@@ -1,0 +1,9 @@
+#ifndef SHARED_SAMPLER_GLSL
+#define SHARED_SAMPLER_GLSL
+
+layout(set = SHARED_SAMPLER_SET, binding = 0) uniform sampler linearClampEdgeSampler;
+layout(set = SHARED_SAMPLER_SET, binding = 1) uniform sampler pointClampEdgeSampler;
+layout(set = SHARED_SAMPLER_SET, binding = 2) uniform sampler linearRepeatSampler;
+layout(set = SHARED_SAMPLER_SET, binding = 3) uniform sampler pointRepeatSampler;
+
+#endif

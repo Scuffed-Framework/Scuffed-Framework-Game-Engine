@@ -1,0 +1,124 @@
+#ifndef SHARED_FUNCTIONS_GLSL
+#define SHARED_FUNCTIONS_GLSL
+
+float saturate(float x) { return clamp(x, 0.0, 1.0); }
+vec2 saturate(vec2 x) { return clamp(x, 0.0, 1.0); }
+vec3 saturate(vec3 x) { return clamp(x, 0.0, 1.0); }
+vec4 saturate(vec4 x) { return clamp(x, 0.0, 1.0); }
+
+float mean(vec3 v) { return (v.x + v.y + v.z) / 3.0; }
+
+float rand(vec2 n)
+{
+    return fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float interleavedGradientNoise(ivec2 pixel, int frame)
+{
+    vec2 uv = vec2(pixel) + vec2(frame, frame);
+    return fract(52.9829189 * fract(dot(uv, vec2(0.06711056, 0.00583715))));
+}
+
+vec3 cubeSmooth(vec3 x)
+{
+    return x * x * (3.0 - 2.0 * x);
+}
+
+bool onRange(vec2 uv, vec2 minVal, vec2 maxVal)
+{
+    return all(greaterThanEqual(uv, minVal)) && all(lessThanEqual(uv, maxVal));
+}
+
+vec3 getWorldPos(vec2 uv, float depth, PerFrameData frameData)
+{
+    vec4 clipSpace = vec4(uv.x * 2.0 - 1.0, (1.0 - uv.y) * 2.0 - 1.0, depth, 1.0);
+    vec4 viewSpace = frameData.camInvertProj * clipSpace;
+    viewSpace.xyz /= viewSpace.w;
+    vec4 worldSpace = frameData.camInvertView * viewSpace;
+    return worldSpace.xyz;
+}
+
+float getUniformPhase()
+{
+    return 1.0 / (4.0 * 3.14159265359);
+}
+
+float hgPhase(float g, float cosTheta)
+{
+    float denom = 1.0 + g * g + 2.0 * g * cosTheta;
+    return (1.0 - g * g) / (4.0 * 3.14159265359 * denom * sqrt(denom));
+}
+
+float rayleighPhase(float cosTheta)
+{
+    return (3.0 / (16.0 * 3.14159265359)) * (1.0 + cosTheta * cosTheta);
+}
+
+float dualLobPhase(float g1, float g2, float mix, float cosTheta)
+{
+    return mix * hgPhase(g1, cosTheta) + (1.0 - mix) * hgPhase(g2, cosTheta);
+}
+
+// Bayer matrix for temporal accumulation
+const int kBayerMatrix16[16] = int[](
+    0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5
+);
+
+// Ray-sphere intersection helpers
+float raySphereIntersectNearest(vec3 origin, vec3 dir, vec3 center, float radius)
+{
+    vec3 oc = origin - center;
+    float b = dot(oc, dir);
+    float c = dot(oc, oc) - radius * radius;
+    float disc = b * b - c;
+    if(disc < 0.0) return -1.0;
+    float sqrtDisc = sqrt(disc);
+    float t0 = -b - sqrtDisc;
+    float t1 = -b + sqrtDisc;
+    if(t0 < 0.0) t0 = t1;
+    return t0;
+}
+
+float raySphereIntersectInside(vec3 origin, vec3 dir, vec3 center, float radius)
+{
+    vec3 oc = origin - center;
+    float b = dot(oc, dir);
+    float c = dot(oc, oc) - radius * radius;
+    float disc = b * b - c;
+    if(disc < 0.0) return -1.0;
+    float sqrtDisc = sqrt(disc);
+    float t0 = -b - sqrtDisc;
+    float t1 = -b + sqrtDisc;
+    if(t0 < 0.0) t0 = t1;
+    return t0;
+}
+
+bool raySphereIntersectOutSide(vec3 origin, vec3 dir, vec3 center, float radius, out vec2 t0t1)
+{
+    vec3 oc = origin - center;
+    float b = dot(oc, dir);
+    float c = dot(oc, oc) - radius * radius;
+    float disc = b * b - c;
+    if(disc < 0.0) return false;
+    float sqrtDisc = sqrt(disc);
+    t0t1.x = -b - sqrtDisc;
+    t0t1.y = -b + sqrtDisc;
+    return true;
+}
+
+vec3 convertToAtmosphereUnit(vec3 pos, PerFrameData frameData)
+{
+    return pos * 0.001;
+}
+
+vec3 convertToCameraUnit(vec3 pos, PerFrameData frameData)
+{
+    return pos * 1000.0;
+}
+
+float aerialPerspectiveDepthToSlice(float depth)
+{
+    return depth * 0.001;
+}
+
+#endif

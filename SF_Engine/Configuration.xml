@@ -1,0 +1,20 @@
+<Project Name="SF Engine" Version="1.0">
+
+  <Compiler>
+    <!-- explicit or "auto" -->
+    <Preferred>auto</Preferred>
+  </Compiler>
+
+  <Configurations>
+    <Config Name="Debug"  Optimization="0" Defines="DEBUG;TRACE" />
+    <Config Name="Release" Optimization="3" Defines="NDEBUG" />
+  </Configurations>
+
+  <Modules>
+    <Module Name="Core" Type="StaticLibrary">
+      <Sources>./</Sources>
+      <Includes>./</Includes>
+    </Module>
+  </Modules>
+
+</Project>
