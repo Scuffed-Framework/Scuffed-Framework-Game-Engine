@@ -88,17 +88,3 @@ set_target_properties(SF_Editor PROPERTIES
     OUTPUT_NAME "SF_Editor"
     DEBUG_POSTFIX "_d"
 )
-
-#  Shader copying 
-# Step 1: copy engine shaders (SF_Engine/Shaders/) → output/Shaders/
-#         This gives us Lit.shader, FullscreenPass.shader, Lighting/*, etc.
-sf_copy_engine_shaders(SF_Editor)
-
-# Step 2: overlay editor-specific shaders on top.
-#         Runs after the engine copy so editor files win on any name collision.
-add_custom_command(TARGET SF_Editor POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/Shaders"
-        "${BASE_OUTPUT_DIR}/Shaders"
-    COMMENT "Copying SF_Editor shaders to output dir"
-)

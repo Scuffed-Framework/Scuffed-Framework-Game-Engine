@@ -1,100 +1,63 @@
-Scuffed Framework Restricted Open License (SFROL)
-
-v1.0 Modifiable & Redistributable, With Restrictions
+Scuffed Framework Open License (SFOL) v2.0
 
 Copyright © 2025 Scuffed Framework Group
 
-1. Purpose
+1. Permissions
 
-This License exists to allow the community to learn from, modify, and contribute to the Software while preventing misuse, theft, and unethical applications.
+You are free to:
 
-2. Permissions
+Use the Software for any purpose, including commercial use
+Study and modify the Software
+Distribute the Software and derivative works in source or binary form
+2. Conditions
 
-You are permitted to:
+You must:
 
-View, study, and learn from the Software.
-Modify the Software and create derivative works.
-Redistribute original or modified versions of the Software.
-Use the Software non-commercially or commercially. (Commercial use requires a note in the root directory of the game or a splash screen that will alert players of the engine used to create the game)
-3. Restrictions
+Include this license and copyright notice in all copies or substantial portions of the Software
+Provide clear attribution to "Scuffed Framework" in:
+Source distributions (e.g., README), and
+End-user products (e.g., credits, splash screen, or documentation)
+3. Attribution & Representation
 
 You may NOT:
 
-Remove or alter copyright or license notices.
-Re-license the Software or derivatives under:
-Any copyleft license (GPL, AGPL, LGPL, etc.)
-Any permissive license (MIT, BSD, Apache)
-Any proprietary license not approved by the copyright holder
-In short: derivatives must remain under this same license.
-Claim the Software as entirely your own work.
-Use the Software to create a competing game engine, SDK, or core technology.
-Misrepresent modified versions as official or endorsed.
-4. Ethical Use Restrictions
+Claim that you are the original author of the Software
+Remove or falsify authorship or copyright notices
+Present modified versions as official Scuffed Framework releases
 
-The Software may not be used by:
+You must clearly indicate if changes were made.
 
-Governments or organizations engaging in censorship, oppression, surveillance, or human-rights abuses.
-Entities producing propaganda for dictatorships or authoritarian states.
-Groups promoting hate, extremism, or violence.
-Individuals creating "one side is good, the other is bad" type of content, such as feminism
+4. Any distribution of the Software, or derivative works based on the Software, must include clear and reasonable attribution to “Scuffed Framework”.
 
+Attribution must:
 
-Any such use immediately terminates your rights.
+Be included in source code distributions (e.g., in a LICENSE file, README, or header comments), and
+Be included in end-user distributions in a reasonable and visible location, such as:
+a credits screen,
+an "About" section, or
+accompanying documentation
 
-5. Derivative Works
+The attribution must include the following text (or a substantially similar form):
 
-Derivative works are allowed under these conditions:
+"This project uses or is based on Scuffed Framework - © 2025 Scuffed Framework Group."
 
-They must retain this license.
-They must include attribution to "Scuffed Framework".
-They must not be relicensed under any incompatible terms.
-They may be distributed as source or binaries.
+The attribution must not be removed, altered to misrepresent authorship, or obscured.
 
-6. License Compatibility
+This requirement does not restrict the licensing of larger works that include the Software, provided this attribution and license notice are preserved.
 
-The Software and any derivatives must always remain under this License.
-You may not combine it with code under:
+5. Third-Party Components
 
-GPL, AGPL, LGPL
-Apache 2.0
-MIT / BSD
-Any license requiring upstream code compatibility
-Any license allowing unrestricted reuse
+This Software includes third-party libraries that are not licensed under this license. These components retain their own original licenses, 
+which take precedence for those files.
 
-This protects any part of the Software or source from being "absorbed" by other projects.
+Includes:
 
-7. Third-Party Components
+Dear ImGui : MIT
+EnTT : MIT
+Acid Game Engine : MIT
 
-This Software includes third-party libraries that are not licensed under the Drippy Engine Restricted Open License (DEROL). These components retain their own original licenses, which take precedence for those files.
+Their licenses remain fully in effect.
 
-The following third-party components are included:
+6. Disclaimer
 
-Dear ImGui - © Omar Cornut and contributors - MIT License
-EnTT - © skypjack and contributors - MIT License
-Parts of Acid Game Engine - © EQMG  - MIT License
-
-
-For all third-party components:
-
-Their original license terms remain fully in effect.
-This License does not apply to those components.
-You may use, modify, and redistribute those components under their respective MIT licenses.
-Restrictions in this License (including but not limited to relicensing restrictions, ethical-use restrictions, or commercial limitations) do not override the permissions granted by the third-party licenses.
-
-All users are responsible for complying with the licenses of these third-party components.
-
-8. Termination
-
-Violation of any clause results in automatic termination of your rights to the Software.
-
-Upon termination, you must cease use and delete all copies.
-
-9. Ownership
-
-All rights not expressly granted here remain with the Scuffed Framework development group.
-
-10. Disclaimer
-
-The Software is provided "as is," without warranties of any kind.
-
-END OF LICENSE
+Source or binaries are provided "as is", without warranty.
