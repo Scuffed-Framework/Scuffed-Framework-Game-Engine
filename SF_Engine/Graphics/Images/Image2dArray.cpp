@@ -23,7 +23,7 @@ namespace SF::Engine
 
         VmaAllocationInfo allocInfo;
         CreateImage(image, allocation, this->extent, format, samples, VK_IMAGE_TILING_OPTIMAL,
-                    this->usage, VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, 1, VK_IMAGE_TYPE_2D);
+                    this->usage, VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, this->arrayLayers, VK_IMAGE_TYPE_2D);
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
         CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_2D_ARRAY, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
         TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
@@ -46,7 +46,7 @@ namespace SF::Engine
 
         VmaAllocationInfo allocInfo;
         CreateImage(image, allocation, this->extent, format, samples, VK_IMAGE_TILING_OPTIMAL,
-                    this->usage, VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, 1, VK_IMAGE_TYPE_2D);
+                    this->usage, VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, this->arrayLayers, VK_IMAGE_TYPE_2D);
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
         CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_2D_ARRAY, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
 

@@ -4,11 +4,16 @@
 #include <Graphics/Stage.hpp>
 #include <Graphics/Lighting/ClusterCullPipelinePass.hpp>
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp>
-#include <Graphics/Visuals/Atmosphere/AtmospherePipelinePass.hpp>
+#include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 #include <Graphics/Visuals/Sun/SunPipelinePass.hpp>
-#include <Graphics/Visuals/Clouds/CloudPipelinePass.hpp>
 #include <ImGui/ImGuiPipelinePass.hpp>
 #include <Graphics/Mesh/Mesh.hpp>
+#include <Graphics/Images/Image2d.hpp>
+#include <Graphics/Stage.hpp>
+#include <Graphics/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
+
+#include <Graphics/PipelinePassRegistry.hpp>
+#include <Graphics/PipelinePassInit.hpp>
 
 namespace SF::Engine
 {
@@ -16,9 +21,6 @@ namespace SF::Engine
     {
         bool enableAtmosphere = false;
         bool enableSun = false;
-        bool enableClouds = false;
-
-        // Atmosphere params  only used if enableAtmosphere = true
         AtmosphereParams atmosphereParams = []
         {
             AtmosphereParams ap;
@@ -29,7 +31,6 @@ namespace SF::Engine
             return ap;
         }();
 
-        // Sun params  only used if enableSun = true
         SunParams sunParams = []
         {
             SunParams sp;
@@ -60,6 +61,8 @@ namespace SF::Engine
 
         void Start() override
         {
+            GetPipelinePassManager()->RunInitCallbacks();
+
             lightManager_ = std::make_unique<LightManager>();
 
             // Cluster cull runs in pre-render (before the renderpass)
@@ -72,22 +75,27 @@ namespace SF::Engine
             if (config_.enableAtmosphere)
                 atmoPass_ = AddPipelinePass<AtmospherePipelinePass>(
                     Pipeline::Stage{0, 0}, config_.atmosphereParams);
-
+            if (config_.enableAtmosphere) // cloud shares the atmosphere flag
+            {
+                auto *cloud = AddPipelinePass<CloudPipelinePass>(
+                    Pipeline::Stage{0, 0},
+                    config_.atmosphereParams);
+                cloudPass_ = cloud;
+            }
             // Optional sun disc
             if (config_.enableSun)
                 sunPass_ = AddPipelinePass<SunPipelinePass>(
                     Pipeline::Stage{0, 0}, config_.sunParams);
 
-            // Optional volumetric clouds  must be registered before ImGui
-            // so that ImGui always composites on top.
-            if (config_.enableClouds)
-                cloudPass_ = AddPipelinePass<CloudPipelinePass>(Pipeline::Stage{0, 0});
+            PipelinePassInitRegistry::Get().RunAll(*GetPipelinePassManager());
 
-            // ImGui  always last so it composites on top of everything
+            // ImGui – always last so it composites on top of everything
             imguiPass_ = AddPipelinePass<ImGuiPipelinePass>(Pipeline::Stage{0, 0});
         }
 
         void Update() override {} // Heavy per-frame work is driven by Scene::Render()
+
+        Image2d *GetHdrColorTarget();
 
         // Accessors
         LightManager *GetLightManager() { return lightManager_.get(); }
@@ -103,7 +111,7 @@ namespace SF::Engine
         LitMeshPipelinePass *litPass_ = nullptr;
         AtmospherePipelinePass *atmoPass_ = nullptr;
         SunPipelinePass *sunPass_ = nullptr;
-        CloudPipelinePass *cloudPass_ = nullptr;
         ImGuiPipelinePass *imguiPass_ = nullptr;
+        CloudPipelinePass *cloudPass_ = nullptr;
     };
 }

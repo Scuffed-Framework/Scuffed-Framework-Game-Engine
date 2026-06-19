@@ -2,7 +2,7 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include <Bitmaps/Bitmap.hpp>
-#include <Files/File.hpp>
+#include <Filesystem/File.hpp>
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
@@ -12,14 +12,14 @@ namespace SF::Engine
     class BitmapJPEG : public Bitmap::Registrar<BitmapJPEG>
     {
     public:
-        static void Load(Bitmap& bitmap, const std::filesystem::path& filename)
+        static void Load(Bitmap &bitmap, const std::filesystem::path &filename)
         {
             int width, height, channels;
 
             // Load JPEG using stb_image
-            unsigned char* imageData =
+            unsigned char *imageData =
                 stbi_load(filename.string().c_str(), &width, &height, &channels,
-                          STBI_rgb_alpha  // Force 4 channels (RGBA)
+                          STBI_rgb_alpha // Force 4 channels (RGBA)
                 );
 
             if (!imageData)
@@ -28,7 +28,7 @@ namespace SF::Engine
             }
 
             // Calculate total size
-            size_t dataSize = width * height * 4;  // 4 bytes per pixel (RGBA)
+            size_t dataSize = width * height * 4; // 4 bytes per pixel (RGBA)
 
             // Transfer ownership to unique_ptr
             auto data = std::make_unique<uint8_t[]>(dataSize);
@@ -44,7 +44,7 @@ namespace SF::Engine
             bitmap.SetFilename(filename);
         }
 
-        static void Write(const Bitmap& bitmap, const std::filesystem::path& filename,
+        static void Write(const Bitmap &bitmap, const std::filesystem::path &filename,
                           int quality = 90)
         {
             if (!bitmap.GetData())
@@ -55,7 +55,7 @@ namespace SF::Engine
             // Clamp quality to valid range
             quality = std::clamp(quality, 1, 100);
 
-            const auto& size = bitmap.GetSize();
+            const auto &size = bitmap.GetSize();
             int width = static_cast<int>(size.x);
             int height = static_cast<int>(size.y);
             int channels = static_cast<int>(bitmap.GetBytesPerPixel());

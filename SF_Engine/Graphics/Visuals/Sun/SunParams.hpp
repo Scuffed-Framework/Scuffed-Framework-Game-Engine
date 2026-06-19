@@ -36,12 +36,9 @@ namespace SF::Engine
     {
         glm::vec3 color = {1.0f, 0.95f, 0.85f}; // warm white
         float intensity = 20.0f;
-        // Angular radius in degrees. Real sun ~0.27 deg; we use ~0.8 for visibility.
-        float discAngleDeg = 0.8f;
-        // Halo extends to this many degrees from centre
+        float discAngleDeg = 0.27f;
         float haloAngleDeg = 4.0f;
         float haloStrength = 0.35f;
-        // Extra brightness multiplier fed into the bloom bright-pass threshold
         float bloomStrength = 6.0f;
     };
 }

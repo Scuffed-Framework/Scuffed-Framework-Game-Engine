@@ -6,12 +6,12 @@
 // Include standard library headers in dependency order
 #include <cstdint>
 #include <filesystem>
-#include <memory>  // For std::allocator
+#include <memory> // For std::allocator
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <Files/File.hpp>
+#include <Filesystem/File.hpp>
 #include <LowLevel/Rocket.hpp>
 
 // Undefine problematic macros (fuck you microsoft)
@@ -26,11 +26,11 @@
 #if _PLATFORM_WINDOWS
 
 // Must define NOMINMAX before windows.h to prevent min/max macro pollution
-#ifndef NOMINMAX  // Fuck you again microsoft
+#ifndef NOMINMAX // Fuck you again microsoft
 #define NOMINMAX
 #endif
 
-#define __INTRIN_H_  // Prevent intrinsics header inclusion
+#define __INTRIN_H_ // Prevent intrinsics header inclusion
 #include <windows.h>
 #if GCC
 #include <x86intrin.h>
@@ -59,7 +59,7 @@ namespace SF::Engine
         friend class Engine;
 
     public:
-        explicit App(std::string name, const Version& version = {1, 0, 0})
+        explicit App(std::string name, const Version &version = {1, 0, 0})
             : name_(std::move(name)), version_(version)
         {
         }
@@ -67,10 +67,10 @@ namespace SF::Engine
         virtual ~App() = default;
 
         // Prevent copying, allow moving
-        App(const App&) = delete;
-        App& operator=(const App&) = delete;
-        App(App&&) noexcept = default;
-        App& operator=(App&&) noexcept = default;
+        App(const App &) = delete;
+        App &operator=(const App &) = delete;
+        App(App &&) noexcept = default;
+        App &operator=(App &&) noexcept = default;
 
         /**
          * @brief Called when switching to this app from another.
@@ -92,7 +92,7 @@ namespace SF::Engine
          * @brief Gets the application's name.
          * @return The application's name.
          */
-        [[nodiscard]] const std::string& GetName() const noexcept
+        [[nodiscard]] const std::string &GetName() const noexcept
         {
             return name_;
         }
@@ -110,7 +110,7 @@ namespace SF::Engine
          * @brief Gets the application's version.
          * @return The application's version.
          */
-        [[nodiscard]] const Version& GetVersion() const noexcept
+        [[nodiscard]] const Version &GetVersion() const noexcept
         {
             return version_;
         }
@@ -119,7 +119,7 @@ namespace SF::Engine
          * @brief Sets the application's version for driver support.
          * @param version The new application version.
          */
-        void SetVersion(const Version& version) noexcept
+        void SetVersion(const Version &version) noexcept
         {
             version_ = version;
         }
@@ -140,8 +140,8 @@ namespace SF::Engine
             std::vector<File> result;
 
             const std::string exeDir = GetExecutablePath().parent_path().string();
-            const char* pattern = "*.module";
-            for (const auto& file : File::GetFiles(exeDir, pattern, false))
+            const char *pattern = "*.module";
+            for (const auto &file : File::GetFiles(exeDir, pattern, false))
             {
                 result.emplace_back(file);
             }

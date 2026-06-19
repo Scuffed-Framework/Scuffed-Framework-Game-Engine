@@ -22,7 +22,7 @@
 //
 // =============================================================================
 
-#include <vulkan/vulkan.h>
+#pragma once
 
 #include <algorithm>
 #include <cassert>
@@ -38,6 +38,9 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include <Graphics/RenderSystem.hpp>
+#include <Engine/Engine.hpp>
 
 #ifdef VK_DUMP_STB_IMAGE_WRITE
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -188,10 +191,10 @@ namespace SF::Engine::VkMemDump
     public:
         // pass in your existing device objects; the Dumper borrows them (no ownership)
         Dumper(
-            VkDevice device,
-            VkPhysicalDevice physicalDevice,
-            VkQueue queue,
-            VkCommandPool commandPool,
+            VkDevice device = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(),
+            VkPhysicalDevice physicalDevice = RenderSystem::Get()->GetPhysicalDevice()->GetPhysicalDevice(),
+            VkQueue queue = RenderSystem::Get()->GetLogicalDevice()->GetGraphicsQueue(),
+            VkCommandPool commandPool = RenderSystem::Get()->GetCommandPool(::SF::Engine::Engine::Get()->GetRenderThreadId())->GetCommandPool(), // well now we can't dump from another thread, but who cares
             bool verbose = true)
             : device_(device), physDevice_(physicalDevice),
               queue_(queue), cmdPool_(commandPool), verbose_(verbose)

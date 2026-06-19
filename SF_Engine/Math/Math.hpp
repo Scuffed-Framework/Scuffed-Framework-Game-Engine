@@ -6,7 +6,7 @@
 /******************************************************************************/
 /* MIT License                                                                */
 /* */
-/* Copyright (c) 2025-present Martin.                                         */
+/* Copyright (c) 2025-present Martin (the name I was assigned in french class).                                         */
 /* */
 /* May all those that this source may reach be blessed by the LORD and find   */
 /* peace and joy in life.                                                     */
@@ -60,9 +60,72 @@ namespace SF::Engine
     concept FloatingPoint = std::is_floating_point_v<T>;
 
     /**
+     * @brief Concept for integral types
+     */
+    template <typename T>
+    concept Integral = std::is_integral_v<T>;
+
+    /**
+     * @brief Signed integral types
+     */
+    template <typename T>
+    concept SignedIntegral =
+        Integral<T> && std::signed_integral<T>;
+
+    /**
+     * @brief Unsigned integral types
+     */
+    template <typename T>
+    concept UnsignedIntegral =
+        Integral<T> && std::unsigned_integral<T>;
+
+    /**
+     * @brief Boolean type only
+     */
+    template <typename T>
+    concept Boolean =
+        std::same_as<std::remove_cvref_t<T>, bool>;
+
+    /**
+     * @brief Excludes bool from arithmetic
+     */
+    template <typename T>
+    concept Numeric =
+        Arithmetic<T> &&
+        !Boolean<T>;
+
+    template <typename T>
+    concept Enum = std::is_enum_v<T>;
+
+    template <typename T>
+    concept Trivial = std::is_trivial_v<T>;
+
+    template <typename T>
+    concept POD = std::is_standard_layout_v<T> &&
+                  std::is_trivial_v<T>;
+
+    template <typename T>
+    concept Real =
+        std::integral<T> ||
+        std::floating_point<T>;
+
+    template <typename T>
+    struct Fraction
+    {
+        T numerator;
+        T denominator;
+    };
+    template <typename T>
+    concept Rational =
+        requires(T v) {
+            { v.numerator } -> std::integral;
+            { v.denominator } -> std::integral;
+        };
+
+    /**
      * @brief Class that holds various mathematical functions and constants
      */
-    class Maths
+    class Mathematics
     {
     public:
         // Use C++20 mathematical constants (more precise)
@@ -89,7 +152,7 @@ namespace SF::Engine
         template <FloatingPoint T = float>
         static constexpr T EPSILON = std::numeric_limits<T>::epsilon();
 
-        Maths() = delete;
+        Mathematics() = delete;
 
         /**
          * @brief Get thread-local random number generator

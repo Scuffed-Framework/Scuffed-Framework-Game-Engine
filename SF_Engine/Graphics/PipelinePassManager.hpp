@@ -4,6 +4,7 @@
 #include <Graphics/Pipelines/Pipeline.hpp>
 #include "UtilityClasses/NoCopy.hpp"
 #include "UtilityClasses/TypeInformation.hpp"
+#include "PipelinePassInit.hpp"
 
 namespace SF::Engine
 {
@@ -115,6 +116,14 @@ namespace SF::Engine
          * Clears all PipelinePasss.
          */
         void Clear();
+
+        /**
+         * Runs things idk
+         */
+        void RunInitCallbacks()
+        {
+            PipelinePassInitRegistry::Get().RunAll(*this);
+        }
 
     private:
         using StageIndex = std::pair<Pipeline::Stage, std::size_t>;

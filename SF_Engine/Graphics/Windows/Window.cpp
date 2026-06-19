@@ -66,7 +66,8 @@ namespace SF::Engine
 
     void CallbackWindowFocus(GLFWwindow *glfwWindow, int32_t focused)
     {
-        if (ImGuiReady()) ImGui_ImplGlfw_WindowFocusCallback(glfwWindow, focused);
+        if (ImGuiReady())
+            ImGui_ImplGlfw_WindowFocusCallback(glfwWindow, focused);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->focused = static_cast<bool>(focused);
         window->onFocus(focused == GLFW_TRUE);
@@ -85,7 +86,8 @@ namespace SF::Engine
         // Vulkan allocations (vmaCreateImage etc.) which re-enters this callback
         // before the first frame is even complete, causing an infinite rebuild loop.
         static bool s_inRefresh = false;
-        if (s_inRefresh) return;
+        if (s_inRefresh)
+            return;
         s_inRefresh = true;
 
         auto *rs = RenderSystem::Get();
@@ -120,7 +122,8 @@ namespace SF::Engine
 
     void CallbackCursorEnter(GLFWwindow *glfwWindow, int32_t entered)
     {
-        if (ImGuiReady()) ImGui_ImplGlfw_CursorEnterCallback(glfwWindow, entered);
+        if (ImGuiReady())
+            ImGui_ImplGlfw_CursorEnterCallback(glfwWindow, entered);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->windowSelected = entered == GLFW_TRUE;
         window->onEnter(entered == GLFW_TRUE);
@@ -139,7 +142,8 @@ namespace SF::Engine
     void CallbackKey(GLFWwindow *glfwWindow, int32_t key, int32_t scancode, int32_t action,
                      int32_t mods)
     {
-        if (ImGuiReady()) ImGui_ImplGlfw_KeyCallback(glfwWindow, key, scancode, action, mods);
+        if (ImGuiReady())
+            ImGui_ImplGlfw_KeyCallback(glfwWindow, key, scancode, action, mods);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->onKey(static_cast<Key>(key), static_cast<InputAction>(action),
                       bitmask::bitmask<InputMod>(mods));
@@ -147,14 +151,16 @@ namespace SF::Engine
 
     void CallbackChar(GLFWwindow *glfwWindow, uint32_t codepoint)
     {
-        if (ImGuiReady()) ImGui_ImplGlfw_CharCallback(glfwWindow, codepoint);
+        if (ImGuiReady())
+            ImGui_ImplGlfw_CharCallback(glfwWindow, codepoint);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->onChar(static_cast<char>(codepoint));
     }
 
     void CallbackMouseButton(GLFWwindow *glfwWindow, int32_t button, int32_t action, int32_t mods)
     {
-        if (ImGuiReady()) ImGui_ImplGlfw_MouseButtonCallback(glfwWindow, button, action, mods);
+        if (ImGuiReady())
+            ImGui_ImplGlfw_MouseButtonCallback(glfwWindow, button, action, mods);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->onMouseButton(static_cast<MouseButton>(button), static_cast<InputAction>(action),
                               bitmask::bitmask<InputMod>(mods));
@@ -162,7 +168,8 @@ namespace SF::Engine
 
     void CallbackCursorPos(GLFWwindow *glfwWindow, double xpos, double ypos)
     {
-        if (ImGuiReady()) ImGui_ImplGlfw_CursorPosCallback(glfwWindow, xpos, ypos);
+        if (ImGuiReady())
+            ImGui_ImplGlfw_CursorPosCallback(glfwWindow, xpos, ypos);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->mousePosition = {xpos, ypos};
         window->onMousePosition(window->mousePosition);
@@ -170,7 +177,8 @@ namespace SF::Engine
 
     void CallbackScroll(GLFWwindow *glfwWindow, double xoffset, double yoffset)
     {
-        if (ImGuiReady()) ImGui_ImplGlfw_ScrollCallback(glfwWindow, xoffset, yoffset);
+        if (ImGuiReady())
+            ImGui_ImplGlfw_ScrollCallback(glfwWindow, xoffset, yoffset);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->mouseScroll = {xoffset, yoffset};
         window->onMouseScroll(window->mouseScroll);
@@ -181,7 +189,7 @@ namespace SF::Engine
         if (value != 0.0)
         {
             value -= static_cast<double>(delta) * std::copysign(3.0, value);
-            value = Maths::Deadband(0.08, value);
+            value = Mathematics::Deadband(0.08, value);
             return value;
         }
 

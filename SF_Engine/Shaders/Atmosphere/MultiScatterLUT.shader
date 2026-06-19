@@ -1,61 +1,29 @@
-// MultiScatterLUT.shader
-// Bakes order-2+ multiple scattering into a 32x32 LUT (Hillaire 2020).
-// Reads transmittanceLUT as input  must be baked first.
-//
-// UV convention (shared with Atmosphere.shader):
-//   x = (height - bottomRadius) / (topRadius - bottomRadius)
-//   y = cosSun * 0.5 + 0.5
-//
-// set=0 bind=0  transmittanceLUT  (sampler2D, 256x64  RGBA16F, read)
-// set=0 bind=1  multiScatterLUT   (image2D,   32x32   RGBA16F, write)
-
 Shader "SF/Atmosphere/MultiScatterLUT"
 {
     ComputeShader
     {
         #version 450
+        const int   SPHERE_SAMPLES    = 64; // must equal local_size_z
         // One workgroup per texel. Z dimension = 64 rays for sphere integration.
-        layout(local_size_x = 1, local_size_y = 1, local_size_z = 64) in;
+        layout(local_size_x=1, local_size_y=1, local_size_z=SPHERE_SAMPLES) in;
 
         layout(set = 0, binding = 0) uniform sampler2D transmittanceLUT;
         layout(set = 0, binding = 1, rgba16f) uniform writeonly image2D multiScatterLUT;
 
-        //  Constants  must match Atmosphere.shader exactly 
-        const vec3  RAY_BETA          = vec3(5.5e-6, 13.0e-6, 22.4e-6);
-        const vec3  MIE_BETA          = vec3(21e-6);
-        const vec3  ABSORPTION_BETA   = vec3(2.04e-5, 4.97e-5, 1.95e-6);
-        const float HEIGHT_RAY        = 8e3;
-        const float HEIGHT_MIE        = 1.2e3;
-        const float HEIGHT_ABSORPTION = 30e3;
-        const float ABSORPTION_FALLOFF= 4e3;
-        const float BOTTOM_RADIUS     = 6371000.0;
-        const float TOP_RADIUS        = 6471000.0;
-        const float PI                = 3.14159265358979;
-        const int   STEPS             = 20;
-        const int   SPHERE_SAMPLES    = 64; // must equal local_size_z
+        #import "Atmosphere.si"
 
-        //  Shared memory  one slot per Z invocation 
         shared vec3 s_fms[SPHERE_SAMPLES];
         shared vec3 s_lms[SPHERE_SAMPLES];
 
-        //  Helpers 
-        vec3 sampleTransmittance(float height, float cosSun)
-        {
-            float x = clamp((height - BOTTOM_RADIUS) / (TOP_RADIUS - BOTTOM_RADIUS), 0.0, 1.0);
-            float y = clamp(cosSun * 0.5 + 0.5, 0.0, 1.0);
-            return textureLod(transmittanceLUT, vec2(x, y), 0.0).rgb;
-        }
 
-        // Distance along ray from height h, direction cosine mu, to sphere R.
-        // Returns -1 if no intersection in front of ray.
         float rayToSphere(float h, float mu, float R)
         {
             float disc = h * h * (mu * mu - 1.0) + R * R;
             if (disc < 0.0) return -1.0;
-            return max(0.0, -h * mu + sqrt(max(0.0, disc)));
+            float t = -h * mu + sqrt(max(0.0, disc));
+            return t > 0.0 ? t : -1.0;  // don't clamp — preserve the "no hit" signal
         }
 
-        // Fibonacci lattice  evenly distributes SPHERE_SAMPLES rays over the unit sphere
         vec3 fibonacciDir(int i)
         {
             float phi   = acos(1.0 - 2.0 * (float(i) + 0.5) / float(SPHERE_SAMPLES));
@@ -63,29 +31,26 @@ Shader "SF/Atmosphere/MultiScatterLUT"
             return normalize(vec3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta)));
         }
 
-        //  Main 
         void main()
         {
             ivec2 lutSize = imageSize(multiScatterLUT);
             ivec2 coord   = ivec2(gl_WorkGroupID.xy); // one workgroup per output texel
             int   rayIdx  = int(gl_LocalInvocationID.z);
 
-            // Decode texel → physical params
             vec2  uv     = (vec2(coord) + 0.5) / vec2(lutSize);
-            float h      = mix(BOTTOM_RADIUS, TOP_RADIUS, uv.x);
+            float h      = uToHeight(uv.x, BOTTOM_RADIUS, TOP_RADIUS); // sqrt-warp matches atmosUV
             float cosSun = uv.y * 2.0 - 1.0;
-            // Sun points along XZ plane at this zenith angle  Y is up
+
             float sinSun = sqrt(max(0.0, 1.0 - cosSun * cosSun));
             vec3  sunDir = vec3(sinSun, cosSun, 0.0);
             vec3  pos    = vec3(0.0, h, 0.0); // camera sits on Y axis at height h
 
-            // This invocation marches one ray in the sphere
             vec3 rayDir  = fibonacciDir(rayIdx);
             float mu     = rayDir.y; // cosine of ray with zenith (planet centred)
 
             float tGround = rayToSphere(h, mu, BOTTOM_RADIUS);
             float tTop    = rayToSphere(h, mu, TOP_RADIUS);
-            float tMax    = (tGround > 0.0) ? tGround : max(tTop, 0.0);
+            float tMax    = (tGround > 0.0) ? tGround : tTop; // tTop is -1 if no hit
 
             vec3 fms    = vec3(0.0); // multiple-scatter factor (geometric series base)
             vec3 lms    = vec3(0.0); // multiple-scatter luminance
@@ -115,9 +80,9 @@ Shader "SF/Atmosphere/MultiScatterLUT"
 
                     // Sun transmittance at this point
                     float cosSunHere = dot(normalize(p), sunDir);
-                    vec3  T_sun      = sampleTransmittance(length(p), cosSunHere);
+                    vec3  T_sun      = sampleTransmittance(transmittanceLUT, alt, cosSunHere,
+                                                          BOTTOM_RADIUS, TOP_RADIUS);
 
-                    // Isotropic phase (1/4π) baked in  uniform sphere average
                     const float ISO = 1.0 / (4.0 * PI);
                     vec3 S    = ISO * sigma_s * T_sun;
                     // Analytic single-step luminance integral
@@ -133,16 +98,17 @@ Shader "SF/Atmosphere/MultiScatterLUT"
                 {
                     vec3  gndPos    = pos + rayDir * tGround;
                     float cosGndSun = dot(normalize(gndPos), sunDir);
-                    vec3  T_sun_gnd = sampleTransmittance(BOTTOM_RADIUS, cosGndSun);
+                    vec3  T_sun_gnd = sampleTransmittance(transmittanceLUT, BOTTOM_RADIUS, cosGndSun,
+                                                          BOTTOM_RADIUS, TOP_RADIUS);
                     lms += T_view * (0.3 / PI) * max(cosGndSun, 0.0) * T_sun_gnd;
                 }
             }
 
-            // Write this ray's contribution into shared memory
             s_fms[rayIdx] = fms;
             s_lms[rayIdx] = lms;
-            barrier();
+            
             memoryBarrierShared();
+            barrier();
 
             // Only invocation 0 reduces and writes output
             if (rayIdx == 0)

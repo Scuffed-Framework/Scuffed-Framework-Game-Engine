@@ -44,7 +44,10 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        window->SetTitle("SF");
+        auto version = engine.GetVersion();
+
+        window->SetTitle(
+            std::string("SF Engine Version: ") + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch));
         window->SetResizable(true);
         window->SetBorderColor(SF::Engine::Color(1.0f, 0.48f, 0.0f, 1.0f));
         window->SetTitleColor(SF::Engine::Color());

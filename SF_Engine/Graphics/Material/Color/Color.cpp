@@ -33,9 +33,9 @@ namespace SF::Engine
 
     Color Color::FromHSV(float hue, float saturation, float value, float alpha)
     {
-        hue = Maths::WrapDegrees(hue) / 60.0f;
-        saturation = Maths::Saturate(saturation);
-        value = Maths::Saturate(value);
+        hue = Mathematics::WrapDegrees(hue) / 60.0f;
+        saturation = Mathematics::Saturate(saturation);
+        value = Mathematics::Saturate(value);
 
         float c = value * saturation;
         float x = c * (1.0f - std::abs(std::fmod(hue, 2.0f) - 1.0f));
@@ -85,9 +85,9 @@ namespace SF::Engine
 
     Color Color::FromHSL(float hue, float saturation, float lightness, float alpha)
     {
-        hue = Maths::WrapDegrees(hue) / 60.0f;
-        saturation = Maths::Saturate(saturation);
-        lightness = Maths::Saturate(lightness);
+        hue = Mathematics::WrapDegrees(hue) / 60.0f;
+        saturation = Mathematics::Saturate(saturation);
+        lightness = Mathematics::Saturate(lightness);
 
         float c = (1.0f - std::abs(2.0f * lightness - 1.0f)) * saturation;
         float x = c * (1.0f - std::abs(std::fmod(hue, 2.0f) - 1.0f));
@@ -155,7 +155,7 @@ namespace SF::Engine
         float s = (cMax > 0.0f) ? (delta / cMax) : 0.0f;
         float v = cMax;
 
-        return {Maths::WrapDegrees(h), s, v};
+        return {Mathematics::WrapDegrees(h), s, v};
     }
 
     std::array<float, 3> Color::ToHSL() const
@@ -178,6 +178,6 @@ namespace SF::Engine
         float l = (cMax + cMin) / 2.0f;
         float s = (delta > 0.0f) ? (delta / (1.0f - std::abs(2.0f * l - 1.0f))) : 0.0f;
 
-        return {Maths::WrapDegrees(h), s, l};
+        return {Mathematics::WrapDegrees(h), s, l};
     }
 }

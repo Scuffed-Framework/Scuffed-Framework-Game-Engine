@@ -4,6 +4,7 @@
 #include <Graphics/Pipelines/RenderPipeline.hpp>
 #include <Graphics/Descriptors/DescriptorSet.hpp>
 #include <Graphics/Buffers/UniformBuffer.hpp>
+#include <Graphics/Visuals/sfSkies/Atmosphere/LUT/TransmittanceLUT.hpp>
 #include "SunParams.hpp"
 
 #include <glm/glm.hpp>
@@ -63,5 +64,6 @@ namespace SF::Engine
         std::unique_ptr<RenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
         std::unique_ptr<UniformBuffer> ubo_;
+        std::unique_ptr<TransmittanceLUT> transmittanceLUT_;
     };
 }

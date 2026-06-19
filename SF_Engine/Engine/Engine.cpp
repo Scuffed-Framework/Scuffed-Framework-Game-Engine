@@ -1,6 +1,8 @@
 #include "Engine.hpp"
 #include <Default/DefaultScene.hpp>
 #include <Scene/SceneManager.hpp>
+#include <Project/Project.hpp>
+#include <GameScript/LuaEngine.hpp>
 
 namespace SF::Engine
 {
@@ -30,6 +32,7 @@ namespace SF::Engine
             }
         }
 
+        gameInstance = std::make_unique<GameInstance>();
         // Load the startup scene, falling back to DefaultScene on any failure.
         // SceneManager::Update() will call Start() on the first frame  don't call it here.
         std::unique_ptr<Scene> startupScene;
@@ -47,6 +50,8 @@ namespace SF::Engine
                     startupScene = std::move(result.scene);
                     Log::Info("Engine: startup scene loaded from '{}'",
                               startUpURL.ToString());
+                    if (gameInstance)
+                        gameInstance->OnCreate();
                 }
                 else
                 {
@@ -68,7 +73,9 @@ namespace SF::Engine
 
         // Hand the scene to SceneManager  it owns and updates it from here
         if (auto *sm = SceneManager::Get())
+        {
             sm->SetScene(std::move(startupScene));
+        }
     }
 
     Engine::~Engine()
@@ -153,6 +160,7 @@ namespace SF::Engine
                 deltaRender.Update();
             }
         }
+        vkDeviceWaitIdle(*RenderSystem::Get()->GetLogicalDevice());
 
         return EXIT_SUCCESS;
     }

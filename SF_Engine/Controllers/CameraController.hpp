@@ -1,15 +1,23 @@
 #pragma once
 #include <Camera/Camera.hpp>
 #include <Camera/EditorCamera.hpp>
+#include "Controller.hpp"
 
 namespace SF::Engine
 {
-    class CameraController
+    class CameraController : public StaticController<CameraController>
     {
     public:
         // Start possessed by the editor camera by default
         CameraController() : possessed_(&editorCamera_)
         {
+        }
+
+        void SetFrameInput(Window *w, bool imguiWantsMouse, bool imguiWantsKeyboard)
+        {
+            window = w;
+            this->imguiWantsMouse = imguiWantsMouse;
+            this->imguiWantsKeyboard = imguiWantsKeyboard;
         }
 
         // Possess any ACamera, pass nullptr to fall back to editor cam
@@ -24,8 +32,7 @@ namespace SF::Engine
         }
 
         // Drive the editor camera when it's active
-        void Update(Window *window, float dt,
-                    bool imguiWantsMouse, bool imguiWantsKeyboard)
+        void Update(float dt) override
         {
             if (possessed_ == &editorCamera_)
                 editorCamera_.Update(window, dt, imguiWantsMouse, imguiWantsKeyboard);
@@ -40,5 +47,8 @@ namespace SF::Engine
     private:
         EditorCamera editorCamera_;
         ACamera *possessed_; // non-owning  lifetime managed by scene/pawn
+        Window *window;
+        bool imguiWantsMouse;
+        bool imguiWantsKeyboard;
     };
 }

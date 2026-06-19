@@ -28,19 +28,19 @@ namespace SF::Engine
 
         ~ComputePipeline();
 
-        void CmdRender(const CommandBuffer& commandBuffer, const Vector2Uint& extent) const;
+        void CmdRender(const CommandBuffer &commandBuffer, const Vector2Uint &extent) const;
 
-        const std::filesystem::path&       GetShaderStage()        const { return shaderStage; }
-        const std::vector<Shader::Define>& GetDefines()            const { return defines; }
-        bool                               IsPushDescriptors()     const override { return pushDescriptors; }
-        const Shader*                      GetShader()             const override { return shader.get(); }
-        const VkDescriptorSetLayout&       GetDescriptorSetLayout()const override { return descriptorSetLayout; }
-        const VkDescriptorPool&            GetDescriptorPool()     const override { return descriptorPool; }
-        const VkPipeline&                  GetPipeline()           const override { return pipeline; }
-        const VkPipelineLayout&            GetPipelineLayout()     const override { return pipelineLayout; }
-        const VkPipelineBindPoint&         GetPipelineBindPoint()  const override { return pipelineBindPoint; }
+        const std::filesystem::path &GetShaderStage() const { return shaderStage; }
+        const std::vector<Shader::Define> &GetDefines() const { return defines; }
+        bool IsPushDescriptors() const override { return pushDescriptors; }
+        const Shader *GetShader() const override { return shader.get(); }
+        const VkDescriptorSetLayout &GetDescriptorSetLayout() const override { return descriptorSetLayout; }
+        const VkDescriptorPool &GetDescriptorPool() const override { return descriptorPool; }
+        const VkPipeline &GetPipeline() const override { return pipeline; }
+        const VkPipelineLayout &GetPipelineLayout() const override { return pipelineLayout; }
+        const VkPipelineBindPoint &GetPipelineBindPoint() const override { return pipelineBindPoint; }
 
-        void ReloadShader(const std::vector<uint32_t>& newSpirv);
+        void ReloadShader(const std::vector<uint32_t> &newSpirv);
 
     private:
         void CreateShaderProgram();
@@ -49,17 +49,17 @@ namespace SF::Engine
         void CreatePipelineLayout();
         void CreatePipelineCompute();
 
-        std::filesystem::path      shaderStage;
+        std::filesystem::path shaderStage;
         std::vector<Shader::Define> defines;
-        bool                        pushDescriptors;
+        bool pushDescriptors;
 
         std::shared_ptr<Shader> shader;
 
-        VkDevice              device_             = VK_NULL_HANDLE;
+        VkDevice device_ = VK_NULL_HANDLE;
         VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
-        VkDescriptorPool      descriptorPool      = VK_NULL_HANDLE;
-        VkPipeline            pipeline            = VK_NULL_HANDLE;
-        VkPipelineLayout      pipelineLayout      = VK_NULL_HANDLE;
-        VkPipelineBindPoint   pipelineBindPoint   = VK_PIPELINE_BIND_POINT_COMPUTE;
+        VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+        VkPipeline pipeline = VK_NULL_HANDLE;
+        VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+        VkPipelineBindPoint pipelineBindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
     };
 }

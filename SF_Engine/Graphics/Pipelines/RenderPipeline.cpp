@@ -34,6 +34,7 @@ namespace SF::Engine
         CreateShaderProgram();
         // Use UPDATE_AFTER_BIND so material texture descriptors can be written
         // while the previous frame's command buffer is still pending (GPU pipelining).
+
         CreateDescriptorLayout_UpdateAfterBind();
         CreateDescriptorPool();
         CreatePipelineLayout();
@@ -167,10 +168,36 @@ namespace SF::Engine
             }
         }
 
+        std::vector<uint32_t> tessEvalSpv;
+        for (const auto &s : parsedShader.stages)
+        {
+            if (s.stage == Shaders::ShaderStage::TessellationEvaluation)
+            {
+                auto compiledOpt = parser.compile(parsedShader, Shaders::ShaderStage::TessellationEvaluation);
+                if (!compiledOpt)
+                    throw std::runtime_error("Failed to compile tessellation evaluation shader: " + parser.getLastError());
+                tessEvalSpv = std::move(compiledOpt->spirv);
+                break;
+            }
+        }
+
+        std::vector<uint32_t> tessCtrlSpv;
+        for (const auto &s : parsedShader.stages)
+        {
+            if (s.stage == Shaders::ShaderStage::TessellationControl)
+            {
+                auto compiledOpt = parser.compile(parsedShader, Shaders::ShaderStage::TessellationControl);
+                if (!compiledOpt)
+                    throw std::runtime_error("Failed to compile tessellation control shader: " + parser.getLastError());
+                tessCtrlSpv = std::move(compiledOpt->spirv);
+                break;
+            }
+        }
+
+        shader = Shader::CreateFromSPIRV(*logicalDevice, vertexSpirv, fragmentSpirv, tessCtrlSpv, tessEvalSpv);
+
         if (!hasVertexShader || !hasFragmentShader)
             throw std::runtime_error("RenderSystem pipeline requires both vertex and fragment shaders");
-
-        shader = Shader::CreateFromSPIRV(*logicalDevice, vertexSpirv, fragmentSpirv);
         if (!shader)
             throw std::runtime_error("Failed to create Vulkan shader from SPIR-V");
 
@@ -369,11 +396,12 @@ namespace SF::Engine
         dynamicState.pDynamicStates = dynamicStates.data();
 
         tessellationState.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
-        tessellationState.patchControlPoints = 3;
+        tessellationState.patchControlPoints = 4;
     }
 
     void RenderPipeline::CreatePipeline()
     {
+        Log::Info("Creating pipeline");
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
         auto physicalDevice = RenderSystem::Get()->GetPhysicalDevice();
         auto pipelineCache = RenderSystem::Get()->GetPipelineCache();
@@ -443,11 +471,9 @@ namespace SF::Engine
         pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineCreateInfo.basePipelineIndex = -1;
 
-        Log::Info("Calling vkCreateGraphicsPipelines");
         auto result = vkCreateGraphicsPipelines(*logicalDevice, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline);
         if (result != VK_SUCCESS)
             throw std::runtime_error("vkCreateGraphicsPipelines failed: " + RenderSystem::StrVkResult(result));
-        Log::Info("Pipeline created successfully");
     }
 
     void RenderPipeline::CreatePipelinePolygon()

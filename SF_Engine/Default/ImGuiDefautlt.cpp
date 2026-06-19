@@ -1,7 +1,4 @@
 #include "ImGuiDefault.hpp"
-// ImGuiDefault.hpp already includes <ImGui/ocornut/imgui.h> : do NOT
-// also include <imgui.h> here, that would pull in the Conan-installed
-// version which has a different ImGuiStyle layout and corrupts the context.
 
 namespace SF::Engine
 {

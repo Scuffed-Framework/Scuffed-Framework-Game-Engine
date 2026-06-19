@@ -1,15 +1,14 @@
 [settings]
 os=Windows
-arch=x86_64
 compiler=msvc
 compiler.version=193
 compiler.runtime=dynamic
+arch=x86_64
 build_type=Debug
 compiler.cppstd=23
 
 [conf]
-tools.cmake.cmaketoolchain:generator=Visual Studio 17 2022
-tools.cmake.cmaketoolchain:extra_variables={"CMAKE_GENERATOR_PLATFORM": "x64", "CMAKE_GENERATOR_TOOLSET": "v143,host=x64"}
+tools.cmake.cmaketoolchain:generator=Ninja
 
 [buildenv]
 CONAN_CMAKE_GENERATOR=Ninja

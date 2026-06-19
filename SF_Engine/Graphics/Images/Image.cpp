@@ -418,6 +418,10 @@ namespace SF::Engine
 
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
             break;
+        case VK_IMAGE_LAYOUT_GENERAL:
+            imageMemoryBarrier.dstAccessMask =
+                VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+            break;
         default:
             // throw std::runtime_error("Unsupported image layout transition destination");
             break;
@@ -644,4 +648,5 @@ namespace SF::Engine
         node.GetAttribute("layout", val);
         layout = (VkImageLayout)val;
     }
+
 }

@@ -3,7 +3,56 @@
     "vendor": {
         "conan": {}
     },
+    "cmakeMinimumRequired": {
+        "major": 4,
+        "minor": 0,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "conan2-ninja",
+            "displayName": "'conan2-ninja' config",
+            "description": "'conan2-ninja' configure using 'Ninja' generator",
+            "generator": "Ninja",
+            "environment": {
+                "CONAN_CMAKE_GENERATOR": "Ninja"
+            },
+            "cacheVariables": {
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            },
+            "toolchainFile": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake",
+            "binaryDir": "F:\\sf_gameengine\\build"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "conan2-debug",
+            "configurePreset": "conan2-ninja",
+            "configuration": "Debug",
+            "jobs": 16
+        },
+        {
+            "name": "conan2-release",
+            "configurePreset": "conan2-ninja",
+            "configuration": "Release",
+            "jobs": 16
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "conan2-debug",
+            "configurePreset": "conan2-ninja",
+            "configuration": "Debug",
+            "execution": {
+                "jobs": 16
+            },
+            "environment": {
+                "PATH": "C:\\Users\\acer\\.conan2\\p\\b\\vulka5c62466a47a00\\p\\bin;$penv{PATH}"
+            }
+        }
+    ],
     "include": [
-        "build/generators/CMakePresets.json"
+        "build/Debug/generators/CMakePresets.json"
     ]
 }

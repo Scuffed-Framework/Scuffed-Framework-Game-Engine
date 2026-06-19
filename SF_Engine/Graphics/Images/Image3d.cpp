@@ -1,6 +1,7 @@
 #include "Image3d.hpp"
 #include <Graphics/Buffers/Buffer.hpp>
 #include <Graphics/RenderSystem.hpp>
+#include <Math/Vectors/Vector3.hpp>
 
 namespace SF::Engine
 {

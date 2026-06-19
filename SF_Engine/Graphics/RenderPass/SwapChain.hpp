@@ -14,9 +14,9 @@ namespace SF::Engine
     class Swapchain
     {
     public:
-        Swapchain(const PhysicalDevice& physicalDevice, const Surface& surface,
-                  const LogicalDevice& logicalDevice, const VkExtent2D& extent,
-                  const Swapchain* oldSwapchain = nullptr);
+        Swapchain(const PhysicalDevice &physicalDevice, const Surface &surface,
+                  const LogicalDevice &logicalDevice, const VkExtent2D &extent,
+                  const Swapchain *oldSwapchain = nullptr);
         ~Swapchain();
 
         /**
@@ -28,7 +28,7 @@ namespace SF::Engine
          * completed.
          * @return Result of the image acquisition.
          */
-        VkResult AcquireNextImage(const VkSemaphore& presentCompleteSemaphore = VK_NULL_HANDLE,
+        VkResult AcquireNextImage(const VkSemaphore &presentCompleteSemaphore = VK_NULL_HANDLE,
                                   VkFence fence = VK_NULL_HANDLE);
 
         /**
@@ -38,20 +38,20 @@ namespace SF::Engine
          * presented.
          * @return Result of the queue presentation.
          */
-        VkResult QueuePresent(const VkQueue& presentQueue,
-                              const VkSemaphore& waitSemaphore = VK_NULL_HANDLE);
+        VkResult QueuePresent(const VkQueue &presentQueue,
+                              const VkSemaphore &waitSemaphore = VK_NULL_HANDLE);
 
-        bool IsSameExtent(const VkExtent2D& extent2D)
+        bool IsSameExtent(const VkExtent2D &extent2D)
         {
             return extent.width == extent2D.width && extent.height == extent2D.height;
         }
 
-        operator const VkSwapchainKHR&() const
+        operator const VkSwapchainKHR &() const
         {
             return swapchain;
         }
 
-        const VkExtent2D& GetExtent() const
+        const VkExtent2D &GetExtent() const
         {
             return extent;
         }
@@ -67,19 +67,19 @@ namespace SF::Engine
         {
             return compositeAlpha;
         }
-        const std::vector<VkImage>& GetImages() const
+        const std::vector<VkImage> &GetImages() const
         {
             return images;
         }
-        const VkImage& GetActiveImage() const
+        const VkImage &GetActiveImage() const
         {
             return images[activeImageIndex];
         }
-        const std::vector<VkImageView>& GetImageViews() const
+        const std::vector<VkImageView> &GetImageViews() const
         {
             return imageViews;
         }
-        const VkSwapchainKHR& GetSwapchain() const
+        const VkSwapchainKHR &GetSwapchain() const
         {
             return swapchain;
         }
@@ -89,9 +89,9 @@ namespace SF::Engine
         }
 
     private:
-        const PhysicalDevice& physicalDevice;
-        const Surface& surface;
-        const LogicalDevice& logicalDevice;
+        const PhysicalDevice &physicalDevice;
+        const Surface &surface;
+        const LogicalDevice &logicalDevice;
 
         VkExtent2D extent;
         VkPresentModeKHR presentMode;

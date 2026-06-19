@@ -95,7 +95,7 @@ Shader "SF/Lighting/DeferredLight"
         {
             vec3  L; float atten = 1.0;
             if (l.type == 2u) {
-                L = normalize(l.direction);
+                L = normalize(-l.direction);
             } else {
                 vec3 d = l.position - P; float dist = length(d);
                 if (dist >= l.radius) return vec3(0.0);

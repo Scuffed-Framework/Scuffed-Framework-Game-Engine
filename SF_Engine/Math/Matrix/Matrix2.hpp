@@ -16,8 +16,8 @@ namespace std
         size_t operator()(const SF::Engine::Matrix2float &matrix) const noexcept
         {
             size_t seed = 0;
-            SF::Engine::Maths::HashCombine(seed, matrix[0]);
-            SF::Engine::Maths::HashCombine(seed, matrix[1]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[0]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[1]);
             return seed;
         }
     };
@@ -28,8 +28,8 @@ namespace std
         size_t operator()(const SF::Engine::Matrix2double &matrix) const noexcept
         {
             size_t seed = 0;
-            SF::Engine::Maths::HashCombine(seed, matrix[0]);
-            SF::Engine::Maths::HashCombine(seed, matrix[1]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[0]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[1]);
             return seed;
         }
     };

@@ -208,6 +208,8 @@ namespace SF::Engine
         {
         }
 
+        Image2d *GetHdrColorTarget();
+
         SF::Engine::LightManager *GetLightManager() { return lightManager_.get(); }
         SF::Engine::GBufferPass *GetGBuffer() { return gbuffer_; }
 

@@ -94,6 +94,8 @@ namespace SF::Engine
             renderStages.emplace_back(std::move(renderStage));
         }
 
+        PipelinePassManager *GetPipelinePassManager() { return &PipelinePassManager; }
+
     private:
         bool started = false;
         std::vector<std::unique_ptr<RenderStage>> renderStages;

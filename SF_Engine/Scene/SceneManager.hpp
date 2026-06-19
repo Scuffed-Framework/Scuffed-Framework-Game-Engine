@@ -18,7 +18,6 @@ namespace SF::Engine
         SceneManager();
 
         void Update() override;
-
         /**
          * Gets the current scene.
          * @return The current scene.
@@ -28,16 +27,21 @@ namespace SF::Engine
             return scene.get();
         }
 
-                /**
+        /**
          * Sets the current scene to a new scene.
          * @param scene The new scene.
          */
-        void SetScene(std::unique_ptr<Scene> &&scene)
+        void SetScene(std::unique_ptr<Scene> &&newScene)
         {
-            this->scene = std::move(scene);
+            pendingScene = std::move(newScene);
+            sceneStarted = false;
         }
+
+        bool IsSceneStarted() { return sceneStarted; }
 
     private:
         std::unique_ptr<Scene> scene;
+        std::unique_ptr<Scene> pendingScene;
+        bool sceneStarted = false;
     };
 }

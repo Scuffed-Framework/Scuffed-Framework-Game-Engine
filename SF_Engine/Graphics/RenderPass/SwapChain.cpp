@@ -13,9 +13,9 @@ namespace SF::Engine
         VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
     };
 
-    Swapchain::Swapchain(const PhysicalDevice& physicalDevice, const Surface& surface,
-                         const LogicalDevice& logicalDevice, const VkExtent2D& extent,
-                         const Swapchain* oldSwapchain)
+    Swapchain::Swapchain(const PhysicalDevice &physicalDevice, const Surface &surface,
+                         const LogicalDevice &logicalDevice, const VkExtent2D &extent,
+                         const Swapchain *oldSwapchain)
         : physicalDevice(physicalDevice),
           surface(surface),
           logicalDevice(logicalDevice),
@@ -37,7 +37,7 @@ namespace SF::Engine
         vkGetPhysicalDeviceSurfacePresentModesKHR(
             physicalDevice, surface, &physicalPresentModeCount, physicalPresentModes.data());
 
-        for (const auto& presentMode : physicalPresentModes)
+        for (const auto &presentMode : physicalPresentModes)
         {
             if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
             {
@@ -70,7 +70,7 @@ namespace SF::Engine
             preTransform = surfaceCapabilities.currentTransform;
         }
 
-        for (const auto& compositeAlphaFlag : COMPOSITE_ALPHA_FLAGS)
+        for (const auto &compositeAlphaFlag : COMPOSITE_ALPHA_FLAGS)
         {
             if (surfaceCapabilities.supportedCompositeAlpha & compositeAlphaFlag)
             {
@@ -87,12 +87,12 @@ namespace SF::Engine
         }
         else
         {
-            this->extent.width  = std::clamp(this->extent.width,
-                surfaceCapabilities.minImageExtent.width,
-                surfaceCapabilities.maxImageExtent.width);
+            this->extent.width = std::clamp(this->extent.width,
+                                            surfaceCapabilities.minImageExtent.width,
+                                            surfaceCapabilities.maxImageExtent.width);
             this->extent.height = std::clamp(this->extent.height,
-                surfaceCapabilities.minImageExtent.height,
-                surfaceCapabilities.maxImageExtent.height);
+                                             surfaceCapabilities.minImageExtent.height,
+                                             surfaceCapabilities.maxImageExtent.height);
         }
 
         VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
@@ -117,7 +117,8 @@ namespace SF::Engine
         if (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT)
             swapchainCreateInfo.imageUsage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-        if (oldSwapchain) swapchainCreateInfo.oldSwapchain = oldSwapchain->swapchain;
+        if (oldSwapchain)
+            swapchainCreateInfo.oldSwapchain = oldSwapchain->swapchain;
 
         if (RenderSystemFamily != presentFamily)
         {
@@ -152,7 +153,7 @@ namespace SF::Engine
     {
         vkDestroySwapchainKHR(logicalDevice, swapchain, nullptr);
 
-        for (const auto& imageView : imageViews)
+        for (const auto &imageView : imageViews)
         {
             vkDestroyImageView(logicalDevice, imageView, nullptr);
         }
@@ -160,7 +161,7 @@ namespace SF::Engine
         vkDestroyFence(logicalDevice, fenceImage, nullptr);
     }
 
-    VkResult Swapchain::AcquireNextImage(const VkSemaphore& presentCompleteSemaphore, VkFence fence)
+    VkResult Swapchain::AcquireNextImage(const VkSemaphore &presentCompleteSemaphore, VkFence fence)
     {
         if (fence != VK_NULL_HANDLE)
         {
@@ -189,7 +190,7 @@ namespace SF::Engine
         return acquireResult;
     }
 
-    VkResult Swapchain::QueuePresent(const VkQueue& presentQueue, const VkSemaphore& waitSemaphore)
+    VkResult Swapchain::QueuePresent(const VkQueue &presentQueue, const VkSemaphore &waitSemaphore)
     {
         VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

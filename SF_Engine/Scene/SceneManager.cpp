@@ -18,21 +18,35 @@ namespace SF::Engine
 
     void SceneManager::Update()
     {
+        if (pendingScene)
+        {
+            if (scene)
+                scene->Stop();
+
+            scene = std::move(pendingScene);
+
+            if (auto *gi = Engine::Get()->GetGameInstance())
+                gi->OnSceneLoad(scene.get());
+        }
+
         if (!scene)
             return;
 
         // Initialize deferred GPU resources (renderer, meshes, LightManager)
         // on the first Update() after all modules including RenderSystem are ready.
-        if (!scene->initialized_)
-            scene->Initialize();
-
-        if (!scene->started_)
+        if (scene)
         {
-            scene->Start();
-            scene->started_ = true;
-        }
+            if (!scene->initialized_)
+                scene->Initialize();
 
-        scene->Update();
-        scene->Render();
+            if (!scene->started_)
+            {
+                scene->Start();
+                scene->started_ = true;
+            }
+
+            scene->Update();
+            scene->Render();
+        }
     }
 }

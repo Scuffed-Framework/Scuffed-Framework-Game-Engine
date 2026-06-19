@@ -48,12 +48,12 @@ namespace SF::Engine
         virtual ~Buffer();
 
         // Modern rule of five with explicit semantics
-        Buffer(const Buffer&) = delete;
-        Buffer& operator=(const Buffer&) = delete;
-        Buffer(Buffer&&) noexcept;
-        Buffer& operator=(Buffer&&) noexcept;
+        Buffer(const Buffer &) = delete;
+        Buffer &operator=(const Buffer &) = delete;
+        Buffer(Buffer &&) noexcept;
+        Buffer &operator=(Buffer &&) noexcept;
 
-        void MapMemory(void** data);
+        void MapMemory(void **data);
         void UnmapMemory();
         void FlushMemory(VkDeviceSize offset = 0, VkDeviceSize size = VK_WHOLE_SIZE);
         void InvalidateMemory(VkDeviceSize offset = 0, VkDeviceSize size = VK_WHOLE_SIZE);
@@ -77,7 +77,7 @@ namespace SF::Engine
             return mappedData_ != nullptr;
         }
 
-        static void InsertMemoryBarrier(const CommandBuffer& commandBuffer, VkBuffer buffer,
+        static void InsertMemoryBarrier(const CommandBuffer &commandBuffer, VkBuffer buffer,
                                         VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
                                         VkPipelineStageFlags srcStageMask,
                                         VkPipelineStageFlags dstStageMask, VkDeviceSize offset = 0,
@@ -87,7 +87,7 @@ namespace SF::Engine
         VkDeviceSize size_;
         VkBuffer buffer_ = VK_NULL_HANDLE;
         VmaAllocation allocation_ = VK_NULL_HANDLE;
-        void* mappedData_ = nullptr;
+        void *mappedData_ = nullptr;
         bool persistentlyMapped_ = false;
     };
 }

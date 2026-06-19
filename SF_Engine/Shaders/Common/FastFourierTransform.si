@@ -1,0 +1,60 @@
+vec2 cadd(vec2 a, vec2 b) { return a + b; }
+vec2 csub(vec2 a, vec2 b) { return a - b; }
+vec2 cmul(vec2 a, vec2 b) {
+    return vec2(
+        a.x*b.x - a.y*b.y,
+        a.x*b.y + a.y*b.x
+    );
+}
+
+vec2 cexp_i(float x) {
+    return vec2(cos(x), sin(x));
+}
+
+uint bitReverse(uint x, uint bits) {
+    uint y = 0u;
+    for (uint i = 0u; i < bits; i++) {
+        y = (y << 1u) | ((x >> i) & 1u);
+    }
+    return y;
+}
+
+void fft(inout vec2 data[], uint N, int dir)
+{
+    uint bits = uint(log2(float(N)));
+
+    for (uint i = 0u; i < N; i++) {
+        uint j = bitReverse(i, bits);
+        if (i < j) {
+            vec2 tmp = data[i];
+            data[i] = data[j];
+            data[j] = tmp;
+        }
+    }
+
+    for (uint s = 1u; s <= bits; s++) {
+        uint m = 1u << s;         // size of sub-FFT
+        float theta = (dir * -2.0 * 3.141592653589793) / float(m);
+        vec2 wm = cexp_i(theta);
+
+        for (uint k = 0u; k < N; k += m) {
+            vec2 w = vec2(1.0, 0.0);
+
+            for (uint j = 0u; j < m/2u; j++) {
+                vec2 t = cmul(w, data[k + j + m/2u]);
+                vec2 u = data[k + j];
+
+                data[k + j]         = u + t;
+                data[k + j + m/2u]  = u - t;
+
+                w = cmul(w, wm);
+            }
+        }
+    }
+
+    if (dir == -1) {
+        float invN = 1.0 / float(N);
+        for (uint i = 0u; i < N; i++)
+            data[i] *= invN;
+    }
+}

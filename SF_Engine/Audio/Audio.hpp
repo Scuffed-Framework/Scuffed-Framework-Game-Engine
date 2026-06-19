@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Engine/Engine.hpp>
+#include <Controllers/CameraController.hpp>
 #include <LowLevel/rocket.hpp>
 #ifdef _Platform_Mac
 #include <OpenAL/al.h>
@@ -52,7 +53,7 @@ namespace SF::Engine
          * Called when a gain value has been modified.
          * @return The delegate.
          */
-        rocket::signal<void(Type, float)>& OnGain()
+        rocket::signal<void(Type, float)> &OnGain()
         {
             return onGain;
         }

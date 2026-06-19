@@ -6,10 +6,10 @@ namespace SF::Engine
 {
     constexpr bool Color::operator==(const Color &rhs) const noexcept
     {
-        return Maths::AlmostEqual(r, rhs.r) &&
-               Maths::AlmostEqual(g, rhs.g) &&
-               Maths::AlmostEqual(b, rhs.b) &&
-               Maths::AlmostEqual(a, rhs.a);
+        return Mathematics::AlmostEqual(r, rhs.r) &&
+               Mathematics::AlmostEqual(g, rhs.g) &&
+               Mathematics::AlmostEqual(b, rhs.b) &&
+               Mathematics::AlmostEqual(a, rhs.a);
     }
 
     constexpr bool Color::operator!=(const Color &rhs) const noexcept
@@ -120,7 +120,7 @@ namespace std
     {
         size_t operator()(const SF::Engine::Color &color) const noexcept
         {
-            return SF::Engine::Maths::Hash(color.r, color.g, color.b, color.a);
+            return SF::Engine::Mathematics::Hash(color.r, color.g, color.b, color.a);
         }
     };
 }

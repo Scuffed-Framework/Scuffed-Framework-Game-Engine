@@ -1,9 +1,4 @@
-// FullscreenPass.shader
-// Renders a single fullscreen triangle (no vertex buffer needed).
-// The fragment stage samples from a color attachment (e.g. a resolved scene image).
-// Bind the source image to set=0, binding=1 as a combined image sampler.
-
-Shader "SF/FullscreenPass"
+Shader "SF/Templates/FullscreenPass"
 {
     VertexShader
     {

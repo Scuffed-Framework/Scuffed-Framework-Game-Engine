@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ImGui/ocornut/imgui.h>
-#include <Default/TransformComponent.hpp>
+#include <Components/TransformComponent.hpp>
 #include <Graphics/Lighting/Light.hpp>
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp> // MeshMaterial
 

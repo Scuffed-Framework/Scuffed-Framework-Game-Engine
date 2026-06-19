@@ -10,6 +10,8 @@
 #include "Windows/Surface.hpp"
 #include "Windows/Windows.hpp"
 
+#include <UtilityClasses/NoCopy.hpp>
+
 #include <filesystem>
 #include <mutex>
 #include <optional>
@@ -27,8 +29,6 @@ namespace SF::Engine
     /**
      * @brief Module that manages the Vulkan instance, devices, surfaces, and rendering
      * infrastructure.
-     *
-     * Modernized for C++20
      */
     class RenderSystem final : public ModuleRegistrar<RenderSystem>
     {
@@ -38,12 +38,6 @@ namespace SF::Engine
     public:
         RenderSystem();
         ~RenderSystem() override;
-
-        // Delete copy, allow move
-        RenderSystem(const RenderSystem &) = delete;
-        RenderSystem &operator=(const RenderSystem &) = delete;
-        RenderSystem(RenderSystem &&) noexcept = default;
-        RenderSystem &operator=(RenderSystem &&) noexcept = default;
 
         // Module interface implementation
         void Update() override;

@@ -16,10 +16,10 @@ namespace std
         size_t operator()(const SF::Engine::Matrix4float &matrix) const noexcept
         {
             size_t seed = 0;
-            SF::Engine::Maths::HashCombine(seed, matrix[0]);
-            SF::Engine::Maths::HashCombine(seed, matrix[1]);
-            SF::Engine::Maths::HashCombine(seed, matrix[2]);
-            SF::Engine::Maths::HashCombine(seed, matrix[3]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[0]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[1]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[2]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[3]);
             return seed;
         }
     };
@@ -30,10 +30,10 @@ namespace std
         size_t operator()(const SF::Engine::Matrix4double &matrix) const noexcept
         {
             size_t seed = 0;
-            SF::Engine::Maths::HashCombine(seed, matrix[0]);
-            SF::Engine::Maths::HashCombine(seed, matrix[1]);
-            SF::Engine::Maths::HashCombine(seed, matrix[2]);
-            SF::Engine::Maths::HashCombine(seed, matrix[3]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[0]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[1]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[2]);
+            SF::Engine::Mathematics::HashCombine(seed, matrix[3]);
             return seed;
         }
     };

@@ -1,0 +1,68 @@
+#ifndef ATOMIC_UTILS_GLSL
+#define ATOMIC_UTILS_GLSL
+
+int atomicAddInt(inout int mem, int val) {
+    return atomicAdd(mem, val);
+}
+
+uint atomicAddUint(inout uint mem, uint val) {
+    return atomicAdd(mem, val);
+}
+
+int atomicMinInt(inout int mem, int val) { return atomicMin(mem, val); }
+int atomicMaxInt(inout int mem, int val) { return atomicMax(mem, val); }
+uint atomicMinUint(inout uint mem, uint val) { return atomicMin(mem, val); }
+uint atomicMaxUint(inout uint mem, uint val) { return atomicMax(mem, val); }
+
+int  atomicExchInt(inout int mem,  int  val) { return atomicExchange(mem, val); }
+uint atomicExchUint(inout uint mem, uint val) { return atomicExchange(mem, val); }
+
+int  atomicCmpExchInt(inout int mem, int cmp, int val) {
+    return atomicCompSwap(mem, cmp, val);
+}
+uint atomicCmpExchUint(inout uint mem, uint cmp, uint val) {
+    return atomicCompSwap(mem, cmp, val);
+}
+
+int  atomicAndInt(inout int mem,  int  val) { return atomicAnd(mem, val); }
+uint atomicAndUint(inout uint mem, uint val) { return atomicAnd(mem, val); }
+
+int  atomicOrInt(inout int mem,  int  val) { return atomicOr(mem, val); }
+uint atomicOrUint(inout uint mem, uint val) { return atomicOr(mem, val); }
+
+int  atomicXorInt(inout int mem,  int  val) { return atomicXor(mem, val); }
+uint atomicXorUint(inout uint mem, uint val) { return atomicXor(mem, val); }
+
+float atomicAddFloat(inout float mem, float val) {
+    uint* memU = (uint*)(&mem);
+
+    uint oldBits = *memU;
+    uint newBits;
+
+    while (true) {
+        float oldF = uintBitsToFloat(oldBits);
+        float newF = oldF + val;
+        newBits = floatBitsToUint(newF);
+
+        uint prev = atomicCompSwap(*memU, oldBits, newBits);
+        if (prev == oldBits)
+            break;
+
+        oldBits = prev;
+    }
+
+    return uintBitsToFloat(oldBits);
+}
+
+// Generic CAS loop utility (int version)
+int atomicCASLoop(inout int mem, int (*op)(int oldVal)) {
+    int oldVal = mem;
+    while (true) {
+        int newVal = op(oldVal);
+        int prev = atomicCompSwap(mem, oldVal, newVal);
+        if (prev == oldVal) return oldVal;
+        oldVal = prev;
+    }
+}
+
+#endif // ATOMIC_UTILS_GLSL

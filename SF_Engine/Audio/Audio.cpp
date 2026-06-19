@@ -70,14 +70,15 @@ namespace SF::Engine
         alListenerf(AL_GAIN, GetGain(Type::Master));
 
         // Set listener position
-        auto position = camera->GetPosition();
+        auto *cam = CameraController::Get().GetActive();
+        auto position = cam->GetPosition();
         alListener3f(AL_POSITION, position.x, position.y, position.z);
 
         // Set listener velocity  ACamera doesn't track velocity, so use zero
         alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
         // Set listener orientation using front and a fixed world-up
-        auto front = camera->GetFront();
+        auto front = cam->GetFront();
         ALfloat orientation[6] = {
             front.x, front.y, front.z, // Forward vector
             0.0f, 1.0f, 0.0f           // Up vector

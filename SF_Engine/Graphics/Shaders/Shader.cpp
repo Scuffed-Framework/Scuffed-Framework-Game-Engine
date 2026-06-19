@@ -25,15 +25,25 @@ namespace SF::Engine
     }
 
     std::shared_ptr<Shader> Shader::CreateFromSPIRV(VkDevice device,
-                                                    const std::vector<uint32_t> &vertSpirv,
-                                                    const std::vector<uint32_t> &fragSpirv)
+                                                    const std::vector<uint32_t> &vertSpirv, const std::vector<uint32_t> &fragSpirv,
+                                                    const std::vector<uint32_t> &tessCtrlSpirv, const std::vector<uint32_t> &tessEvalSpirv)
     {
         auto shader = std::shared_ptr<Shader>(new Shader(device));
-
         shader->AddShaderModule(vertSpirv, VK_SHADER_STAGE_VERTEX_BIT);
-        shader->AddShaderModule(fragSpirv, VK_SHADER_STAGE_FRAGMENT_BIT);
-
         shader->ReflectFromSPIRV(vertSpirv, VK_SHADER_STAGE_VERTEX_BIT);
+
+        if (!tessCtrlSpirv.empty())
+        {
+            shader->AddShaderModule(tessCtrlSpirv, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+            shader->ReflectFromSPIRV(tessCtrlSpirv, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+        }
+        if (!tessEvalSpirv.empty())
+        {
+            shader->AddShaderModule(tessEvalSpirv, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+            shader->ReflectFromSPIRV(tessEvalSpirv, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+        }
+
+        shader->AddShaderModule(fragSpirv, VK_SHADER_STAGE_FRAGMENT_BIT);
         shader->ReflectFromSPIRV(fragSpirv, VK_SHADER_STAGE_FRAGMENT_BIT);
 
         return shader;

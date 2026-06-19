@@ -1,0 +1,57 @@
+#ifndef WORLEY_NOISE_SI
+#define WORLEY_NOISE_SI
+
+// Simple 3D hash (fast & tileable)
+float hash13(vec3 p)
+{
+    p = fract(p * 0.1031);
+    p += dot(p, p.yzx + 33.33);
+    return fract((p.x + p.y) * p.z);
+}
+
+// Single-cell Worley
+float worley(vec3 p)
+{
+    vec3 ip = floor(p);
+    vec3 fp = fract(p);
+
+    float d = 1e10;
+
+    // Search 3×3×3 neighborhood
+    for (int xo = -1; xo <= 1; xo++)
+    for (int yo = -1; yo <= 1; yo++)
+    for (int zo = -1; zo <= 1; zo++)
+    {
+        vec3 cell = vec3(xo, yo, zo);
+        vec3 h = vec3(
+            hash13(ip + cell + vec3(0)),
+            hash13(ip + cell + vec3(17)),
+            hash13(ip + cell + vec3(47))
+        );
+
+        vec3 diff = cell + h - fp;
+        float dist = dot(diff, diff);
+        d = min(d, dist);
+    }
+
+    return sqrt(d); // 0..1
+}
+
+// Multi-octave FBM
+float worleyFbm(vec3 p, float baseFreq)
+{
+    float f = 0.0;
+    float amp = 0.5;
+    float freq = baseFreq;
+
+    for (int i = 0; i < 4; i++)
+    {
+        f += worley(p * freq) * amp;
+        freq *= 2.0;
+        amp *= 0.5;
+    }
+
+    return f; // Not normalized; cloud LUT expects raw sum
+}
+
+#endif

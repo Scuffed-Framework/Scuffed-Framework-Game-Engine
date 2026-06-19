@@ -2,9 +2,10 @@
 #include <string>
 #include <memory>
 #include <Graphics/Mesh/Mesh.hpp>
-#include <Graphics/Lighting/Lighting.hpp>
-#include <Default/TransformComponent.hpp>
+#include <Graphics/Lighting/LightingTypes.hpp>
+#include <Components/TransformComponent.hpp>
 #include <XML/XMLReader.hpp>
+#include <Graphics/Lighting/Light.hpp>
 
 namespace SF::Engine
 {

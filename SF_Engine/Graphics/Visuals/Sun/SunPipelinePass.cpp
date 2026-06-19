@@ -22,6 +22,12 @@ namespace SF::Engine
         : PipelinePass(stage), params_(params)
     {
         ubo_ = std::make_unique<UniformBuffer>(sizeof(SunUBO));
+        transmittanceLUT_ = std::make_unique<TransmittanceLUT>();
+        {
+            CommandBuffer cmd(true); // begin
+            transmittanceLUT_->Bake(cmd);
+            cmd.SubmitIdle(); // blocks until compute is done
+        }
 
         // Depth::Read : depth test ON so the disc is hidden by geometry,
         // depth write OFF so it doesn't overwrite the scene depth buffer.
@@ -80,7 +86,22 @@ namespace SF::Engine
     void SunPipelinePass::WriteDescriptors()
     {
         VkDescriptorBufferInfo bi{ubo_->GetBuffer(), 0, VK_WHOLE_SIZE};
-        DescriptorSet::Update({MakeUboWrite(descSet_->GetDescriptorSet(), 0, &bi)});
+        // bind=1 : transmittance LUT sampler
+        // After Bake() the image is in SHADER_READ_ONLY_OPTIMAL.
+        VkDescriptorImageInfo ii{};
+        ii.sampler = transmittanceLUT_->GetTexture()->GetSampler();
+        ii.imageView = transmittanceLUT_->GetTexture()->GetView();
+        ii.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        VkWriteDescriptorSet w1{};
+        w1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w1.dstSet = descSet_->GetDescriptorSet();
+        w1.dstBinding = 1;
+        w1.descriptorCount = 1;
+        w1.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w1.pImageInfo = &ii;
+
+        DescriptorSet::Update({MakeUboWrite(descSet_->GetDescriptorSet(), 0, &bi), w1});
     }
 
     VkWriteDescriptorSet SunPipelinePass::WUbo(VkDescriptorSet d, uint32_t b,

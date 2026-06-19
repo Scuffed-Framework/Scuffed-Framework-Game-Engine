@@ -1,5 +1,4 @@
-﻿// InstanceBuffer.hpp
-#pragma once
+﻿#pragma once
 
 #include "Buffer.hpp"
 

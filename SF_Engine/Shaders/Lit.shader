@@ -53,7 +53,7 @@ Shader "SF/Lit"
             vec3 N = normalize(normalMat * inNormal);
             // Tangent transformed by model matrix (NOT normal matrix) then
             // re-orthogonalised against world-space N so the TBN frame is
-            // always orthonormal even with non-uniform scale.
+            // always orthonormal even with non-uniform scal    e.
             vec3 T = normalize(mat3(push.model) * inTangent);
             T = normalize(T - dot(T, N) * N);
             vec3 B = cross(N, T);   // right-handed bitangent
@@ -137,7 +137,7 @@ Shader "SF/Lit"
         {
             vec3 L; float atten=1.0;
             if (l.type==2u) {
-                L = normalize(l.direction);
+                L = normalize(-l.direction);
             } else {
                 vec3 d=l.position-P; float dist=length(d);
                 if (dist>=l.radius) return vec3(0.0);

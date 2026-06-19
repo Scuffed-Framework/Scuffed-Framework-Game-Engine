@@ -129,4 +129,60 @@ namespace SF::Engine
         VkSampler sampler = VK_NULL_HANDLE;
         VkImageView view = VK_NULL_HANDLE;
     };
+
+    inline void ImageBarrier(VkCommandBuffer cmd,
+                             VkImage image,
+                             VkImageLayout oldLayout,
+                             VkImageLayout newLayout,
+                             VkAccessFlags srcAccess,
+                             VkAccessFlags dstAccess,
+                             VkPipelineStageFlags srcStage,
+                             VkPipelineStageFlags dstStage,
+                             VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT,
+                             uint32_t mipLevel = 0,
+                             uint32_t arrayLayer = 0)
+    {
+        VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+        b.oldLayout = oldLayout;
+        b.newLayout = newLayout;
+        b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        b.image = image;
+        b.subresourceRange.aspectMask = aspect;
+        b.subresourceRange.baseMipLevel = mipLevel;
+        b.subresourceRange.levelCount = 1;
+        b.subresourceRange.baseArrayLayer = arrayLayer;
+        b.subresourceRange.layerCount = 1;
+        b.srcAccessMask = srcAccess;
+        b.dstAccessMask = dstAccess;
+        vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0,
+                             0, nullptr, 0, nullptr, 1, &b);
+    }
+    inline void ImageArrayBarrier(VkCommandBuffer cmd,
+                                  VkImage image,
+                                  VkImageLayout oldLayout,
+                                  VkImageLayout newLayout,
+                                  VkAccessFlags srcAccess,
+                                  VkAccessFlags dstAccess,
+                                  VkPipelineStageFlags srcStage,
+                                  VkPipelineStageFlags dstStage,
+                                  uint32_t layerCount,
+                                  VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT)
+    {
+        VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+        b.oldLayout = oldLayout;
+        b.newLayout = newLayout;
+        b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        b.image = image;
+        b.subresourceRange.aspectMask = aspect;
+        b.subresourceRange.baseMipLevel = 0;
+        b.subresourceRange.levelCount = 1;
+        b.subresourceRange.baseArrayLayer = 0;
+        b.subresourceRange.layerCount = layerCount;
+        b.srcAccessMask = srcAccess;
+        b.dstAccessMask = dstAccess;
+        vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0,
+                             0, nullptr, 0, nullptr, 1, &b);
+    }
 }

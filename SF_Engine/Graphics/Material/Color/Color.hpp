@@ -94,10 +94,10 @@ namespace SF::Engine
         constexpr Color Lerp(const Color &other, float t) const noexcept
         {
             return Color(
-                Maths::Lerp(r, other.r, t),
-                Maths::Lerp(g, other.g, t),
-                Maths::Lerp(b, other.b, t),
-                Maths::Lerp(a, other.a, t));
+                Mathematics::Lerp(r, other.r, t),
+                Mathematics::Lerp(g, other.g, t),
+                Mathematics::Lerp(b, other.b, t),
+                Mathematics::Lerp(a, other.a, t));
         }
 
         /**
@@ -108,7 +108,7 @@ namespace SF::Engine
          */
         Color SmoothLerp(const Color &other, float t) const
         {
-            float smoothT = Maths::Smoothstep(0.0f, 1.0f, t);
+            float smoothT = Mathematics::Smoothstep(0.0f, 1.0f, t);
             return Lerp(other, smoothT);
         }
 
@@ -119,7 +119,7 @@ namespace SF::Engine
         [[nodiscard]] Color Normalize() const
         {
             float len = Length();
-            if (Maths::IsZero(len))
+            if (Mathematics::IsZero(len))
                 return Color(0, 0, 0, 0);
             return *this / len;
         }
@@ -184,10 +184,10 @@ namespace SF::Engine
         [[nodiscard]] Color Saturate() const noexcept
         {
             return Color(
-                Maths::Saturate(r),
-                Maths::Saturate(g),
-                Maths::Saturate(b),
-                Maths::Saturate(a));
+                Mathematics::Saturate(r),
+                Mathematics::Saturate(g),
+                Mathematics::Saturate(b),
+                Mathematics::Saturate(a));
         }
 
         /**
@@ -209,10 +209,10 @@ namespace SF::Engine
          */
         [[nodiscard]] constexpr uint32_t ToInt(PackingOrder order = PackingOrder::RGBA) const noexcept
         {
-            auto r8 = static_cast<uint8_t>(Maths::Saturate(r) * 255.0f);
-            auto g8 = static_cast<uint8_t>(Maths::Saturate(g) * 255.0f);
-            auto b8 = static_cast<uint8_t>(Maths::Saturate(b) * 255.0f);
-            auto a8 = static_cast<uint8_t>(Maths::Saturate(a) * 255.0f);
+            auto r8 = static_cast<uint8_t>(Mathematics::Saturate(r) * 255.0f);
+            auto g8 = static_cast<uint8_t>(Mathematics::Saturate(g) * 255.0f);
+            auto b8 = static_cast<uint8_t>(Mathematics::Saturate(b) * 255.0f);
+            auto a8 = static_cast<uint8_t>(Mathematics::Saturate(a) * 255.0f);
 
             switch (order)
             {

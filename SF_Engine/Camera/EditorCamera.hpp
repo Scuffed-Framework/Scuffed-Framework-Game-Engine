@@ -30,15 +30,19 @@ namespace SF::Engine
         float lookSensitivity = 0.12f; // degrees per raw pixel
         float fovDeg = 60.0f;
         float nearPlane = 0.05f;
-        float farPlane = 200000.0f; // covers cloud layer (~4km) with room for flight
+        float farPlane = 200000.0f;
         float minFov = 10.0f;
         float maxFov = 120.0f;
 
+        float GetFieldOfView() const override
+        {
+            return fovDeg;
+        }
+
         EditorCamera()
         {
-            position_ = {0.0f, 1.5f, 6.0f};
-            yaw_ = -90.0f; // look toward -Z initially
-            pitch_ = -10.0f;
+            position_ = {0.0f, 0.0f, 0.0f};
+            moveSpeed = 100.0f;
             UpdateVectors();
         }
 
@@ -148,9 +152,9 @@ namespace SF::Engine
             up_ = glm::normalize(glm::cross(right_, front_));
         }
 
-        glm::vec3 position_;
-        float yaw_;
-        float pitch_;
+        glm::vec3 position_ = {0.f, 10.f, 0.f};
+        float yaw_ = -90.0f;
+        float pitch_ = 10.0f;
         glm::vec3 front_{0, 0, -1};
         glm::vec3 right_{1, 0, 0};
         glm::vec3 up_{0, 1, 0};

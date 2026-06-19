@@ -7,7 +7,7 @@
 /******************************************************************************/
 /* MIT License                                                                */
 /*                                                                            */
-/* Copyright (c) 2025-present Martin.                                         */
+/* Copyright (c) 2025-present Martin (the name I was assigned in french class).                                         */
 /*                                                                            */
 /* May all those that this source may reach be blessed by the LORD and find   */
 /* peace and joy in life.                                                     */
@@ -55,8 +55,7 @@ namespace SF::Engine
         "\"For my yoke is easy and my burden is light.\" : Matthew 11:30",
         "\"Do to others as you would have them do to you.\": Luke 6:31",
         "\"I tell you, the one who is truly wise is the one who can control his tongue.\" - [REDACTED]",
-        // hehe haha quotes:
-        "\"You watch Doctor Who? Why no Doctor You?\"- Rucka Rucka Ali",
+        "\"You watch Doctor Who? Why no Doctor You?\"- Rucka Rucka Ali", // I am so cancelled :sob:
         // I locked in, trust
         "\"The only way to do great work is to love what you do.\" - Steve Jobs",
         "\"In the middle of difficulty lies opportunity.\" - Albert Einstein",
@@ -92,14 +91,13 @@ namespace SF::Engine
         "\"I'll be back.\" - The Terminator",
         "\"May the odds be ever in your favor.\" - The Hunger Games",
         "\"The answer to life, the universe, and everything is 42.\" - Douglas Adams",
-        "No I am telling you it is option C",
-        "Thought I was going to say \"C\" the programming language, Torvalds. HAHA this is all written in C++",
+        "No trust me, if in doubt, choose C (++)",
         "\"Don't panic.\" - Douglas Adams (if the loading bar isnt moving, panic.)",
         "\"Reality is frequently inaccurate.\" - Douglas Adams",
         "\"Stay hungry, stay foolish.\" - Steve Jobs",
         "\"Talk is cheap. Show me the code.\" - Linus Torvalds", // says the guy who crashed out on C++ and made a whole generation of larpers hate it (tis not that bad)
         "\"Programs must be written for people to read, and only incidentally for machines to execute.\" - Harold Abelson",
-        "\"Any fool can write code that a computer can understand. Good programmers write code that humans can understand.\" - Martin Fowler",
+        "\"Any fool can write code that a computer can understand. Good programmers write code that humans can understand.\" - Martin (the name I was assigned in french class) Fowler",
         "\"First, solve the problem. Then, write the code.\" - John Johnson",
         "\"Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday's code.\" - Christopher Thompson",
         "\"Deleted code is debugged code.\" - Jeff Sickel",
@@ -172,5 +170,6 @@ namespace SF::Engine
         "Don't worry, it gets worse.",
         "Everything is under control. Probably.",
         "If you're reading this, something went wrong.",
-        "someone once told me my IP address was 127.0.0.1"};
+        "someone once told me my IP address was 127.0.0.1",
+        "sars-copilot-2"};
 }

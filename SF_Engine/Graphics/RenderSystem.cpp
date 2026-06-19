@@ -98,6 +98,7 @@ namespace SF::Engine
         for (auto [id, swapchain] : Enumerate(swapchains))
         {
             auto &perSurfaceBuffer = perSurfaceBuffers[id];
+            vkWaitForFences(*logicalDevice, 1, &perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame], VK_TRUE, UINT64_MAX);
             auto acquireResult = swapchain->AcquireNextImage(
                 perSurfaceBuffer->presentCompletes[perSurfaceBuffer->currentFrame],
                 perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
@@ -107,18 +108,20 @@ namespace SF::Engine
                 RecreateSwapchain();
                 return;
             }
-            // Suboptimal: keep going with current swapchain : RecreatePass will
-            // handle the rebuild once the size stabilises (debounce)
+
             if (acquireResult == VK_SUBOPTIMAL_KHR)
             {
                 perSurfaceBuffer->framebufferResized = true;
             }
-
-            if (acquireResult != VK_SUCCESS)
+            else if (acquireResult != VK_SUCCESS)
             {
                 Log::Error("Failed to acquire swap chain image!\n");
                 return;
             }
+
+            // 3. ONLY reset the fence if we successfully acquired an image and will submit work.
+            // If we reset it before acquiring and acquire fails, we will deadlock next frame.
+            vkResetFences(*logicalDevice, 1, &perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
 
             Pipeline::Stage stage;
 

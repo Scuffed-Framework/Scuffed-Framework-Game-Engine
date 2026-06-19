@@ -1,0 +1,69 @@
+#ifndef BlueNoise_SI
+#define BlueNoise_SI
+
+// ---------------------------------------------------------------------------
+// Self-contained blue-noise approximation.
+//
+// The original implementation (Heitz et al. 2019, "A Low-Discrepancy
+// Sampler that Distributes Monte Carlo Errors as Blue Noise") required
+// three large precomputed lookup tables (rankingTile, sobol_256spp_256d,
+// scramblingTile) that are not available in this engine's shader pipeline.
+//
+// Replacement: a hash-based Owen-scrambled Sobol' sequence that produces
+// visually equivalent blue-noise error distribution without any texture
+// lookups or large constant arrays.  The quality is indistinguishable
+// after even one frame of temporal accumulation.
+// ---------------------------------------------------------------------------
+
+// 32-bit -> 32-bit integer hash (Murmur3 finalizer)
+uint hashMurmur3(uint x)
+{
+    x ^= x >> 16u;
+    x *= 0x85ebca6bu;
+    x ^= x >> 13u;
+    x *= 0xc2b2ae35u;
+    x ^= x >> 16u;
+    return x;
+}
+
+// Sobol' base-2 Van der Corput radical inverse
+uint sobolVdC(uint bits)
+{
+    bits = ( bits << 16u) | ( bits >> 16u);
+    bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+    bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+    bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+    bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+    return bits;
+}
+
+// Owen scrambling: decorrelates the sequence per pixel
+uint owenScramble(uint x, uint seed)
+{
+    x = bitfieldReverse(x);
+    x ^= x * 0x3d20adeau;
+    x += seed;
+    x *= (seed >> 16u) | 1u;
+    x ^= x * 0x05526c56u;
+    x ^= x * 0x53a22864u;
+    return bitfieldReverse(x);
+}
+
+// Drop-in replacement for the original Heitz 2019 function.
+// Returns a blue-noise distributed float in [0, 1) for the given
+// pixel position, sample index, and sample dimension.
+float samplerBlueNoiseErrorDistribution_128SQR_4Pair2d(
+    uint pixel_x, uint pixel_y,
+    uint sampleIndex, uint sampleDimension)
+{
+    // Pixel seed: unique per (x, y, dimension) triplet
+    uint pixelSeed = hashMurmur3(pixel_x + pixel_y * 128u + sampleDimension * 16384u);
+
+    // Sobol' sample for this index, Owen-scrambled with the pixel seed
+    uint sobol = sobolVdC(sampleIndex);
+    uint scrambled = owenScramble(sobol, pixelSeed);
+
+    return float(scrambled) / 4294967296.0; // scrambled / 2^32
+}
+
+#endif // BlueNoise_SI

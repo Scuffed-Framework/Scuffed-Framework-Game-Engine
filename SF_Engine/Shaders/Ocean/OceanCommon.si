@@ -1,0 +1,160 @@
+#ifndef OCEAN_COMMON_SI
+#define OCEAN_COMMON_SI
+
+#define PI 3.14159265358979323846
+layout(set = 0, binding = 0) uniform FrameUBO
+{
+    mat4  viewProj;        //   0
+    mat4  invView;         //  64
+    mat4  invProj;         // 128
+    vec3  cameraPos;       // 192
+    float time;            // 204
+    vec2  screenSize;      // 208
+    float _pad0;           // 216
+    float _pad1;           // 220
+
+    float waveAmplitude;   // 224
+    float waveFrequency;   // 228
+    float waveSpeed;       // 232
+    float waveSteepness;   // 236
+    float waveAmplitude2;  // 240
+    float waveFrequency2;  // 244
+    float waveSpeed2;      // 248
+    float tessFactor;      // 252
+
+    float minTessDistance; // 256
+    float maxTessDistance; // 260
+    float tile0;           // 264
+    float tile1;           // 268
+
+    vec3  windDirection;   // 272
+    float timeScale;       // 284
+
+    vec3  oceanColor;      // 288
+    float glossiness;      // 300
+    vec3  shallowColor;    // 304
+    float specularPower;   // 316
+    vec3  foamColor;       // 320
+    float foamIntensity;   // 332
+    float foamThreshold;   // 336
+    float tile2;           // 340
+    float tile3;           // 344
+    float normalStrength;  // 348
+    vec3  planetCenter;    // 352
+    float planetRadius;    // 364
+    vec3  sunDirection;    // 368  toward sun, unit vector
+    float _pad7;           // 380
+} frame;
+
+float GerstnerWave(vec3 origin, vec3 localOrigin, float time, vec2 direction,
+                   vec3 up, vec3 tangentU, vec3 tangentV,
+                   float amplitude, float frequency, float speed, float steepness,
+                   inout vec3 position, inout vec3 normal)
+{
+    vec2  d  = normalize(direction);
+    float k  = frequency;
+    float w  = k * speed;
+    float Q  = steepness;
+    float coordU = dot(localOrigin, tangentU);
+    float coordV = dot(localOrigin, tangentV);
+
+    float phase = k * (d.x * coordU + d.y * coordV) - w * time;
+    float c     = cos(phase);
+    float s     = sin(phase);
+
+    vec3 horiz = (d.x * tangentU + d.y * tangentV) * (Q * amplitude * c);
+    position += horiz;
+    position += up * (amplitude * s);
+
+    float kA = k * amplitude;
+    normal -= (d.x * tangentU + d.y * tangentV) * (kA * c);
+    normal -= up * (Q * kA * s);
+
+    return Q * kA * s; // Jacobian term
+}
+
+
+
+
+
+float GetDirectionalSlopeVariance(vec3 direction, vec2 secondOrderMoments)
+{
+    // Squared cos and and sin of view direction
+    vec2 squaredNormalizedDirection = direction.xy * direction.xy / (max(1.0 - direction.z * direction.z, 1e-5));
+    return sqrt(dot(squaredNormalizedDirection, secondOrderMoments));
+}
+
+float SmithShadowingMaskingFactor(vec3 direction, vec3 surfaceNormal, vec2 secondOrderMoments)
+{
+    float cosTheta = max(dot(direction, surfaceNormal), 1e-3);
+    float tanTheta = sqrt(max(1.0 - cosTheta * cosTheta, 0.0)) / cosTheta;
+    
+    float a = 1.0 / (max(GetDirectionalSlopeVariance(direction, secondOrderMoments.xy) * tanTheta, 1e-5));
+    float aSquared = a * a;
+
+    return a < 1.6 ? (1.0 - 1.259 * a + 0.396 * aSquared) / (3.535 * a + 2.181 * aSquared) : 0.0;
+}
+
+float JointSmithShadowingMasking(vec3 lightDirection, vec3 viewDirection, vec3 surfaceNormal, vec2 secondOrderMoments)
+{
+    return 1.0 / (1.0 + SmithShadowingMaskingFactor(viewDirection,  surfaceNormal, secondOrderMoments) 
+                    + SmithShadowingMaskingFactor(lightDirection, vec3(0, 0, 1), secondOrderMoments));
+}
+
+float OceanFresnel(vec3 viewDirection, vec3 surfaceNormal, float reflectance, vec2 secondOrderMoments)
+{
+    float slopeVariance = GetDirectionalSlopeVariance(viewDirection, secondOrderMoments);
+    
+    float cosTheta = dot(viewDirection, surfaceNormal);
+    float result = reflectance + (1.0 - reflectance) * pow(1.0f - cosTheta, 5.0f * exp(-2.69f * slopeVariance))
+                                                / (1.0f + 22.7f * pow(slopeVariance, 1.5f));
+    
+    return saturate(result);
+}
+
+float GaussianSlopeDistribution(vec2 slope, vec2 slopeMean, vec2 slopeVariance, float slopeCovariance)
+{
+    slope -= slopeMean;
+    float determinant = slopeVariance.x * slopeVariance.y -  slopeCovariance * slopeCovariance;
+
+    if (determinant <= 0.0)
+        return 0.0;
+
+    float argument = - 0.5 / determinant * (slope.x * slope.x * slopeVariance.y
+                                            + slope.y * slope.y * slopeVariance.x
+                                            - 2.0 * slope.x * slope.y * slopeCovariance);
+
+    return exp(argument) / max(2.0 * PI * sqrt(determinant), 1e-5);
+}
+
+float BeckmannDistribution(vec3 normal, vec2 firstOrderMoments, vec2 secondOrderMoments, float slopeCovariance)
+{
+    vec2 slope = normal.xy / normal.z;
+
+    vec2 variance = secondOrderMoments - firstOrderMoments * firstOrderMoments;
+    float covariance = slopeCovariance - firstOrderMoments.x * firstOrderMoments.y;
+
+    float gaussianSlopeDistribution = GaussianSlopeDistribution(slope, firstOrderMoments, variance, covariance);
+
+    float denominator = normal.z * normal.z;
+    denominator *= denominator;
+
+    return gaussianSlopeDistribution / max(denominator, 1e-5);
+}
+
+float GetOceanSpecularBeckmann(vec3 viewDirection, vec3 lightDirection, vec3 normal,
+                    vec2 firstOrderMoments, vec2 secondOrderMoments, float covariance, float reflectance)
+{
+    vec3 halfVector = normalize(viewDirection + lightDirection);
+    float cosView = max(dot(viewDirection, normal), 1e-3);
+    
+    if (dot(normal, halfVector) <= 0.0)
+        return 0.0;
+    
+    float F = OceanFresnel(viewDirection, normal, reflectance, secondOrderMoments.xy);
+    float D = BeckmannDistribution(halfVector, firstOrderMoments, secondOrderMoments, covariance);
+    float G = JointSmithShadowingMasking(lightDirection, viewDirection, normal, secondOrderMoments.xy);
+
+    return (F * D * G) / (4.0 * cosView);
+}
+#endif // OCEAN_COMMON_SI

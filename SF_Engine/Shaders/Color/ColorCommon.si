@@ -1,0 +1,162 @@
+#ifndef SF_COLOR_MATH_GLSL
+#define SF_COLOR_MATH_GLSL
+
+const float PI       = 3.14159265358979323846;
+const float TWO_PI   = 6.28318530717958647692;
+const float HALF_PI  = 1.57079632679489661923;
+const float INV_PI   = 0.31830988618379067154;
+const float EPSILON  = 1e-6;
+
+
+#define saturate(x) clamp((x), 0.0, 1.0)
+#define lerp(a,b,t) mix(a,b,t)
+#define rcp(x) (1.0 / (x))
+
+#define DEG2RAD(x) ((x) * PI / 180.0)
+#define RAD2DEG(x) ((x) * 180.0 / PI)
+
+#define PowTo(x, num) for()
+
+float Pow2(float x) { return x * x; }
+float Pow3(float x) { return x * x * x; }
+float Pow4(float x)
+{
+    float x2 = x * x;
+    return x2 * x2;
+}
+float Pow5(float x)
+{
+    float x2 = x * x;
+    return x2 * x2 * x;
+}
+
+vec2 Pow2(vec2 v) { return v * v; }
+vec3 Pow2(vec3 v) { return v * v; }
+vec4 Pow2(vec4 v) { return v * v; }
+
+vec2 Pow3(vec2 v) { return v * v * v; }
+vec3 Pow3(vec3 v) { return v * v * v; }
+vec4 Pow3(vec4 v) { return v * v * v; }
+float Pow6(float x)
+{
+    float x2 = x * x;
+    return x2 * x2 * x2;
+}
+
+
+float mean(vec3 v) { return (v.x + v.y + v.z) / 3.0; }
+
+
+float Max3(vec3 v)
+{
+    return max(max(v.x, v.y), v.z);
+}
+
+float Min3(vec3 v)
+{
+    return min(min(v.x, v.y), v.z);
+}
+
+
+float Remap(float v, float oldMin, float oldMax,
+            float newMin, float newMax)
+{
+    return newMin +
+           (v - oldMin) *
+           (newMax - newMin) /
+           (oldMax - oldMin);
+}
+
+float Remap01(float v, float minV, float maxV)
+{
+    return saturate((v - minV) / (maxV - minV));
+}
+
+
+float Smooth01(float x)
+{
+    x = saturate(x);
+    return x * x * (3.0 - 2.0 * x);
+}
+
+float Smoother01(float x)
+{
+    x = saturate(x);
+    return x * x * x *
+           (x * (x * 6.0 - 15.0) + 10.0);
+}
+
+float Luminance(vec3 c)
+{
+    return dot(c, vec3(
+        0.2126,
+        0.7152,
+        0.0722
+    ));
+}
+
+
+vec3 LinearToGamma(vec3 c)
+{
+    return pow(max(c, 0.0), vec3(1.0 / 2.2));
+}
+
+vec3 GammaToLinear(vec3 c)
+{
+    return pow(max(c, 0.0), vec3(2.2));
+}
+
+vec3 SafeNormalize(vec3 v)
+{
+    float len2 = dot(v, v);
+
+    if (len2 < EPSILON)
+        return vec3(0.0);
+
+    return v * inversesqrt(len2);
+}
+
+float SafeRcp(float x)
+{
+    return abs(x) > EPSILON
+        ? 1.0 / x
+        : 0.0;
+}
+
+float DistanceSquared(vec3 a, vec3 b)
+{
+    vec3 d = a - b;
+    return dot(d, d);
+}
+
+float DistanceSquared(vec2 a, vec2 b)
+{
+    vec2 d = a - b;
+    return dot(d, d);
+}
+
+vec3 ReinhardToneMap(vec3 color)
+{
+    return color / (1.0 + color);
+}
+
+vec3 Exposure(vec3 color, float exposure)
+{
+    return vec3(1.0) - exp(-color * exposure);
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+    float g2 = g * g;
+
+    return (1.0 - g2) /
+           (4.0 * PI *
+           pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5));
+}
+
+float Beer(float opticalDepth)
+{
+    return exp(-opticalDepth);
+}
+
+#endif

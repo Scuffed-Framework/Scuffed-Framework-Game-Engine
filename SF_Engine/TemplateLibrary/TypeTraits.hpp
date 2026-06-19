@@ -6,7 +6,7 @@
 /******************************************************************************/
 /* MIT License                                                                */
 /*                                                                            */
-/* Copyright (c) 2025-present Martin.                                         */
+/* Copyright (c) 2025-present Martin (the name I was assigned in french class).                                         */
 /*                                                                            */
 /* May all those that this source may reach be blessed by the LORD and find   */
 /* peace and joy in life.                                                     */
@@ -745,25 +745,6 @@ namespace SFTL
     // decay
     // =============================================================================
 
-    namespace detail
-    {
-        template <typename T>
-        struct decay_impl
-        {
-        private:
-            using U = remove_reference_t<T>;
-
-        public:
-            using type = conditional_t
-                is_array_v<U>,
-                  remove_extent_t<U> *, // T[N] -> T*  (remove_extent below)
-                conditional_t false,    // is_function  omitted for brevity;
-                U *,                    // add it if you need function decay
-                remove_cv_t<U> >>
-                ;
-        };
-    } // namespace detail
-
     // remove_extent (needed by decay)
     template <typename T>
     struct remove_extent
@@ -783,13 +764,30 @@ namespace SFTL
     template <typename T>
     using remove_extent_t = typename remove_extent<T>::type;
 
+    /*
+    namespace detail
+    {
+        template <typename T>
+        struct decay_impl
+        {
+        private:
+            using U = remove_reference_t<T>;
+
+        public:
+            using type = conditional_t
+                is_array_v<U>,
+                  remove_extent_t<U> *,
+                  remove_cv_t<U> > ;
+        };
+    } // namespace detail
+
     template <typename T>
     struct decay : detail::decay_impl<T>
     {
     };
     template <typename T>
     using decay_t = typename decay<T>::type;
-
+    */
     // =============================================================================
     // move / forward  (implementation only  normally in <utility>)
     // =============================================================================

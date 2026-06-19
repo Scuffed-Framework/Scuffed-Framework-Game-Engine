@@ -4,17 +4,22 @@
 #include <LowLevel/Rocket.hpp>
 #include "EntityHolder.hpp"
 #include "SystemHolder.hpp"
+
 #include <Graphics/Mesh/Mesh.hpp>
-#include <Default/TransformComponent.hpp>
+#include <Components/TransformComponent.hpp>
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp>
-#include <Graphics/Visuals/Atmosphere/AtmospherePipelinePass.hpp>
+#include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 #include <Graphics/Visuals/Sun/SunPipelinePass.hpp>
-#include <Graphics/Visuals/Clouds/CloudPipelinePass.hpp>
+
 #include <XML/XMLReader.hpp>
 #include "SceneSerialization.hpp"
 #include "EngineUI.hpp"
 #include <Scene/Types.hpp>
 #include <Scene/SceneRenderer.hpp>
+#include <Graphics/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
+
+#include <Graphics/Images/Image2d.hpp>
+#include <Controllers/CameraController.hpp>
 
 namespace SF::Engine
 {
@@ -23,7 +28,7 @@ namespace SF::Engine
         friend class SceneManager;
 
     public:
-        explicit Scene(std::unique_ptr<ACamera> &&camera, SceneRendererConfig cfg = {});
+        explicit Scene(std::unique_ptr<CameraController> &&cameraController, SceneRendererConfig cfg = {});
         virtual ~Scene() = default;
 
         virtual void Start() = 0;
@@ -62,8 +67,8 @@ namespace SF::Engine
 
         void ClearEntities();
 
-        ACamera *GetCamera() const { return camera.get(); }
-        void SetCamera(ACamera *c) { camera.reset(c); }
+        CameraController *GetCamera() const { return cameraController_.get(); }
+        void SetCamera(std::unique_ptr<CameraController> c) { cameraController_ = std::move(c); }
 
         virtual bool IsPaused() const = 0;
 
@@ -93,6 +98,26 @@ namespace SF::Engine
         void Serialize(XMLNode &node) const override;
         void Deserialize(const XMLNode &node) override;
 
+        void Stop()
+        {
+            started_ = false;
+            initialized_ = false;
+            ClearSystems();
+            ClearEntities();
+            objects_.clear();
+            lights_.clear();
+        }
+
+        static std::vector<SceneLight> GetAllLights(Scene *scene)
+        {
+            return scene->lights_;
+        }
+
+    protected:
+        // Subclasses can set these before Initialize() to opt into features.
+        bool sunEnabled = false;
+        bool atmosphereEnabled = false;
+
     private:
         bool started_ = false;
         bool initialized_ = false;
@@ -103,7 +128,7 @@ namespace SF::Engine
         SystemHolder systems;
         EntityHolder entities;
 
-        std::unique_ptr<ACamera> camera;
+        std::unique_ptr<CameraController> cameraController_;
 
         std::shared_ptr<LightManager> lightManager_;
         LitMeshPipelinePass *litPass_ = nullptr;
@@ -111,17 +136,14 @@ namespace SF::Engine
         SunPipelinePass *sunPass_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
 
-        bool sunEnabled = false;
-        bool atmosphereEnabled = false;
-        bool cloudsEnabled = false;
-
         std::vector<SceneObject> objects_;
         std::vector<SceneLight> lights_;
 
         float elapsed_ = 0.0f;
         uint32_t frameIndex_ = 0;
 
-        // Cloud pass resize tracking
+        glm::mat4 prevViewProj_ = glm::mat4(1.0f);
+
         uint32_t lastScreenW_ = 0;
         uint32_t lastScreenH_ = 0;
 
@@ -155,5 +177,8 @@ namespace SF::Engine
             for (auto &sl : lights_)
                 lightManager_->AddLight(sl.light);
         }
+
+    public:
+        static const ImageDepth *GetDepthTexture();
     };
 }

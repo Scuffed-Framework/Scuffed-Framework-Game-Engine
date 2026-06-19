@@ -24,7 +24,7 @@ namespace SF::Engine
         virtual float GetNearPlane() const = 0;
         virtual float GetFarPlane() const = 0;
 
-        float GetFieldOfView() const {}
+        virtual float GetFieldOfView() const = 0;
 
         virtual glm::vec3 GetFront() const = 0;
         virtual void SetPosition(glm::vec3 p) {}
@@ -39,7 +39,7 @@ namespace SF::Engine
         Camera()
             : nearPlane(0.1f),
               farPlane(1000.0f),
-              fieldOfView(Maths::Radians(45.0f)),
+              fieldOfView(Mathematics::Radians(45.0f)),
               viewRay(false, {0.5f, 0.5f})
         {
         }
@@ -156,4 +156,4 @@ namespace SF::Engine
 
         glm::vec3 front_{0, 0, -1};
     };
-} // msvc betrayed me :(
+}

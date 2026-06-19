@@ -27,13 +27,13 @@ namespace SF::Engine
         bool readOnly = false;
         bool writeOnly = false;
 
-        bool operator==(const UniformInfo& other) const
+        bool operator==(const UniformInfo &other) const
         {
             return binding == other.binding && offset == other.offset && size == other.size &&
                    type == other.type && stageFlags == other.stageFlags &&
                    readOnly == other.readOnly && writeOnly == other.writeOnly;
         }
-        auto operator<=>(const UniformInfo&) const = default;
+        auto operator<=>(const UniformInfo &) const = default;
     };
     struct PushConstantRange
     {
@@ -60,19 +60,20 @@ namespace SF::Engine
 
             virtual ~VertexInput() = default;
 
-            const std::vector<VkVertexInputBindingDescription>& GetBindingDescriptions() const
+            const std::vector<VkVertexInputBindingDescription> &GetBindingDescriptions() const
             {
                 return bindingDescriptions;
             }
 
-            const std::vector<VkVertexInputAttributeDescription>& GetAttributeDescriptions() const
+            const std::vector<VkVertexInputAttributeDescription> &GetAttributeDescriptions() const
             {
                 return attributeDescriptions;
             }
 
-            bool operator<(const VertexInput& other) const
+            bool operator<(const VertexInput &other) const
             {
-                if (bindingDescriptions.empty() || other.bindingDescriptions.empty()) return false;
+                if (bindingDescriptions.empty() || other.bindingDescriptions.empty())
+                    return false;
                 return bindingDescriptions.front().binding <
                        other.bindingDescriptions.front().binding;
             }
@@ -94,12 +95,12 @@ namespace SF::Engine
             {
             }
 
-            bool operator<(const Define& other) const
+            bool operator<(const Define &other) const
             {
                 return name < other.name;
             }
 
-            bool operator==(const Define& other) const
+            bool operator==(const Define &other) const
             {
                 return name == other.name && value == other.value;
             }
@@ -141,25 +142,26 @@ namespace SF::Engine
             {
                 return type;
             }
-            const std::map<std::string, UniformInfo>& GetUniforms() const
+            const std::map<std::string, UniformInfo> &GetUniforms() const
             {
                 return uniforms;
             }
 
-            std::optional<UniformInfo> GetUniform(const std::string& name) const
+            std::optional<UniformInfo> GetUniform(const std::string &name) const
             {
                 auto it = uniforms.find(name);
-                if (it == uniforms.end()) return std::nullopt;
+                if (it == uniforms.end())
+                    return std::nullopt;
                 return it->second;
             }
 
-            bool operator==(const UniformBlock& rhs) const
+            bool operator==(const UniformBlock &rhs) const
             {
                 return binding == rhs.binding && size == rhs.size && stageFlags == rhs.stageFlags &&
                        type == rhs.type && uniforms == rhs.uniforms;
             }
 
-            bool operator!=(const UniformBlock& rhs) const
+            bool operator!=(const UniformBlock &rhs) const
             {
                 return !operator==(rhs);
             }
@@ -202,7 +204,7 @@ namespace SF::Engine
                 return format;
             }
 
-            bool operator==(const Attribute& rhs) const
+            bool operator==(const Attribute &rhs) const
             {
                 return set == rhs.set && location == rhs.location && size == rhs.size &&
                        format == rhs.format;
@@ -217,15 +219,17 @@ namespace SF::Engine
 
         // Factory methods
         static std::shared_ptr<Shader> CreateFromSPIRV(VkDevice device,
-                                                       const std::vector<uint32_t>& vertSpirv,
-                                                       const std::vector<uint32_t>& fragSpirv);
+                                                       const std::vector<uint32_t> &vertSpirv,
+                                                       const std::vector<uint32_t> &fragSpirv,
+                                                       const std::vector<uint32_t> &tessCtrlSpirv = {},
+                                                       const std::vector<uint32_t> &tessEvalSpirv = {});
 
         static std::shared_ptr<Shader> CreateComputeFromSPIRV(
-            VkDevice device, const std::vector<uint32_t>& computeSpirv);
+            VkDevice device, const std::vector<uint32_t> &computeSpirv);
 
         static std::shared_ptr<Shader> CreateFromFile(VkDevice device,
-                                                      const std::filesystem::path& vertPath,
-                                                      const std::filesystem::path& fragPath);
+                                                      const std::filesystem::path &vertPath,
+                                                      const std::filesystem::path &fragPath);
 
         ~Shader();
 
@@ -235,41 +239,41 @@ namespace SF::Engine
         std::vector<VkPushConstantRange> GetPushConstantRanges() const;
 
         // Reflection data accessors
-        const std::unordered_map<std::string, UniformInfo>& GetUniforms() const
+        const std::unordered_map<std::string, UniformInfo> &GetUniforms() const
         {
             return uniforms;
         }
-        const std::map<std::string, UniformBlock>& GetUniformBlocks() const
+        const std::map<std::string, UniformBlock> &GetUniformBlocks() const
         {
             return uniformBlocks;
         }
-        const std::map<std::string, Attribute>& GetAttributes() const
+        const std::map<std::string, Attribute> &GetAttributes() const
         {
             return attributes;
         }
-        const std::vector<PushConstantRange>& GetPushConstants() const
+        const std::vector<PushConstantRange> &GetPushConstants() const
         {
             return pushConstants;
         }
-        const std::vector<VkDescriptorSetLayoutBinding>& GetDescriptorBindings() const
+        const std::vector<VkDescriptorSetLayoutBinding> &GetDescriptorBindings() const
         {
             return descriptorBindings;
         }
-        const std::vector<VkDescriptorPoolSize>& GetDescriptorPools() const
+        const std::vector<VkDescriptorPoolSize> &GetDescriptorPools() const
         {
             return descriptorPools;
         }
-        const std::vector<VkVertexInputAttributeDescription>& GetAttributeDescriptions() const
+        const std::vector<VkVertexInputAttributeDescription> &GetAttributeDescriptions() const
         {
             return attributeDescriptions;
         }
 
         // Query methods
-        std::optional<uint32_t> GetDescriptorLocation(const std::string& name) const;
-        std::optional<uint32_t> GetDescriptorSize(const std::string& name) const;
-        std::optional<UniformInfo> GetUniform(const std::string& name) const;
-        std::optional<UniformBlock> GetUniformBlock(const std::string& name) const;
-        std::optional<Attribute> GetAttribute(const std::string& name) const;
+        std::optional<uint32_t> GetDescriptorLocation(const std::string &name) const;
+        std::optional<uint32_t> GetDescriptorSize(const std::string &name) const;
+        std::optional<UniformInfo> GetUniform(const std::string &name) const;
+        std::optional<UniformBlock> GetUniformBlock(const std::string &name) const;
+        std::optional<Attribute> GetAttribute(const std::string &name) const;
         std::optional<VkDescriptorType> GetDescriptorType(uint32_t location) const;
 
         bool HasStage(VkShaderStageFlagBits stage) const;
@@ -279,19 +283,19 @@ namespace SF::Engine
         }
 
         // Hot reload support
-        void Reload(const std::vector<uint32_t>& newSpirv, VkShaderStageFlagBits stage);
+        void Reload(const std::vector<uint32_t> &newSpirv, VkShaderStageFlagBits stage);
 
         // Utility
-        static VkShaderStageFlagBits GetShaderStageFromExtension(const std::string& filepath);
+        static VkShaderStageFlagBits GetShaderStageFromExtension(const std::string &filepath);
         static VkFormat GlTypeToVk(int32_t type);
 
     private:
         Shader(VkDevice device);
 
-        void ReflectFromSPIRV(const std::vector<uint32_t>& spirv, VkShaderStageFlagBits stage);
-        void AddShaderModule(const std::vector<uint32_t>& spirv, VkShaderStageFlagBits stage);
-        void LoadUniformBlock(const SpvReflectBlockVariable& block, VkShaderStageFlagBits stage);
-        void IncrementDescriptorPool(std::map<VkDescriptorType, uint32_t>& poolCounts,
+        void ReflectFromSPIRV(const std::vector<uint32_t> &spirv, VkShaderStageFlagBits stage);
+        void AddShaderModule(const std::vector<uint32_t> &spirv, VkShaderStageFlagBits stage);
+        void LoadUniformBlock(const SpvReflectBlockVariable &block, VkShaderStageFlagBits stage);
+        void IncrementDescriptorPool(std::map<VkDescriptorType, uint32_t> &poolCounts,
                                      VkDescriptorType type);
         void Cleanup();
 
@@ -321,7 +325,7 @@ namespace SF::Engine
     };
 
     // Helper function implementations
-    inline VkShaderStageFlagBits Shader::GetShaderStageFromExtension(const std::string& filepath)
+    inline VkShaderStageFlagBits Shader::GetShaderStageFromExtension(const std::string &filepath)
     {
         if (filepath.ends_with(".vert") || filepath.ends_with(".vs"))
             return VK_SHADER_STAGE_VERTEX_BIT;

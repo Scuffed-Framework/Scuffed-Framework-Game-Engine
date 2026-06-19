@@ -21,12 +21,20 @@ namespace SF::Engine
      */
     enum class ModuleStage : uint8_t
     {
-        Never,   // Module is never updated (utility module)
-        Always,  // Module is always updated (critical systems)
-        Pre,     // Early update (input, events)
-        Normal,  // Standard update (game logic)
-        Post,    // Late update (physics, cleanup)
-        Render   // Rendering stage
+        Never,  // Module is never updated (utility module)
+        Always, // Module is always updated (critical systems)
+        Pre,    // Early update (input, events)
+        Normal, // Standard update (game logic)
+        Post,   // Late update (physics, cleanup)
+        Render  // Rendering stage
+    };
+
+    enum class ModuleStartStage : uint8_t
+    {
+        ManualStartup, // default
+        OnEngineInit,
+        Normal,
+        PostEngineInit
     };
 
     /**
@@ -48,9 +56,9 @@ namespace SF::Engine
         struct CreateInfo
         {
             std::function<std::unique_ptr<Base>()> createFunc;
-            ModuleStage stage;  // Use ModuleStage instead of typename Base::Stage
+            ModuleStage stage;
             std::vector<TypeId> dependencies;
-            std::string_view name;  // For debugging and logging
+            std::string_view name; // For debugging and logging
         };
 
         using RegistryMap = std::unordered_map<TypeId, CreateInfo>;
@@ -60,7 +68,7 @@ namespace SF::Engine
         /**
          * @brief Get the global module registry
          */
-        static RegistryMap& Registry()
+        static RegistryMap &Registry()
         {
             static RegistryMap impl;
             return impl;
@@ -70,7 +78,7 @@ namespace SF::Engine
          * @brief Helper for specifying module dependencies
          */
         template <ModuleDerived... Args>
-        class Requires  // Ensure this is in a public section
+        class Requires // Ensure this is in a public section
         {
         public:
             std::vector<TypeId> Get() const
@@ -88,13 +96,14 @@ namespace SF::Engine
         template <typename T>
         class Registrar : public Base
         {
-        public:  // Change this from protected to public
+        public: // Change this from protected to public
             virtual ~Registrar()
             {
-                if (static_cast<T*>(this) == s_instance) s_instance = nullptr;
+                if (static_cast<T *>(this) == s_instance)
+                    s_instance = nullptr;
             }
 
-            static T* Get() noexcept
+            static T *Get() noexcept
             {
                 return s_instance;
             }
@@ -125,7 +134,7 @@ namespace SF::Engine
             inline static std::string_view s_registeredName = "";
 
         private:
-            inline static T* s_instance = nullptr;
+            inline static T *s_instance = nullptr;
         };
 
         template <typename T, typename... Args>
@@ -253,42 +262,44 @@ namespace SF::Engine
         }
 
         template <ModuleDerived T>
-        ModuleFilter& Exclude() noexcept
+        ModuleFilter &Exclude() noexcept
         {
             const auto id = TypeInfo<Module>::GetTypeId<T>();
-            if (id < MaxModules) m_include.reset(id);
+            if (id < MaxModules)
+                m_include.reset(id);
             return *this;
         }
 
         template <ModuleDerived T>
-        ModuleFilter& Include() noexcept
+        ModuleFilter &Include() noexcept
         {
             const auto id = TypeInfo<Module>::GetTypeId<T>();
-            if (id < MaxModules) m_include.set(id);
+            if (id < MaxModules)
+                m_include.set(id);
             return *this;
         }
 
         template <ModuleDerived... Args>
-        ModuleFilter& Exclude() noexcept
+        ModuleFilter &Exclude() noexcept
         {
             (Exclude<Args>(), ...);
             return *this;
         }
 
         template <ModuleDerived... Args>
-        ModuleFilter& Include() noexcept
+        ModuleFilter &Include() noexcept
         {
             (Include<Args>(), ...);
             return *this;
         }
 
-        ModuleFilter& ExcludeAll() noexcept
+        ModuleFilter &ExcludeAll() noexcept
         {
             m_include.reset();
             return *this;
         }
 
-        ModuleFilter& IncludeAll() noexcept
+        ModuleFilter &IncludeAll() noexcept
         {
             m_include.set();
             return *this;
@@ -320,4 +331,4 @@ namespace SF::Engine
 #define REGISTER_MODULE(ModuleClass, UpdateStage, ...) \
     inline static bool ModuleClass##_registered = ModuleClass::Register(UpdateStage, ##__VA_ARGS__)
 
-}  // namespace SF::Engine
+} // namespace SF::Engine

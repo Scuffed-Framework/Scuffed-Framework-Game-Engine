@@ -2,7 +2,7 @@ from conan import ConanFile
 from conan.tools.cmake import cmake_layout
 
 class SfEngineConan(ConanFile):
-    name = "sf-engine"
+    name = "SF Engine"
     version = "1.0.0"
     
     # Binary configuration
@@ -71,9 +71,16 @@ class SfEngineConan(ConanFile):
         
         # Image Loading
         self.requires("libpng/1.6.42")
+        self.requires("libraw/0.21.1")
         
         # Compression
         self.requires("zlib/1.3.1")
+
+        # Scripting
+        self.requires("sol2/3.3.0")
+
+        # Physics
+        self.requires("bullet3/3.25")
     
     def layout(self):
         cmake_layout(self)

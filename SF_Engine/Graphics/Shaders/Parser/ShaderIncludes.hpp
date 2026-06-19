@@ -178,6 +178,22 @@ namespace SF::Engine::Shaders
          * @brief Combine two paths
          */
         static std::string combinePaths(const std::string &base, const std::string &relative);
+
+        static std::string stripSectionDirectives(const std::string &source)
+        {
+            std::string result;
+            std::istringstream stream(source);
+            std::string line;
+            while (std::getline(stream, line))
+            {
+                // Trim leading whitespace
+                size_t first = line.find_first_not_of(" \t");
+                if (first != std::string::npos && line.substr(first, 8) == "#Section")
+                    continue; // skip this line
+                result += line + "\n";
+            }
+            return result;
+        }
     };
 
     // Implementation of utility functions
@@ -189,6 +205,7 @@ namespace SF::Engine::Shaders
         bool inLineComment = false;
         bool inBlockComment = false;
         bool inString = false;
+        bool inSection = false;
 
         for (size_t i = 0; i < source.length(); i++)
         {
@@ -224,6 +241,21 @@ namespace SF::Engine::Shaders
                 {
                     result += c;
                 }
+                continue;
+            }
+
+            if (inSection)
+            {
+                if (c == '\n')
+                    inSection = false;
+                result += c;
+                continue;
+            }
+
+            if (c == '#' && next == 'S' && !inSection)
+            {
+                inSection = true;
+                result += c;
                 continue;
             }
 

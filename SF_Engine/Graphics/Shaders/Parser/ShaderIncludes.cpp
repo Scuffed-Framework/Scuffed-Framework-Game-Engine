@@ -67,7 +67,8 @@ namespace SF::Engine::Shaders
             return {};
         };
 
-        // 1. Relative to basePath — ONLY for quoted includes ("...").
+        // 1. Relative to basePath
+        // ONLY for quoted includes ("...").
         //    Angle-bracket includes (<...>) skip this step entirely and go
         //    straight to the registered include directories, just like C/C++.
         if (!angleBracket && !basePath.empty())
@@ -77,7 +78,7 @@ namespace SF::Engine::Shaders
                 return r;
         }
 
-        // 2. Registered include directories — always searched for both syntaxes.
+        // 2. Registered include directories, always searched for both syntaxes.
         for (const auto &dir : includeDirs_)
         {
             auto r = tryWithExts(ShaderIncludeUtils::combinePaths(dir, filename));

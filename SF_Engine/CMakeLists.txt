@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 4.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 get_directory_property(_parent_prefix PARENT_DIRECTORY CMAKE_PREFIX_PATH)
@@ -44,6 +44,9 @@ find_package(ZLIB REQUIRED)                         # ZLIBConfig.cmake
 find_package(spdlog CONFIG REQUIRED)                # spdlog-config.cmake
 find_package(spirv-reflect-static CONFIG REQUIRED)
 find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
+find_package(sol2 REQUIRED)
+find_package(Bullet REQUIRED)
+find_package(libraw CONFIG REQUIRED)
 
 file(GLOB_RECURSE ENGINE_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
@@ -127,7 +130,14 @@ target_link_libraries(SF_Engine PUBLIC
     ZLIB::ZLIB
     spdlog::spdlog
     spirv-reflect-static
+    sol2::sol2
+    Bullet::Bullet
+    #Bullet::BulletSoftBody
+    #Bullet::BulletDynamics
+    #Bullet::BulletCollision
+    libraw::libraw
 )
+
 target_include_directories(SF_Engine PUBLIC
     $<TARGET_PROPERTY:volk::volk,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:Vulkan::Headers,INTERFACE_INCLUDE_DIRECTORIES>
@@ -140,26 +150,21 @@ if(MSVC)
     target_link_libraries(SF_Engine PRIVATE kernel32)
 endif()
 
-#  Engine shader directory 
-# Expose the engine shader source path as a target property so downstream
-# executables can copy them without hard-coding paths.
-set_target_properties(SF_Engine PROPERTIES
-    SF_ENGINE_SHADER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Shaders"
-)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(ARCH_SUFFIX "x64")
+else()
+    set(ARCH_SUFFIX "x86")
+endif()
 
-# Helper function that any executable CMakeLists can call:
-#   sf_copy_engine_shaders(MyTarget)
-# It copies SF_Engine/Shaders/ → <build-output>/Shaders/ after each build.
-function(sf_copy_engine_shaders TARGET_NAME)
-    get_target_property(_shader_dir SF_Engine SF_ENGINE_SHADER_DIR)
-    get_target_property(_output_dir ${TARGET_NAME} RUNTIME_OUTPUT_DIRECTORY)
-    if(NOT _output_dir)
-        set(_output_dir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-    endif()
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${_shader_dir}"
-            "${_output_dir}/Shaders"
-        COMMENT "[SF] Copying engine shaders to ${_output_dir}/Shaders"
-    )
-endfunction()
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
+set(SF_ENGINE_SHADER_OUT_DIR "../Shaders")
+
+add_custom_target(SF_CopyShaders ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/Shaders"
+        "${SF_ENGINE_SHADER_OUT_DIR}"
+    COMMENT "[SF] Copying engine shaders"
+)

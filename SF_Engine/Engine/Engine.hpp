@@ -24,6 +24,11 @@
 #include <Scene/Scene.hpp>
 #include <Scene/SceneLoading.hpp>
 
+#include <UtilityClasses/Formatter.hpp>
+#include <UtilityClasses/ThreadPool.hpp>
+
+#include "InitGame/GameInstance.hpp"
+
 #ifdef major
 #undef major
 #endif
@@ -38,6 +43,7 @@
 #ifdef MINOR
 #undef MINOR
 #endif
+// also might work for linux/mac stuff but idk
 
 namespace SF::Engine
 {
@@ -272,6 +278,43 @@ namespace SF::Engine
         ElapsedTime elapsedUpdate, elapsedRender;
 
         SceneURLResolver resolver;
+
+    public:
+        const std::thread::id g_main_thread_id = std::this_thread::get_id();
+        const std::thread::id g_render_thread_id = std::thread::id(); // Set to main thread by default, will be updated if a separate render thread is used
+
+        const std::thread::id &GetMainThreadId() const
+        {
+            return g_main_thread_id;
+        }
+
+        const std::thread::id &GetRenderThreadId() const
+        {
+            return g_render_thread_id;
+        }
+
+        bool IsMainThread() const
+        {
+            return std::this_thread::get_id() == g_main_thread_id;
+        }
+
+    private:
+        ThreadPool threadPool{std::max(1u, std::thread::hardware_concurrency() - 1)}; // Leave one thread for the main loop
+
+    public:
+        ThreadPool &GetThreadPool()
+        {
+            return threadPool;
+        }
+
+    protected:
+        std::unique_ptr<GameInstance> gameInstance;
+
+    public:
+        GameInstance *GetGameInstance() const
+        {
+            return gameInstance.get();
+        }
     };
 
 }

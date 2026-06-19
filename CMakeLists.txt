@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 4.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} CACHE STRING "" FORCE)
@@ -23,13 +23,13 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL") # got the sars-copilot-2 virus while reading this
     cmake_policy(SET CMP0091 NEW)
 endif()
 
 project("SF"
     VERSION 1.0.0
-    DESCRIPTION "Some funny project Monsieur Martin decided to make. Worst mistake of his life"
+    DESCRIPTION "Games? (AI hallucination goes here)"
     LANGUAGES C CXX
 )
 
@@ -38,8 +38,8 @@ if(CMAKE_EXPORT_COMPILE_COMMANDS)
     set(CMAKE_C_USE_RESPONSE_FILE_FOR_INCLUDES OFF)
 endif()
 
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

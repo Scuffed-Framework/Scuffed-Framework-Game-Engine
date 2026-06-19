@@ -1,0 +1,46 @@
+#ifndef OCEAN_FFT_COMMON_SI
+#define OCEAN_FFT_COMMON_SI
+
+#define PI 3.14159265358979323846
+
+layout(set = 0, binding = 0) uniform SpectrumUBO
+{
+    float frameTime, deltaTime, A, gravity, repeatTime, damping, depth, lowCutoff, highCutoff;
+    int   seed;
+    vec2  wind;
+    vec2  lambda;
+    vec2  normalStrength;
+    uint  N, lengthScale0, lengthScale1, lengthScale2, lengthScale3;
+    float foamBias, foamDecayRate, foamAdd, foamThreshold;
+} spectrum;
+
+float hash(uint n)
+{
+    n = (n << 13u) ^ n;
+    n = n * (n * n * 15731u + 0x789221u) + 0x76312589u;
+    return float(n & 0x7fffffffu) / float(0x7fffffff);
+}
+
+vec2 ComplexMult(vec2 a, vec2 b)
+{
+    return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+}
+
+vec2 EulerFormula(float x)
+{
+    return vec2(cos(x), sin(x));
+}
+
+vec2 ComplexExp(vec2 a)
+{
+    return vec2(cos(a.y), sin(a.y) * exp(a.x));
+}
+
+vec2 UniformToGaussian(float u1, float u2)
+{
+    float R = sqrt(-2.0 * log(max(u1, 1e-6)));
+    float theta = 2.0 * PI * u2;
+    return vec2(R * cos(theta), R * sin(theta));
+}
+
+#endif // OCEAN_FFT_COMMON_SI

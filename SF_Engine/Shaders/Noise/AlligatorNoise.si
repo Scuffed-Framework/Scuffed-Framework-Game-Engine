@@ -1,0 +1,156 @@
+#ifndef AlligatorNoiseC
+#define AlligatorNoiseC
+
+// ============================================================
+// AlligatorNoise.si
+// Tileable 3-D Alligator noise + Curly-Alligator noise for
+// volumetric cloud detail.
+//
+// Based on: Andrew Schneider, "Nubis Cubed" (SIGGRAPH 2023),
+//           Advances in Real-Time Rendering in Games, p.95-96.
+//           SideFX Alligator noise reference implementation:
+//           https://www.sidefx.com/docs/hdk/alligator_2alligator_8_c-example.html
+//
+// Two noise types (matching the 4-channel LUT layout on p.96):
+//
+//   alligatorNoise()        — Houdini-style alligator noise.
+//                             Looks like layered Worley but with
+//                             more cloud-appropriate lacunarity.
+//                             Used INVERTED for billowy details.
+//
+//   curlyAlligatorNoise()   — Inverted alligator distorted by
+//                             curl noise.  Produces web/wisp
+//                             shapes for decreasing-density zones.
+//
+// Requires: hash33(), remap(), f_remap(), perlinfbm()
+//           from PerlinWorleyNoise.si  (include that header first)
+// ============================================================
+
+
+// ----------------------------------------------------------------
+// Alligator Noise
+// Houdini's alligator noise is a sum of two cellular (F1) layers
+// at different frequencies with the second layer subtracted,
+// giving it the characteristic "layered scales" look that reads
+// as cloud billows better than plain Worley.
+//
+// Reference: SideFX HDK alligator.c
+//   core = F1(p, f) - F1(p, f*2)   (absolute difference)
+//   result is then remapped and FBM'd across octaves.
+// ----------------------------------------------------------------
+
+// Single-frequency F1 cellular distance (squared), tileable.
+float cellularF1Sq(vec3 uv, float freq)
+{
+    // Work in cell space: uv is already scaled by freq outside
+    vec3 uvScaled = uv * freq;
+    vec3 id = floor(uvScaled);
+    vec3 p  = fract(uvScaled);
+    float d = 1e9;
+
+    for (float x = -1.; x <= 1.; ++x)
+    for (float y = -1.; y <= 1.; ++y)
+    for (float z = -1.; z <= 1.; ++z)
+    {
+        vec3 offset = vec3(x, y, z);
+        // tile by freq so cell IDs wrap smoothly
+        vec3 cell   = hash33(mod(id + offset, vec3(freq))) * 0.5 + 0.5;
+        cell += offset;
+        d = min(d, dot(p - cell, p - cell));
+    }
+    return d;
+}
+
+// One octave of alligator noise:  |F1(f) - F1(2f)|, remapped.
+// The subtraction gives it layered lacunarity vs plain Worley.
+float alligatorOctave(vec3 p, float freq)
+{
+    float f1a = sqrt(cellularF1Sq(p,        freq       ));
+    float f1b = sqrt(cellularF1Sq(p,        freq * 2.0 ));
+    float n = abs(f1a - f1b);
+    return clamp(n, 0.0, 1.0);
+}
+
+// FBM alligator, 4 octaves, GPU Pro 7 weights.
+// invertCloud=true  → bright billows (use for R/G cloud shape)
+// invertCloud=false → dark ridges / raw crack
+float alligatorFBM(vec3 p, float freq, bool invertCloud)
+{
+    float n = alligatorOctave(p,              freq      ) * 0.5
+            + alligatorOctave(p * 1.0, freq * 2.0) * 0.25
+            + alligatorOctave(p * 1.0, freq * 4.0) * 0.125
+            + alligatorOctave(p * 1.0, freq * 8.0) * 0.0625;
+
+    // Normalise (sum of weights = 0.9375)
+    n = clamp(n / 0.9375, 0.0, 1.0);
+    return invertCloud ? (1.0 - n) : n;
+}
+
+
+// ----------------------------------------------------------------
+// Curl Noise
+// Divergence-free noise field derived from the gradient of Perlin
+// noise.  Used to distort the alligator noise sample position.
+//
+//   curl(F) = ( dFz/dy - dFy/dz,
+//               dFx/dz - dFz/dx,
+//               dFy/dx - dFx/dy )
+//
+// Finite-difference approximation with epsilon e.
+// ----------------------------------------------------------------
+vec3 curlNoise(vec3 p, float freq, float e)
+{
+    // Sample gradient noise at offset positions for FD derivatives
+    float nx0 = gradientNoise(p + vec3(e,  0,  0), freq);
+    float nx1 = gradientNoise(p - vec3(e,  0,  0), freq);
+    float ny0 = gradientNoise(p + vec3(0,  e,  0), freq);
+    float ny1 = gradientNoise(p - vec3(0,  e,  0), freq);
+    float nz0 = gradientNoise(p + vec3(0,  0,  e), freq);
+    float nz1 = gradientNoise(p - vec3(0,  0,  e), freq);
+
+    float inv2e = 1.0 / (2.0 * e);
+    return vec3(
+        (ny0 - ny1 - nz0 + nz1) * inv2e,   // dFz/dy - dFy/dz  (approx)
+        (nz0 - nz1 - nx0 + nx1) * inv2e,   // dFx/dz - dFz/dx
+        (nx0 - nx1 - ny0 + ny1) * inv2e    // dFy/dx - dFx/dy
+    );
+}
+
+
+// ----------------------------------------------------------------
+// Curly-Alligator Noise  (Nubis Cubed, p.95)
+// "We started with inverted alligator noise, which creates nice
+//  web-like shapes, and then distorted it using curl noise."
+//
+// Process:
+//   1. Compute curl vector at sample position.
+//   2. Displace sample position by that curl vector (× strength).
+//   3. Sample inverted alligator FBM at displaced position.
+//
+// This gives web/wisp shapes suited to decreasing-density cloud edges.
+// ----------------------------------------------------------------
+float curlyAlligatorNoise(vec3 p, float freq, float curlStrength)
+{
+    // FD epsilon: roughly 1/freq of the cell size feels right
+    float e = 0.5 / freq;
+
+    vec3 curl = curlNoise(p, freq, e);
+    vec3 distorted = p + curl * curlStrength;
+
+    // Inverted alligator at distorted position → wispy web shapes
+    return alligatorFBM(distorted, freq, true);
+}
+
+// FBM variant: multi-octave curly-alligator with increasing curl
+// strength per octave (wispy lacunarity).
+float curlyAlligatorFBM(vec3 p, float freq, float curlStrength)
+{
+    float n = curlyAlligatorNoise(p,       freq,        curlStrength      ) * 0.5
+            + curlyAlligatorNoise(p, freq * 2.0,  curlStrength * 0.5) * 0.25
+            + curlyAlligatorNoise(p, freq * 4.0,  curlStrength * 0.25) * 0.125
+            + curlyAlligatorNoise(p, freq * 8.0,  curlStrength * 0.125) * 0.0625;
+
+    return clamp(n / 0.9375, 0.0, 1.0);
+}
+
+#endif // AlligatorNoiseC

@@ -45,7 +45,7 @@ Shader "SF/Lighting/GBuffer"
             vec3 N = normalize(normalMat * inNormal);
             vec3 T = normalize(normalMat * inTangent);
             T = normalize(T - dot(T,N)*N);
-            outTBN = mat3(T, cross(N,T), N);
+            outTBN = mat3(T, cross(T,N), N);
             gl_Position = frame.viewProj * wp4;
         }
     }

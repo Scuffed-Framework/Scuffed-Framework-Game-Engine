@@ -6,6 +6,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <vector>
+#include <algorithm>
 
 namespace SF::Engine
 {
@@ -19,7 +20,6 @@ namespace SF::Engine
         DXT5
     };
 
-// DDS pixel format structure
 #pragma pack(push, 1)
     struct DDSPixelFormat
     {
@@ -33,11 +33,10 @@ namespace SF::Engine
         uint32_t aBitMask;
     };
 
-    // DDS header structure
     struct DDSHeader
     {
-        uint32_t magic;  // "DDS " (0x20534444)
-        uint32_t size;   // Size of structure (124 bytes)
+        uint32_t magic;
+        uint32_t size;
         uint32_t flags;
         uint32_t height;
         uint32_t width;
@@ -54,11 +53,9 @@ namespace SF::Engine
     };
 #pragma pack(pop)
 
-    // DDS constants
-    constexpr uint32_t DDS_MAGIC = 0x20534444;  // "DDS "
+    constexpr uint32_t DDS_MAGIC = 0x20534444;
     constexpr uint32_t DDS_HEADER_SIZE = 124;
 
-    // Flags
     constexpr uint32_t DDSD_CAPS = 0x1;
     constexpr uint32_t DDSD_HEIGHT = 0x2;
     constexpr uint32_t DDSD_WIDTH = 0x4;
@@ -67,110 +64,127 @@ namespace SF::Engine
     constexpr uint32_t DDSD_MIPMAPCOUNT = 0x20000;
     constexpr uint32_t DDSD_LINEARSIZE = 0x80000;
 
-    // Pixel format flags
     constexpr uint32_t DDPF_ALPHAPIXELS = 0x1;
     constexpr uint32_t DDPF_ALPHA = 0x2;
     constexpr uint32_t DDPF_FOURCC = 0x4;
     constexpr uint32_t DDPF_RGB = 0x40;
+    constexpr uint32_t DDPF_LUMINANCE = 0x20000;
 
-    // FourCC codes
-    constexpr uint32_t FOURCC_DXT1 = 0x31545844;  // "DXT1"
-    constexpr uint32_t FOURCC_DXT3 = 0x33545844;  // "DXT3"
-    constexpr uint32_t FOURCC_DXT5 = 0x35545844;  // "DXT5"
+    constexpr uint32_t FOURCC_DXT1 = 0x31545844;
+    constexpr uint32_t FOURCC_DXT3 = 0x33545844;
+    constexpr uint32_t FOURCC_DXT5 = 0x35545844;
 
-    // Caps
     constexpr uint32_t DDSCAPS_TEXTURE = 0x1000;
 
     class BitmapDDS : public Bitmap::Registrar<BitmapDDS>
     {
     public:
-        static void Load(Bitmap& bitmap, const std::filesystem::path& filename)
+        static void Load(Bitmap &bitmap, const std::filesystem::path &filename)
         {
             std::ifstream file(filename, std::ios::binary);
             if (!file)
-            {
                 throw std::runtime_error("Failed to open DDS file: " + filename.string());
-            }
 
-            // Read header
             DDSHeader header;
-            file.read(reinterpret_cast<char*>(&header), sizeof(DDSHeader));
+            file.read(reinterpret_cast<char *>(&header), sizeof(DDSHeader));
 
             if (header.magic != DDS_MAGIC)
-            {
-                throw std::runtime_error("Invalid DDS file magic number");
-            }
-
+                throw std::runtime_error("Invalid DDS magic number");
             if (header.size != DDS_HEADER_SIZE)
-            {
                 throw std::runtime_error("Invalid DDS header size");
+
+            const uint32_t width = header.width;
+            const uint32_t height = header.height;
+            const auto &pf = header.pixelFormat;
+
+            if (pf.flags & DDPF_FOURCC)
+            {
+                uint32_t blockSize = (pf.fourCC == FOURCC_DXT1) ? 8 : 16;
+                uint32_t blocksW = std::max(1u, (width + 3) / 4);
+                uint32_t blocksH = std::max(1u, (height + 3) / 4);
+                size_t compressed = blocksW * blocksH * blockSize;
+
+                std::vector<uint8_t> src(compressed);
+                file.read(reinterpret_cast<char *>(src.data()), compressed);
+                if (!file)
+                    throw std::runtime_error("Failed to read DXT data");
+
+                auto rgba = std::make_unique<uint8_t[]>(width * height * 4);
+
+                if (pf.fourCC == FOURCC_DXT1)
+                    DecompressDXT1(src, rgba.get(), width, height);
+                else if (pf.fourCC == FOURCC_DXT3)
+                    DecompressDXT3(src, rgba.get(), width, height);
+                else if (pf.fourCC == FOURCC_DXT5)
+                    DecompressDXT5(src, rgba.get(), width, height);
+                else
+                    throw std::runtime_error("Unknown FourCC format");
+
+                bitmap.SetData(std::move(rgba));
+                bitmap.SetSize(Vector2Uint(width, height));
+                bitmap.SetBytesPerPixel(4);
+                bitmap.SetFilename(filename);
+                return;
             }
 
-            // Determine format and bytes per pixel
-            uint32_t bytesPerPixel = 4;
-            bool isCompressed = false;
-
-            if (header.pixelFormat.flags & DDPF_FOURCC)
+            if ((pf.flags & (DDPF_ALPHA | DDPF_LUMINANCE)) && pf.rgbBitCount == 16)
             {
-                isCompressed = true;
-                // Compressed formats will be decompressed to RGBA
-            }
-            else if (header.pixelFormat.flags & DDPF_RGB)
-            {
-                bytesPerPixel = header.pixelFormat.rgbBitCount / 8;
-            }
+                size_t pixels = width * height;
+                std::vector<uint8_t> raw(pixels * 2);
+                file.read(reinterpret_cast<char *>(raw.data()), pixels * 2);
+                if (!file)
+                    throw std::runtime_error("Failed to read A8L8 data");
 
-            uint32_t width = header.width;
-            uint32_t height = header.height;
-
-            if (isCompressed)
-            {
-                // For compressed formats, we'll need to decompress
-                // This is a simplified version - full DXT decompression is complex
-                throw std::runtime_error(
-                    "DXT compressed DDS loading not yet implemented. "
-                    "Consider using a library like gli or DirectXTex");
-            }
-
-            // Read uncompressed pixel data
-            size_t dataSize = width * height * bytesPerPixel;
-            auto data = std::make_unique<uint8_t[]>(dataSize);
-            file.read(reinterpret_cast<char*>(data.get()), dataSize);
-
-            if (!file)
-            {
-                throw std::runtime_error("Failed to read DDS pixel data");
-            }
-
-            // Convert BGRA to RGBA if needed
-            if (bytesPerPixel == 4)
-            {
-                for (size_t i = 0; i < dataSize; i += 4)
+                auto rgba = std::make_unique<uint8_t[]>(pixels * 4);
+                for (size_t i = 0; i < pixels; ++i)
                 {
-                    std::swap(data[i], data[i + 2]);  // Swap B and R
+                    uint8_t l = raw[i * 2 + 0];
+                    uint8_t a = raw[i * 2 + 1];
+                    rgba[i * 4 + 0] = l;
+                    rgba[i * 4 + 1] = l;
+                    rgba[i * 4 + 2] = l;
+                    rgba[i * 4 + 3] = a;
                 }
-            }
 
-            bitmap.SetData(std::move(data));
-            bitmap.SetSize(Vector2Uint(width, height));
-            bitmap.SetBytesPerPixel(bytesPerPixel);
-            bitmap.SetFilename(filename);
+                bitmap.SetData(std::move(rgba));
+                bitmap.SetSize(Vector2Uint(width, height));
+                bitmap.SetBytesPerPixel(4);
+                bitmap.SetFilename(filename);
+                return;
+            }
+            {
+                uint32_t bytesPerPixel = pf.rgbBitCount / 8;
+                size_t dataSize = width * height * bytesPerPixel;
+                auto data = std::make_unique<uint8_t[]>(dataSize);
+
+                file.read(reinterpret_cast<char *>(data.get()), dataSize);
+                if (!file)
+                    throw std::runtime_error("Failed to read pixel data");
+
+                // BGRA → RGBA
+                if (bytesPerPixel >= 3)
+                {
+                    for (size_t i = 0; i < dataSize; i += bytesPerPixel)
+                        std::swap(data[i], data[i + 2]);
+                }
+
+                bitmap.SetData(std::move(data));
+                bitmap.SetSize(Vector2Uint(width, height));
+                bitmap.SetBytesPerPixel(bytesPerPixel);
+                bitmap.SetFilename(filename);
+            }
         }
 
-        static void Write(const Bitmap& bitmap, const std::filesystem::path& filename,
+        static void Write(const Bitmap &bitmap, const std::filesystem::path &filename,
                           DDSFormat format = DDSFormat::ARGB8)
         {
             if (!bitmap.GetData())
-            {
                 throw std::runtime_error("Cannot write empty bitmap");
-            }
 
-            const auto& size = bitmap.GetSize();
-            uint32_t width = size.x;
-            uint32_t height = size.y;
-            uint32_t bytesPerPixel = bitmap.GetBytesPerPixel();
+            const uint32_t width = bitmap.GetSize().x;
+            const uint32_t height = bitmap.GetSize().y;
+            const uint32_t srcBpp = bitmap.GetBytesPerPixel();
 
-            // Create header
             DDSHeader header = {};
             header.magic = DDS_MAGIC;
             header.size = DDS_HEADER_SIZE;
@@ -180,73 +194,288 @@ namespace SF::Engine
             header.depth = 1;
             header.mipMapCount = 1;
             header.caps = DDSCAPS_TEXTURE;
-
-            // Setup pixel format based on requested format
             header.pixelFormat.size = sizeof(DDSPixelFormat);
+
+            uint32_t writeBpp = srcBpp;
 
             switch (format)
             {
-                case DDSFormat::ARGB8:
-                    header.pixelFormat.flags = DDPF_RGB | DDPF_ALPHAPIXELS;
-                    header.pixelFormat.rgbBitCount = 32;
-                    header.pixelFormat.rBitMask = 0x00FF0000;
-                    header.pixelFormat.gBitMask = 0x0000FF00;
-                    header.pixelFormat.bBitMask = 0x000000FF;
-                    header.pixelFormat.aBitMask = 0xFF000000;
-                    header.pitchOrLinearSize = width * 4;
-                    break;
+            case DDSFormat::ARGB8:
+                header.pixelFormat.flags = DDPF_RGB | DDPF_ALPHAPIXELS;
+                header.pixelFormat.rgbBitCount = 32;
+                header.pixelFormat.rBitMask = 0x00FF0000;
+                header.pixelFormat.gBitMask = 0x0000FF00;
+                header.pixelFormat.bBitMask = 0x000000FF;
+                header.pixelFormat.aBitMask = 0xFF000000;
+                header.pitchOrLinearSize = width * 4;
+                writeBpp = 4;
+                break;
 
-                case DDSFormat::XRGB8:
-                    header.pixelFormat.flags = DDPF_RGB;
-                    header.pixelFormat.rgbBitCount = 32;
-                    header.pixelFormat.rBitMask = 0x00FF0000;
-                    header.pixelFormat.gBitMask = 0x0000FF00;
-                    header.pixelFormat.bBitMask = 0x000000FF;
-                    header.pixelFormat.aBitMask = 0x00000000;
-                    header.pitchOrLinearSize = width * 4;
-                    break;
+            case DDSFormat::XRGB8:
+                header.pixelFormat.flags = DDPF_RGB;
+                header.pixelFormat.rgbBitCount = 32;
+                header.pixelFormat.rBitMask = 0x00FF0000;
+                header.pixelFormat.gBitMask = 0x0000FF00;
+                header.pixelFormat.bBitMask = 0x000000FF;
+                header.pixelFormat.aBitMask = 0x00000000;
+                header.pitchOrLinearSize = width * 4;
+                writeBpp = 4;
+                break;
 
-                case DDSFormat::DXT1:
-                case DDSFormat::DXT3:
-                case DDSFormat::DXT5:
-                    throw std::runtime_error("DXT compression not yet implemented");
+            case DDSFormat::A8L8:
+                header.pixelFormat.flags = DDPF_LUMINANCE | DDPF_ALPHAPIXELS;
+                header.pixelFormat.rgbBitCount = 16;
+                header.pixelFormat.rBitMask = 0x000000FF; // luminance
+                header.pixelFormat.aBitMask = 0x0000FF00; // alpha
+                header.pitchOrLinearSize = width * 2;
+                writeBpp = 2;
+                break;
 
-                default:
-                    throw std::runtime_error("Unsupported DDS format");
+            case DDSFormat::DXT1:
+                header.pixelFormat.flags = DDPF_FOURCC;
+                header.pixelFormat.fourCC = FOURCC_DXT1;
+                header.flags = (header.flags & ~DDSD_PITCH) | DDSD_LINEARSIZE;
+                header.pitchOrLinearSize = std::max(1u, (width + 3) / 4) * std::max(1u, (height + 3) / 4) * 8;
+                writeBpp = 0;
+                break;
+
+            case DDSFormat::DXT3:
+                header.pixelFormat.flags = DDPF_FOURCC;
+                header.pixelFormat.fourCC = FOURCC_DXT3;
+                header.flags = (header.flags & ~DDSD_PITCH) | DDSD_LINEARSIZE;
+                header.pitchOrLinearSize = std::max(1u, (width + 3) / 4) * std::max(1u, (height + 3) / 4) * 16;
+                writeBpp = 0;
+                break;
+
+            case DDSFormat::DXT5:
+                header.pixelFormat.flags = DDPF_FOURCC;
+                header.pixelFormat.fourCC = FOURCC_DXT5;
+                header.flags = (header.flags & ~DDSD_PITCH) | DDSD_LINEARSIZE;
+                header.pitchOrLinearSize = std::max(1u, (width + 3) / 4) * std::max(1u, (height + 3) / 4) * 16;
+                writeBpp = 0;
+                break;
+
+            default:
+                throw std::runtime_error("Unsupported DDS format");
             }
 
-            // Write to file
-            std::ofstream file(filename, std::ios::binary);
-            if (!file)
-            {
+            if (writeBpp == 0)
+                throw std::runtime_error("DXT compression not yet implemented :( "
+                                         "link against DirectXTex or squish and call their encoder here");
+
+            std::ofstream out(filename, std::ios::binary);
+            if (!out)
                 throw std::runtime_error("Failed to create DDS file: " + filename.string());
-            }
 
-            // Write header
-            file.write(reinterpret_cast<const char*>(&header), sizeof(DDSHeader));
+            out.write(reinterpret_cast<const char *>(&header), sizeof(DDSHeader));
 
-            // Convert and write pixel data (RGBA to BGRA)
-            size_t dataSize = width * height * bytesPerPixel;
-            auto writeData = std::make_unique<uint8_t[]>(dataSize);
-            std::memcpy(writeData.get(), bitmap.GetData().get(), dataSize);
+            const uint8_t *src = bitmap.GetData().get();
+            size_t pixels = width * height;
 
-            if (bytesPerPixel == 4)
+            if (format == DDSFormat::A8L8)
             {
-                for (size_t i = 0; i < dataSize; i += 4)
+                // RGBA8 → A8L8
+                auto buf = std::make_unique<uint8_t[]>(pixels * 2);
+                for (size_t i = 0; i < pixels; ++i)
                 {
-                    std::swap(writeData[i], writeData[i + 2]);  // Swap R and B
+                    uint8_t r = src[i * srcBpp + 0];
+                    uint8_t g = src[i * srcBpp + 1];
+                    uint8_t b = src[i * srcBpp + 2];
+                    uint8_t a = (srcBpp == 4) ? src[i * srcBpp + 3] : 0xFF;
+                    uint8_t l = static_cast<uint8_t>(0.299f * r + 0.587f * g + 0.114f * b);
+                    buf[i * 2 + 0] = l;
+                    buf[i * 2 + 1] = a;
                 }
+                out.write(reinterpret_cast<const char *>(buf.get()), pixels * 2);
             }
-
-            file.write(reinterpret_cast<const char*>(writeData.get()), dataSize);
-
-            if (!file)
+            else
             {
-                throw std::runtime_error("Failed to write DDS pixel data");
+                // RGBA → BGRA for ARGB8 / XRGB8
+                size_t dataSize = pixels * writeBpp;
+                auto buf = std::make_unique<uint8_t[]>(dataSize);
+                std::memcpy(buf.get(), src, dataSize);
+
+                if (writeBpp >= 3)
+                {
+                    for (size_t i = 0; i < dataSize; i += writeBpp)
+                        std::swap(buf[i], buf[i + 2]);
+                }
+
+                out.write(reinterpret_cast<const char *>(buf.get()), dataSize);
             }
+
+            if (!out)
+                throw std::runtime_error("Failed to write DDS pixel data");
         }
 
     private:
         static inline bool registered = Register("dds", "DDS");
+
+        // Expand a packed RGB565 word into R8 G8 B8.
+        static void Unpack565(uint16_t packed, uint8_t &r, uint8_t &g, uint8_t &b)
+        {
+            r = static_cast<uint8_t>(((packed >> 11) & 0x1F) * 255 / 31);
+            g = static_cast<uint8_t>(((packed >> 5) & 0x3F) * 255 / 63);
+            b = static_cast<uint8_t>(((packed >> 0) & 0x1F) * 255 / 31);
+        }
+
+        // Decode one 4×4 DXT colour block into `out` (stride = imageWidth * 4).
+        // If isDXT1 and the colour0 <= colour1 code point 3 is transparent.
+        static void DecodeColourBlock(const uint8_t *block,
+                                      uint8_t *out,
+                                      uint32_t imageWidth,
+                                      bool isDXT1)
+        {
+            uint16_t c0 = static_cast<uint16_t>(block[0] | (block[1] << 8));
+            uint16_t c1 = static_cast<uint16_t>(block[2] | (block[3] << 8));
+
+            uint8_t r[4], g[4], b[4], a[4];
+            Unpack565(c0, r[0], g[0], b[0]);
+            Unpack565(c1, r[1], g[1], b[1]);
+
+            a[0] = a[1] = a[2] = a[3] = 0xFF;
+
+            if (!isDXT1 || c0 > c1)
+            {
+                // 4-colour mode
+                r[2] = (2 * r[0] + r[1]) / 3;
+                g[2] = (2 * g[0] + g[1]) / 3;
+                b[2] = (2 * b[0] + b[1]) / 3;
+                r[3] = (r[0] + 2 * r[1]) / 3;
+                g[3] = (g[0] + 2 * g[1]) / 3;
+                b[3] = (b[0] + 2 * b[1]) / 3;
+            }
+            else
+            {
+                // 3-colour + transparent mode (DXT1 only)
+                r[2] = (r[0] + r[1]) / 2;
+                g[2] = (g[0] + g[1]) / 2;
+                b[2] = (b[0] + b[1]) / 2;
+                r[3] = g[3] = b[3] = 0;
+                a[3] = 0;
+            }
+
+            uint32_t indices = block[4] | (block[5] << 8) | (block[6] << 16) | (block[7] << 24);
+
+            for (int row = 0; row < 4; ++row)
+            {
+                for (int col = 0; col < 4; ++col)
+                {
+                    uint8_t idx = (indices >> ((row * 4 + col) * 2)) & 0x3;
+                    uint8_t *px = out + (row * imageWidth + col) * 4;
+                    px[0] = r[idx];
+                    px[1] = g[idx];
+                    px[2] = b[idx];
+                    px[3] = a[idx];
+                }
+            }
+        }
+
+        // DXT3 explicit 4-bit alpha block.
+        static void DecodeDXT3AlphaBlock(const uint8_t *block,
+                                         uint8_t *out,
+                                         uint32_t imageWidth)
+        {
+            for (int row = 0; row < 4; ++row)
+            {
+                uint16_t word = static_cast<uint16_t>(block[row * 2] | (block[row * 2 + 1] << 8));
+                for (int col = 0; col < 4; ++col)
+                {
+                    uint8_t a = (word >> (col * 4)) & 0xF;
+                    out[(row * imageWidth + col) * 4 + 3] = static_cast<uint8_t>(a * 17); // 0xF→0xFF
+                }
+            }
+        }
+
+        // DXT5 interpolated alpha block.
+        static void DecodeDXT5AlphaBlock(const uint8_t *block,
+                                         uint8_t *out,
+                                         uint32_t imageWidth)
+        {
+            uint8_t a[8];
+            a[0] = block[0];
+            a[1] = block[1];
+
+            if (a[0] > a[1])
+            {
+                a[2] = (6 * a[0] + 1 * a[1]) / 7;
+                a[3] = (5 * a[0] + 2 * a[1]) / 7;
+                a[4] = (4 * a[0] + 3 * a[1]) / 7;
+                a[5] = (3 * a[0] + 4 * a[1]) / 7;
+                a[6] = (2 * a[0] + 5 * a[1]) / 7;
+                a[7] = (1 * a[0] + 6 * a[1]) / 7;
+            }
+            else
+            {
+                a[2] = (4 * a[0] + 1 * a[1]) / 5;
+                a[3] = (3 * a[0] + 2 * a[1]) / 5;
+                a[4] = (2 * a[0] + 3 * a[1]) / 5;
+                a[5] = (1 * a[0] + 4 * a[1]) / 5;
+                a[6] = 0;
+                a[7] = 255;
+            }
+
+            // 48-bit index table packed in 6 bytes starting at block[2]
+            uint64_t bits = 0;
+            for (int i = 0; i < 6; ++i)
+                bits |= static_cast<uint64_t>(block[2 + i]) << (i * 8);
+
+            for (int row = 0; row < 4; ++row)
+                for (int col = 0; col < 4; ++col)
+                {
+                    uint8_t idx = (bits >> ((row * 4 + col) * 3)) & 0x7;
+                    out[(row * imageWidth + col) * 4 + 3] = a[idx];
+                }
+        }
+
+        static void DecompressDXT1(const std::vector<uint8_t> &src,
+                                   uint8_t *dst,
+                                   uint32_t width, uint32_t height)
+        {
+            uint32_t blocksW = std::max(1u, (width + 3) / 4);
+            uint32_t blocksH = std::max(1u, (height + 3) / 4);
+            const uint8_t *p = src.data();
+
+            for (uint32_t by = 0; by < blocksH; ++by)
+                for (uint32_t bx = 0; bx < blocksW; ++bx, p += 8)
+                {
+                    uint8_t *out = dst + (by * 4 * width + bx * 4) * 4;
+                    DecodeColourBlock(p, out, width, true);
+                }
+        }
+
+        static void DecompressDXT3(const std::vector<uint8_t> &src,
+                                   uint8_t *dst,
+                                   uint32_t width, uint32_t height)
+        {
+            uint32_t blocksW = std::max(1u, (width + 3) / 4);
+            uint32_t blocksH = std::max(1u, (height + 3) / 4);
+            const uint8_t *p = src.data();
+
+            for (uint32_t by = 0; by < blocksH; ++by)
+                for (uint32_t bx = 0; bx < blocksW; ++bx, p += 16)
+                {
+                    uint8_t *out = dst + (by * 4 * width + bx * 4) * 4;
+                    DecodeDXT3AlphaBlock(p, out, width);         // first 8 bytes = alpha
+                    DecodeColourBlock(p + 8, out, width, false); // next 8 = colour
+                }
+        }
+
+        static void DecompressDXT5(const std::vector<uint8_t> &src,
+                                   uint8_t *dst,
+                                   uint32_t width, uint32_t height)
+        {
+            uint32_t blocksW = std::max(1u, (width + 3) / 4);
+            uint32_t blocksH = std::max(1u, (height + 3) / 4);
+            const uint8_t *p = src.data();
+
+            for (uint32_t by = 0; by < blocksH; ++by)
+                for (uint32_t bx = 0; bx < blocksW; ++bx, p += 16)
+                {
+                    uint8_t *out = dst + (by * 4 * width + bx * 4) * 4;
+                    DecodeDXT5AlphaBlock(p, out, width);         // first 8 bytes = alpha
+                    DecodeColourBlock(p + 8, out, width, false); // next 8 = colour
+                }
+        }
     };
 }

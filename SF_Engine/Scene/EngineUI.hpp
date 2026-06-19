@@ -5,7 +5,7 @@
 #include <cstdio>
 
 #include <Scene/Types.hpp>
-#include <Default/TransformComponent.hpp>
+#include <Components/TransformComponent.hpp>
 #include <Default/ImGuiDefaultWIDGETS.hpp>
 
 namespace SF::Engine
@@ -58,20 +58,23 @@ namespace SF::Engine
                     ImGui::Separator();
                     ImGui::TextDisabled("Teleport");
                     auto pos = ctx_.camera->GetPosition();
-                    // Height above surface in metres (planet surface is at Y=0 in world)
-                    float altKm = pos.y / 1000.0f;
-                    ImGui::Text("Alt: %.1f km", altKm);
+                    // Y=0 in game space = sea level. Display altitude in metres below 10km, km above.
+                    float altM = pos.y;
+                    if (std::abs(altM) < 10000.0f)
+                        ImGui::Text("Alt: %.0f m", altM);
+                    else
+                        ImGui::Text("Alt: %.1f km", altM / 1000.0f);
                     if (ImGui::Button("Surface (0 m)"))
-                        ctx_.camera->SetPosition({0.0f, 1.5f, 6.0f});
+                        ctx_.camera->SetPosition({0.0f, 10.0f, 0.0f});
                     ImGui::SameLine();
                     if (ImGui::Button("10 km"))
                         ctx_.camera->SetPosition({0.0f, 10000.0f, 0.0f});
-                    ImGui::SameLine();
                     if (ImGui::Button("50 km"))
                         ctx_.camera->SetPosition({0.0f, 50000.0f, 0.0f});
                     ImGui::SameLine();
                     if (ImGui::Button("100 km"))
                         ctx_.camera->SetPosition({0.0f, 100000.0f, 0.0f});
+                    ImGui::SameLine();
                     if (ImGui::Button("200 km (orbit)"))
                         ctx_.camera->SetPosition({0.0f, 200000.0f, 0.0f});
                     ImGui::SameLine();

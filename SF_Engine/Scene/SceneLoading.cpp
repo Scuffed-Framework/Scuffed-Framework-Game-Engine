@@ -2,7 +2,7 @@
 #include <Camera/EditorCamera.hpp>
 #include <Default/DefaultScene.hpp>
 #include <Engine/Log/Log.hpp>
-#include <Files/File.hpp>
+#include <Filesystem/File.hpp>
 #include <XML/XMLReader.hpp>
 
 #include <fstream>
@@ -16,6 +16,7 @@
 #include <wininet.h>
 #pragma comment(lib, "wininet.lib")
 #endif
+#include <Controllers/CameraController.hpp>
 
 namespace SF::Engine
 {
@@ -31,7 +32,7 @@ namespace SF::Engine
     {
     public:
         explicit LoadedScene(SceneRendererConfig cfg = {})
-            : Scene(std::make_unique<EditorCamera>(), cfg)
+            : Scene(std::make_unique<CameraController>(), cfg)
         {
         }
 

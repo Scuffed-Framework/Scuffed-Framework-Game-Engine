@@ -36,4 +36,25 @@ namespace SF::Engine
             return Shader::VertexInput(std::move(bindings), std::move(attrs));
         }
     };
+    struct PatchVertex
+    {
+        glm::vec3 position;
+        glm::vec2 uv;
+        glm::vec3 normal;
+
+        static Shader::VertexInput GetVertexInput()
+        {
+            std::vector<VkVertexInputBindingDescription> bindings(1);
+            bindings[0].binding = 0;
+            bindings[0].stride = sizeof(PatchVertex);
+            bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            std::vector<VkVertexInputAttributeDescription> attrs(3);
+            attrs[0] = {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PatchVertex, position)};
+            attrs[1] = {1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(PatchVertex, uv)};
+            attrs[2] = {2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PatchVertex, normal)};
+
+            return Shader::VertexInput(std::move(bindings), std::move(attrs));
+        }
+    };
 }

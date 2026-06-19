@@ -1,0 +1,80 @@
+#ifndef PERLIN_NOISE_SI
+#define PERLIN_NOISE_SI
+
+// Gradient hash: 12 fixed gradients
+vec3 grad3(int hash)
+{
+    const vec3 g[12] = vec3[12](
+        vec3( 1,1,0), vec3(-1,1,0), vec3( 1,-1,0), vec3(-1,-1,0),
+        vec3( 1,0,1), vec3(-1,0,1), vec3( 1,0,-1), vec3(-1,0,-1),
+        vec3( 0,1,1), vec3( 0,-1,1), vec3( 0,1,-1), vec3( 0,-1,-1)
+    );
+    return g[hash & 11];
+}
+
+float fade(float t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+
+// Simple lattice hash
+int perm(int x)
+{
+    x = x & 255;
+    x = (x << 13) ^ x;
+    return (x * (x * x * 15731 + 789221) + 1376312589) & 0xFF;
+}
+
+// 3D Perlin
+float perlin(vec3 p)
+{
+    ivec3 ip = ivec3(floor(p));
+    vec3 fp = fract(p);
+
+    float u = fade(fp.x);
+    float v = fade(fp.y);
+    float w = fade(fp.z);
+
+    int A  = perm(ip.x) + ip.y;
+    int AA = perm(A) + ip.z;
+    int AB = perm(A + 1) + ip.z;
+
+    int B  = perm(ip.x + 1) + ip.y;
+    int BA = perm(B) + ip.z;
+    int BB = perm(B + 1) + ip.z;
+
+    float g000 = dot(grad3(perm(AA)),       fp - vec3(0,0,0));
+    float g100 = dot(grad3(perm(BA)),       fp - vec3(1,0,0));
+    float g010 = dot(grad3(perm(AB)),       fp - vec3(0,1,0));
+    float g110 = dot(grad3(perm(BB)),       fp - vec3(1,1,0));
+    float g001 = dot(grad3(perm(AA+1)),     fp - vec3(0,0,1));
+    float g101 = dot(grad3(perm(BA+1)),     fp - vec3(1,0,1));
+    float g011 = dot(grad3(perm(AB+1)),     fp - vec3(0,1,1));
+    float g111 = dot(grad3(perm(BB+1)),     fp - vec3(1,1,1));
+
+    float x00 = mix(g000, g100, u);
+    float x10 = mix(g010, g110, u);
+    float x01 = mix(g001, g101, u);
+    float x11 = mix(g011, g111, u);
+
+    float y0 = mix(x00, x10, v);
+    float y1 = mix(x01, x11, v);
+
+    return mix(y0, y1, w) * 0.5 + 0.5; // Normalize to [0,1]
+}
+
+// Multi-octave FBM
+float perlinfbm(vec3 p, float baseFreq, int octaves)
+{
+    float sum = 0.0;
+    float amp = 0.5;
+    float freq = baseFreq;
+
+    for (int i = 0; i < octaves; i++)
+    {
+        sum += perlin(p * freq) * amp;
+        freq *= 2.0;
+        amp *= 0.5;
+    }
+
+    return sum;
+}
+
+#endif
