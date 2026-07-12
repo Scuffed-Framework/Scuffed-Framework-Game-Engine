@@ -12,10 +12,10 @@
 
 #if !defined(WORDS_BIGENDIAN)
 #if defined(_MSC_VER)
-#include <intrin.h>  // _byteswap_uint64
+#include <intrin.h> // _byteswap_uint64
 // #include <immintrin.h>  // Intel _loadbe_i64 / _storebe_i64 depends on the CPU
-#endif  // MSVC
-#endif  // !BIGENDIAN
+#endif // MSVC
+#endif // !BIGENDIAN
 
 #include <algorithm>
 #include <cstddef>
@@ -23,16 +23,16 @@
 
 #include <Matroska/EBML/EbmlTypes.h>
 
-#include "EbmlConfig.h"  // contains _ENDIANESS_
+#include "EbmlConfig.h" // contains _ENDIANESS_
 
-#if defined(__linux__)
+#if defined(_PLATFORM_LINUX)
 #include <endian.h>
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #undef WORDS_BIGENDIAN
 #elif __BYTE_ORDER == __BIG_ENDIAN
 #define WORDS_BIGENDIAN 1
 #endif
-#else  // !LINUX
+#else // !LINUX
 // automatic endianess detection working on GCC
 #if !defined(WORDS_BIGENDIAN)
 #if (defined(__arm__) && !defined(__ARMEB__)) || defined(__i386__) || defined(__i860__) || \
@@ -41,11 +41,11 @@
 #elif defined(__sparc__) || defined(__alpha__) || defined(__PPC__) || defined(__mips__) || \
     defined(__ppc__) || defined(__BIG_ENDIAN__)
 #define WORDS_BIGENDIAN 1
-#else                   // other CPU
+#else                  // other CPU
 // not automatically detected, put it yourself
-#undef WORDS_BIGENDIAN  // for my testing platform (x86)
+#undef WORDS_BIGENDIAN // for my testing platform (x86)
 #endif
-#endif  // not autoconf
+#endif // not autoconf
 #endif
 
 #if defined(WORDS_BIGENDIAN) && defined(BUILD_LITTLE_ENDIAN)
@@ -73,9 +73,9 @@ namespace libebml
         {
 #if defined(__GNUC__) || defined(__clang__)
             return __builtin_bswap64(value);
-#else  // _MSC_VER
-            std::uint64_t res = _byteswap_uint64(*reinterpret_cast<std::uint64_t*>(&value));
-            return *reinterpret_cast<std::int64_t*>(&res);
+#else // _MSC_VER
+            std::uint64_t res = _byteswap_uint64(*reinterpret_cast<std::uint64_t *>(&value));
+            return *reinterpret_cast<std::int64_t *>(&res);
 #endif
         }
 
@@ -83,9 +83,9 @@ namespace libebml
         {
 #if defined(__GNUC__) || defined(__clang__)
             return __builtin_bswap32(value);
-#else  // _MSC_VER
-            std::uint32_t res = _byteswap_ulong(*reinterpret_cast<std::uint32_t*>(&value));
-            return *reinterpret_cast<std::int16_t*>(&res);
+#else // _MSC_VER
+            std::uint32_t res = _byteswap_ulong(*reinterpret_cast<std::uint32_t *>(&value));
+            return *reinterpret_cast<std::int16_t *>(&res);
 #endif
         }
 
@@ -93,41 +93,41 @@ namespace libebml
         {
 #if defined(__GNUC__) || defined(__clang__)
             return __builtin_bswap16(value);
-#else  // _MSC_VER
-            std::uint16_t res = _byteswap_ushort(*reinterpret_cast<std::uint16_t*>(&value));
-            return *reinterpret_cast<std::int16_t*>(&res);
+#else // _MSC_VER
+            std::uint16_t res = _byteswap_ushort(*reinterpret_cast<std::uint16_t *>(&value));
+            return *reinterpret_cast<std::int16_t *>(&res);
 #endif
         }
 
-#else  // !GCC && !CLANG && !MSVC
+#else // !GCC && !CLANG && !MSVC
 
         // generic version
         template <class T>
         static inline T swap_big(T value)
         {
-            std::reverse(reinterpret_cast<std::uint8_t*>(&value),
-                         reinterpret_cast<std::uint8_t*>(&value + 1));
+            std::reverse(reinterpret_cast<std::uint8_t *>(&value),
+                         reinterpret_cast<std::uint8_t *>(&value + 1));
             // TODO support C++23 std::byteswap
             return value;
         }
 
-#endif  // !GCC && !CLANG && !MSVC
+#endif // !GCC && !CLANG && !MSVC
 
-        static inline std::int64_t from_big64(const binary* big_ptr)
+        static inline std::int64_t from_big64(const binary *big_ptr)
         {
             std::int64_t result;
             memcpy(&result, big_ptr, sizeof(result));
             return swap_big(result);
         }
 
-        static inline std::int32_t from_big32(const binary* big_ptr)
+        static inline std::int32_t from_big32(const binary *big_ptr)
         {
             std::int32_t result;
             memcpy(&result, big_ptr, sizeof(result));
             return swap_big(result);
         }
 
-        static inline std::int16_t from_big16(const binary* big_ptr)
+        static inline std::int16_t from_big16(const binary *big_ptr)
         {
             std::int16_t result;
             memcpy(&result, big_ptr, sizeof(result));
@@ -152,12 +152,12 @@ namespace libebml
             memcpy(out, &value, sizeof(value));
         }
 
-    }  // namespace endian
+    } // namespace endian
 
     enum endianess
     {
-        big_endian,    ///< PowerPC, Alpha, 68000
-        little_endian  ///< Intel x86 platforms
+        big_endian,   ///< PowerPC, Alpha, 68000
+        little_endian ///< Intel x86 platforms
     };
 
     /*!
@@ -177,29 +177,29 @@ namespace libebml
             process_endian();
         }
 
-        inline Endian& Eval(const binary* endian_buffer)
+        inline Endian &Eval(const binary *endian_buffer)
         {
             // endian_value = *(TYPE *)(endian_buffer);
             memcpy(&endian_value, endian_buffer,
-                   sizeof(TYPE));  // Some (all?) RISC processors do not allow reading objects
-                                   // bigger than 1 byte from non-aligned addresses, and
-                                   // endian_buffer may point to a non-aligned address.
+                   sizeof(TYPE)); // Some (all?) RISC processors do not allow reading objects
+                                  // bigger than 1 byte from non-aligned addresses, and
+                                  // endian_buffer may point to a non-aligned address.
             process_platform();
             return *this;
         }
 
-        inline void Fill(binary* endian_buffer) const
+        inline void Fill(binary *endian_buffer) const
         {
             //*(TYPE*)endian_buffer = endian_value;
-            memcpy(endian_buffer, &endian_value, sizeof(TYPE));  // See above.
+            memcpy(endian_buffer, &endian_value, sizeof(TYPE)); // See above.
         }
 
-        inline operator const TYPE&() const
+        inline operator const TYPE &() const
         {
             return platform_value;
         }
         //  inline TYPE endian() const   { return endian_value; }
-        inline const TYPE& endian() const
+        inline const TYPE &endian() const
         {
             return endian_value;
         }
@@ -207,9 +207,9 @@ namespace libebml
         {
             return sizeof(TYPE);
         }
-        inline bool operator!=(const binary* buffer) const
+        inline bool operator!=(const binary *buffer) const
         {
-            return *(reinterpret_cast<TYPE*>(buffer)) == platform_value;
+            return *(reinterpret_cast<TYPE *>(buffer)) == platform_value;
         }
 
     private:
@@ -221,11 +221,11 @@ namespace libebml
             endian_value = platform_value;
 #ifdef WORDS_BIGENDIAN
             if (ENDIAN == little_endian)
-#else   // _ENDIANESS_
+#else  // _ENDIANESS_
             if (ENDIAN == big_endian)
-#endif  // _ENDIANESS_
-                std::reverse(reinterpret_cast<std::uint8_t*>(&endian_value),
-                             reinterpret_cast<std::uint8_t*>(&endian_value + 1));
+#endif // _ENDIANESS_
+                std::reverse(reinterpret_cast<std::uint8_t *>(&endian_value),
+                             reinterpret_cast<std::uint8_t *>(&endian_value + 1));
         }
 
         inline void process_platform()
@@ -233,11 +233,11 @@ namespace libebml
             platform_value = endian_value;
 #ifdef WORDS_BIGENDIAN
             if (ENDIAN == little_endian)
-#else   // _ENDIANESS_
+#else  // _ENDIANESS_
             if (ENDIAN == big_endian)
-#endif  // _ENDIANESS_
-                std::reverse(reinterpret_cast<std::uint8_t*>(&platform_value),
-                             reinterpret_cast<std::uint8_t*>(&platform_value + 1));
+#endif // _ENDIANESS_
+                std::reverse(reinterpret_cast<std::uint8_t *>(&platform_value),
+                             reinterpret_cast<std::uint8_t *>(&platform_value + 1));
         }
     };
 
@@ -248,6 +248,6 @@ namespace libebml
     using big_uint32 = Endian<std::uint32_t, big_endian>;
     using big_uint64 = Endian<std::uint64_t, big_endian>;
 
-}  // namespace libebml
+} // namespace libebml
 
-#endif  // LIBEBML_ENDIAN_H
+#endif // LIBEBML_ENDIAN_H

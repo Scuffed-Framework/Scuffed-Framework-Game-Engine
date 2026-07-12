@@ -1,4 +1,4 @@
-#ifdef _WIN32
+#ifdef_PLATFORM_WINDOWS
 #ifndef UNICODE
 #define UNICODE
 #endif
@@ -130,4 +130,4 @@ namespace SF::Engine
     }
 
 } // namespace SF::Engine
-#endif // _WIN32
+#endif //_PLATFORM_WINDOWS

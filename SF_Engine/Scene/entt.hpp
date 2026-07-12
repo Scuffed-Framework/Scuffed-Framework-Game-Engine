@@ -157,7 +157,7 @@ namespace entt {}
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -375,7 +375,7 @@ namespace entt {}
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -548,7 +548,7 @@ namespace entt {}
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -6153,7 +6153,7 @@ struct radix_sort {
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -11497,7 +11497,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -11678,7 +11678,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -23627,7 +23627,7 @@ sigh_helper(Registry &) -> sigh_helper<Registry>;
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -23802,7 +23802,7 @@ sigh_helper(Registry &) -> sigh_helper<Registry>;
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -26576,7 +26576,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -26953,7 +26953,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -27545,7 +27545,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -27718,7 +27718,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -35387,7 +35387,7 @@ inline constexpr bool std::ranges::enable_view<entt::basic_group<Args...>>{true}
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -35560,7 +35560,7 @@ inline constexpr bool std::ranges::enable_view<entt::basic_group<Args...>>{true}
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -45723,7 +45723,7 @@ basic_view(std::tuple<Get &...>, std::tuple<Exclude &...> = {}) -> basic_view<ge
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -46100,7 +46100,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -46753,7 +46753,7 @@ void dot(std::ostream &out, const Graph &graph) {
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -46926,7 +46926,7 @@ void dot(std::ostream &out, const Graph &graph) {
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -53851,7 +53851,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -54238,7 +54238,7 @@ struct adl_meta_pointer_like {
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -54411,7 +54411,7 @@ struct adl_meta_pointer_like {
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -59301,7 +59301,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -60690,7 +60690,7 @@ class meta_ctx: private internal::meta_context {
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -63603,7 +63603,7 @@ template<typename Type>
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -71884,7 +71884,7 @@ template<typename Type, auto Candidate, typename Policy = as_value_t>
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -75903,7 +75903,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -78570,7 +78570,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -79302,7 +79302,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -79475,7 +79475,7 @@ private:
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -83433,7 +83433,7 @@ struct uses_allocator<entt::internal::dense_map_node<Key, Value>, Allocator>
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -86230,7 +86230,7 @@ template<typename Lhs, typename Rhs>
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -86405,7 +86405,7 @@ template<typename Lhs, typename Rhs>
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -87925,7 +87925,7 @@ delegate(Ret (*)(const void *, Args...), const void * = nullptr) -> delegate<Ret
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN
@@ -88098,7 +88098,7 @@ delegate(Ret (*)(const void *, Args...), const void * = nullptr) -> delegate<Ret
 #endif
 
 #ifndef ENTT_EXPORT
-#    if defined _WIN32 || defined __CYGWIN__ || defined _MSC_VER
+#    if defined_PLATFORM_WINDOWS || defined __CYGWIN__ || defined _MSC_VER
 #        define ENTT_EXPORT __declspec(dllexport)
 #        define ENTT_IMPORT __declspec(dllimport)
 #        define ENTT_HIDDEN

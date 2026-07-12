@@ -155,7 +155,7 @@
 #endif
 
 // GLFW
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || \
+#if defined(_PLATFORM_LINUX) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || \
     defined(__DragonFly__)
 #define GLFW_HAS_X11_OR_WAYLAND 1
 #else
@@ -168,7 +168,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #endif
 #include <GLFW/glfw3native.h>
-#elif defined(__APPLE__)
+#elif defined(_PLATFORM_MACOS)
 #ifndef GLFW_EXPOSE_NATIVE_COCOA // for glfwGetCocoaWindow()
 #define GLFW_EXPOSE_NATIVE_COCOA
 #endif
@@ -1018,7 +1018,7 @@ static bool ImGui_ImplGlfw_Init(GLFWwindow *window, bool install_callbacks,
     main_viewport->PlatformHandle = (void *)bd->Window;
 #ifdef _WIN32
     main_viewport->PlatformHandleRaw = glfwGetWin32Window(bd->Window);
-#elif defined(__APPLE__)
+#elif defined(_PLATFORM_MACOS)
     main_viewport->PlatformHandleRaw = (void *)glfwGetCocoaWindow(bd->Window);
 #endif
 
@@ -1254,7 +1254,7 @@ float ImGui_ImplGlfw_GetContentScaleForWindow(GLFWwindow *window)
             return 1.0f;
 #endif
 #if GLFW_HAS_PER_MONITOR_DPI && \
-    !(defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__ANDROID__))
+    !(defined(_PLATFORM_MACOS) || defined(__EMSCRIPTEN__) || defined(__ANDROID__))
     float x_scale, y_scale;
     glfwGetWindowContentScale(window, &x_scale, &y_scale);
     return x_scale;
@@ -1271,7 +1271,7 @@ float ImGui_ImplGlfw_GetContentScaleForMonitor(GLFWmonitor *monitor)
         return 1.0f;
 #endif
 #if GLFW_HAS_PER_MONITOR_DPI && \
-    !(defined(__APPLE__) || defined(__EMSCRIPTEN__) || defined(__ANDROID__))
+    !(defined(_PLATFORM_MACOS) || defined(__EMSCRIPTEN__) || defined(__ANDROID__))
     float x_scale, y_scale;
     glfwGetMonitorContentScale(monitor, &x_scale, &y_scale);
     return x_scale;

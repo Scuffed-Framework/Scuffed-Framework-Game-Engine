@@ -56,15 +56,15 @@ namespace SF::Engine
     public:
         // Constructors
         File() = default;
-        explicit File(const std::string& path);
-        File(const fs::path& path);
-        File(const File& other);
-        File(File&& other) noexcept;
+        explicit File(const std::string &path);
+        File(const fs::path &path);
+        File(const File &other);
+        File(File &&other) noexcept;
         ~File();
 
         // Assignment operators
-        File& operator=(const File& other);
-        File& operator=(File&& other) noexcept;
+        File &operator=(const File &other);
+        File &operator=(File &&other) noexcept;
 
         // File operations
         bool Open(FileMode mode = FileMode::Read);
@@ -75,7 +75,7 @@ namespace SF::Engine
         std::string ReadAllText();
         std::vector<std::string> ReadAllLines();
         std::vector<uint8_t> ReadAllBytes();
-        size_t Read(void* buffer, size_t size);
+        size_t Read(void *buffer, size_t size);
         std::string ReadString(size_t length);
         int64_t ReadInt64();
         int32_t ReadInt32();
@@ -83,9 +83,9 @@ namespace SF::Engine
         float ReadFloat();
 
         // Writing operations
-        size_t Write(const void* data, size_t size);
-        void WriteAllText(const std::string& text);
-        void WriteAllBytes(const std::vector<uint8_t>& data);
+        size_t Write(const void *data, size_t size);
+        void WriteAllText(const std::string &text);
+        void WriteAllBytes(const std::vector<uint8_t> &data);
         void WriteInt64(int64_t value);
         void WriteInt32(int32_t value);
         void WriteDouble(double value);
@@ -98,22 +98,22 @@ namespace SF::Engine
         bool Seek(int64_t offset, FileSeek seek = FileSeek::Current);
 
         // File system operations
-        static bool Exists(const std::string& path);
+        static bool Exists(const std::string &path);
         bool Exists() const;
 
-        static bool Delete(const std::string& path);
+        static bool Delete(const std::string &path);
         bool Delete();
 
-        static bool Copy(const std::string& source, const std::string& destination,
+        static bool Copy(const std::string &source, const std::string &destination,
                          bool overwrite = false);
-        bool CopyTo(const std::string& destination, bool overwrite = false) const;
+        bool CopyTo(const std::string &destination, bool overwrite = false) const;
 
-        static bool Move(const std::string& source, const std::string& destination,
+        static bool Move(const std::string &source, const std::string &destination,
                          bool overwrite = false);
-        bool MoveTo(const std::string& destination, bool overwrite = false);
+        bool MoveTo(const std::string &destination, bool overwrite = false);
 
-        static bool Rename(const std::string& oldPath, const std::string& newPath);
-        bool Rename(const std::string& newName);
+        static bool Rename(const std::string &oldPath, const std::string &newPath);
+        bool Rename(const std::string &newName);
 
         // File information
         std::string GetName() const;
@@ -129,28 +129,28 @@ namespace SF::Engine
         bool IsSymbolicLink() const;
 
         // Directory operations
-        static bool CreateDirectory(const std::string& path);
-        static bool DeleteDirectory(const std::string& path, bool recursive = false);
+        static bool CreateDirectory(const std::string &path);
+        static bool DeleteDirectory(const std::string &path, bool recursive = false);
 
-        static std::vector<File> GetFiles(const std::string& directory,
-                                          const std::string& pattern = "*", bool recursive = false);
-        static std::vector<File> GetDirectories(const std::string& directory,
+        static std::vector<File> GetFiles(const std::string &directory,
+                                          const std::string &pattern = "*", bool recursive = false);
+        static std::vector<File> GetDirectories(const std::string &directory,
                                                 bool recursive = false);
 
         // Utility functions
         static std::string GetCurrentDirectory();
-        static bool SetCurrentDirectory(const std::string& path);
+        static bool SetCurrentDirectory(const std::string &path);
         static std::string GetTempDirectory();
         static File CreateTempFile();
 
         // Stream-like operations
-        File& operator>>(std::string& str);
-        File& operator>>(int64_t& value);
-        File& operator>>(double& value);
+        File &operator>>(std::string &str);
+        File &operator>>(int64_t &value);
+        File &operator>>(double &value);
 
-        File& operator<<(const std::string& str);
-        File& operator<<(int64_t value);
-        File& operator<<(double value);
+        File &operator<<(const std::string &str);
+        File &operator<<(int64_t value);
+        File &operator<<(double value);
 
         operator bool() const;
 
@@ -169,13 +169,13 @@ namespace SF::Engine
         {
         public:
             DirectoryIterator() = default;
-            explicit DirectoryIterator(const std::string& path);
+            explicit DirectoryIterator(const std::string &path);
 
             DirectoryIterator begin() const;
             DirectoryIterator end() const;
 
-            bool operator!=(const DirectoryIterator& other) const;
-            DirectoryIterator& operator++();
+            bool operator!=(const DirectoryIterator &other) const;
+            DirectoryIterator &operator++();
             File operator*() const;
 
         private:
@@ -190,14 +190,14 @@ namespace SF::Engine
     class FileReader
     {
     public:
-        explicit FileReader(const File& file);
-        explicit FileReader(const std::string& path);
+        explicit FileReader(const File &file);
+        explicit FileReader(const std::string &path);
 
         template <typename T>
         T Read();
 
         template <typename T>
-        FileReader& operator>>(T& value);
+        FileReader &operator>>(T &value);
 
         bool IsEOF();
         size_t GetPosition();
@@ -211,14 +211,14 @@ namespace SF::Engine
     class FileWriter
     {
     public:
-        explicit FileWriter(const File& file, FileMode mode = FileMode::Write);
-        explicit FileWriter(const std::string& path, FileMode mode = FileMode::Write);
+        explicit FileWriter(const File &file, FileMode mode = FileMode::Write);
+        explicit FileWriter(const std::string &path, FileMode mode = FileMode::Write);
 
         template <typename T>
-        void Write(const T& value);
+        void Write(const T &value);
 
         template <typename T>
-        FileWriter& operator<<(const T& value);
+        FileWriter &operator<<(const T &value);
 
         void Flush();
 
@@ -231,30 +231,30 @@ namespace SF::Engine
     {
     public:
         MemoryMappedFile();
-        explicit MemoryMappedFile(const std::string& path, size_t offset = 0, size_t length = 0);
+        explicit MemoryMappedFile(const std::string &path, size_t offset = 0, size_t length = 0);
         ~MemoryMappedFile();
 
-        bool Open(const std::string& path, size_t offset = 0, size_t length = 0);
+        bool Open(const std::string &path, size_t offset = 0, size_t length = 0);
         void Close();
 
         bool IsOpen() const;
         size_t GetSize() const;
-        const uint8_t* GetData() const;
-        uint8_t* GetData();
+        const uint8_t *GetData() const;
+        uint8_t *GetData();
 
         template <typename T>
-        const T* GetAs() const;
+        const T *GetAs() const;
 
         void Flush();
 
     private:
-#ifdef _WIN32
-        void* m_fileHandle = nullptr;
-        void* m_mappingHandle = nullptr;
+#ifdef_PLATFORM_WINDOWS
+        void *m_fileHandle = nullptr;
+        void *m_mappingHandle = nullptr;
 #else
-        int m_fileDescriptor = -1;
+int m_fileDescriptor = -1;
 #endif
-        uint8_t* m_data = nullptr;
+        uint8_t *m_data = nullptr;
         size_t m_size = 0;
         size_t m_offset = 0;
     };
@@ -271,16 +271,16 @@ namespace SF::Engine
             Renamed
         };
 
-        using Callback = std::function<void(const std::string&, ChangeType)>;
+        using Callback = std::function<void(const std::string &, ChangeType)>;
 
         FileWatcher();
         ~FileWatcher();
 
-        void Watch(const std::string& path, bool recursive = true);
-        void Unwatch(const std::string& path);
+        void Watch(const std::string &path, bool recursive = true);
+        void Unwatch(const std::string &path);
 
         void SetCallback(Callback callback);
-        void Update(float deltaTime);  // Call this periodically
+        void Update(float deltaTime); // Call this periodically
 
     private:
         struct WatchInfo
@@ -296,16 +296,16 @@ namespace SF::Engine
     };
 
     // Implementation of inline methods
-    inline File::File(const std::string& path) : m_path(path) {}
+    inline File::File(const std::string &path) : m_path(path) {}
 
-    inline File::File(const fs::path& path) : m_path(path) {}
+    inline File::File(const fs::path &path) : m_path(path) {}
 
     inline bool File::Exists() const
     {
         return fs::exists(m_path);
     }
 
-    inline bool File::Exists(const std::string& path)
+    inline bool File::Exists(const std::string &path)
     {
         return fs::exists(path);
     }
@@ -359,31 +359,31 @@ namespace SF::Engine
     }
 
     template <typename T>
-    FileReader& FileReader::operator>>(T& value)
+    FileReader &FileReader::operator>>(T &value)
     {
         value = Read<T>();
         return *this;
     }
 
     template <typename T>
-    void FileWriter::Write(const T& value)
+    void FileWriter::Write(const T &value)
     {
         m_file.Write(&value, sizeof(T));
     }
 
     template <typename T>
-    FileWriter& FileWriter::operator<<(const T& value)
+    FileWriter &FileWriter::operator<<(const T &value)
     {
         Write(value);
         return *this;
     }
 
     template <typename T>
-    const T* MemoryMappedFile::GetAs() const
+    const T *MemoryMappedFile::GetAs() const
     {
-        return reinterpret_cast<const T*>(m_data);
+        return reinterpret_cast<const T *>(m_data);
     }
 
-}  // namespace SF::Engine
+} // namespace SF::Engine
 
-#endif  // SF_ENGINE_FILE_HPP
+#endif // SF_ENGINE_FILE_HPP

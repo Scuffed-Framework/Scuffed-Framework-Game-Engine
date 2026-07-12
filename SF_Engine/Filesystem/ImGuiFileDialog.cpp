@@ -87,12 +87,12 @@ SOFTWARE.
 #ifndef PATH_MAX
 #define PATH_MAX 260
 #endif // PATH_MAX
-#elif defined(__linux__) ||   \
-    defined(__FreeBSD__) ||   \
-    defined(__DragonFly__) || \
-    defined(__NetBSD__) ||    \
-    defined(__OpenBSD__) ||   \
-    defined(__APPLE__) ||     \
+#elif defined(_PLATFORM_LINUX) || \
+    defined(__FreeBSD__) ||       \
+    defined(__DragonFly__) ||     \
+    defined(__NetBSD__) ||        \
+    defined(__OpenBSD__) ||       \
+    defined(_PLATFORM_MACOS) ||   \
     defined(__EMSCRIPTEN__)
 #define _IGFD_UNIX_
 #define stricmp strcasecmp
@@ -3076,11 +3076,11 @@ bool IGFD::FileManager::SelectDirectory(const std::shared_ptr<FileInfos> &vInfos
         }
         else
         {
-#ifdef __linux__
+#ifdef _PLATFORM_LINUX
             if (fsRoot == m_CurrentPath)
                 newPath = m_CurrentPath + vInfos->fileNameExt;
             else
-#endif // __linux__
+#endif // _PLATFORM_LINUX
                 newPath = m_CurrentPath + IGFD::Utils::GetPathSeparator() + vInfos->fileNameExt;
         }
 

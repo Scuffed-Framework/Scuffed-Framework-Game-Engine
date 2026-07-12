@@ -1,6 +1,6 @@
 #include "SoundBuffer.hpp"
 
-#ifdef __APPLE__
+#ifdef _PLATFORM_MACOS
 #include <OpenAL/al.h>
 #else
 #include <al.h>

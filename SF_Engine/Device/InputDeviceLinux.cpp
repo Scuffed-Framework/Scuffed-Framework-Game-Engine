@@ -1,4 +1,4 @@
-#ifdef __linux__
+#ifdef _PLATFORM_LINUX
 #include "InputDevice.h"
 #include <libudev.h>           // link: -ludev
 #include <libevdev/libevdev.h> // link: -levdev
@@ -122,4 +122,4 @@ namespace SF::Engine
     }
 
 } // namespace SF::Engine
-#endif // __linux__
+#endif // _PLATFORM_LINUX

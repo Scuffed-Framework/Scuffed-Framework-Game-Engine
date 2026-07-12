@@ -1,4 +1,4 @@
-#ifdef __APPLE__
+#ifdef _PLATFORM_MACOS
 #include "InputDevice.h"
 #import <IOKit/hid/IOHIDManager.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -138,4 +138,4 @@ namespace SF::Engine
     }
 
 } // namespace SF::Engine
-#endif // __APPLE__
+#endif // _PLATFORM_MACOS
