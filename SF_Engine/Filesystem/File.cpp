@@ -416,7 +416,6 @@ namespace SF::Engine
         return FileType::Unknown;
     }
 
-    // With:
     FileTime File::GetTimes() const
     {
         FileTime times;

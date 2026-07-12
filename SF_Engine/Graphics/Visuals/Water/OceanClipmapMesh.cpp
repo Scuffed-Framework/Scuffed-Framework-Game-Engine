@@ -50,7 +50,7 @@ namespace SF::Engine
                     row >= holeStart && row < holeEnd &&
                     col >= holeStart && col < holeEnd)
                 {
-                    continue; // skip patches inside the hole — covered by inner ring
+                    continue; // skip patches inside the hole, covered by inner ring
                 }
 
                 const uint32_t bl = row * gridW + col;

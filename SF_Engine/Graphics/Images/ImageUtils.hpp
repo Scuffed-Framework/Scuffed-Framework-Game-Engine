@@ -1,6 +1,6 @@
 #include "Image2d.hpp"
 #include "Image3d.hpp"
-#include "../Descriptors/DescriptorSet.hpp"
+#include <Graphics/Descriptors/DescriptorSet.hpp>
 
 namespace SF::Engine
 {

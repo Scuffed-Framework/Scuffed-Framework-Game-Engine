@@ -30,11 +30,6 @@ Shader "SF/Atmosphere/SkyView"
             vec3  viewPos = vec3(0.0, h, 0.0);
             vec3  up      = vec3(0.0, 1.0, 0.0);
 
-            // FIX 2: build ray in sun-relative azimuthal frame to match
-            // sampleSkyView() in Atmosphere.shader, which encodes phi as
-            // atan(dot(rdHoriz, perpAxis), dot(rdHoriz, sunProj)).
-            // Old code used phi from +Z (fixed world axis), causing every
-            // LUT lookup to sample the wrong azimuth.
             vec3  sunDir   = normalize(pc.sunDir.xyz);
             vec3  sunHoriz = sunDir - dot(sunDir, up) * up;
             float sunHLen  = length(sunHoriz);

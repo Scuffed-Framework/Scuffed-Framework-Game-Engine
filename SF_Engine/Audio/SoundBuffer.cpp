@@ -5,7 +5,6 @@
 #else
 #include <al.h>
 #endif
-#include <Resources/Resources.hpp>
 #include <iostream>
 #include <stdexcept>
 
@@ -15,7 +14,7 @@ namespace SF::Engine
     std::unordered_map<std::string, std::weak_ptr<SoundBuffer>> SoundBuffer::cache;
     std::mutex SoundBuffer::cacheMutex;
 
-    std::shared_ptr<SoundBuffer> SoundBuffer::Create(const std::filesystem::path& filename)
+    std::shared_ptr<SoundBuffer> SoundBuffer::Create(const std::filesystem::path &filename)
     {
         std::lock_guard<std::mutex> lock(cacheMutex);
 
@@ -73,13 +72,13 @@ namespace SF::Engine
         }
     }
 
-    SoundBuffer::SoundBuffer(SoundBuffer&& other) noexcept
+    SoundBuffer::SoundBuffer(SoundBuffer &&other) noexcept
         : filename(std::move(other.filename)), buffer(other.buffer)
     {
         other.buffer = 0;
     }
 
-    SoundBuffer& SoundBuffer::operator=(SoundBuffer&& other) noexcept
+    SoundBuffer &SoundBuffer::operator=(SoundBuffer &&other) noexcept
     {
         if (this != &other)
         {
@@ -131,7 +130,7 @@ namespace SF::Engine
         std::string extension = filename.extension().string();
 
         // Look up loader in registry
-        auto& registry = Registry();
+        auto &registry = Registry();
         auto it = registry.find(extension);
 
         if (it == registry.end())
@@ -145,7 +144,7 @@ namespace SF::Engine
         {
             it->second.first(*this, filename);
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
             std::cerr << "Failed to load sound buffer from " << filename << ": " << e.what()
                       << std::endl;

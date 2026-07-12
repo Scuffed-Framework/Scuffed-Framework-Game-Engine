@@ -75,6 +75,10 @@ namespace SF::Engine
         void DrawProjectManagerWindow();
 
         std::filesystem::path GetProjectPath() { return currentLoadedProject->Path; }
+        std::filesystem::path GetProjectAssetPath() { return currentLoadedProject->Path / "Assets"; }
+        std::filesystem::path GetProjectLogPath() { return currentLoadedProject->Path / "Logs"; }
+        std::filesystem::path GetProjectCachePath() { return currentLoadedProject->Path / "Cache"; }
+        std::filesystem::path GetProjectBuildPath() { return currentLoadedProject->Path / "Build"; }
 
     private:
         Project *currentLoadedProject = nullptr;

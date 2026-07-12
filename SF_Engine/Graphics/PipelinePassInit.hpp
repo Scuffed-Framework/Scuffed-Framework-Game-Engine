@@ -67,18 +67,3 @@ namespace SF::Engine
         inline static Registrar registrar_{};
     };
 }
-#define SF_PIPELINE_PASS_FACTORY(PassType, ...)                   \
-    namespace SF::Engine::PassRegistration                        \
-    {                                                             \
-        static const bool PassType##_registered = []()            \
-        {                                                         \
-            ::SF::Engine::PipelinePassRegistry::Get().Register(   \
-                [](::SF::Engine::PipelinePassManager &mgr)        \
-                {                                                 \
-                    mgr.Add<PassType>(                            \
-                        ::SF::Engine::Pipeline::Stage{0, 0},      \
-                        std::make_unique<PassType>(__VA_ARGS__)); \
-                });                                               \
-            return true;                                          \
-        }();                                                      \
-    }

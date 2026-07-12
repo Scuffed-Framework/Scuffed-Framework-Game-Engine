@@ -10,6 +10,7 @@ namespace SF::Engine
         // Properties
         std::vector<KeyValuePair<float, float>> keyframes;
         const int length = static_cast<int>(keyframes.size());
+
         KeyValuePair<float, float> AddKeyframe(float time, float value)
         {
             KeyValuePair<float, float> kvp(time, value);

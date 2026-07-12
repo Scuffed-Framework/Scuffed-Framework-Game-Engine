@@ -13,12 +13,12 @@
 //
 // Two noise types (matching the 4-channel LUT layout on p.96):
 //
-//   alligatorNoise()        — Houdini-style alligator noise.
+//   alligatorNoise()       , Houdini-style alligator noise.
 //                             Looks like layered Worley but with
 //                             more cloud-appropriate lacunarity.
 //                             Used INVERTED for billowy details.
 //
-//   curlyAlligatorNoise()   — Inverted alligator distorted by
+//   curlyAlligatorNoise()  , Inverted alligator distorted by
 //                             curl noise.  Produces web/wisp
 //                             shapes for decreasing-density zones.
 //

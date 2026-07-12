@@ -11,6 +11,13 @@
 #include <type_traits>
 #include <XML/XMLReader.hpp>
 
+#include <Reflection/RTTISingle.hpp>
+#include <Assets/SerializationRegistry.hpp>
+#include <XML/XMLNodeWriter.hpp>
+
+SF_REFLECT_EXTERNAL_TYPE(VkExtent3D)
+SF_REFLECT_EXTERNAL_TYPE(VkExtent2D)
+
 namespace SF::Engine
 {
     class Bitmap;
@@ -20,6 +27,7 @@ namespace SF::Engine
      */
     class Image : public Descriptor, public Serializable
     {
+        SF_RTTI(Image, Serializable)
     public:
         /**
          * Creates a new image object.
@@ -66,7 +74,6 @@ namespace SF::Engine
 
         static uint32_t GetMipLevels(const VkExtent3D &extent);
 
-        // Do not know why we fucking need this but it is here, I AM GETTING RAGE BAITED BY A FUCKING CLANKER
         void SetLayout(VkImageLayout newLayout) { layout = newLayout; }
 
         /**
@@ -128,6 +135,36 @@ namespace SF::Engine
         VmaAllocation allocation = VK_NULL_HANDLE;
         VkSampler sampler = VK_NULL_HANDLE;
         VkImageView view = VK_NULL_HANDLE;
+
+    public:
+        static void EnsureReflected()
+        {
+            static bool reflected = []
+            {
+                auto &ctx = ::SF::RTTI::SerializeContext::Instance();
+
+                ctx.Class<VkExtent3D>()
+                    ->Version(1)
+                    ->Field("width", &VkExtent3D::width)
+                    ->Field("height", &VkExtent3D::height)
+                    ->Field("depth", &VkExtent3D::depth);
+
+                ctx.Class<Image>()
+                    ->Version(1)
+                    ->Field("Extent", &Image::extent)
+                    ->Field("format", &Image::format)
+                    ->Field("samples", &Image::samples)
+                    ->Field("usage", &Image::usage)
+                    ->Field("mipLevels", &Image::mipLevels)
+                    ->Field("arrayLayers", &Image::arrayLayers)
+                    ->Field("filter", &Image::filter)
+                    ->Field("addressMode", &Image::addressMode)
+                    ->Field("layout", &Image::layout);
+
+                return true;
+            }();
+            (void)reflected;
+        }
     };
 
     inline void ImageBarrier(VkCommandBuffer cmd,

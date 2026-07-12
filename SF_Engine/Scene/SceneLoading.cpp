@@ -20,19 +20,19 @@
 
 namespace SF::Engine
 {
-    // =========================================================================
+
     // LoadedScene
     //
     // Concrete Scene subclass produced by all loaders. It owns the deserialized
     // scene data and exposes it through the standard Scene interface. Callers
     // can replace the camera or add systems after loading before handing it to
     // SceneManager::SetScene().
-    // =========================================================================
+
     class LoadedScene : public Scene
     {
     public:
-        explicit LoadedScene(SceneRendererConfig cfg = {})
-            : Scene(std::make_unique<CameraController>(), cfg)
+        explicit LoadedScene(SceneRendererConfig cfg = {}, std::string name = "")
+            : Scene(std::make_unique<CameraController>(), name, cfg)
         {
         }
 
@@ -40,9 +40,8 @@ namespace SF::Engine
         bool IsPaused() const override { return false; }
     };
 
-    // =========================================================================
     // Internal helpers
-    // =========================================================================
+
     namespace
     {
         // Strip the "file://" prefix and normalise separators
@@ -78,13 +77,15 @@ namespace SF::Engine
             // Read optional renderer config from root attributes
             XMLNode root = reader.GetRootNode();
             SceneRendererConfig cfg;
+            std::string name = root.GetAttribute("name");
+
             bool atmo = false, sun = false;
             root.GetAttribute("atmosphere", atmo);
             root.GetAttribute("sun", sun);
             cfg.enableAtmosphere = atmo;
             cfg.enableSun = sun;
 
-            auto scene = std::make_unique<LoadedScene>(cfg);
+            auto scene = std::make_unique<LoadedScene>(cfg, name);
             scene->Deserialize(root);
             return scene;
         }
@@ -134,9 +135,7 @@ namespace SF::Engine
 #endif
     } // anonymous namespace
 
-    // =========================================================================
     // FileSceneSource
-    // =========================================================================
 
     SceneLoadResult FileSceneSource::Load(const std::string &url)
     {
@@ -178,13 +177,6 @@ namespace SF::Engine
         return Load(rawPath);
     }
 
-    // =========================================================================
-    // MapSceneSource
-    //
-    // In-memory named scene registry. Register scenes by name with Register(),
-    // then load them with map://sceneName.
-    // =========================================================================
-
     static std::unordered_map<std::string, std::string> s_sceneMap; // name → xml text
 
     void MapSceneSource::Register(const std::string &name, const std::string &xmlText)
@@ -219,10 +211,6 @@ namespace SF::Engine
         const std::string key = url.authority.empty() ? url.path : url.authority;
         return Load(key);
     }
-
-    // =========================================================================
-    // HttpSceneSource
-    // =========================================================================
 
     SceneLoadResult HttpSceneSource::Load(const std::string &url)
     {

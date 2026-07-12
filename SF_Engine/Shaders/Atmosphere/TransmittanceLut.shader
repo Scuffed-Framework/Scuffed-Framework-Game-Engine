@@ -24,7 +24,7 @@ Shader "SF/Atmosphere/TransmittanceLUT"
         #import "Atmosphere.si"
 
         void uvToParams(vec2 uv, out float height, out float cosZenith) {
-            float t = uv.x * uv.x;  // inverse of sqrt in heightToU — must match atmosUV()
+            float t = uv.x * uv.x;  // inverse of sqrt in heightToU, must match atmosUV()
             height = BOTTOM_RADIUS + t * (TOP_RADIUS - BOTTOM_RADIUS);
             cosZenith = uv.y * 2.0 - 1.0;
         }

@@ -12,6 +12,7 @@ namespace SF::Engine
      */
     class Image3d : public Image
     {
+        SF_RTTI(Image3d, Image)
     public:
         /**
          * Creates an empty 3D image with the given dimensions.

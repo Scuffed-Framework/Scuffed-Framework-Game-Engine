@@ -16,9 +16,6 @@ namespace SF::Engine::Shaders
 {
     bool ShaderParser::glslangReady_ = true;
 
-    // -------------------------------------------------------------------------
-    // glslang resource table (unchanged)
-    // -------------------------------------------------------------------------
     static const TBuiltInResource DefaultTBuiltInResource = {
         /* .MaxLights = */ 32,
         /* .MaxClipPlanes = */ 6,
@@ -157,9 +154,8 @@ namespace SF::Engine::Shaders
         }
     }
 
-    // =========================================================================
     // ShaderParser
-    // =========================================================================
+
     ShaderParser::ShaderParser() = default;
     ShaderParser::~ShaderParser() = default;
 
@@ -169,9 +165,7 @@ namespace SF::Engine::Shaders
         std::cerr << "ShaderParser Error: " << error << std::endl;
     }
 
-    // =========================================================================
     // Public entry points
-    // =========================================================================
 
     std::optional<ParsedShader> ShaderParser::parse(const std::string &filepath)
     {
@@ -262,13 +256,12 @@ namespace SF::Engine::Shaders
         return compiled;
     }
 
-    // =========================================================================
     // Top-level body parser
     // Handles: Properties, #pragma, #import/#include, SubShader, Pass,
     //          stage blocks, ResourceLayout, #Section.
     // All constructs are valid at both the top level and nested inside
     // SubShader blocks, so SubShader delegates back here after noting the LOD.
-    // =========================================================================
+
     bool ShaderParser::parseShaderBody(ParseContext &ctx)
     {
         while (ctx.pos < ctx.source.length())
@@ -349,9 +342,8 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // SubShader { LOD N  Tags { ... }  <body> }
-    // =========================================================================
+
     bool ShaderParser::parseSubShaderBlock(ParseContext &ctx)
     {
         readToken(ctx); // consume "SubShader"
@@ -438,9 +430,8 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // Pass "name" { Tags { } Cull/ZWrite/Blend  <stage blocks> }
-    // =========================================================================
+
     bool ShaderParser::parsePassBlock(ParseContext &ctx)
     {
         readToken(ctx); // consume "Pass"
@@ -524,9 +515,8 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // Tags { "Key" = "Value" ... }
-    // =========================================================================
+
     bool ShaderParser::parseTagsBlock(ParseContext &ctx, std::map<std::string, std::string> &out)
     {
         skipWhitespace(ctx);
@@ -574,9 +564,8 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // ResourceLayout { [set, binding] type Name [: qualifiers] ... }
-    // =========================================================================
+
     bool ShaderParser::parseResourceLayoutBlock(ParseContext &ctx)
     {
         skipWhitespace(ctx);
@@ -665,9 +654,7 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // Parsing helpers
-    // =========================================================================
 
     bool ShaderParser::parseDeclaration(ParseContext &ctx)
     {
@@ -848,9 +835,7 @@ namespace SF::Engine::Shaders
         return result;
     }
 
-    // =========================================================================
     // Token helpers
-    // =========================================================================
 
     void ShaderParser::skipWhitespace(ParseContext &ctx)
     {
@@ -917,7 +902,6 @@ namespace SF::Engine::Shaders
         return ShaderIncludeUtils::stripComments(source);
     }
 
-    // =========================================================================
     // #pragma handler
     //
     // Supported pragmas (new additions marked **):
@@ -931,7 +915,7 @@ namespace SF::Engine::Shaders
     //   ** fallback "path"             -- set fallback shader path
     //   ** specialize NAME = default   -- declare SPIR-V specialization constant
     //   anything else                  -- silently ignored for forward compat
-    // =========================================================================
+
     bool ShaderParser::parsePragma(ParseContext &ctx)
     {
         readToken(ctx); // consume "#pragma"
@@ -1070,12 +1054,11 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // @annotation parser
     // Reads zero or more @annotation(...) or @annotation("...") lines that
     // appear before a property declaration and populates the prop struct.
     // Returns with ctx positioned at the first non-annotation token.
-    // =========================================================================
+
     bool ShaderParser::parseAnnotations(ParseContext &ctx, ShaderProp &prop)
     {
         while (true)
@@ -1131,7 +1114,6 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // Properties block
     //
     // Extended syntax on top of the original:
@@ -1147,7 +1129,6 @@ namespace SF::Engine::Shaders
     //
     // All existing syntax forms remain supported unchanged.
     // All new types fall back to stringProps for backward compat.
-    // =========================================================================
     bool ShaderParser::parsePropertiesBlock(ParseContext &ctx)
     {
         skipWhitespace(ctx);
@@ -1177,9 +1158,6 @@ namespace SF::Engine::Shaders
                 continue;
             }
 
-            // ----------------------------------------------------------------
-            // Collect @annotations that precede the property declaration
-            // ----------------------------------------------------------------
             ShaderProp prop;
             parseAnnotations(ctx, prop);
 
@@ -1187,9 +1165,6 @@ namespace SF::Engine::Shaders
             if (ctx.pos >= ctx.source.length() || ctx.source[ctx.pos] == '}')
                 break;
 
-            // ----------------------------------------------------------------
-            // Read property name
-            // ----------------------------------------------------------------
             std::string propName = readToken(ctx);
             if (propName.empty())
             {
@@ -1199,9 +1174,6 @@ namespace SF::Engine::Shaders
 
             skipWhitespace(ctx);
 
-            // ----------------------------------------------------------------
-            // Optional: ("Display Name", Type)  or  (Type)  or  (Range(min, max))
-            // ----------------------------------------------------------------
             std::string displayName;
             std::string typeStr;
             float rangeMin = 0.0f, rangeMax = 1.0f;
@@ -1283,9 +1255,7 @@ namespace SF::Engine::Shaders
 
             skipWhitespace(ctx);
 
-            // ----------------------------------------------------------------
             // Optional: = defaultValue
-            // ----------------------------------------------------------------
             std::string rawDefault;
             if (ctx.pos < ctx.source.length() && ctx.source[ctx.pos] == '=')
             {
@@ -1350,9 +1320,8 @@ namespace SF::Engine::Shaders
             if (propName.empty())
                 continue;
 
-            // ----------------------------------------------------------------
             // Determine PropType
-            // ----------------------------------------------------------------
+
             std::string typeStrLower = typeStr;
             std::transform(typeStrLower.begin(), typeStrLower.end(),
                            typeStrLower.begin(), ::tolower);
@@ -1383,9 +1352,8 @@ namespace SF::Engine::Shaders
             else if (typeStrLower == "gradient")
                 propType = PropType::Gradient;
 
-            // ----------------------------------------------------------------
             // Build ShaderProp (metadata already partially filled by annotations)
-            // ----------------------------------------------------------------
+
             prop.name = propName;
             prop.displayName = displayName.empty() ? propName : displayName;
             prop.type = propType;
@@ -1395,9 +1363,8 @@ namespace SF::Engine::Shaders
             prop.enumTypeName = enumTypeName;
             ctx.shader->properties.push_back(prop);
 
-            // ----------------------------------------------------------------
             // Populate typed convenience maps (backward compat)
-            // ----------------------------------------------------------------
+
             try
             {
                 switch (propType)
@@ -1443,11 +1410,10 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // extractWorkgroupSize
     // Looks for:  layout(local_size_x = X, local_size_y = Y, local_size_z = Z) in;
     // Values default to 1 if a component is absent. Returns true if found.
-    // =========================================================================
+
     bool ShaderParser::extractWorkgroupSize(const std::string &source, glm::uvec3 &outSize)
     {
         static const std::string kAnchor = "local_size_x";
@@ -1493,10 +1459,9 @@ namespace SF::Engine::Shaders
         return true;
     }
 
-    // =========================================================================
     // extractEntryPoint
     // Looks for:  #pragma entry <name>  anywhere in source.
-    // =========================================================================
+
     std::optional<std::string> ShaderParser::extractEntryPoint(const std::string &source)
     {
         std::istringstream ss(source);
@@ -1528,9 +1493,7 @@ namespace SF::Engine::Shaders
         return std::nullopt;
     }
 
-    // =========================================================================
     // Preprocessing
-    // =========================================================================
 
     std::string ShaderParser::preprocessStage(
         const ParsedShader &shader,
@@ -1627,9 +1590,7 @@ namespace SF::Engine::Shaders
         return *resolved;
     }
 
-    // =========================================================================
     // Compilation
-    // =========================================================================
 
     std::vector<uint32_t> ShaderParser::compileGLSL(const std::string &source,
                                                     ShaderStage stage,

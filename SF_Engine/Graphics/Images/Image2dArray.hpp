@@ -9,6 +9,7 @@ namespace SF::Engine
      */
     class Image2dArray : public Image
     {
+        SF_RTTI(Image2dArray, Image)
     public:
         /**
          * Creates a new array of 2D images.

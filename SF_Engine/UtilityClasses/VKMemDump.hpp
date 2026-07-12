@@ -1,11 +1,5 @@
 #pragma once
-// =============================================================================
-// vk_dump.h    Vulkan GPU memory / texture dumping tool
-// Drop into any Vulkan project. Requires C++17 and vulkan.h in your include path.
-// Optional: define VK_DUMP_STB_IMAGE_WRITE before including to enable PNG output.
-//           (stb_image_write.h must be available)
-// =============================================================================
-//
+
 //  Quick start:
 //    VkDump::Dumper dump(device, physicalDevice, queue, queueFamilyIndex, commandPool);
 //
@@ -19,8 +13,6 @@
 //
 //    // Dump raw device memory
 //    dump.dumpMemory(myMemory, 0, byteSize, "out/raw.bin");
-//
-// =============================================================================
 
 #pragma once
 

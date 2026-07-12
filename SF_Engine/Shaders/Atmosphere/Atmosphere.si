@@ -18,7 +18,7 @@ const vec3  AMBIENT_BETA      = vec3(0.0);
 
 // Ozone absorption: REBALANCED.
 // Original: vec3(2.04e-5, 4.97e-5, 1.95e-6)
-// The green channel (4.97e-5) was far too strong — it ate into the blue-green
+// The green channel (4.97e-5) was far too strong, it ate into the blue-green
 // band that produces the characteristic cyan limb colour.  Real ozone absorption
 // peaks at ~600nm (red/orange), is moderate at ~550nm (green), and nearly zero
 // at ~450nm (blue).  Values scaled to match the Hillaire 2020 reference.
@@ -52,7 +52,7 @@ float heightToU(float height, float bottomRadius, float topRadius)
 }
 
 float uToHeight(float u, float Rbot, float Rtop) {
-    float t = u * u;   // exact inverse of sqrt in heightToU — u² undoes sqrt(t)
+    float t = u * u;   // exact inverse of sqrt in heightToU, u² undoes sqrt(t)
     return Rbot + t * (Rtop - Rbot);
 }
 

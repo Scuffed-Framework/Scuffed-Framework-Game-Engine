@@ -167,7 +167,7 @@ namespace SF::Engine
         const float upLen = glm::length(up);
         if (upLen < 1e-5f)
         {
-            // Degenerate (camera at planet center) — fall back to world up.
+            // Degenerate (camera at planet center), fall back to world up.
             up = glm::vec3(0.0f, 1.0f, 0.0f);
         }
         else

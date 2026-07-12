@@ -2,11 +2,11 @@
 /* TypeTraits.hpp                                                             */
 /******************************************************************************/
 /*                            This file is part of                            */
-/*                                SF Game Engine                              */
+/*             Scuffed Framework Standard Template Library                    */
 /******************************************************************************/
 /* MIT License                                                                */
 /*                                                                            */
-/* Copyright (c) 2025-present Martin (the name I was assigned in french class).                                         */
+/* Copyright (c) 2025-present Noah Lee                                        */
 /*                                                                            */
 /* May all those that this source may reach be blessed by the LORD and find   */
 /* peace and joy in life.                                                     */
@@ -33,35 +33,20 @@
 /******************************************************************************/
 
 #pragma once
+#include <type_traits> // intrinsics 🥀
 
 namespace SFTL
 {
-
-    // =============================================================================
-    // Internal helpers (not for direct use)
-    // =============================================================================
-
     namespace detail
     {
-        // Separate lvalue/rvalue overloads so declval<void>() still compiles
         template <typename T>
         T &&declval_impl(int) noexcept;
         template <typename T>
         T declval_impl(long) noexcept;
     } // namespace detail
 
-    // =============================================================================
-    // declval
-    // =============================================================================
-
-    /// Produces a value of type T in an unevaluated context without construction.
-    /// Mirrors std::declval. Never defined; ODR-safe because it is never called.
     template <typename T>
     auto declval() noexcept -> decltype(detail::declval_impl<T>(0));
-
-    // =============================================================================
-    // integral_constant / bool_constant / true_type / false_type
-    // =============================================================================
 
     template <typename T, T val>
     struct integral_constant
@@ -80,9 +65,7 @@ namespace SFTL
     using true_type = bool_constant<true>;
     using false_type = bool_constant<false>;
 
-    // =============================================================================
     // type_identity  (useful building block  gives back T unchanged)
-    // =============================================================================
 
     template <typename T>
     struct type_identity
@@ -92,10 +75,6 @@ namespace SFTL
 
     template <typename T>
     using type_identity_t = typename type_identity<T>::type;
-
-    // =============================================================================
-    // conditional
-    // =============================================================================
 
     template <bool Cond, typename IfTrue, typename IfFalse>
     struct conditional
@@ -112,9 +91,7 @@ namespace SFTL
     template <bool Cond, typename IfTrue, typename IfFalse>
     using conditional_t = typename conditional<Cond, IfTrue, IfFalse>::type;
 
-    // =============================================================================
     // enable_if
-    // =============================================================================
 
     template <bool Cond, typename T = void>
     struct enable_if
@@ -130,18 +107,9 @@ namespace SFTL
     template <bool Cond, typename T = void>
     using enable_if_t = typename enable_if<Cond, T>::type;
 
-    // =============================================================================
-    // void_t  (detection idiom helper)
-    // =============================================================================
-
     template <typename...>
     using void_t = void;
 
-    // =============================================================================
-    // remove / add qualifiers
-    // =============================================================================
-
-    // --- const ---
     template <typename T>
     struct remove_const
     {
@@ -155,7 +123,6 @@ namespace SFTL
     template <typename T>
     using remove_const_t = typename remove_const<T>::type;
 
-    // --- volatile ---
     template <typename T>
     struct remove_volatile
     {
@@ -169,7 +136,6 @@ namespace SFTL
     template <typename T>
     using remove_volatile_t = typename remove_volatile<T>::type;
 
-    // --- cv ---
     template <typename T>
     struct remove_cv
     {
@@ -178,7 +144,6 @@ namespace SFTL
     template <typename T>
     using remove_cv_t = typename remove_cv<T>::type;
 
-    // --- reference ---
     template <typename T>
     struct remove_reference
     {
@@ -197,7 +162,6 @@ namespace SFTL
     template <typename T>
     using remove_reference_t = typename remove_reference<T>::type;
 
-    // --- cvref ---
     template <typename T>
     struct remove_cvref
     {
@@ -206,7 +170,6 @@ namespace SFTL
     template <typename T>
     using remove_cvref_t = typename remove_cvref<T>::type;
 
-    // --- pointer ---
     template <typename T>
     struct remove_pointer
     {
@@ -235,7 +198,6 @@ namespace SFTL
     template <typename T>
     using remove_pointer_t = typename remove_pointer<T>::type;
 
-    // --- add_lvalue_reference / add_rvalue_reference ---
     namespace detail
     {
         template <typename T, typename = void>
@@ -275,10 +237,6 @@ namespace SFTL
     template <typename T>
     using add_rvalue_reference_t = typename add_rvalue_reference<T>::type;
 
-    // =============================================================================
-    // is_same
-    // =============================================================================
-
     template <typename T, typename U>
     struct is_same : false_type
     {
@@ -291,10 +249,6 @@ namespace SFTL
     template <typename T, typename U>
     inline constexpr bool is_same_v = is_same<T, U>::value;
 
-    // =============================================================================
-    // is_void
-    // =============================================================================
-
     template <typename T>
     struct is_void : is_same<void, remove_cv_t<T>>
     {
@@ -302,10 +256,6 @@ namespace SFTL
 
     template <typename T>
     inline constexpr bool is_void_v = is_void<T>::value;
-
-    // =============================================================================
-    // is_const / is_volatile / is_reference / is_pointer
-    // =============================================================================
 
     template <typename T>
     struct is_const : false_type
@@ -355,6 +305,7 @@ namespace SFTL
     struct is_reference : bool_constant<is_lvalue_reference_v<T> || is_rvalue_reference_v<T>>
     {
     };
+
     template <typename T>
     inline constexpr bool is_reference_v = is_reference<T>::value;
 
@@ -381,10 +332,6 @@ namespace SFTL
     template <typename T>
     inline constexpr bool is_pointer_v = is_pointer<T>::value;
 
-    // =============================================================================
-    // is_array
-    // =============================================================================
-
     template <typename T>
     struct is_array : false_type
     {
@@ -400,9 +347,14 @@ namespace SFTL
     template <typename T>
     inline constexpr bool is_array_v = is_array<T>::value;
 
-    // =============================================================================
-    // is_integral / is_floating_point / is_arithmetic
-    // =============================================================================
+    // is_function: the classic trick  functions are the only types for which
+    // "const T" does not actually add const, and which are also not references.
+    template <typename T>
+    struct is_function : bool_constant<!is_const_v<const T> && !is_reference_v<T>>
+    {
+    };
+    template <typename T>
+    inline constexpr bool is_function_v = is_function<T>::value;
 
     namespace detail
     {
@@ -517,14 +469,11 @@ namespace SFTL
     template <typename T>
     inline constexpr bool is_arithmetic_v = is_arithmetic<T>::value;
 
-    // =============================================================================
-    // is_signed / is_unsigned  (arithmetic types only)
-    // =============================================================================
-
     template <typename T, bool = is_arithmetic_v<T>>
     struct is_signed : bool_constant<(T(-1) < T(0))>
     {
     };
+
     template <typename T>
     struct is_signed<T, false> : false_type
     {
@@ -538,11 +487,6 @@ namespace SFTL
     };
     template <typename T>
     inline constexpr bool is_unsigned_v = is_unsigned<T>::value;
-
-    // =============================================================================
-    // is_enum / is_union / is_class
-    // (These three require compiler builtins; there is no portable TMP alternative)
-    // =============================================================================
 
     template <typename T>
     struct is_enum : bool_constant<__is_enum(T)>
@@ -565,20 +509,12 @@ namespace SFTL
     template <typename T>
     inline constexpr bool is_class_v = is_class<T>::value;
 
-    // =============================================================================
-    // is_base_of
-    // =============================================================================
-
     template <typename Base, typename Derived>
     struct is_base_of : bool_constant<__is_base_of(Base, Derived)>
     {
     };
     template <typename Base, typename Derived>
     inline constexpr bool is_base_of_v = is_base_of<Base, Derived>::value;
-
-    // =============================================================================
-    // is_convertible
-    // =============================================================================
 
     namespace detail
     {
@@ -591,8 +527,7 @@ namespace SFTL
         };
 
         template <typename From, typename To>
-        struct is_convertible_impl<From, To,
-                                   void_t<decltype(test_convertible<To>(declval<From>()))>> : true_type
+        struct is_convertible_impl<From, To, void_t<decltype(test_convertible<To>(declval<From>()))>> : true_type
         {
         };
     } // namespace detail
@@ -604,9 +539,34 @@ namespace SFTL
     template <typename From, typename To>
     inline constexpr bool is_convertible_v = is_convertible<From, To>::value;
 
-    // =============================================================================
-    // is_constructible / is_default_constructible / is_copy_constructible
-    // =============================================================================
+    template <typename From, typename To>
+    class is_convertible_to_impl
+    {
+    private:
+        static void test(To);
+
+        template <typename F, typename = decltype(test(declval<F>()))>
+        static true_type check(int);
+
+        template <typename>
+        static false_type check(...);
+
+    public:
+        static constexpr bool value = decltype(check<From>(0))::value;
+    };
+
+    template <typename From, typename To>
+    struct is_convertible_to
+        : integral_constant<bool, is_convertible_to_impl<From, To>::value>
+    {
+    };
+
+    // Helper variable template (C++14)
+    template <typename From, typename To>
+    inline constexpr bool is_convertible_to_v = is_convertible_to<From, To>::value;
+
+    template <typename From, typename To>
+    concept convertible_to = is_convertible_v<From, To> && requires { static_cast<To>(declval<From>()); };
 
     namespace detail
     {
@@ -652,9 +612,46 @@ namespace SFTL
     template <typename T>
     inline constexpr bool is_move_constructible_v = is_move_constructible<T>::value;
 
-    // =============================================================================
-    // is_assignable / is_copy_assignable / is_move_assignable
-    // =============================================================================
+    namespace detail
+    {
+        // Reference T: test real direct-initialization by passing the argument to a
+        // declared (never defined/called - fine inside noexcept, same as everything
+        // else here) function whose parameter type is exactly T. Passing an argument
+        // to a function parameter is direct-initialization only; unlike "T(args...)"
+        // it has no reinterpret_cast fallback, so it can't quietly accept things that
+        // aren't real reference bindings.
+        template <class T>
+        void accept_as(T) noexcept;
+
+        template <class T, class... Args>
+        auto test(int)
+            -> enable_if_t<is_reference_v<T>,
+                           bool_constant<noexcept(accept_as<T>(declval<Args>()...))>>;
+
+        // Non-reference T: functional-cast notation is fine here - for a non-class type
+        // it's just a conversion, and for a class type it's overload resolution against
+        // its constructors, same as direct-init would do anyway.
+        template <class T, class... Args>
+        auto test(int)
+            -> enable_if_t<!is_reference_v<T>,
+                           bool_constant<noexcept(T(declval<Args>()...))>>;
+
+        template <class, class...>
+        auto test(...) -> false_type;
+    }
+
+    template <class T, class... Args>
+    struct is_nothrow_constructible
+        : decltype(detail::test<T, Args...>(0))
+    {
+    };
+
+    template <class T, class... Args>
+    inline constexpr bool is_nothrow_constructible_v =
+        is_nothrow_constructible<T, Args...>::value;
+
+    template <class _Ty>
+    constexpr bool is_object_v = is_const_v<const _Ty> && !is_void_v<_Ty>;
 
     namespace detail
     {
@@ -691,10 +688,6 @@ namespace SFTL
     };
     template <typename T>
     inline constexpr bool is_move_assignable_v = is_move_assignable<T>::value;
-
-    // =============================================================================
-    // Nothrow variants  (your originals, fixed)
-    // =============================================================================
 
     template <typename T>
     struct is_nothrow_move_constructible
@@ -741,11 +734,6 @@ namespace SFTL
     inline constexpr bool is_nothrow_default_constructible_v =
         is_nothrow_default_constructible<T>::value;
 
-    // =============================================================================
-    // decay
-    // =============================================================================
-
-    // remove_extent (needed by decay)
     template <typename T>
     struct remove_extent
     {
@@ -764,7 +752,143 @@ namespace SFTL
     template <typename T>
     using remove_extent_t = typename remove_extent<T>::type;
 
-    /*
+    namespace detail
+    {
+        template <typename T>
+        struct is_destructible_scalar
+        {
+        private:
+            template <typename U, typename = decltype(declval<U &>().~U())>
+            static true_type test(int);
+            template <typename>
+            static false_type test(...);
+
+        public:
+            using type = decltype(test<T>(0));
+        };
+
+        template <typename T>
+        struct is_nothrow_destructible_scalar
+        {
+        private:
+            template <typename U>
+            static bool_constant<noexcept(declval<U &>().~U())> test(int);
+            template <typename>
+            static false_type test(...);
+
+        public:
+            using type = decltype(test<T>(0));
+        };
+    } // namespace detail
+
+    template <typename T>
+    struct is_destructible;
+    template <typename T>
+    struct is_nothrow_destructible;
+
+    namespace detail
+    {
+        enum class _destruct_cat
+        {
+            _ref,
+            _invalid,
+            _arr,
+            _scalar
+        };
+
+        template <typename T>
+        struct _is_bounded_array : false_type
+        {
+        };
+        template <typename T, size_t N>
+        struct _is_bounded_array<T[N]> : true_type
+        {
+        };
+
+        template <typename T>
+        struct _is_unbounded_array : false_type
+        {
+        };
+        template <typename T>
+        struct _is_unbounded_array<T[]> : true_type
+        {
+        };
+
+        template <typename T>
+        constexpr _destruct_cat _classify_destruct()
+        {
+            if constexpr (is_reference_v<T>)
+                return _destruct_cat::_ref;
+            else if constexpr (is_void_v<T> || is_function_v<T> || _is_unbounded_array<T>::value)
+                return _destruct_cat::_invalid;
+            else if constexpr (_is_bounded_array<T>::value)
+                return _destruct_cat::_arr;
+            else
+                return _destruct_cat::_scalar;
+        }
+
+        template <typename T, _destruct_cat = _classify_destruct<T>()>
+        struct _is_destructible_cat;
+
+        template <typename T>
+        struct _is_destructible_cat<T, _destruct_cat::_ref> : true_type
+        {
+        };
+        template <typename T>
+        struct _is_destructible_cat<T, _destruct_cat::_invalid> : false_type
+        {
+        };
+        template <typename T>
+        struct _is_destructible_cat<T, _destruct_cat::_arr>
+            : integral_constant<bool, is_destructible<remove_extent_t<T>>::value>
+        {
+        };
+        template <typename T>
+        struct _is_destructible_cat<T, _destruct_cat::_scalar>
+            : is_destructible_scalar<remove_cv_t<T>>::type
+        {
+        };
+
+        template <typename T, _destruct_cat = _classify_destruct<T>()>
+        struct _is_nothrow_destructible_cat;
+
+        template <typename T>
+        struct _is_nothrow_destructible_cat<T, _destruct_cat::_ref> : true_type
+        {
+        };
+        template <typename T>
+        struct _is_nothrow_destructible_cat<T, _destruct_cat::_invalid> : false_type
+        {
+        };
+        template <typename T>
+        struct _is_nothrow_destructible_cat<T, _destruct_cat::_arr>
+            : integral_constant<bool, is_nothrow_destructible<remove_extent_t<T>>::value>
+        {
+        };
+        template <typename T>
+        struct _is_nothrow_destructible_cat<T, _destruct_cat::_scalar>
+            : is_nothrow_destructible_scalar<remove_cv_t<T>>::type
+        {
+        };
+    } // namespace detail
+
+    template <class _Ty>
+    using _Remove_cvref_t = remove_cv_t<remove_reference_t<_Ty>>;
+
+    template <typename T>
+    struct is_destructible : detail::_is_destructible_cat<T>
+    {
+    };
+    template <typename T>
+    inline constexpr bool is_destructible_v = is_destructible<T>::value;
+
+    template <typename T>
+    struct is_nothrow_destructible : detail::_is_nothrow_destructible_cat<T>
+    {
+    };
+    template <typename T>
+    inline constexpr bool is_nothrow_destructible_v = is_nothrow_destructible<T>::value;
+
     namespace detail
     {
         template <typename T>
@@ -774,10 +898,9 @@ namespace SFTL
             using U = remove_reference_t<T>;
 
         public:
-            using type = conditional_t
-                is_array_v<U>,
-                  remove_extent_t<U> *,
-                  remove_cv_t<U> > ;
+            using type = conditional_t<is_array_v<U>,
+                                       remove_extent_t<U> *,
+                                       remove_cv_t<U>>;
         };
     } // namespace detail
 
@@ -787,10 +910,152 @@ namespace SFTL
     };
     template <typename T>
     using decay_t = typename decay<T>::type;
-    */
-    // =============================================================================
-    // move / forward  (implementation only  normally in <utility>)
-    // =============================================================================
+
+    template <class...>
+    struct common_reference;
+
+    // Zero types
+    template <>
+    struct common_reference<>
+    {
+    };
+
+    // One type
+    template <class T>
+    struct common_reference<T>
+    {
+        using type = T;
+    };
+
+    namespace detail
+    {
+        // Applies the const/volatile qualification of `From` onto `To`.
+        template <typename From, typename To>
+        struct copy_cv
+        {
+            using type = To;
+        };
+        template <typename From, typename To>
+        struct copy_cv<const From, To>
+        {
+            using type = const To;
+        };
+        template <typename From, typename To>
+        struct copy_cv<volatile From, To>
+        {
+            using type = volatile To;
+        };
+        template <typename From, typename To>
+        struct copy_cv<const volatile From, To>
+        {
+            using type = const volatile To;
+        };
+        template <typename From, typename To>
+        using copy_cv_t = typename copy_cv<From, To>::type;
+
+        // COND-RES(X, Y)
+        template <typename T1, typename T2>
+        using cond_res_t = decltype(false ? declval<T1 (&)()>()() : declval<T2 (&)()>()());
+
+        // COND-RES(COPYCV(X, Y)&, COPYCV(Y, X)&)
+        template <typename X, typename Y>
+        using condres_cvref_t = cond_res_t<copy_cv_t<X, Y> &, copy_cv_t<Y, X> &>;
+
+        template <typename A, typename B, typename = void>
+        struct common_ref_impl
+        {
+        };
+
+        // Both A and B are lvalue references.
+        template <typename X, typename Y>
+        struct common_ref_impl<X &, Y &, void_t<condres_cvref_t<X, Y>>>
+            : enable_if<is_reference_v<condres_cvref_t<X, Y>>, condres_cvref_t<X, Y>>
+        {
+        };
+
+        template <typename A, typename B>
+        using common_ref_t_ = typename common_ref_impl<A, B>::type;
+
+        // C = remove_reference_t<COMMON-REF(X&, Y&)>&&
+        template <typename X, typename Y>
+        using common_ref_C = remove_reference_t<common_ref_t_<X &, Y &>> &&;
+
+        // Both A and B are rvalue references.
+        template <typename X, typename Y>
+        struct common_ref_impl<X &&, Y &&,
+                               enable_if_t<is_convertible_v<X &&, common_ref_C<X, Y>> &&
+                                           is_convertible_v<Y &&, common_ref_C<X, Y>>>>
+        {
+            using type = common_ref_C<X, Y>;
+        };
+
+        // D = COMMON-REF(const X&, Y&)
+        template <typename X, typename Y>
+        using common_ref_D = common_ref_t_<const X &, Y &>;
+
+        // A is an rvalue reference, B is an lvalue reference.
+        template <typename X, typename Y>
+        struct common_ref_impl<X &&, Y &, enable_if_t<is_convertible_v<X &&, common_ref_D<X, Y>>>>
+        {
+            using type = common_ref_D<X, Y>;
+        };
+
+        // A is an lvalue reference, B is an rvalue reference: delegate, swapped.
+        template <typename X, typename Y>
+        struct common_ref_impl<X &, Y &&> : common_ref_impl<Y &&, X &>
+        {
+        };
+
+        // ---- dispatch: try COMMON-REF for reference pairs, else COND-RES ----
+
+        template <typename T1, typename T2, typename = void>
+        struct common_reference_condres
+        {
+        };
+        template <typename T1, typename T2>
+        struct common_reference_condres<T1, T2, void_t<cond_res_t<T1, T2>>>
+        {
+            using type = cond_res_t<T1, T2>;
+        };
+
+        template <typename T1, typename T2, typename = void>
+        struct common_reference_refs
+        {
+        };
+        template <typename T1, typename T2>
+        struct common_reference_refs<
+            T1, T2,
+            void_t<enable_if_t<is_reference_v<T1> && is_reference_v<T2>>, common_ref_t_<T1, T2>>>
+        {
+            using type = common_ref_t_<T1, T2>;
+        };
+
+        template <typename T1, typename T2, typename = void>
+        struct common_reference_2 : common_reference_condres<T1, T2>
+        {
+        };
+        template <typename T1, typename T2>
+        struct common_reference_2<T1, T2, void_t<typename common_reference_refs<T1, T2>::type>>
+            : common_reference_refs<T1, T2>
+        {
+        };
+    } // namespace detail
+
+    // Two types
+    template <class T1, class T2>
+    struct common_reference<T1, T2> : detail::common_reference_2<T1, T2>
+    {
+    };
+
+    // Three or more types: fold pairwise, left to right
+    template <class T1, class T2, class... Rest>
+    struct common_reference<T1, T2, Rest...>
+        : common_reference<typename common_reference<T1, T2>::type, Rest...>
+    {
+    };
+
+    template <class... Ts>
+    using common_reference_t = typename common_reference<Ts...>::type;
 
     template <typename T>
     constexpr remove_reference_t<T> &&move(T &&t) noexcept
@@ -812,10 +1077,6 @@ namespace SFTL
         return static_cast<T &&>(t);
     }
 
-    // =============================================================================
-    // swap
-    // =============================================================================
-
     template <typename T>
     constexpr enable_if_t<is_move_constructible_v<T> && is_move_assignable_v<T>>
     swap(T &a, T &b) noexcept(is_nothrow_move_constructible_v<T> &&
@@ -825,5 +1086,44 @@ namespace SFTL
         a = move(b);
         b = move(tmp);
     }
+
+    template <class _Ty>
+    constexpr conditional_t<!is_nothrow_move_constructible_v<_Ty> && is_copy_constructible_v<_Ty>, const _Ty &, _Ty &&>
+    move_if_noexcept(_Ty &_Arg) noexcept
+    {
+        return SFTL::move(_Arg);
+    }
+
+    using std::is_constant_evaluated;
+
+    using std::is_trivial;
+    using std::is_trivial_v;
+
+    using std::is_trivially_assignable;
+    using std::is_trivially_assignable_v;
+
+    using std::is_trivially_move_constructible;
+    using std::is_trivially_move_constructible_v;
+
+    using std::is_trivially_move_assignable;
+    using std::is_trivially_move_assignable_v;
+
+    using std::is_trivially_constructible;
+    using std::is_trivially_constructible_v;
+
+    using std::is_trivially_copy_assignable;
+    using std::is_trivially_copy_assignable_v;
+
+    using std::is_trivially_copy_constructible;
+    using std::is_trivially_copy_constructible_v;
+
+    using std::is_trivially_copyable;
+    using std::is_trivially_copyable_v;
+
+    using std::is_trivially_default_constructible;
+    using std::is_trivially_default_constructible_v;
+
+    using std::is_trivially_destructible;
+    using std::is_trivially_destructible_v;
 
 } // namespace SFTL

@@ -20,19 +20,17 @@ namespace libebml
     {
     }
 
-    // ----------------------------------------------------------------------
-
     SafeReadIOCallback::SafeReadIOCallback(std::unique_ptr<IOCallback> IO)
     {
         Init(std::move(IO));
     }
 
-    SafeReadIOCallback::SafeReadIOCallback(void const* Mem, std::size_t Size)
+    SafeReadIOCallback::SafeReadIOCallback(void const *Mem, std::size_t Size)
     {
         Init(std::make_unique<MemReadIOCallback>(Mem, Size));
     }
 
-    SafeReadIOCallback::SafeReadIOCallback(EbmlBinary const& Binary)
+    SafeReadIOCallback::SafeReadIOCallback(EbmlBinary const &Binary)
     {
         Init(std::make_unique<MemReadIOCallback>(Binary));
     }
@@ -72,11 +70,12 @@ namespace libebml
 
         NumBytes = std::min<std::size_t>(std::max<std::size_t>(1, NumBytes), 8);
         std::uint64_t Value = 0;
-        std::uint8_t* Ptr = &Buffer[0];
+        std::uint8_t *Ptr = &Buffer[0];
 
         Read(Buffer, NumBytes);
 
-        for (std::size_t i = 0; NumBytes > i; ++i, ++Ptr) Value = (Value << 8) + *Ptr;
+        for (std::size_t i = 0; NumBytes > i; ++i, ++Ptr)
+            Value = (Value << 8) + *Ptr;
 
         return Value;
     }
@@ -121,13 +120,15 @@ namespace libebml
     {
         mIO->setFilePointer(Position);
         const std::uint64_t ActualPosition = mIO->getFilePointer();
-        if (ActualPosition != Position) throw EndOfStreamX(ActualPosition - Position);
+        if (ActualPosition != Position)
+            throw EndOfStreamX(ActualPosition - Position);
     }
 
-    void SafeReadIOCallback::Read(void* Dst, std::size_t Count)
+    void SafeReadIOCallback::Read(void *Dst, std::size_t Count)
     {
         const std::uint64_t NumRead = mIO->read(Dst, Count);
-        if (NumRead != Count) throw SafeReadIOCallback::EndOfStreamX(Count - NumRead);
+        if (NumRead != Count)
+            throw SafeReadIOCallback::EndOfStreamX(Count - NumRead);
     }
 
-}  // namespace libebml
+} // namespace libebml

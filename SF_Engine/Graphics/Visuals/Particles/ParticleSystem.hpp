@@ -18,10 +18,9 @@
 
 namespace SF::Engine
 {
-    // -------------------------------------------------------------------------
-    // GPU-side structures — must match particle.comp layout exactly.
+
+    // GPU-side structures, must match particle.comp layout exactly.
     // All fields are 4-byte aligned; no implicit padding surprises.
-    // -------------------------------------------------------------------------
 
     /**
      * @brief Per-particle state residing entirely on the GPU.
@@ -77,9 +76,7 @@ namespace SF::Engine
         uint32_t _pad;
     };
 
-    // -------------------------------------------------------------------------
-    // Emitter — CPU-side handle owned by game code.
-    // -------------------------------------------------------------------------
+    // Emitter, CPU-side handle owned by game code.
 
     /**
      * @brief Describes one particle emitter.
@@ -95,9 +92,7 @@ namespace SF::Engine
         float accumulator = 0.0f; // fractional particle debt (sub-frame emission)
     };
 
-    // -------------------------------------------------------------------------
     // ParticleSystem module
-    // -------------------------------------------------------------------------
 
     /**
      * @brief Data-oriented, GPU-driven particle system.
@@ -115,9 +110,9 @@ namespace SF::Engine
      *     pipeline dependency.
      *
      * GPU buffer layout:
-     *   binding 0  — ParticleBuffer   : GpuParticle[MAX_TOTAL_PARTICLES]   (SSBO)
-     *   binding 1  — EmitterBuffer    : EmitterParams[MAX_EMITTERS]         (SSBO)
-     *   binding 2  — FreelistBuffer   : uint32_t  (atomic counter head)     (SSBO)
+     *   binding 0 , ParticleBuffer   : GpuParticle[MAX_TOTAL_PARTICLES]   (SSBO)
+     *   binding 1 , EmitterBuffer    : EmitterParams[MAX_EMITTERS]         (SSBO)
+     *   binding 2 , FreelistBuffer   : uint32_t  (atomic counter head)     (SSBO)
      *
      * Usage from game code:
      * @code

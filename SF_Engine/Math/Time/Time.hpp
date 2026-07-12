@@ -6,7 +6,7 @@
 /******************************************************************************/
 /* MIT License                                                                */
 /*                                                                            */
-/* Copyright (c) 2025-present Martin (the name I was assigned in french class).                                         */
+/* Copyright (c) 2025-present Noah Lee                                        */
 /*                                                                            */
 /* May all those that this source may reach be blessed by the LORD and find   */
 /* peace and joy in life.                                                     */
@@ -56,20 +56,21 @@ namespace SF::Engine
     /**
      * @brief Represents a time value stored in microseconds with high precision
      */
-    class Time
+    // ApplicationTime
+    class ApplicationTime
     {
     public:
         using Clock = std::chrono::steady_clock;
         using Duration = std::chrono::microseconds;
 
-        constexpr Time() noexcept = default;
+        constexpr ApplicationTime() noexcept = default;
 
         /**
          * @brief Creates a new time from a chrono duration
          * @param duration The duration
          */
         template <typename Rep, typename Period>
-        constexpr Time(const std::chrono::duration<Rep, Period> &duration) noexcept
+        constexpr ApplicationTime(const std::chrono::duration<Rep, Period> &duration) noexcept
             : m_value(std::chrono::duration_cast<Duration>(duration))
         {
         }
@@ -77,50 +78,50 @@ namespace SF::Engine
         /**
          * @brief Creates a time value from seconds
          * @param seconds Number of seconds
-         * @return Time value constructed from seconds
+         * @return ApplicationTime value constructed from seconds
          */
         template <typename Rep = double>
-        [[nodiscard]] static constexpr Time Seconds(Rep seconds) noexcept
+        [[nodiscard]] static constexpr ApplicationTime Seconds(Rep seconds) noexcept
         {
-            return Time(std::chrono::duration<Rep>(seconds));
+            return ApplicationTime(std::chrono::duration<Rep>(seconds));
         }
 
         /**
          * @brief Creates a time value from milliseconds
          * @param milliseconds Number of milliseconds
-         * @return Time value constructed from milliseconds
+         * @return ApplicationTime value constructed from milliseconds
          */
         template <typename Rep = int32_t>
-        [[nodiscard]] static constexpr Time Milliseconds(Rep milliseconds) noexcept
+        [[nodiscard]] static constexpr ApplicationTime Milliseconds(Rep milliseconds) noexcept
         {
-            return Time(std::chrono::duration<Rep, std::milli>(milliseconds));
+            return ApplicationTime(std::chrono::duration<Rep, std::milli>(milliseconds));
         }
 
         /**
          * @brief Creates a time value from microseconds
          * @param microseconds Number of microseconds
-         * @return Time value constructed from microseconds
+         * @return ApplicationTime value constructed from microseconds
          */
         template <typename Rep = int64_t>
-        [[nodiscard]] static constexpr Time Microseconds(Rep microseconds) noexcept
+        [[nodiscard]] static constexpr ApplicationTime Microseconds(Rep microseconds) noexcept
         {
-            return Time(std::chrono::duration<Rep, std::micro>(microseconds));
+            return ApplicationTime(std::chrono::duration<Rep, std::micro>(microseconds));
         }
 
         /**
          * @brief Creates a time value from nanoseconds
          * @param nanoseconds Number of nanoseconds
-         * @return Time value constructed from nanoseconds
+         * @return ApplicationTime value constructed from nanoseconds
          */
         template <typename Rep = int64_t>
-        [[nodiscard]] static constexpr Time Nanoseconds(Rep nanoseconds) noexcept
+        [[nodiscard]] static constexpr ApplicationTime Nanoseconds(Rep nanoseconds) noexcept
         {
-            return Time(std::chrono::duration<Rep, std::nano>(nanoseconds));
+            return ApplicationTime(std::chrono::duration<Rep, std::nano>(nanoseconds));
         }
 
         /**
          * @brief Gets the time value as seconds
-         * @return Time in seconds
+         * @return ApplicationTime in seconds
          */
         template <typename T = double>
         [[nodiscard]] constexpr T AsSeconds() const noexcept
@@ -130,7 +131,7 @@ namespace SF::Engine
 
         /**
          * @brief Gets the time value as milliseconds
-         * @return Time in milliseconds
+         * @return ApplicationTime in milliseconds
          */
         template <typename T = double>
         [[nodiscard]] constexpr T AsMilliseconds() const noexcept
@@ -140,7 +141,7 @@ namespace SF::Engine
 
         /**
          * @brief Gets the time value as microseconds
-         * @return Time in microseconds
+         * @return ApplicationTime in microseconds
          */
         template <typename T = int64_t>
         [[nodiscard]] constexpr T AsMicroseconds() const noexcept
@@ -150,7 +151,7 @@ namespace SF::Engine
 
         /**
          * @brief Gets the time value as nanoseconds
-         * @return Time in nanoseconds
+         * @return ApplicationTime in nanoseconds
          */
         template <typename T = int64_t>
         [[nodiscard]] constexpr T AsNanoseconds() const noexcept
@@ -198,9 +199,9 @@ namespace SF::Engine
          * @brief Gets the absolute value of this time
          * @return The absolute time
          */
-        [[nodiscard]] constexpr Time Abs() const noexcept
+        [[nodiscard]] constexpr ApplicationTime Abs() const noexcept
         {
-            return Time(m_value < Duration::zero() ? -m_value : m_value);
+            return ApplicationTime(m_value < Duration::zero() ? -m_value : m_value);
         }
 
         /**
@@ -208,16 +209,16 @@ namespace SF::Engine
          * @param other The divisor
          * @return The remainder
          */
-        [[nodiscard]] constexpr Time Mod(const Time &other) const noexcept
+        [[nodiscard]] constexpr ApplicationTime Mod(const ApplicationTime &other) const noexcept
         {
-            return Time(Duration(m_value.count() % other.m_value.count()));
+            return ApplicationTime(Duration(m_value.count() % other.m_value.count()));
         }
 
         /**
          * @brief Gets the current time since application start (steady clock)
          * @return The current time
          */
-        [[nodiscard]] static Time Now() noexcept
+        [[nodiscard]] static ApplicationTime Now() noexcept
         {
             static const auto s_epoch = Clock::now();
             return std::chrono::duration_cast<Duration>(Clock::now() - s_epoch);
@@ -227,7 +228,7 @@ namespace SF::Engine
          * @brief Gets the current system time (wall clock)
          * @return The current system time
          */
-        [[nodiscard]] static Time SystemNow() noexcept
+        [[nodiscard]] static ApplicationTime SystemNow() noexcept
         {
             auto now = std::chrono::system_clock::now();
             return std::chrono::duration_cast<Duration>(now.time_since_epoch());
@@ -284,49 +285,49 @@ namespace SF::Engine
         }
 
         // Comparison operators
-        [[nodiscard]] constexpr bool operator==(const Time &rhs) const noexcept = default;
-        [[nodiscard]] constexpr auto operator<=>(const Time &rhs) const noexcept = default;
+        [[nodiscard]] constexpr bool operator==(const ApplicationTime &rhs) const noexcept = default;
+        [[nodiscard]] constexpr auto operator<=>(const ApplicationTime &rhs) const noexcept = default;
 
         // Unary operators
-        [[nodiscard]] constexpr Time operator-() const noexcept;
-        [[nodiscard]] constexpr Time operator+() const noexcept;
+        [[nodiscard]] constexpr ApplicationTime operator-() const noexcept;
+        [[nodiscard]] constexpr ApplicationTime operator+() const noexcept;
 
         // Arithmetic operators
-        friend constexpr Time operator+(const Time &lhs, const Time &rhs) noexcept;
-        friend constexpr Time operator-(const Time &lhs, const Time &rhs) noexcept;
+        friend constexpr ApplicationTime operator+(const ApplicationTime &lhs, const ApplicationTime &rhs) noexcept;
+        friend constexpr ApplicationTime operator-(const ApplicationTime &lhs, const ApplicationTime &rhs) noexcept;
 
         template <std::floating_point T>
-        friend constexpr Time operator*(const Time &lhs, T rhs) noexcept;
+        friend constexpr ApplicationTime operator*(const ApplicationTime &lhs, T rhs) noexcept;
 
         template <std::integral T>
-        friend constexpr Time operator*(const Time &lhs, T rhs) noexcept;
+        friend constexpr ApplicationTime operator*(const ApplicationTime &lhs, T rhs) noexcept;
 
         template <std::floating_point T>
-        friend constexpr Time operator*(T lhs, const Time &rhs) noexcept;
+        friend constexpr ApplicationTime operator*(T lhs, const ApplicationTime &rhs) noexcept;
 
         template <std::integral T>
-        friend constexpr Time operator*(T lhs, const Time &rhs) noexcept;
+        friend constexpr ApplicationTime operator*(T lhs, const ApplicationTime &rhs) noexcept;
 
         template <std::floating_point T>
-        friend constexpr Time operator/(const Time &lhs, T rhs) noexcept;
+        friend constexpr ApplicationTime operator/(const ApplicationTime &lhs, T rhs) noexcept;
 
         template <std::integral T>
-        friend constexpr Time operator/(const Time &lhs, T rhs) noexcept;
+        friend constexpr ApplicationTime operator/(const ApplicationTime &lhs, T rhs) noexcept;
 
-        friend constexpr double operator/(const Time &lhs, const Time &rhs) noexcept;
+        friend constexpr double operator/(const ApplicationTime &lhs, const ApplicationTime &rhs) noexcept;
 
         // Compound assignment operators
-        constexpr Time &operator+=(const Time &rhs) noexcept;
-        constexpr Time &operator-=(const Time &rhs) noexcept;
+        constexpr ApplicationTime &operator+=(const ApplicationTime &rhs) noexcept;
+        constexpr ApplicationTime &operator-=(const ApplicationTime &rhs) noexcept;
 
         template <typename T>
-        constexpr Time &operator*=(T rhs) noexcept;
+        constexpr ApplicationTime &operator*=(T rhs) noexcept;
 
         template <typename T>
-        constexpr Time &operator/=(T rhs) noexcept;
+        constexpr ApplicationTime &operator/=(T rhs) noexcept;
 
         // Stream operator
-        friend std::ostream &operator<<(std::ostream &os, const Time &time);
+        friend std::ostream &operator<<(std::ostream &os, const ApplicationTime &time);
 
     private:
         Duration m_value{};
@@ -338,14 +339,14 @@ namespace SF::Engine
     class ElapsedTime
     {
     public:
-        explicit ElapsedTime(const Time &interval = Time::Seconds(-1)) noexcept
-            : m_startTime(Time::Now()), m_interval(interval)
+        explicit ElapsedTime(const ApplicationTime &interval = ApplicationTime::Seconds(-1)) noexcept
+            : m_startTime(ApplicationTime::Now()), m_interval(interval)
         {
         }
 
         uint32_t GetElapsed() noexcept
         {
-            auto now = Time::Now();
+            auto now = ApplicationTime::Now();
             auto elapsed = static_cast<uint32_t>((now - m_startTime) / m_interval);
 
             if (elapsed > 0)
@@ -354,9 +355,9 @@ namespace SF::Engine
             return elapsed;
         }
 
-        [[nodiscard]] Time GetElapsedTime() const noexcept
+        [[nodiscard]] ApplicationTime GetElapsedTime() const noexcept
         {
-            return Time::Now() - m_startTime;
+            return ApplicationTime::Now() - m_startTime;
         }
 
         bool HasElapsed() noexcept
@@ -366,17 +367,17 @@ namespace SF::Engine
 
         void Reset() noexcept
         {
-            m_startTime = Time::Now();
+            m_startTime = ApplicationTime::Now();
         }
 
-        [[nodiscard]] const Time &GetStartTime() const noexcept { return m_startTime; }
-        void SetStartTime(const Time &startTime) noexcept { m_startTime = startTime; }
-        [[nodiscard]] const Time &GetInterval() const noexcept { return m_interval; }
-        void SetInterval(const Time &interval) noexcept { m_interval = interval; }
+        [[nodiscard]] const ApplicationTime &GetStartTime() const noexcept { return m_startTime; }
+        void SetStartTime(const ApplicationTime &startTime) noexcept { m_startTime = startTime; }
+        [[nodiscard]] const ApplicationTime &GetInterval() const noexcept { return m_interval; }
+        void SetInterval(const ApplicationTime &interval) noexcept { m_interval = interval; }
 
     private:
-        Time m_startTime;
-        Time m_interval;
+        ApplicationTime m_startTime;
+        ApplicationTime m_interval;
     };
 
     /**
@@ -385,21 +386,21 @@ namespace SF::Engine
     class ScopedTimer
     {
     public:
-        using CallbackFn = std::function<void(Time)>;
+        using CallbackFn = std::function<void(ApplicationTime)>;
 
         explicit ScopedTimer(CallbackFn callback) noexcept
-            : m_callback(std::move(callback)), m_start(Time::Now())
+            : m_callback(std::move(callback)), m_start(ApplicationTime::Now())
         {
         }
 
-        explicit ScopedTimer(Time &result) noexcept
-            : m_result(&result), m_start(Time::Now())
+        explicit ScopedTimer(ApplicationTime &result) noexcept
+            : m_result(&result), m_start(ApplicationTime::Now())
         {
         }
 
         ~ScopedTimer()
         {
-            auto elapsed = Time::Now() - m_start;
+            auto elapsed = ApplicationTime::Now() - m_start;
 
             if (m_callback)
                 m_callback(elapsed);
@@ -415,8 +416,8 @@ namespace SF::Engine
 
     private:
         CallbackFn m_callback;
-        Time *m_result = nullptr;
-        Time m_start;
+        ApplicationTime *m_result = nullptr;
+        ApplicationTime m_start;
     };
 
     /**
@@ -432,7 +433,7 @@ namespace SF::Engine
             if (!m_running)
             {
                 m_running = true;
-                m_startTime = Time::Now();
+                m_startTime = ApplicationTime::Now();
             }
         }
 
@@ -441,15 +442,15 @@ namespace SF::Engine
             if (m_running)
             {
                 m_running = false;
-                m_elapsed += Time::Now() - m_startTime;
+                m_elapsed += ApplicationTime::Now() - m_startTime;
             }
         }
 
         void Reset() noexcept
         {
             m_running = false;
-            m_elapsed = Time::Seconds(0);
-            m_startTime = Time::Seconds(0);
+            m_elapsed = ApplicationTime::Seconds(0);
+            m_startTime = ApplicationTime::Seconds(0);
         }
 
         void Restart() noexcept
@@ -458,10 +459,10 @@ namespace SF::Engine
             Start();
         }
 
-        [[nodiscard]] Time GetElapsed() const noexcept
+        [[nodiscard]] ApplicationTime GetElapsed() const noexcept
         {
             if (m_running)
-                return m_elapsed + (Time::Now() - m_startTime);
+                return m_elapsed + (ApplicationTime::Now() - m_startTime);
             return m_elapsed;
         }
 
@@ -469,8 +470,8 @@ namespace SF::Engine
 
     private:
         bool m_running = false;
-        Time m_elapsed = Time::Seconds(0);
-        Time m_startTime = Time::Seconds(0);
+        ApplicationTime m_elapsed = ApplicationTime::Seconds(0);
+        ApplicationTime m_startTime = ApplicationTime::Seconds(0);
     };
 
     /**
@@ -479,15 +480,15 @@ namespace SF::Engine
     class FPSCounter
     {
     public:
-        explicit FPSCounter(const Time &updateInterval = Time::Seconds(1)) noexcept
-            : m_updateInterval(updateInterval), m_lastUpdate(Time::Now())
+        explicit FPSCounter(const ApplicationTime &updateInterval = ApplicationTime::Seconds(1)) noexcept
+            : m_updateInterval(updateInterval), m_lastUpdate(ApplicationTime::Now())
         {
         }
 
         void Update() noexcept
         {
             m_frameCount++;
-            auto now = Time::Now();
+            auto now = ApplicationTime::Now();
             auto elapsed = now - m_lastUpdate;
 
             if (elapsed >= m_updateInterval)
@@ -506,8 +507,8 @@ namespace SF::Engine
         }
 
     private:
-        Time m_updateInterval;
-        Time m_lastUpdate;
+        ApplicationTime m_updateInterval;
+        ApplicationTime m_lastUpdate;
         uint32_t m_frameCount = 0;
         double m_fps = 0.0;
     };
@@ -517,18 +518,18 @@ namespace SF::Engine
     public:
         void Update()
         {
-            currentFrameTime = Time::Now();
+            currentFrameTime = ApplicationTime::Now();
             change = currentFrameTime - lastFrameTime;
             lastFrameTime = currentFrameTime;
         }
 
-        Time currentFrameTime;
-        Time lastFrameTime;
-        Time change;
+        ApplicationTime currentFrameTime;
+        ApplicationTime lastFrameTime;
+        ApplicationTime change;
     };
 
     template <typename ClockType = std::chrono::steady_clock>
-    class UpdatesPerSecond
+    class UpdateClock
     {
     public:
         using clock = ClockType;
@@ -565,7 +566,7 @@ namespace SF::Engine
             return std::nullopt;
         }
 
-        std::optional<uint32_t> Update(const Time &time)
+        std::optional<uint32_t> Update(const ApplicationTime &time)
         {
             const auto seconds = std::chrono::duration_cast<duration>(
                 std::chrono::duration<double>(time.AsSeconds()));
@@ -637,7 +638,7 @@ namespace SF::Engine
         class ScopedUpdater
         {
         public:
-            explicit ScopedUpdater(UpdatesPerSecond &counter) : counter_(counter) {}
+            explicit ScopedUpdater(UpdateClock &counter) : counter_(counter) {}
 
             ~ScopedUpdater()
             {
@@ -650,15 +651,15 @@ namespace SF::Engine
             ScopedUpdater &operator=(ScopedUpdater &&) noexcept = default;
 
         private:
-            UpdatesPerSecond &counter_;
+            UpdateClock &counter_;
         };
     };
 
     template <typename ClockType = std::chrono::steady_clock>
-    class RateTracker : public UpdatesPerSecond<ClockType>
+    class RateTracker : public UpdateClock<ClockType>
     {
     public:
-        using Base = UpdatesPerSecond<ClockType>;
+        using Base = UpdateClock<ClockType>;
         using typename Base::time_point;
 
         struct Statistics
@@ -716,7 +717,7 @@ namespace SF::Engine
     };
 
     template <typename ClockType>
-    UpdatesPerSecond(ClockType) -> UpdatesPerSecond<ClockType>;
+    UpdateClock(ClockType) -> UpdateClock<ClockType>;
 
 }
 

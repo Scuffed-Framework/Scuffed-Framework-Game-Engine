@@ -28,7 +28,7 @@
 
 namespace SF::Engine
 {
-    Scene::Scene(std::unique_ptr<CameraController> &&cameraController, SceneRendererConfig cfg)
+    Scene::Scene(std::unique_ptr<CameraController> &&cameraController, std::string name, SceneRendererConfig cfg)
         : cameraController_(std::move(cameraController)), rendererCfg_(cfg)
     {
         MakeLight(
@@ -115,16 +115,19 @@ namespace SF::Engine
             atmoPass_ = sceneRenderer_->GetAtmoPass();
             sunPass_ = sceneRenderer_->GetSunPass();
             cloudPass_ = sceneRenderer_->GetCloudPass();
-            // todo: take ImGui out of Scene
 
-            auto *imgui = sceneRenderer_->GetPipelinePass<ImGuiPipelinePass>();
-            if (imgui)
-                imgui->SetDrawCallback(
+            // todo: take ImGui out of SceneRenderer
+            // resolved 6/22/26
+            // - NLee
+
+            // TODO:
+            // add global conf option
+
+            if (sceneRenderer_->GetPipelinePassManager()->Get<ImGuiPipelinePass>()) // if imgui exists
+                sceneRenderer_->GetPipelinePassManager()->Get<ImGuiPipelinePass>()->SetDrawCallback(
                     [this]()
                     {
-                        ui_.Draw(
-                            {cameraController_->GetActive(), &objects_, &lights_, &selectedObj_, &selectedLight_});
-                        cloudPass_->DrawImGuiPanel();
+                        ui_.Draw({cameraController_->GetActive(), &objects_, &lights_, &selectedObj_, &selectedLight_});
                         UIRegistry::Get().DrawAll();
                     });
         }
@@ -132,17 +135,11 @@ namespace SF::Engine
         if (!litPass_ || !lightManager_)
             return;
 
-        // ------------------------------------------------------------------ //
-        // Delta time
-        // ------------------------------------------------------------------ //
         auto now = std::chrono::steady_clock::now();
         float dt = std::min(std::chrono::duration<float>(now - lastFrameTime_).count(), 0.1f);
         lastFrameTime_ = now;
         elapsed_ += dt;
 
-        // ------------------------------------------------------------------ //
-        // Camera
-        // ------------------------------------------------------------------ //
         auto *wnd = WindowManager::Get()->GetWindow(0);
         auto &io = ImGui::GetIO();
         cameraController_->SetFrameInput(wnd, io.WantCaptureMouse, io.WantCaptureKeyboard);

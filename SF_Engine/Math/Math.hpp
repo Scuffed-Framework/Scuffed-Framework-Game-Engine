@@ -6,7 +6,7 @@
 /******************************************************************************/
 /* MIT License                                                                */
 /* */
-/* Copyright (c) 2025-present Martin (the name I was assigned in french class).                                         */
+/* Copyright (c) 2025-present Noah Lee                                        */
 /* */
 /* May all those that this source may reach be blessed by the LORD and find   */
 /* peace and joy in life.                                                     */
@@ -215,6 +215,30 @@ namespace SF::Engine
             auto logMax = std::log(max);
             auto scale = Random<T>();
             return std::exp(logMin + scale * (logMax - logMin));
+        }
+
+        /**
+         * @brief Template that creates a number between two min in max, uniform distribution
+         * @param min The min value
+         * @param max The max value
+         * @return The final random number
+         */
+        template <typename T>
+        T Rand(T Min, T Max)
+        {
+            static std::random_device Device;
+            static std::mt19937 Generator(Device());
+
+            if constexpr (std::is_integral_v<T>)
+            {
+                std::uniform_int_distribution<T> Dist(Min, Max);
+                return Dist(Generator);
+            }
+            else
+            {
+                std::uniform_real_distribution<T> Dist(Min, Max);
+                return Dist(Generator);
+            }
         }
 
         /**

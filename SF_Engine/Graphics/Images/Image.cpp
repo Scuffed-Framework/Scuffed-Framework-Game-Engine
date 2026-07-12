@@ -599,54 +599,17 @@ namespace SF::Engine
         return supportsBlit;
     }
 
-    // Image.cpp
     void Image::Serialize(XMLNode &node) const
     {
-        // Extent
-        XMLNode extentNode = node.AddChild("Extent");
-        extentNode.SetAttribute("width", (int)extent.width);
-        extentNode.SetAttribute("height", (int)extent.height);
-        extentNode.SetAttribute("depth", (int)extent.depth);
-
-        // Format / sampling
-        node.SetAttribute("format", (int)format);
-        node.SetAttribute("samples", (int)samples);
-        node.SetAttribute("usage", (int)usage);
-        node.SetAttribute("mipLevels", (int)mipLevels);
-        node.SetAttribute("arrayLayers", (int)arrayLayers);
-
-        // Sampler
-        node.SetAttribute("filter", (int)filter);
-        node.SetAttribute("addressMode", (int)addressMode);
-        node.SetAttribute("layout", (int)layout);
+        EnsureReflected();
+        XmlNodeWriter writer(node);
+        ::SF::RTTI::SerializeContext::Instance().Save(*this, writer);
     }
 
     void Image::Deserialize(const XMLNode &node)
     {
-        XMLNode extentNode = node.GetChild("Extent");
-        int w, h, d;
-        extentNode.GetAttribute("width", w);
-        extentNode.GetAttribute("height", h);
-        extentNode.GetAttribute("depth", d);
-        extent = {(uint32_t)w, (uint32_t)h, (uint32_t)d};
-
-        int val;
-        node.GetAttribute("format", val);
-        format = (VkFormat)val;
-        node.GetAttribute("samples", val);
-        samples = (VkSampleCountFlagBits)val;
-        node.GetAttribute("usage", val);
-        usage = (VkImageUsageFlags)val;
-        node.GetAttribute("mipLevels", val);
-        mipLevels = (uint32_t)val;
-        node.GetAttribute("arrayLayers", val);
-        arrayLayers = (uint32_t)val;
-        node.GetAttribute("filter", val);
-        filter = (VkFilter)val;
-        node.GetAttribute("addressMode", val);
-        addressMode = (VkSamplerAddressMode)val;
-        node.GetAttribute("layout", val);
-        layout = (VkImageLayout)val;
+        EnsureReflected();
+        XmlNodeReader reader(node);
+        ::SF::RTTI::SerializeContext::Instance().Load(*this, reader);
     }
-
 }

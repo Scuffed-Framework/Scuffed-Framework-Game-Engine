@@ -44,6 +44,7 @@
 #endif
 
 #include <Engine/VersionSemantic.hpp>
+#include <UtilityClasses/NoCopy.hpp>
 
 namespace SF::Engine
 {
@@ -54,7 +55,7 @@ namespace SF::Engine
      * has a name and version for identification and driver support.
      */
 
-    class App : public virtual rocket::trackable
+    class App : public virtual rocket::trackable, NoCopy
     {
         friend class Engine;
 
@@ -65,12 +66,6 @@ namespace SF::Engine
         }
 
         virtual ~App() = default;
-
-        // Prevent copying, allow moving
-        App(const App &) = delete;
-        App &operator=(const App &) = delete;
-        App(App &&) noexcept = default;
-        App &operator=(App &&) noexcept = default;
 
         /**
          * @brief Called when switching to this app from another.

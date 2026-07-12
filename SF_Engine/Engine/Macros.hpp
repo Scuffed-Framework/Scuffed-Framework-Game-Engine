@@ -1,5 +1,11 @@
+#pragma once
 // Main
-#define NULL (void*)0
+#define NULL ((void *)0)
 
-// Module
-#define MODULE_MAIN() void main(string argsI[])
+#define UINT unsigned int
+#define ULONG unsigned long
+#define ULONGLONG unsigned long long
+
+#define WORD unsigned short
+#define DWORD ULONG
+#define QWORD ULONGLONG

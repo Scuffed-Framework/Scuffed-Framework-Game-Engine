@@ -36,7 +36,7 @@ Shader "SF/Clouds/AlligatorNoiseLUT"
     {
         #version 450
 
-        // PerlinWorleyNoise.si must come first — AlligatorNoise.si
+        // PerlinWorleyNoise.si must come first, AlligatorNoise.si
         // depends on hash33(), gradientNoise(), remap(), f_remap(),
         // and perlinfbm() defined there.
         #import "Noise/PerlinWorleyNoise.si"

@@ -21,6 +21,7 @@ namespace SF::Engine
     public:
         DefaultScene()
             : Scene(std::make_unique<CameraController>(),
+                    "Default Scene",
                     SceneRendererConfig{
                         .enableAtmosphere = true,
                         .enableSun = true,
@@ -30,7 +31,7 @@ namespace SF::Engine
 
         void Start() override
         {
-                }
+        }
 
         bool IsPaused() const override { return false; }
     };

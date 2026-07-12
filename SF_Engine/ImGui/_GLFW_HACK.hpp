@@ -22,10 +22,6 @@
 
 #pragma comment(lib, "dwmapi.lib")
 
-// ============================================================================
-// API
-// ============================================================================
-
 // Your custom WndProc callback
 // Return the result to send back, or call the originalProc to chain
 typedef LRESULT(CALLBACK *GLFW_WndProc_Callback)(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
@@ -40,10 +36,6 @@ inline void GLFW_UnhookWndProc(GLFWwindow *window);
 
 // Get the original GLFW WndProc
 inline WNDPROC GLFW_GetOriginalWndProc(GLFWwindow *window);
-
-// ============================================================================
-// IMPLEMENTATION
-// ============================================================================
 
 namespace GLFW_Hack_Internal
 {
@@ -141,10 +133,6 @@ inline WNDPROC GLFW_GetOriginalWndProc(GLFWwindow *window)
     HookData *hook = (HookData *)GetPropW(hwnd, HOOK_PROP_NAME);
     return hook ? hook->originalProc : nullptr;
 }
-
-// ============================================================================
-// HELPER MACROS FOR COMMON CASES
-// ============================================================================
 
 // Makes a borderless window with custom titlebar
 #define GLFW_HACK_ENABLE_BORDERLESS(hwnd)                                        \

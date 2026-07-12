@@ -13,9 +13,8 @@
 
 namespace SF::Engine::Shaders
 {
-    // -------------------------------------------------------------------------
+
     // Public enums
-    // -------------------------------------------------------------------------
     enum class ShaderLanguage
     {
         GLSL,
@@ -32,9 +31,7 @@ namespace SF::Engine::Shaders
         TessellationEvaluation
     };
 
-    // -------------------------------------------------------------------------
     // Property types for the Properties { } block
-    // -------------------------------------------------------------------------
     enum class PropType
     {
         Int,
@@ -69,18 +66,14 @@ namespace SF::Engine::Shaders
         std::string enumTypeName;
     };
 
-    // -------------------------------------------------------------------------
     // Capability requirement (from #pragma require)
-    // -------------------------------------------------------------------------
     struct ShaderCapabilityRequirement
     {
         std::string feature; // e.g. "compute_shaders", "texture3d"
         int tier = 0;        // optional tier (0 = any)
     };
 
-    // -------------------------------------------------------------------------
     // Specialization constant (from #pragma specialize)
-    // -------------------------------------------------------------------------
     struct ShaderSpecializationConstant
     {
         std::string name;
@@ -88,9 +81,7 @@ namespace SF::Engine::Shaders
         uint32_t constantId = 0; // assigned in declaration order
     };
 
-    // -------------------------------------------------------------------------
     // Resource binding entry (from ResourceLayout { } block)
-    // -------------------------------------------------------------------------
     struct ResourceBinding
     {
         uint32_t set = 0;
@@ -100,9 +91,7 @@ namespace SF::Engine::Shaders
         std::string qualifiers; // e.g. "writeonly rgba16f"
     };
 
-    // -------------------------------------------------------------------------
     // Per-pass render state (from Pass { } blocks)
-    // -------------------------------------------------------------------------
     struct PassRenderState
     {
         // Cull mode: "Off", "Front", "Back" (default "Back")
@@ -116,18 +105,14 @@ namespace SF::Engine::Shaders
         std::map<std::string, std::string> tags;
     };
 
-    // -------------------------------------------------------------------------
     // SubShader LOD
-    // -------------------------------------------------------------------------
     struct SubShaderDesc
     {
         int lod = 0;
         std::map<std::string, std::string> tags;
     };
 
-    // -------------------------------------------------------------------------
     // Public structs -- everything callers might need
-    // -------------------------------------------------------------------------
     struct ComputeKernel
     {
         std::string name;
@@ -208,9 +193,7 @@ namespace SF::Engine::Shaders
         bool hasWorkgroupSize = false;
     };
 
-    // -------------------------------------------------------------------------
     // ShaderParser
-    // -------------------------------------------------------------------------
     class ShaderParser
     {
     public:
@@ -282,9 +265,7 @@ namespace SF::Engine::Shaders
         static bool glslangReady_;
     };
 
-    // -------------------------------------------------------------------------
     // Helpers
-    // -------------------------------------------------------------------------
     inline const char *stageToString(ShaderStage stage)
     {
         switch (stage)

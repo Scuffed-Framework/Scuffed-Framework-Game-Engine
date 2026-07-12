@@ -23,7 +23,6 @@ namespace SF::Engine
         ubo_ = std::make_unique<UniformBuffer>(sizeof(OceanTessellationFrameUBO));
         spectrumUBO_ = std::make_unique<UniformBuffer>(sizeof(OceanFFTSpectrumUBO));
 
-        // ---- FFT resources -------------------------------------------------
         const uint32_t N = fftSettings_.N;
         const Vector2Uint size{N, N};
 
@@ -105,7 +104,6 @@ namespace SF::Engine
         verticalFFTPipeline_ /******/ = std::make_unique<ComputePipeline>("Shaders/Ocean/OceanFFTSpectrum.shader", kernelDefines("CS_VerticalFFT"));
         assemblePipeline_ /*********/ = std::make_unique<ComputePipeline>("Shaders/Ocean/OceanFFTSpectrum.shader", kernelDefines("CS_AssembleMaps"));
 
-        // ---- Graphics pipeline ----------------------------------------------
         std::vector<Shader::Define> defines =
             {
                 {"USE_TESSELLATION", "1"},
@@ -130,7 +128,6 @@ namespace SF::Engine
         setupDescriptorSet();
         setupComputeDescriptorSets();
 
-        // ---- One-time spectrum initialization --------------------------------
         {
             CommandBuffer initCmd = CommandBuffer(true);
 
@@ -225,7 +222,7 @@ namespace SF::Engine
         VkDescriptorImageInfo dispStorageInfo{VK_NULL_HANDLE, displacementTex_->GetView(), VK_IMAGE_LAYOUT_GENERAL};
         VkDescriptorImageInfo slopeStorageInfo{VK_NULL_HANDLE, slopeTex_->GetView(), VK_IMAGE_LAYOUT_GENERAL};
 
-        // Helper lambdas — each captures the ds by value after the set is created.
+        // Helper lambdas, each captures the ds by value after the set is created.
         auto W_UBO = [&](VkDescriptorSet ds)
         {
             VkWriteDescriptorSet w{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
@@ -297,37 +294,37 @@ namespace SF::Engine
             return w;
         };
 
-        // CS_InitializeSpectrum — bindings 0, 1, 2
+        // CS_InitializeSpectrum, bindings 0, 1, 2
         {
             initSpectrumDescSet_ = std::make_unique<DescriptorSet>(*initSpectrumPipeline_);
             VkDescriptorSet ds = initSpectrumDescSet_->GetDescriptorSet();
             DescriptorSet::Update({W_UBO(ds), W_Params(ds), W_InitSpec(ds)});
         }
-        // CS_PackSpectrumConjugate — bindings 0, 2
+        // CS_PackSpectrumConjugate, bindings 0, 2
         {
             packConjugateDescSet_ = std::make_unique<DescriptorSet>(*packConjugatePipeline_);
             VkDescriptorSet ds = packConjugateDescSet_->GetDescriptorSet();
             DescriptorSet::Update({W_UBO(ds), W_InitSpec(ds)});
         }
-        // CS_UpdateSpectrumForFFT — bindings 0, 2 (read), 3 (write)
+        // CS_UpdateSpectrumForFFT, bindings 0, 2 (read), 3 (write)
         {
             updateSpectrumDescSet_ = std::make_unique<DescriptorSet>(*updateSpectrumPipeline_);
             VkDescriptorSet ds = updateSpectrumDescSet_->GetDescriptorSet();
             DescriptorSet::Update({W_UBO(ds), W_InitSpec(ds), W_Spectrum(ds)});
         }
-        // CS_HorizontalFFT — bindings 0, 6
+        // CS_HorizontalFFT, bindings 0, 6
         {
             horizontalFFTDescSet_ = std::make_unique<DescriptorSet>(*horizontalFFTPipeline_);
             VkDescriptorSet ds = horizontalFFTDescSet_->GetDescriptorSet();
             DescriptorSet::Update({W_UBO(ds), W_Fourier(ds)});
         }
-        // CS_VerticalFFT — bindings 0, 6
+        // CS_VerticalFFT, bindings 0, 6
         {
             verticalFFTDescSet_ = std::make_unique<DescriptorSet>(*verticalFFTPipeline_);
             VkDescriptorSet ds = verticalFFTDescSet_->GetDescriptorSet();
             DescriptorSet::Update({W_UBO(ds), W_Fourier(ds)});
         }
-        // CS_AssembleMaps — bindings 0, 3 (read), 4, 5
+        // CS_AssembleMaps, bindings 0, 3 (read), 4, 5
         {
             assembleDescSet_ = std::make_unique<DescriptorSet>(*assemblePipeline_);
             VkDescriptorSet ds = assembleDescSet_->GetDescriptorSet();

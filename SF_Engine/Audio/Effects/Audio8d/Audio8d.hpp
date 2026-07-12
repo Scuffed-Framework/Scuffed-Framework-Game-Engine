@@ -26,7 +26,7 @@ namespace SF::Engine
      * around the listener in 3D space. Combined with OpenAL's built-in
      * HRTF (Head-Related Transfer Function) and an optional reverb effect,
      * this creates strong binaural spatialisation that tricks the brain into
-     * perceiving movement and depth — even on plain stereo headphones.
+     * perceiving movement and depth, even on plain stereo headphones.
      *
      * Key parameters:
      *  - orbitRadius     : how far the source sits from the listener (metres)
@@ -40,7 +40,7 @@ namespace SF::Engine
     struct Audio8DParams
     {
         float orbitRadius = 3.0f;      // metres
-        float revolutionSpeed = 0.12f; // rev/s  (≈ 7 RPM — feels natural, not dizzying)
+        float revolutionSpeed = 0.12f; // rev/s  (≈ 7 RPM, feels natural, not dizzying)
         float orbitTilt = 0.18f;       // radians above horizon (~10°)
         float breatheDepth = 0.25f;    // fractional radius oscillation
         float breatheSpeed = 0.07f;    // Hz  (very slow "breathing" cycle)
@@ -77,7 +77,7 @@ namespace SF::Engine
                          const Audio8DParams &params = {});
         ~Audio8D();
 
-        // Non-copyable — owns OpenAL EFX objects
+        // Non-copyable, owns OpenAL EFX objects
         Audio8D(const Audio8D &) = delete;
         Audio8D &operator=(const Audio8D &) = delete;
         Audio8D(Audio8D &&) = default;
@@ -111,7 +111,7 @@ namespace SF::Engine
         void DestroyEFX();
         void ConfigureReverb();
 
-        // EFX function pointers (loaded at runtime — not all drivers expose them at link time)
+        // EFX function pointers (loaded at runtime, not all drivers expose them at link time)
         using LPALGENEFFECTS = void(AL_APIENTRY *)(ALsizei, ALuint *);
         using LPALDELETEEFFECTS = void(AL_APIENTRY *)(ALsizei, const ALuint *);
         using LPALISEFFECT = ALboolean(AL_APIENTRY *)(ALuint);
@@ -148,7 +148,7 @@ namespace SF::Engine
         ALuint efxSlot = 0;
         ALuint efxFilter = 0;
 
-        // Derived from Audio8DParams — stored so we can delta-update only when changed
+        // Derived from Audio8DParams, stored so we can delta-update only when changed
         float cachedDecay = -1.0f;
         float cachedMix = -1.0f;
     };

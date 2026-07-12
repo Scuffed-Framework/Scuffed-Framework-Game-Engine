@@ -91,7 +91,7 @@ namespace SF::Engine
         return glm::vec4(CameraController::Get().GetActive()->GetPosition(), 1.0f);
     }
 
-    Time GetDeltaTime()
+    ApplicationTime GetDeltaTime()
     {
         return Engine::Get()->GetDelta();
     }

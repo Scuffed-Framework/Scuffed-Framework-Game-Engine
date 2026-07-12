@@ -5,9 +5,8 @@
 
 namespace SF::Engine
 {
-    // =========================================================================
+
     // Internal helpers
-    // =========================================================================
 
     // Bind a storage image at binding 0 of a descriptor set.
     static void bindStorageImage(DescriptorSet &ds, Image *img)
@@ -69,9 +68,8 @@ namespace SF::Engine
             VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
     }
 
-    // =========================================================================
     // BlueNoiseLUT  (2-D R16_SFLOAT)
-    // =========================================================================
+
     BlueNoiseLUT::BlueNoiseLUT(uint32_t size)
         : size_(size)
     {

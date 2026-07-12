@@ -6,11 +6,13 @@
 #include <Components/TransformComponent.hpp>
 #include <XML/XMLReader.hpp>
 #include <Graphics/Lighting/Light.hpp>
+#include <Graphics/Lighting/LitMeshPipelinePass.hpp>
 
 namespace SF::Engine
 {
     struct SceneObject : public Serializable
     {
+    public:
         std::string name;
         TransformComponent transform;
         MeshMaterial material;

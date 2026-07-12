@@ -9,6 +9,7 @@ namespace SF::Engine
      */
     class ImageDepth : public Image
     {
+        SF_RTTI(ImageDepth, Image)
     public:
         explicit ImageDepth(const Vector2Uint &extent, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
     };

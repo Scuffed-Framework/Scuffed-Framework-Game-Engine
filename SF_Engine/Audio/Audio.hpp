@@ -13,16 +13,6 @@
 
 namespace SF::Engine
 {
-
-    enum class AudioFormat
-    {
-        WAV,
-        MP3,
-        OGG,
-        FLAC,
-        MATROSKA
-    };
-
     /**
      * @brief Module used for loading, managing and playing a variety of different sound types.
      */

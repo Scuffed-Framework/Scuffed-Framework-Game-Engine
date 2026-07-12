@@ -20,8 +20,7 @@ namespace SF::Engine
      * Uses a single fullscreen triangle (no VBO) to sample a source texture
      * and write it into the current render target (typically the swapchain).
      *
-     * Usage
-     * -----
+     * Usage:
      * Add a second render stage to your Renderer that has:
      *   - Attachment{0, "scene", Attachment::Type::Image}   <- the resolved scene colour
      *   - Attachment{1, "swapchain", Attachment::Type::Swapchain}

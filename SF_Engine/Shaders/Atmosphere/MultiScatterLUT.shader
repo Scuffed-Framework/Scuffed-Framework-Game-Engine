@@ -21,7 +21,7 @@ Shader "SF/Atmosphere/MultiScatterLUT"
             float disc = h * h * (mu * mu - 1.0) + R * R;
             if (disc < 0.0) return -1.0;
             float t = -h * mu + sqrt(max(0.0, disc));
-            return t > 0.0 ? t : -1.0;  // don't clamp — preserve the "no hit" signal
+            return t > 0.0 ? t : -1.0;  // don't clamp, preserve the "no hit" signal
         }
 
         vec3 fibonacciDir(int i)

@@ -43,6 +43,14 @@ namespace SF::Engine
 
     void ImGuiPipelinePass::Init()
     {
+        if (s_backendInitialized)
+        {
+            // Another instance already owns the context; this instance is a duplicate and should not re-initialize anything.
+            // Log an error because this isn't supposed to happen
+            Log::Error("[ImGui Pass Backend] ImGui Backend tried initializing, but was previously initialized!");
+            return;
+        }
+
         auto *renderSystem = RenderSystem::Get();
         auto *physDevice = renderSystem->GetPhysicalDevice();
         auto *logDevice = renderSystem->GetLogicalDevice();
@@ -100,9 +108,10 @@ namespace SF::Engine
             throw std::runtime_error("ImGuiPipelinePass: ImGui_ImplVulkan_Init failed");
 
         initialized_ = true;
+        s_backendInitialized = true;
 
         ImGuiDefaultStyle::SetStyle();
-    }
+        }
 
     void ImGuiPipelinePass::Shutdown()
     {
@@ -123,6 +132,7 @@ namespace SF::Engine
         }
 
         initialized_ = false;
+        s_backendInitialized = false;
     }
 
     void ImGuiPipelinePass::BuildUI()

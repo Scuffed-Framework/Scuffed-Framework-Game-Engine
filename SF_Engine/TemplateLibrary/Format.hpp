@@ -2,11 +2,11 @@
 /* Format.hpp                                                                 */
 /******************************************************************************/
 /*                            This file is part of                            */
-/*                                SF Game Engine                              */
+/*             Scuffed Framework Standard Template Library                    */
 /******************************************************************************/
 /* MIT License                                                                */
 /*                                                                            */
-/* Copyright (c) 2025-present Martin (the name I was assigned in french class).                                         */
+/* Copyright (c) 2025-present Noah Lee                                        */
 /*                                                                            */
 /* May all those that this source may reach be blessed by the LORD and find   */
 /* peace and joy in life.                                                     */
@@ -155,7 +155,6 @@ namespace SFTL
         return Detail::FormatImpl(fmt, std::forward<Args>(args)...);
     }
 
-    // Type-safe formatting with precision control
     namespace Fmt
     {
         // Fixed precision floating point
@@ -188,7 +187,6 @@ namespace SFTL
             return Detail::FormatImpl("%.*e", s.precision, s.value);
         }
 
-        // Hexadecimal
         struct Hex
         {
             unsigned long long value;
@@ -219,7 +217,6 @@ namespace SFTL
             }
         }
 
-        // Binary representation
         struct Binary
         {
             unsigned long long value;
@@ -400,8 +397,6 @@ namespace SFTL
     {
         return Fmt::ToString(Fmt::Binary(value, prefix));
     }
-
-    // Format time duration (works with your Time class)
     template <typename DurationType>
     inline std::string FormatDuration(const DurationType &duration)
     {

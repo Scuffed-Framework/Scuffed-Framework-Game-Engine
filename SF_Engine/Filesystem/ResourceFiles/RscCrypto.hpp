@@ -10,16 +10,14 @@
 
 namespace SF::Engine
 {
-    // -------------------------------------------------------------------------
     //  Compile-time obfuscation of Half A
     //
-    //  KEY_HALF_A_RAW   — your actual 16 secret bytes, change before shipping
-    //  KEY_HALF_A_MASK  — XOR mask applied at compile time; raw never appears
+    //  KEY_HALF_A_RAW  , your actual 16 secret bytes, change before shipping
+    //  KEY_HALF_A_MASK , XOR mask applied at compile time; raw never appears
     //                     in the binary as plaintext
     //
     //  At runtime, UnmaskHalfA() recovers the real bytes.
     //  Keep both constants in a translation unit that strips debug info.
-    // -------------------------------------------------------------------------
     namespace detail
     {
         // !! CHANGE THESE BEFORE SHIPPING !!
@@ -50,18 +48,16 @@ namespace SF::Engine
         };
     } // namespace detail
 
-    // -------------------------------------------------------------------------
     //  RscKeyDeriver
     //
     //  Derives the final 32-byte ChaCha20 key from two halves:
     //
-    //    Half A (16 bytes) — unmasked from the obfuscated binary constant
-    //    Half B (16 bytes) — BLAKE2b( buildTimestamp || engineVersion || platform )
-    //    Final  (32 bytes) — sodium_memzero-safe concat: [HalfA | HalfB]
+    //    Half A (16 bytes), unmasked from the obfuscated binary constant
+    //    Half B (16 bytes), BLAKE2b( buildTimestamp || engineVersion || platform )
+    //    Final  (32 bytes), sodium_memzero-safe concat: [HalfA | HalfB]
     //
     //  The two halves are XOR'd into their respective slots rather than
     //  concatenated so that neither half appears verbatim in memory.
-    // -------------------------------------------------------------------------
     class RscKeyDeriver
     {
     public:
@@ -86,15 +82,13 @@ namespace SF::Engine
         static void DeriveHalfB(const BuildInfo &info, uint8_t out[16]);
     };
 
-    // -------------------------------------------------------------------------
     //  RscNonce
     //
     //  12-byte IETF ChaCha20-Poly1305 nonce derived deterministically from the
-    //  entry index and name hash — no stored randomness needed.
+    //  entry index and name hash, no stored randomness needed.
     //
     //  nonce = BLAKE2b-96( entryIndex || nameHash )
     //  (96-bit output = exactly crypto_aead_chacha20poly1305_IETF_NPUBBYTES)
-    // -------------------------------------------------------------------------
     struct RscNonce
     {
         uint8_t bytes[crypto_aead_chacha20poly1305_ietf_NPUBBYTES]; // 12
@@ -102,7 +96,6 @@ namespace SF::Engine
         static RscNonce Derive(uint64_t entryIndex, uint64_t nameHash);
     };
 
-    // -------------------------------------------------------------------------
     //  RscByteShuffler
     //
     //  Custom pre-compression pass:
@@ -119,7 +112,6 @@ namespace SF::Engine
     //
     //  stride is written into the ResourceEntryDescriptor.flags so the
     //  decompressor knows how to undo it without guessing.
-    // -------------------------------------------------------------------------
     class RscByteShuffler
     {
     public:
@@ -131,7 +123,7 @@ namespace SF::Engine
                                             uint8_t stride,
                                             uint8_t &outStride);
 
-        // Undoes Shuffle — stride must match what Shuffle produced
+        // Undoes Shuffle, stride must match what Shuffle produced
         static std::vector<uint8_t> Unshuffle(std::span<const uint8_t> src,
                                               uint8_t stride);
 
@@ -139,7 +131,6 @@ namespace SF::Engine
         static uint8_t PickStride(size_t dataSize);
     };
 
-    // -------------------------------------------------------------------------
     //  RscCipher
     //
     //  Thin wrapper around libsodium ChaCha20-Poly1305 IETF.
@@ -149,7 +140,6 @@ namespace SF::Engine
     //
     //  The 16-byte Poly1305 tag is appended to the ciphertext in the .rsc blob.
     //  compressedSize in the entry descriptor includes the tag bytes.
-    // -------------------------------------------------------------------------
     class RscCipher
     {
     public:

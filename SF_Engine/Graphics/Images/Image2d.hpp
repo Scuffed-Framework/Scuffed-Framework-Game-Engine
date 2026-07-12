@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Bitmaps/Bitmap.hpp>
-#include "Resources/Resource.hpp"
 #include "Image.hpp"
 #include <typeindex>
 
@@ -12,6 +11,7 @@ namespace SF::Engine
      */
     class Image2d : public Image
     {
+        SF_RTTI(Image2d, Image)
     public:
         /**
          * Creates a new 2D image, or finds one with the same values.
@@ -86,7 +86,7 @@ namespace SF::Engine
         bool IsMipmap() const { return mipmap; }
         uint32_t GetComponents() const { return components; }
 
-        void Serialize(XMLNode &node) const override
+        void Serialize(XMLNode &node) const
         {
             Image::Serialize(node);
             node.SetAttribute("filename", filename.string());
@@ -94,7 +94,7 @@ namespace SF::Engine
             node.SetAttribute("mipmap", mipmap);
         }
 
-        void Deserialize(const XMLNode &node) override
+        void Deserialize(const XMLNode &node)
         {
             Image::Deserialize(node);
             std::string f;

@@ -2,7 +2,7 @@
 
 #include <Engine/Engine.hpp>
 #include <Graphics/RenderSystem.hpp>
-#include <TemplateLibrary/Dynamic.hpp>
+#include <TemplateLibrary/DynamicArray.hpp>
 #include "Scene.hpp"
 
 namespace SF::Engine

@@ -25,7 +25,7 @@
 #include <Scene/SceneLoading.hpp>
 
 #include <UtilityClasses/Formatter.hpp>
-#include <UtilityClasses/ThreadPool.hpp>
+#include <Threading/ThreadPool.hpp>
 
 #include "InitGame/GameInstance.hpp"
 
@@ -146,7 +146,7 @@ namespace SF::Engine
          * Gets the delta (seconds) between updates.
          * @return The delta between updates.
          */
-        const Time &GetDelta() const
+        const ApplicationTime &GetDelta() const
         {
             return deltaUpdate.change;
         }
@@ -155,13 +155,13 @@ namespace SF::Engine
          * Gets the delta (seconds) between renders.
          * @return The delta between renders.
          */
-        const Time &GetDeltaRender() const
+        const ApplicationTime &GetDeltaRender() const
         {
             return deltaRender.change;
         }
 
     private:
-        UpdatesPerSecond<> ups, fps;
+        UpdateClock<> ups, fps;
 
     public:
         /**
@@ -315,6 +315,18 @@ namespace SF::Engine
         {
             return gameInstance.get();
         }
+        static XMLReader writer;
     };
 
+    inline std::filesystem::path GetEngineRootPath()
+    {
+        // Get the path of the executable
+        std::filesystem::path exePath = std::filesystem::current_path();
+        return exePath;
+    }
+
+    inline std::filesystem::path GetEngineAssetsPath()
+    {
+        return GetEngineRootPath() / "Assets"; // todo: build into .rsc
+    }
 }

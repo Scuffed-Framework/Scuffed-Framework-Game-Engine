@@ -2,16 +2,20 @@
 
 #include <XML/XMLReader.hpp>
 #include <ID/GUID.hpp>
+#include <Controllers/Controller.hpp>
+#include <span>
+#include <TemplateLibrary/DynamicArray.hpp>
+#include <Reflection/RTTI/RTTICast.hpp>
 
 namespace SF::Engine
 {
-    enum AssetType
+    enum class AssetType // scoped enum avoids name collisions
     {
         Mesh,
         Texture,
         Shader,
-        Script,  // Lua
-        CppCode, // we should be able to run C++ code like in unreal
+        LuaScript, // Lua
+        CppCode,   // we should be able to run C++ code like in unreal
         VFX,
         Audio,
         SkeletalAnimation,
@@ -25,10 +29,95 @@ namespace SF::Engine
         Text
     };
 
-    struct Asset : Serializable // asset.png serializes to: asset.xml, this also is an interface
+    class AssetBase : public Serializable
     {
+        SF_RTTI(AssetBase, Serializable)
+    public:
         std::string name;
         AssetType type;
-        GUID guid;
+        GUID guid = GUID::Generate();
+
+        virtual ~AssetBase() = default;
+
+        // Persist assetData to the editor-side loose XML representation.
+        // Not valid to call against a mounted (packed, read-only) archive —
+        // see AssetController::SaveAll().
+        virtual void Save() = 0;
+
+        // Populate assetData from raw archive payload bytes (already
+        // decrypted/decompressed by MountedRscFile). Returns false on
+        // malformed payload.
+        virtual bool Load(std::span<const uint8_t> payload) = 0;
+
+        void Serialize(XMLNode &node) const override
+        {
+            XMLNode asset = node.AddChild("Asset");
+            asset.SetAttribute("Name", name);
+            asset.SetAttribute("Type", static_cast<int>(type));
+            asset.SetAttribute("GUID", guid.ToString());
+        }
+
+        void Deserialize(const XMLNode &node) override
+        {
+            XMLNode asset = node.GetChild("Asset");
+            asset.GetAttribute("Name", name);
+            int rawType{};
+            asset.GetAttribute("Type", rawType);
+            type = static_cast<AssetType>(rawType);
+            asset.GetAttribute("GUID", guid);
+        }
+    };
+
+    // Typed leaf that only adds the actual payload
+    template <typename T>
+    class Asset : public AssetBase
+    {
+        SF_RTTI(Asset<T>, AssetBase)
+    public:
+        T assetData;
+
+        void Save() override
+        {
+            // write XML data changes
+            // and implement in e.g. MeshAsset : Asset<Mesh>
+        }
+    };
+
+    using AssetFactoryFn = std::function<std::shared_ptr<AssetBase>()>;
+
+    class AssetController : public StaticController<AssetController>
+    {
+    public:
+        void Update(float dt) {}
+        void Initialize();
+        void Shutdown() { assets_.clear(); }
+
+        static void RegisterFactory(AssetType type, AssetFactoryFn factory);
+
+        void SaveAll();
+
+        std::shared_ptr<AssetBase> FindByGUID(const GUID &guid) const;
+        std::shared_ptr<AssetBase> FindByName(std::string_view name) const;
+
+        template <typename T>
+        std::shared_ptr<Asset<T>> Get(const GUID &guid) const
+        {
+            return ::SF::RTTI::rtti_pointer_cast<Asset<T>>(FindByGUID(guid));
+        }
+
+        SFTL::DynamicArray<std::shared_ptr<AssetBase>> assets_;
+
+    private:
+        static std::unordered_map<AssetType, AssetFactoryFn> &Factories();
+    };
+
+    template <typename T>
+    struct AssetRegistrar
+    {
+        explicit AssetRegistrar(AssetType type)
+        {
+            AssetController::RegisterFactory(type, []
+                                             { return std::make_shared<Asset<T>>(); });
+        }
     };
 }

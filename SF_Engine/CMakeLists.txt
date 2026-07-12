@@ -18,6 +18,12 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
+include(FetchContent)
+FetchContent_Declare(box3d
+  GIT_REPOSITORY https://github.com/erincatto/box3d.git
+  GIT_TAG v0.1.0)
+FetchContent_MakeAvailable(box3d)
+
 find_package(OpenAL CONFIG REQUIRED)                # OpenALConfig.cmake
 find_package(assimp CONFIG REQUIRED)                # assimp-config.cmake
 find_package(OpenCLHeaders REQUIRED)                # OpenCLHeadersConfig.cmake
@@ -45,7 +51,6 @@ find_package(spdlog CONFIG REQUIRED)                # spdlog-config.cmake
 find_package(spirv-reflect-static CONFIG REQUIRED)
 find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
 find_package(sol2 REQUIRED)
-find_package(Bullet REQUIRED)
 find_package(libraw CONFIG REQUIRED)
 
 file(GLOB_RECURSE ENGINE_SOURCES
@@ -131,10 +136,7 @@ target_link_libraries(SF_Engine PUBLIC
     spdlog::spdlog
     spirv-reflect-static
     sol2::sol2
-    Bullet::Bullet
-    #Bullet::BulletSoftBody
-    #Bullet::BulletDynamics
-    #Bullet::BulletCollision
+    box3d::box3d
     libraw::libraw
 )
 

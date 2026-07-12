@@ -30,7 +30,6 @@ namespace SF::Engine
         static std::vector<ProjectTemplate> s_templates;
         static bool s_templatesLoaded = false;
 
-        // Status bar feedback shown for a few seconds after an action.
         static std::string s_statusMsg;
         static float s_statusTimer = 0.0f;
         constexpr float kStatusDuration = 3.0f; // seconds
@@ -47,12 +46,11 @@ namespace SF::Engine
                 s_statusTimer -= dt;
         }
 
-        // ----------------------------------------------------------------
         void EnsureRecentProjectsLoaded()
         {
             if (s_recentLoaded)
                 return;
-            // TODO: read from a registry / JSON side-car file on disk.
+            // TODO: read from a registry / xml side-car file on disk.
             s_recentLoaded = true;
         }
 
@@ -64,7 +62,6 @@ namespace SF::Engine
             s_templatesLoaded = true;
         }
 
-        // ----------------------------------------------------------------
         // Draw a preview image, or a grey placeholder when img == nullptr.
         void DrawPreviewImage(const Image2d *img, ImVec2 size)
         {
@@ -73,7 +70,7 @@ namespace SF::Engine
 
             if (img)
             {
-                // Wire up your real texture handle here:
+                // Wire up texture handle here:
                 // ImGui::Image((ImTextureID)(intptr_t)img->GetTextureID(), size);
                 // For now draw a tinted placeholder so it looks distinct.
                 dl->AddRectFilled(cursor, {cursor.x + size.x, cursor.y + size.y},
@@ -133,13 +130,12 @@ namespace SF::Engine
         }
     } // anonymous namespace
 
-    // =========================================================================
     // ProjectManager::CreateProject
     //
     // Directory layout created on disk:
     //   <path>/
     //     <name>.projxml     ← project XML descriptor
-    // =========================================================================
+
     ProjectResult ProjectManager::CreateProject(const std::string &name,
                                                 const std::filesystem::path &path)
     {

@@ -162,7 +162,7 @@ namespace SF::Engine
         std::unique_ptr<UniformBuffer> ubo_;
         std::unique_ptr<UniformBuffer> spectrumUBO_;
 
-        // One ComputePipeline + DescriptorSet per kernel — each shader file
+        // One ComputePipeline + DescriptorSet per kernel, each shader file
         // has a single entry point (see ComputePipeline ctor: shaderStage is
         // a single file, no BindKernel concept). All four point at the same
         // OceanFFT.comp.shader source but select their kernel via a #pragma

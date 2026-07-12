@@ -76,7 +76,7 @@ namespace SF::Engine
         }
         else
         {
-            std::cerr << "[Audio8D] EFX not available on this driver — "
+            std::cerr << "[Audio8D] EFX not available on this driver, "
                          "reverb disabled, spatial rotation still active.\n";
         }
     }
@@ -235,7 +235,7 @@ namespace SF::Engine
         }
 
         // Create low-pass filter for the direct signal (attenuates very high
-        // frequencies slightly — mimics the natural HF loss of distant sources)
+        // frequencies slightly, mimics the natural HF loss of distant sources)
         if (alGenFilters_f)
         {
             alGenFilters_f(1, &efxFilter);
@@ -297,7 +297,7 @@ namespace SF::Engine
                        static_cast<ALint>(AL_FILTER_NULL));
             // Apply wet-level via source gain on the send
             // (proper way: use a send-level filter, but GAINLF is read-only
-            //  per-send on most drivers — we scale with per-send gain below)
+            //  per-send on most drivers, we scale with per-send gain below)
             alGetError();
         }
     }

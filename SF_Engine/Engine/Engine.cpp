@@ -17,7 +17,7 @@ namespace SF::Engine
           elapsedRender(-1s)
     {
         Instance = this;
-        Log::Init(Time::GetDateTime("Logs/%Y%m%d%H%M%S.txt"));
+        Log::Init(ApplicationTime::GetDateTime("Logs/%Y%m%d%H%M%S.txt"));
 
         // Create modules from registry
         for (auto it = Module::Registry().begin(); it != Module::Registry().end(); ++it)
@@ -119,7 +119,7 @@ namespace SF::Engine
                 app->Update();
             }
 
-            elapsedRender.SetInterval(Time::Seconds(1.0f / fpsLimit));
+            elapsedRender.SetInterval(ApplicationTime::Seconds(1.0f / fpsLimit));
 
             // Always-Update.
             UpdateStage(Module::Stage::Always);
@@ -127,7 +127,7 @@ namespace SF::Engine
             if (elapsedUpdate.GetElapsed() != 0)
             {
                 // Resets the timer.
-                ups.Update(Time::Now());
+                ups.Update(ApplicationTime::Now());
 
                 // Pre-Update.
                 UpdateStage(Module::Stage::Pre);
@@ -148,7 +148,7 @@ namespace SF::Engine
             if (elapsedRender.GetElapsed() != 0)
             {
                 // Resets the timer.
-                fps.Update(Time::Now());
+                fps.Update(ApplicationTime::Now());
 
                 // Render
                 UpdateStage(Module::Stage::Render);

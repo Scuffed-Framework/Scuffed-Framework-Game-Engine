@@ -78,9 +78,6 @@ class SfEngineConan(ConanFile):
 
         # Scripting
         self.requires("sol2/3.3.0")
-
-        # Physics
-        self.requires("bullet3/3.25")
     
     def layout(self):
         cmake_layout(self)

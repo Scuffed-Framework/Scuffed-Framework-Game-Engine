@@ -64,7 +64,7 @@ Shader "SF/Sun"
             // yellow-top / red-bottom gradient without any hardcoded ramp.
             //
             // CLAMP to sunDir.y so we never query the LUT below the sun centre's
-            // horizon — below that the transmittance collapses to zero and we'd
+            // horizon, below that the transmittance collapses to zero and we'd
             // get black pixels chopping the bottom of the disc.
             // The clamp floor is sunDir.y which is where the disc centre sits;
             // anything below that just gets the same deep-red as the centre row.

@@ -17,13 +17,10 @@ namespace fs = std::filesystem;
 
 namespace SF::Engine
 {
-    // =========================================================================
-    //  Helpers
-    // =========================================================================
     uint64_t RscPacker::HashName(std::string_view name)
     {
         constexpr uint64_t FNV_OFFSET = 14695981039346656037ULL;
-        constexpr uint64_t FNV_PRIME  = 1099511628211ULL;
+        constexpr uint64_t FNV_PRIME = 1099511628211ULL;
         uint64_t hash = FNV_OFFSET;
         for (unsigned char c : name)
         {
@@ -33,24 +30,18 @@ namespace SF::Engine
         return hash;
     }
 
-    // =========================================================================
-    //  Constructor
-    // =========================================================================
-    RscPacker::RscPacker(const RscKeyDeriver::BuildInfo& buildInfo)
+    RscPacker::RscPacker(const RscKeyDeriver::BuildInfo &buildInfo)
         : m_buildInfo(buildInfo)
     {
         if (sodium_init() < 0)
             throw std::runtime_error("libsodium failed to initialise");
     }
 
-    // =========================================================================
-    //  Staging
-    // =========================================================================
-    bool RscPacker::AddFile(const std::string& assetName,
-                            const std::string& sourcePath,
-                            RscAssetType       type,
-                            RscCompression     compression,
-                            uint8_t            shuffleStride)
+    bool RscPacker::AddFile(const std::string &assetName,
+                            const std::string &sourcePath,
+                            RscAssetType type,
+                            RscCompression compression,
+                            uint8_t shuffleStride)
     {
         File src(sourcePath);
         if (!src.Open(FileMode::Read))
@@ -63,33 +54,34 @@ namespace SF::Engine
         return AddRawBytes(assetName, bytes, type, compression, shuffleStride);
     }
 
-    bool RscPacker::AddRawBytes(const std::string&       assetName,
+    bool RscPacker::AddRawBytes(const std::string &assetName,
                                 std::span<const uint8_t> data,
-                                RscAssetType             type,
-                                RscCompression           compression,
-                                uint8_t                  shuffleStride)
+                                RscAssetType type,
+                                RscCompression compression,
+                                uint8_t shuffleStride)
     {
         if (assetName.empty() || assetName.size() > 43)
             return false;
 
-        for (const auto& s : m_staged)
+        for (const auto &s : m_staged)
             if (s.assetName == assetName)
                 return false; // duplicate
 
         StagedEntry e;
-        e.assetName     = assetName;
-        e.rawData       = std::vector<uint8_t>(data.begin(), data.end());
-        e.type          = type;
-        e.compression   = compression;
+        e.assetName = assetName;
+        e.rawData = std::vector<uint8_t>(data.begin(), data.end());
+        e.type = type;
+        e.compression = compression;
         e.shuffleStride = shuffleStride;
         m_staged.push_back(std::move(e));
         return true;
     }
 
-    bool RscPacker::Remove(const std::string& assetName)
+    bool RscPacker::Remove(const std::string &assetName)
     {
         auto it = std::remove_if(m_staged.begin(), m_staged.end(),
-                                 [&](const StagedEntry& e) {
+                                 [&](const StagedEntry &e)
+                                 {
                                      return e.assetName == assetName;
                                  });
         if (it == m_staged.end())
@@ -100,11 +92,8 @@ namespace SF::Engine
 
     void RscPacker::Clear() { m_staged.clear(); }
 
-    // =========================================================================
-    //  Compress helper
-    // =========================================================================
     std::vector<uint8_t> RscPacker::Compress(std::span<const uint8_t> src,
-                                              RscCompression            codec)
+                                             RscCompression codec)
     {
         switch (codec)
         {
@@ -114,8 +103,8 @@ namespace SF::Engine
             int maxDst = LZ4_compressBound(static_cast<int>(src.size()));
             std::vector<uint8_t> dst(maxDst);
             int sz = LZ4_compress_HC(
-                reinterpret_cast<const char*>(src.data()),
-                reinterpret_cast<char*>(dst.data()),
+                reinterpret_cast<const char *>(src.data()),
+                reinterpret_cast<char *>(dst.data()),
                 static_cast<int>(src.size()), maxDst,
                 LZ4HC_CLEVEL_DEFAULT);
             if (sz > 0 && static_cast<size_t>(sz) < src.size())
@@ -150,14 +139,11 @@ namespace SF::Engine
         }
     }
 
-    // =========================================================================
-    //  ProcessEntry — shuffle → compress → encrypt one asset
-    // =========================================================================
-    bool RscPacker::ProcessEntry(const StagedEntry&             staged,
-                                 uint64_t                        entryIndex,
-                                 const std::array<uint8_t, 32>& key,
-                                 ResourceEntryDescriptor&        outEntry,
-                                 std::vector<uint8_t>&           outBlob) const
+    bool RscPacker::ProcessEntry(const StagedEntry &staged,
+                                 uint64_t entryIndex,
+                                 const std::array<uint8_t, 32> &key,
+                                 ResourceEntryDescriptor &outEntry,
+                                 std::vector<uint8_t> &outBlob) const
     {
         // 1. Byte-shuffle pre-pass
         uint8_t chosenStride = 0;
@@ -171,28 +157,28 @@ namespace SF::Engine
         RscCompression actualCodec = staged.compression;
         if (compressed.size() >= shuffled.size())
         {
-            compressed  = std::move(shuffled);   // use shuffled-but-uncompressed
+            compressed = std::move(shuffled); // use shuffled-but-uncompressed
             actualCodec = RscCompression::None;
         }
 
         // 3. Derive nonce and encrypt
         uint64_t nameHash = HashName(staged.assetName);
-        RscNonce nonce    = RscNonce::Derive(entryIndex, nameHash);
+        RscNonce nonce = RscNonce::Derive(entryIndex, nameHash);
 
         outBlob = RscCipher::Encrypt(compressed, key, nonce);
         if (outBlob.empty())
             return false;
 
         // 4. Fill descriptor (dataOffset set by caller)
-        outEntry.nameHash          = nameHash;
-        outEntry.dataOffset        = 0; // filled in by Pack()
-        outEntry.compressedSize    = static_cast<uint64_t>(outBlob.size()); // includes 16-byte tag
-        outEntry.uncompressedSize  = static_cast<uint64_t>(staged.rawData.size());
-        outEntry.assetType         = staged.type;
-        outEntry.compression       = actualCodec;
-        outEntry.shuffleStride     = chosenStride;
-        outEntry.flags             = 0;
-        std::memset(outEntry.pad,  0, sizeof(outEntry.pad));
+        outEntry.nameHash = nameHash;
+        outEntry.dataOffset = 0;                                         // filled in by Pack()
+        outEntry.compressedSize = static_cast<uint64_t>(outBlob.size()); // includes 16-byte tag
+        outEntry.uncompressedSize = static_cast<uint64_t>(staged.rawData.size());
+        outEntry.assetType = staged.type;
+        outEntry.compression = actualCodec;
+        outEntry.shuffleStride = chosenStride;
+        outEntry.flags = 0;
+        std::memset(outEntry.pad, 0, sizeof(outEntry.pad));
         std::memset(outEntry.pad2, 0, sizeof(outEntry.pad2));
         std::memset(outEntry.name, 0, sizeof(outEntry.name));
         std::strncpy(outEntry.name, staged.assetName.c_str(), sizeof(outEntry.name) - 1);
@@ -200,23 +186,18 @@ namespace SF::Engine
         return true;
     }
 
-    // =========================================================================
-    //  Pack
-    // =========================================================================
-    bool RscPacker::Pack(const std::string& outputPath, ProgressFn progress) const
+    bool RscPacker::Pack(const std::string &outputPath, ProgressFn progress) const
     {
-        // --- Derive key once for the whole archive ---
         auto key = RscKeyDeriver::Derive(m_buildInfo);
 
-        const uint64_t entryCount      = static_cast<uint64_t>(m_staged.size());
-        const uint64_t headerSize      = sizeof(ResourceFileHeader);
-        const uint64_t entryTableSize  = entryCount * sizeof(ResourceEntryDescriptor);
-        const uint64_t entryTableOff   = headerSize;
-        const uint64_t dataRegionOff   = headerSize + entryTableSize;
+        const uint64_t entryCount = static_cast<uint64_t>(m_staged.size());
+        const uint64_t headerSize = sizeof(ResourceFileHeader);
+        const uint64_t entryTableSize = entryCount * sizeof(ResourceEntryDescriptor);
+        const uint64_t entryTableOff = headerSize;
+        const uint64_t dataRegionOff = headerSize + entryTableSize;
 
-        // --- Process all assets (shuffle + compress + encrypt) ---
         std::vector<ResourceEntryDescriptor> entries(m_staged.size());
-        std::vector<std::vector<uint8_t>>    blobs(m_staged.size());
+        std::vector<std::vector<uint8_t>> blobs(m_staged.size());
 
         uint64_t cursor = dataRegionOff;
         for (size_t i = 0; i < m_staged.size(); ++i)
@@ -235,22 +216,24 @@ namespace SF::Engine
             cursor += blobs[i].size();
         }
 
-        // --- Build header (archiveSignature zeroed for now) ---
         ResourceFileHeader header{};
         std::memcpy(header.magic, RSC_MAGIC, 4);
-        header.version          = RSC_VERSION;
-        header.entryCount       = entryCount;
+        header.version = RSC_VERSION;
+        header.entryCount = entryCount;
         header.entryTableOffset = entryTableOff;
         header.dataRegionOffset = dataRegionOff;
-        header.buildTimestamp   = m_buildInfo.buildTimestamp;
-        header.engineVersion    = m_buildInfo.engineVersion;
-        header.platformSalt     = m_buildInfo.platformSalt;
+        header.buildTimestamp = m_buildInfo.buildTimestamp;
+        header.engineVersion = m_buildInfo.engineVersion;
+        header.platformSalt = m_buildInfo.platformSalt;
         std::memset(header.archiveSignature, 0, sizeof(header.archiveSignature));
 
-        // --- Compute archive signature over header[0..47] + entry table ---
+        // Keyed with the same derived key used to encrypt the archive, so
+        // this is a MAC (requires the key to forge) rather than a bare
+        // checksum (which anyone could recompute after editing the table).
+        // Must match MountedRscFile::VerifyArchiveSignature() exactly.
         {
             const size_t signedHeaderBytes = offsetof(ResourceFileHeader, archiveSignature); // 48
-            const size_t tableBytes        = entries.size() * sizeof(ResourceEntryDescriptor);
+            const size_t tableBytes = entries.size() * sizeof(ResourceEntryDescriptor);
             std::vector<uint8_t> sigPayload(signedHeaderBytes + tableBytes);
 
             std::memcpy(sigPayload.data(), &header, signedHeaderBytes);
@@ -259,12 +242,11 @@ namespace SF::Engine
 
             crypto_generichash(header.archiveSignature, sizeof(header.archiveSignature),
                                sigPayload.data(), sigPayload.size(),
-                               nullptr, 0);
+                               key.data(), key.size());
         }
 
         RscKeyDeriver::Wipe(key);
 
-        // --- Write file ---
         File out(outputPath);
         if (!out.Open(FileMode::Write))
             return false;
@@ -278,17 +260,14 @@ namespace SF::Engine
 
         // Data blobs
         out.SetPosition(static_cast<size_t>(dataRegionOff));
-        for (const auto& blob : blobs)
+        for (const auto &blob : blobs)
             out.Write(blob.data(), blob.size());
 
         return static_cast<bool>(out);
     }
 
-    // =========================================================================
-    //  Merge
-    // =========================================================================
-    bool RscPacker::Merge(const std::string& existingRsc,
-                          const std::string& outputPath) const
+    bool RscPacker::Merge(const std::string &existingRsc,
+                          const std::string &outputPath) const
     {
         MountedRscFile mounted;
         if (!mounted.Mount(existingRsc))
@@ -297,7 +276,7 @@ namespace SF::Engine
         RscPacker merged(m_buildInfo);
 
         uint64_t idx = 0;
-        for (const auto& entry : mounted.GetEntries())
+        for (const auto &entry : mounted.GetEntries())
         {
             std::vector<uint8_t> data = mounted.ReadAsset(entry, idx++);
             if (!data.empty())
@@ -306,41 +285,38 @@ namespace SF::Engine
                                    entry.shuffleStride);
         }
 
-        // New staged assets — skip silently if name already exists from archive
-        for (const auto& s : m_staged)
+        // New staged assets, skip silently if name already exists from archive
+        for (const auto &s : m_staged)
             merged.AddRawBytes(s.assetName, s.rawData,
                                s.type, s.compression, s.shuffleStride);
 
         return merged.Pack(outputPath);
     }
 
-    // =========================================================================
-    //  Free helpers
-    // =========================================================================
     static RscAssetType ExtensionToType(std::string_view ext)
     {
-        if (ext == ".png"  || ext == ".jpg" || ext == ".jpeg" ||
-            ext == ".ktx"  || ext == ".ktx2"|| ext == ".dds")
+        if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" ||
+            ext == ".ktx" || ext == ".ktx2" || ext == ".dds")
             return RscAssetType::Texture;
-        if (ext == ".mesh" || ext == ".obj" || ext == ".fbx"  || ext == ".gltf")
+        if (ext == ".mesh" || ext == ".obj" || ext == ".fbx" || ext == ".gltf")
             return RscAssetType::Mesh;
         if (ext == ".spv")
             return RscAssetType::Shader;
-        if (ext == ".wav"  || ext == ".ogg" || ext == ".mp3"  || ext == ".flac")
+        if (ext == ".wav" || ext == ".ogg" || ext == ".mp3" || ext == ".flac")
             return RscAssetType::Audio;
         if (ext == ".mat")
             return RscAssetType::Material;
-        if (ext == ".lua"  || ext == ".js")
+        if (ext == ".lua" || ext == ".js")
             return RscAssetType::Script;
-        if (ext == ".ttf"  || ext == ".otf")
+        if (ext == ".ttf" || ext == ".otf")
             return RscAssetType::Font;
         return RscAssetType::Unknown;
     }
 
-    bool PackDirectory(const std::string&              sourceDir,
-                       const std::string&              outputRsc,
-                       const RscKeyDeriver::BuildInfo& buildInfo,
-                       RscCompression                  defaultCompression,
+    bool PackDirectory(const std::string &sourceDir,
+                       const std::string &outputRsc,
+                       const RscKeyDeriver::BuildInfo &buildInfo,
+                       RscCompression defaultCompression,
                        std::function<RscAssetType(std::string_view)> fileTyper)
     {
         if (!fs::exists(sourceDir) || !fs::is_directory(sourceDir))
@@ -348,16 +324,16 @@ namespace SF::Engine
 
         RscPacker packer(buildInfo);
 
-        for (const auto& dirEntry : fs::recursive_directory_iterator(sourceDir))
+        for (const auto &dirEntry : fs::recursive_directory_iterator(sourceDir))
         {
             if (!dirEntry.is_regular_file())
                 continue;
 
             std::string fullPath = dirEntry.path().string();
-            std::string relPath  = fs::relative(dirEntry.path(), sourceDir).string();
+            std::string relPath = fs::relative(dirEntry.path(), sourceDir).string();
             std::replace(relPath.begin(), relPath.end(), '\\', '/');
 
-            std::string ext  = dirEntry.path().extension().string();
+            std::string ext = dirEntry.path().extension().string();
             RscAssetType type = fileTyper ? fileTyper(ext) : ExtensionToType(ext);
 
             packer.AddFile(relPath, fullPath, type, defaultCompression);
@@ -366,9 +342,9 @@ namespace SF::Engine
         return packer.Pack(outputRsc);
     }
 
-    bool UnpackRsc(const std::string&              rscPath,
-                   const std::string&              outputDir,
-                   const RscKeyDeriver::BuildInfo& buildInfo)
+    bool UnpackRsc(const std::string &rscPath,
+                   const std::string &outputDir,
+                   const RscKeyDeriver::BuildInfo &buildInfo)
     {
         // buildInfo is embedded in the header, but we accept it as a parameter
         // to allow cross-build extraction during development. The Mount() will
@@ -382,7 +358,7 @@ namespace SF::Engine
         fs::create_directories(outputDir);
 
         uint64_t idx = 0;
-        for (const auto& entry : mounted.GetEntries())
+        for (const auto &entry : mounted.GetEntries())
         {
             std::vector<uint8_t> data = mounted.ReadAsset(entry, idx++);
             if (data.empty())

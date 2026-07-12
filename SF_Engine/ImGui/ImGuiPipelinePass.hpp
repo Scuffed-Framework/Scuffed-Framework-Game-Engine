@@ -20,8 +20,7 @@ namespace SF::Engine
     /**
      * @brief PipelinePass that integrates Dear ImGui into the SF render pipeline.
      *
-     * Setup
-     * -----
+     * Setup:
      * Add this PipelinePass LAST within a subpass so it composites on top:
      *
      *     AddPipelinePass<ImGuiPipelinePass>(Pipeline::Stage{0, 0});
@@ -34,6 +33,19 @@ namespace SF::Engine
      */
     class ImGuiPipelinePass : public PipelinePass
     {
+        inline static bool s_registered = []()
+        {
+            PipelinePassInitRegistry::Get().Register(
+                [](PipelinePassManager &mgr)
+                {
+                    mgr.Add<ImGuiPipelinePass>(
+                        Pipeline::Stage{0, 0},
+                        std::make_unique<ImGuiPipelinePass>(
+                            Pipeline::Stage{0, 0}));
+                });
+            return true;
+        }();
+
     public:
         using DrawCallback = std::function<void()>;
 
@@ -52,6 +64,8 @@ namespace SF::Engine
         virtual void BuildUI();
 
     private:
+        inline static bool s_backendInitialized = false;
+
         void Init();
         void Shutdown();
         void CreateDescriptorPool();

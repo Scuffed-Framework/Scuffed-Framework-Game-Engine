@@ -6,9 +6,8 @@
 
 namespace SF::Engine
 {
-    // =========================================================================
+
     // XMLNode
-    // =========================================================================
 
     std::string XMLNode::GetName() const
     {
@@ -36,9 +35,7 @@ namespace SF::Engine
         xmlNodeSetContent(node, reinterpret_cast<const xmlChar *>(content.c_str()));
     }
 
-    // -------------------------------------------------------------------------
     // Attribute getters
-    // -------------------------------------------------------------------------
 
     std::string XMLNode::GetAttribute(const std::string &name) const
     {
@@ -105,9 +102,7 @@ namespace SF::Engine
         return true;
     }
 
-    // -------------------------------------------------------------------------
     // Attribute setters
-    // -------------------------------------------------------------------------
 
     void XMLNode::SetAttribute(const std::string &name, const std::string &value)
     {
@@ -136,9 +131,7 @@ namespace SF::Engine
         SetAttribute(name, value ? std::string("true") : std::string("false"));
     }
 
-    // -------------------------------------------------------------------------
     // Child navigation
-    // -------------------------------------------------------------------------
 
     XMLNode XMLNode::GetFirstChild() const
     {
@@ -213,9 +206,7 @@ namespace SF::Engine
         return XMLNode(child, doc);
     }
 
-    // =========================================================================
     // XMLReader
-    // =========================================================================
 
     XMLReader::XMLReader() : document(nullptr), rootNode(nullptr)
     {
@@ -258,9 +249,7 @@ namespace SF::Engine
             self->lastError += buf;
     }
 
-    // -------------------------------------------------------------------------
     // File / string I/O
-    // -------------------------------------------------------------------------
 
     bool XMLReader::LoadFromFile(const std::string &filename)
     {
@@ -311,9 +300,7 @@ namespace SF::Engine
         return result;
     }
 
-    // -------------------------------------------------------------------------
     // Root node
-    // -------------------------------------------------------------------------
 
     XMLNode XMLReader::GetRootNode() const
     {
@@ -329,9 +316,7 @@ namespace SF::Engine
         xmlDocSetRootElement(document, rootNode);
     }
 
-    // -------------------------------------------------------------------------
     // Static value helpers
-    // -------------------------------------------------------------------------
 
     std::string XMLReader::SerializeValue(int value)
     {
@@ -391,6 +376,17 @@ namespace SF::Engine
     bool XMLReader::DeserializeValue(const std::string &str, std::string &out)
     {
         out = str;
+        return true;
+    }
+
+    std::string XMLReader::SerializeValue(const GUID &value)
+    {
+        return value.ToString(); // or whatever GUID's canonical string accessor is
+    }
+
+    bool XMLReader::DeserializeValue(const std::string &str, GUID &out)
+    {
+        out = GUID::FromString(str);
         return true;
     }
 

@@ -159,7 +159,7 @@ Shader "Ocean/OceanTessellation"
                 layout(location = 3) out float outFoam;
                 layout(location = 4) out float outWaveHeight;
 
-                // Tiling scales per cascade — match OceanFFTSettings lengthScaleN.
+                // Tiling scales per cascade, match OceanFFTSettings lengthScaleN.
                 // World-space UV is derived from local tangent-plane coords so
                 // tiling stays seamless under sphere projection.
                 vec3 SampleDisplacement(vec3 localUV)
@@ -190,7 +190,7 @@ Shader "Ocean/OceanTessellation"
 
                     // Camera-relative tangent-plane coords, used as the FFT
                     // texture UV so phase stays stable as the camera moves
-                    // (mirrors the localOrigin trick from the Gerstner path —
+                    // (mirrors the localOrigin trick from the Gerstner path,
                     // raw worldPos has magnitude ~planetRadius and would
                     // alias the texture lookup).
                     vec3 localOrigin = worldPos - frame.cameraPos;

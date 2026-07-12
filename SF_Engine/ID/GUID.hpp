@@ -20,10 +20,7 @@ namespace SF::Engine
         // Thread-safe random number generator (non-constexpr)
         static std::mt19937 &get_random_engine()
         {
-            static thread_local std::mt19937 engine(
-                std::random_device{}() ^
-                static_cast<uint64_t>(
-                    reinterpret_cast<uintptr_t>(&engine)));
+            static thread_local std::mt19937 engine(std::random_device{}() ^ static_cast<uint64_t>(reinterpret_cast<uintptr_t>(&engine)));
             return engine;
         }
 

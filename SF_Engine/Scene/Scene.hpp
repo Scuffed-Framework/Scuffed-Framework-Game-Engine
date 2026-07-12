@@ -28,7 +28,7 @@ namespace SF::Engine
         friend class SceneManager;
 
     public:
-        explicit Scene(std::unique_ptr<CameraController> &&cameraController, SceneRendererConfig cfg = {});
+        explicit Scene(std::unique_ptr<CameraController> &&cameraController, std::string name, SceneRendererConfig cfg = {});
         virtual ~Scene() = default;
 
         virtual void Start() = 0;
@@ -178,7 +178,10 @@ namespace SF::Engine
                 lightManager_->AddLight(sl.light);
         }
 
+        std::string name;
+
     public:
+        const std::string GetName() { return name; }
         static const ImageDepth *GetDepthTexture();
     };
 }

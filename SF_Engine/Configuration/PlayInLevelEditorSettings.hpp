@@ -1,3 +1,5 @@
+#pragma once
+
 namespace SF::Engine
 {
     // for later :)

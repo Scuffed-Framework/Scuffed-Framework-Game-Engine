@@ -6,7 +6,7 @@
 /******************************************************************************/
 /* MIT License                                                                */
 /*                                                                            */
-/* Copyright (c) 2025-present Martin (the name I was assigned in french class).                                         */
+/* Copyright (c) 2025-present Noah Lee                                        */
 /*                                                                            */
 /* May all those that this source may reach be blessed by the LORD and find   */
 /* peace and joy in life.                                                     */

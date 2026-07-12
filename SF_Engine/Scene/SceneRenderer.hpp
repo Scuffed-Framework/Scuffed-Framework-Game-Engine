@@ -1,4 +1,3 @@
-// SF_Engine/Scene/SceneRenderer.hpp
 #pragma once
 #include <Graphics/Renderer.hpp>
 #include <Graphics/Stage.hpp>
@@ -6,13 +5,11 @@
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp>
 #include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 #include <Graphics/Visuals/Sun/SunPipelinePass.hpp>
-#include <ImGui/ImGuiPipelinePass.hpp>
 #include <Graphics/Mesh/Mesh.hpp>
 #include <Graphics/Images/Image2d.hpp>
 #include <Graphics/Stage.hpp>
 #include <Graphics/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
 
-#include <Graphics/PipelinePassRegistry.hpp>
 #include <Graphics/PipelinePassInit.hpp>
 
 namespace SF::Engine
@@ -61,8 +58,6 @@ namespace SF::Engine
 
         void Start() override
         {
-            GetPipelinePassManager()->RunInitCallbacks();
-
             lightManager_ = std::make_unique<LightManager>();
 
             // Cluster cull runs in pre-render (before the renderpass)
@@ -86,11 +81,8 @@ namespace SF::Engine
             if (config_.enableSun)
                 sunPass_ = AddPipelinePass<SunPipelinePass>(
                     Pipeline::Stage{0, 0}, config_.sunParams);
-
-            PipelinePassInitRegistry::Get().RunAll(*GetPipelinePassManager());
-
-            // ImGui – always last so it composites on top of everything
-            imguiPass_ = AddPipelinePass<ImGuiPipelinePass>(Pipeline::Stage{0, 0});
+            GetPipelinePassManager()->RunInitCallbacks(); // or
+            // PipelinePassInitRegistry::Get().RunAll(*GetPipelinePassManager());
         }
 
         void Update() override {} // Heavy per-frame work is driven by Scene::Render()
@@ -111,7 +103,6 @@ namespace SF::Engine
         LitMeshPipelinePass *litPass_ = nullptr;
         AtmospherePipelinePass *atmoPass_ = nullptr;
         SunPipelinePass *sunPass_ = nullptr;
-        ImGuiPipelinePass *imguiPass_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
     };
 }

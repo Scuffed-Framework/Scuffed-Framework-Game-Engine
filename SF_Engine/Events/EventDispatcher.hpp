@@ -7,16 +7,19 @@
 #include <unordered_map>
 #include <vector>
 
+#include <UtilityClasses/NoCopy.hpp>
+
+#include <TemplateLibrary/Operations.hpp>
+
+using namespace ::SFTL;
 namespace SF::Engine
 {
-    // Base event class - all events inherit from this
     struct Event
     {
         virtual ~Event() = default;
         bool handled = false;
     };
 
-    // Event listener handle for unsubscribing
     class EventHandle
     {
         friend class EventDispatcher;
@@ -35,7 +38,6 @@ namespace SF::Engine
         }
     };
 
-    // Event dispatcher - manages all event subscriptions and dispatching
     class EventDispatcher
     {
     private:
@@ -43,22 +45,22 @@ namespace SF::Engine
         {
             virtual ~ListenerBase() = default;
             size_t id;
-            virtual void Invoke(Event&) = 0;
+            virtual void Invoke(Event &) = 0;
         };
 
         template <typename T>
         struct Listener : ListenerBase
         {
-            std::function<void(T&)> callback;
+            std::function<void(T &)> callback;
 
-            Listener(size_t id, std::function<void(T&)> cb) : callback(std::move(cb))
+            Listener(size_t id, std::function<void(T &)> cb) : callback(std::move(cb))
             {
                 this->id = id;
             }
 
-            void Invoke(Event& e) override
+            void Invoke(Event &e) override
             {
-                callback(static_cast<T&>(e));
+                callback(static_cast<T &>(e));
             }
         };
 
@@ -66,13 +68,12 @@ namespace SF::Engine
         size_t _nextId = 1;
 
     public:
-        // Subscribe to an event type
         template <typename EventType>
-        EventHandle Subscribe(std::function<void(EventType&)> callback)
+        EventHandle Subscribe(std::function<void(EventType &)> callback)
         {
-            static_assert(std::is_base_of_v<Event, EventType>, "EventType must derive from Event");
+            static_assert(is_base_of_v<Event, EventType>, "EventType must derive from Event");
 
-            auto& listeners = _listeners[typeid(EventType)];
+            auto &listeners = _listeners[typeid(EventType)];
             size_t id = _nextId++;
 
             listeners.push_back(std::make_unique<Listener<EventType>>(id, std::move(callback)));
@@ -80,79 +81,76 @@ namespace SF::Engine
             return EventHandle(typeid(EventType), id);
         }
 
-        // Convenience overload for member functions
         template <typename EventType, typename T>
-        EventHandle Subscribe(T* instance, void (T::*method)(EventType&))
+        EventHandle Subscribe(T *instance, void (T::*method)(EventType &))
         {
-            return Subscribe<EventType>([instance, method](EventType& e)
+            return Subscribe<EventType>([instance, method](EventType &e)
                                         { (instance->*method)(e); });
         }
 
-        // Unsubscribe using handle
         void Unsubscribe(EventHandle handle)
         {
-            if (!handle.IsValid()) return;
+            if (!handle.IsValid())
+                return;
 
             auto it = _listeners.find(handle._type);
-            if (it == _listeners.end()) return;
+            if (it == _listeners.end())
+                return;
 
-            auto& listeners = it->second;
-            listeners.erase(std::remove_if(listeners.begin(), listeners.end(),
-                                           [id = handle._id](const auto& listener)
-                                           { return listener->id == id; }),
+            auto &listeners = it->second;
+            listeners.erase(::SFTL::remove_if(listeners.begin(), listeners.end(),
+                                              [id = handle._id](const auto &listener)
+                                              { return listener->id == id; }),
                             listeners.end());
         }
 
-        // Dispatch an event to all subscribers
         template <typename EventType>
-        void Dispatch(EventType& event)
+        void Dispatch(EventType &event)
         {
-            static_assert(std::is_base_of_v<Event, EventType>, "EventType must derive from Event");
+            static_assert(is_base_of_v<Event, EventType>, "EventType must derive from Event");
 
             auto it = _listeners.find(typeid(EventType));
-            if (it == _listeners.end()) return;
+            if (it == _listeners.end())
+                return;
 
-            for (auto& listenerBase : it->second)
+            for (auto &listenerBase : it->second)
             {
-                if (event.handled) break;
+                if (event.handled)
+                    break;
 
-                auto* listener = static_cast<Listener<EventType>*>(listenerBase.get());
+                auto *listener = static_cast<Listener<EventType> *>(listenerBase.get());
                 listener->callback(event);
             }
         }
 
-        // Dispatch by creating event inline
         template <typename EventType, typename... Args>
-        void Dispatch(Args&&... args)
+        void Dispatch(Args &&...args)
         {
-            EventType event(std::forward<Args>(args)...);
+            EventType event(forward<Args>(args)...);
             Dispatch(event);
         }
 
-        // Clear all listeners for a specific event type
         template <typename EventType>
         void ClearListeners()
         {
             _listeners.erase(typeid(EventType));
         }
 
-        // Clear all listeners
         void ClearAll()
         {
             _listeners.clear();
         }
     };
 
-    // RAII-style scoped event subscription?
-    class ScopedEventHandle
+    class ScopedEventHandle : NoCopy
     {
-        EventDispatcher* _dispatcher = nullptr;
+        EventDispatcher *_dispatcher = nullptr;
         EventHandle _handle;
 
     public:
         ScopedEventHandle() = default;
 
-        ScopedEventHandle(EventDispatcher* dispatcher, EventHandle handle)
+        ScopedEventHandle(EventDispatcher *dispatcher, EventHandle handle)
             : _dispatcher(dispatcher), _handle(handle)
         {
         }
@@ -165,19 +163,14 @@ namespace SF::Engine
             }
         }
 
-        // Non-copyable
-        ScopedEventHandle(const ScopedEventHandle&) = delete;
-        ScopedEventHandle& operator=(const ScopedEventHandle&) = delete;
-
-        // Movable
-        ScopedEventHandle(ScopedEventHandle&& other) noexcept
+        ScopedEventHandle(ScopedEventHandle &&other) noexcept
             : _dispatcher(other._dispatcher), _handle(other._handle)
         {
             other._dispatcher = nullptr;
             other._handle = EventHandle();
         }
 
-        ScopedEventHandle& operator=(ScopedEventHandle&& other) noexcept
+        ScopedEventHandle &operator=(ScopedEventHandle &&other) noexcept
         {
             if (this != &other)
             {
@@ -203,4 +196,4 @@ namespace SF::Engine
         }
     };
 
-}  // namespace SF::Engine
+} // namespace SF::Engine

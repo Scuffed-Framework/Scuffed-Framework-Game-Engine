@@ -67,7 +67,7 @@ Shader "SF/Atmosphere/AerialPerspectiveLUT"
             vec2 atmoHit  = raySphereIntersect(viewPos, rd, Rtop);
             vec2 gndHit   = raySphereIntersect(viewPos, rd, Rbot);
 
-            // Ray misses the atmosphere entirely — fill with no-op and bail.
+            // Ray misses the atmosphere entirely, fill with no-op and bail.
             if (atmoHit.y < 0.0)
             {
                 imageStore(aerialPerspRange, coord2, vec4(-1.0));

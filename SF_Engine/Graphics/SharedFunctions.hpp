@@ -3,7 +3,7 @@
 
 namespace SF::Engine
 {
-    struct Time;
+    struct ApplicationTime;
     class ImageDepth;
     class Image2d;
 
@@ -20,7 +20,7 @@ namespace SF::Engine
     glm::vec4 GetCameraDirection();
     glm::vec3 GetCameraPosition();
     glm::vec4 GetCameraPosition4();
-    Time GetDeltaTime();
+    ApplicationTime GetDeltaTime();
     double GetDeltaTimeMilliS();
     int64_t GetDeltaTimeMicroS();
     int64_t GetDeltaTimeNanoS();
