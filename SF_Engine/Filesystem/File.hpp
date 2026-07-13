@@ -248,11 +248,11 @@ namespace SF::Engine
         void Flush();
 
     private:
-#ifdef_PLATFORM_WINDOWS
+#ifdef _PLATFORM_WINDOWS
         void *m_fileHandle = nullptr;
         void *m_mappingHandle = nullptr;
 #else
-int m_fileDescriptor = -1;
+        int m_fileDescriptor = -1;
 #endif
         uint8_t *m_data = nullptr;
         size_t m_size = 0;

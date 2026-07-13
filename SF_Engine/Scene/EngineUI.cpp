@@ -20,8 +20,8 @@ namespace SF::Engine
                     if (ImGui::MenuItem("Save Project"))
                     {
                     }
+                    ImGui::EndMenu();
                 }
-                ImGui::EndMenu();
                 if (ImGui::BeginMenu("New"))
                 {
                     if (ImGui::MenuItem("New Scene"))
@@ -30,8 +30,8 @@ namespace SF::Engine
                     if (ImGui::MenuItem("New Project"))
                     {
                     }
+                    ImGui::EndMenu();
                 }
-                ImGui::EndMenu();
                 if (ImGui::BeginMenu("Open"))
                 {
                     if (ImGui::MenuItem("Open Scene"))
@@ -40,13 +40,14 @@ namespace SF::Engine
                     if (ImGui::MenuItem("Open Project"))
                     {
                     }
+                    ImGui::EndMenu();
                 }
-                ImGui::EndMenu();
 
                 if (ImGui::MenuItem("Exit"))
                 {
                     Engine::Get()->RequestClose();
                 }
+
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Windows"))

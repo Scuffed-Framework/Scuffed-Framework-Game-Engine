@@ -1,4 +1,4 @@
-#ifdef_PLATFORM_WINDOWS
+#ifdef _PLATFORM_WINDOWS
 #ifndef UNICODE
 #define UNICODE
 #endif

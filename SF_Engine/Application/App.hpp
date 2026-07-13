@@ -35,10 +35,10 @@
 #if GCC
 #include <x86intrin.h>
 #endif
-#elif defined(__APPLE__)
+#elif defined(_PLATFORM_MACOS)
 // macOS
 #include <mach-o/dyld.h>
-#elif defined(__linux__)
+#elif defined(_PLATFORM_LINUX)
 // Linux
 #include <unistd.h>
 #endif
