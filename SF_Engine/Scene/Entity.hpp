@@ -6,15 +6,22 @@
 namespace SF::Engine
 {
     using Entity = ::entt::entity; // msvc is a little dumb
-    // Components are now just plain data structures
     struct NameComponent
     {
-        ::std::string name; // msvc having a schizo outbreak
+        ::std::string name;
     };
 
     struct RemovedComponent
     {
-        // Tag component - presence indicates entity is marked for removal
+    };
+
+    /**
+     * @brief Tag component — presence/state of enabled flag. Entities
+     * without it are implicitly enabled; only add when something toggles it.
+     */
+    struct EnabledComponent
+    {
+        bool enabled = true;
     };
 
     /**

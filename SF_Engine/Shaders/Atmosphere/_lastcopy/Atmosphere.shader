@@ -5,7 +5,6 @@ Shader "SF/Atmosphere/Atmosphere"
         #version 450
         void main()
         {
-            // Full-screen triangle from vertex index alone – no VBO needed.
             vec2 uv     = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
             gl_Position = vec4(uv * 2.0 - 1.0, 1.0, 1.0);
         }
@@ -20,12 +19,12 @@ Shader "SF/Atmosphere/Atmosphere"
         {
             mat4  invProj;
             mat4  invView;
-            vec4  cameraPos;        // .xyz = world position relative to planet centre (metres)
-            vec4  planetPos;        // unused – planet is at origin
-            vec4  sunDir;           // .xyz = toward sun (unit), .w = sun intensity
+            vec4  cameraPos;
+            vec4  planetPos;
+            vec4  sunDir;
             float bottomRadius;
             float topRadius;
-            float renderUnitRadius; // unused
+            float renderUnitRadius;
             float _p0;
             vec2  screenSize;
             vec2  _p1;
@@ -35,21 +34,54 @@ Shader "SF/Atmosphere/Atmosphere"
         layout(set = 0, binding = 2) uniform sampler2D multiScatterLUT;
         layout(set = 0, binding = 3) uniform sampler2D skyViewLUT;
 
+        layout(set = 0, binding = 4) uniform sampler3D aerialPerspColorRGBTransR; // inscatter.rgb, T.r
+        layout(set = 0, binding = 5) uniform sampler3D aerialPerspTransGB;        // T.gb
+        layout(set = 0, binding = 6) uniform sampler2D aerialPerspRange;          // distToTravel per XY
+
+        layout(set = 0, binding = 7) uniform sampler2D sceneColor;  // HDR geometry colour
+        layout(set = 0, binding = 8) uniform sampler2D sceneDepth;  // depth buffer [0,1]
+
         #import "Atmosphere.si"
-
-        vec3 sampleSkyView(vec3 rd)
+        vec3 arbitraryPerp(vec3 n)
         {
-            float phi   = atan(rd.x, rd.z);                    // [-PI, PI]
-            float theta = asin(clamp(rd.y, -1.0, 1.0));        // [-PI/2, PI/2]
+            vec3 a = (abs(n.x) < 0.9) ? vec3(1, 0, 0) : vec3(0, 1, 0);
+            return normalize(cross(n, a));
+        }
 
-            float u = (phi / (2.0 * PI)) + 0.5;                // remap to [0, 1]
-            float v = skyViewEncodeV(theta);
+        vec3 sampleSkyView(vec3 rd, vec3 viewPos, vec3 sunDir, float camR, float botRadius)
+        {
+            vec3 up = normalize(viewPos);
 
-            return textureLod(skyViewLUT, vec2(u, v), 0.0).rgb;
+            vec3  sunHoriz    = sunDir - dot(sunDir, up) * up;
+            float sunHorizLen = length(sunHoriz);
+            vec3  sunProj     = (sunHorizLen > 1e-4)
+                                    ? (sunHoriz / sunHorizLen)
+                                    : arbitraryPerp(up);
+            vec3 perpAxis = cross(up, sunProj);
+
+            float sinTh = clamp(dot(rd, up), -1.0, 1.0);
+            float theta = asin(sinTh);
+            float v     = skyViewEncodeV(theta, camR, botRadius);
+
+            vec3  rdH    = rd - sinTh * up;
+            float rdHLen = length(rdH);
+            float u_coord;
+            if (rdHLen < 1e-4)
+            {
+                u_coord = 0.0;
+            }
+            else
+            {
+                vec3  rdHoriz = rdH / rdHLen;
+                float phi     = atan(dot(rdHoriz, perpAxis), dot(rdHoriz, sunProj));
+                u_coord = abs(phi) / PI;
+            }
+
+            return textureLod(skyViewLUT, vec2(u_coord, v), 0.0).rgb;
         }
 
         vec3 sunDisk(vec3 rd, vec3 sunDir, float sunIntensity,
-                     float height, float bottomRadius, float topRadius)
+                     vec3 viewPos, float bottomRadius, float topRadius)
         {
             const float SUN_ANGULAR_RADIUS = 0.0045;
             float cosAngle   = dot(rd, sunDir);
@@ -57,21 +89,41 @@ Shader "SF/Atmosphere/Atmosphere"
                 cos(SUN_ANGULAR_RADIUS * 1.05),
                 cos(SUN_ANGULAR_RADIUS * 0.95),
                 cosAngle);
-
             if (diskWeight <= 0.0) return vec3(0.0);
-
-            // Attenuate by transmittance toward the sun so the disk dims at sunrise/set.
-            float cosSun = dot(normalize(vec3(0.0, height, 0.0)), sunDir);
-            vec3  T      = sampleTransmittance(transmittanceLUT, height, cosSun,
+            float camR   = length(viewPos);
+            float cosSun = dot(viewPos / camR, sunDir);
+            vec3  T      = sampleTransmittance(transmittanceLUT, camR, cosSun,
                                                bottomRadius, topRadius);
             return diskWeight * sunIntensity * T;
         }
 
+        void sampleAerialPerspective(vec2 screenUV, float sceneDist,
+                                     out vec3 outScatter, out vec3 outTransmit)
+        {
+            float maxDist = max(texture(aerialPerspRange, screenUV).r, 0.001);
+            float t = clamp(sqrt(sceneDist / maxDist), 0.0, 1.0);  
+
+            vec4 ct  = texture(aerialPerspColorRGBTransR, vec3(screenUV, t));
+            vec2 tgb = texture(aerialPerspTransGB,        vec3(screenUV, t)).rg;
+
+            outScatter  = ct.rgb;
+            outTransmit = vec3(ct.a, tgb.r, tgb.g);
+        }
+
+        float depthToViewDist(float depth, vec2 ndc)
+        {
+            vec4 clipPos = vec4(ndc, depth, 1.0);
+            vec4 vPos    = u.invProj * clipPos;
+            return length(vPos.xyz / vPos.w);  
+        }
+
         void main()
         {
-            vec2 ndc = vec2(
-                gl_FragCoord.x / u.screenSize.x * 2.0 - 1.0,
-                gl_FragCoord.y / u.screenSize.y * 2.0 - 1.0);
+            vec2 screenUV = gl_FragCoord.xy / u.screenSize;
+
+            vec2 ndc = screenUV * 2.0 - 1.0;
+
+            // Reconstruct world-space ray direction
             vec4 vp = u.invProj * vec4(ndc, 1.0, 1.0);
             vec3 rd  = normalize((u.invView * vec4(vp.xyz / vp.w, 0.0)).xyz);
 
@@ -80,28 +132,40 @@ Shader "SF/Atmosphere/Atmosphere"
             float Rbot   = u.bottomRadius;
             float Rtop   = u.topRadius;
 
-            vec3 viewPos = u.cameraPos.xyz;
-            if (length(viewPos) < Rbot + 1.0)
-                viewPos = normalize(viewPos.y >= 0.0 ? viewPos : vec3(0,1,0))
-                          * (Rbot + 1.0);
+            vec3  viewPos = u.cameraPos.xyz;
+            float vpLen   = length(viewPos);
+            if (vpLen < 1.0)
+                viewPos = vec3(0.0, Rbot + 1.0, 0.0);
+            else if (vpLen < Rbot + 1.0)
+                viewPos = viewPos * ((Rbot + 1.0) / vpLen);
 
             float camHeight = length(viewPos);
 
-            vec2 atmoHit = raySphereIntersect(viewPos, rd, Rtop);
-          
-
-            float camAlt = camHeight - Rbot;
-            if (camAlt < (Rtop - Rbot))
+            float depth = texture(sceneDepth, screenUV).r;
+            if (depth > 0.0)
             {
-                vec3 col = sampleSkyView(rd);
+                vec3  surface   = texture(sceneColor, screenUV).rgb;
+                float sceneDist = depthToViewDist(depth, ndc);
 
-                col += sunDisk(rd, sunDir, sunI, camHeight, Rbot, Rtop);
+                vec3 scatter, transmit;
+                sampleAerialPerspective(screenUV, sceneDist, scatter, transmit);
 
-                // Tone-map and write.
-                col = 1.0 - exp(-col);
+                outColor = vec4(surface * transmit + scatter, 1.0);
+                return;
+            }
 
-                // Alpha: derive transmittance along this pixel's ray to sky top.
-                // Use the transmittance LUT for a cheap but physically consistent result.
+            vec2 atmoHit = raySphereIntersect(viewPos, rd, Rtop);
+
+            float camAlt        = camHeight - Rbot;
+            float atmoThickness = Rtop - Rbot;
+
+            if (camAlt < atmoThickness - 1.0)
+            {
+                // Inside atmosphere → SkyView LUT
+                vec3 col = sampleSkyView(rd, viewPos, sunDir, camHeight, Rbot);
+                col += sunDisk(rd, sunDir, sunI, viewPos, Rbot, Rtop);
+                col  = 1.0 - exp(-col);
+
                 float cosSky   = dot(normalize(viewPos), rd);
                 vec3  skyTrans = sampleTransmittance(transmittanceLUT, camHeight,
                                                      cosSky, Rbot, Rtop);
@@ -111,7 +175,7 @@ Shader "SF/Atmosphere/Atmosphere"
                 return;
             }
 
-
+            // Above atmosphere → full raymarch
             float maxDist = atmoHit.y;
             vec2  gndHit  = raySphereIntersect(viewPos, rd, Rbot);
             if (gndHit.x > 0.0 && gndHit.x < gndHit.y)
@@ -126,7 +190,6 @@ Shader "SF/Atmosphere/Atmosphere"
                 transmittance);
 
             col = 1.0 - exp(-col);
-
             float atmAlpha = 1.0 - dot(transmittance, vec3(0.2126, 0.7152, 0.0722));
             outColor = vec4(col, atmAlpha);
         }

@@ -7,7 +7,7 @@
 
 namespace SF::Engine
 {
-    Framebuffer::Framebuffer(const LogicalDevice &logicalDevice, const Swapchain &swapchain, const RenderStage &renderStage, const Renderpass &renderPass, const ImageDepth &depthStencil,
+    Framebuffer::Framebuffer(const LogicalDevice &logicalDevice, const Swapchain &swapchain, const RenderStage &renderStage, const Renderpass &renderPass, const ImageDepth *depthStencil,
                              const Vector2Uint &extent, VkSampleCountFlagBits samples) : logicalDevice(logicalDevice)
     {
         for (const auto &attachment : renderStage.GetAttachments())
@@ -43,7 +43,9 @@ namespace SF::Engine
                     attachments.emplace_back(GetAttachment(attachment.GetBinding())->GetView());
                     break;
                 case Attachment::Type::Depth:
-                    attachments.emplace_back(depthStencil.GetView());
+                    // Only reached when this stage actually declares a Depth
+                    // attachment, so depthStencil is guaranteed non-null here.
+                    attachments.emplace_back(depthStencil->GetView());
                     break;
                 case Attachment::Type::Swapchain:
                     attachments.emplace_back(swapchain.GetImageViews().at(i));

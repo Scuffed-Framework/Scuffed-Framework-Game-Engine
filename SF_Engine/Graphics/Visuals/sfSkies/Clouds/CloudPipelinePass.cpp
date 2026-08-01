@@ -4,6 +4,7 @@
 #include <Graphics/RenderSystem.hpp>
 #include <Graphics/Descriptors/DescriptorSet.hpp>
 #include <glm/gtc/constants.hpp>
+#include <Graphics/SharedFunctions.hpp>
 
 namespace SF::Engine
 {
@@ -137,7 +138,43 @@ namespace SF::Engine
         w5.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         w5.pImageInfo = &b5;
 
-        DescriptorSet::Update({w0, w1, w2, w3, w4, w5});
+        VkDescriptorImageInfo b6{};
+        b6.sampler = cloudNoise_->GetBaseTexture()->GetSampler();
+        b6.imageView = cloudNoise_->GetBaseTexture()->GetView();
+        b6.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        VkWriteDescriptorSet w6{};
+        w6.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w6.dstSet = descSet_->GetDescriptorSet();
+        w6.dstBinding = 6;
+        w6.descriptorCount = 1;
+        w6.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w6.pImageInfo = &b6;
+
+        VkDescriptorImageInfo b7{};
+        b7.sampler = cloudNoise_->GetDetailTexture()->GetSampler();
+        b7.imageView = cloudNoise_->GetDetailTexture()->GetView();
+        b7.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        VkWriteDescriptorSet w7{};
+        w7.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w7.dstSet = descSet_->GetDescriptorSet();
+        w7.dstBinding = 7;
+        w7.descriptorCount = 1;
+        w7.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w7.pImageInfo = &b7;
+
+        VkDescriptorImageInfo b8{};
+        b8.sampler = aerialPerspRange_->GetAerialPerspectiveRange()->GetSampler();
+        b8.imageView = aerialPerspRange_->GetAerialPerspectiveRange()->GetView();
+        b8.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        VkWriteDescriptorSet w8{};
+        w8.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w8.dstSet = descSet_->GetDescriptorSet();
+        w8.dstBinding = 8;
+        w8.descriptorCount = 1;
+        w8.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w8.pImageInfo = &b8;
+
+        DescriptorSet::Update({w0, w1, w2, w3, w4, w5, w6, w7, w8});
     }
 
     void CloudPipelinePass::SetFrameData(const glm::mat4 &invProj,
@@ -177,11 +214,42 @@ namespace SF::Engine
         if (!enabled)
             return;
 
-        totalTime_ += 0.016f;
+        auto *rs = RenderSystem::Get();
+        auto *depthDesc = rs->GetAttachment("gbuf_depth");
+        auto *colorDesc = rs->GetAttachment("hdr");
+        auto *depthImg = dynamic_cast<const ImageDepth *>(depthDesc);
+        auto *colorImg = dynamic_cast<const Image2d *>(colorDesc);
+        if (!depthImg || !colorImg)
+            return; // not ready yet, e.g. first frame
 
+        if (depthImg != lastDepthImg_ || colorImg != lastColorImg_)
+        {
+            lastDepthImg_ = depthImg;
+            lastColorImg_ = colorImg;
+
+            VkDescriptorImageInfo dInfo{depthImg->GetSampler(), depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+            VkDescriptorImageInfo cInfo{colorImg->GetSampler(), colorImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+
+            VkWriteDescriptorSet w6{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            w6.dstSet = descSet_->GetDescriptorSet();
+            w6.dstBinding = 6;
+            w6.descriptorCount = 1;
+            w6.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            w6.pImageInfo = &dInfo;
+
+            VkWriteDescriptorSet w7{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            w7.dstSet = descSet_->GetDescriptorSet();
+            w7.dstBinding = 7;
+            w7.descriptorCount = 1;
+            w7.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            w7.pImageInfo = &cInfo;
+
+            DescriptorSet::Update({w6, w7});
+        }
+
+        totalTime_ += 0.016f;
         atmoUBO_->Update(frameData_);
         UpdateCloudUBO();
-
         pipeline_->BindPipeline(cmd);
         descSet_->BindDescriptor(cmd);
         vkCmdDraw(cmd, 3, 1, 0, 0);
@@ -198,13 +266,12 @@ namespace SF::Engine
 
         ubo.cloudDensityScale = densityScale;
         ubo.cloudCoverage = coverage;
-        ubo.windSpeed = windSpeed;
-        ubo.cloudType = glm::clamp(cloudType, 0.0f, 1.0f);
 
         ubo.time = totalTime_;
-        ubo._pad0 = 0.0f;
-
-        ubo._pad1 = 0.0f;
+        if (!ubo.frameIndex) // if null/unitialized, start at 0
+            ubo.frameIndex = 0;
+        else
+            ubo.frameIndex = (ubo.frameIndex + 1) % 256;
 
         cloudUBO_->Update(ubo);
     }

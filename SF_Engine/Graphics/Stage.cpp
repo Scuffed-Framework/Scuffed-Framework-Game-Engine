@@ -1,7 +1,7 @@
 #include "Stage.hpp"
 #include "Images/ImageDepth.hpp"
 #include "RenderSystem.hpp"
-#include "Windows/Windows.hpp"
+#include "Windows/WindowManager.hpp"
 
 namespace SF::Engine
 {
@@ -33,7 +33,7 @@ namespace SF::Engine
                 VkClearValue clearValue = {};
                 if (att->GetType() == Attachment::Type::Depth)
                 {
-                    clearValue.depthStencil = {1.0f, 0};
+                    clearValue.depthStencil = {0.0f, 0};
                 }
                 else
                 {
@@ -111,7 +111,7 @@ namespace SF::Engine
         Log::Info("Creating Framebuffer");
         framebuffer =
             std::make_unique<Framebuffer>(*logicalDevice, swapchain, *this, *renderpass,
-                                          *depthStencil, renderArea.GetExtent(), msaaSamples);
+                                          depthStencil.get(), renderArea.GetExtent(), msaaSamples);
         Log::Info("Framebuffer created");
         outOfDate = false;
 

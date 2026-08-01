@@ -6,7 +6,7 @@
 #include <Input/ButtonCodes.hpp>
 #include <LowLevel/BitMask.hpp>
 #include <LowLevel/rocket.hpp>
-#include "Monitor.hpp" // monitor has #include "Cursor.hpp", which has glfw3.h
+#include "Monitor.hpp"
 
 namespace SF::Engine
 {
@@ -513,6 +513,9 @@ namespace SF::Engine
         rocket::signal<void(MouseButton, InputAction, bitmask::bitmask<InputMod>)> onMouseButton;
         rocket::signal<void(Vector2double)> onMousePosition;
         rocket::signal<void(Vector2double)> onMouseScroll;
+
+    public:
+        WindowId GetId() { return id; }
     };
 }
 

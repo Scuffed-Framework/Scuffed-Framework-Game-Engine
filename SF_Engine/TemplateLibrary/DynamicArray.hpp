@@ -37,6 +37,7 @@
 #include <cassert>
 #include "Operations.hpp"
 #include "Allocator.hpp"
+#include <memory_resource> // polymorphic_allocator
 
 namespace SFTL
 {

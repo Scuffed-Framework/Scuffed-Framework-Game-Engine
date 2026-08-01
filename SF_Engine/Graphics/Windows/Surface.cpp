@@ -4,7 +4,7 @@
 #include <Graphics/Devices/LogicalDevice.hpp>
 #include <Graphics/Devices/PhysicalDevice.hpp>
 #include <Graphics/RenderSystem.hpp>
-#include "Windows.hpp"
+#include "WindowManager.hpp"
 
 namespace SF::Engine
 {

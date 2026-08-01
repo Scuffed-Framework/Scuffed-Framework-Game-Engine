@@ -1,6 +1,7 @@
 #pragma once
 #include <XML/XMLReader.hpp>
 #include <glm/glm.hpp>
+#include "Entity.hpp"
 
 namespace SF::Engine
 {

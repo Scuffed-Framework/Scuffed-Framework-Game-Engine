@@ -13,7 +13,8 @@ namespace SF::Engine
     class Framebuffer : NoCopy
     {
     public:
-        Framebuffer(const LogicalDevice &logicalDevice, const Swapchain &swapchain, const RenderStage &renderStage, const Renderpass &renderPass, const ImageDepth &depthStencil,
+        Framebuffer(const LogicalDevice &logicalDevice, const Swapchain &swapchain, const RenderStage &renderStage,
+                    const Renderpass &renderPass, const ImageDepth *depthStencil, // pointer now
                     const Vector2Uint &extent, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
         ~Framebuffer();
 

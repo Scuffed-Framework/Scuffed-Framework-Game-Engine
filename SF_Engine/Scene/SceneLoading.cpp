@@ -83,7 +83,6 @@ namespace SF::Engine
             root.GetAttribute("atmosphere", atmo);
             root.GetAttribute("sun", sun);
             cfg.enableAtmosphere = atmo;
-            cfg.enableSun = sun;
 
             auto scene = std::make_unique<LoadedScene>(cfg, name);
             scene->Deserialize(root);

@@ -20,8 +20,8 @@ namespace SF::Engine
             this->imguiWantsKeyboard = imguiWantsKeyboard;
         }
 
-        // Possess any ACamera, pass nullptr to fall back to editor cam
-        void Possess(ACamera *cam)
+        // Possess any Camera, pass nullptr to fall back to editor cam
+        void Possess(Camera *cam)
         {
             possessed_ = cam ? cam : &editorCamera_;
         }
@@ -39,14 +39,14 @@ namespace SF::Engine
             // Game cameras update themselves via their own Update() / pawn tick
         }
 
-        ACamera *GetActive() { return possessed_; }
+        Camera *GetActive() { return possessed_; }
         EditorCamera &GetEditorCamera() { return editorCamera_; }
 
         bool IsEditorCameraActive() const { return possessed_ == &editorCamera_; }
 
     private:
         EditorCamera editorCamera_;
-        ACamera *possessed_; // non-owning  lifetime managed by scene/pawn
+        Camera *possessed_; // non-owning  lifetime managed by scene/pawn
         Window *window;
         bool imguiWantsMouse;
         bool imguiWantsKeyboard;

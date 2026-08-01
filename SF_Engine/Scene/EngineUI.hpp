@@ -11,9 +11,11 @@
 
 #include <Commands/CommandsWindow.hpp>
 
+#include <ImGui/ocornut/imgui_stdlib.h>
+
 namespace SF::Engine
 {
-    class ACamera;
+    class Camera;
 
     class EngineUI
     {
@@ -24,7 +26,7 @@ namespace SF::Engine
 
         struct DrawContext
         {
-            ACamera *camera;
+            Camera *camera;
             std::vector<SceneObject> *objects;
             std::vector<SceneLight> *lights;
             int *selectedObj;
@@ -54,8 +56,6 @@ namespace SF::Engine
                              ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
             auto pos = ctx_.camera->GetPosition();
-            char buf[128];
-            ImGui::TextDisabled("%s", buf);
 
             ImGui::End();
             ImGui::PopStyleVar();
@@ -79,7 +79,10 @@ namespace SF::Engine
                     (*ctx_.selectedObj == i ? ImGuiTreeNodeFlags_Selected : 0);
                 if (!obj.enabled)
                     ImGui::PushStyleColor(ImGuiCol_Text, {0.5f, 0.5f, 0.5f, 1.0f});
-                ImGui::TreeNodeEx(obj.name.c_str(), f);
+
+                const char *displayName = obj.name.empty() ? "(unnamed)" : obj.name.c_str();
+                ImGui::TreeNodeEx((void *)(intptr_t)i, f, "%s", displayName);
+
                 if (!obj.enabled)
                     ImGui::PopStyleColor();
                 if (ImGui::IsItemClicked())
@@ -128,10 +131,7 @@ namespace SF::Engine
                 ImGui::Checkbox("##En", &obj.enabled);
                 ImGui::SameLine();
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                char nb[64];
-                std::snprintf(nb, sizeof(nb), "%s", obj.name.c_str());
-                if (ImGui::InputText("##ObjName", nb, sizeof(nb)))
-                    obj.name = nb;
+                ImGui::InputText("##ObjName", &obj.name);
                 ImGui::Separator();
 
                 ImGui::Spacing();

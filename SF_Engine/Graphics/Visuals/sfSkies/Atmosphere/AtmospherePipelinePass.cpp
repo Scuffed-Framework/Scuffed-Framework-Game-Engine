@@ -19,7 +19,7 @@ namespace SF::Engine
             std::vector<Shader::VertexInput>{},
             std::vector<Shader::Define>{},
             RenderPipeline::Mode::Polygon,
-            RenderPipeline::Depth::None, // was Depth::Read
+            RenderPipeline::Depth::Read, // was Depth::Read
             VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             VK_POLYGON_MODE_FILL,
             VK_CULL_MODE_NONE,

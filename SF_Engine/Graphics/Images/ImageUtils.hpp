@@ -1,3 +1,4 @@
+#pragma once
 #include "Image2d.hpp"
 #include "Image3d.hpp"
 #include <Graphics/Descriptors/DescriptorSet.hpp>

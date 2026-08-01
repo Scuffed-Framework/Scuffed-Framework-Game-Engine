@@ -13,7 +13,6 @@
 #include "Log/Log.hpp"
 #include "Module.hpp"
 
-#include <Application/App.hpp>
 #include <LowLevel/Rocket.hpp>
 #include <Math/Time/Time.hpp>
 #include <cstdint>
@@ -28,6 +27,8 @@
 #include <Threading/ThreadPool.hpp>
 
 #include "InitGame/GameInstance.hpp"
+#include "VersionSemantic.hpp"
+#include <Platform/PlatformIncludes.hpp>
 
 #ifdef major
 #undef major
@@ -95,24 +96,6 @@ namespace SF::Engine
         const Version &GetVersion() const
         {
             return version;
-        }
-
-        /**
-         * Gets the current application.
-         * @return The renderer manager.
-         */
-        App *GetApp() const
-        {
-            return app.get();
-        }
-
-        /**
-         * Sets the current application to a new application.
-         * @param app The new application.
-         */
-        void SetApp(std::unique_ptr<App> &&app)
-        {
-            this->app = std::move(app);
         }
 
         /**
@@ -264,8 +247,6 @@ namespace SF::Engine
         std::string argv0;
         Version version;
 
-        std::unique_ptr<App> app;
-
         std::map<TypeId, std::unique_ptr<Module>> modules;
         std::map<Module::Stage, std::vector<TypeId>> moduleStages;
 
@@ -320,9 +301,7 @@ namespace SF::Engine
 
     inline std::filesystem::path GetEngineRootPath()
     {
-        // Get the path of the executable
-        std::filesystem::path exePath = std::filesystem::current_path();
-        return exePath;
+        return GetExecutablePath();
     }
 
     inline std::filesystem::path GetEngineAssetsPath()

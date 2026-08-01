@@ -74,7 +74,7 @@ namespace SF::Engine
         auto position = cam->GetPosition();
         alListener3f(AL_POSITION, position.x, position.y, position.z);
 
-        // Set listener velocity  ACamera doesn't track velocity, so use zero
+        // Set listener velocity Camera doesn't track velocity, so use zero
         alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
         // Set listener orientation using front and a fixed world-up

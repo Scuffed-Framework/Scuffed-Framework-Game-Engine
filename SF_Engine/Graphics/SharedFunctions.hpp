@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <string>
 
 namespace SF::Engine
 {
@@ -26,6 +27,6 @@ namespace SF::Engine
     int64_t GetDeltaTimeNanoS();
 
     const Image2d *GetSceneHDR();
-    const ImageDepth *GetSceneDepth();
-
+    const ImageDepth *GetSceneDepth(
+        const std::string &attachmentName = "gbuf_depth");
 }

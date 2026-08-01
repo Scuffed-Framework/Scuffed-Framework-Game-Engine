@@ -1,3 +1,4 @@
+#pragma once
 #include "Version.hpp"
 
 namespace SF::Engine

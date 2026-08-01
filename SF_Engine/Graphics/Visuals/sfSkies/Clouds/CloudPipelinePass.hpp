@@ -9,6 +9,8 @@
 #include <Graphics/LUT/AlligatorNoiseLUT.hpp>
 #include "../Atmosphere/LUT/TransmittanceLUT.hpp"
 #include "../Atmosphere/LUT/MultiScatterLUT.hpp"
+#include "CloudNoise.hpp"
+#include "../Atmosphere/LUT/AerialPerspectiveLUT.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -16,7 +18,6 @@
 
 namespace SF::Engine
 {
-
     struct alignas(16) CloudUBO
     {
         float cloudBottomRadius; // params.bottomRadius + minAlt
@@ -26,16 +27,14 @@ namespace SF::Engine
 
         float cloudDensityScale; // global density multiplier
         float cloudCoverage;     // [0, 1] coverage bias
-        float windSpeed;         // noise-scroll speed multiplier
-        float cloudType;         // 0 = billowy, 1 = wispy (global bias; NVDF overrides)
 
         float time; // accumulated seconds (wind animation)
-        float _pad0;
 
         float sdfRangeMetres; // max SDF distance in G channel
-
-        float _pad1;
+        int frameIndex;       // frame counter for blue noise sampling
+        int bozo[3];          // padding to satisfy std140 alignment
     };
+
     static_assert(sizeof(CloudUBO) == 48, "CloudUBO size mismatch - check padding");
     static_assert(sizeof(CloudUBO) % 16 == 0, "CloudUBO must satisfy std140 alignment");
 
@@ -63,23 +62,11 @@ namespace SF::Engine
         float minAlt = 1500.0f; // metres above planet surface
         float maxAlt = 6000.0f;
 
-        int marchSteps = 96;      // primary ray
-        int lightMarchSteps = 24; // secondary (light accum compute)
+        int marchSteps = 32;     // primary ray
+        int lightMarchSteps = 8; // secondary (light accum compute)
 
         float densityScale = 1.0f;
-        float coverage = 0.50f;
-
-        float extinctionCoeff = 0.06f;  // σ_e (m^-1)
-        float scatteringAlbedo = 0.90f; // σ_s / σ_e
-
-        float windSpeed = 1.0f;
-
-        float cloudType = 0.0f; // 0 = cumulus, 1 = cirrus
-
-        float cloudletRadius = 2000.0f; // base radius (m)
-        int cloudletCount = 12;
-
-        void RebuildCloudlets(); // regenerates and re-bakes the NVDF
+        float coverage = 0.20f;
 
         static bool isWindowOpen;
 
@@ -96,6 +83,9 @@ namespace SF::Engine
 
         std::unique_ptr<BlueNoiseLUT> blueNoiseLUT_;
         std::unique_ptr<PerlinWorleyNoiseLUT> pWorleyLUT_;
+        std::unique_ptr<CloudNoiseLUTs> cloudNoise_;
+        std::unique_ptr<AerialPerspectiveLUT> aerialPerspRange_;
+
         std::unique_ptr<TransmittanceLUT> transmittanceLUT_;
         std::unique_ptr<MultiScatterLUT> multiScatterLUT_;
 
@@ -104,6 +94,9 @@ namespace SF::Engine
 
         glm::vec3 cachedSunDir_{0.577f, 0.577f, 0.577f};
         float totalTime_{0.0f};
+
+        const Image2d *lastColorImg_ = nullptr;
+        const ImageDepth *lastDepthImg_ = nullptr;
     };
 
 } // namespace SF::Engine

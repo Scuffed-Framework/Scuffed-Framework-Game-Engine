@@ -1,0 +1,6 @@
+# SHADERS
+1. Transition from glslang to ShaderSlang
+2. Remove the unity shader like thing (it is shit)
+
+#CORE 
+1. Get includes for box3d and ShaderSlang

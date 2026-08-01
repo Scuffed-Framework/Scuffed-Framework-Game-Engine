@@ -83,8 +83,6 @@ namespace SF::Engine
         // Clear layer stack before destroying app
         layerStack.Clear();
 
-        app = nullptr;
-
         // Shutdown modules in reverse order
         for (auto it = modules.rbegin(); it != modules.rend(); ++it)
         {
@@ -108,17 +106,6 @@ namespace SF::Engine
     {
         while (running)
         {
-            if (app)
-            {
-                if (!app->started_)
-                {
-                    app->Start();
-                    app->started_ = true;
-                }
-
-                app->Update();
-            }
-
             elapsedRender.SetInterval(ApplicationTime::Seconds(1.0f / fpsLimit));
 
             // Always-Update.
@@ -129,34 +116,23 @@ namespace SF::Engine
                 // Resets the timer.
                 ups.Update(ApplicationTime::Now());
 
-                // Pre-Update.
                 UpdateStage(Module::Stage::Pre);
 
-                // Update layers
                 layerStack.UpdateLayers();
 
-                // Update.
                 UpdateStage(Module::Stage::Normal);
-                // Post-Update.
                 UpdateStage(Module::Stage::Post);
 
-                // Updates the engines delta.
                 deltaUpdate.Update();
             }
 
             // Renders when needed.
             if (elapsedRender.GetElapsed() != 0)
             {
-                // Resets the timer.
                 fps.Update(ApplicationTime::Now());
 
-                // Render
                 UpdateStage(Module::Stage::Render);
 
-                // Render ImGui for all layers
-                layerStack.RenderImGui();
-
-                // Updates the render delta, and render time extension.
                 deltaRender.Update();
             }
         }

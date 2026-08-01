@@ -28,6 +28,11 @@ namespace SFTL
             else
                 return std::iswspace(static_cast<unsigned short>(c)) != 0;
         }
+        template <typename T>
+        struct WidenChar
+        {
+            static T From(unsigned char c) { return static_cast<T>(c); }
+        };
 
         template <typename T>
         constexpr size_t HashSpan(const T *data, size_t count)
@@ -602,7 +607,7 @@ namespace SFTL
                 DynamicArray<T> wide;
                 wide.resize(static_cast<size_t>(size));
                 for (size_t i = 0; i < static_cast<size_t>(size); ++i)
-                    wide[i] = WidenChar<T>::From(static_cast<unsigned char>(narrow[i]));
+                    wide[i] = Detail::WidenChar<T>::From(static_cast<unsigned char>(narrow[i]));
                 return AdvancedString(wide.data(), static_cast<size_t>(size));
             }
         }
@@ -639,7 +644,6 @@ namespace SFTL
             return os;
         }
 
-        std::string_view /*n/a*/;
         const T *Data() const { return Ptr(); }
         const T *CStr() const { return Ptr(); }
         size_type Size() const { return size_; }

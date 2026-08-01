@@ -356,7 +356,7 @@ namespace SF::Engine
         colourBlendState.pAttachments = blendAttachmentStates.data();
 
         depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+        depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
         depthStencilState.front = depthStencilState.back;
         depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
 

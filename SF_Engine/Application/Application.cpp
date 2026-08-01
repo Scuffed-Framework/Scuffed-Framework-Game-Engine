@@ -1,8 +1,8 @@
-#include "App.hpp"
+#include "Application.hpp"
 
 namespace SF::Engine
 {
-    std::filesystem::path App::GetExecutablePath() const
+    std::filesystem::path GetExecutablePathImpl()
     {
 #if _PLATFORM_WINDOWS
         std::vector<wchar_t> buffer(MAX_PATH);
@@ -12,9 +12,11 @@ namespace SF::Engine
         {
             size = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
 
-            if (size == 0) return {};
+            if (size == 0)
+                return {};
 
-            if (size < buffer.size()) break;
+            if (size < buffer.size())
+                break;
 
             buffer.resize(buffer.size() * 2);
         }
@@ -26,7 +28,8 @@ namespace SF::Engine
         _NSGetExecutablePath(nullptr, &size);
 
         std::vector<char> buffer(size);
-        if (_NSGetExecutablePath(buffer.data(), &size) != 0) return {};
+        if (_NSGetExecutablePath(buffer.data(), &size) != 0)
+            return {};
 
         return std::filesystem::weakly_canonical(buffer.data());
 
@@ -37,9 +40,11 @@ namespace SF::Engine
         while (true)
         {
             size = readlink("/proc/self/exe", buffer.data(), buffer.size());
-            if (size < 0) return {};
+            if (size < 0)
+                return {};
 
-            if (size < static_cast<ssize_t>(buffer.size())) break;
+            if (size < static_cast<ssize_t>(buffer.size()))
+                break;
 
             buffer.resize(buffer.size() * 2);
         }

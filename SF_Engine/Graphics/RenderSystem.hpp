@@ -8,7 +8,7 @@
 #include "Devices/PhysicalDevice.hpp"
 #include "Renderer.hpp"
 #include "Windows/Surface.hpp"
-#include "Windows/Windows.hpp"
+#include "Windows/WindowManager.hpp"
 
 #include <UtilityClasses/NoCopy.hpp>
 

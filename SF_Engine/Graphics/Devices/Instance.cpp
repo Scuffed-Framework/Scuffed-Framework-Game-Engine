@@ -3,7 +3,7 @@
 #include <fmt/format.h>
 
 #include <Graphics/RenderSystem.hpp>
-#include <Graphics/Windows/Windows.hpp>
+#include <Graphics/Windows/WindowManager.hpp>
 
 #define VK_EXT_DEBUG_UTILS_EXTENSION_NAME "VK_EXT_debug_utils"
 

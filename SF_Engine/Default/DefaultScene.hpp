@@ -23,9 +23,7 @@ namespace SF::Engine
             : Scene(std::make_unique<CameraController>(),
                     "Default Scene",
                     SceneRendererConfig{
-                        .enableAtmosphere = true,
-                        .enableSun = true,
-                    })
+                        .enableAtmosphere = true})
         {
         }
 

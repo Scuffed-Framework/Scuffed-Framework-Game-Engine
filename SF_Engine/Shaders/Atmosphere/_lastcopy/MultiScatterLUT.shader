@@ -38,7 +38,7 @@ Shader "SF/Atmosphere/MultiScatterLUT"
             int   rayIdx  = int(gl_LocalInvocationID.z);
 
             vec2  uv     = (vec2(coord) + 0.5) / vec2(lutSize);
-            float h      = mix(BOTTOM_RADIUS, TOP_RADIUS, uv.x);
+            float h      = uToHeight(uv.x, BOTTOM_RADIUS, TOP_RADIUS); // sqrt-warp matches atmosUV
             float cosSun = uv.y * 2.0 - 1.0;
 
             float sinSun = sqrt(max(0.0, 1.0 - cosSun * cosSun));

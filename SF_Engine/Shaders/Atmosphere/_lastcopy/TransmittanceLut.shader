@@ -1,3 +1,17 @@
+// TransmittanceLUT.shader
+// Baked once at startup. 256×64 RGBA16F.
+// Stores T(r, cosZenith)  transmittance from altitude r toward the sun.
+//
+// UV convention (matches the sampler in Atmosphere.shader):
+//   u  → height sqrt-remapped: u=0 at ground, u=1 at atmosphere top
+//          height = BOTTOM_RADIUS + u^2 * (TOP_RADIUS - BOTTOM_RADIUS)
+//   v  → cosZenith remapped: v=0 → cos=-1 (straight down), v=1 → cos=+1 (straight up)
+//
+// The sqrt warp packs more texels near the surface where density changes
+// fastest, eliminating the banding that appears in the 30-100 km limb band.
+//
+// set=0 bind=0  transmittanceLUT (rgba16f storage image, writeonly)
+
 Shader "SF/Atmosphere/TransmittanceLUT"
 {
     ComputeShader
@@ -9,9 +23,9 @@ Shader "SF/Atmosphere/TransmittanceLUT"
 
         #import "Atmosphere.si"
 
-        void uvToParams(vec2 uv, out float height, out float cosZenith)
-        {
-            height    = mix(BOTTOM_RADIUS, TOP_RADIUS, uv.x);
+        void uvToParams(vec2 uv, out float height, out float cosZenith) {
+            float t = uv.x * uv.x;  // inverse of sqrt in heightToU, must match atmosUV()
+            height = BOTTOM_RADIUS + t * (TOP_RADIUS - BOTTOM_RADIUS);
             cosZenith = uv.y * 2.0 - 1.0;
         }
 

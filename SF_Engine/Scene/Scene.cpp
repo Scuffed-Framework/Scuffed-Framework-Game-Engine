@@ -2,11 +2,10 @@
 #include <Graphics/Renderer.hpp>
 #include <Graphics/Stage.hpp>
 #include <Graphics/Mesh/MeshFactory.hpp>
-#include <Graphics/Windows/Windows.hpp>
+#include <Graphics/Windows/WindowManager.hpp>
 #include <ImGui/ImGuiPipelinePass.hpp>
 #include <Graphics/Lighting/Lighting.hpp>
 #include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
-#include <Graphics/Visuals/Sun/SunPipelinePass.hpp>
 #include <Graphics/Lighting/LightingTypes.hpp>
 #include <Scene/Scene.hpp>
 
@@ -58,21 +57,16 @@ namespace SF::Engine
 
         SceneRendererConfig cfg = rendererCfg_;
         cfg.enableAtmosphere = true;
-        cfg.enableSun = true;
 
         cfg.atmosphereParams.bottomRadius = 6371000.0f;
         cfg.atmosphereParams.topRadius = 6471000.0f;
         cfg.atmosphereParams.sunIntensity = 40.0f;
         cfg.atmosphereParams.renderUnitRadius = cfg.atmosphereParams.bottomRadius;
 
-        cfg.sunParams.intensity = 20.0f;
-        cfg.sunParams.discAngleDeg = 0.8f;
-        cfg.sunParams.haloAngleDeg = 5.0f;
-        cfg.sunParams.haloStrength = 0.30f;
-        cfg.sunParams.bloomStrength = 6.0f;
-
         auto ownedRenderer = std::make_unique<SceneRenderer>(cfg);
         sceneRenderer_ = ownedRenderer.get();
+
+        ImGuiPipelinePass::SetTargetStage(Pipeline::Stage{1, 0}); // swapchain lives in stage 1 now
 
         if (auto *rs = RenderSystem::Get())
         {
@@ -113,7 +107,6 @@ namespace SF::Engine
 
             litPass_ = sceneRenderer_->GetLitPass();
             atmoPass_ = sceneRenderer_->GetAtmoPass();
-            sunPass_ = sceneRenderer_->GetSunPass();
             cloudPass_ = sceneRenderer_->GetCloudPass();
 
             // todo: take ImGui out of SceneRenderer
@@ -144,7 +137,7 @@ namespace SF::Engine
         auto &io = ImGui::GetIO();
         cameraController_->SetFrameInput(wnd, io.WantCaptureMouse, io.WantCaptureKeyboard);
         cameraController_->Update(dt);
-        ACamera *cam = cameraController_->GetActive();
+        Camera *cam = cameraController_->GetActive();
 
         float aspect = wnd ? wnd->GetAspectRatio() : 1.0f;
         glm::vec2 screenSize = wnd ? glm::vec2(wnd->GetSize().x, wnd->GetSize().y)
@@ -213,15 +206,6 @@ namespace SF::Engine
                                     atmoSun, screenSize);
         }
 
-        if (sunPass_)
-        {
-            glm::vec3 discSun = sunDir;
-            if (!lights_.empty() &&
-                lights_[0].light.type == Lighting::LightType::Directional)
-                discSun = -glm::normalize(lights_[0].light.direction);
-            sunPass_->SetFrameData(glm::inverse(proj), glm::inverse(view),
-                                   discSun, screenSize);
-        }
         if (cloudPass_)
         {
             glm::vec3 cloudSun = sunDir;

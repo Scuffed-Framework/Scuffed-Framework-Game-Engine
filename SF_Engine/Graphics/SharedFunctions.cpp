@@ -1,6 +1,6 @@
 #include "SharedFunctions.hpp"
 #include <glm/glm.hpp>
-#include <Graphics/Windows/Windows.hpp>
+#include <Graphics/Windows/WindowManager.hpp>
 #include <Controllers/CameraController.hpp>
 #include <Engine/Engine.hpp>
 #include <Scene/SceneManager.hpp>
@@ -115,9 +115,9 @@ namespace SF::Engine
         return dynamic_cast<const Image2d *>(rs->GetAttachment("hdr"));
     }
 
-    const ImageDepth *GetSceneDepth()
+    const ImageDepth *GetSceneDepth(const std::string &attachmentName)
     {
         auto *rs = RenderSystem::Get();
-        return dynamic_cast<const ImageDepth *>(rs->GetAttachment("gbuf_depth"));
+        return dynamic_cast<const ImageDepth *>(rs->GetAttachment(attachmentName));
     }
 }

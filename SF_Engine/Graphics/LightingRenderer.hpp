@@ -5,7 +5,7 @@
 #include <Graphics/RenderPass/FullscreenPass.hpp>
 #include <Graphics/Lighting/Lighting.hpp>
 #include <Graphics/Mesh/MeshFactory.hpp>
-#include "Windows/Windows.hpp"
+#include "Windows/WindowManager.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

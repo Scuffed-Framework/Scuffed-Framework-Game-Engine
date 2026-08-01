@@ -1,5 +1,6 @@
 #pragma once
 #include <Scene/Scene.hpp>
+#include <Configuration/PlayInLevelEditorSettings.hpp> // enum PlayInEditorType
 
 namespace SF::Engine
 {

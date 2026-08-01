@@ -60,7 +60,7 @@ namespace SF::Engine
             if (ImGui::BeginMenu("Camera"))
             {
                 auto *ec = static_cast<EditorCamera *>(ctx_.camera);
-                ImGui::SliderFloat("Speed##cs", &ec->moveSpeed, 0.1f, 50000.0f);
+                ImGui::InputFloat("Speed##cs", &ec->moveSpeed);
                 ImGui::SliderFloat("Sensitivity##cs", &ec->lookSensitivity, 0.01f, 1.0f);
                 ImGui::SliderFloat("FOV##cs", &ec->fovDeg, 20.0f, 120.0f);
                 ImGui::Separator();

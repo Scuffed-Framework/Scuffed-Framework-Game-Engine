@@ -9,7 +9,6 @@
 #include <Components/TransformComponent.hpp>
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp>
 #include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
-#include <Graphics/Visuals/Sun/SunPipelinePass.hpp>
 
 #include <XML/XMLReader.hpp>
 #include "SceneSerialization.hpp"
@@ -133,7 +132,6 @@ namespace SF::Engine
         std::shared_ptr<LightManager> lightManager_;
         LitMeshPipelinePass *litPass_ = nullptr;
         AtmospherePipelinePass *atmoPass_ = nullptr;
-        SunPipelinePass *sunPass_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
 
         std::vector<SceneObject> objects_;

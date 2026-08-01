@@ -33,15 +33,20 @@ namespace SF::Engine
      */
     class ImGuiPipelinePass : public PipelinePass
     {
+    public:
+        static void SetTargetStage(Pipeline::Stage stage) { s_targetStage = stage; }
+
+    private:
+        inline static Pipeline::Stage s_targetStage{0, 0}; // default preserves old behavior
+
         inline static bool s_registered = []()
         {
             PipelinePassInitRegistry::Get().Register(
                 [](PipelinePassManager &mgr)
                 {
                     mgr.Add<ImGuiPipelinePass>(
-                        Pipeline::Stage{0, 0},
-                        std::make_unique<ImGuiPipelinePass>(
-                            Pipeline::Stage{0, 0}));
+                        s_targetStage,
+                        std::make_unique<ImGuiPipelinePass>(s_targetStage));
                 });
             return true;
         }();

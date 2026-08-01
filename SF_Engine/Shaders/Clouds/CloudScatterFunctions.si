@@ -1,0 +1,36 @@
+#ifndef CloudScatterFunctionsInclude
+#define CloudScatterFunctionsInclude
+
+float BeerAbsorption(float density)
+{
+    return exp(-density);
+}
+float BeerAbsorptionMultipleScattering(float density)
+{
+    return 1.0 / (1.0 + 0.35 * density + 0.065 * density * density);
+}
+float HenyeyGreensteinPhaseFunction(float eccentricity, float viewDirDotLight)
+{
+    return (1.0 - eccentricity * eccentricity) / (4.0 * PI * pow(1.0 + eccentricity * eccentricity
+                                                 - 2.0 * eccentricity * viewDirDotLight, 3.0/2.0));
+}
+void GetPhaseFunctions(float dotLight, out float directLightingPhaseFunction, out float indirectLightingPhaseFunction)
+{
+    directLightingPhaseFunction = 0.2 * HenyeyGreensteinPhaseFunction(0.8, dotLight);
+
+    indirectLightingPhaseFunction = 2.5 * HenyeyGreensteinPhaseFunction(0.2, dotLight) +
+                                    0.7 * HenyeyGreensteinPhaseFunction(-0.4, dotLight);
+}
+
+float GetHeightFraction(vec3 position, vec3 planetPosition, float innerCloudRadius, float outerCloudRadius)
+{
+    float altitude = length(position - planetPosition);
+    return (altitude - innerCloudRadius) / (outerCloudRadius - innerCloudRadius);
+}
+
+float Powder(float opticalDepth)
+{
+	return pow(opticalDepth * 20.0, 0.5) /* times scale?*/;
+}
+
+#endif

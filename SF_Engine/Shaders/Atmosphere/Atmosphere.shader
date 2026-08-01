@@ -1,5 +1,6 @@
 Shader "SF/Atmosphere/Atmosphere"
 {
+    Cull Off
     VertexShader
     {
         #version 450
@@ -42,10 +43,11 @@ Shader "SF/Atmosphere/Atmosphere"
         layout(set = 0, binding = 8) uniform sampler2D sceneDepth;  // depth buffer [0,1]
 
         #import "Atmosphere.si"
-        vec3 arbitraryPerp(vec3 n)
-        {
-            vec3 a = (abs(n.x) < 0.9) ? vec3(1, 0, 0) : vec3(0, 1, 0);
-            return normalize(cross(n, a));
+
+        vec3 arbitraryPerp(vec3 n) 
+        { 
+            vec3 a = (abs(n.x) < 0.9) ? vec3(1, 0, 0) : vec3(0, 1, 0); 
+            return normalize(cross(n, a)); 
         }
 
         vec3 sampleSkyView(vec3 rd, vec3 viewPos, vec3 sunDir, float camR, float botRadius)
@@ -120,7 +122,6 @@ Shader "SF/Atmosphere/Atmosphere"
         void main()
         {
             vec2 screenUV = gl_FragCoord.xy / u.screenSize;
-
             vec2 ndc = screenUV * 2.0 - 1.0;
 
             // Reconstruct world-space ray direction
@@ -141,6 +142,11 @@ Shader "SF/Atmosphere/Atmosphere"
 
             float camHeight = length(viewPos);
 
+            // shit way to avoid fixing depth :(
+            //float depth = 0.0f;
+            // this down here causes a super dull blue atmo :( harass the goat claude to fix it ig
+            // probabfly because whatever wrote to  it (litmeshpipelinepass) wasn't configured to read and write (neither is this, fuck) the depth for infinite far plane
+            // along with the reversed Z buffer.
             float depth = texture(sceneDepth, screenUV).r;
             if (depth > 0.0)
             {
@@ -188,6 +194,11 @@ Shader "SF/Atmosphere/Atmosphere"
                 Rbot, Rtop,
                 transmittanceLUT, multiScatterLUT,
                 transmittance);
+
+            bool groundBlocking = (gndHit.x > 0.0 && gndHit.x < gndHit.y);
+            if (!groundBlocking)
+                col += sunDisk(rd, sunDir, sunI, viewPos, Rbot, Rtop);
+
 
             col = 1.0 - exp(-col);
             float atmAlpha = 1.0 - dot(transmittance, vec3(0.2126, 0.7152, 0.0722));

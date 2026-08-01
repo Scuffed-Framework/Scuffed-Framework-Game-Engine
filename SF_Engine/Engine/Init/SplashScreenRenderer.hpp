@@ -1,7 +1,9 @@
-#include <Graphics/Windows/Windows.hpp>
+#pragma once
+#include <Graphics/Windows/WindowManager.hpp>
 #include <Graphics/Images/Imaged2d>
-// #include <Video/Video.hpp>
+#include <Video/Video.hpp>
 #include <vector>
+#include "SplashScreenQuotes.hpp"
 
 namespace SF::Engine
 {

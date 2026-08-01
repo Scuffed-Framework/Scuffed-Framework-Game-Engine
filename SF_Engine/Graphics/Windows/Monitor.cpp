@@ -2,7 +2,7 @@
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
-#include "Windows.hpp"
+#include "WindowManager.hpp"
 
 namespace SF::Engine
 {

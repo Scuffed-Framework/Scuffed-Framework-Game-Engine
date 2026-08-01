@@ -5,7 +5,7 @@
 
 namespace SF::Engine
 {
-    Renderpass::Renderpass(const LogicalDevice& logicalDevice, const RenderStage& renderStage,
+    Renderpass::Renderpass(const LogicalDevice &logicalDevice, const RenderStage &renderStage,
                            VkFormat depthFormat, VkFormat surfaceFormat,
                            VkSampleCountFlagBits samples)
         : logicalDevice(logicalDevice)
@@ -13,41 +13,37 @@ namespace SF::Engine
         // Creates the renderpasses attachment descriptions,
         std::vector<VkAttachmentDescription> attachmentDescriptions;
 
-        for (const auto& attachment : renderStage.GetAttachments())
+        for (const auto &attachment : renderStage.GetAttachments())
         {
             auto attachmentSamples = attachment.IsMultisampled() ? samples : VK_SAMPLE_COUNT_1_BIT;
 
             VkAttachmentDescription attachmentDescription = {};
             attachmentDescription.samples = attachmentSamples;
             attachmentDescription.loadOp =
-                VK_ATTACHMENT_LOAD_OP_CLEAR;  // Clear at beginning of the render pass.
+                VK_ATTACHMENT_LOAD_OP_CLEAR; // Clear at beginning of the render pass.
             attachmentDescription.storeOp =
-                VK_ATTACHMENT_STORE_OP_STORE;  // // The image can be read from so it's important to
-                                               // store the attachment results
+                VK_ATTACHMENT_STORE_OP_STORE; // // The image can be read from so it's important to
+                                              // store the attachment results
             attachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             attachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
             attachmentDescription.initialLayout =
-                VK_IMAGE_LAYOUT_UNDEFINED;  // We don't care about initial layout of the attachment.
+                VK_IMAGE_LAYOUT_UNDEFINED; // We don't care about initial layout of the attachment.
 
             switch (attachment.GetType())
             {
-                case Attachment::Type::Image:
-                    // SHADER_READ_ONLY_OPTIMAL so the renderpass automatically
-                    // transitions the image into a samplable state when it ends.
-                    // This allows bloom (and other post-process passes) to sample
-                    // the image in the next PreRender without an explicit barrier.
-                    attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    attachmentDescription.format = attachment.GetFormat();
-                    break;
-                case Attachment::Type::Depth:
-                    attachmentDescription.finalLayout =
-                        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                    attachmentDescription.format = depthFormat;
-                    break;
-                case Attachment::Type::Swapchain:
-                    attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-                    attachmentDescription.format = surfaceFormat;
-                    break;
+            case Attachment::Type::Image:
+                attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                attachmentDescription.format = attachment.GetFormat();
+                break;
+            case Attachment::Type::Depth:
+                attachmentDescription.finalLayout =
+                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+                attachmentDescription.format = depthFormat;
+                break;
+            case Attachment::Type::Swapchain:
+                attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                attachmentDescription.format = surfaceFormat;
+                break;
             }
 
             attachmentDescriptions.emplace_back(attachmentDescription);
@@ -57,14 +53,14 @@ namespace SF::Engine
         std::vector<std::unique_ptr<SubpassDescription>> subpasses;
         std::vector<VkSubpassDependency> dependencies;
 
-        for (const auto& subpassType : renderStage.GetSubpasses())
+        for (const auto &subpassType : renderStage.GetSubpasses())
         {
             // Attachments.
             std::vector<VkAttachmentReference> subpassColourAttachments;
 
             std::optional<uint32_t> depthAttachment;
 
-            for (const auto& attachmentBinding : subpassType.GetAttachmentBindings())
+            for (const auto &attachmentBinding : subpassType.GetAttachmentBindings())
             {
                 auto attachment = renderStage.GetAttachment(attachmentBinding);
 
@@ -93,9 +89,11 @@ namespace SF::Engine
 
             // Subpass dependencies.
             VkSubpassDependency subpassDependency = {};
-            subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                             VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
             subpassDependency.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-            subpassDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            subpassDependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                                              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
             subpassDependency.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
             subpassDependency.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -104,7 +102,8 @@ namespace SF::Engine
                 subpassDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
                 subpassDependency.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
                 subpassDependency.srcAccessMask =
-                    VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                    VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 subpassDependency.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
             }
             else
@@ -115,11 +114,12 @@ namespace SF::Engine
             if (subpassType.GetBinding() == 0)
             {
                 subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-                subpassDependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+                subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                                 VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
                 subpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                subpassDependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-                subpassDependency.dstAccessMask =
-                    VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                subpassDependency.srcAccessMask =
+                    VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
             }
             else
             {
@@ -132,7 +132,7 @@ namespace SF::Engine
         std::vector<VkSubpassDescription> subpassDescriptions;
         subpassDescriptions.reserve(subpasses.size());
 
-        for (const auto& subpass : subpasses)
+        for (const auto &subpass : subpasses)
         {
             subpassDescriptions.emplace_back(subpass->GetSubpassDescription());
         }

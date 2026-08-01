@@ -107,6 +107,18 @@ namespace SF::Engine
 
         SFTL::DynamicArray<std::shared_ptr<AssetBase>> assets_;
 
+        template <typename T, typename... Args>
+        std::shared_ptr<T> RegisterAsset(std::string assetName, Args &&...args)
+        {
+            static_assert(std::is_base_of_v<AssetBase, T>,
+                          "RegisterAsset<T> requires T to derive from AssetBase");
+
+            auto asset = std::make_shared<T>(std::forward<Args>(args)...);
+            asset->name = std::move(assetName);
+            assets_.push_back(asset);
+            return asset;
+        }
+
     private:
         static std::unordered_map<AssetType, AssetFactoryFn> &Factories();
     };
@@ -114,10 +126,17 @@ namespace SF::Engine
     template <typename T>
     struct AssetRegistrar
     {
+        static_assert(std::is_base_of_v<AssetBase, T>,
+                      "AssetRegistrar<T> requires T to derive from AssetBase "
+                      "(this includes Asset<Payload> and ImageAssetBase<TImage> leaves)");
+
         explicit AssetRegistrar(AssetType type)
         {
             AssetController::RegisterFactory(type, []
-                                             { return std::make_shared<Asset<T>>(); });
+                                             { return std::make_shared<T>(); });
         }
     };
+
+    template <typename Payload>
+    using DataAssetRegistrar = AssetRegistrar<Asset<Payload>>;
 }

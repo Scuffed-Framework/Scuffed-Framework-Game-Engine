@@ -19,10 +19,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 include(FetchContent)
+
 FetchContent_Declare(box3d
   GIT_REPOSITORY https://github.com/erincatto/box3d.git
   GIT_TAG v0.1.0)
 FetchContent_MakeAvailable(box3d)
+
+FetchContent_Declare(slang
+  GIT_REPOSITORY https://github.com/shader-slang/slang.git
+  GIT_TAG v0.1.0)
+FetchContent_MakeAvailable(slang)
 
 find_package(OpenAL CONFIG REQUIRED)                # OpenALConfig.cmake
 find_package(assimp CONFIG REQUIRED)                # assimp-config.cmake

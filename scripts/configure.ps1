@@ -21,14 +21,59 @@ if (-not $vsPath) {
     Pop-Location; exit 1
 }
 
-$vcvars = "$vsPath\VC\Auxiliary\Build\vcvars64.bat"
-Write-Host "==> Importing VS environment from: $vcvars" -ForegroundColor Cyan
+# --- find a real, complete MSVC toolset (has cl.exe) - no hardcoded version ---
+$msvcToolset = Get-ChildItem "$vsPath\VC\Tools\MSVC" -Directory -ErrorAction SilentlyContinue |
+Where-Object { Test-Path (Join-Path $_.FullName "bin\Hostx64\x64\cl.exe") } |
+Sort-Object Name -Descending |
+Select-Object -First 1
 
-cmd /c "`"$vcvars`" && set" | ForEach-Object {
-    if ($_ -match "^([^=]+)=(.*)$") {
-        [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], "Process")
-    }
+if (-not $msvcToolset) {
+    Write-Host "No MSVC toolset with cl.exe found under $vsPath\VC\Tools\MSVC" -ForegroundColor Red
+    Pop-Location; exit 1
 }
+$msvcRoot = $msvcToolset.FullName
+Write-Host "==> MSVC toolset: $($msvcToolset.Name)" -ForegroundColor Cyan
+
+# --- find newest Windows SDK that actually has headers+libs - no hardcoded version ---
+$sdkRoot = "${env:ProgramFiles(x86)}\Windows Kits\10"
+$sdkVersion = Get-ChildItem "$sdkRoot\Include" -Directory -ErrorAction SilentlyContinue |
+Where-Object { Test-Path (Join-Path $_.FullName "um\windows.h") } |
+Sort-Object Name -Descending |
+Select-Object -First 1
+
+if (-not $sdkVersion) {
+    Write-Host "No usable Windows SDK found under $sdkRoot\Include" -ForegroundColor Red
+    Pop-Location; exit 1
+}
+$sdkVer = $sdkVersion.Name
+Write-Host "==> Windows SDK: $sdkVer" -ForegroundColor Cyan
+
+# --- assemble env vars manually, bypassing vcvars.bat entirely ---
+$binDir = Join-Path $msvcRoot "bin\Hostx64\x64"
+$incDirs = @(
+    (Join-Path $msvcRoot "include"),
+    (Join-Path $sdkRoot "Include\$sdkVer\ucrt"),
+    (Join-Path $sdkRoot "Include\$sdkVer\um"),
+    (Join-Path $sdkRoot "Include\$sdkVer\shared"),
+    (Join-Path $sdkRoot "Include\$sdkVer\winrt")
+)
+$libDirs = @(
+    (Join-Path $msvcRoot "lib\x64"),
+    (Join-Path $sdkRoot "Lib\$sdkVer\ucrt\x64"),
+    (Join-Path $sdkRoot "Lib\$sdkVer\um\x64")
+)
+
+$env:PATH = "$binDir;$env:PATH"
+$env:INCLUDE = ($incDirs -join ";")
+$env:LIB = ($libDirs -join ";")
+$env:LIBPATH = $env:LIB
+
+$cl = Get-Command cl.exe -ErrorAction SilentlyContinue
+if (-not $cl) {
+    Write-Host "cl.exe still not resolvable after manual env setup" -ForegroundColor Red
+    Pop-Location; exit 1
+}
+Write-Host "Using compiler: $($cl.Source)" -ForegroundColor DarkGray
 
 Write-Host "==> Running conan install..." -ForegroundColor Cyan
 conan install . --profile=./profiles/windows-x64-$buildType.txt --build=missing

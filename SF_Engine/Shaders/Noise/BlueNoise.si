@@ -49,21 +49,27 @@ uint owenScramble(uint x, uint seed)
     return bitfieldReverse(x);
 }
 
-// Drop-in replacement for the original Heitz 2019 function.
-// Returns a blue-noise distributed float in [0, 1) for the given
-// pixel position, sample index, and sample dimension.
-float samplerBlueNoiseErrorDistribution_128SQR_4Pair2d(
-    uint pixel_x, uint pixel_y,
-    uint sampleIndex, uint sampleDimension)
+float BlueNoiseErrorDistrib(uint pixel_i, uint pixel_j, uint sampleIndex, uint sampleDimension)
 {
-    // Pixel seed: unique per (x, y, dimension) triplet
-    uint pixelSeed = hashMurmur3(pixel_x + pixel_y * 128u + sampleDimension * 16384u);
+    // wrap arguments
+    pixel_i = pixel_i & 127u;
+    pixel_j = pixel_j & 127u;
+    sampleIndex = sampleIndex & 255u;
+    sampleDimension = sampleDimension & 255u;
 
-    // Sobol' sample for this index, Owen-scrambled with the pixel seed
-    uint sobol = sobolVdC(sampleIndex);
-    uint scrambled = owenScramble(sobol, pixelSeed);
+    // xor index based on optimized ranking
+    uint rankedSampleIndex = sampleIndex ^ rankingTile[sampleDimension + (pixel_i + pixel_j * 128u) * 8u];
 
-    return float(scrambled) / 4294967296.0; // scrambled / 2^32
+    // fetch value in sequence
+    uint value = sobol_256spp_256d[sampleDimension + rankedSampleIndex * 256u];
+
+    // If the dimension is optimized, xor sequence value based on optimized scrambling
+    value = value ^ scramblingTile[(sampleDimension%8) + (pixel_i + pixel_j * 128u) * 8u];
+
+    // convert to float and return
+    float v = (0.5f + value) / 256.0f;
+
+    return v;
 }
 
 #endif // BlueNoise_SI

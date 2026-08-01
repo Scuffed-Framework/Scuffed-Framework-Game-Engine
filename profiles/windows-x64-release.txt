@@ -9,6 +9,7 @@ compiler.cppstd=23
 
 [conf]
 tools.cmake.cmaketoolchain:generator=Ninja
+tools.microsoft.msbuild:vs_version=18
 
 [buildenv]
 CONAN_CMAKE_GENERATOR=Ninja

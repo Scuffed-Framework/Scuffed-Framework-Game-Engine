@@ -7,9 +7,12 @@
 
 #include <glslang/Public/ShaderLang.h>
 #include "PipelineRenderer.hpp"
-#include "Windows/Windows.hpp"
+#include "Windows/WindowManager.hpp"
 
 #include <glslang/Include/visibility.h>
+
+#include "SharedSamplers.hpp"
+
 namespace SF::Engine
 {
     RenderSystem::RenderSystem()
@@ -50,6 +53,8 @@ namespace SF::Engine
         if (!glslang::InitializeProcess())
             throw std::runtime_error("Failed to initialize glslang process");
         Log::Info("RenderSystem fully initialized");
+
+        SharedSamplers::CreateSamplers();
     }
 
     RenderSystem::~RenderSystem()
@@ -59,6 +64,7 @@ namespace SF::Engine
 
         renderer = nullptr;
         swapchains.clear();
+        SharedSamplers::DestroySamplers();
 
         glslang::FinalizeProcess();
 
@@ -95,10 +101,39 @@ namespace SF::Engine
 
         renderer->Update();
 
+        // Update all stages first, then check staleness BEFORE any renderpass
+        // is started this frame. Doing this mid-loop (old code) could leave a
+        // command buffer with an unsubmitted vkCmdBeginRenderPass while
+        // RecreatePass() calls vkQueueWaitIdle -> deadlock.
+        for (auto &renderStage : renderer->renderStages)
+            renderStage->Update();
+
+        bool anyOutOfDate = false;
+        for (auto &renderStage : renderer->renderStages)
+        {
+            if (renderStage->IsOutOfDate())
+            {
+                anyOutOfDate = true;
+                break;
+            }
+        }
+
+        if (anyOutOfDate)
+        {
+            RecreatePass(0, *renderer->renderStages.front()); // rebuilds ALL stages internally
+            return;
+        }
+
         for (auto [id, swapchain] : Enumerate(swapchains))
         {
             auto &perSurfaceBuffer = perSurfaceBuffers[id];
-            vkWaitForFences(*logicalDevice, 1, &perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame], VK_TRUE, UINT64_MAX);
+
+            // NOTE: removed the standalone vkWaitForFences(..., UINT64_MAX) that used to
+            // sit here. AcquireNextImage() already waits on this exact fence internally,
+            // with a bounded 1s timeout that converts a timeout into VK_ERROR_OUT_OF_DATE_KHR.
+            // The UINT64_MAX wait here had no such escape hatch: if the fence's paired
+            // Submit() was ever skipped (see the StartRenderpass failure case below,
+            // pre-fix), this call would hang forever with the window fully frozen.
             auto acquireResult = swapchain->AcquireNextImage(
                 perSurfaceBuffer->presentCompletes[perSurfaceBuffer->currentFrame],
                 perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
@@ -119,27 +154,21 @@ namespace SF::Engine
                 return;
             }
 
-            // 3. ONLY reset the fence if we successfully acquired an image and will submit work.
-            // If we reset it before acquiring and acquire fails, we will deadlock next frame.
-            vkResetFences(*logicalDevice, 1, &perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
+            // AcquireNextImage() already resets the fence internally right after a
+            // successful acquire, so the old vkResetFences() call here was redundant
+            // dead code — removed.
 
             Pipeline::Stage stage;
+            bool wentStale = false;
 
             for (auto &renderStage : renderer->renderStages)
             {
-                renderStage->Update();
-
-                // Open the command buffer early so PreRender() can record
-                // compute work (cluster culling, transitions, etc.) before
-                // the renderpass begins.
                 auto &commandBuffer =
                     perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
 
                 if (!commandBuffer->IsRunning())
                     commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
-                // Call PreRender on all PipelinePasss for every subpass in this
-                // stage : runs OUTSIDE the renderpass (safe for compute).
                 for (const auto &subpass : renderStage->GetSubpasses())
                 {
                     stage.second = subpass.GetBinding();
@@ -148,13 +177,21 @@ namespace SF::Engine
                 stage.second = 0;
 
                 if (!StartRenderpass(id, *renderStage))
-                    return;
+                {
+                    // A resize raced us between the up-front staleness check and here.
+                    // The acquire fence has already been reset by AcquireNextImage but
+                    // nothing will submit it on this path — bailing out with `return`
+                    // (old behavior) permanently orphans that fence, and the *next*
+                    // frame's acquire-side wait would block on it indefinitely.
+                    // Instead, treat this as "went stale mid-frame" and let RecreatePass
+                    // fix it up properly before we leave this Update().
+                    wentStale = true;
+                    break;
+                }
 
                 for (const auto &subpass : renderStage->GetSubpasses())
                 {
                     stage.second = subpass.GetBinding();
-
-                    // Renders subpass PipelinePass pipelines.
                     renderer->PipelinePassManager.RenderStage(stage, *commandBuffer);
 
                     if (subpass.GetBinding() != renderStage->GetSubpasses().back().GetBinding())
@@ -164,9 +201,14 @@ namespace SF::Engine
                 EndRenderpass(id, *renderStage);
                 stage.first++;
             }
+
+            if (wentStale)
+            {
+                RecreatePass(id, *renderer->renderStages.front());
+                return;
+            }
         }
 
-        // Purges unused command pools.
         if (elapsedPurge.GetElapsed() != 0)
         {
             for (auto it = commandPools.begin(); it != commandPools.end();)
@@ -176,7 +218,6 @@ namespace SF::Engine
                     it = commandPools.erase(it);
                     continue;
                 }
-
                 ++it;
             }
         }
@@ -429,10 +470,17 @@ namespace SF::Engine
         for (const auto [sid, swapchain] : Enumerate(swapchains))
         {
             auto &psb = perSurfaceBuffers[sid];
-            if (renderStage.HasSwapchain() &&
+            // Check ALL stages for a swapchain attachment, not just the one
+            // passed in — RecreatePass may be invoked with any stage as the
+            // trigger, and that stage might not be the one that owns swapchain.
+            bool anyStageHasSwapchain = std::any_of(
+                renderer->renderStages.begin(), renderer->renderStages.end(),
+                [](const auto &rs)
+                { return rs->HasSwapchain(); });
+
+            if (anyStageHasSwapchain &&
                 (psb->framebufferResized || !swapchain->IsSameExtent(displayExtent)))
             {
-                psb->framebufferResized = false;
                 needsSwapchainRecreate = true;
             }
         }
@@ -440,7 +488,6 @@ namespace SF::Engine
         if (needsSwapchainRecreate)
             RecreateSwapchain();
 
-        // Rebuild ALL render stages and command buffers
         for (const auto [sid, swapchain] : Enumerate(swapchains))
         {
             if (perSurfaceBuffers[sid]->flightFences.size() != swapchain->GetImageCount())
@@ -463,11 +510,11 @@ namespace SF::Engine
 
     bool RenderSystem::StartRenderpass(std::size_t id, RenderStage &renderStage)
     {
+        // Staleness is now handled up-front in Update(), so this should never
+        // be true here. Kept as a safety net only — no RecreatePass call,
+        // since calling it mid-loop is what caused the resize deadlock.
         if (renderStage.IsOutOfDate())
-        {
-            RecreatePass(id, renderStage);
             return false;
-        }
 
         auto &swapchain = swapchains[id];
         auto &perSurfaceBuffer = perSurfaceBuffers[id];
@@ -476,8 +523,6 @@ namespace SF::Engine
         if (!commandBuffer->IsRunning())
             commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
-        // Always use swapchain extent for the renderpass : the render stage render area
-        // may have updated to the new window size before the swapchain was rebuilt
         auto scExtent = swapchain->GetExtent();
         VkRect2D renderArea = {};
         renderArea.offset = {0, 0};

@@ -11,5 +11,6 @@ namespace SF::Engine
     {
     public:
         static void SetStyle();
+        static void SetStyle2();
     };
 }

@@ -1,3 +1,4 @@
+#pragma once
 #include "Scene.hpp"
 #include <ID/GUID.hpp>
 #include "SceneRenderer.hpp"
@@ -35,7 +36,7 @@ namespace SF::Engine
         SceneRenderer *renderer = nullptr;
 
         // Optional camera override (e.g. editor camera)
-        ACamera *overrideCamera = nullptr;
+        Camera *overrideCamera = nullptr;
 
         // Time values (per world!)
         float deltaTime = 0.f;

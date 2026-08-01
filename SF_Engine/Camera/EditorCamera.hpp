@@ -23,37 +23,22 @@ namespace SF::Engine
      * Window::GetMousePositionDelta() returns RAW pixel delta (not dt-scaled).
      * lookSensitivity is therefore in degrees-per-pixel.
      */
-    class EditorCamera : public ACamera
+    class EditorCamera : public Camera
     {
     public:
         float moveSpeed = 5.0f;
         float lookSensitivity = 0.12f; // degrees per raw pixel
-        float fovDeg = 60.0f;
-        float nearPlane = 0.05f;
-        float farPlane = 200000.0f;
-        float minFov = 10.0f;
-        float maxFov = 120.0f;
-
-        float GetFieldOfView() const override
-        {
-            return fovDeg;
-        }
 
         EditorCamera()
         {
-            position_ = {0.0f, 0.0f, 0.0f};
+            position = {0.0f, 0.0f, 0.0f};
             moveSpeed = 100.0f;
             UpdateVectors();
+            SetInverseZ(true);
+            SetFarPlaneInfinite(true); // oopsies
         }
 
-        // imguiWantsKeyboard : true when an ImGui text field has focus
-        // imguiWantsMouse    : true when the mouse is over any ImGui window
-        //
-        // RMB look intentionally ignores imguiWantsMouse: ImGui sets that flag
-        // whenever ANY window is hovered (including transparent overlays), which
-        // would make right-click look permanently broken in an editor layout.
-        void Update(Window *window, float dt,
-                    bool /*imguiWantsMouse*/, bool imguiWantsKeyboard)
+        void Update(Window *window, float dt, bool /*imguiWantsMouse*/, bool imguiWantsKeyboard) override
         {
             if (!window)
                 return;
@@ -95,17 +80,17 @@ namespace SF::Engine
                     speed *= 3.0f;
 
                 if (window->GetKey(Key::W) != InputAction::Release)
-                    position_ += front_ * speed;
+                    position += front_ * speed;
                 if (window->GetKey(Key::S) != InputAction::Release)
-                    position_ -= front_ * speed;
+                    position -= front_ * speed;
                 if (window->GetKey(Key::A) != InputAction::Release)
-                    position_ -= right_ * speed;
+                    position -= right_ * speed;
                 if (window->GetKey(Key::D) != InputAction::Release)
-                    position_ += right_ * speed;
+                    position += right_ * speed;
                 if (window->GetKey(Key::Q) != InputAction::Release)
-                    position_ -= up_ * speed;
+                    position -= up_ * speed;
                 if (window->GetKey(Key::E) != InputAction::Release)
-                    position_ += up_ * speed;
+                    position += up_ * speed;
             }
 
             //  FOV: scroll wheel
@@ -120,43 +105,5 @@ namespace SF::Engine
                 }
             }
         }
-
-        glm::mat4 GetView() const
-        {
-            return glm::lookAt(position_, position_ + front_, glm::vec3(0, 1, 0));
-        }
-
-        glm::mat4 GetProjection(float aspect) const
-        {
-            glm::mat4 p = glm::perspective(
-                glm::radians(fovDeg), aspect, nearPlane, farPlane);
-            p[1][1] *= -1.0f; // Vulkan Y-flip
-            return p;
-        }
-
-        glm::vec3 GetPosition() const { return position_; }
-        void SetPosition(glm::vec3 p) override { position_ = p; }
-        glm::vec3 GetFront() const override { return front_; }
-        float GetNearPlane() const override { return nearPlane; }
-        float GetFarPlane() const override { return farPlane; }
-
-    private:
-        void UpdateVectors()
-        {
-            float yR = glm::radians(yaw_), pR = glm::radians(pitch_);
-            front_ = glm::normalize(glm::vec3(
-                std::cos(yR) * std::cos(pR),
-                std::sin(pR),
-                std::sin(yR) * std::cos(pR)));
-            right_ = glm::normalize(glm::cross(front_, glm::vec3(0, 1, 0)));
-            up_ = glm::normalize(glm::cross(right_, front_));
-        }
-
-        glm::vec3 position_ = {0.f, 10.f, 0.f};
-        float yaw_ = -90.0f;
-        float pitch_ = 10.0f;
-        glm::vec3 front_{0, 0, -1};
-        glm::vec3 right_{1, 0, 0};
-        glm::vec3 up_{0, 1, 0};
     };
 }

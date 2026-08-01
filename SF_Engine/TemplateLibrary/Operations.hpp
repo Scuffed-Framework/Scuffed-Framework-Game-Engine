@@ -230,9 +230,8 @@ namespace SFTL
         inline constexpr bool copy_can_memmove_v =
             is_pointer_v<In> &&
             is_pointer_v<Out> &&
-            is_same_v
-                remove_const_t<remove_pointer_t<In>>,
-                              remove_pointer_t < Out >> &&is_trivially_copyable_v<remove_pointer_t<Out>>;
+            is_same_v<remove_const_t<remove_pointer_t<In>>, remove_pointer_t<Out>> &&
+            is_trivially_copyable_v<remove_pointer_t<Out>>;
     }
 
     template <class In, class Out>

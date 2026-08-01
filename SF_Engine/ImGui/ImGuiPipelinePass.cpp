@@ -1,7 +1,7 @@
 #include "ImGuiPipelinePass.hpp"
 
 #include <Graphics/RenderSystem.hpp>
-#include <Graphics/Windows/Windows.hpp>
+#include <Graphics/Windows/WindowManager.hpp>
 #include <Graphics/Commands/CommandBuffer.hpp>
 #include <Graphics/RenderPass/RenderPass.hpp>
 #include <Graphics/Stage.hpp>
@@ -111,7 +111,7 @@ namespace SF::Engine
         s_backendInitialized = true;
 
         ImGuiDefaultStyle::SetStyle();
-        }
+    }
 
     void ImGuiPipelinePass::Shutdown()
     {
