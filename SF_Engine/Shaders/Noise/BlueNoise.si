@@ -2,17 +2,22 @@
 #define BlueNoise_SI
 
 // ---------------------------------------------------------------------------
-// Self-contained blue-noise approximation.
+// Procedural blue-noise approximation (no LUTs, no texture fetches).
 //
-// The original implementation (Heitz et al. 2019, "A Low-Discrepancy
-// Sampler that Distributes Monte Carlo Errors as Blue Noise") required
-// three large precomputed lookup tables (rankingTile, sobol_256spp_256d,
-// scramblingTile) that are not available in this engine's shader pipeline.
+// This is NOT a faithful reimplementation of Heitz et al. 2019 — that paper's
+// quality comes from genuine multi-dimensional Sobol' points (which need
+// per-dimension direction numbers) plus a *pre-optimized* ranking/scrambling
+// tile that was fit offline to minimize low-frequency error. Baking that
+// offline optimization into a closed-form hash isn't really possible; you'd
+// be trading one kind of table for another.
 //
-// Replacement: a hash-based Owen-scrambled Sobol' sequence that produces
-// visually equivalent blue-noise error distribution without any texture
-// lookups or large constant arrays.  The quality is indistinguishable
-// after even one frame of temporal accumulation.
+// What this does instead: base-2 Van der Corput as a 1D low-discrepancy
+// generator (that's dimension 0 of Sobol'), decorrelated per pixel and per
+// dimension using Burley's hash-based Owen scramble (JCGT 2020). Good enough
+// for temporal dithering / TAA jitter — which is what OceanClipmap and the
+// cloud raymarch use this for — but don't assume it matches the paper's
+// stratification guarantees across dimensions. Worth a comment here so a
+// future pass doesn't assume drop-in equivalence.
 // ---------------------------------------------------------------------------
 
 // 32-bit -> 32-bit integer hash (Murmur3 finalizer)
@@ -37,7 +42,10 @@ uint sobolVdC(uint bits)
     return bits;
 }
 
-// Owen scrambling: decorrelates the sequence per pixel
+// Burley 2020 "Practical Hash-based Owen Scrambling" nested-uniform hash.
+// Operates MSB-first (hence the bit reversals on the way in/out), which is
+// what makes it approximate real Owen scrambling instead of just being a
+// generic bit-mixer.
 uint owenScramble(uint x, uint seed)
 {
     x = bitfieldReverse(x);
@@ -51,25 +59,20 @@ uint owenScramble(uint x, uint seed)
 
 float BlueNoiseErrorDistrib(uint pixel_i, uint pixel_j, uint sampleIndex, uint sampleDimension)
 {
-    // wrap arguments
-    pixel_i = pixel_i & 127u;
-    pixel_j = pixel_j & 127u;
-    sampleIndex = sampleIndex & 255u;
-    sampleDimension = sampleDimension & 255u;
+    // Fold pixel coords + dimension into one per-stream seed. Multiplying
+    // sampleDimension by a large odd constant keeps different dimensions
+    // from aliasing onto the same seed for small pixel coords.
+    uint seed = hashMurmur3(pixel_i * 1973u + pixel_j * 9277u + sampleDimension * 26699u + 1u);
 
-    // xor index based on optimized ranking
-    uint rankedSampleIndex = sampleIndex ^ rankingTile[sampleDimension + (pixel_i + pixel_j * 128u) * 8u];
+    // 1D low-discrepancy base value for this sample index.
+    uint vdc = sobolVdC(sampleIndex);
 
-    // fetch value in sequence
-    uint value = sobol_256spp_256d[sampleDimension + rankedSampleIndex * 256u];
+    // Owen-scramble it against the per-pixel/per-dimension seed.
+    uint scrambled = owenScramble(vdc, seed);
 
-    // If the dimension is optimized, xor sequence value based on optimized scrambling
-    value = value ^ scramblingTile[(sampleDimension%8) + (pixel_i + pixel_j * 128u) * 8u];
-
-    // convert to float and return
-    float v = (0.5f + value) / 256.0f;
-
-    return v;
+    // Full 32-bit uint -> [0,1). Using all 32 bits (not just a top byte)
+    // avoids banding compared to the original 256-entry LUT's 8-bit range.
+    return (0.5 + float(scrambled >> 8u)) * (1.0 / 16777216.0); // top 24 bits, safe in fp32
 }
 
 #endif // BlueNoise_SI

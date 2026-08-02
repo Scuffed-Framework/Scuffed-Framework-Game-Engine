@@ -17,18 +17,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(SLANG_VERSION "2026.14.1")
+
 
 include(FetchContent)
-
-FetchContent_Declare(box3d
-  GIT_REPOSITORY https://github.com/erincatto/box3d.git
-  GIT_TAG v0.1.0)
-FetchContent_MakeAvailable(box3d)
-
-FetchContent_Declare(slang
-  GIT_REPOSITORY https://github.com/shader-slang/slang.git
-  GIT_TAG v0.1.0)
-FetchContent_MakeAvailable(slang)
+include(ExternalProject)
 
 find_package(OpenAL CONFIG REQUIRED)                # OpenALConfig.cmake
 find_package(assimp CONFIG REQUIRED)                # assimp-config.cmake
@@ -84,6 +77,7 @@ target_compile_definitions(SF_Engine PUBLIC
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_ENABLE_EXPERIMENTAL
     SPDLOG_COMPILED_LIB
+    VK_NO_PROTOTYPES
 )
 
 target_include_directories(SF_Engine PRIVATE "./")
@@ -115,6 +109,77 @@ elseif(UNIX)
     target_link_libraries(SF_Engine PUBLIC X11 pthread dl)
 endif()
 
+
+FetchContent_Declare(box3d
+  GIT_REPOSITORY https://github.com/erincatto/box3d.git
+  GIT_TAG v0.1.0)
+FetchContent_MakeAvailable(box3d)
+
+
+
+
+# --- detect architecture ---
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
+    set(SLANG_ARCH "aarch64")
+else()
+    set(SLANG_ARCH "x86_64")
+endif()
+
+# --- detect platform + pick matching archive/hash ---
+if(WIN32)
+    if(SLANG_ARCH STREQUAL "aarch64")
+        set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-windows-aarch64.zip")
+        set(SLANG_ARCHIVE_HASH "SHA256=5067047bb35ae5675b06a3467d0b302d9816727450a803cb3770660bef684f37")
+    else()
+        set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-windows-x86_64.zip")
+        set(SLANG_ARCHIVE_HASH "SHA256=5ed0a59d650a0af0aca45d5db4e083b3d8fb5cea05748747dd95dfbe9c580658")
+    endif()
+elseif(APPLE)
+    if(SLANG_ARCH STREQUAL "aarch64")
+        set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-macos-aarch64.zip")
+        set(SLANG_ARCHIVE_HASH "SHA256=2976c3a9a6f4d77b5734d00b5d841d1ff087d9965d9006b9b4d73edd0062cb7d")
+    else()
+        set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-macos-x86_64.zip")
+        set(SLANG_ARCHIVE_HASH "SHA256=a3da109bfb732ab3f09beb6999f9831d9be440fa9a1843006b7ea56498f545d6")
+    endif()
+elseif(UNIX)
+    if(SLANG_ARCH STREQUAL "aarch64")
+        set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-linux-aarch64.tar.gz")
+        set(SLANG_ARCHIVE_HASH "SHA256=438325c6529ba658f571614d9d551cdff09e730836d29c26c290afc8ed996985")
+    else()
+        set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-linux-x86_64.tar.gz")
+        set(SLANG_ARCHIVE_HASH "SHA256=21f2d7847385a770e569fb61b1507a7794d742d97850bce0432bff0032ca005f")
+    endif()
+endif()
+
+message(STATUS "Slang: fetching ${SLANG_ARCHIVE_NAME}")
+
+FetchContent_Declare(slang_prebuilt
+  URL "https://github.com/shader-slang/slang/releases/download/v${SLANG_VERSION}/${SLANG_ARCHIVE_NAME}"
+  URL_HASH ${SLANG_ARCHIVE_HASH}
+)
+FetchContent_MakeAvailable(slang_prebuilt)
+
+add_library(slang::slang SHARED IMPORTED GLOBAL)
+
+if(WIN32)
+    set_target_properties(slang::slang PROPERTIES
+        IMPORTED_IMPLIB   "${slang_prebuilt_SOURCE_DIR}/lib/slang.lib"
+        IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/bin/slang.dll"
+        INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
+    )
+elseif(APPLE)
+    set_target_properties(slang::slang PROPERTIES
+        IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/lib/libslang.dylib"
+        INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
+    )
+elseif(UNIX)
+    set_target_properties(slang::slang PROPERTIES
+        IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/lib/libslang.so"
+        INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
+    )
+endif()
+
 target_link_libraries(SF_Engine PUBLIC
     OpenAL::OpenAL
     assimp::assimp
@@ -144,6 +209,7 @@ target_link_libraries(SF_Engine PUBLIC
     sol2::sol2
     box3d::box3d
     libraw::libraw
+    slang::slang
 )
 
 target_include_directories(SF_Engine PUBLIC
@@ -152,6 +218,8 @@ target_include_directories(SF_Engine PUBLIC
     $<TARGET_PROPERTY:spirv-cross::spirv-cross,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:SPIRV-Tools,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:spirv-reflect-static,INTERFACE_INCLUDE_DIRECTORIES>
+    # hopefully this works
+    $<TARGET_PROPERTY:box3d::box3d,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 if(MSVC)

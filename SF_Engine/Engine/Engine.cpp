@@ -32,6 +32,10 @@ namespace SF::Engine
             }
         }
 
+        // annoying as fuck, I know. Getting the logical device inside the RenderSystem constructor is too early,
+        // so we have to call this after the RenderSystem is fully initialized. I don't like it either.
+        RenderSystem::Get()->PostInit();
+
         gameInstance = std::make_unique<GameInstance>();
         // Load the startup scene, falling back to DefaultScene on any failure.
         // SceneManager::Update() will call Start() on the first frame  don't call it here.

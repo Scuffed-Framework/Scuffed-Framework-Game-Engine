@@ -5,7 +5,6 @@
 #include <Graphics/Descriptors/DescriptorSet.hpp>
 #include <glm/gtc/constants.hpp>
 #include <Graphics/SharedFunctions.hpp>
-
 namespace SF::Engine
 {
     bool CloudPipelinePass::isWindowOpen = true;
@@ -46,6 +45,13 @@ namespace SF::Engine
         atmoUBO_ = std::make_unique<UniformBuffer>(sizeof(AtmosphereFrameUBO));
         cloudUBO_ = std::make_unique<UniformBuffer>(sizeof(CloudUBO));
 
+        cloudNoise_ = std::make_unique<CloudNoiseLUTs>(128, 128, 128);
+        {
+            CommandBuffer cmd(true);
+            cloudNoise_->Bake(cmd);
+            cmd.SubmitIdle();
+        }
+
         pipeline_ = std::make_unique<RenderPipeline>(
             stage,
             "Shaders/Clouds/Clouds.shader",
@@ -57,9 +63,12 @@ namespace SF::Engine
             VK_POLYGON_MODE_FILL,
             VK_CULL_MODE_NONE,
             VK_FRONT_FACE_COUNTER_CLOCKWISE);
+        Log::Info("CloudPipelinePass: RenderPipeline created with shader Shaders/Clouds/Clouds.shader");
 
         descSet_ = std::make_unique<DescriptorSet>(*pipeline_);
+        // this fails
         BindDescriptors();
+        Log::Info("CloudPipelinePass: DescriptorSet created and bound");
 
         isWindowOpen = true;
     }
@@ -175,6 +184,7 @@ namespace SF::Engine
         w8.pImageInfo = &b8;
 
         DescriptorSet::Update({w0, w1, w2, w3, w4, w5, w6, w7, w8});
+        Log::Info("CloudPipelinePass descriptors bound");
     }
 
     void CloudPipelinePass::SetFrameData(const glm::mat4 &invProj,
@@ -203,6 +213,7 @@ namespace SF::Engine
         frameData_._p0 = 0.0f;
         frameData_.screenSize = screenSize;
         frameData_._p1 = glm::vec2(0.0f);
+        Log::Info("CloudPipelinePass frame data set");
     }
 
     void CloudPipelinePass::PreRender(const CommandBuffer &cmd)
@@ -219,40 +230,44 @@ namespace SF::Engine
         auto *colorDesc = rs->GetAttachment("hdr");
         auto *depthImg = dynamic_cast<const ImageDepth *>(depthDesc);
         auto *colorImg = dynamic_cast<const Image2d *>(colorDesc);
+        Log::Info("CloudPipelinePass::Render");
         if (!depthImg || !colorImg)
             return; // not ready yet, e.g. first frame
 
         if (depthImg != lastDepthImg_ || colorImg != lastColorImg_)
         {
+            Log::Info("CloudPipelinePass: Updating scene depth and color descriptors");
             lastDepthImg_ = depthImg;
             lastColorImg_ = colorImg;
 
             VkDescriptorImageInfo dInfo{depthImg->GetSampler(), depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo cInfo{colorImg->GetSampler(), colorImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
-            VkWriteDescriptorSet w6{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-            w6.dstSet = descSet_->GetDescriptorSet();
-            w6.dstBinding = 6;
-            w6.descriptorCount = 1;
-            w6.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            w6.pImageInfo = &dInfo;
+            VkWriteDescriptorSet w9{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            w9.dstSet = descSet_->GetDescriptorSet();
+            w9.dstBinding = 9;
+            w9.descriptorCount = 1;
+            w9.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            w9.pImageInfo = &dInfo;
 
-            VkWriteDescriptorSet w7{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-            w7.dstSet = descSet_->GetDescriptorSet();
-            w7.dstBinding = 7;
-            w7.descriptorCount = 1;
-            w7.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            w7.pImageInfo = &cInfo;
+            VkWriteDescriptorSet w10{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            w10.dstSet = descSet_->GetDescriptorSet();
+            w10.dstBinding = 10;
+            w10.descriptorCount = 1;
+            w10.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            w10.pImageInfo = &cInfo;
 
-            DescriptorSet::Update({w6, w7});
+            DescriptorSet::Update({w9, w10});
+            Log::Info("CloudPipelinePass: Scene depth and color descriptors updated");
         }
 
         totalTime_ += 0.016f;
         atmoUBO_->Update(frameData_);
-        UpdateCloudUBO();
+        UpdateCloudUBO();   
         pipeline_->BindPipeline(cmd);
         descSet_->BindDescriptor(cmd);
         vkCmdDraw(cmd, 3, 1, 0, 0);
+        Log::Info("CloudPipelinePass drew");
     }
 
     void CloudPipelinePass::UpdateCloudUBO()

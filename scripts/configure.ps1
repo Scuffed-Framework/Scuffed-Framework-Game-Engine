@@ -63,7 +63,8 @@ $libDirs = @(
     (Join-Path $sdkRoot "Lib\$sdkVer\um\x64")
 )
 
-$env:PATH = "$binDir;$env:PATH"
+$sdkBinDir = Join-Path $sdkRoot "bin\$sdkVer\x64"
+$env:PATH = "$binDir;$sdkBinDir;$env:PATH"
 $env:INCLUDE = ($incDirs -join ";")
 $env:LIB = ($libDirs -join ";")
 $env:LIBPATH = $env:LIB

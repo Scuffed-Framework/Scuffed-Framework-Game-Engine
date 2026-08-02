@@ -39,6 +39,8 @@ namespace SF::Engine
         RenderSystem();
         ~RenderSystem() override;
 
+        void PostInit();
+
         // Module interface implementation
         void Update() override;
 

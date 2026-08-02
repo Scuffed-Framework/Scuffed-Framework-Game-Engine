@@ -1,6 +1,7 @@
 #ifndef CloudScatterFunctionsInclude
 #define CloudScatterFunctionsInclude
 
+#define PI 3.14159265359
 float BeerAbsorption(float density)
 {
     return exp(-density);

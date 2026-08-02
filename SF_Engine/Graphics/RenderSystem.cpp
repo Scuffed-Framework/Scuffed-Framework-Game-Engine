@@ -53,8 +53,6 @@ namespace SF::Engine
         if (!glslang::InitializeProcess())
             throw std::runtime_error("Failed to initialize glslang process");
         Log::Info("RenderSystem fully initialized");
-
-        SharedSamplers::CreateSamplers();
     }
 
     RenderSystem::~RenderSystem()
@@ -85,6 +83,11 @@ namespace SF::Engine
 
             perSurfaceBuffer->commandBuffers.clear();
         }
+    }
+
+    void RenderSystem::PostInit()
+    {
+        SharedSamplers::CreateSamplers();
     }
 
     void RenderSystem::Update()

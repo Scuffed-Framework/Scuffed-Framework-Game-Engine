@@ -56,7 +56,9 @@ Shader "SF/Clouds/Clouds"
         layout(set = 0, binding = 6) uniform sampler3D baseNoise;         // 128^3 R8
         layout(set = 0, binding = 7) uniform sampler3D detailNoise;       // 128^3 R8
         layout(set = 0, binding = 8) uniform sampler2D aerialPerspRange; // distToTravel per XY
-
+        layout(set = 0, binding = 9) uniform sampler2D sceneDepth;       // linear depth in metres
+        layout(set = 0, binding = 10) uniform sampler2D sceneColor;
+        
         float depthToViewDist(float depth, vec2 ndc)
         {
             vec4 clipPos = vec4(ndc, depth, 1.0);

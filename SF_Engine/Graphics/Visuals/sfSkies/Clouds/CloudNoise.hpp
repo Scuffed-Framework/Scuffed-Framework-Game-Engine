@@ -9,16 +9,16 @@ namespace SF::Engine
     class CloudNoiseLUTs
     {
     public:
-        explicit CloudNoiseLUTs(uint32_t width = 32, uint32_t height = 32)
+        explicit CloudNoiseLUTs(uint32_t width = 32, uint32_t height = 32, uint32_t depth = 1)
         {
             BaseNoiseTexture_ = std::make_unique<Image3d>(
-                Vector3Uint{width, height, 1},
+                VkExtent3D{width, height, depth},
                 VK_FORMAT_R8_UNORM,
                 VK_IMAGE_LAYOUT_GENERAL,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
             DetailNoiseTexture_ = std::make_unique<Image3d>(
-                Vector3Uint{width, height, 1},
+                VkExtent3D{width, height, depth},
                 VK_FORMAT_R8_UNORM,
                 VK_IMAGE_LAYOUT_GENERAL,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
