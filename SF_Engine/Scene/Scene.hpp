@@ -25,6 +25,7 @@ namespace SF::Engine
     class Scene : public virtual rocket::trackable, public Serializable
     {
         friend class SceneManager;
+        friend class SceneRenderer;
 
     public:
         explicit Scene(std::unique_ptr<CameraController> &&cameraController, std::string name, SceneRendererConfig cfg = {});
@@ -71,7 +72,7 @@ namespace SF::Engine
 
         virtual bool IsPaused() const = 0;
 
-        LightManager *GetLightManager() { return lightManager_.get(); }
+        LightManager *GetLightManager() { return sceneRenderer_ ? sceneRenderer_->GetLightManager() : nullptr; }
         SceneRenderer *GetRenderer() const { return sceneRenderer_; }
 
         template <typename T, typename... Args>

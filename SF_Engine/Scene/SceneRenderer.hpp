@@ -3,11 +3,11 @@
 #include <Graphics/Stage.hpp>
 #include <Graphics/Lighting/ClusterCullPipelinePass.hpp>
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp>
-#include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 #include <Graphics/Mesh/Mesh.hpp>
 #include <Graphics/Images/Image2d.hpp>
 #include <Graphics/Stage.hpp>
 #include <Graphics/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
+#include <Graphics/Visuals/sfSkies/AtmosphereController.hpp>
 
 #include <Graphics/PipelinePassInit.hpp>
 #include <Graphics/RenderPass/FullscreenPass.hpp>
@@ -15,6 +15,7 @@
 namespace SF::Engine
 {
     class Scene;
+
     struct SceneRendererConfig
     {
         bool enableAtmosphere = false;
@@ -32,20 +33,6 @@ namespace SF::Engine
     class SceneRenderer : public Renderer
     {
     public:
-        /*
-            explicit SceneRenderer(SceneRendererConfig cfg = {})
-                : config_(std::move(cfg))
-            {
-                AddRenderStage(std::make_unique<RenderStage>(
-                    std::vector<Attachment>{
-                        Attachment{0, "depth", Attachment::Type::Depth},
-                        Attachment{1, "swapchain", Attachment::Type::Swapchain},
-                    },
-                    std::vector<SubpassType>{
-                        SubpassType{0, {0, 1}},
-                    }));
-            }*/
-
         SceneRenderer(SceneRendererConfig cfg = {}) : config_(std::move(cfg))
         {
             // Stage 0: opaque forward pass — depth + offscreen HDR color
@@ -78,37 +65,46 @@ namespace SF::Engine
             AddPipelinePass<ClusterCullPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
             litPass_ = AddPipelinePass<LitMeshPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
 
+            atmoController = std::make_unique<AtmosphereController>(
+            Pipeline::Stage{1, 0},
+            [this](Pipeline::Stage s, const AtmosphereParams &p) { return AddPipelinePass<AtmospherePipelinePass>(s, p); });
+
             if (config_.enableAtmosphere)
             {
-                // Stage 1: Compositor. Safely samples finished scene textures and draws to swapchain
-                atmoPass_ = AddPipelinePass<AtmospherePipelinePass>(
-                    Pipeline::Stage{1, 0}, config_.atmosphereParams);
+                AtmosphereData earthData{ config_.atmosphereParams, {} };
+                glm::vec3 earthPos = {0.0f, -config_.atmosphereParams.bottomRadius, 0.0f};
+                // TODO: load from xml
+                atmoController->AddAtmosphere("Earth", earthData, earthPos);
 
-                cloudPass_ = AddPipelinePass<CloudPipelinePass>(
-                    Pipeline::Stage{1, 0}, config_.atmosphereParams);
+                cloudPass_ = AddPipelinePass<CloudPipelinePass>(Pipeline::Stage{1, 0}, config_.atmosphereParams);
             }
 
             GetPipelinePassManager()->RunInitCallbacks();
         }
 
-        void Update() override {} // Heavy per-frame work is driven by Scene::Render()
+        void Update() override {} // Heavy per-frame work is driven by RenderScene()
+
+        // Renders one frame for the given scene: camera update, lighting upload,
+        // mesh submission, atmosphere/cloud frame data. Replaces Scene::Render().
+        void RenderScene(Scene *scene);
 
         Image2d *GetHdrColorTarget();
 
         // Accessors
         LightManager *GetLightManager() { return lightManager_.get(); }
         LitMeshPipelinePass *GetLitPass() { return litPass_; }
-        AtmospherePipelinePass *GetAtmoPass() { return atmoPass_; }
         CloudPipelinePass *GetCloudPass() { return cloudPass_; }
+        AtmosphereController *GetAtmosphereController() { return atmoController.get(); }
 
-        void RenderScene(Scene* scene);
+        std::unique_ptr<AtmosphereController> atmoController;
 
     private:
         SceneRendererConfig config_;
 
         std::unique_ptr<LightManager> lightManager_;
         LitMeshPipelinePass *litPass_ = nullptr;
-        AtmospherePipelinePass *atmoPass_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
+
+        bool uiCallbackSet_ = false;
     };
 }

@@ -5,6 +5,7 @@
 
 #include <TemplateLibrary/Containers/AdvancedString.hpp>
 #include <glm/glm.hpp>
+#include <functional>
 
 namespace SF::Engine
 {
@@ -12,7 +13,7 @@ namespace SF::Engine
     {
         ::SFTL::String name;
         AtmosphereData data;
-        AtmospherePipelinePass pass;
+        AtmospherePipelinePass *pass = nullptr; // non-owning; owned by PipelinePassManager
         glm::vec3 planetPos = {0.0f, 0.0f, 0.0f};
         bool active = true;
     };
@@ -20,37 +21,36 @@ namespace SF::Engine
     class AtmosphereController : public StaticController<AtmosphereController>
     {
     public:
-        explicit AtmosphereController(Pipeline::Stage stage,
+        using PassFactory = std::function<AtmospherePipelinePass *(Pipeline::Stage, const AtmosphereParams &)>;
+
+        explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory)
+            : stage_(stage), factory_(std::move(factory))
+        {
+        }
+
+        explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory,
                                        const ::SFTL::DynamicArray<KeyValuePair<::SFTL::String, AtmosphereData>> &params)
-            : stage_(stage)
+            : stage_(stage), factory_(std::move(factory))
         {
             entries_.reserve(params.size());
             for (const auto &[name, data] : params)
-            {
-                entries_.emplace_back(AtmosphereEntry{ name, data, AtmospherePipelinePass(stage_, data.params), {0.0f, 0.0f, 0.0f}, true });
-            }
+                entries_.emplace_back(AtmosphereEntry{ name, data, factory_(stage_, data.params), {0.0f, 0.0f, 0.0f}, true });
         }
 
         void Update(float DeltaTime) override
         {
-            // Reserved for time-driven atmosphere behavior (e.g. animated params).
-            // Per-frame render data is pushed separately via SetFrameData, since it
-            // needs camera/view data Scene::Render already computes.
         }
 
-        // Called once per frame from Scene::Render, after view/proj are known.
-        // Pushes frame data into every *active* atmosphere pass, using each
-        // entry's own planetPos rather than a single shared centre.
         void SetFrameData(const glm::mat4 &invProj, const glm::mat4 &invView,
                            const glm::vec3 &cameraPos, const glm::vec3 &sunDir,
                            const glm::vec2 &screenSize)
         {
             for (auto &entry : entries_)
             {
-                if (!entry.active)
+                if (!entry.active || !entry.pass)
                     continue;
 
-                entry.pass.SetFrameData(invProj, invView, cameraPos, entry.planetPos, sunDir, screenSize);
+                entry.pass->SetFrameData(invProj, invView, cameraPos, entry.planetPos, sunDir, screenSize);
             }
         }
 
@@ -68,7 +68,7 @@ namespace SF::Engine
 
         void AddAtmosphere(const ::SFTL::String &name, const AtmosphereData &data, const glm::vec3 &planetPos = {})
         {
-            entries_.emplace_back(AtmosphereEntry{ name, data, AtmospherePipelinePass(stage_, data.params), planetPos, true });
+            entries_.emplace_back(AtmosphereEntry{ name, data, factory_(stage_, data.params), planetPos, true });
         }
 
         void RemoveAtmosphere(const ::SFTL::String &name)
@@ -77,6 +77,8 @@ namespace SF::Engine
                 [&name](const AtmosphereEntry &e) { return e.name == name; });
             entries_.erase(newEnd, entries_.end());
         }
+
+        bool Empty() const { return entries_.empty(); }
 
     private:
         AtmosphereEntry *Find(const ::SFTL::String &name)
@@ -88,6 +90,7 @@ namespace SF::Engine
         }
 
         Pipeline::Stage stage_;
+        PassFactory factory_;
         ::SFTL::DynamicArray<AtmosphereEntry> entries_;
     };
 }
