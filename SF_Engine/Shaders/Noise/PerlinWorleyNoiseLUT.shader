@@ -34,10 +34,10 @@ Shader "SF/Clouds/PerlinWorleyNoiseLUT"
             float z = uvw.z;
             float freq = 4.0;
 
-            float w0 = PerlinWorleyFBM(vec3(uvw.xy, z), freq * .75, 7);      // shape noise
-            float w1 = PerlinWorleyFBM(vec3(uvw.xy, z), freq * 2.0, 7); // medium detail
-            float w2 = PerlinWorleyFBM(vec3(uvw.xy, z), freq * 4.0, 7); // small detail
-            float w3 = remap(PerlinWorleyFBM(vec3(uvw.xy, z), freq * .5, 7), -1., 1., 0., 1.);
+            float w0 = PerlinWorleyFBM(vec3(uvw.xy, z), freq * .75);      // shape noise
+            float w1 = PerlinWorleyFBM(vec3(uvw.xy, z), freq * 2.0); // medium detail
+            float w2 = PerlinWorleyFBM(vec3(uvw.xy, z), freq * 4.0); // small detail
+            float w3 = remap(PerlinWorleyFBM(vec3(uvw.xy, z), freq * .5), -1., 1., 0., 1.);
             w3 = remap(w3, 0.85, 1.0, 0.0, 1.0); // fake cloud coverage
 
             // Pack into RGBA channels

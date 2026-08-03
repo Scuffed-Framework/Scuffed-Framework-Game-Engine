@@ -14,6 +14,7 @@
 
 namespace SF::Engine
 {
+    class Scene;
     struct SceneRendererConfig
     {
         bool enableAtmosphere = false;
@@ -99,6 +100,8 @@ namespace SF::Engine
         LitMeshPipelinePass *GetLitPass() { return litPass_; }
         AtmospherePipelinePass *GetAtmoPass() { return atmoPass_; }
         CloudPipelinePass *GetCloudPass() { return cloudPass_; }
+
+        void RenderScene(Scene* scene);
 
     private:
         SceneRendererConfig config_;

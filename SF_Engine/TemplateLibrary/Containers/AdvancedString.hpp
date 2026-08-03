@@ -15,6 +15,7 @@
 #include "../DynamicArray.hpp"
 #include "../TypeTraits.hpp"
 #include "../Allocator.hpp"
+#include "../Iterators.hpp"
 
 namespace SFTL
 {
@@ -182,15 +183,15 @@ namespace SFTL
         using value_type = T;
         using allocator_type = Allocator;
         using size_type = size_t;
-        using difference_type = std::ptrdiff_t;
+        using difference_type = ptrdiff_t;
         using reference = T &;
         using const_reference = const T &;
         using pointer = typename AllocTraits::pointer;
         using const_pointer = typename AllocTraits::const_pointer;
         using iterator = T *;
         using const_iterator = const T *;
-        using reverse_iterator = std::reverse_iterator<iterator>;
-        using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+        using reverse_iterator = ::SFTL::reverse_iterator<iterator>;
+        using const_reverse_iterator = ::SFTL::reverse_iterator<const_iterator>;
 
         static constexpr size_type npos = static_cast<size_type>(-1);
 
@@ -679,7 +680,7 @@ namespace SFTL
 
     using String = AdvancedString<char>;
     using WString = AdvancedString<wchar_t>;
-}
+} // namespace SFTL
 
 namespace std
 {

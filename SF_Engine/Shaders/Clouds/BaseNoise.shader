@@ -3,6 +3,7 @@ Shader "Clouds/NoiseBasic"
     ComputeShader
     {
         #import "Noise/WorleyNoise.si"
+        #import "Noise/PerlinNoise.si"
         #version 460
 
         #define kBasicFrequency 4.0
@@ -38,9 +39,9 @@ Shader "Clouds/NoiseBasic"
             pfbm = abs(pfbm * 2.0 - 1.0); // billowy perlin noise
             
             vec4 col = vec4(0.0);
-            col.g += worleyFbm(uvw, kBasicFrequency * 1.0);
-            col.b += worleyFbm(uvw, kBasicFrequency * 2.0);
-            col.a += worleyFbm(uvw, kBasicFrequency * 4.0);
+            col.g += worleyFbm(uvw, kBasicFrequency * 1.0, 4);
+            col.b += worleyFbm(uvw, kBasicFrequency * 2.0, 4);
+            col.a += worleyFbm(uvw, kBasicFrequency * 4.0, 4);
 
             col.r += remap(pfbm, 0., 1., col.g, 1.0); // perlin-worley
             imageStore(imageBasicNoise, workPos,  vec4(basicNoiseComposite(col)));

@@ -49,6 +49,7 @@ namespace SF::Engine
 
         Image3d *GetBaseTexture() const { return BaseNoiseTexture_.get(); }
         Image3d *GetDetailTexture() const { return DetailNoiseTexture_.get(); }
+        
         void Bake(const CommandBuffer &cmd)
         {
             // On re-bake the image may already be SHADER_READ_ONLY_OPTIMAL; transition back.

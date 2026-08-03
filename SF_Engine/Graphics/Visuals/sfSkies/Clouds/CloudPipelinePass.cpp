@@ -52,6 +52,14 @@ namespace SF::Engine
             cmd.SubmitIdle();
         }
 
+        aerialPerspRange_ = std::make_unique<AerialPerspectiveLUT>(
+            transmittanceLUT_->GetTexture(), multiScatterLUT_->GetTexture(), 128, 32);
+        {
+            CommandBuffer cmd(true);
+            aerialPerspRange_->Bake(cmd, AtmosphereFrameUBO());
+            cmd.SubmitIdle();
+        }
+
         pipeline_ = std::make_unique<RenderPipeline>(
             stage,
             "Shaders/Clouds/Clouds.shader",
@@ -147,6 +155,7 @@ namespace SF::Engine
         w5.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         w5.pImageInfo = &b5;
 
+        Log::Info("6");
         VkDescriptorImageInfo b6{};
         b6.sampler = cloudNoise_->GetBaseTexture()->GetSampler();
         b6.imageView = cloudNoise_->GetBaseTexture()->GetView();
@@ -159,6 +168,7 @@ namespace SF::Engine
         w6.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         w6.pImageInfo = &b6;
 
+        Log::Info("7");
         VkDescriptorImageInfo b7{};
         b7.sampler = cloudNoise_->GetDetailTexture()->GetSampler();
         b7.imageView = cloudNoise_->GetDetailTexture()->GetView();
@@ -171,9 +181,12 @@ namespace SF::Engine
         w7.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         w7.pImageInfo = &b7;
 
+        Log::Info("8");
         VkDescriptorImageInfo b8{};
-        b8.sampler = aerialPerspRange_->GetAerialPerspectiveRange()->GetSampler();
+        b8.sampler = aerialPerspRange_->GetAerialPerspectiveRange()->GetSampler(); // shit i forgot to initialize it
+        Log::Info("8.1");
         b8.imageView = aerialPerspRange_->GetAerialPerspectiveRange()->GetView();
+        Log::Info("8.2");
         b8.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet w8{};
         w8.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -182,7 +195,9 @@ namespace SF::Engine
         w8.descriptorCount = 1;
         w8.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         w8.pImageInfo = &b8;
+        Log::Info("8.3");
 
+        Log::Info("PreUpdate");
         DescriptorSet::Update({w0, w1, w2, w3, w4, w5, w6, w7, w8});
         Log::Info("CloudPipelinePass descriptors bound");
     }

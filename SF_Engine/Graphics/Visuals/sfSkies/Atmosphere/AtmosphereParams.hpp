@@ -8,9 +8,9 @@ namespace SF::Engine
     {
         float bottomRadius = 6'371'000.0f;     // Planet ground radius (m)
         float topRadius = 6'471'000.0f;        // Atmosphere top radius (m)
-        float sunIntensity = 20.0f;            // idc
+        float sunIntensity = 20.0f;            // idk
         float renderUnitRadius = 6'371'000.0f; // Engine units that equal bottomRadius metres.
-                                               // Default: 1 engine unit = 1 metre.
+                                               // Default: 1 engine unit = 1 meter.
     };
 
     //  UBO sent to Atmosphere.shader every frame
@@ -30,4 +30,11 @@ namespace SF::Engine
         glm::vec2 _p1;
     };
     static_assert(sizeof(AtmosphereFrameUBO) % 16 == 0);
+
+    struct AtmosphereData
+    {
+        AtmosphereParams params;
+        AtmosphereFrameUBO ubo;
+    };
+
 }

@@ -38,13 +38,13 @@ float worley(vec3 p)
 }
 
 // Multi-octave FBM
-float worleyFbm(vec3 p, float baseFreq)
+float worleyFbm(vec3 p, float baseFreq, int octaves)
 {
     float f = 0.0;
     float amp = 0.5;
     float freq = baseFreq;
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < octaves; i++)
     {
         f += worley(p * freq) * amp;
         freq *= 2.0;

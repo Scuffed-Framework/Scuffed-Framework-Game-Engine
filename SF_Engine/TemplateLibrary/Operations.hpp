@@ -194,34 +194,35 @@ namespace SFTL
     template <class _Ty>
     concept copyable = copy_constructible<_Ty> && movable<_Ty> && assignable_from<_Ty &, _Ty &> && assignable_from<_Ty &, const _Ty &> && assignable_from<_Ty &, const _Ty>;
 
-    template <class InputIt, class Pred>
-    [[nodiscard]] constexpr InputIt find_if(InputIt first, InputIt last, Pred pred)
+    template <class InputIterator, class Predicate>
+    [[nodiscard]] constexpr InputIterator find_if(InputIterator first, InputIterator last, Predicate predicate)
     {
         for (; first != last; ++first)
         {
-            if (pred(*first))
+            if (predicate(*first))
                 break;
         }
         return first;
     }
 
-    template <class FwdIt, class Pred>
-    constexpr FwdIt remove_if(FwdIt first, FwdIt last, Pred pred)
+    template <class ForwardIterator, class Predicate>
+    [[nodiscard]] constexpr ForwardIterator remove_if(ForwardIterator first, ForwardIterator last, Predicate predicate)
     {
-        first = ::SFTL::find_if(first, last, pred);
+        // Skip the leading run that doesn't match; nothing to compact yet.
+        first = ::SFTL::find_if(first, last, predicate);
         if (first == last)
             return first;
 
-        FwdIt writePos = first;
-        for (FwdIt readPos = writePos; ++readPos != last;)
+        // 'first' now points at the first element to be removed.
+        // Slide every subsequent non-matching element back into place.
+        ForwardIterator dest = first;
+        for (ForwardIterator it = first; ++it != last;)
         {
-            if (!pred(*readPos))
-            {
-                *writePos = ::SFTL::move(*readPos);
-                ++writePos;
-            }
+            if (!predicate(*it))
+                *dest++ = ::SFTL::move(*it);
         }
-        return writePos;
+
+        return dest;
     }
 
     namespace detail

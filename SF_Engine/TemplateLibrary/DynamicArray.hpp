@@ -467,35 +467,7 @@ namespace SFTL
             return removed;
         }
 
-        // Remove all elements matching predicate (maintains order)
-        template <typename Predicate>
-        size_t remove_if_da(Predicate pred)
-        {
-            T *writePos = data_;
-            size_t removed = 0;
-
-            for (size_t i = 0; i < size_; ++i)
-            {
-                if (pred(data_[i]))
-                {
-                    allocator_traits<Allocator>::destroy(allocator_, data_ + i);
-                    ++removed;
-                }
-                else
-                {
-                    if (writePos != data_ + i)
-                    {
-                        allocator_traits<Allocator>::construct(
-                            allocator_, writePos, ::SFTL::move_if_noexcept(data_[i]));
-                        allocator_traits<Allocator>::destroy(allocator_, data_ + i);
-                    }
-                    ++writePos;
-                }
-            }
-
-            size_ -= removed;
-            return removed;
-        }
+    
 
         // Fast unordered removal by swapping with last element
         void swap_remove(size_t index)

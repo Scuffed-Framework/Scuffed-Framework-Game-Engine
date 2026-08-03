@@ -18,9 +18,9 @@ Shader "Clouds/NoiseDetailed"{
             const vec3 uvw = (vec3(workPos) + vec3(0.5f)) / vec3(texSize);
 
             float detailNoise = 
-                worleyFbm(uvw, kDetailFrequency * 1.0) * 0.625 +
-                worleyFbm(uvw, kDetailFrequency * 2.0) * 0.250 +
-                worleyFbm(uvw, kDetailFrequency * 4.0) * 0.125;
+                worleyFbm(uvw, kDetailFrequency * 1.0, 4) * 0.625 +
+                worleyFbm(uvw, kDetailFrequency * 2.0, 4) * 0.250 +
+                worleyFbm(uvw, kDetailFrequency * 4.0, 4) * 0.125;
 
             imageStore(imageWorleyNoise, workPos, vec4(detailNoise));
         }

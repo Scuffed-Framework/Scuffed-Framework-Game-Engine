@@ -9,4 +9,8 @@ namespace SF::Engine
         auto *hdr = dynamic_cast<const Image2d *>(rs->GetAttachment("swapchain"));
         return const_cast<Image2d *>(hdr);
     }
+    void SceneRenderer::RenderScene(Scene* scene)
+    {
+        
+    }
 }
