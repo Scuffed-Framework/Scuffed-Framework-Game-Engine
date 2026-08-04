@@ -4,18 +4,18 @@
 
 #include <vulkan/vulkan.h>
 #include <array>
-#include <glm/glm.hpp>
+#include <Math/Vectors/Vector3.hpp>
 #include <vector>
 
 namespace SF::Engine
 {
     struct Vertex
     {
-        glm::vec3 pos;
-        glm::vec3 color;
-        glm::vec2 texCoord;  // UV
-        glm::vec3 tangent;
-        glm::vec3 normal;
+        Vector3float pos;
+        Vector3float color;
+        Vector3float texCoord;  // UV
+        Vector3float tangent;
+        Vector3float normal;
 
         static VkVertexInputBindingDescription getBindingDescription()
         {
@@ -381,6 +381,153 @@ namespace SF::Engine
             };
 
             return Shape<24>(vertices, indices);
+        }
+
+        inline Vector3float lerpVec3(const Vector3float& a, const Vector3float& b, float t)
+        {
+            return Vector3float{
+                a.x + (b.x - a.x) * t,
+                a.y + (b.y - a.y) * t,
+                a.z + (b.z - a.z) * t
+            };
+        }
+
+        inline Vector3float scaleVec3(const Vector3float& v, float s)
+        {
+            return Vector3float{ v.x * s, v.y * s, v.z * s };
+        }
+
+        inline Vector3float normalizeVec3(const Vector3float& v)
+        {
+            float len = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+            if (len < 1e-8f)
+                return v;
+            return Vector3float{ v.x / len, v.y / len, v.z / len };
+        }
+
+        inline Vector3float crossVec3(const Vector3float& a, const Vector3float& b)
+        {
+            return Vector3float{
+                a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x
+            };
+        }
+
+        // Spherical UV from a *normalized* position
+        inline Vector3float sphericalUV(const Vector3float& n)
+        {
+            constexpr float kPi = 3.14159265358979323846f;
+            float u = 0.5f + std::atan2(n.z, n.x) / (2.0f * kPi);
+            float v = 0.5f - std::asin(std::clamp(n.y, -1.0f, 1.0f)) / kPi;
+            return Vector3float{ u, v, 0.0f };
+        }
+
+        // Tangent perpendicular to the normal (degenerates gracefully at the poles)
+        inline Vector3float tangentFromNormal(const Vector3float& n)
+        {
+            Vector3float up{ 0.0f, 1.0f, 0.0f };
+            if (std::abs(n.y) > 0.999f)
+                up = Vector3float{ 1.0f, 0.0f, 0.0f };
+            return normalizeVec3(crossVec3(up, n));
+        }
+
+        // Midpoint of two vertices, pushed out onto the sphere of the given radius
+        inline Vertex midpointVertex(const Vertex& a, const Vertex& b, float radius)
+        {
+            Vector3float posMid = lerpVec3(a.pos, b.pos, 0.5f);
+            Vector3float n       = normalizeVec3(posMid);
+
+            Vertex out{};
+            out.pos      = scaleVec3(n, radius);
+            out.normal   = n;
+            out.tangent  = tangentFromNormal(n);
+            out.color    = lerpVec3(a.color, b.color, 0.5f);
+            out.texCoord = sphericalUV(n);
+            return out;
+        }
+
+        /** @brief Recursively subdivide a triangle, pushing flat (non-indexed) vertex triples.
+        * re-projects new midpoints onto the sphere at each step, which is what turns an icosahedron into an icosphere.
+        */
+        inline void SubdivideTriangle(std::vector<Vertex>& vertices, Vertex A, Vertex B, Vertex C,
+                                    uint8_t repetitions, float radius = 1.0f)
+        {
+            if (repetitions == 0)
+            {
+                vertices.push_back(A);
+                vertices.push_back(B);
+                vertices.push_back(C);
+                return;
+            }
+
+            Vertex AB = midpointVertex(A, B, radius);
+            Vertex BC = midpointVertex(B, C, radius);
+            Vertex CA = midpointVertex(C, A, radius);
+
+            SubdivideTriangle(vertices, A,  AB, CA, repetitions - 1, radius);
+            SubdivideTriangle(vertices, B,  BC, AB, repetitions - 1, radius);
+            SubdivideTriangle(vertices, C,  CA, BC, repetitions - 1, radius);
+            SubdivideTriangle(vertices, AB, BC, CA, repetitions - 1, radius); // center triangle
+        }
+
+        constexpr size_t icosphereVertexCount(uint8_t subdivisions)
+        {
+            size_t count = 60;
+            for (uint8_t i = 0; i < subdivisions; ++i)
+                count *= 4;
+            return count;
+        }
+
+        inline Vertex makeIcoVertex(const Vector3float& rawPos, float radius)
+        {
+            Vector3float n = normalizeVec3(rawPos);
+            Vertex v{};
+            v.pos      = scaleVec3(n, radius);
+            v.normal   = n;
+            v.tangent  = tangentFromNormal(n);
+            v.color    = Vector3float{ 1.0f, 1.0f, 1.0f };
+            v.texCoord = sphericalUV(n);
+            return v;
+        }
+
+        template <uint8_t Subdivisions>
+        inline Shape<icosphereVertexCount(Subdivisions)> createIcosphere(float radius = 0.5f)
+        {
+            constexpr float t = 1.61803398875f; // golden ratio
+
+            // 12 base icosahedron positions (unnormalized)
+            std::array<Vector3float, 12> raw = {{
+                {-1,  t,  0}, { 1,  t,  0}, {-1, -t,  0}, { 1, -t,  0},
+                { 0, -1,  t}, { 0,  1,  t}, { 0, -1, -t}, { 0,  1, -t},
+                { t,  0, -1}, { t,  0,  1}, {-t,  0, -1}, {-t,  0,  1}
+            }};
+
+            std::array<Vertex, 12> baseVerts{};
+            for (size_t i = 0; i < 12; ++i)
+                baseVerts[i] = makeIcoVertex(raw[i], radius);
+
+            // 20 faces of the icosahedron
+            static constexpr int faces[20][3] = {
+                {0,11,5}, {0,5,1},  {0,1,7},  {0,7,10}, {0,10,11},
+                {1,5,9},  {5,11,4}, {11,10,2},{10,7,6}, {7,1,8},
+                {3,9,4},  {3,4,2},  {3,2,6},  {3,6,8},  {3,8,9},
+                {4,9,5},  {2,4,11}, {6,2,10}, {8,6,7},  {9,8,1}
+            };
+
+            std::vector<Vertex> vertices;
+            vertices.reserve(icosphereVertexCount(Subdivisions));
+
+            for (const auto& f : faces)
+            {
+                SubdivideTriangle(vertices, baseVerts[f[0]], baseVerts[f[1]], baseVerts[f[2]],
+                                Subdivisions, radius);
+            }
+
+            std::array<Vertex, icosphereVertexCount(Subdivisions)> arr{};
+            std::copy(vertices.begin(), vertices.end(), arr.begin());
+
+            return Shape<icosphereVertexCount(Subdivisions)>(arr);
         }
     }
 }
