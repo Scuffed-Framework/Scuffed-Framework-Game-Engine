@@ -6,6 +6,7 @@
 #include <Physics/Ray.hpp>
 #include <Math/Math.hpp>
 #include <Graphics/Windows/Window.hpp>
+#include <Graphics/Buffers/UniformBuffer.hpp>
 
 namespace SF::Engine
 {
@@ -258,4 +259,33 @@ namespace SF::Engine
         float minFov = 10.0f;
         float maxFov = 120.0f;
     };
+
+    struct /*std140*/ CameraUBO
+    {
+        // 16 bytes
+        float aspectRatio;
+        float deltaTime;
+        int screenWidth;
+        int screenHeight;
+
+        // 16 bytes
+        glm::mat4 cameraPosition;
+
+        // 64 bytes each
+        glm::mat4 inverseProjection;
+        glm::mat4 inverseView;
+        glm::mat4 projection;
+        glm::mat4 view;
+        glm::mat4 viewProjection;
+        glm::mat4 prevViewProjection;
+    };
+
+    // goofy
+    inline CameraUBO SharedCameraData; // fine, POD-ish, no SIOF risk
+
+    inline UniformBuffer &GetSharedCameraBuffer()
+    {
+        static UniformBuffer buffer(sizeof(CameraUBO));
+        return buffer;
+    }
 }

@@ -189,9 +189,8 @@ namespace SF::Engine
         frameData_.bottomRadius = params_.bottomRadius;
         frameData_.topRadius = params_.topRadius;
         frameData_.renderUnitRadius = params_.renderUnitRadius;
-        frameData_._p0 = 0.0f;
         frameData_.screenSize = screenSize;
-        frameData_._p1 = glm::vec2(0.0f);
+        frameData_.sunCol = glm::vec3(1); // rgb base color (its white)
 
         SkyViewPushConstants svp{};
         svp.sunDir = glm::vec4(sd, params_.sunIntensity);

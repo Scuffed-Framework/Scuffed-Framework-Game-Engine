@@ -11,6 +11,7 @@
 
 int main(int argc, char *argv[])
 {
+    std::cout << "hi\n";
     // Change working directory to wherever the exe lives
     // so relative paths like "Shaders/Cube.shader" resolve correctly
     if (argc > 0)

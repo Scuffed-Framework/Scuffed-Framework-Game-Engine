@@ -4,9 +4,12 @@
 
 namespace SF::Engine
 {
+    // too many :(
     struct ApplicationTime;
     class ImageDepth;
     class Image2d;
+    struct CameraUBO;
+    class DescriptorSet;
 
     glm::vec3 GetMainDirectionalLightDirection();
     float GetMainDirectionalLightIntensity();
@@ -29,4 +32,6 @@ namespace SF::Engine
     const Image2d *GetSceneHDR();
     const ImageDepth *GetSceneDepth(
         const std::string &attachmentName = "gbuf_depth");
+
+    void BindSharedCameraData(int bind, int count, DescriptorSet* set);
 }

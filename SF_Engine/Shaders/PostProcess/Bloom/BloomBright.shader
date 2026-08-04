@@ -4,56 +4,62 @@
 // spot at the sun disc position in screen space, which is then blurred
 // to create a natural glow/corona effect.
 //
-// set=0  bind=0  sampler2D sceneTex   (capture buffer : used for scene-based threshold)
+// set=0  bind=0  texture2D sceneTex   (capture buffer : used for scene-based threshold)
 // set=0  bind=1  UBO BloomBrightUBO
 
-Shader "SF/PostProcess/BloomBright"
+struct BloomBrightUBO
 {
-    VertexShader
-    {
-        #version 450
-        layout(location = 0) out vec2 outUV;
-        void main()
-        {
-            outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-            gl_Position = vec4(outUV * 2.0 - 1.0, 0.0, 1.0);
-        }
-    }
+    float threshold;    // luminance threshold (e.g. 0.8)
+    float knee;         // soft-knee width (e.g. 0.2)
+    float intensity;    // bloom intensity multiplier
+    float _pad;
+};
 
-    FragmentShader
-    {
-        #version 450
-        layout(location = 0) in  vec2 inUV;
-        layout(location = 0) out vec4 outColor;
+[[vk::binding(0, 0)]]
+Texture2D<float4> sceneTex;
 
-        layout(set = 0, binding = 0) uniform sampler2D sceneTex;
+[[vk::binding(1, 0)]]
+ConstantBuffer<BloomBrightUBO> u;
 
-        layout(set = 0, binding = 1) uniform BloomBrightUBO
-        {
-            float threshold;    // luminance threshold (e.g. 0.8)
-            float knee;         // soft-knee width (e.g. 0.2)
-            float intensity;    // bloom intensity multiplier
-            float _pad;
-        } u;
+[[vk::binding(2, 0)]]
+SamplerState g_sampler;
 
-        float Lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+struct VSOutput
+{
+    float4 position : SV_Position;
+    float2 uv : TEXCOORD0;
+};
 
-        void main()
-        {
-            vec3  col = texture(sceneTex, inUV).rgb;
-            float lum = Lum(col);
+float Lum(float3 c) 
+{ 
+    return dot(c, float3(0.2126, 0.7152, 0.0722)); 
+}
 
-            // Hard threshold with soft knee : only pixels significantly
-            // above threshold contribute, clamped to prevent feedback blowout.
-            float lo     = u.threshold - u.knee;
-            float weight = clamp((lum - lo) / max(u.knee * 2.0, 1e-4), 0.0, 1.0);
-            weight       = weight * weight; // smooth
-            // Clamp to prevent feedback runaway: when blitting a post-composite
-            // swapchain, pixels already have some bloom baked in. The hard clamp
-            // at 1.0 (scene max) ensures the bright pass output can't exceed what
-            // a single frame could contribute, breaking the feedback loop.
-            vec3 bright = clamp(col * weight * u.intensity, vec3(0.0), vec3(1.0));
-            outColor = vec4(bright, 1.0);
-        }
-    }
+[shader("vertex")]
+VSOutput vsMain(uint vertexID : SV_VertexID)
+{
+    VSOutput output;
+    output.uv = float2((vertexID << 1) & 2, vertexID & 2);
+    output.position = float4(output.uv * 2.0 - 1.0, 0.0, 1.0);
+    return output;
+}
+
+[shader("fragment")]
+float4 fsMain(VSOutput input) : SV_Target
+{
+    float3 col = sceneTex.SampleLevel(g_sampler, input.uv, 0.0).rgb;
+    float lum = Lum(col);
+
+    // Hard threshold with soft knee : only pixels significantly
+    // above threshold contribute, clamped to prevent feedback blowout.
+    float lo = u.threshold - u.knee;
+    float weight = clamp((lum - lo) / max(u.knee * 2.0, 1e-4), 0.0, 1.0);
+    weight = weight * weight; // smooth
+    
+    // Clamp to prevent feedback runaway: when blitting a post-composite
+    // swapchain, pixels already have some bloom baked in. The hard clamp
+    // at 1.0 (scene max) ensures the bright pass output can't exceed what
+    // a single frame could contribute, breaking the feedback loop.
+    float3 bright = clamp(col * weight * u.intensity, float3(0.0), float3(1.0));
+    return float4(bright, 1.0);
 }

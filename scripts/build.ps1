@@ -68,7 +68,44 @@ $versionHeaderDir = Split-Path $versionHeader -Parent
 if (-not (Test-Path $versionHeaderDir)) { New-Item -ItemType Directory -Path $versionHeaderDir -Force | Out-Null }
 Set-Content -Path $versionHeader -Value $versionHeaderContent -NoNewline
 
-# --- build ---
+
+function Import-VsDevEnvironment {
+    if ($env:VSCMD_ARG_TGT_ARCH) { return } # already in a dev shell, don't redo it
+
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    if (-not (Test-Path $vswhere)) {
+        Write-Host "vswhere.exe not found -- can't locate VS install" -ForegroundColor Red
+        exit 1
+    }
+
+    $vsPath = & $vswhere -latest -products * `
+        -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+        -property installationPath
+
+    if (-not $vsPath) {
+        Write-Host "No VS install with C++ build tools found" -ForegroundColor Red
+        exit 1
+    }
+
+    $vcvars = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
+    if (-not (Test-Path $vcvars)) {
+        Write-Host "vcvars64.bat not found at: $vcvars" -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "==> Activating MSVC environment ($vsPath)" -ForegroundColor DarkCyan
+
+    # Run vcvars64.bat in cmd, dump the resulting env, import it into this process
+    $envDump = cmd /c "`"$vcvars`" && set"
+    foreach ($line in $envDump) {
+        if ($line -match '^([^=]+)=(.*)$') {
+            Set-Item -Path "Env:\$($matches[1])" -Value $matches[2]
+        }
+    }
+}
+
+Import-VsDevEnvironment
+
 cmake --build --preset conan2-$buildType
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed" -ForegroundColor Red; Pop-Location; exit 1 }
 

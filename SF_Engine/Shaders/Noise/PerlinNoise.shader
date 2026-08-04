@@ -1,32 +1,27 @@
-Shader "SF/Noise/Perlin"
+#include "Noise/PerlinNoise.si"
+
+[[vk::binding(0, 0)]]
+[[vk::image_format("r8")]]
+RWTexture2D<float4> perlinNoiseTex;
+
+[numthreads(8, 8, 1)]
+void main(uint3 globalThreadID : SV_DispatchThreadID)
 {
-    ComputeShader
-    {
-        #version 450
-        #import "Noise/PerlinNoise.si"
+    int2 uv = int2(globalThreadID.xy);
 
-        layout (local_size_x = 8, local_size_y = 8) in;
+    // get texture size
+    int2 size;
+    perlinNoiseTex.GetDimensions(size.x, size.y);
+    if (uv.x >= size.x || uv.y >= size.y)
+        return;
 
-        layout(set = 0, binding = 0, r8) uniform writeonly image2D perlinNoiseTex;
+    // Normalized coords
+    float2 p = float2(uv) / float2(size);
 
-        void main()
-        {
-            ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+    // Turn 2D -> 3D Perlin input
+    float3 pos = float3(p * 8.0, 0.0);
 
-            // get texture size
-            ivec2 size = imageSize(perlinNoiseTex);
-            if (uv.x >= size.x || uv.y >= size.y)
-                return;
+    float n = perlin(pos) * 0.5 + 0.5;  // remap to 0–1
 
-            // Normalized coords
-            vec2 p = vec2(uv) / vec2(size);
-
-            // Turn 2D -> 3D Perlin input
-            vec3 pos = vec3(p * 8.0, 0.0);
-
-            float n = perlin(pos) * 0.5 + 0.5;  // remap to 0–1
-
-            imageStore(perlinNoiseTex, uv, vec4(n, 0.0, 0.0, 1.0));
-        }
-    }
+    perlinNoiseTex[uv] = float4(n, 0.0, 0.0, 1.0);
 }

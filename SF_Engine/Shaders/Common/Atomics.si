@@ -1,68 +1,177 @@
-#ifndef ATOMIC_UTILS_GLSL
-#define ATOMIC_UTILS_GLSL
+#ifndef ATOMIC_UTILS_SLANG
+#define ATOMIC_UTILS_SLANG
 
-int atomicAddInt(inout int mem, int val) {
-    return atomicAdd(mem, val);
+// Interlocked operations in Slang use out parameters for the original value
+// The atomic variable must be a RWByteAddressBuffer or RWStructuredBuffer element
+// For regular variables, Slang doesn't support direct atomics on local variables
+
+int atomicAddInt(inout int mem, int val) 
+{
+    int original;
+    InterlockedAdd(mem, val, original);
+    return original;
 }
 
-uint atomicAddUint(inout uint mem, uint val) {
-    return atomicAdd(mem, val);
+uint atomicAddUint(inout uint mem, uint val) 
+{
+    uint original;
+    InterlockedAdd(mem, val, original);
+    return original;
 }
 
-int atomicMinInt(inout int mem, int val) { return atomicMin(mem, val); }
-int atomicMaxInt(inout int mem, int val) { return atomicMax(mem, val); }
-uint atomicMinUint(inout uint mem, uint val) { return atomicMin(mem, val); }
-uint atomicMaxUint(inout uint mem, uint val) { return atomicMax(mem, val); }
-
-int  atomicExchInt(inout int mem,  int  val) { return atomicExchange(mem, val); }
-uint atomicExchUint(inout uint mem, uint val) { return atomicExchange(mem, val); }
-
-int  atomicCmpExchInt(inout int mem, int cmp, int val) {
-    return atomicCompSwap(mem, cmp, val);
-}
-uint atomicCmpExchUint(inout uint mem, uint cmp, uint val) {
-    return atomicCompSwap(mem, cmp, val);
+int atomicMinInt(inout int mem, int val) 
+{
+    int original;
+    InterlockedMin(mem, val, original);
+    return original;
 }
 
-int  atomicAndInt(inout int mem,  int  val) { return atomicAnd(mem, val); }
-uint atomicAndUint(inout uint mem, uint val) { return atomicAnd(mem, val); }
+int atomicMaxInt(inout int mem, int val) 
+{
+    int original;
+    InterlockedMax(mem, val, original);
+    return original;
+}
 
-int  atomicOrInt(inout int mem,  int  val) { return atomicOr(mem, val); }
-uint atomicOrUint(inout uint mem, uint val) { return atomicOr(mem, val); }
+uint atomicMinUint(inout uint mem, uint val) 
+{
+    uint original;
+    InterlockedMin(mem, val, original);
+    return original;
+}
 
-int  atomicXorInt(inout int mem,  int  val) { return atomicXor(mem, val); }
-uint atomicXorUint(inout uint mem, uint val) { return atomicXor(mem, val); }
+uint atomicMaxUint(inout uint mem, uint val) 
+{
+    uint original;
+    InterlockedMax(mem, val, original);
+    return original;
+}
 
-float atomicAddFloat(inout float mem, float val) {
-    uint* memU = (uint*)(&mem);
+int atomicExchInt(inout int mem, int val) 
+{
+    int original;
+    InterlockedExchange(mem, val, original);
+    return original;
+}
 
-    uint oldBits = *memU;
-    uint newBits;
+uint atomicExchUint(inout uint mem, uint val) 
+{
+    uint original;
+    InterlockedExchange(mem, val, original);
+    return original;
+}
 
-    while (true) {
-        float oldF = uintBitsToFloat(oldBits);
-        float newF = oldF + val;
-        newBits = floatBitsToUint(newF);
+int atomicCmpExchInt(inout int mem, int cmp, int val) 
+{
+    int original;
+    InterlockedCompareExchange(mem, cmp, val, original);
+    return original;
+}
 
-        uint prev = atomicCompSwap(*memU, oldBits, newBits);
-        if (prev == oldBits)
-            break;
+uint atomicCmpExchUint(inout uint mem, uint cmp, uint val) 
+{
+    uint original;
+    InterlockedCompareExchange(mem, cmp, val, original);
+    return original;
+}
 
-        oldBits = prev;
+int atomicAndInt(inout int mem, int val) 
+{
+    int original;
+    InterlockedAnd(mem, val, original);
+    return original;
+}
+
+uint atomicAndUint(inout uint mem, uint val) 
+{
+    uint original;
+    InterlockedAnd(mem, val, original);
+    return original;
+}
+
+int atomicOrInt(inout int mem, int val) 
+{
+    int original;
+    InterlockedOr(mem, val, original);
+    return original;
+}
+
+uint atomicOrUint(inout uint mem, uint val) 
+{
+    uint original;
+    InterlockedOr(mem, val, original);
+    return original;
+}
+
+int atomicXorInt(inout int mem, int val) 
+{
+    int original;
+    InterlockedXor(mem, val, original);
+    return original;
+}
+
+uint atomicXorUint(inout uint mem, uint val) 
+{
+    uint original;
+    InterlockedXor(mem, val, original);
+    return original;
+}
+
+// For float atomics, we need to use the uint version with bit casting
+// Note: In Slang, you cannot directly take the address of a float for atomic operations
+// This function is provided as a wrapper, but you'll need to use it with RWByteAddressBuffer
+float atomicAddFloat(inout float mem, float val) 
+{
+    // Slang doesn't support direct float atomics on local variables
+    // This would need to be used with RWByteAddressBuffer or similar
+    uint originalBits;
+    uint currentBits = asuint(mem);
+    
+    while (true) 
+    {
+        float currentVal = asfloat(currentBits);
+        float newVal = currentVal + val;
+        uint newBits = asuint(newVal);
+        
+        uint prevBits;
+        InterlockedCompareExchange(mem, currentBits, newBits, prevBits);
+        
+        if (prevBits == currentBits) 
+            return asfloat(prevBits);
+        
+        currentBits = prevBits;
     }
-
-    return uintBitsToFloat(oldBits);
 }
 
 // Generic CAS loop utility (int version)
-int atomicCASLoop(inout int mem, int (*op)(int oldVal)) {
-    int oldVal = mem;
-    while (true) {
-        int newVal = op(oldVal);
-        int prev = atomicCompSwap(mem, oldVal, newVal);
-        if (prev == oldVal) return oldVal;
-        oldVal = prev;
+// In Slang, you cannot pass function pointers or lambdas directly
+// Use this with a macro or inline the operation
+int atomicCASLoop(inout int mem, int oldVal, int op(int oldVal)) 
+{
+    int current = oldVal;
+    while (true) 
+    {
+        int newVal = op(current);
+        int prev;
+        InterlockedCompareExchange(mem, current, newVal, prev);
+        if (prev == current) 
+            return current;
+        current = prev;
     }
 }
 
-#endif // ATOMIC_UTILS_GLSL
+// Alternative: Use a macro-based approach for the CAS loop
+// Since Slang doesn't support function pointers well, use a macro
+#define ATOMIC_CAS_LOOP(mem, op) \
+    do { \
+        int oldVal = (mem); \
+        while (true) { \
+            int newVal = op(oldVal); \
+            int prev; \
+            InterlockedCompareExchange((mem), oldVal, newVal, prev); \
+            if (prev == oldVal) break; \
+            oldVal = prev; \
+        } \
+    } while(0)
+
+#endif // ATOMIC_UTILS_SLANG

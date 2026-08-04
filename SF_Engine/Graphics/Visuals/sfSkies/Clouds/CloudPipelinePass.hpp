@@ -32,10 +32,18 @@ namespace SF::Engine
 
         float sdfRangeMetres; // max SDF distance in G channel
         int frameIndex;       // frame counter for blue noise sampling
-        int bozo[3];          // padding to satisfy std140 alignment
+        
+        float cloudDetailScale;
+        float cloudBaseNoiseScale;
+        float cloudCurlNoiseScale;
+
+        float cloudWeatherUVScale;
+        float percipitationBias;
+        float FadeDistance2d;
+        float fadeSmoothDist;
     };
 
-    static_assert(sizeof(CloudUBO) == 48, "CloudUBO size mismatch - check padding");
+    static_assert(sizeof(CloudUBO) == 64, "CloudUBO size mismatch - check padding");
     static_assert(sizeof(CloudUBO) % 16 == 0, "CloudUBO must satisfy std140 alignment");
 
     class CloudPipelinePass : public PipelinePass

@@ -1,7 +1,22 @@
 #ifndef CloudScatterFunctionsInclude
 #define CloudScatterFunctionsInclude
 
-#define PI 3.14159265359
+float hgPhase(float g, float cosTheta)
+{
+    float denom = 1.0 + g * g + 2.0 * g * cosTheta;
+    return (1.0 - g * g) / (4.0 * 3.14159265359 * denom * sqrt(denom));
+}
+
+float rayleighPhase(float cosTheta)
+{
+    return (3.0 / (16.0 * 3.14159265359)) * (1.0 + cosTheta * cosTheta);
+}
+
+float dualLobPhase(float g1, float g2, float lerp, float cosTheta)
+{
+    return lerp * hgPhase(g1, cosTheta) + (1.0 - lerp) * hgPhase(g2, cosTheta);
+}
+
 float BeerAbsorption(float density)
 {
     return exp(-density);
@@ -12,7 +27,7 @@ float BeerAbsorptionMultipleScattering(float density)
 }
 float HenyeyGreensteinPhaseFunction(float eccentricity, float viewDirDotLight)
 {
-    return (1.0 - eccentricity * eccentricity) / (4.0 * PI * pow(1.0 + eccentricity * eccentricity
+    return (1.0 - eccentricity * eccentricity) / (4.0 * 3.14159265358979 * pow(1.0 + eccentricity * eccentricity
                                                  - 2.0 * eccentricity * viewDirDotLight, 3.0/2.0));
 }
 void GetPhaseFunctions(float dotLight, out float directLightingPhaseFunction, out float indirectLightingPhaseFunction)
@@ -23,7 +38,7 @@ void GetPhaseFunctions(float dotLight, out float directLightingPhaseFunction, ou
                                     0.7 * HenyeyGreensteinPhaseFunction(-0.4, dotLight);
 }
 
-float GetHeightFraction(vec3 position, vec3 planetPosition, float innerCloudRadius, float outerCloudRadius)
+float GetHeightFraction(float3 position, float3 planetPosition, float innerCloudRadius, float outerCloudRadius)
 {
     float altitude = length(position - planetPosition);
     return (altitude - innerCloudRadius) / (outerCloudRadius - innerCloudRadius);

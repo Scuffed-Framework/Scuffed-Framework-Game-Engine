@@ -1,0 +1,23 @@
+#ifndef VERTOUT_COMMON
+#define VERTOUT_COMMON
+struct VertexOutput 
+{
+    float4 position     : SV_Position;
+    float4 clipPos      : CLIPPOS;
+    float3 worldPos     : WORLDPOS;
+    float3 color        : COLOR0;
+
+    float3x3 tbn        : TBN;   // tangent, bitangent, normal (world space)
+
+    float2 uv           : TEXCOORD0;    
+};
+
+struct VSInput
+{
+    float3 position : POSITION;
+    float3 normal   : NORMAL;
+    float2 texCoord : TEXCOORD0;
+    float3 tangent  : TANGENT;
+};
+
+#endif

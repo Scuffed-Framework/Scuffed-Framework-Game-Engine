@@ -1,7 +1,6 @@
 #ifndef ENCODING_SI
 #define ENCODING_SI
-#import "Color/ColorCommon.si"
-#import "Common/Encoding.si"
+#include "Color/ColorCommon.si"
 
 float EncodeInfiniteDepth(float depth, float near)
 {
@@ -11,6 +10,6 @@ float EncodeInfiniteDepth(float depth, float near)
 // 'z' is the depth encoded in the depth buffer (1 at near plane, 0 at far plane)
 float DecodeInfiniteDepth(float z, float near)
 {
-    return near / max(z, FLT_EPS);
+    return near / max(z, /*float epsilon*/1.192092896e-07);
 }
 #endif

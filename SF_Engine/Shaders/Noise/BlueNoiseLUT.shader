@@ -1,28 +1,24 @@
-Shader "Clouds/BlueNoiseLUT"
+#include "Noise/BlueNoise.si"
+
+[[vk::binding(0, 0)]]
+[[vk::image_format("r16f")]]
+RWTexture2D<float4> outBlueNoise;
+
+[numthreads(8, 8, 1)]
+void main(uint3 globalThreadID : SV_DispatchThreadID)
 {
-    ComputeShader
-    {
-        #version 450
-        layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
-        layout(set = 0, binding = 0, r16f) uniform writeonly image2D outBlueNoise;
-        
-        #import "Noise/BlueNoise.si"
+    int2 coord = int2(globalThreadID.xy);
+    int2 size;
+    outBlueNoise.GetDimensions(size.x, size.y);
+    if (coord.x >= size.x || coord.y >= size.y) return;
 
-        void main()
-        {
-            ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
-            ivec2 size  = imageSize(outBlueNoise);
-            if (coord.x >= size.x || coord.y >= size.y) return;
+    float2 uv = float2(coord) / float2(size);
+    float blueNoise = BlueNoiseErrorDistrib(
+        uint(coord.x), 
+        uint(coord.y), 
+        0, 
+        0u
+    );
 
-            vec2 uv = vec2(coord) / vec2(size);
-            float blueNoise = BlueNoiseErrorDistrib(
-                uint(coord.x), 
-                uint(coord.y), 
-                0, 
-                0u
-            );
-
-            imageStore(outBlueNoise, coord, vec4(blueNoise, 0.0, 0.0, 1.0));
-        }
-    }
+    outBlueNoise[coord] = float4(blueNoise, 0.0, 0.0, 1.0);
 }

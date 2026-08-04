@@ -4,6 +4,7 @@
 
 namespace SF::Engine
 {
+    // TODO: what do do with Graphics/Shape/Shape.hpp?
     /**
      * @brief Simple 2D vertex with position and UV coordinates
      */

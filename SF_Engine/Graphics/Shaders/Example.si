@@ -1,6 +1,0 @@
-vec3 add(vec3 a, vec3 b){
-    float one = a.x+b.x;
-    float two = a.y+b.y;
-    float three = a.z+b.z;
-    return vec3(one,two,three);
-}

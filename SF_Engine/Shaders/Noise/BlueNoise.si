@@ -45,16 +45,16 @@ uint sobolVdC(uint bits)
 // Burley 2020 "Practical Hash-based Owen Scrambling" nested-uniform hash.
 // Operates MSB-first (hence the bit reversals on the way in/out), which is
 // what makes it approximate real Owen scrambling instead of just being a
-// generic bit-mixer.
+// generic bit-lerper.
 uint owenScramble(uint x, uint seed)
 {
-    x = bitfieldReverse(x);
+    x = reversebits(x);
     x ^= x * 0x3d20adeau;
     x += seed;
     x *= (seed >> 16u) | 1u;
     x ^= x * 0x05526c56u;
     x ^= x * 0x53a22864u;
-    return bitfieldReverse(x);
+    return reversebits(x);
 }
 
 float BlueNoiseErrorDistrib(uint pixel_i, uint pixel_j, uint sampleIndex, uint sampleDimension)

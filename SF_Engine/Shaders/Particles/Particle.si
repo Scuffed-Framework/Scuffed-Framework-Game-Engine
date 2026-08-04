@@ -1,0 +1,32 @@
+#ifndef PARTICLE_S
+#define PARTICLE_S
+struct Particle
+{
+    float4 position;  // xyz = world pos,  w = lifetime remaining
+    float4 velocity;  // xyz = velocity,   w = total lifetime
+    float4 color;     // rgba linear
+    float2 size;      // x = current, y = initial
+    float rotation;
+    float _pad0;
+};
+
+struct EmitterParams
+{
+    float4  position;       // xyz = world origin
+    float4  direction;      // xyz = cone axis, w = half-angle (radians)
+    float4  colorStart;
+    float4  colorEnd;
+    float emissionRate;
+    float minLifetime;
+    float maxLifetime;
+    float minSpeed;
+    float maxSpeed;
+    float minSize;
+    float maxSize;
+    float gravity;
+    uint  maxParticles;
+    uint  emitterIndex;
+    float _pad0;
+    float _pad1;
+};
+#endif

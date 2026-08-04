@@ -33,9 +33,9 @@ namespace SF::Engine
             descSetB_ = std::make_unique<DescriptorSet>(*pipelineB_);
 
             auto info0 = BaseNoiseTexture_->GetWriteDescriptor(
-                1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, std::nullopt);
+                0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, std::nullopt);
             auto info1 = DetailNoiseTexture_->GetWriteDescriptor(
-                1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, std::nullopt);
+                0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, std::nullopt);
 
             // Patch dstSet  GetWriteDescriptor leaves it null
             VkWriteDescriptorSet w0 = info0.GetWriteDescriptorSet();

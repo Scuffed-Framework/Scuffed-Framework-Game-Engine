@@ -1,28 +1,28 @@
-Shader "Clouds/NoiseDetailed"{
-    ComputeShader{
-        #import "Noise/WorleyNoise.si"
-        #define kDetailFrequency 8.0
+#include "Noise/WorleyNoise.si"
 
-        layout (set = 0, binding = 0, r8) uniform image3D imageWorleyNoise; 
-        layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
-        void main()
-        {
-            ivec3 texSize = imageSize(imageWorleyNoise);
-            ivec3 workPos = ivec3(gl_GlobalInvocationID.xyz);
+#define kDetailFrequency 8.0
 
-            if(workPos.x >= texSize.x || workPos.y >= texSize.y || workPos.z >= texSize.z)
-            {
-                return;
-            }
+[[vk::binding(0, 0)]]
+RWTexture3D<float> imageWorleyNoise;
 
-            const vec3 uvw = (vec3(workPos) + vec3(0.5f)) / vec3(texSize);
+[numthreads(8, 8, 1)]
+void main(uint3 globalThreadID : SV_DispatchThreadID)
+{
+    int3 texSize;
+    imageWorleyNoise.GetDimensions(texSize.x, texSize.y, texSize.z);
+    int3 workPos = int3(globalThreadID.xyz);
 
-            float detailNoise = 
-                worleyFbm(uvw, kDetailFrequency * 1.0, 4) * 0.625 +
-                worleyFbm(uvw, kDetailFrequency * 2.0, 4) * 0.250 +
-                worleyFbm(uvw, kDetailFrequency * 4.0, 4) * 0.125;
-
-            imageStore(imageWorleyNoise, workPos, vec4(detailNoise));
-        }
+    if (workPos.x >= texSize.x || workPos.y >= texSize.y || workPos.z >= texSize.z)
+    {
+        return;
     }
+
+    const float3 uvw = (float3(workPos) + float3(0.5f)) / float3(texSize);
+
+    float detailNoise = 
+        worleyFbm(uvw, kDetailFrequency * 1.0, 4) * 0.625 +
+        worleyFbm(uvw, kDetailFrequency * 2.0, 4) * 0.250 +
+        worleyFbm(uvw, kDetailFrequency * 4.0, 4) * 0.125;
+
+    imageWorleyNoise[workPos] = detailNoise;
 }

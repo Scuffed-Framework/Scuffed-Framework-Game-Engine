@@ -13,6 +13,8 @@
 
 #include "SharedSamplers.hpp"
 
+#include <Camera/Camera.hpp>
+
 namespace SF::Engine
 {
     RenderSystem::RenderSystem()
@@ -103,6 +105,9 @@ namespace SF::Engine
         }
 
         renderer->Update();
+        
+        GetSharedCameraBuffer().Update(SharedCameraData);
+        
 
         // Update all stages first, then check staleness BEFORE any renderpass
         // is started this frame. Doing this mid-loop (old code) could leave a

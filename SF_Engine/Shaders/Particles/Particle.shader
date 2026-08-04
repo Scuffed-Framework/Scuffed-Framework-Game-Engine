@@ -1,75 +1,24 @@
-#version 450
-#extension GL_EXT_shader_atomic_float : enable
+#include "Particle.si"  // Contains Particle, EmitterParams definitions
 
-// Particle simulation compute shader
-//
-// One thread = one particle slot.
-// Dispatch: ceil(MAX_TOTAL_PARTICLES / 256) work-groups of 256 threads each.
-//
-// Bindings:
-//   0 : ParticleBuffer   : read/write particle state
-//   1 : EmitterBuffer    : read-only emitter params (uploaded CPU→GPU each frame)
-//   2 : FreelistBuffer   : atomic counter (dead-particle recycling, no CPU readback)
-//
-// Push constants:
-//   deltaTime, time, emitterCount
-// Local work-group size.
-// 256 threads gives good occupancy on desktop GPUs while staying within the
-// minimum maxComputeWorkGroupInvocations (128) guaranteed by Vulkan 1.0.
-layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
-
-struct Particle
-{
-    vec4 position;  // xyz = world pos,  w = lifetime remaining
-    vec4 velocity;  // xyz = velocity,   w = total lifetime
-    vec4 color;     // rgba linear
-    vec2 size;      // x = current, y = initial
-    float rotation;
-    float _pad0;
-};
-
-struct EmitterParams
-{
-    vec4  position;       // xyz = world origin
-    vec4  direction;      // xyz = cone axis, w = half-angle (radians)
-    vec4  colorStart;
-    vec4  colorEnd;
-    float emissionRate;
-    float minLifetime;
-    float maxLifetime;
-    float minSpeed;
-    float maxSpeed;
-    float minSize;
-    float maxSize;
-    float gravity;
-    uint  maxParticles;
-    uint  emitterIndex;
-    float _pad0;
-    float _pad1;
-};
-
-layout(std430, set = 0, binding = 0) buffer ParticleBuffer
-{
-    Particle particles[];
-};
-
-layout(std430, set = 0, binding = 1) readonly buffer EmitterBuffer
-{
-    EmitterParams emitters[];
-};
-
-layout(std430, set = 0, binding = 2) buffer FreelistBuffer
-{
-    uint freelistHead;  // atomic counter; wraps around MAX_TOTAL_PARTICLES
-};
-
-layout(push_constant) uniform PushConstants
+struct PushConstants
 {
     float deltaTime;
     float time;
     uint  emitterCount;
     uint  _pad;
-} pc;
+};
+
+[[vk::binding(0, 0)]]
+RWStructuredBuffer<Particle> particles;
+
+[[vk::binding(1, 0)]]
+StructuredBuffer<EmitterParams> emitters;
+
+[[vk::binding(2, 0)]]
+RWStructuredBuffer<uint> freelist;
+
+[[vk::push_constant]]
+ConstantBuffer<PushConstants> pc;
 
 uint wangHash(uint seed)
 {
@@ -95,16 +44,16 @@ float randRange(inout uint seed, float lo, float hi)
 }
 
 // Returns a random direction inside a cone defined by (axis, halfAngle).
-vec3 randConeDir(inout uint seed, vec3 axis, float halfAngle)
+float3 randConeDir(inout uint seed, float3 axis, float halfAngle)
 {
     // Sample a random azimuth and elevation within the cone.
     float theta = randFloat(seed) * 6.28318530718;   // 2pi
     float phi   = randFloat(seed) * halfAngle;
 
     // Build an arbitrary perpendicular basis around `axis`.
-    vec3 helper = abs(axis.x) < 0.9 ? vec3(1, 0, 0) : vec3(0, 1, 0);
-    vec3 perp0  = normalize(cross(axis, helper));
-    vec3 perp1  = cross(axis, perp0);
+    float3 helper = abs(axis.x) < 0.9 ? float3(1, 0, 0) : float3(0, 1, 0);
+    float3 perp0  = normalize(cross(axis, helper));
+    float3 perp1  = cross(axis, perp0);
 
     float sinPhi = sin(phi);
     return normalize(axis * cos(phi) + perp0 * (sinPhi * cos(theta))
@@ -117,25 +66,29 @@ void spawnParticle(uint idx, EmitterParams e, uint seed)
     float speed    = randRange(seed, e.minSpeed,    e.maxSpeed);
     float size     = randRange(seed, e.minSize,     e.maxSize);
 
-    vec3 dir = randConeDir(seed, e.direction.xyz, e.direction.w);
-    vec3 vel = dir * speed;
+    float3 dir = randConeDir(seed, e.direction.xyz, e.direction.w);
+    float3 vel = dir * speed;
 
-    particles[idx].position  = vec4(e.position.xyz, lifetime);
-    particles[idx].velocity  = vec4(vel, lifetime);        // w stores total lifetime
+    particles[idx].position  = float4(e.position.xyz, lifetime);
+    particles[idx].velocity  = float4(vel, lifetime);        // w stores total lifetime
     particles[idx].color     = e.colorStart;
-    particles[idx].size      = vec2(size, size);
+    particles[idx].size      = float2(size, size);
     particles[idx].rotation  = randFloat(seed) * 6.28318530718;
 }
 
-void main()
+[numthreads(256, 1, 1)]
+void main(uint3 globalThreadID : SV_DispatchThreadID)
 {
-    uint idx = gl_GlobalInvocationID.x;
+    uint idx = globalThreadID.x;
 
     // Guard: threads beyond the particle budget do nothing.
     // MAX_TOTAL_PARTICLES is baked into the dispatch count on the CPU.
     // We rely on the CPU ensuring groups*256 >= MAX_TOTAL_PARTICLES and
     // simply discard out-of-range threads.
-    if (idx >= uint(particles.length()))
+    uint particleCount;
+    uint stride;
+    particles.GetDimensions(particleCount, stride);
+    if (idx >= particleCount)
         return;
 
     Particle p = particles[idx];
@@ -162,7 +115,7 @@ void main()
                 gravity = emitters[e].gravity;
 
                 // Colour interpolation
-                p.color = mix(emitters[e].colorStart, emitters[e].colorEnd, t);
+                p.color = lerp(emitters[e].colorStart, emitters[e].colorEnd, t);
 
                 // Size shrink: linear fade toward zero
                 p.size.x = p.size.y * (1.0 - t);
@@ -171,7 +124,7 @@ void main()
         }
 
         // Verlet integration (simple; replace with RK4 if needed)
-        p.velocity.xyz += vec3(0.0, gravity, 0.0) * pc.deltaTime;
+        p.velocity.xyz += float3(0.0, gravity, 0.0) * pc.deltaTime;
         p.position.xyz += p.velocity.xyz * pc.deltaTime;
 
         // Slow rotation over time
@@ -186,7 +139,7 @@ void main()
 
     // Branch B: particle is dead, try to claim it for an emitter that needs to spawn a new one.
     // We use a lock-free approach: atomically increment a shared counter to claim a "spawn ticket".
-    // Each emitter's allowed spawn count this frame is floor(emissionRate * deltaTime + accumulator), and the compute shader distributes tickets across the particle pool via modulo.
+    // Each emitter's allowed spawn count this frame is floor(emissionRate * deltaTime + accumulator), and the compute shader distributes tickets across the particle pool via fmodulo.
     // No CPU readback is required.
     for (uint e = 0; e < pc.emitterCount; ++e)
     {
@@ -208,7 +161,8 @@ void main()
             break;
 
         // Claim one spawn ticket atomically.
-        uint ticket = atomicAdd(freelistHead, 1u);
+        uint ticket;
+        InterlockedAdd(freelist[0], 1u, ticket);
         if (ticket >= desired)
         {
             // All tickets for this emitter already claimed this frame.

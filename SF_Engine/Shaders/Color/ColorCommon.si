@@ -1,15 +1,15 @@
 #ifndef SF_COLOR_MATH_GLSL
 #define SF_COLOR_MATH_GLSL
 
-const float PI       = 3.14159265358979323846;
-const float TWO_PI   = 6.28318530717958647692;
-const float HALF_PI  = 1.57079632679489661923;
-const float INV_PI   = 0.31830988618379067154;
-const float EPSILON  = 1e-6;
+const static float PI       = 3.14159265358979323846;
+const static float TWO_PI   = 6.28318530717958647692;
+const static float HALF_PI  = 1.57079632679489661923;
+const static float INV_PI   = 0.31830988618379067154;
+const static float EPSILON  = 1e-6;
 
 
 #define saturate(x) clamp((x), 0.0, 1.0)
-#define lerp(a,b,t) mix(a,b,t)
+#define lerp(a,b,t) lerp(a,b,t)
 #define rcp(x) (1.0 / (x))
 
 #define DEG2RAD(x) ((x) * PI / 180.0)
@@ -30,13 +30,13 @@ float Pow5(float x)
     return x2 * x2 * x;
 }
 
-vec2 Pow2(vec2 v) { return v * v; }
-vec3 Pow2(vec3 v) { return v * v; }
-vec4 Pow2(vec4 v) { return v * v; }
+float2 Pow2(float2 v) { return v * v; }
+float3 Pow2(float3 v) { return v * v; }
+float4 Pow2(float4 v) { return v * v; }
 
-vec2 Pow3(vec2 v) { return v * v * v; }
-vec3 Pow3(vec3 v) { return v * v * v; }
-vec4 Pow3(vec4 v) { return v * v * v; }
+float2 Pow3(float2 v) { return v * v * v; }
+float3 Pow3(float3 v) { return v * v * v; }
+float4 Pow3(float4 v) { return v * v * v; }
 float Pow6(float x)
 {
     float x2 = x * x;
@@ -44,15 +44,15 @@ float Pow6(float x)
 }
 
 
-float mean(vec3 v) { return (v.x + v.y + v.z) / 3.0; }
+float mean(float3 v) { return (v.x + v.y + v.z) / 3.0; }
 
 
-float Max3(vec3 v)
+float Max3(float3 v)
 {
     return max(max(v.x, v.y), v.z);
 }
 
-float Min3(vec3 v)
+float Min3(float3 v)
 {
     return min(min(v.x, v.y), v.z);
 }
@@ -86,9 +86,9 @@ float Smoother01(float x)
            (x * (x * 6.0 - 15.0) + 10.0);
 }
 
-float Luminance(vec3 c)
+float Luminance(float3 c)
 {
-    return dot(c, vec3(
+    return dot(c, float3(
         0.2126,
         0.7152,
         0.0722
@@ -96,24 +96,24 @@ float Luminance(vec3 c)
 }
 
 
-vec3 LinearToGamma(vec3 c)
+float3 LinearToGamma(float3 c)
 {
-    return pow(max(c, 0.0), vec3(1.0 / 2.2));
+    return pow(max(c, 0.0), float3(1.0 / 2.2));
 }
 
-vec3 GammaToLinear(vec3 c)
+float3 GammaToLinear(float3 c)
 {
-    return pow(max(c, 0.0), vec3(2.2));
+    return pow(max(c, 0.0), float3(2.2));
 }
 
-vec3 SafeNormalize(vec3 v)
+float3 SafeNormalize(float3 v)
 {
     float len2 = dot(v, v);
 
     if (len2 < EPSILON)
-        return vec3(0.0);
+        return float3(0.0);
 
-    return v * inversesqrt(len2);
+    return v * rsqrt(len2);
 }
 
 float SafeRcp(float x)
@@ -123,26 +123,26 @@ float SafeRcp(float x)
         : 0.0;
 }
 
-float DistanceSquared(vec3 a, vec3 b)
+float DistanceSquared(float3 a, float3 b)
 {
-    vec3 d = a - b;
+    float3 d = a - b;
     return dot(d, d);
 }
 
-float DistanceSquared(vec2 a, vec2 b)
+float DistanceSquared(float2 a, float2 b)
 {
-    vec2 d = a - b;
+    float2 d = a - b;
     return dot(d, d);
 }
 
-vec3 ReinhardToneMap(vec3 color)
+float3 ReinhardToneMap(float3 color)
 {
     return color / (1.0 + color);
 }
 
-vec3 Exposure(vec3 color, float exposure)
+float3 Exposure(float3 color, float exposure)
 {
-    return vec3(1.0) - exp(-color * exposure);
+    return float3(1.0) - exp(-color * exposure);
 }
 
 float HenyeyGreenstein(float cosTheta, float g)

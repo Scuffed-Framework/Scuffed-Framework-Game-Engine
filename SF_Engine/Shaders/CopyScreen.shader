@@ -1,24 +1,27 @@
-Shader "CopyScreen"
+[[vk::binding(0, 1)]]
+[[vk::image_format("rgba16f")]]
+RWTexture2D<float4> resultColor;
+
+[[vk::binding(1, 1)]]
+[[vk::image_format("r32f")]]
+RWTexture2D<float> resultDepth;
+
+[[vk::binding(2, 1)]]
+Texture2D<float4> samplerColor;
+
+[[vk::binding(3, 1)]]
+Texture2D<float> samplerDepth;
+
+[numthreads(8, 8, 1)]
+void main(uint3 globalThreadID : SV_DispatchThreadID)
 {
-    ComputeShader
-    {
-        #version 450
-
-        layout (local_size_x = 8, local_size_y = 8) in;
-        layout (set = 1, binding = 0, rgba16f)      uniform image2D resultColor;
-        layout (set = 1, binding = 1, r32f)         uniform image2D resultDepth;
-        layout (set = 1, binding = 2)               uniform sampler2D samplerDepth;
-        layout (set = 1, binding = 3)               uniform sampler2D samplerColor;
-
-
-        void main()
-        {
-            ivec2 dimensions = imageSize(resultColor);
-            ivec2 screenCoordinates = ivec2(gl_GlobalInvocationID.xy); // It is a uvec3
-            if (screenCoordinates.x >= dimensions.x || screenCoordinates.y >= dimensions.y) return;
-            
-            imageStore(resultColor, screenCoordinates, texelFetch(samplerColor, screenCoordinates, 0));
-            imageStore(resultDepth, screenCoordinates, texelFetch(samplerDepth, screenCoordinates, 0));
-        }
-    }
+    int2 dimensions;
+    resultColor.GetDimensions(dimensions.x, dimensions.y);
+    int2 screenCoordinates = int2(globalThreadID.xy);
+    
+    if (screenCoordinates.x >= dimensions.x || screenCoordinates.y >= dimensions.y) 
+        return;
+    
+    resultColor[screenCoordinates] = samplerColor.Load(int3(screenCoordinates, 0));
+    resultDepth[screenCoordinates] = samplerDepth.Load(int3(screenCoordinates, 0)).r;
 }

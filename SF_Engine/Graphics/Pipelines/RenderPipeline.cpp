@@ -130,67 +130,43 @@ namespace SF::Engine
 
         Shaders::ShaderParser parser;
         Log::Info("Loading shader: {} (cwd={})", shaderPath.string(),
-                  std::filesystem::current_path().string());
+                std::filesystem::current_path().string());
         auto parsedShaderOpt = parser.parse(shaderPath.string());
 
         if (!parsedShaderOpt)
-            throw std::runtime_error("Failed to parse shader '" + shaderPath.string() + "': " + parser.getLastError());
+            throw std::runtime_error("Failed to parse shader '" + shaderPath.string() +
+                                    "': " + parser.getLastError());
 
         Shaders::ParsedShader &parsedShader = *parsedShaderOpt;
 
-        std::vector<uint32_t> vertexSpirv;
-        bool hasVertexShader = false;
-        for (const auto &s : parsedShader.stages)
+        auto compiledOpt = parser.compileAll(parsedShader, defines);
+        if (!compiledOpt)
+            throw std::runtime_error("Failed to compile shader '" + shaderPath.string() +
+                                    "': " + parser.getLastError());
+
+        std::vector<uint32_t> vertexSpirv, fragmentSpirv, tessCtrlSpv, tessEvalSpv;
+        bool hasVertexShader = false, hasFragmentShader = false;
+
+        for (auto &c : *compiledOpt)
         {
-            if (s.stage == Shaders::ShaderStage::Vertex)
+            switch (c.stage)
             {
-                auto compiledOpt = parser.compile(parsedShader, Shaders::ShaderStage::Vertex);
-                if (!compiledOpt)
-                    throw std::runtime_error("Failed to compile vertex shader: " + parser.getLastError());
-                vertexSpirv = std::move(compiledOpt->spirv);
+            case Shaders::ShaderStage::Vertex:
+                vertexSpirv = std::move(c.spirv);
                 hasVertexShader = true;
                 break;
-            }
-        }
-
-        std::vector<uint32_t> fragmentSpirv;
-        bool hasFragmentShader = false;
-        for (const auto &s : parsedShader.stages)
-        {
-            if (s.stage == Shaders::ShaderStage::Fragment)
-            {
-                auto compiledOpt = parser.compile(parsedShader, Shaders::ShaderStage::Fragment);
-                if (!compiledOpt)
-                    throw std::runtime_error("Failed to compile fragment shader: " + parser.getLastError());
-                fragmentSpirv = std::move(compiledOpt->spirv);
+            case Shaders::ShaderStage::Fragment:
+                fragmentSpirv = std::move(c.spirv);
                 hasFragmentShader = true;
                 break;
-            }
-        }
-
-        std::vector<uint32_t> tessEvalSpv;
-        for (const auto &s : parsedShader.stages)
-        {
-            if (s.stage == Shaders::ShaderStage::TessellationEvaluation)
-            {
-                auto compiledOpt = parser.compile(parsedShader, Shaders::ShaderStage::TessellationEvaluation);
-                if (!compiledOpt)
-                    throw std::runtime_error("Failed to compile tessellation evaluation shader: " + parser.getLastError());
-                tessEvalSpv = std::move(compiledOpt->spirv);
+            case Shaders::ShaderStage::TessellationControl:
+                tessCtrlSpv = std::move(c.spirv);
                 break;
-            }
-        }
-
-        std::vector<uint32_t> tessCtrlSpv;
-        for (const auto &s : parsedShader.stages)
-        {
-            if (s.stage == Shaders::ShaderStage::TessellationControl)
-            {
-                auto compiledOpt = parser.compile(parsedShader, Shaders::ShaderStage::TessellationControl);
-                if (!compiledOpt)
-                    throw std::runtime_error("Failed to compile tessellation control shader: " + parser.getLastError());
-                tessCtrlSpv = std::move(compiledOpt->spirv);
+            case Shaders::ShaderStage::TessellationEvaluation:
+                tessEvalSpv = std::move(c.spirv);
                 break;
+            default:
+                break; // Compute/Geometry entries in the same file aren't consumed here
             }
         }
 

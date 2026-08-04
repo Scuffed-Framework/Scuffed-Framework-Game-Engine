@@ -1,11 +1,16 @@
 #include "SharedFunctions.hpp"
-#include <glm/glm.hpp>
-#include <Graphics/Windows/WindowManager.hpp>
+
 #include <Controllers/CameraController.hpp>
 #include <Engine/Engine.hpp>
-#include <Scene/SceneManager.hpp>
+
+#include <Graphics/Windows/WindowManager.hpp>
 #include <Graphics/Lighting/LightManager.hpp>
+#include <Graphics/Descriptors/DescriptorSet.hpp>
+
+#include <Scene/SceneManager.hpp>
 #include <Math/Time/Time.hpp>
+#include <glm/glm.hpp>
+
 
 namespace SF::Engine
 {
@@ -119,5 +124,18 @@ namespace SF::Engine
     {
         auto *rs = RenderSystem::Get();
         return dynamic_cast<const ImageDepth *>(rs->GetAttachment(attachmentName));
+    }
+
+    void BindSharedCameraData(int bind, int count, DescriptorSet* set)
+    {
+        VkDescriptorBufferInfo bi{GetSharedCameraBuffer().GetBuffer(), 0, VK_WHOLE_SIZE};
+        VkWriteDescriptorSet w0{};
+        w0.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w0.dstSet = set->GetDescriptorSet();
+        w0.dstBinding = bind;
+        w0.descriptorCount = count;
+        w0.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        w0.pBufferInfo = &bi;
+        DescriptorSet::Update({w0});
     }
 }

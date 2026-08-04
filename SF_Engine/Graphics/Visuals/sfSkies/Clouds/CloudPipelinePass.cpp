@@ -189,6 +189,8 @@ namespace SF::Engine
         w8.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         w8.pImageInfo = &b8;
 
+        BindSharedCameraData(11, 1, descSet_.get());
+
         DescriptorSet::Update({w0, w1, w2, w3, w4, w5, w6, w7, w8});
     }
 
@@ -215,9 +217,8 @@ namespace SF::Engine
         frameData_.bottomRadius = params_.bottomRadius;
         frameData_.topRadius = params_.topRadius;
         frameData_.renderUnitRadius = params_.renderUnitRadius;
-        frameData_._p0 = 0.0f;
         frameData_.screenSize = screenSize;
-        frameData_._p1 = glm::vec2(0.0f);
+        frameData_.sunCol = glm::vec4(1);
     }
 
     void CloudPipelinePass::PreRender(const CommandBuffer &cmd)

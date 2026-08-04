@@ -1,15 +1,24 @@
+#ifndef CAMERA_S
+#define CAMERA_S
+
 struct Camera
 {
+    // 16 bytes
     float aspectRatio;
-    vec4 cameraPosition;
     float deltaTime;
-    float farPlane;
-    mat4 inverseProjection;
-    mat4 inverseView;
-    float nearPlane;
-    mat4 projection;
-    int screenHeight;
     int screenWidth;
-    mat4 view;
-    mat4 viewProjection;
+    int screenHeight;
+
+    // 16 bytes
+    float4 cameraPosition;
+
+    // 64 bytes each
+    float4x4 inverseProjection;
+    float4x4 inverseView;
+    float4x4 projection;
+    float4x4 view;
+    float4x4 viewProjection;
+    float4x4 prevViewProjection;
 };
+
+#endif
