@@ -38,6 +38,16 @@ namespace SF::Engine
             SetFarPlaneInfinite(true); // oopsies
         }
 
+        TypeId GetTypeId() const override
+        {
+            return TypeInformation<Component>::GetTypeId<EditorCamera>();
+        }
+
+        std::string_view GetTypeName() const override
+        {
+            return TypeInformation<Component>::GetTypeName<EditorCamera>();
+        }
+
         void Update(Window *window, float dt, bool /*imguiWantsMouse*/, bool imguiWantsKeyboard) override
         {
             if (!window)

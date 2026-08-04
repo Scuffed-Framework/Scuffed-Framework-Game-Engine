@@ -3,8 +3,7 @@
 #include <memory>
 #include <Graphics/Mesh/Mesh.hpp>
 #include <Graphics/Lighting/LightingTypes.hpp>
-#include <Components/TransformComponent.hpp>
-#include <XML/XMLReader.hpp>
+#include <Math/Transform.hpp>
 #include <Graphics/Lighting/Light.hpp>
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp>
 
@@ -14,7 +13,7 @@ namespace SF::Engine
     {
     public:
         std::string name;
-        TransformComponent transform;
+        Transform transform;
         MeshMaterial material;
         std::shared_ptr<Mesh> mesh;
         bool enabled = true;
@@ -54,7 +53,7 @@ namespace SF::Engine
     struct SceneLight : public Serializable
     {
         std::string name;
-        TransformComponent transform;
+        Transform transform;
         Light light;
 
         void Serialize(XMLNode &node) const override

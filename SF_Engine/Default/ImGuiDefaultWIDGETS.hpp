@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ImGui/ocornut/imgui.h>
-#include <Components/TransformComponent.hpp>
+#include <Math/Transform.hpp>
 #include <Graphics/Lighting/Light.hpp>
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp> // MeshMaterial
 
@@ -30,7 +30,7 @@ namespace SF::Engine
          * @param transform  Reference to the transform being edited : modified in-place.
          * @param id         Unique ImGui ID string (use entity name / index).
          */
-        static void Draw(TransformComponent &transform, const char *id = "##Transform");
+        static void Draw(Transform &transform, const char *id = "##Transform");
     };
 
     //
@@ -59,15 +59,5 @@ namespace SF::Engine
          * @param id     Unique ImGui ID string.
          */
         static void Draw(Light &light, const char *id = "##Light");
-    };
-
-    //
-    // Backwards-compat wrapper (old static API still compiles)
-    //
-    class ImGuiWidgets
-    {
-    public:
-        // Old signature : draws with internal static state (no external data).
-        static void TransformsWidget();
     };
 }

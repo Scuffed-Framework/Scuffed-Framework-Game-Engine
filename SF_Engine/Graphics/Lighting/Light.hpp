@@ -7,6 +7,7 @@
 #include <string>
 #include <XML/XMLReader.hpp>
 #include <Scene/SceneSerialization.hpp>
+#include <Components/Component.hpp>
 
 namespace SF::Engine
 {
@@ -14,7 +15,7 @@ namespace SF::Engine
      * @brief CPU-side light descriptor.  Add these to a LightSystem (or build
      *        the GpuLight array yourself) and upload via LightManager.
      */
-    struct Light : public Serializable
+    struct Light : public Component::Registrar<Light>
     {
         Lighting::LightType type = Lighting::LightType::Point;
 
@@ -47,6 +48,7 @@ namespace SF::Engine
 
         void Serialize(XMLNode &node) const override
         {
+            Component::Serialize(node);
             node.SetAttribute("name", name);
             node.SetAttribute("type", (int)type);
             node.SetAttribute("intensity", intensity);
@@ -73,6 +75,7 @@ namespace SF::Engine
 
         void Deserialize(const XMLNode &node) override
         {
+            Component::Deserialize(node);
             node.GetAttribute("name", name);
             int t = 0;
             node.GetAttribute("type", t);

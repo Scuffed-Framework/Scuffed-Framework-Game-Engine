@@ -18,8 +18,8 @@ namespace SF::Engine
 
     struct SceneRendererConfig
     {
-        bool enableAtmosphere = false;
-        AtmosphereParams atmosphereParams = []
+        bool enableAtmosphere = false; 
+        AtmosphereParams atmosphereParams /*Earth*/ = []
         {
             AtmosphereParams ap;
             ap.bottomRadius = 6371000.0f;

@@ -2,11 +2,10 @@
 
 #include <Camera/Camera.hpp>
 #include <LowLevel/Rocket.hpp>
-#include "EntityHolder.hpp"
+#include <Entity/EntityHolder.hpp>
 #include "SystemHolder.hpp"
 
 #include <Graphics/Mesh/Mesh.hpp>
-#include <Components/TransformComponent.hpp>
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp>
 #include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 
@@ -28,7 +27,7 @@ namespace SF::Engine
         friend class SceneRenderer;
 
     public:
-        explicit Scene(std::unique_ptr<CameraController> &&cameraController, std::string name, SceneRendererConfig cfg = {});
+        explicit Scene(::std::unique_ptr<CameraController> &&cameraController, std::string name, SceneRendererConfig cfg = {});
         virtual ~Scene() = default;
 
         virtual void Start() = 0;
@@ -48,10 +47,10 @@ namespace SF::Engine
         void RemoveSystem() { systems.Remove<T>(); }
         void ClearSystems();
 
-        Entity GetEntity(const std::string &name) const;
-        Entity CreateEntity();
-        Entity CreatePrefabEntity(const std::string &filename);
-        std::vector<Entity> QueryAllEntities();
+        Entity* GetEntity(const std::string& name) const;
+        Entity* CreateEntity();
+        Entity* CreatePrefabEntity(const std::string& filename);
+        std::vector<Entity*> QueryAllEntities();
 
         template <typename T>
         T *GetComponent(bool allowDisabled = false)

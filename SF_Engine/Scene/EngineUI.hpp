@@ -6,7 +6,6 @@
 #include <cstdio>
 
 #include <Scene/Types.hpp>
-#include <Components/TransformComponent.hpp>
 #include <Default/ImGuiDefaultWIDGETS.hpp>
 
 #include <Commands/CommandsWindow.hpp>

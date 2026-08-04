@@ -1,8 +1,11 @@
 #pragma once
 
 #include <Math/Vectors/Vector.hpp>
-#include <Scene/Component.hpp>
+#include <Components/Component.hpp>
 #include <Math/Matrix/Matrix4.hpp>
+#include <XML/XMLReader.hpp>
+#include <Scene/SceneSerialization.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 namespace SF::Engine
 {
@@ -21,7 +24,7 @@ namespace SF::Engine
          * @param scale The scale.
          */
         Transform(const Vector3float &position = {}, const Vector3float &rotation = {}, const Vector3float &scale = Vector3float(1.0f));
-        ~Transform();
+        ~Transform() = default;
 
         Matrix4float GetWorldMatrix() const;
         Vector3float GetPosition() const;
@@ -37,12 +40,6 @@ namespace SF::Engine
         const Vector3float &GetLocalScale() const { return scale; }
         void SetLocalScale(const Vector3float &localScale) { scale = localScale; }
 
-        Transform *GetParent() const { return parent; }
-        void SetParent(Transform *parent);
-        void SetParent(Entity *parent);
-
-        const std::vector<Transform *> &GetChildren() const { return children; }
-
         bool operator==(const Transform &rhs) const;
         bool operator!=(const Transform &rhs) const;
 
@@ -50,18 +47,45 @@ namespace SF::Engine
 
         Transform &operator*=(const Transform &rhs);
 
-    private:
-        const Transform *GetWorldTransform() const;
-
-        void AddChild(Transform *child);
-        void RemoveChild(Transform *child);
+        Transform GetWorldTransform() const;
 
         Vector3float position;
         Vector3float rotation;
         Vector3float scale;
 
-        Transform *parent = nullptr;
-        std::vector<Transform *> children;
         mutable Transform *worldTransform = nullptr;
+        void Serialize(XMLNode &node) const override
+        {
+            Component::Serialize(node);
+            SerializeVec3(node, "position", position);
+            SerializeVec3(node, "rotation", rotation);
+            SerializeVec3(node, "scale", scale);
+        }
+
+        void Deserialize(const XMLNode &node) override
+        {
+            Component::Deserialize(node);
+            position = DeserializeVec3(node, "position");
+            rotation = DeserializeVec3(node, "rotation");
+            scale = DeserializeVec3(node, "scale", {1.f, 1.f, 1.f});
+        }
+
+        Matrix4float ToMatrix() const
+        {
+            Matrix4float T = glm::translate(Matrix4float(1.0f), position);
+            Matrix4float R = glm::yawPitchRoll(
+                glm::radians(rotation.y),
+                glm::radians(rotation.x),
+                glm::radians(rotation.z));
+            Matrix4float S = glm::scale(Matrix4float(1.0f), scale);
+            return T * R * S;
+        }
+
+        void Reset()
+        {
+            position = {0.0f, 0.0f, 0.0f};
+            rotation = {0.0f, 0.0f, 0.0f};
+            scale = {1.0f, 1.0f, 1.0f};
+        }
     };
 }

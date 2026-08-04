@@ -3,15 +3,19 @@
 #include <Graphics/Buffers/Buffer.hpp>
 #include <Graphics/Commands/CommandBuffer.hpp>
 #include <Graphics/Mesh/Vertex.hpp>
+#include <XML/XMLReader.hpp>
+#include <Components/Component.hpp>
 #include <span>
 #include <vector>
+#include <Scene/SceneSerialization.hpp>
+#include <ID/GUID.hpp>
 
 namespace SF::Engine
 {
     /**
      * @brief GPU mesh : owns vertex and index buffers, knows how to bind and draw itself.
      */
-    class Mesh
+    class Mesh : public Component::Registrar<Mesh>
     {
     public:
         /**
@@ -44,5 +48,22 @@ namespace SF::Engine
         std::unique_ptr<Buffer> indexBuffer_;
         uint32_t vertexCount_ = 0;
         uint32_t indexCount_ = 0;
+
+        GUID ID;
+
+    public:
+        void Serialize(XMLNode &node) const override
+        {
+            Component::Serialize(node);
+            XMLNode mesh = node.AddChild("Mesh");
+            mesh.SetAttribute("GUID", ID.ToString());
+        }
+
+        void Deserialize(const XMLNode &node) override
+        {
+            Component::Deserialize(node);
+            XMLNode mesh = node.GetChild("Mesh");
+            mesh.GetAttribute("GUID", ID);
+        }
     };
 }

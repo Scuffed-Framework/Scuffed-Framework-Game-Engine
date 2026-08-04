@@ -1,6 +1,6 @@
 #include "AudioClip.hpp"
 
-#ifdef ACID_BUILD_MACOS
+#ifdef _PLATFORM_MACOS
 #include <OpenAL/al.h>
 #else
 #include <al.h>

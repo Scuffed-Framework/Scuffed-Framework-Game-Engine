@@ -2,8 +2,8 @@
 
 #include <Math/Transform.hpp>
 #include <Math/Vectors/Vector.hpp>
-#include <Scene/Entity.hpp>
-#include <UtilityClasses/NoCopy.hpp>
+#include <Entity/Entity.hpp>
+#include <Components/Component.hpp>
 #include <memory>
 #include "Audio.hpp"
 #include "SoundBuffer.hpp"
@@ -13,8 +13,11 @@ namespace SF::Engine
     /**
      * @brief Component that represents a playable AudioClip.
      */
-    struct AudioClip : NoCopy
+    class AudioClip : public Component::Registrar<AudioClip>
     {
+        inline static const bool Registered = Register("audioClip");
+
+    public:
         AudioClip() = default;
         explicit AudioClip(const std::string& filename,
                            const Audio::Type& type = Audio::Type::General, bool begin = false,
@@ -32,25 +35,13 @@ namespace SF::Engine
         void SetDirection(const Vector3float& direction);
         void SetVelocity(const Vector3float& velocity);
 
-        const Audio::Type& GetType() const
-        {
-            return type;
-        }
-        void SetType(const Audio::Type& type)
-        {
-            this->type = type;
-        }
+        const Audio::Type& GetType() const { return type; }
+        void SetType(const Audio::Type& type) { this->type = type; }
 
-        float GetGain() const
-        {
-            return gain;
-        }
+        float GetGain() const { return gain; }
         void SetGain(float gain);
 
-        float GetPitch() const
-        {
-            return pitch;
-        }
+        float GetPitch() const { return pitch; }
         void SetPitch(float pitch);
 
         std::shared_ptr<SoundBuffer> buffer;
@@ -70,22 +61,26 @@ namespace SF::Engine
     public:
         static void Update(EntityRegistry& registry)
         {
-            // Update all AudioClips with transforms
-            auto view = registry.View<AudioClip, Transform>();
-            view.each([](auto entity, AudioClip& AudioClip, Transform& transform)
-                      { AudioClip.SetPosition(transform.GetPosition()); });
+            registry.ForEach([](Entity* entity)
+            {
+                auto* clip = entity->GetComponent<AudioClip>();
+                auto* transform = entity->GetComponent<Transform>();
+                if (clip && transform)
+                {
+                    clip->SetPosition(transform->GetPosition());
+                }
+            });
         }
 
         static void UpdateVolumes(EntityRegistry& registry)
         {
-            // Update volumes when audio settings change
-            auto view = registry.View<AudioClip>();
-            view.each(
-                [](auto entity, AudioClip& AudioClip)
+            registry.ForEach([](Entity* entity)
+            {
+                if (auto* clip = entity->GetComponent<AudioClip>())
                 {
-                    AudioClip.SetGain(
-                        AudioClip.GetGain());  // This will recalculate with current Audio volume
-                });
+                    clip->SetGain(clip->GetGain()); // recompute with current Audio volume
+                }
+            });
         }
     };
 }

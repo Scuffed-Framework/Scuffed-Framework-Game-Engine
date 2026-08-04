@@ -9,58 +9,22 @@ namespace SF::Engine
     {
     }
 
-    Transform::~Transform()
-    {
-        delete worldTransform;
-
-        for (auto& child : children) child->parent = nullptr;
-
-        if (parent) parent->RemoveChild(this);
-    }
-
     Matrix4float Transform::GetWorldMatrix() const
     {
-        auto worldTransform = GetWorldTransform();
+        Transform world = GetWorldTransform();
 
-        Matrix4float matrix = Matrix4float(1.0f);
-        matrix = glm::translate(matrix, worldTransform->position);
-        matrix = glm::rotate(matrix, worldTransform->rotation.x, Vector3float(1, 0, 0));
-        matrix = glm::rotate(matrix, worldTransform->rotation.y, Vector3float(0, 1, 0));
-        matrix = glm::rotate(matrix, worldTransform->rotation.z, Vector3float(0, 0, 1));
-        matrix = glm::scale(matrix, worldTransform->scale);
-
+        Matrix4float matrix(1.0f);
+        matrix = glm::translate(matrix, world.position);
+        matrix = glm::rotate(matrix, world.rotation.x, Vector3float(1, 0, 0));
+        matrix = glm::rotate(matrix, world.rotation.y, Vector3float(0, 1, 0));
+        matrix = glm::rotate(matrix, world.rotation.z, Vector3float(0, 0, 1));
+        matrix = glm::scale(matrix, world.scale);
         return matrix;
     }
 
-    Vector3float Transform::GetPosition() const
-    {
-        return GetWorldTransform()->position;
-    }
-
-    Vector3float Transform::GetRotation() const
-    {
-        return GetWorldTransform()->rotation;
-    }
-
-    Vector3float Transform::GetScale() const
-    {
-        return GetWorldTransform()->scale;
-    }
-
-    void Transform::SetParent(Transform* parent)
-    {
-        if (this->parent) this->parent->RemoveChild(this);  // FIX: Remove from OLD parent
-
-        this->parent = parent;
-
-        if (parent) parent->AddChild(this);
-    }
-
-    // REMOVE THIS METHOD - it won't work with entt::entity
-    // void Transform::SetParent(Entity* parent)
-    // {
-    //     SetParent(parent->GetComponent<Transform>());
-    // }
+    Vector3float Transform::GetPosition() const { return GetWorldTransform().position; }
+    Vector3float Transform::GetRotation() const { return GetWorldTransform().rotation; }
+    Vector3float Transform::GetScale()    const { return GetWorldTransform().scale; }
 
     bool Transform::operator==(const Transform& rhs) const
     {
@@ -85,35 +49,21 @@ namespace SF::Engine
         return *this = *this * rhs;
     }
 
-    const Transform* Transform::GetWorldTransform() const
+    Transform Transform::GetWorldTransform() const
     {
-        if (!parent)
+        Transform local(position, rotation, scale);
+
+        if (Entity* owner = GetOwner())
         {
-            if (worldTransform)
+            if (Entity* parent = owner->GetParent())
             {
-                delete worldTransform;
-                worldTransform = nullptr;
+                if (Transform* parentTransform = parent->GetComponent<Transform>())
+                {
+                    return (*parentTransform) * local; // recurse up the chain
+                }
             }
-
-            return this;
         }
 
-        if (!worldTransform)
-        {
-            worldTransform = new Transform();
-        }
-
-        *worldTransform = *parent->GetWorldTransform() * *this;
-        return worldTransform;
-    }
-
-    void Transform::AddChild(Transform* child)
-    {
-        children.emplace_back(child);
-    }
-
-    void Transform::RemoveChild(Transform* child)
-    {
-        children.erase(std::remove(children.begin(), children.end(), child), children.end());
+        return local; // root, or parent has no Transform
     }
 }

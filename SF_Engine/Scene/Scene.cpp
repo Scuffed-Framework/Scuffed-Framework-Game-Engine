@@ -163,10 +163,10 @@ namespace SF::Engine
     void Scene::ClearSystems() { systems.Clear(); }
     void Scene::ClearEntities() { entities.Clear(); }
 
-    Entity Scene::GetEntity(const std::string &name) const { return entities.GetEntity(name); }
-    Entity Scene::CreateEntity() { return entities.CreateEntity(); }
-    Entity Scene::CreatePrefabEntity(const std::string &f) { return entities.CreatePrefabEntity(f); }
-    std::vector<Entity> Scene::QueryAllEntities() { return entities.QueryAll(); }
+    Entity* Scene::GetEntity(const std::string &name) const { return entities.GetEntity(name); }
+    Entity* Scene::CreateEntity() { return entities.CreateEntity(); }
+    Entity* Scene::CreatePrefabEntity(const std::string &f) { return entities.CreatePrefabEntity(f); }
+    std::vector<Entity*> Scene::QueryAllEntities() { return entities.QueryAll(); }
 
     const ImageDepth *Scene::GetDepthTexture()
     {

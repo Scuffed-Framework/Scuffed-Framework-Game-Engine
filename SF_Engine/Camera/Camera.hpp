@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Components/Component.hpp>
 #include <Math/Math.hpp>
 #include <Physics/Frustum.hpp>
 #include <Physics/Ray.hpp>
@@ -13,7 +14,7 @@ namespace SF::Engine
      * behaviour.
      */
 
-    class Camera
+    class Camera : public Component::Registrar<Camera>
     {
     public:
         Camera()
@@ -43,8 +44,15 @@ namespace SF::Engine
               infiniteFarPlane(infFarPlane)
         {
         }
+        TypeId GetTypeId() const override
+        {
+            return TypeInformation<Component>::GetTypeId<Camera>();
+        }
 
-        virtual ~Camera() = default;
+        std::string_view GetTypeName() const override
+        {
+            return TypeInformation<Component>::GetTypeName<Camera>();
+        }
 
         virtual void Update(Window *, float /*DeltaTime*/, bool /*imguiWantsMouse*/, bool /*imguiWantsKeyboard*/) = 0;
         virtual void Start() {}

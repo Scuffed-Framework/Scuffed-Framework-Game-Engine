@@ -11,6 +11,8 @@ namespace SF::Engine
         if (vertices.empty())
             throw std::runtime_error("Mesh: vertex data is empty");
 
+        ID = GUID::Generate();
+        
         vertexBuffer_ = std::make_unique<Buffer>(
             sizeof(Vertex) * vertices.size(),
             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
