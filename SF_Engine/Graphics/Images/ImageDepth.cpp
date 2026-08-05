@@ -8,7 +8,7 @@ namespace SF::Engine
         VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT, VK_FORMAT_D24_UNORM_S8_UINT,
         VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D16_UNORM};
 
-    ImageDepth::ImageDepth(const Vector2Uint &extent, VkSampleCountFlagBits samples)
+    ImageDepth::ImageDepth(const UVec2 &extent, VkSampleCountFlagBits samples)
         : Image(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, samples,
                 VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,

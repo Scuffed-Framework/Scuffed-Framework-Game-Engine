@@ -53,8 +53,8 @@ namespace SF::Engine
         glm::vec2 screenSize = wnd ? glm::vec2(wnd->GetSize().x, wnd->GetSize().y)
                                    : glm::vec2(1280.0f, 720.0f);
 
-        glm::mat4 view = cam->GetView();
-        glm::mat4 proj = cam->GetProjection(aspect);
+        Mat4 view = cam->GetView();
+        Mat4 proj = cam->GetProjection(aspect);
 
         scene->SyncLightTransforms();
         scene->RebuildLightManager();
@@ -63,11 +63,11 @@ namespace SF::Engine
         fd.view = view;
         fd.proj = proj;
         fd.viewProj = proj * view;
-        fd.invView = glm::inverse(view);
-        fd.invProj = glm::inverse(proj);
-        fd.invViewProj = glm::inverse(fd.viewProj);
-        fd.cameraPos = glm::vec4(cam->GetPosition(), cam->GetNearPlane());
-        fd.cameraDir = glm::vec4(cam->GetFront(), cam->GetFarPlane());
+        fd.invView = inverse(view);
+        fd.invProj = inverse(proj);
+        fd.invViewProj = inverse(fd.viewProj);
+        fd.cameraPos = Vec4(cam->GetPosition(), cam->GetNearPlane());
+        fd.cameraDir = Vec4(cam->GetFront(), cam->GetFarPlane());
         fd.screenSize = screenSize;
         fd.invScreenSize = 1.0f / screenSize;
         fd.nearPlane = cam->GetNearPlane();
@@ -77,24 +77,24 @@ namespace SF::Engine
         fd.lightCount = lightManager_->GetLightCount();
         fd.frameIndex = scene->frameIndex_++;
 
-        glm::vec3 sunDir = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f));
-        glm::vec3 sunColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        Vec3 sunDir = normalize(Vec3(0.0f, 0.0f, 0.0f));
+        Vec3 sunColor = Vec3(1.0f, 1.0f, 1.0f);
         float sunInt = 1.0f;
         if (!scene->lights_.empty() &&
             scene->lights_[0].light.type == Lighting::LightType::Directional)
         {
-            glm::vec3 ld = glm::normalize(scene->lights_[0].light.direction);
+            Vec3 ld = normalize(scene->lights_[0].light.direction);
             sunDir = -ld;
             sunColor = scene->lights_[0].light.color;
             sunInt = scene->lights_[0].light.intensity;
         }
-        fd.sunDirIntensity = glm::vec4(sunDir, sunInt);
+        fd.sunDirIntensity = Vec4(sunDir, sunInt);
 
         lightManager_->Upload(fd);
 
         // Legacy single-planet centre, still used by CloudPipelinePass until it's
         // converted to per-planet data like AtmosphereController.
-        glm::vec3 planetCentre = {0.0f, -6371000.0f, 0.0f};
+        Vec3 planetCentre = {0.0f, -6371000.0f, 0.0f};
 
         for (auto &obj : scene->objects_)
         {
@@ -104,30 +104,30 @@ namespace SF::Engine
 
         if (atmoController && !atmoController->Empty())
         {
-            glm::vec3 atmoSun = sunDir;
+            Vec3 atmoSun = sunDir;
             if (!scene->lights_.empty() &&
                 scene->lights_[0].light.type == Lighting::LightType::Directional)
             {
-                glm::vec3 ld = glm::normalize(scene->lights_[0].light.direction);
+                Vec3 ld = normalize(scene->lights_[0].light.direction);
                 if (glm::length(ld) > 0.5f)
                     atmoSun = -ld;
             }
-            atmoController->SetFrameData(glm::inverse(proj), glm::inverse(view),
+            atmoController->SetFrameData(inverse(proj), inverse(view),
                                           cam->GetPosition(), atmoSun, screenSize);
         }
 
         if (cloudPass_)
         {
-            glm::vec3 cloudSun = sunDir;
+            Vec3 cloudSun = sunDir;
             if (!scene->lights_.empty() &&
                 scene->lights_[0].light.type == Lighting::LightType::Directional)
             {
-                glm::vec3 ld = glm::normalize(scene->lights_[0].light.direction);
+                Vec3 ld = normalize(scene->lights_[0].light.direction);
                 if (glm::length(ld) > 0.5f)
                     cloudSun = -ld;
             }
 
-            cloudPass_->SetFrameData(glm::inverse(proj), glm::inverse(view),
+            cloudPass_->SetFrameData(inverse(proj), inverse(view),
                                      cam->GetPosition(), planetCentre,
                                      cloudSun, screenSize);
         }

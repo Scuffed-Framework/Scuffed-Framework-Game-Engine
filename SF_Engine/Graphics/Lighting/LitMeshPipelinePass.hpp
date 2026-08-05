@@ -8,7 +8,7 @@
 #include <Graphics/Mesh/MeshFactory.hpp>
 #include "LightManager.hpp"
 #include "LightingTypes.hpp"
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <memory>
 #include <vector>
 #include <XML/XMLReader.hpp>
@@ -25,8 +25,8 @@ namespace SF::Engine
     // of the model matrix, avoiding a second mat4 in push constants.
     struct alignas(4) LitPushConstants
     {
-        glm::mat4 model;
-        glm::vec4 baseColor = {1, 1, 1, 1};
+        Mat4 model;
+        Vec4 baseColor = {1, 1, 1, 1};
         float roughnessFactor = 1.0f;
         float metallicFactor = 0.0f;
         float aoFactor = 1.0f;
@@ -45,7 +45,7 @@ namespace SF::Engine
         std::shared_ptr<Image2d> pbr;      // bind=6  (r=rough g=metal b=ao, white if null)
         std::shared_ptr<Image2d> emissive; // bind=7  (black if null)
 
-        glm::vec4 baseColor = {1, 1, 1, 1};
+        Vec4 baseColor = {1, 1, 1, 1};
         float roughnessFactor = 1.0f;
         float metallicFactor = 0.0f;
         float aoFactor = 1.0f;
@@ -136,7 +136,7 @@ namespace SF::Engine
     {
         std::shared_ptr<Mesh> mesh;
         MeshMaterial material;
-        glm::mat4 transform = glm::mat4(1.0f);
+        Mat4 transform = Mat4(1.0f);
     };
 
     /**
@@ -170,7 +170,7 @@ namespace SF::Engine
         /// Queue a mesh+material+transform for drawing this frame.
         void Submit(std::shared_ptr<Mesh> mesh,
                     const MeshMaterial &material,
-                    const glm::mat4 &transform);
+                    const Mat4 &transform);
 
         void Submit(const MeshInstance &instance);
 
@@ -194,7 +194,7 @@ namespace SF::Engine
         {
             std::shared_ptr<Mesh> mesh;
             MeshMaterial material;
-            glm::mat4 transform;
+            Mat4 transform;
         };
         std::vector<DrawCall> drawList_;
 

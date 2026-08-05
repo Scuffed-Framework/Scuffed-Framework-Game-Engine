@@ -10,12 +10,12 @@ namespace SF::Engine
 {
     struct SkyViewPushConstants
     {
-        glm::vec4 sunDir; // .xyz = direction, .w = intensity
+        Vec4 sunDir; // .xyz = direction, .w = intensity
         float cameraHeight;
         float bottomRadius;
         float topRadius;
         float _pad;
-        glm::vec4 cameraPos; // add: xyz = planet-relative metres, w = unused
+        Vec4 cameraPos; // add: xyz = planet-relative metres, w = unused
     };
 
     class SkyViewLUT

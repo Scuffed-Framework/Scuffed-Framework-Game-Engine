@@ -11,7 +11,7 @@ namespace SF::Engine::Animation
         Keyframe() = default;
         Keyframe(const ApplicationTime TimeStamp, std::map<std::string, JointTransform> Pose) : TimeStamp(TimeStamp), Pose(Pose) {}
 
-        void AddJointTransform(const std::string &jointNameId, const Matrix4float &jointLocalTransform) { Pose.emplace(jointNameId, jointLocalTransform); }
+        void AddJointTransform(const std::string &jointNameId, const Mat4 &jointLocalTransform) { Pose.emplace(jointNameId, jointLocalTransform); }
 
         const ApplicationTime &GetTimeStamp() const { return TimeStamp; }
 

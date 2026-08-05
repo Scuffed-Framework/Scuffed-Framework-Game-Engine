@@ -8,7 +8,7 @@
 #include "LUT/MultiScatterLUT.hpp"
 #include "LUT/SkyViewLUT.hpp"
 
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <memory>
 #include "../../Water/OceanPipelinePass.hpp"
 
@@ -28,11 +28,11 @@ namespace SF::Engine
         void Render(const CommandBuffer &commandBuffer) override;
 
         void SetSceneBuffers();
-        void SetFrameData(const glm::mat4 &invProj,
-                          const glm::mat4 &invView,
-                          const glm::vec3 &cameraPos,
-                          const glm::vec3 &planetPos,
-                          const glm::vec3 &sunDir,
+        void SetFrameData(const Mat4 &invProj,
+                          const Mat4 &invView,
+                          const Vec3 &cameraPos,
+                          const Vec3 &planetPos,
+                          const Vec3 &sunDir,
                           glm::vec2 screenSize);
 
         void SetParams(const AtmosphereParams &params) { params_ = params; }

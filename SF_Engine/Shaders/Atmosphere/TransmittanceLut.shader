@@ -13,7 +13,7 @@
 #include "Atmosphere/Atmosphere.si"
 
 [[vk::binding(0, 0)]]
-[[vk::image_format("rgba16")]]
+[[vk::image_format("rgba16f")]]
 RWTexture2D<float4> transmittanceLUT;
 
 void uvToParams(float2 uv, out float height, out float cosZenith) 

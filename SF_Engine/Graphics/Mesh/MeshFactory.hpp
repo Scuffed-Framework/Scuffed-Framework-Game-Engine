@@ -88,14 +88,14 @@ namespace SF::Engine::MeshFactory
             for (uint32_t j = 0; j <= slices; ++j)
             {
                 float theta = 2.0f * std::numbers::pi_v<float> * float(j) / float(slices);
-                glm::vec3 pos = {
+                Vec3 pos = {
                     std::sin(phi) * std::cos(theta),
                     std::cos(phi),
                     std::sin(phi) * std::sin(theta)
                 };
                 glm::vec2 uv  = {float(j)/float(slices), float(i)/float(stacks)};
-                glm::vec3 tan = {-std::sin(theta), 0, std::cos(theta)};
-                verts.push_back({pos, glm::normalize(pos), uv, tan});
+                Vec3 tan = {-std::sin(theta), 0, std::cos(theta)};
+                verts.push_back({pos, normalize(pos), uv, tan});
             }
         }
 

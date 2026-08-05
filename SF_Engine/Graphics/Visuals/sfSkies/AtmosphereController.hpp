@@ -4,7 +4,7 @@
 #include <Math/KVP.hpp>
 
 #include <TemplateLibrary/Containers/AdvancedString.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <functional>
 
 namespace SF::Engine
@@ -14,7 +14,7 @@ namespace SF::Engine
         ::SFTL::String name;
         AtmosphereData data;
         AtmospherePipelinePass *pass = nullptr; // non-owning; owned by PipelinePassManager
-        glm::vec3 planetPos = {0.0f, 0.0f, 0.0f};
+        Vec3 planetPos = {0.0f, 0.0f, 0.0f};
         bool active = true;
     };
 
@@ -41,8 +41,8 @@ namespace SF::Engine
         {
         }
 
-        void SetFrameData(const glm::mat4 &invProj, const glm::mat4 &invView,
-                           const glm::vec3 &cameraPos, const glm::vec3 &sunDir,
+        void SetFrameData(const Mat4 &invProj, const Mat4 &invView,
+                           const Vec3 &cameraPos, const Vec3 &sunDir,
                            const glm::vec2 &screenSize)
         {
             for (auto &entry : entries_)
@@ -60,13 +60,13 @@ namespace SF::Engine
                 entry->active = active;
         }
 
-        void SetPlanetPosition(const ::SFTL::String &name, const glm::vec3 &pos)
+        void SetPlanetPosition(const ::SFTL::String &name, const Vec3 &pos)
         {
             if (AtmosphereEntry *entry = Find(name))
                 entry->planetPos = pos;
         }
 
-        void AddAtmosphere(const ::SFTL::String &name, const AtmosphereData &data, const glm::vec3 &planetPos = {})
+        void AddAtmosphere(const ::SFTL::String &name, const AtmosphereData &data, const Vec3 &planetPos = {})
         {
             entries_.emplace_back(AtmosphereEntry{ name, data, factory_(stage_, data.params), planetPos, true });
         }

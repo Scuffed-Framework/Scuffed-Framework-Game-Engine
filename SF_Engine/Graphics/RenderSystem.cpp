@@ -1,3 +1,4 @@
+#define VMA_DEBUG_LOG
 #include <string>
 #include <vector>
 
@@ -5,15 +6,12 @@
 
 #include <cstring>
 
-#include <glslang/Public/ShaderLang.h>
 #include "PipelineRenderer.hpp"
 #include "Windows/WindowManager.hpp"
-
-#include <glslang/Include/visibility.h>
-
 #include "SharedSamplers.hpp"
 
 #include <Camera/Camera.hpp>
+#include "SharedFunctions.hpp"
 
 namespace SF::Engine
 {
@@ -52,9 +50,20 @@ namespace SF::Engine
         CreatePipelineCache();
         Log::Info("Pipeline cache created");
 
-        if (!glslang::InitializeProcess())
-            throw std::runtime_error("Failed to initialize glslang process");
         Log::Info("RenderSystem fully initialized");
+    } 
+    
+    void RenderSystem::PostInit()
+    {
+        SharedSamplers::CreateSamplers();
+        CreateSharedCameraBuffer();
+    }
+
+    void RenderSystem::PreShutdown()
+    {
+        // pre shutdown code 
+        DestroySharedCameraBuffer();
+        SharedSamplers::DestroySamplers();
     }
 
     RenderSystem::~RenderSystem()
@@ -64,9 +73,8 @@ namespace SF::Engine
 
         renderer = nullptr;
         swapchains.clear();
-        SharedSamplers::DestroySamplers();
 
-        glslang::FinalizeProcess();
+        PreShutdown();
 
         vkDestroyPipelineCache(*logicalDevice, pipelineCache, nullptr);
 
@@ -87,9 +95,18 @@ namespace SF::Engine
         }
     }
 
-    void RenderSystem::PostInit()
-    {
-        SharedSamplers::CreateSamplers();
+    void UpdateSharedCameraData(){
+        SharedCameraData.screenHeight = GetScreenSize().y;
+        SharedCameraData.screenWidth = GetScreenSize().x;
+        SharedCameraData.aspectRatio = SharedCameraData.screenWidth/SharedCameraData.screenHeight;
+        SharedCameraData.cameraPosition = GetCameraPosition4();
+        SharedCameraData.deltaTime = GetDeltaTime().AsMilliseconds();
+        SharedCameraData.inverseProjection = GetInvProjection();
+        SharedCameraData.inverseView = GetInvView();
+        SharedCameraData.viewProjection = GetProjection();
+        SharedCameraData.prevViewProjection = GetProjection(); // TODO: PREVIOUS
+        SharedCameraData.view = GetView();
+        GetSharedCameraBuffer().Update(SharedCameraData);
     }
 
     void RenderSystem::Update()
@@ -106,8 +123,7 @@ namespace SF::Engine
 
         renderer->Update();
         
-        GetSharedCameraBuffer().Update(SharedCameraData);
-        
+        UpdateSharedCameraData();
 
         // Update all stages first, then check staleness BEFORE any renderpass
         // is started this frame. Doing this mid-loop (old code) could leave a

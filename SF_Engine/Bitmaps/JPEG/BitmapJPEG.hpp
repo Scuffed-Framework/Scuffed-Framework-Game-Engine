@@ -39,7 +39,7 @@ namespace SF::Engine
 
             // Set bitmap properties
             bitmap.SetData(std::move(data));
-            bitmap.SetSize(Vector2Uint(width, height));
+            bitmap.SetSize(UVec2(width, height));
             bitmap.SetBytesPerPixel(4);
             bitmap.SetFilename(filename);
         }

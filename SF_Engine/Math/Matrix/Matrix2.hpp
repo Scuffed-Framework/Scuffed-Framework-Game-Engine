@@ -4,16 +4,16 @@
 
 namespace SF::Engine
 {
-    using Matrix2float = glm::mat2;
-    using Matrix2double = glm::dmat2;
+    using Mat2 = glm::mat2;
+    using DMat2 = glm::dmat2;
 }
 
 namespace std
 {
     template <>
-    struct hash<SF::Engine::Matrix2float>
+    struct hash<SF::Engine::Mat2>
     {
-        size_t operator()(const SF::Engine::Matrix2float &matrix) const noexcept
+        size_t operator()(const SF::Engine::Mat2 &matrix) const noexcept
         {
             size_t seed = 0;
             SF::Engine::Mathematics::HashCombine(seed, matrix[0]);
@@ -23,9 +23,9 @@ namespace std
     };
 
     template <>
-    struct hash<SF::Engine::Matrix2double>
+    struct hash<SF::Engine::DMat2>
     {
-        size_t operator()(const SF::Engine::Matrix2double &matrix) const noexcept
+        size_t operator()(const SF::Engine::DMat2 &matrix) const noexcept
         {
             size_t seed = 0;
             SF::Engine::Mathematics::HashCombine(seed, matrix[0]);

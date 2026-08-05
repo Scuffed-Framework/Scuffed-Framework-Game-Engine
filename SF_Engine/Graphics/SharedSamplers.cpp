@@ -11,11 +11,8 @@ namespace SF::Engine
 
     void SharedSamplers::CreateSamplers()
     {
-        Log::Info("Creating shared samplers");
-        // this line crashes the whole engine... haha fuck
         VkDevice device = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice();
 
-        Log::Info("Creating linear clamp sampler");
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         samplerInfo.magFilter = VK_FILTER_LINEAR;

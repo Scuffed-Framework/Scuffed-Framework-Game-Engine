@@ -31,9 +31,9 @@ namespace SF::Engine
 
         bool IsPlaying() const;
 
-        void SetPosition(const Vector3float& position);
-        void SetDirection(const Vector3float& direction);
-        void SetVelocity(const Vector3float& velocity);
+        void SetPosition(const Vec3& position);
+        void SetDirection(const Vec3& direction);
+        void SetVelocity(const Vec3& velocity);
 
         const Audio::Type& GetType() const { return type; }
         void SetType(const Audio::Type& type) { this->type = type; }
@@ -47,9 +47,9 @@ namespace SF::Engine
         std::shared_ptr<SoundBuffer> buffer;
         uint32_t source = 0;
 
-        Vector3float position;
-        Vector3float direction;
-        Vector3float velocity;
+        Vec3 position;
+        Vec3 direction;
+        Vec3 velocity;
 
         Audio::Type type = Audio::Type::General;
         float gain = 1.0f;

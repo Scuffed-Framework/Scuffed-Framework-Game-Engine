@@ -3,14 +3,12 @@
 const static int SPHERE_SAMPLES = 64; // must equal local_size_z
 
 [[vk::binding(0, 0)]]
-Texture2D<float4> transmittanceLUT;
-[[vk::binding(0, 1)]]
+Sampler2D<float4> transmittanceLUT;
+[[vk::binding(1, 0)]]
 RWTexture2D<float4> multiScatterLUT;
 
 groupshared float3 s_fms[SPHERE_SAMPLES];
 groupshared float3 s_lms[SPHERE_SAMPLES];
-
-SamplerState g_sampler : register(s2, space0);
 
 float rayToSphere(float h, float mu, float R)
 {
@@ -78,7 +76,7 @@ void main(uint3 groupID : SV_GroupID, uint3 localID : SV_GroupThreadID)
 
             // Sun transmittance at this point
             float cosSunHere = dot(normalize(p), sunDir);
-            float3 T_sun = sampleTransmittance(transmittanceLUT, g_sampler, 
+            float3 T_sun = sampleTransmittance(transmittanceLUT, 
                                                length(p), cosSunHere,
                                                BOTTOM_RADIUS, TOP_RADIUS);
 
@@ -97,7 +95,7 @@ void main(uint3 groupID : SV_GroupID, uint3 localID : SV_GroupThreadID)
         {
             float3 gndPos = pos + rayDir * tGround;
             float cosGndSun = dot(normalize(gndPos), sunDir);
-            float3 T_sun_gnd = sampleTransmittance(transmittanceLUT, g_sampler,
+            float3 T_sun_gnd = sampleTransmittance(transmittanceLUT,
                                                    BOTTOM_RADIUS, cosGndSun,
                                                    BOTTOM_RADIUS, TOP_RADIUS);
             lms += T_view * (0.3 / kPI) * max(cosGndSun, 0.0) * T_sun_gnd;

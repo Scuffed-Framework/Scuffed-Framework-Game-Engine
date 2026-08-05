@@ -11,7 +11,6 @@
 //   binding 5  Texture2D normalMap
 //   binding 6  Texture2D pbrMap        (r=roughness, g=metallic, b=AO)
 //   binding 7  Texture2D emissiveMap
-//   binding 8  SamplerState linearSampler
 // Push constants: fmodel float4x4, baseColor float4,
 //                 roughnessFactor, metallicFactor, aoFactor, emissiveFactor
 
@@ -43,12 +42,10 @@ struct Light
 struct ClusterList { uint offset; uint count; };
 [[vk::binding(2, 0)]] StructuredBuffer<ClusterList> lists;
 [[vk::binding(3, 0)]] StructuredBuffer<uint> indices;
-
-[[vk::binding(4, 0)]] Texture2D albedoMap;
-[[vk::binding(5, 0)]] Texture2D normalMap;
-[[vk::binding(6, 0)]] Texture2D pbrMap;
-[[vk::binding(7, 0)]] Texture2D emissiveMap;
-[[vk::binding(8, 0)]] SamplerState linearSampler;
+[[vk::binding(4, 0)]] Sampler2D<float4> albedoMap;
+[[vk::binding(5, 0)]] Sampler2D<float4> normalMap;
+[[vk::binding(6, 0)]] Sampler2D<float4> pbrMap;
+[[vk::binding(7, 0)]] Sampler2D<float4> emissiveMap;
 
 struct PC
 {
@@ -191,17 +188,17 @@ FSOutput fragmentMain(VSOutput input)
 {
     FSOutput output;
 
-    float4 albedoS = albedoMap.Sample(linearSampler, input.uv) * push.baseColor;
+    float4 albedoS = albedoMap.Sample(input.uv) * push.baseColor;
     if (albedoS.a < 0.01) discard;
 
-    float3 tsN = normalMap.Sample(linearSampler, input.uv).rgb * 2.0 - 1.0;
+    float3 tsN = normalMap.Sample(input.uv).rgb * 2.0 - 1.0;
     float3 N = normalize(mul(tsN, input.tbn));
 
-    float4 pbr   = pbrMap.Sample(linearSampler, input.uv);
+    float4 pbr   = pbrMap.Sample(input.uv);
     float rough  = max(pbr.r * push.roughnessFactor, 0.04);
     float metal  = pbr.g * push.metallicFactor;
     float ao     = pbr.b * push.aoFactor;
-    float emis   = emissiveMap.Sample(linearSampler, input.uv).r * push.emissiveFactor;
+    float emis   = emissiveMap.Sample(input.uv).r * push.emissiveFactor;
 
     float3 albedo = albedoS.rgb;
     float3 V      = normalize(frame.cameraPos.xyz - input.worldPos);

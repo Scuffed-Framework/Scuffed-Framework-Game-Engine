@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <array>
 #include <cstdint>
 

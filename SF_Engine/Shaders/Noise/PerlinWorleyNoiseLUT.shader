@@ -19,7 +19,7 @@ A: coverage/weather (billowy Perlin FBM)
 RWTexture3D<float4> outNoise;
 
 [numthreads(4, 4, 4)]
-void main(uint3 globalThreadID : SV_DispatchThreadID)
+void main(uint3 globalThreadID: SV_DispatchThreadID)
 {
     int3 coord = int3(globalThreadID.xyz);
     int3 size;
@@ -32,9 +32,9 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
     float z = uvw.z;
     float freq = 4.0;
 
-    float w0 = PerlinWorleyFBM(float3(uvw.xy, z), freq * 0.75);      // shape noise
-    float w1 = PerlinWorleyFBM(float3(uvw.xy, z), freq * 2.0); // medium detail
-    float w2 = PerlinWorleyFBM(float3(uvw.xy, z), freq * 4.0); // small detail
+    float w0 = PerlinWorleyFBM(float3(uvw.xy, z), freq * 0.75); // shape noise
+    float w1 = PerlinWorleyFBM(float3(uvw.xy, z), freq * 2.0);  // medium detail
+    float w2 = PerlinWorleyFBM(float3(uvw.xy, z), freq * 4.0);  // small detail
     float w3 = remap(PerlinWorleyFBM(float3(uvw.xy, z), freq * 0.5), -1.0, 1.0, 0.0, 1.0);
     w3 = remap(w3, 0.85, 1.0, 0.0, 1.0); // fake cloud coverage
 

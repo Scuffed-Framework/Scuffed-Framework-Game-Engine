@@ -8,7 +8,7 @@
 namespace SF::Engine
 {
     Framebuffer::Framebuffer(const LogicalDevice &logicalDevice, const Swapchain &swapchain, const RenderStage &renderStage, const Renderpass &renderPass, const ImageDepth *depthStencil,
-                             const Vector2Uint &extent, VkSampleCountFlagBits samples) : logicalDevice(logicalDevice)
+                             const UVec2 &extent, VkSampleCountFlagBits samples) : logicalDevice(logicalDevice)
     {
         for (const auto &attachment : renderStage.GetAttachments())
         {

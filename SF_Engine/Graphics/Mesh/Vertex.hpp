@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Graphics/Shaders/Shader.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <volk.h>
 
 namespace SF::Engine
@@ -13,10 +13,10 @@ namespace SF::Engine
      */
     struct Vertex
     {
-        glm::vec3 position = {};
-        glm::vec3 normal = {};
+        Vec3 position = {};
+        Vec3 normal = {};
         glm::vec2 texCoord = {};
-        glm::vec3 tangent = {};
+        Vec3 tangent = {};
 
         bool operator==(const Vertex &) const = default;
 
@@ -38,9 +38,9 @@ namespace SF::Engine
     };
     struct PatchVertex
     {
-        glm::vec3 position;
+        Vec3 position;
         glm::vec2 uv;
-        glm::vec3 normal;
+        Vec3 normal;
 
         static Shader::VertexInput GetVertexInput()
         {

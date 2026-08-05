@@ -2,6 +2,7 @@
 #include <Graphics/RenderSystem.hpp>
 #include <Graphics/Descriptors/DescriptorSet.hpp>
 #include <Graphics/SharedFunctions.hpp>
+#include <Graphics/SharedSamplers.hpp>
 
 namespace SF::Engine
 {
@@ -132,12 +133,9 @@ namespace SF::Engine
         lastDepth_ = sceneDepth;
 
         assert(sceneColor != nullptr);
-        printf("1\n");
         VkDescriptorImageInfo ci{};
         ci.sampler = sceneColor->GetSampler();
-        printf("1\n");
         ci.imageView = sceneColor->GetView();
-        printf("1\n");
         ci.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkWriteDescriptorSet wc{};
@@ -148,7 +146,6 @@ namespace SF::Engine
         wc.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         wc.pImageInfo = &ci;
 
-        printf("2\n");
         VkDescriptorImageInfo di{};
         di.sampler = sceneDepth->GetSampler();
         di.imageView = sceneDepth->GetView();
@@ -162,43 +159,42 @@ namespace SF::Engine
         wd.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         wd.pImageInfo = &di;
 
-        printf("3\n");
         DescriptorSet::Update({wc, wd});
     }
 
-    void AtmospherePipelinePass::SetFrameData(const glm::mat4 &invProj,
-                                              const glm::mat4 &invView,
-                                              const glm::vec3 &cameraPos,
-                                              const glm::vec3 &planetPos,
-                                              const glm::vec3 &sunDir,
+    void AtmospherePipelinePass::SetFrameData(const Mat4 &invProj,
+                                              const Mat4 &invView,
+                                              const Vec3 &cameraPos,
+                                              const Vec3 &planetPos,
+                                              const Vec3 &sunDir,
                                               glm::vec2 screenSize)
     {
-        const glm::vec3 sd = glm::length(sunDir) > 1e-6f
-                                 ? glm::normalize(sunDir)
-                                 : glm::vec3(0.577f, 0.577f, 0.577f);
+        const Vec3 sd = glm::length(sunDir) > 1e-6f
+                                 ? normalize(sunDir)
+                                 : Vec3(0.577f, 0.577f, 0.577f);
 
         const float ruToM = params_.bottomRadius / params_.renderUnitRadius;
-        glm::vec3 viewPosSI = glm::vec3(
+        Vec3 viewPosSI = Vec3(
             (glm::dvec3(cameraPos) - glm::dvec3(planetPos)) * (double)ruToM);
 
         frameData_.invProj = invProj;
         frameData_.invView = invView;
-        frameData_.cameraPos = glm::vec4(viewPosSI, 0.0f);
-        frameData_.planetPos = glm::vec4(0.0f);
-        frameData_.sunDir = glm::vec4(sd, params_.sunIntensity);
+        frameData_.cameraPos = Vec4(viewPosSI, 0.0f);
+        frameData_.planetPos = Vec4(0.0f);
+        frameData_.sunDir = Vec4(sd, params_.sunIntensity);
         frameData_.bottomRadius = params_.bottomRadius;
         frameData_.topRadius = params_.topRadius;
         frameData_.renderUnitRadius = params_.renderUnitRadius;
         frameData_.screenSize = screenSize;
-        frameData_.sunCol = glm::vec3(1); // rgb base color (its white)
+        frameData_.sunCol = Vec3(1); // rgb base color (its white)
 
         SkyViewPushConstants svp{};
-        svp.sunDir = glm::vec4(sd, params_.sunIntensity);
+        svp.sunDir = Vec4(sd, params_.sunIntensity);
         svp.cameraHeight = glm::length(viewPosSI) - params_.bottomRadius;
         svp.bottomRadius = params_.bottomRadius;
         svp.topRadius = params_.topRadius;
         svp._pad = 0.0f;
-        svp.cameraPos = glm::vec4(viewPosSI, 0.0f);
+        svp.cameraPos = Vec4(viewPosSI, 0.0f);
         atmoLUTs_->GetSkyViewLUT()->SetParams(svp);
     }
 

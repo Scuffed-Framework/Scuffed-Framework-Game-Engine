@@ -1,4 +1,5 @@
 #include "Clouds.si"
+#include "Common/Camera.si"
 
 [[vk::binding(0, 0)]]
 ConstantBuffer<AtmoUBO> atmo;
@@ -6,8 +7,6 @@ ConstantBuffer<AtmoUBO> atmo;
 [[vk::binding(2, 0)]]
 Texture2D<float4> blueNoise;
 
-[[vk::binding(3, 0)]]
-Texture3D<float4> alligatorNoise;
 
 [[vk::binding(4, 0)]]
 Texture2D<float4> transmittanceLUT;
@@ -15,11 +14,9 @@ Texture2D<float4> transmittanceLUT;
 [[vk::binding(5, 0)]]
 Texture2D<float4> multiScatterLUT;
 
-[[vk::binding(6, 0)]]
-Texture3D<float> baseNoise;
 
-[[vk::binding(7, 0)]]
-Texture3D<float> detailNoise;
+
+
 
 [[vk::binding(8, 0)]]
 Texture2D<float> aerialPerspRange;
@@ -27,10 +24,15 @@ Texture2D<float> aerialPerspRange;
 [[vk::binding(9, 0)]]
 Texture2D<float> sceneDepth;
 
-[[vk::binding(10, 0)]]
-Texture2D<float4> sceneColor;
+// [[vk::binding(10, 0)]]
+// Texture2D<float4> sceneColor;
 
 [[vk::binding(11, 0)]]
+ConstantBuffer<Camera> camera;
+
+
+
+[[vk::binding(13, 0)]]
 SamplerState g_sampler;
 
 struct VSOutput
@@ -43,7 +45,6 @@ struct VSOutput
 VSOutput vsmain(uint vertexID : SV_VertexID)
 {
     VSOutput output;
-    // Fullscreen triangle (same pattern as Atmosphere.shader)
     float2 uv = float2((vertexID << 1) & 2, vertexID & 2);
     output.position = float4(uv * 2.0 - 1.0, 1.0, 1.0);
     output.uv = uv;
@@ -53,7 +54,7 @@ VSOutput vsmain(uint vertexID : SV_VertexID)
 float depthToViewDist(float depth, float2 ndc)
 {
     float4 clipPos = float4(ndc, depth, 1.0);
-    float4 vPos = mul(atmo.invProj, clipPos);
+    float4 vPos = mul(camera.inverseProjection, clipPos);
     return length(vPos.xyz / vPos.w);
 }
 
@@ -132,62 +133,40 @@ ShellHit IntersectCloudShell(float3 ro, float3 rd, float innerR, float outerR, f
     return hit;
 }
 
-float GetCloudDensity(float3 posMetres)
+float3 CloudSunMarch(float3 pos, float3 sunDir, float distToSun)
 {
-    float height = length(posMetres);
-    float heightFrac = clamp((height - cloud.cloudBottomRadius) /
-                                max(cloud.cloudTopRadius - cloud.cloudBottomRadius, 1.0),
-                                0.0, 1.0);
+    float height = length(pos);
+    float normalizedHeight = (height - atmo.bottomRadius) / (atmo.topRadius - atmo.bottomRadius);
 
-    // Soft falloff at base and top of the layer
-    float heightGradient = smoothstep(0.0, 0.2, heightFrac) *
-                            (1.0 - smoothstep(0.6, 1.0, heightFrac));
-    if (heightGradient <= 0.0)
-        return 0.0;
+    float cosAngle = dot(normalize(pos), sunDir);
 
-    float3 wind = float3(cloud.time * 20.0, cloud.time * 5.0, cloud.time * 12.0);
-    float3 samplePos = (posMetres + wind) * 0.000008; // tile scale, tune per-project
+    float2 uv = float2(
+        saturate(cosAngle * 0.5 + 0.5),
+        saturate(normalizedHeight)
+    );
 
-    float baseShape = alligatorNoise.SampleLevel(g_sampler, samplePos, 0.0).r;
+    float3 transmittance = transmittanceLUT.SampleLevel(g_sampler, uv, 0.0).rgb;
+    float3 multiScatter  = multiScatterLUT.SampleLevel(g_sampler, uv, 0.0).rgb;
 
-    float cov = clamp(cloud.cloudCoverage, 0.0, 1.0);
-    float shaped = max(baseShape - (1.0 - cov), 0.0);
-
-    return shaped * heightGradient * cloud.cloudDensityScale;
+    return transmittance + multiScatter;
 }
 
-float CloudSunMarch(float3 pos, float3 sunDir)
+float4 CloudMarch(float3 origin, float3 dir, float3 sunDir, 
+                  float dstToShell, float dstThroughShell, 
+                  float2 fragCoord)  // Changed from VSOutput to float2
 {
-    float stepSize = (cloud.cloudTopRadius - cloud.cloudBottomRadius) / float(LIGHT_STEPS) * 0.5;
-    float densitySum = 0.0;
-    float3 p = pos;
-
-    for (int i = 0; i < LIGHT_STEPS; i++)
-    {
-        p += sunDir * stepSize;
-        densitySum += GetCloudDensity(p) * stepSize;
-    }
-    return exp(-densitySum);
-}
-
-float4 CloudMarch(float3 origin, float3 dir, float3 sunDir, float dstToShell, float dstThroughShell)
-{
-    int steps = int(min(cloud.stepCount, float(MAX_STEPS)));
+    float desiredStepSize = 200.0;
+    int steps = int(clamp(dstThroughShell / desiredStepSize, 4.0, float(MAX_STEPS)));
     if (steps <= 0 || dstThroughShell <= 0.0)
         return float4(0.0);
-
     float stepSize = dstThroughShell / float(steps);
 
-    // Dither the starting offset with blue noise to hide banding
     int2 jitter = int2(
         (cloud.frameIndex * 73) % 128,
         (cloud.frameIndex * 31) % 128
     );
 
-    // Note: In Slang, we need the SV_Position from the fragment shader
-    // For now, we'll use a global variable - this will need to be passed from VS
-    float2 fragCoord = float2(0.0); // Will be set in fsmain
-    int2 pix = (int2(fragCoord.xy) + jitter) % 128;
+    int2 pix = (int2(fragCoord.xy) + jitter) % 128;  // Use fragCoord directly
     float noiseOffset = blueNoise.SampleLevel(g_sampler, float2(pix) / 128.0, 0.0).r;
     float dst = dstToShell + noiseOffset * stepSize;
 
@@ -198,30 +177,29 @@ float4 CloudMarch(float3 origin, float3 dir, float3 sunDir, float dstToShell, fl
     float3 sunColor = float3(1.0, 0.98, 0.92) * sunIntensity;
     float3 ambientColor = float3(0.4, 0.5, 0.6) * 0.3;
 
-    // Calculate phase for sunlight scattering
     float cosTheta = dot(dir, sunDir);
-    // g = 0.6 is a good starting point for forward scattering in clouds
     float phaseVal = HenyeyGreensteinPhaseFunction(cosTheta, 0.6);
+
+    // Get the distance to atmosphere top along this ray
+    float3 atmoTopPos = atmo.topRadius * normalize(origin);
+    float topAtmosphereDist = distance(origin, atmoTopPos);
 
     for (int i = 0; i < steps; i++)
     {
         float3 pos = origin + dir * dst;
-        float density = GetCloudDensity(pos);
+        float heightFrac = saturate((length(pos) - cloud.cloudBottomRadius) /
+                             max(cloud.cloudTopRadius - cloud.cloudBottomRadius, 1.0));
+        float density = cloudMap(pos, heightFrac, cloud.time);
 
         if (density > 0.0)
         {
-            float sunTransmittance = CloudSunMarch(pos, sunDir);
-            
-            // 1. Apply Phase Function to direct sunlight
+            // Calculate transmittance using LUT
+            float3 sunTransmittance = CloudSunMarch(pos, sunDir, topAtmosphereDist);
+
             float3 directLight = sunColor * sunTransmittance * phaseVal;
-            
-            // 2. Attenuate ambient light!
-            // The deeper we are (lower transmittance), the darker the ambient light should be.
             float3 ambientLight = ambientColor * (0.2 + 0.8 * sunTransmittance);
 
-            // Combine and multiply by density and step size
             float3 lightEnergy = (directLight + ambientLight) * density * stepSize;
-
             luminance += lightEnergy * transmittance;
             transmittance *= exp(-density * stepSize);
 
@@ -236,42 +214,32 @@ float4 CloudMarch(float3 origin, float3 dir, float3 sunDir, float dstToShell, fl
 }
 
 [shader("fragment")]
-float4 fsmain(VSOutput input) : SV_Target
+float4 fsmain(VSOutput input, float4 fragCoord : SV_Position) : SV_Target
 {
     float2 uv = input.uv;
     float2 ndc = uv * 2.0 - 1.0;
 
     float4 clip = float4(ndc, 1.0, 1.0);
-    float4 viewPos = mul(atmo.invProj, clip);
+    float4 viewPos = mul(camera.inverseProjection, clip);
     viewPos /= viewPos.w;
-    float3 rayDir = normalize(mul(atmo.invView, float4(viewPos.xyz, 0.0)).xyz);
-    
-    float3 rayOrigin = atmo.cameraPos.xyz;
+    float3 rayDir = normalize(mul(camera.inverseView, float4(viewPos.xyz, 0.0)).xyz);
+
+    float3 rayOrigin = camera.cameraPosition.xyz;
     float3 sunDir = atmo.sunDir.xyz;
 
     float depth = sceneDepth.SampleLevel(g_sampler, uv, 0.0).r;
-    float sceneDist = (depth > 0.0) ? depthToViewDist(depth, ndc) : 1e9;
+    float sceneDistRender = (depth > 0.0) ? depthToViewDist(depth, ndc) : 1e9;
+    float ruToM = atmo.bottomRadius / atmo.renderUnitRadius;
+    float sceneDist = (depth > 0.0) ? sceneDistRender * ruToM : 1e9;
 
-    ShellHit hit = IntersectCloudShell(rayOrigin, rayDir, 
-                                        cloud.cloudBottomRadius, 
-                                        cloud.cloudTopRadius, 
-                                        atmo.bottomRadius);
+    ShellHit hit = IntersectCloudShell(rayOrigin, rayDir,
+                                       cloud.cloudBottomRadius,
+                                       cloud.cloudTopRadius,
+                                       atmo.bottomRadius);
 
     hit.dstThroughShell = max(0.0, min(hit.dstToShell + hit.dstThroughShell, sceneDist) - hit.dstToShell);
 
-    if (hit.dstThroughShell <= 0.0)
-    {
-        return float4(0.0);
-    }
+    float4 cloudResult = CloudMarch(rayOrigin, rayDir, sunDir, hit.dstToShell, hit.dstThroughShell, fragCoord.xy);
 
-    float4 cloudResult = CloudMarch(rayOrigin, rayDir, sunDir, hit.dstToShell, hit.dstThroughShell);
-
-    // 1. Exposure Control (Tweak this value! Try 0.1, 0.01, etc.)
-    float exposure = 1.0;
-    float3 exposedColor = cloudResult.rgb * exposure;
-
-    // 2. Simple Reinhard Tonemapping (compresses high values down gracefully)
-    float3 finalColor = exposedColor / (1.0 + exposedColor);
-    
-    return float4(finalColor, cloudResult.a);
+    return float4(rayDir * 0.5 + 0.5, 1.0) + cloudResult * 0.00001;
 }

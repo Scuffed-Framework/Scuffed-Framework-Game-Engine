@@ -16,7 +16,7 @@ namespace SF::Engine
          * @param useMouse If the ray will use the mouse coords or to start from screenStart.
          * @param screenStart If useMouse is false then this will be used as the rays start.
          */
-        Ray(bool useMouse, const Vector2float& screenStart);
+        Ray(bool useMouse, const Vec2& screenStart);
 
         /**
          * Updates the ray to a new position.
@@ -25,15 +25,15 @@ namespace SF::Engine
          * @param viewMatrix The cameras view matrix.
          * @param projectionMatrix The projection view matrix.
          */
-        void Update(const Vector3float& currentPosition, const Vector2float& mousePosition,
-                    const Matrix4float& viewMatrix, const Matrix4float& projectionMatrix);
+        void Update(const Vec3& currentPosition, const Vec2& mousePosition,
+                    const Mat4& viewMatrix, const Mat4& projectionMatrix);
 
         /**
          * Gets a point on the ray.
          * @param distance Distance down the ray to sample.
          * @return The destination vector.
          */
-        Vector3float GetPointOnRay(float distance) const;
+        Vec3 GetPointOnRay(float distance) const;
 
         /**
          * Converts a position from world space to screen space.
@@ -41,7 +41,7 @@ namespace SF::Engine
          * @return The destination vector X and Y being screen space coords and Z being the distance
          * to the camera.
          */
-        Vector3float ConvertToScreenSpace(const Vector3float& position) const;
+        Vec3 ConvertToScreenSpace(const Vec3& position) const;
 
         bool IsUseMouse() const
         {
@@ -52,20 +52,20 @@ namespace SF::Engine
             this->useMouse = useMouse;
         }
 
-        const Vector2float& GetScreenStart() const
+        const Vec2& GetScreenStart() const
         {
             return screenStart;
         }
-        void SetScreenStart(const Vector2float& screenStart)
+        void SetScreenStart(const Vec2& screenStart)
         {
             this->screenStart = screenStart;
         }
 
-        const Vector3float& GetOrigin() const
+        const Vec3& GetOrigin() const
         {
             return origin;
         }
-        const Vector3float& GetCurrentRay() const
+        const Vec3& GetCurrentRay() const
         {
             return currentRay;
         }
@@ -76,18 +76,18 @@ namespace SF::Engine
         void UpdateWorldCoords();
 
         bool useMouse;
-        Vector2float screenStart;
+        Vec2 screenStart;
 
-        Matrix4float projectionMatrix, viewMatrix;
+        Mat4 projectionMatrix, viewMatrix;
 
-        Vector2float normalizedCoords;
-        Vector4float clipCoords;
-        Vector4float eyeCoords;
+        Vec2 normalizedCoords;
+        Vec4 clipCoords;
+        Vec4 eyeCoords;
 
-        Matrix4float invertedProjection, invertedView;
-        Vector4float rayWorld;
+        Mat4 invertedProjection, invertedView;
+        Vec4 rayWorld;
 
-        Vector3float origin;
-        Vector3float currentRay;
+        Vec3 origin;
+        Vec3 currentRay;
     };
 }

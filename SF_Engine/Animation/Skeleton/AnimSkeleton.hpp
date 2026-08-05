@@ -8,7 +8,7 @@ namespace SF::Engine::Animation
     {
         SF_RTTI_BASE(Skeleton)
     public:
-        Skeleton(std::vector<std::string> boneOrder, const Matrix4float &correction) : boneOrder(std::move(boneOrder)),
+        Skeleton(std::vector<std::string> boneOrder, const Mat4 &correction) : boneOrder(std::move(boneOrder)),
                                                                                        correction(correction)
         {
         }
@@ -22,7 +22,7 @@ namespace SF::Engine::Animation
         std::optional<uint32> GetBoneIndex(const std::string &name) const;
 
         std::vector<std::string> boneOrder;
-        Matrix4float correction;
+        Mat4 correction;
 
         uint32 jointCount = 0;
         Joint headJoint;

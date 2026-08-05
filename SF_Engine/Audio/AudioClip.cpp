@@ -82,21 +82,21 @@ namespace SF::Engine
         return state == AL_PLAYING;
     }
 
-    void AudioClip::SetPosition(const Vector3float &position)
+    void AudioClip::SetPosition(const Vec3 &position)
     {
         this->position = position;
         alSource3f(source, AL_POSITION, position.x, position.y, position.z);
         Audio::CheckAl(alGetError());
     }
 
-    void AudioClip::SetDirection(const Vector3float &direction)
+    void AudioClip::SetDirection(const Vec3 &direction)
     {
         this->direction = direction;
         alSource3f(source, AL_DIRECTION, direction.x, direction.y, direction.z);
         Audio::CheckAl(alGetError());
     }
 
-    void AudioClip::SetVelocity(const Vector3float &velocity)
+    void AudioClip::SetVelocity(const Vec3 &velocity)
     {
         this->velocity = velocity;
         alSource3f(source, AL_VELOCITY, velocity.x, velocity.y, velocity.z);

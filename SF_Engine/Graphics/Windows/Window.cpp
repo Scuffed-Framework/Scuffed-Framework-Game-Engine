@@ -239,12 +239,12 @@ namespace SF::Engine
 
         int width, height;
         glfwGetWindowSize(window, &width, &height);
-        size = Vector2Uint(width, height);
+        size = UVec2(width, height);
 
         // Get window position
         int xpos, ypos;
         glfwGetWindowPos(window, &xpos, &ypos);
-        position = Vector2Uint(xpos, ypos);
+        position = UVec2(xpos, ypos);
 
         // Sets the user pointer.
         glfwSetWindowUserPointer(window, this);
@@ -297,7 +297,7 @@ namespace SF::Engine
         mouseLastScroll = mouseScroll;
     }
 
-    void Window::SetSize(const Vector2int &size)
+    void Window::SetSize(const IVec2 &size)
     {
         if (size.x != -1)
             this->size.x = size.x;
@@ -306,7 +306,7 @@ namespace SF::Engine
         glfwSetWindowSize(window, size.x, size.y);
     }
 
-    void Window::SetPosition(const Vector2int &position)
+    void Window::SetPosition(const IVec2 &position)
     {
         if (position.x != -1)
             this->position.x = position.x;
@@ -381,7 +381,7 @@ namespace SF::Engine
         }
         else
         {
-            position = ((Vector2int(videoMode.width, videoMode.height) - Vector2int(size)) / 2) +
+            position = ((IVec2(videoMode.width, videoMode.height) - IVec2(size)) / 2) +
                        selected->GetPosition();
             glfwSetWindowMonitor(window, nullptr, position.x, position.y, size.x, size.y,
                                  GLFW_DONT_CARE);
@@ -443,14 +443,14 @@ namespace SF::Engine
         return static_cast<InputAction>(state);
     }
 
-    void Window::SetMousePosition(const Vector2double &mousePosition)
+    void Window::SetMousePosition(const DVec2 &mousePosition)
     {
         this->mouseLastPosition = mousePosition;
         this->mousePosition = mousePosition;
         glfwSetCursorPos(window, mousePosition.x, mousePosition.y);
     }
 
-    void Window::SetMouseScroll(const Vector2double &mouseScroll)
+    void Window::SetMouseScroll(const DVec2 &mouseScroll)
     {
         this->mouseLastScroll = mouseScroll;
         this->mouseScroll = mouseScroll;
@@ -705,7 +705,7 @@ namespace SF::Engine
         }
     }
 
-    int32_t OverlappingArea(Vector2int l1, Vector2int r1, Vector2int l2, Vector2int r2)
+    int32_t OverlappingArea(IVec2 l1, IVec2 r1, IVec2 l2, IVec2 r2)
     {
         int area1 = std::abs(l1.x - r1.x) * std::abs(l1.y - r1.y);
 

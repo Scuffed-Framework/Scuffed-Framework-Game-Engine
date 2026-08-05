@@ -40,6 +40,7 @@ namespace SF::Engine
         ~RenderSystem() override;
 
         void PostInit();
+        void PreShutdown();
 
         // Module interface implementation
         void Update() override;

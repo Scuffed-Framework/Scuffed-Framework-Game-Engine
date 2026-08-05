@@ -2,13 +2,13 @@
 
 namespace SF::Engine
 {
-    Ray::Ray(bool useMouse, const Vector2float& screenStart)
+    Ray::Ray(bool useMouse, const Vec2& screenStart)
         : useMouse(useMouse), screenStart(screenStart)
     {
     }
 
-    void Ray::Update(const Vector3float& currentPosition, const Vector2float& mousePosition,
-                     const Matrix4float& viewMatrix, const Matrix4float& projectionMatrix)
+    void Ray::Update(const Vec3& currentPosition, const Vec2& mousePosition,
+                     const Mat4& viewMatrix, const Mat4& projectionMatrix)
     {
         origin = currentPosition;
 
@@ -19,26 +19,26 @@ namespace SF::Engine
 
         this->viewMatrix = viewMatrix;
         this->projectionMatrix = projectionMatrix;
-        clipCoords = Vector4float(normalizedCoords.x, normalizedCoords.y, -1.0f, 1.0f);
+        clipCoords = Vec4(normalizedCoords.x, normalizedCoords.y, -1.0f, 1.0f);
         UpdateEyeCoords();
         UpdateWorldCoords();
     }
 
-    Vector3float Ray::GetPointOnRay(float distance) const
+    Vec3 Ray::GetPointOnRay(float distance) const
     {
         auto vector = distance * currentRay;
         return origin + vector;
     }
 
-    Vector3float Ray::ConvertToScreenSpace(const Vector3float& position) const
+    Vec3 Ray::ConvertToScreenSpace(const Vec3& position) const
     {
-        Vector4float coords(position, 1.0f);
+        Vec4 coords(position, 1.0f);
         coords = viewMatrix * coords;
         coords = projectionMatrix * coords;
 
-        if (coords.w < 0.0f) return Vector3float(0.0f);
+        if (coords.w < 0.0f) return Vec3(0.0f);
 
-        return Vector3float((coords.x / coords.w + 1.0f) / 2.0f,
+        return Vec3((coords.x / coords.w + 1.0f) / 2.0f,
                             1.0f - (coords.y / coords.w + 1.0f) / 2.0f, coords.z);
     }
 
@@ -50,15 +50,15 @@ namespace SF::Engine
 
     void Ray::UpdateEyeCoords()
     {
-        invertedProjection = glm::inverse(projectionMatrix);
+        invertedProjection = inverse(projectionMatrix);
         eyeCoords = invertedProjection * clipCoords;
-        eyeCoords = Vector4float(eyeCoords.x, eyeCoords.y, -1.0f, 0.0f);
+        eyeCoords = Vec4(eyeCoords.x, eyeCoords.y, -1.0f, 0.0f);
     }
 
     void Ray::UpdateWorldCoords()
     {
-        invertedView = glm::inverse(viewMatrix);
+        invertedView = inverse(viewMatrix);
         rayWorld = invertedView * eyeCoords;
-        currentRay = Vector3float(rayWorld);
+        currentRay = Vec3(rayWorld);
     }
 }

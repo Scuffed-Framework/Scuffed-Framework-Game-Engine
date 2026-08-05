@@ -140,7 +140,7 @@ namespace SF::Engine
         float elapsed_ = 0.0f;
         uint32_t frameIndex_ = 0;
 
-        glm::mat4 prevViewProj_ = glm::mat4(1.0f);
+        Mat4 prevViewProj_ = Mat4(1.0f);
 
         uint32_t lastScreenW_ = 0;
         uint32_t lastScreenH_ = 0;
@@ -158,11 +158,11 @@ namespace SF::Engine
                 sl.light.position = sl.transform.position;
                 if (sl.light.type == Lighting::LightType::Directional)
                 {
-                    glm::vec3 rot = glm::radians(sl.transform.rotation);
-                    glm::mat4 m = glm::rotate(glm::mat4(1.0f), rot.y, {0, 1, 0});
+                    Vec3 rot = glm::radians(sl.transform.rotation);
+                    Mat4 m = glm::rotate(Mat4(1.0f), rot.y, {0, 1, 0});
                     m = glm::rotate(m, rot.x, {1, 0, 0});
                     m = glm::rotate(m, rot.z, {0, 0, 1});
-                    sl.light.direction = glm::normalize(glm::vec3(m * glm::vec4(0, -1, 0, 0)));
+                    sl.light.direction = normalize(Vec3(m * Vec4(0, -1, 0, 0)));
                 }
             }
         }

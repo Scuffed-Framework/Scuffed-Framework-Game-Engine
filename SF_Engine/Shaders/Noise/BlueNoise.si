@@ -1,6 +1,7 @@
 #ifndef BlueNoise_SI
 #define BlueNoise_SI
 
+
 // ---------------------------------------------------------------------------
 // Procedural blue-noise approximation (no LUTs, no texture fetches).
 //

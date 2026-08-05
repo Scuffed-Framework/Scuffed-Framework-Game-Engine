@@ -78,7 +78,7 @@ namespace SF::Engine
     class RenderArea
     {
     public:
-        explicit RenderArea(const Vector2Uint &extent = {}, const Vector2int &offset = {}) : extent(extent),
+        explicit RenderArea(const UVec2 &extent = {}, const IVec2 &offset = {}) : extent(extent),
                                                                                              offset(offset)
         {
         }
@@ -93,11 +93,11 @@ namespace SF::Engine
             return !operator==(rhs);
         }
 
-        const Vector2Uint &GetExtent() const { return extent; }
-        void SetExtent(const Vector2Uint &extent) { this->extent = extent; }
+        const UVec2 &GetExtent() const { return extent; }
+        void SetExtent(const UVec2 &extent) { this->extent = extent; }
 
-        const Vector2int &GetOffset() const { return offset; }
-        void SetOffset(const Vector2int &offset) { this->offset = offset; }
+        const IVec2 &GetOffset() const { return offset; }
+        void SetOffset(const IVec2 &offset) { this->offset = offset; }
 
         /**
          * Gets the aspect ratio between the render stages width and height.
@@ -107,8 +107,8 @@ namespace SF::Engine
         void SetAspectRatio(float aspectRatio) { this->aspectRatio = aspectRatio; }
 
     private:
-        Vector2Uint extent;
-        Vector2int offset;
+        UVec2 extent;
+        IVec2 offset;
         float aspectRatio = 1.0f;
     };
 
@@ -117,23 +117,23 @@ namespace SF::Engine
     public:
         Viewport() = default;
 
-        explicit Viewport(const Vector2Uint &size) : size(size)
+        explicit Viewport(const UVec2 &size) : size(size)
         {
         }
 
-        const Vector2float &GetScale() const { return scale; }
-        void SetScale(const Vector2float &scale) { this->scale = scale; }
+        const Vec2 &GetScale() const { return scale; }
+        void SetScale(const Vec2 &scale) { this->scale = scale; }
 
-        const std::optional<Vector2Uint> &GetSize() const { return size; }
-        void SetSize(const std::optional<Vector2Uint> &size) { this->size = size; }
+        const std::optional<UVec2> &GetSize() const { return size; }
+        void SetSize(const std::optional<UVec2> &size) { this->size = size; }
 
-        const Vector2int &GetOffset() const { return offset; }
-        void SetOffset(const Vector2int &offset) { this->offset = offset; }
+        const IVec2 &GetOffset() const { return offset; }
+        void SetOffset(const IVec2 &offset) { this->offset = offset; }
 
     private:
-        Vector2float scale = {1.0f, 1.0f};
-        std::optional<Vector2Uint> size;
-        Vector2int offset;
+        Vec2 scale = {1.0f, 1.0f};
+        std::optional<UVec2> size;
+        IVec2 offset;
     };
 
     class RenderStage

@@ -1,5 +1,5 @@
 #pragma once
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 
 namespace SF::Engine
 {
@@ -17,16 +17,16 @@ namespace SF::Engine
     // std140 layout : must match the uniform block in Atmosphere.shader exactly.
     struct alignas(16) AtmosphereFrameUBO
     {
-        glm::mat4 invProj;
-        glm::mat4 invView;
-        glm::vec4 cameraPos;    // .xyz = viewPos in metres (camera - planet centre)
-        glm::vec4 planetPos;    // .xyz = planet centre (always vec3(0) in shader convention)
-        glm::vec4 sunDir;       // .xyz = toward sun (unit vector), .w = sunIntensity
+        Mat4 invProj;
+        Mat4 invView;
+        Vec4 cameraPos;    // .xyz = viewPos in metres (camera - planet centre)
+        Vec4 planetPos;    // .xyz = planet centre (always vec3(0) in shader convention)
+        Vec4 sunDir;       // .xyz = toward sun (unit vector), .w = sunIntensity
         float bottomRadius;     // metres
         float topRadius;        // metres
         float renderUnitRadius; // unused by shader, kept for UBO size alignment
         glm::vec2 screenSize;
-        glm::vec3 sunCol;
+        Vec3 sunCol;
     };
     static_assert(sizeof(AtmosphereFrameUBO) % 16 == 0);
 

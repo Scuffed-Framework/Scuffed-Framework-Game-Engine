@@ -38,7 +38,7 @@
  */
 
 #include <ImGui/ocornut/imgui.h>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <cstdio>
 #include <functional>
@@ -196,7 +196,7 @@ namespace SF::Engine
             }
         }
 
-        void ColorSwatch(const glm::vec4 &c) const
+        void ColorSwatch(const Vec4 &c) const
         {
             ImVec2 sz{ImGui::GetContentRegionAvail().x, 8.0f};
             ImVec2 cp = ImGui::GetCursorScreenPos();
@@ -209,7 +209,7 @@ namespace SF::Engine
         }
 
         // Draws a full-width intensity bar (e.g. light intensity preview).
-        void IntensityBar(float value, float maxValue, const glm::vec3 &colour) const
+        void IntensityBar(float value, float maxValue, const Vec3 &colour) const
         {
             ImVec2 cp = ImGui::GetCursorScreenPos();
             float barW = ImGui::GetContentRegionAvail().x;
@@ -277,9 +277,9 @@ namespace SF::Engine
     };
 
 //
-/// glm::vec3 with X/Y/Z reset buttons.
+/// Vec3 with X/Y/Z reset buttons.
 /// @param label  Display name
-/// @param ref    glm::vec3 l-value
+/// @param ref    Vec3 l-value
 /// @param rx/ry/rz  Per-axis reset values
 /// @param speed  Drag speed (default 0.1)
 #define SF_WIDGET_VEC3(label, ref, rx, ry, rz, speed) \
@@ -290,7 +290,7 @@ namespace SF::Engine
                     (rx), (ry), (rz), (speed));       \
     }
 
-/// glm::vec3 with degree format (convenience wrapper over SF_WIDGET_VEC3).
+/// Vec3 with degree format (convenience wrapper over SF_WIDGET_VEC3).
 #define SF_WIDGET_VEC3_ANGLES(label, ref, speed) \
     SF_WIDGET_VEC3(label, ref, 0.0f, 0.0f, 0.0f, speed)
 
@@ -330,7 +330,7 @@ namespace SF::Engine
     }
 
 /// RGBA colour picker (swatch + picker).
-/// @param ref  glm::vec4 l-value
+/// @param ref  Vec4 l-value
 #define SF_WIDGET_COLOR(label, ref)                              \
     if (_wb.IsOpen())                                            \
     {                                                            \
@@ -342,7 +342,7 @@ namespace SF::Engine
     }
 
 /// RGB colour picker (swatch + picker, no alpha).
-/// @param ref  glm::vec3 l-value
+/// @param ref  Vec3 l-value
 #define SF_WIDGET_COLOR3(label, ref)                             \
     if (_wb.IsOpen())                                            \
     {                                                            \
@@ -372,7 +372,7 @@ namespace SF::Engine
     }
 
 /// Typically used below a colour property for a preview.
-/// @param vec4ref  const glm::vec4&
+/// @param vec4ref  const Vec4&
 #define SF_WIDGET_SWATCH(vec4ref)     \
     if (_wb.IsOpen())                 \
     {                                 \
@@ -388,7 +388,7 @@ namespace SF::Engine
 /// Full-width intensity bar (use outside the table, e.g. light preview).
 /// @param value      Current value
 /// @param maxValue   Scale maximum
-/// @param vec3color  glm::vec3 bar colour
+/// @param vec3color  Vec3 bar colour
 #define SF_WIDGET_BAR(value, maxValue, vec3color)           \
     if (_wb.IsOpen())                                       \
     {                                                       \

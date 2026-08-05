@@ -1,19 +1,16 @@
 #include "Atmosphere/Atmosphere.si"
 
 [[vk::binding(0, 0)]]
-Texture2D<float4> transmittanceLUT;
+Sampler2D<float4> transmittanceLUT;
 
 [[vk::binding(1, 0)]]
-Texture2D<float4> multiScatterLUT;
+Sampler2D<float4> multiScatterLUT;
 
 [[vk::binding(2, 0)]]
 RWTexture2D<float4> skyViewLUT;
 
 [[vk::binding(3, 0)]]
 ConstantBuffer<SkyViewUBO> pc;
-
-[[vk::binding(4, 0)]]
-SamplerState g_sampler;
 
 [numthreads(8, 8, 1)]
 void main(uint3 globalThreadID : SV_DispatchThreadID)
@@ -52,7 +49,7 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
         viewPos, rd, maxDist,
         sunDir, float3(pc.sunDir.w),
         pc.bottomRadius, pc.topRadius,
-        transmittanceLUT, multiScatterLUT, g_sampler,
+        transmittanceLUT, multiScatterLUT,
         transmittance);
 
     skyViewLUT[coord] = float4(col, 1.0);

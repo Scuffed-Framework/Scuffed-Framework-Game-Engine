@@ -74,7 +74,7 @@ namespace SF::Engine
         : size_(size)
     {
         texture_ = std::make_unique<Image2d>(
-            Vector2Uint{size_, size_},
+            UVec2{size_, size_},
             VK_FORMAT_R16_SFLOAT,
             VK_IMAGE_LAYOUT_GENERAL,
             VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,

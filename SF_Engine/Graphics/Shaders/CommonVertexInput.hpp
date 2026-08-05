@@ -1,6 +1,6 @@
 #pragma once
 #include "Shader.hpp"
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 
 namespace SF::Engine
 {
@@ -53,12 +53,12 @@ namespace SF::Engine
     class Vertex3D : public Shader::VertexInput
     {
     public:
-        glm::vec3 position;
-        glm::vec3 normal;
+        Vec3 position;
+        Vec3 normal;
         glm::vec2 texCoord;
 
         Vertex3D() = default;
-        Vertex3D(const glm::vec3 &pos, const glm::vec3 &norm, const glm::vec2 &uv)
+        Vertex3D(const Vec3 &pos, const Vec3 &norm, const glm::vec2 &uv)
             : position(pos), normal(norm), texCoord(uv) {}
 
         std::vector<VkVertexInputBindingDescription> GetBindingDescriptions() const override
@@ -102,11 +102,11 @@ namespace SF::Engine
     class VertexPBR : public Shader::VertexInput
     {
     public:
-        glm::vec3 position;
-        glm::vec3 normal;
+        Vec3 position;
+        Vec3 normal;
         glm::vec2 texCoord;
-        glm::vec3 tangent;
-        glm::vec3 bitangent;
+        Vec3 tangent;
+        Vec3 bitangent;
 
         VertexPBR() = default;
 
@@ -163,11 +163,11 @@ namespace SF::Engine
     class VertexColored : public Shader::VertexInput
     {
     public:
-        glm::vec3 position;
-        glm::vec4 color;
+        Vec3 position;
+        Vec4 color;
 
         VertexColored() = default;
-        VertexColored(const glm::vec3 &pos, const glm::vec4 &col)
+        VertexColored(const Vec3 &pos, const Vec4 &col)
             : position(pos), color(col) {}
 
         std::vector<VkVertexInputBindingDescription> GetBindingDescriptions() const override
@@ -205,8 +205,8 @@ namespace SF::Engine
     class VertexInstance : public Shader::VertexInput
     {
     public:
-        glm::mat4 modelMatrix;
-        glm::vec4 color;
+        Mat4 modelMatrix;
+        Vec4 color;
 
         VertexInstance() = default;
 
@@ -229,7 +229,7 @@ namespace SF::Engine
                 attributes[i].binding = 1;
                 attributes[i].location = 5 + i;
                 attributes[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-                attributes[i].offset = offsetof(VertexInstance, modelMatrix) + sizeof(glm::vec4) * i;
+                attributes[i].offset = offsetof(VertexInstance, modelMatrix) + sizeof(Vec4) * i;
             }
 
             // Color
@@ -250,10 +250,10 @@ namespace SF::Engine
     public:
         glm::vec2 position;
         glm::vec2 texCoord;
-        glm::vec4 color;
+        Vec4 color;
 
         VertexUI() = default;
-        VertexUI(const glm::vec2 &pos, const glm::vec2 &uv, const glm::vec4 &col)
+        VertexUI(const glm::vec2 &pos, const glm::vec2 &uv, const Vec4 &col)
             : position(pos), texCoord(uv), color(col) {}
 
         std::vector<VkVertexInputBindingDescription> GetBindingDescriptions() const override
@@ -297,10 +297,10 @@ namespace SF::Engine
     class VertexSkinned : public Shader::VertexInput
     {
     public:
-        glm::vec3 position;
-        glm::vec3 normal;
+        Vec3 position;
+        Vec3 normal;
         glm::vec2 texCoord;
-        glm::vec4 boneWeights;
+        Vec4 boneWeights;
         glm::ivec4 boneIndices;
 
         VertexSkinned() = default;

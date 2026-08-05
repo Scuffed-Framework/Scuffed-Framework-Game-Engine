@@ -96,16 +96,16 @@ namespace SF::Engine
             this->fieldOfView = fieldOfView;
         }
 
-        Vector3float GetPosition() const
+        Vec3 GetPosition() const
         {
             return position;
         }
 
-        const Vector3float &GetRotation() const
+        const Vec3 &GetRotation() const
         {
             return rotation;
         }
-        const Vector3float &GetVelocity() const
+        const Vec3 &GetVelocity() const
         {
             return velocity;
         }
@@ -114,7 +114,7 @@ namespace SF::Engine
          * Gets the view matrix created by the current camera position and rotation.
          * @return The view matrix created by the current camera position and rotation.
          */
-        const Matrix4float &GetViewMatrix() const
+        const Mat4 &GetViewMatrix() const
         {
             return viewMatrix;
         }
@@ -123,7 +123,7 @@ namespace SF::Engine
          * Gets the projection matrix used in the current scene render.
          * @return The projection matrix used in the current scene render.
          */
-        const Matrix4float &GetProjectionMatrix() const
+        const Mat4 &GetProjectionMatrix() const
         {
             return projectionMatrix;
         }
@@ -146,7 +146,7 @@ namespace SF::Engine
             return viewRay;
         }
 
-        glm::vec3 GetFront() const { return front_; }
+        Vec3 GetFront() const { return front_; }
 
         /**
         @brief inverse depth buffer and infinite far plane,
@@ -158,12 +158,12 @@ namespace SF::Engine
         bool IsFarPlaneInfinite() const { return infiniteFarPlane; }
         void SetFarPlaneInfinite(bool value) { infiniteFarPlane = value; }
 
-        Matrix4float GetProjection(float aspect) const
+        Mat4 GetProjection(float aspect) const
         {
             if (infiniteFarPlane)
                 return InfiniteFarProjection(aspect);
 
-            glm::mat4 p = glm::perspective(glm::radians(fovDeg), aspect, nearPlane, farPlane);
+            Mat4 p = glm::perspective(glm::radians(fovDeg), aspect, nearPlane, farPlane);
             p[1][1] *= -1.0f; // flip y cuz vulkan yk
             return p;
         }
@@ -174,23 +174,23 @@ namespace SF::Engine
         bool inverseZ;
         bool infiniteFarPlane;
 
-        Vector3float position;
-        Vector3float rotation;
-        Vector3float velocity;
+        Vec3 position;
+        Vec3 rotation;
+        Vec3 velocity;
 
-        Matrix4float viewMatrix;
-        Matrix4float projectionMatrix;
+        Mat4 viewMatrix;
+        Mat4 projectionMatrix;
 
         Frustum viewFrustum;
         Ray viewRay;
 
     public:
-        void SetPosition(glm::vec3 p) { position = p; }
+        void SetPosition(Vec3 p) { position = p; }
 
-        glm::mat4 InfiniteFarProjection(float aspect) const
+        Mat4 InfiniteFarProjection(float aspect) const
         {
             float f = 1.0f / std::tan(glm::radians(fovDeg) * 0.5f);
-            glm::mat4 p(0.0f);
+            Mat4 p(0.0f);
             p[0][0] = f / aspect;
             p[1][1] = f;
             p[2][3] = -1.0f;
@@ -215,25 +215,25 @@ namespace SF::Engine
         void UpdateVectors()
         {
             float yR = glm::radians(yaw_), pR = glm::radians(pitch_);
-            front_ = glm::normalize(glm::vec3(
+            front_ = normalize(Vec3(
                 std::cos(yR) * std::cos(pR),
                 std::sin(pR),
                 std::sin(yR) * std::cos(pR)));
-            right_ = glm::normalize(glm::cross(front_, glm::vec3(0, 1, 0)));
-            up_ = glm::normalize(glm::cross(right_, front_));
+            right_ = normalize(cross(front_, Vec3(0, 1, 0)));
+            up_ = normalize(cross(right_, front_));
         }
 
-        glm::mat4 GetView() const
+        Mat4 GetView() const
         {
             // Build view matrix from basis vectors directly instead of lookAt(eye, eye+dir, up).
             // lookAt(position_, position_ + front_, up) loses precision at large |position_|
             // because front_ (magnitude ~1) gets swallowed into position_'s float mantissa,
             // causing the "target" to jump between discrete representable values -> jittery rotation.
-            glm::vec3 f = glm::normalize(front_);
-            glm::vec3 r = glm::normalize(glm::cross(f, glm::vec3(0, 1, 0)));
-            glm::vec3 u = glm::cross(r, f);
+            Vec3 f = normalize(front_);
+            Vec3 r = normalize(cross(f, Vec3(0, 1, 0)));
+            Vec3 u = cross(r, f);
 
-            glm::mat4 view(1.0f);
+            Mat4 view(1.0f);
             view[0][0] = r.x;
             view[1][0] = r.y;
             view[2][0] = r.z;
@@ -252,9 +252,9 @@ namespace SF::Engine
 
         float yaw_ = -90.0f;
         float pitch_ = 10.0f;
-        glm::vec3 front_{0, 0, -1};
-        glm::vec3 right_{1, 0, 0};
-        glm::vec3 up_{0, 1, 0};
+        Vec3 front_{0, 0, -1};
+        Vec3 right_{1, 0, 0};
+        Vec3 up_{0, 1, 0};
         float fovDeg = 60.0f;
         float minFov = 10.0f;
         float maxFov = 120.0f;
@@ -269,23 +269,38 @@ namespace SF::Engine
         int screenHeight;
 
         // 16 bytes
-        glm::mat4 cameraPosition;
+        Vec4 cameraPosition;
 
         // 64 bytes each
-        glm::mat4 inverseProjection;
-        glm::mat4 inverseView;
-        glm::mat4 projection;
-        glm::mat4 view;
-        glm::mat4 viewProjection;
-        glm::mat4 prevViewProjection;
+        Mat4 inverseProjection;
+        Mat4 inverseView;
+        Mat4 projection;
+        Mat4 view;
+        Mat4 viewProjection;
+        Mat4 prevViewProjection;
     };
 
     // goofy
-    inline CameraUBO SharedCameraData; // fine, POD-ish, no SIOF risk
+    inline CameraUBO SharedCameraData;
+
+    namespace detail
+    {
+        inline UniformBuffer *g_sharedCameraBuffer = nullptr;
+    }
 
     inline UniformBuffer &GetSharedCameraBuffer()
     {
-        static UniformBuffer buffer(sizeof(CameraUBO));
-        return buffer;
+        return *detail::g_sharedCameraBuffer;
+    }
+
+    inline void CreateSharedCameraBuffer()
+    {
+        detail::g_sharedCameraBuffer = new UniformBuffer(sizeof(CameraUBO));
+    }
+
+    inline void DestroySharedCameraBuffer()
+    {
+        delete detail::g_sharedCameraBuffer;
+        detail::g_sharedCameraBuffer = nullptr;
     }
 }

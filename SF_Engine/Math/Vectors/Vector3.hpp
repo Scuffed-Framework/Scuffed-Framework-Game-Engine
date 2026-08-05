@@ -6,17 +6,19 @@
 
 namespace SF::Engine
 {
-    using Vector3float = glm::vec3;
-    using Vector3double = glm::dvec3;
-    using Vector3int = glm::ivec3;
-    using Vector3Uint = glm::uvec3;
+    using Vec3 = glm::vec3;
+    using DVec3 = glm::dvec3;
+    using IVec3 = glm::ivec3;
+    using UVec3 = glm::uvec3;
+    using TVec3 = glm::tvec3<glm::uint16>;
+    using BVec3 = glm::bvec3;
 
-    inline glm::ivec3 operator+(const glm::ivec3 &lhs, const Vector3Uint &rhs) noexcept
+    inline glm::ivec3 operator+(const glm::ivec3 &lhs, const UVec3 &rhs) noexcept
     {
         return lhs + glm::ivec3(static_cast<int>(rhs.x), static_cast<int>(rhs.y), static_cast<int>(rhs.z));
     }
 
-    inline glm::ivec3 operator+(const Vector3Uint &lhs, const glm::ivec3 &rhs) noexcept
+    inline glm::ivec3 operator+(const UVec3 &lhs, const glm::ivec3 &rhs) noexcept
     {
         return glm::ivec3(static_cast<int>(lhs.x), static_cast<int>(lhs.y), static_cast<int>(lhs.z)) + rhs;
     }

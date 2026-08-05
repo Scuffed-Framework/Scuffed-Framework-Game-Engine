@@ -24,7 +24,7 @@ namespace SF::Engine
         Load();
     }
 
-    Cubemap::Cubemap(const Vector2Uint& extent, VkFormat format, VkImageLayout layout,
+    Cubemap::Cubemap(const UVec2& extent, VkFormat format, VkImageLayout layout,
                      VkImageUsageFlags usage, VkFilter filter, VkSamplerAddressMode addressMode,
                      VkSampleCountFlagBits samples, bool anisotropic, bool mipmap)
         : Image(filter, addressMode, samples, layout,
@@ -54,10 +54,10 @@ namespace SF::Engine
 
     std::unique_ptr<Bitmap> Cubemap::GetBitmap(uint32_t mipLevel) const
     {
-        auto size = Vector2Uint(extent.width, extent.height) >> mipLevel;
+        auto size = UVec2(extent.width, extent.height) >> mipLevel;
         auto sizeSide = size.x * size.y * components;
         auto bitmap =
-            std::make_unique<Bitmap>(Vector2Uint(size.x, size.y * arrayLayers), components);
+            std::make_unique<Bitmap>(UVec2(size.x, size.y * arrayLayers), components);
         auto offset = bitmap->GetData().get();
 
         for (uint32_t i = 0; i < 6; i++)

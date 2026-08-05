@@ -58,7 +58,7 @@ namespace SF::Engine
         std::unique_ptr<Bitmap> GetBitmap(uint32_t mipLevel = 0, uint32_t arrayLayer = 0) const;
 
         const VkExtent3D &GetExtent() const { return extent; }
-        Vector2Uint GetSize() const { return {extent.width, extent.height}; }
+        UVec2 GetSize() const { return {extent.width, extent.height}; }
         VkFormat GetFormat() const { return format; }
         VkSampleCountFlagBits GetSamples() const { return samples; }
         VkImageUsageFlags GetUsage() const { return usage; }

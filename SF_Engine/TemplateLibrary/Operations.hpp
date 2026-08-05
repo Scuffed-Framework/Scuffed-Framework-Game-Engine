@@ -72,30 +72,30 @@ namespace SFTL
         }
     };
 
-    template <class _Out, class _Ty>
+    template <class _Out, class Type>
     struct out_value_result
     {
         _Out out;
-        _Ty value;
+        Type value;
 
-        template <_Convertible_from<const _Out &> _OOut, _Convertible_from<const _Ty &> _TTy>
+        template <_Convertible_from<const _Out &> _OOut, _Convertible_from<const Type &> _TTy>
         constexpr operator out_value_result<_OOut, _TTy>() const &
         {
             return {out, value};
         }
 
-        template <_Convertible_from<_Out> _OOut, _Convertible_from<_Ty> _TTy>
+        template <_Convertible_from<_Out> _OOut, _Convertible_from<Type> _TTy>
         constexpr operator out_value_result<_OOut, _TTy>() &&
         {
             return {move(out), move(value)};
         }
     };
 
-    template <class _Ty1, class _Ty2>
-    concept _same_impl = is_same_v<_Ty1, _Ty2>;
+    template <class Type1, class Type2>
+    concept _same_impl = is_same_v<Type1, Type2>;
 
-    template <class _Ty1, class _Ty2>
-    concept same_as = _same_impl<_Ty1, _Ty2> && _same_impl<_Ty2, _Ty1>;
+    template <class Type1, class Type2>
+    concept same_as = _same_impl<Type1, Type2> && _same_impl<Type2, Type1>;
 
     template <class _Derived, class _Base>
     concept derived_from =
@@ -105,12 +105,12 @@ namespace SFTL
     template <class _From, class _To>
     concept _implicitly_convertible_to = is_convertible_v<_From, _To>;
 
-    template <class _Ty1, class _Ty2>
+    template <class Type1, class Type2>
     concept common_reference_with =
         requires {
-            typename common_reference_t<_Ty1, _Ty2>;
-            typename common_reference_t<_Ty2, _Ty1>;
-        } && same_as<common_reference_t<_Ty1, _Ty2>, common_reference_t<_Ty2, _Ty1>> && convertible_to<_Ty1, common_reference_t<_Ty1, _Ty2>> && convertible_to<_Ty2, common_reference_t<_Ty1, _Ty2>>;
+            typename common_reference_t<Type1, Type2>;
+            typename common_reference_t<Type2, Type1>;
+        } && same_as<common_reference_t<Type1, Type2>, common_reference_t<Type2, Type1>> && convertible_to<Type1, common_reference_t<Type1, Type2>> && convertible_to<Type2, common_reference_t<Type1, Type2>>;
 
     template <class _LTy, class _RTy>
     concept assignable_from = is_lvalue_reference_v<_LTy> && common_reference_with<const remove_reference_t<_LTy> &, const remove_reference_t<_RTy> &> &&
@@ -118,56 +118,56 @@ namespace SFTL
                                   { _Left = static_cast<_RTy &&>(_Right) } -> same_as<_LTy>;
                               };
 
-    template <class _Ty>
-    concept destructible = is_nothrow_destructible_v<_Ty>;
+    template <class Type>
+    concept destructible = is_nothrow_destructible_v<Type>;
 
-    template <class _Ty, class... _ArgTys>
-    concept constructible_from = destructible<_Ty> && is_constructible_v<_Ty, _ArgTys...>;
-    template <class _Ty>
-    concept move_constructible = constructible_from<_Ty, _Ty> && convertible_to<_Ty, _Ty>;
+    template <class Type, class... _ArgTys>
+    concept constructible_from = destructible<Type> && is_constructible_v<Type, _ArgTys...>;
+    template <class Type>
+    concept move_constructible = constructible_from<Type, Type> && convertible_to<Type, Type>;
 
-    template <class _Ty>
-    concept copy_constructible = move_constructible<_Ty> && constructible_from<_Ty, _Ty &> && convertible_to<_Ty &, _Ty> && constructible_from<_Ty, const _Ty &> && convertible_to<const _Ty &, _Ty> && constructible_from<_Ty, const _Ty> && convertible_to<const _Ty, _Ty>;
+    template <class Type>
+    concept copy_constructible = move_constructible<Type> && constructible_from<Type, Type &> && convertible_to<Type &, Type> && constructible_from<Type, const Type &> && convertible_to<const Type &, Type> && constructible_from<Type, const Type> && convertible_to<const Type, Type>;
 
-    template <class _Ty>
+    template <class Type>
     concept _Has_class_or_enum_type =
-        is_class_v<remove_reference_t<_Ty>> || is_enum_v<remove_reference_t<_Ty>> || is_union_v<remove_reference_t<_Ty>>;
+        is_class_v<remove_reference_t<Type>> || is_enum_v<remove_reference_t<Type>> || is_union_v<remove_reference_t<Type>>;
 
     namespace ranges
     {
         namespace _swap_detail
         {
-            template <class _Ty>
-            void swap(_Ty &, _Ty &) = delete;
+            template <class Type>
+            void swap(Type &, Type &) = delete;
 
-            template <class _Ty1, class _Ty2>
+            template <class Type1, class Type2>
             concept _Use_ADL_swap =
-                (_Has_class_or_enum_type<_Ty1> || _Has_class_or_enum_type<_Ty2>) && requires(_Ty1 &&__t, _Ty2 &&__u) {
-                    swap(static_cast<_Ty1 &&>(__t), static_cast<_Ty2 &&>(__u)); // intentional ADL
+                (_Has_class_or_enum_type<Type1> || _Has_class_or_enum_type<Type2>) && requires(Type1 &&__t, Type2 &&__u) {
+                    swap(static_cast<Type1 &&>(__t), static_cast<Type2 &&>(__u)); // intentional ADL
                 };
 
             struct _swap_FN
             {
-                template <class _Ty1, class _Ty2>
-                    requires _Use_ADL_swap<_Ty1, _Ty2>
-                constexpr void operator()(_Ty1 &&__t, _Ty2 &&__u) const
-                    noexcept(noexcept(swap(static_cast<_Ty1 &&>(__t), static_cast<_Ty2 &&>(__u))))
+                template <class Type1, class Type2>
+                    requires _Use_ADL_swap<Type1, Type2>
+                constexpr void operator()(Type1 &&__t, Type2 &&__u) const
+                    noexcept(noexcept(swap(static_cast<Type1 &&>(__t), static_cast<Type2 &&>(__u))))
                 {
-                    swap(static_cast<_Ty1 &&>(__t), static_cast<_Ty2 &&>(__u));
+                    swap(static_cast<Type1 &&>(__t), static_cast<Type2 &&>(__u));
                 }
 
-                template <class _Ty>
-                    requires(!_Use_ADL_swap<_Ty &, _Ty &> && move_constructible<_Ty> && assignable_from<_Ty &, _Ty>)
-                constexpr void operator()(_Ty &__x, _Ty &__y) const
-                    noexcept(is_nothrow_move_constructible_v<_Ty> && is_nothrow_move_assignable_v<_Ty>)
+                template <class Type>
+                    requires(!_Use_ADL_swap<Type &, Type &> && move_constructible<Type> && assignable_from<Type &, Type>)
+                constexpr void operator()(Type &__x, Type &__y) const
+                    noexcept(is_nothrow_move_constructible_v<Type> && is_nothrow_move_assignable_v<Type>)
                 {
-                    _Ty __tmp(static_cast<_Ty &&>(__x));
-                    __x = static_cast<_Ty &&>(__y);
-                    __y = static_cast<_Ty &&>(__tmp);
+                    Type __tmp(static_cast<Type &&>(__x));
+                    __x = static_cast<Type &&>(__y);
+                    __y = static_cast<Type &&>(__tmp);
                 }
 
-                template <class _Ty1, class _Ty2, size_t _Size>
-                constexpr void operator()(_Ty1 (&__t)[_Size], _Ty2 (&__u)[_Size]) const
+                template <class Type1, class Type2, size_t _Size>
+                constexpr void operator()(Type1 (&__t)[_Size], Type2 (&__u)[_Size]) const
                     noexcept(noexcept(operator()(__t[0], __u[0])))
                     requires requires(_swap_FN __fn) { __fn(__t[0], __u[0]); }
                 {
@@ -185,14 +185,14 @@ namespace SFTL
         }
     } // namespace ranges
 
-    template <class _Ty>
-    concept swappable = requires(_Ty &__x, _Ty &__y) { ranges::swap(__x, __y); };
+    template <class Type>
+    concept swappable = requires(Type &__x, Type &__y) { ranges::swap(__x, __y); };
 
-    template <class _Ty>
-    concept movable = is_object_v<_Ty> && move_constructible<_Ty> && assignable_from<_Ty &, _Ty> && swappable<_Ty>;
+    template <class Type>
+    concept movable = is_object_v<Type> && move_constructible<Type> && assignable_from<Type &, Type> && swappable<Type>;
 
-    template <class _Ty>
-    concept copyable = copy_constructible<_Ty> && movable<_Ty> && assignable_from<_Ty &, _Ty &> && assignable_from<_Ty &, const _Ty &> && assignable_from<_Ty &, const _Ty>;
+    template <class Type>
+    concept copyable = copy_constructible<Type> && movable<Type> && assignable_from<Type &, Type &> && assignable_from<Type &, const Type &> && assignable_from<Type &, const Type>;
 
     template <class InputIterator, class Predicate>
     [[nodiscard]] constexpr InputIterator find_if(InputIterator first, InputIterator last, Predicate predicate)

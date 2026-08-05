@@ -5,7 +5,7 @@
 RWTexture2D<float4> perlinNoiseTex;
 
 [numthreads(8, 8, 1)]
-void main(uint3 globalThreadID : SV_DispatchThreadID)
+void main(uint3 globalThreadID: SV_DispatchThreadID)
 {
     int2 uv = int2(globalThreadID.xy);
 
@@ -21,7 +21,7 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
     // Turn 2D -> 3D Perlin input
     float3 pos = float3(p * 8.0, 0.0);
 
-    float n = perlin(pos) * 0.5 + 0.5;  // remap to 0–1
+    float n = perlin(pos) * 0.5 + 0.5; // remap to 0–1
 
     perlinNoiseTex[uv] = float4(n, 0.0, 0.0, 1.0);
 }

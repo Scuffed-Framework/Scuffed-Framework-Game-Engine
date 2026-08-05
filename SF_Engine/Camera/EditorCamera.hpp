@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Graphics/Windows/Window.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>

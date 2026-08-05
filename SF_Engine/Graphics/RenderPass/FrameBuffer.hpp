@@ -15,7 +15,7 @@ namespace SF::Engine
     public:
         Framebuffer(const LogicalDevice &logicalDevice, const Swapchain &swapchain, const RenderStage &renderStage,
                     const Renderpass &renderPass, const ImageDepth *depthStencil, // pointer now
-                    const Vector2Uint &extent, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
+                    const UVec2 &extent, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
         ~Framebuffer();
 
         Image2d *GetAttachment(uint32_t index) const { return imageAttachments[index].get(); }

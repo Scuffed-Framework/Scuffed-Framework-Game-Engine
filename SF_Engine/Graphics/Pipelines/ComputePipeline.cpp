@@ -139,7 +139,7 @@ namespace SF::Engine
     }
 
     void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer,
-                                    const Vector2Uint &extent) const
+                                    const UVec2 &extent) const
     {
         constexpr uint32_t LOCAL = 16;
         uint32_t gx = (extent.x + LOCAL - 1) / LOCAL;

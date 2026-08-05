@@ -76,7 +76,7 @@ namespace SF::Engine
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
         VmaAllocator *alloc = RenderSystem::Get()->getAllocator();
 
-        Vector2Uint size(int32_t(extent.width >> mipLevel), int32_t(extent.height >> mipLevel));
+        UVec2 size(int32_t(extent.width >> mipLevel), int32_t(extent.height >> mipLevel));
 
         VkImage dstImage;
         VmaAllocation dstAllocation = VK_NULL_HANDLE;

@@ -23,7 +23,7 @@ namespace SF::Engine
          * @param anisotropic If anisotropic filtering is enabled.
          * @param mipmap If mipmaps will be generated.
          */
-        Image2dArray(const Vector2Uint &extent, uint32_t arrayLayers, VkFormat format = VK_FORMAT_R8G8B8A8_UNORM,
+        Image2dArray(const UVec2 &extent, uint32_t arrayLayers, VkFormat format = VK_FORMAT_R8G8B8A8_UNORM,
                      VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                      VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
                      VkFilter filter = VK_FILTER_LINEAR, VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,

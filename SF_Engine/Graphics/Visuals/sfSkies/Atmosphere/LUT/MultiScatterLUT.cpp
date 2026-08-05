@@ -7,7 +7,7 @@ namespace SF::Engine
     MultiScatterLUT::MultiScatterLUT(Image2d *transmittanceLUT, uint32_t w, uint32_t h)
     {
         texture_ = std::make_unique<Image2d>(
-            Vector2Uint{w, h},
+            UVec2{w, h},
             VK_FORMAT_R16G16B16A16_SFLOAT,
             VK_IMAGE_LAYOUT_GENERAL,
             VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);

@@ -9,12 +9,12 @@
 
 #include <Scene/SceneManager.hpp>
 #include <Math/Time/Time.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 
 
 namespace SF::Engine
 {
-    glm::vec3 GetMainDirectionalLightDirection()
+    Vec3 GetMainDirectionalLightDirection()
     {
         if (SceneManager::Get()->IsSceneStarted())
         {
@@ -22,13 +22,13 @@ namespace SF::Engine
                 SceneManager::Get()->GetScene());
 
             if (lights.empty())
-                return glm::vec3(0.0f);
+                return Vec3(0.0f);
 
-            return glm::normalize(lights[0].light.direction);
+            return normalize(lights[0].light.direction);
         }
         else
         {
-            return glm::vec3(0, 1, 0);
+            return Vec3(0, 1, 0);
         }
     }
 
@@ -43,28 +43,28 @@ namespace SF::Engine
         return lights[0].light.intensity;
     }
 
-    glm::vec2 GetScreenSize()
+    Vec2 GetScreenSize()
     {
-        return glm::vec2(WindowManager::Get()->GetWindow(0)->GetSize().x, WindowManager::Get()->GetWindow(0)->GetSize().y);
+        return Vec2(WindowManager::Get()->GetWindow(0)->GetSize().x, WindowManager::Get()->GetWindow(0)->GetSize().y);
     }
 
-    glm::mat4 GetView()
+    Mat4 GetView()
     {
         return CameraController::Get().GetActive()->GetView();
     }
-    glm::mat4 GetInvView()
+    Mat4 GetInvView()
     {
-        return glm::inverse(CameraController::Get().GetActive()->GetView());
+        return inverse(CameraController::Get().GetActive()->GetView());
     }
 
-    glm::mat4 GetProjection()
+    Mat4 GetProjection()
     {
         return CameraController::Get().GetActive()->GetProjection(WindowManager::Get()->GetWindow(0)->GetAspectRatio());
     }
 
-    glm::mat4 GetInvProjection()
+    Mat4 GetInvProjection()
     {
-        return glm::inverse(GetProjection());
+        return inverse(GetProjection());
     }
 
     float GetFarPlane()
@@ -82,18 +82,18 @@ namespace SF::Engine
         return CameraController::Get().GetActive()->GetFieldOfView();
     }
 
-    glm::vec4 GetCameraDirection()
+    Vec4 GetCameraDirection()
     {
-        return glm::vec4(CameraController::Get().GetActive()->GetFront(), CameraController::Get().GetActive()->GetFarPlane());
+        return Vec4(CameraController::Get().GetActive()->GetFront(), CameraController::Get().GetActive()->GetFarPlane());
     }
 
-    glm::vec3 GetCameraPosition()
+    Vec3 GetCameraPosition()
     {
         return CameraController::Get().GetActive()->GetPosition();
     }
-    glm::vec4 GetCameraPosition4()
+    Vec4 GetCameraPosition4()
     {
-        return glm::vec4(CameraController::Get().GetActive()->GetPosition(), 1.0f);
+        return Vec4(CameraController::Get().GetActive()->GetPosition(), 1.0f);
     }
 
     ApplicationTime GetDeltaTime()

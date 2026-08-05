@@ -23,22 +23,22 @@ namespace SF::Engine
          * @param rotation The rotation.
          * @param scale The scale.
          */
-        Transform(const Vector3float &position = {}, const Vector3float &rotation = {}, const Vector3float &scale = Vector3float(1.0f));
+        Transform(const Vec3 &position = {}, const Vec3 &rotation = {}, const Vec3 &scale = Vec3(1.0f));
         ~Transform() = default;
 
-        Matrix4float GetWorldMatrix() const;
-        Vector3float GetPosition() const;
-        Vector3float GetRotation() const;
-        Vector3float GetScale() const;
+        Mat4 GetWorldMatrix() const;
+        Vec3 GetPosition() const;
+        Vec3 GetRotation() const;
+        Vec3 GetScale() const;
 
-        const Vector3float &GetLocalPosition() const { return position; }
-        void SetLocalPosition(const Vector3float &localPosition) { position = localPosition; }
+        const Vec3 &GetLocalPosition() const { return position; }
+        void SetLocalPosition(const Vec3 &localPosition) { position = localPosition; }
 
-        const Vector3float &GetLocalRotation() const { return rotation; }
-        void SetLocalRotation(const Vector3float &localRotation) { rotation = localRotation; }
+        const Vec3 &GetLocalRotation() const { return rotation; }
+        void SetLocalRotation(const Vec3 &localRotation) { rotation = localRotation; }
 
-        const Vector3float &GetLocalScale() const { return scale; }
-        void SetLocalScale(const Vector3float &localScale) { scale = localScale; }
+        const Vec3 &GetLocalScale() const { return scale; }
+        void SetLocalScale(const Vec3 &localScale) { scale = localScale; }
 
         bool operator==(const Transform &rhs) const;
         bool operator!=(const Transform &rhs) const;
@@ -49,9 +49,9 @@ namespace SF::Engine
 
         Transform GetWorldTransform() const;
 
-        Vector3float position;
-        Vector3float rotation;
-        Vector3float scale;
+        Vec3 position;
+        Vec3 rotation;
+        Vec3 scale;
 
         mutable Transform *worldTransform = nullptr;
         void Serialize(XMLNode &node) const override
@@ -70,14 +70,14 @@ namespace SF::Engine
             scale = DeserializeVec3(node, "scale", {1.f, 1.f, 1.f});
         }
 
-        Matrix4float ToMatrix() const
+        Mat4 ToMatrix() const
         {
-            Matrix4float T = glm::translate(Matrix4float(1.0f), position);
-            Matrix4float R = glm::yawPitchRoll(
+            Mat4 T = glm::translate(Mat4(1.0f), position);
+            Mat4 R = glm::yawPitchRoll(
                 glm::radians(rotation.y),
                 glm::radians(rotation.x),
                 glm::radians(rotation.z));
-            Matrix4float S = glm::scale(Matrix4float(1.0f), scale);
+            Mat4 S = glm::scale(Mat4(1.0f), scale);
             return T * R * S;
         }
 

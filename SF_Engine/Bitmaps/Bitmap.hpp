@@ -46,8 +46,8 @@ namespace SF::Engine
     public:
         Bitmap() = default;
         explicit Bitmap(std::filesystem::path filename);
-        explicit Bitmap(const Vector2Uint &size, uint32_t bytesPerPixel = 4);
-        Bitmap(std::unique_ptr<uint8_t[]> &&data, const Vector2Uint &size,
+        explicit Bitmap(const UVec2 &size, uint32_t bytesPerPixel = 4);
+        Bitmap(std::unique_ptr<uint8_t[]> &&data, const UVec2 &size,
                uint32_t bytesPerPixel = 4);
         ~Bitmap() = default;
 
@@ -83,11 +83,11 @@ namespace SF::Engine
             this->data = std::move(data);
         }
 
-        const Vector2Uint &GetSize() const
+        const UVec2 &GetSize() const
         {
             return size;
         }
-        void SetSize(const Vector2Uint &size)
+        void SetSize(const UVec2 &size)
         {
             this->size = size;
         }
@@ -102,11 +102,11 @@ namespace SF::Engine
         }
 
     private:
-        static uint32_t CalculateLength(const Vector2Uint &size, uint32_t bytesPerPixel);
+        static uint32_t CalculateLength(const UVec2 &size, uint32_t bytesPerPixel);
 
         std::filesystem::path filename;
         std::unique_ptr<uint8_t[]> data;
-        Vector2Uint size;
+        UVec2 size;
         uint32_t bytesPerPixel = 0;
     };
 }

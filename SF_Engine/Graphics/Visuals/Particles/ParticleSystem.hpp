@@ -9,7 +9,7 @@
 #include <Graphics/Pipelines/ComputePipeline.hpp>
 
 #include <Math/Vectors/Vector.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 
 #include <array>
 #include <cstdint>
@@ -30,9 +30,9 @@ namespace SF::Engine
      */
     struct alignas(16) GpuParticle
     {
-        glm::vec4 position; // xyz = world pos,  w = lifetime remaining (s)
-        glm::vec4 velocity; // xyz = velocity,   w = total lifetime (s)
-        glm::vec4 color;    // rgba, linear
+        Vec4 position; // xyz = world pos,  w = lifetime remaining (s)
+        Vec4 velocity; // xyz = velocity,   w = total lifetime (s)
+        Vec4 color;    // rgba, linear
         glm::vec2 size;     // x = current size, y = initial size
         float rotation;     // radians
         float _pad0;
@@ -46,10 +46,10 @@ namespace SF::Engine
      */
     struct alignas(16) EmitterParams
     {
-        glm::vec4 position;   // xyz = world origin, w = unused
-        glm::vec4 direction;  // xyz = cone axis (normalised), w = half-angle (rad)
-        glm::vec4 colorStart; // rgba
-        glm::vec4 colorEnd;   // rgba
+        Vec4 position;   // xyz = world origin, w = unused
+        Vec4 direction;  // xyz = cone axis (normalised), w = half-angle (rad)
+        Vec4 colorStart; // rgba
+        Vec4 colorEnd;   // rgba
         float emissionRate;   // particles / second
         float minLifetime;    // seconds
         float maxLifetime;    // seconds
@@ -118,7 +118,7 @@ namespace SF::Engine
      * @code
      *   auto *ps = ParticleSystem::Get();
      *   EmitterHandle h = ps->AddEmitter(params);
-     *   ps->GetEmitter(h).params.position = glm::vec4(pos, 1.0f);
+     *   ps->GetEmitter(h).params.position = Vec4(pos, 1.0f);
      *   ps->RemoveEmitter(h);
      * @endcode
      */

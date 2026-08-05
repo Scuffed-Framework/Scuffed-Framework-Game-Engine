@@ -28,11 +28,11 @@ namespace SF::Engine
         float waveSpeed2 = 1.8f;
 
         //  Visual
-        glm::vec3 oceanColor = glm::vec3(0.02f, 0.05f, 0.12f);
+        Vec3 oceanColor = Vec3(0.02f, 0.05f, 0.12f);
         float glossiness = 0.85f;
-        glm::vec3 shallowColor = glm::vec3(0.10f, 0.35f, 0.40f);
+        Vec3 shallowColor = Vec3(0.10f, 0.35f, 0.40f);
         float specularPower = 96.0f;
-        glm::vec3 foamColor = glm::vec3(0.85f, 0.92f, 0.95f);
+        Vec3 foamColor = Vec3(0.85f, 0.92f, 0.95f);
         float foamIntensity = 0.60f;
         float foamThreshold = 0.15f;
 
@@ -43,14 +43,14 @@ namespace SF::Engine
 
         //  Animation
         float timeScale = 1.0f;
-        glm::vec3 windDirection = glm::vec3(1.0f, 0.0f, 0.3f);
+        Vec3 windDirection = Vec3(1.0f, 0.0f, 0.3f);
 
         //  Planet / sun (planetCenter is the planet's center in world/render
         //  coordinates. With the convention "camera starts at sea level at
         //  the origin", planetCenter = (0, -planetRadius, 0) by default.)
-        glm::vec3 planetCenter = glm::vec3(0.0f, -6'371'000.0f, 0.0f);
+        Vec3 planetCenter = Vec3(0.0f, -6'371'000.0f, 0.0f);
         float planetRadius = 6'371'000.0f;                          // match AtmosphereParams::bottomRadius by default
-        glm::vec3 sunDirection = glm::vec3(0.577f, 0.577f, 0.577f); // toward sun, unit vector
+        Vec3 sunDirection = Vec3(0.577f, 0.577f, 0.577f); // toward sun, unit vector
 
         //  Mesh
         // patchCount: coarse grid divisions per axis; total patches = patchCount².
@@ -63,10 +63,10 @@ namespace SF::Engine
     struct OceanTessellationFrameUBO // offset  size
     {
         // View
-        glm::mat4 viewProj;   //   0      64
-        glm::mat4 invView;    //  64      64
-        glm::mat4 invProj;    // 128      64
-        glm::vec3 cameraPos;  // 192      12
+        Mat4 viewProj;   //   0      64
+        Mat4 invView;    //  64      64
+        Mat4 invProj;    // 128      64
+        Vec3 cameraPos;  // 192      12
         float time;           // 204       4
         glm::vec2 screenSize; // 208       8
         float _pad0;          // 216       4
@@ -87,15 +87,15 @@ namespace SF::Engine
         float tile0;           // 264  (was _pad2) -- 1/lengthScale0
         float tile1;           // 268  (was _pad3) -- 1/lengthScale1
         //  272, 16-byte aligned
-        glm::vec3 windDirection; // 272      12
+        Vec3 windDirection; // 272      12
         float timeScale;         // 284       4
         //  288, 16-byte aligned
         // Visual  (each vec3+float = 16 bytes)
-        glm::vec3 oceanColor;   // 288      12
+        Vec3 oceanColor;   // 288      12
         float glossiness;       // 300       4
-        glm::vec3 shallowColor; // 304      12
+        Vec3 shallowColor; // 304      12
         float specularPower;    // 316       4
-        glm::vec3 foamColor;    // 320      12
+        Vec3 foamColor;    // 320      12
         float foamIntensity;    // 332       4
         float foamThreshold;    // 336       4
         float tile2;            // 340  (was _pad4) -- 1/lengthScale2
@@ -103,9 +103,9 @@ namespace SF::Engine
         float normalStrength;   // 348  (was _pad6)
         //  352, 16-byte aligned
         // Planet / sun (vec3+float = 16 bytes, vec3+float = 16 bytes)
-        glm::vec3 planetCenter; // 352      12  (always vec3(0) in render coords)
+        Vec3 planetCenter; // 352      12  (always vec3(0) in render coords)
         float planetRadius;     // 364       4
-        glm::vec3 sunDirection; // 368      12
+        Vec3 sunDirection; // 368      12
         float _pad7;            // 380       4
         //  Total: 384 bytes  (384 / 16 = 24, correctly aligned)
     };

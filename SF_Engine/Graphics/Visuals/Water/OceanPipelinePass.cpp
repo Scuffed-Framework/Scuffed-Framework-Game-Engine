@@ -24,7 +24,7 @@ namespace SF::Engine
         spectrumUBO_ = std::make_unique<UniformBuffer>(sizeof(OceanFFTSpectrumUBO));
 
         const uint32_t N = fftSettings_.N;
-        const Vector2Uint size{N, N};
+        const UVec2 size{N, N};
 
         initialSpectrumTex_ = std::make_unique<Image2dArray>(
             size,
@@ -363,7 +363,7 @@ namespace SF::Engine
         frameData_.maxTessDistance = params_.maxTessDistance;
 
         // Wind
-        frameData_.windDirection = glm::normalize(params_.windDirection);
+        frameData_.windDirection = normalize(params_.windDirection);
         frameData_.timeScale = params_.timeScale;
 
         // Visual
@@ -379,8 +379,8 @@ namespace SF::Engine
         frameData_.planetCenter = params_.planetCenter;
         frameData_.planetRadius = params_.planetRadius;
         frameData_.sunDirection = glm::length(params_.sunDirection) > 1e-6f
-                                      ? glm::normalize(params_.sunDirection)
-                                      : glm::vec3(0.577f, 0.577f, 0.577f);
+                                      ? normalize(params_.sunDirection)
+                                      : Vec3(0.577f, 0.577f, 0.577f);
 
         // FFT cascade tiling (1 / lengthScale per cascade) and normal strength.
         frameData_.tile0 = 1.0f / fftSettings_.lengthScale0;
@@ -466,12 +466,12 @@ namespace SF::Engine
         accumulatedTime_ += dt;
 
         float aspect = window->GetAspectRatio();
-        glm::mat4 view = cam->GetView();
-        glm::mat4 proj = cam->GetProjection(aspect);
+        Mat4 view = cam->GetView();
+        Mat4 proj = cam->GetProjection(aspect);
 
         frameData_.viewProj = proj * view;
-        frameData_.invView = glm::inverse(view);
-        frameData_.invProj = glm::inverse(proj);
+        frameData_.invView = inverse(view);
+        frameData_.invProj = inverse(proj);
         frameData_.cameraPos = cam->GetPosition();
         frameData_.time = accumulatedTime_;
 
@@ -500,15 +500,15 @@ namespace SF::Engine
                        frameData_.planetCenter.x, frameData_.planetCenter.y, frameData_.planetCenter.z,
                        frameData_.planetRadius);
 
-                glm::vec3 up = frameData_.cameraPos - frameData_.planetCenter;
+                Vec3 up = frameData_.cameraPos - frameData_.planetCenter;
                 float upLen = glm::length(up);
                 if (upLen > 1e-5f)
                     up /= upLen;
                 else
-                    up = glm::vec3(0, 1, 0);
-                glm::vec3 surfacePoint = frameData_.planetCenter + up * frameData_.planetRadius;
+                    up = Vec3(0, 1, 0);
+                Vec3 surfacePoint = frameData_.planetCenter + up * frameData_.planetRadius;
 
-                glm::vec4 clip = frameData_.viewProj * glm::vec4(surfacePoint, 1.0f);
+                Vec4 clip = frameData_.viewProj * Vec4(surfacePoint, 1.0f);
                 printf("[OceanDebug] surfacePoint=(%.3f,%.3f,%.3f) distToCam=%.3f\n",
                        surfacePoint.x, surfacePoint.y, surfacePoint.z,
                        glm::length(frameData_.cameraPos - surfacePoint));
@@ -518,7 +518,7 @@ namespace SF::Engine
                        clip.w != 0.0f ? clip.y / clip.w : 0.0f,
                        clip.w != 0.0f ? clip.z / clip.w : 0.0f);
 
-                glm::vec4 camClip = frameData_.viewProj * glm::vec4(frameData_.cameraPos, 1.0f);
+                Vec4 camClip = frameData_.viewProj * Vec4(frameData_.cameraPos, 1.0f);
                 printf("[OceanDebug] camClip=(%.6f,%.6f,%.6f,%.6f)\n",
                        camClip.x, camClip.y, camClip.z, camClip.w);
             }

@@ -12,7 +12,7 @@
 #include "CloudNoise.hpp"
 #include "../Atmosphere/LUT/AerialPerspectiveLUT.hpp"
 
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <memory>
 #include <cstdint>
 
@@ -53,11 +53,11 @@ namespace SF::Engine
                                    const AtmosphereParams &params);
         ~CloudPipelinePass() override = default;
 
-        void SetFrameData(const glm::mat4 &invProj,
-                          const glm::mat4 &invView,
-                          const glm::vec3 &cameraPos,
-                          const glm::vec3 &planetPos,
-                          const glm::vec3 &sunDir,
+        void SetFrameData(const Mat4 &invProj,
+                          const Mat4 &invView,
+                          const Vec3 &cameraPos,
+                          const Vec3 &planetPos,
+                          const Vec3 &sunDir,
                           glm::vec2 screenSize);
 
         void PreRender(const CommandBuffer &cmd);
@@ -74,7 +74,15 @@ namespace SF::Engine
         int lightMarchSteps = 8; // secondary (light accum compute)
 
         float densityScale = 1.0f;
-        float coverage = 0.20f;
+        float coverage = 0.5;
+        float cloudDetailScale = 1.0f;
+        float cloudBaseNoiseScale = 1.0f;
+        float cloudCurlNoiseScale = 1.0f;
+
+        float cloudWeatherUVScale = 1.0f;
+        float percipitationBias = 1.0f;
+        float FadeDistance2d = 1.0f;
+        float fadeSmoothDist = 1.0f;
 
         static bool isWindowOpen;
 
@@ -100,11 +108,14 @@ namespace SF::Engine
         std::unique_ptr<RenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
 
-        glm::vec3 cachedSunDir_{0.577f, 0.577f, 0.577f};
+        Vec3 cachedSunDir_{0.577f, 0.577f, 0.577f};
         float totalTime_{0.0f};
 
         const Image2d *lastColorImg_ = nullptr;
         const ImageDepth *lastDepthImg_ = nullptr;
+
+        uint64_t lastAttachmentGeneration_ = 0;
+        uint32_t frameCounter_ = 0;
     };
 
 } // namespace SF::Engine

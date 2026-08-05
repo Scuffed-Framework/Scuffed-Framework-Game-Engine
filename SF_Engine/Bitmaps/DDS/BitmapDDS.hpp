@@ -121,7 +121,7 @@ namespace SF::Engine
                     throw std::runtime_error("Unknown FourCC format");
 
                 bitmap.SetData(std::move(rgba));
-                bitmap.SetSize(Vector2Uint(width, height));
+                bitmap.SetSize(UVec2(width, height));
                 bitmap.SetBytesPerPixel(4);
                 bitmap.SetFilename(filename);
                 return;
@@ -147,7 +147,7 @@ namespace SF::Engine
                 }
 
                 bitmap.SetData(std::move(rgba));
-                bitmap.SetSize(Vector2Uint(width, height));
+                bitmap.SetSize(UVec2(width, height));
                 bitmap.SetBytesPerPixel(4);
                 bitmap.SetFilename(filename);
                 return;
@@ -169,7 +169,7 @@ namespace SF::Engine
                 }
 
                 bitmap.SetData(std::move(data));
-                bitmap.SetSize(Vector2Uint(width, height));
+                bitmap.SetSize(UVec2(width, height));
                 bitmap.SetBytesPerPixel(bytesPerPixel);
                 bitmap.SetFilename(filename);
             }

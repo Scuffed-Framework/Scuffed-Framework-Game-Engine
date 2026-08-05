@@ -52,7 +52,7 @@ namespace SF::Engine
     // Creates a 1x1 Image2d with the given RGBA bytes, fully uploaded to GPU.
     static std::unique_ptr<Image2d> Make1x1(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
-        auto bmp = std::make_unique<Bitmap>(Vector2Uint{1, 1}, 4);
+        auto bmp = std::make_unique<Bitmap>(UVec2{1, 1}, 4);
         uint8_t *p = bmp->GetData().get();
         p[0] = r;
         p[1] = g;
@@ -100,7 +100,7 @@ namespace SF::Engine
 
     void LitMeshPipelinePass::Submit(std::shared_ptr<Mesh> mesh,
                                      const MeshMaterial &material,
-                                     const glm::mat4 &transform)
+                                     const Mat4 &transform)
     {
         drawList_.push_back({std::move(mesh), material, transform});
     }

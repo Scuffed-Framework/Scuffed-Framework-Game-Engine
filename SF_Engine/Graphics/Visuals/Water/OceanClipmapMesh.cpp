@@ -86,10 +86,10 @@ namespace SF::Engine
     }
 
     void OceanClipmapMesh::writeRingVertices(uint32_t ringIndex,
-                                             const glm::vec3 &origin,
-                                             const glm::vec3 &tangentU,
-                                             const glm::vec3 &tangentV,
-                                             const glm::vec3 &planetCenter,
+                                             const Vec3 &origin,
+                                             const Vec3 &tangentU,
+                                             const Vec3 &tangentV,
+                                             const Vec3 &planetCenter,
                                              float planetRadius)
     {
         Ring &ring = rings_[ringIndex];
@@ -110,9 +110,9 @@ namespace SF::Engine
                 const float localX = -half + static_cast<float>(col) * step;
                 const float localZ = -half + static_cast<float>(row) * step;
 
-                const glm::vec3 flatPos = origin + tangentU * localX + tangentV * localZ;
-                const glm::vec3 dir = glm::normalize(flatPos - planetCenter);
-                const glm::vec3 spherePos = planetCenter + dir * planetRadius;
+                const Vec3 flatPos = origin + tangentU * localX + tangentV * localZ;
+                const Vec3 dir = normalize(flatPos - planetCenter);
+                const Vec3 spherePos = planetCenter + dir * planetRadius;
 
                 PatchVertex &v = vertices[row * gridW + col];
                 v.position = spherePos;
@@ -128,22 +128,22 @@ namespace SF::Engine
         ring.vertexBuffer->UnmapMemory();
     }
 
-    void OceanClipmapMesh::RegenerateAt(const glm::vec3 &cameraPos,
-                                        const glm::vec3 &planetCenter,
+    void OceanClipmapMesh::RegenerateAt(const Vec3 &cameraPos,
+                                        const Vec3 &planetCenter,
                                         float planetRadius)
     {
-        glm::vec3 up = cameraPos - planetCenter;
+        Vec3 up = cameraPos - planetCenter;
         const float upLen = glm::length(up);
-        up = (upLen < 1e-5f) ? glm::vec3(0.0f, 1.0f, 0.0f) : (up / upLen);
+        up = (upLen < 1e-5f) ? Vec3(0.0f, 1.0f, 0.0f) : (up / upLen);
 
-        const glm::vec3 surfacePoint = planetCenter + up * planetRadius;
+        const Vec3 surfacePoint = planetCenter + up * planetRadius;
 
-        glm::vec3 reference = glm::vec3(0.0f, 1.0f, 0.0f);
+        Vec3 reference = Vec3(0.0f, 1.0f, 0.0f);
         if (std::abs(glm::dot(reference, up)) > 0.99f)
-            reference = glm::vec3(1.0f, 0.0f, 0.0f);
+            reference = Vec3(1.0f, 0.0f, 0.0f);
 
-        const glm::vec3 tangentU = glm::normalize(glm::cross(reference, up));
-        const glm::vec3 tangentV = glm::normalize(glm::cross(up, tangentU));
+        const Vec3 tangentU = normalize(cross(reference, up));
+        const Vec3 tangentV = normalize(cross(up, tangentU));
 
         for (uint32_t i = 0; i < ringCount_; ++i)
             writeRingVertices(i, surfacePoint, tangentU, tangentV, planetCenter, planetRadius);

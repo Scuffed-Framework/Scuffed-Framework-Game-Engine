@@ -11,11 +11,11 @@ namespace SF::Engine
 {
     struct Vertex
     {
-        Vector3float pos;
-        Vector3float color;
-        Vector3float texCoord;  // UV
-        Vector3float tangent;
-        Vector3float normal;
+        Vec3 pos;
+        Vec3 color;
+        Vec3 texCoord;  // UV
+        Vec3 tangent;
+        Vec3 normal;
 
         static VkVertexInputBindingDescription getBindingDescription()
         {
@@ -62,46 +62,46 @@ namespace SF::Engine
     // Uniform buffer object for MVP matrices
     struct UniformBufferObject
     {
-        alignas(16) glm::mat4 model;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
+        alignas(16) Mat4 model;
+        alignas(16) Mat4 view;
+        alignas(16) Mat4 proj;
     };
 
     // Camera data for shaders
     struct CameraData
     {
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-        alignas(16) glm::mat4 viewProj;
-        alignas(16) glm::vec4 cameraPos;
-        alignas(16) glm::vec4 screenDimensions;  // width, height, nearPlane, farPlane
+        alignas(16) Mat4 view;
+        alignas(16) Mat4 proj;
+        alignas(16) Mat4 viewProj;
+        alignas(16) Vec4 cameraPos;
+        alignas(16) Vec4 screenDimensions;  // width, height, nearPlane, farPlane
     };
 
     // Scene-level uniform data
     struct SceneUBO
     {
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 projection;
-        alignas(16) glm::vec3 cameraPos;
+        alignas(16) Mat4 view;
+        alignas(16) Mat4 projection;
+        alignas(16) Vec3 cameraPos;
         float _padding;
     };
 
     // Data passed between shader stages
     struct PerStageData
     {
-        glm::vec3 worldPos;
+        Vec3 worldPos;
         glm::vec2 texCoord;
-        glm::vec3 worldNormal;
-        glm::vec3 worldTangent;
-        glm::vec3 worldBitangent;
+        Vec3 worldNormal;
+        Vec3 worldTangent;
+        Vec3 worldBitangent;
     };
 
     // Matches Light struct in GLSL
     struct Light
     {
-        alignas(16) glm::vec4 position;  // .w = type (0=point, 1=directional, 2=spot)
-        alignas(16) glm::vec4 color;     // .w = intensity
-        alignas(16) glm::vec4 params;    // x: range, y: radius, z: spotAngle, w: spotBlend
+        alignas(16) Vec4 position;  // .w = type (0=point, 1=directional, 2=spot)
+        alignas(16) Vec4 color;     // .w = intensity
+        alignas(16) Vec4 params;    // x: range, y: radius, z: spotAngle, w: spotBlend
     };
 
     // Matches UBO_Lights in GLSL
@@ -383,31 +383,31 @@ namespace SF::Engine
             return Shape<24>(vertices, indices);
         }
 
-        inline Vector3float lerpVec3(const Vector3float& a, const Vector3float& b, float t)
+        inline Vec3 lerpVec3(const Vec3& a, const Vec3& b, float t)
         {
-            return Vector3float{
+            return Vec3{
                 a.x + (b.x - a.x) * t,
                 a.y + (b.y - a.y) * t,
                 a.z + (b.z - a.z) * t
             };
         }
 
-        inline Vector3float scaleVec3(const Vector3float& v, float s)
+        inline Vec3 scaleVec3(const Vec3& v, float s)
         {
-            return Vector3float{ v.x * s, v.y * s, v.z * s };
+            return Vec3{ v.x * s, v.y * s, v.z * s };
         }
 
-        inline Vector3float normalizeVec3(const Vector3float& v)
+        inline Vec3 normalizeVec3(const Vec3& v)
         {
             float len = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
             if (len < 1e-8f)
                 return v;
-            return Vector3float{ v.x / len, v.y / len, v.z / len };
+            return Vec3{ v.x / len, v.y / len, v.z / len };
         }
 
-        inline Vector3float crossVec3(const Vector3float& a, const Vector3float& b)
+        inline Vec3 crossVec3(const Vec3& a, const Vec3& b)
         {
-            return Vector3float{
+            return Vec3{
                 a.y * b.z - a.z * b.y,
                 a.z * b.x - a.x * b.z,
                 a.x * b.y - a.y * b.x
@@ -415,28 +415,28 @@ namespace SF::Engine
         }
 
         // Spherical UV from a *normalized* position
-        inline Vector3float sphericalUV(const Vector3float& n)
+        inline Vec3 sphericalUV(const Vec3& n)
         {
             constexpr float kPi = 3.14159265358979323846f;
             float u = 0.5f + std::atan2(n.z, n.x) / (2.0f * kPi);
             float v = 0.5f - std::asin(std::clamp(n.y, -1.0f, 1.0f)) / kPi;
-            return Vector3float{ u, v, 0.0f };
+            return Vec3{ u, v, 0.0f };
         }
 
         // Tangent perpendicular to the normal (degenerates gracefully at the poles)
-        inline Vector3float tangentFromNormal(const Vector3float& n)
+        inline Vec3 tangentFromNormal(const Vec3& n)
         {
-            Vector3float up{ 0.0f, 1.0f, 0.0f };
+            Vec3 up{ 0.0f, 1.0f, 0.0f };
             if (std::abs(n.y) > 0.999f)
-                up = Vector3float{ 1.0f, 0.0f, 0.0f };
+                up = Vec3{ 1.0f, 0.0f, 0.0f };
             return normalizeVec3(crossVec3(up, n));
         }
 
         // Midpoint of two vertices, pushed out onto the sphere of the given radius
         inline Vertex midpointVertex(const Vertex& a, const Vertex& b, float radius)
         {
-            Vector3float posMid = lerpVec3(a.pos, b.pos, 0.5f);
-            Vector3float n       = normalizeVec3(posMid);
+            Vec3 posMid = lerpVec3(a.pos, b.pos, 0.5f);
+            Vec3 n       = normalizeVec3(posMid);
 
             Vertex out{};
             out.pos      = scaleVec3(n, radius);
@@ -479,14 +479,14 @@ namespace SF::Engine
             return count;
         }
 
-        inline Vertex makeIcoVertex(const Vector3float& rawPos, float radius)
+        inline Vertex makeIcoVertex(const Vec3& rawPos, float radius)
         {
-            Vector3float n = normalizeVec3(rawPos);
+            Vec3 n = normalizeVec3(rawPos);
             Vertex v{};
             v.pos      = scaleVec3(n, radius);
             v.normal   = n;
             v.tangent  = tangentFromNormal(n);
-            v.color    = Vector3float{ 1.0f, 1.0f, 1.0f };
+            v.color    = Vec3{ 1.0f, 1.0f, 1.0f };
             v.texCoord = sphericalUV(n);
             return v;
         }
@@ -497,7 +497,7 @@ namespace SF::Engine
             constexpr float t = 1.61803398875f; // golden ratio
 
             // 12 base icosahedron positions (unnormalized)
-            std::array<Vector3float, 12> raw = {{
+            std::array<Vec3, 12> raw = {{
                 {-1,  t,  0}, { 1,  t,  0}, {-1, -t,  0}, { 1, -t,  0},
                 { 0, -1,  t}, { 0,  1,  t}, { 0, -1, -t}, { 0,  1, -t},
                 { t,  0, -1}, { t,  0,  1}, {-t,  0, -1}, {-t,  0,  1}

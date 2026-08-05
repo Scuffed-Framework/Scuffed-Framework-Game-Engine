@@ -7,6 +7,8 @@
 #include "../AtmosphereParams.hpp"
 #include <memory>
 
+#include <Graphics/SharedSamplers.hpp>
+
 namespace SF::Engine
 {
     //  aerialPerspColorRGBTransR_  rgba16f  3-D   .rgb = inscatter, .a = T.r
@@ -41,7 +43,7 @@ namespace SF::Engine
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
             aerialPerspRange_ = std::make_unique<Image2d>(
-                Vector2Uint{width_, height_},
+                UVec2{width_, height_},
                 VK_FORMAT_R32_SFLOAT,
                 VK_IMAGE_LAYOUT_GENERAL,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);

@@ -2,7 +2,7 @@
 
 #include <Graphics/Mesh/Mesh.hpp>
 #include <Graphics/Buffers/Buffer.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <memory>
 #include <vector>
 
@@ -39,8 +39,8 @@ namespace SF::Engine
         OceanClipmapMesh(const OceanClipmapMesh &) = delete;
         OceanClipmapMesh &operator=(const OceanClipmapMesh &) = delete;
 
-        void RegenerateAt(const glm::vec3 &cameraPos,
-                          const glm::vec3 &planetCenter,
+        void RegenerateAt(const Vec3 &cameraPos,
+                          const Vec3 &planetCenter,
                           float planetRadius);
 
         void Draw(const CommandBuffer &cmd) const;
@@ -60,10 +60,10 @@ namespace SF::Engine
 
         void buildRingTopology(uint32_t ringIndex);
         void writeRingVertices(uint32_t ringIndex,
-                               const glm::vec3 &origin,
-                               const glm::vec3 &tangentU,
-                               const glm::vec3 &tangentV,
-                               const glm::vec3 &planetCenter,
+                               const Vec3 &origin,
+                               const Vec3 &tangentU,
+                               const Vec3 &tangentV,
+                               const Vec3 &planetCenter,
                                float planetRadius);
 
         uint32_t ringCount_;

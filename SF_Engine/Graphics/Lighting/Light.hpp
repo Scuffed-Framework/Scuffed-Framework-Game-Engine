@@ -3,7 +3,7 @@
 #include "LightingTypes.hpp"
 #include <Graphics/Material/Color/Color.hpp>
 #include <Math/Vectors/Vector.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <string>
 #include <XML/XMLReader.hpp>
 #include <Scene/SceneSerialization.hpp>
@@ -19,9 +19,9 @@ namespace SF::Engine
     {
         Lighting::LightType type = Lighting::LightType::Point;
 
-        glm::vec3 position = {0, 0, 0};
-        glm::vec3 direction = {0, -1, 0}; // normalised, pointing away from source
-        glm::vec3 color = {1, 1, 1};      // linear RGB
+        Vec3 position = {0, 0, 0};
+        Vec3 direction = {0, -1, 0}; // normalised, pointing away from source
+        Vec3 color = {1, 1, 1};      // linear RGB
         float intensity = 1.0f;           // candela / lux
         float radius = 10.0f;             // effective range (point/spot)
         float innerConeAngleDeg = 30.0f;  // spot inner
@@ -38,7 +38,7 @@ namespace SF::Engine
             g.radius = radius;
             g.color = color;
             g.intensity = intensity;
-            g.direction = glm::normalize(direction);
+            g.direction = normalize(direction);
             g.innerConeAngle = glm::cos(glm::radians(innerConeAngleDeg));
             g.outerConeAngle = glm::cos(glm::radians(outerConeAngleDeg));
             g.type = static_cast<uint32_t>(type);

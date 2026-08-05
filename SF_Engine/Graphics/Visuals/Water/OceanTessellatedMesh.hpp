@@ -2,7 +2,7 @@
 
 #include <Graphics/Mesh/Mesh.hpp>
 #include <Graphics/Buffers/Buffer.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <memory>
 
 namespace SF::Engine
@@ -63,8 +63,8 @@ namespace SF::Engine
          * @param planetCenter  Planet center in world space.
          * @param planetRadius  Planet (sea-level) radius in world units.
          */
-        void RegenerateAt(const glm::vec3 &cameraPos,
-                          const glm::vec3 &planetCenter,
+        void RegenerateAt(const Vec3 &cameraPos,
+                          const Vec3 &planetCenter,
                           float planetRadius);
 
         /**
@@ -89,10 +89,10 @@ namespace SF::Engine
         // Rebuilds only the vertex buffer contents for the given tangent
         // frame / sphere projection. Shared by the constructor and
         // RegenerateAt().
-        void writeVertices(const glm::vec3 &origin,
-                           const glm::vec3 &tangentU,
-                           const glm::vec3 &tangentV,
-                           const glm::vec3 &planetCenter,
+        void writeVertices(const Vec3 &origin,
+                           const Vec3 &tangentU,
+                           const Vec3 &tangentV,
+                           const Vec3 &planetCenter,
                            float planetRadius);
 
         uint32_t patchCount_;

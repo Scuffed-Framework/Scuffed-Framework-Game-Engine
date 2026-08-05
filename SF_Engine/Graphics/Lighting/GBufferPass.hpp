@@ -7,7 +7,7 @@
 #include <Graphics/Mesh/Mesh.hpp>
 #include "LightManager.hpp"
 #include "LitMeshPipelinePass.hpp" // reuses MeshMaterial and LitPushConstants
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <memory>
 #include <vector>
 
@@ -44,7 +44,7 @@ namespace SF::Engine
         /// Queue a mesh for rendering this frame.
         void Submit(std::shared_ptr<Mesh> mesh,
                     const MeshMaterial &material,
-                    const glm::mat4 &transform);
+                    const Mat4 &transform);
 
         void Render(const CommandBuffer &commandBuffer) override;
 
@@ -66,7 +66,7 @@ namespace SF::Engine
         {
             std::shared_ptr<Mesh> mesh;
             MeshMaterial material;
-            glm::mat4 transform;
+            Mat4 transform;
         };
         std::vector<DrawCall> drawList_;
     };

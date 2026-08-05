@@ -4,31 +4,28 @@
 ConstantBuffer<AtmoUBO> u;
 
 [[vk::binding(1, 0)]]
-Texture2D<float4> transmittanceLUT;
+Sampler2D transmittanceLUT;
 
 [[vk::binding(2, 0)]]
-Texture2D<float4> multiScatterLUT;
+Sampler2D multiScatterLUT;
 
 [[vk::binding(3, 0)]]
-Texture2D<float4> skyViewLUT;
+Sampler2D skyViewLUT;
 
 [[vk::binding(4, 0)]]
-Texture3D<float4> aerialPerspColorRGBTransR;
+Sampler3D aerialPerspColorRGBTransR;  // Note: Sampler3D for 3D textures
 
 [[vk::binding(5, 0)]]
-Texture3D<float4> aerialPerspTransGB;
+Sampler3D aerialPerspTransGB;
 
 [[vk::binding(6, 0)]]
-Texture2D<float> aerialPerspRange;
+Sampler2D aerialPerspRange;
 
 [[vk::binding(7, 0)]]
-Texture2D<float4> sceneColor;
+Sampler2D sceneColor;
 
 [[vk::binding(8, 0)]]
-Texture2D<float> sceneDepth;
-
-[[vk::binding(9, 0)]]
-SamplerState g_sampler;
+Sampler2D sceneDepth;
 
 struct VSOutput
 {
@@ -81,7 +78,7 @@ float3 sampleSkyView(float3 rd, float3 viewPos, float3 sunDir, float camR, float
         u_coord = abs(phi) / kPI;
     }
 
-    return skyViewLUT.SampleLevel(g_sampler, float2(u_coord, v), 0.0).rgb;
+    return skyViewLUT.SampleLevel(float2(u_coord, v), 0.0).rgb;
 }
 
 float3 sunDisk(float3 rd, float3 sunDir, float sunIntensity,
@@ -96,7 +93,7 @@ float3 sunDisk(float3 rd, float3 sunDir, float sunIntensity,
     if (diskWeight <= 0.0) return float3(0.0);
     float camR = length(viewPos);
     float cosSun = dot(viewPos / camR, sunDir);
-    float3 T = sampleTransmittance(transmittanceLUT, g_sampler, camR, cosSun,
+    float3 T = sampleTransmittance(transmittanceLUT, camR, cosSun,
                                     bottomRadius, topRadius);
     return diskWeight * sunIntensity * T;
 }
@@ -104,11 +101,11 @@ float3 sunDisk(float3 rd, float3 sunDir, float sunIntensity,
 void sampleAerialPerspective(float2 screenUV, float sceneDist,
                                 out float3 outScatter, out float3 outTransmit)
 {
-    float maxDist = max(aerialPerspRange.SampleLevel(g_sampler, screenUV, 0.0).r, 0.001);
+    float maxDist = max(aerialPerspRange.SampleLevel( screenUV, 0.0).r, 0.001);
     float t = clamp(sqrt(sceneDist / maxDist), 0.0, 1.0);
 
-    float4 ct = aerialPerspColorRGBTransR.SampleLevel(g_sampler, float3(screenUV, t), 0.0);
-    float2 tgb = aerialPerspTransGB.SampleLevel(g_sampler, float3(screenUV, t), 0.0).rg;
+    float4 ct = aerialPerspColorRGBTransR.SampleLevel( float3(screenUV, t), 0.0);
+    float2 tgb = aerialPerspTransGB.SampleLevel( float3(screenUV, t), 0.0).rg;
 
     outScatter = ct.rgb;
     outTransmit = float3(ct.a, tgb.r, tgb.g);
@@ -150,10 +147,10 @@ float4 atmo_fs(VSOutput input) : SV_Target
     // this down here causes a super dull blue atmo :( harass the goat claude to fix it ig
     // probabfly because whatever wrote to it (litmeshpipelinepass) wasn't configured to read and write (neither is this, fuck) the depth for infinite far plane
     // along with the reversed Z buffer.
-    float depth = sceneDepth.SampleLevel(g_sampler, screenUV, 0.0).r;
+    float depth = sceneDepth.SampleLevel( screenUV, 0.0).r;
     if (depth > 0.0)
     {
-        float3 surface = sceneColor.SampleLevel(g_sampler, screenUV, 0.0).rgb;
+        float3 surface = sceneColor.SampleLevel( screenUV, 0.0).rgb;
         float sceneDist = depthToViewDist(depth, ndc);
 
         float3 scatter, transmit;
@@ -175,7 +172,7 @@ float4 atmo_fs(VSOutput input) : SV_Target
         col = 1.0 - exp(-col);
 
         float cosSky = dot(normalize(viewPos), rd);
-        float3 skyTrans = sampleTransmittance(transmittanceLUT, g_sampler, camHeight,
+        float3 skyTrans = sampleTransmittance(transmittanceLUT,  camHeight,
                                                 cosSky, Rbot, Rtop);
         float atmAlpha = 1.0 - dot(skyTrans, float3(0.2126, 0.7152, 0.0722));
 
@@ -193,7 +190,7 @@ float4 atmo_fs(VSOutput input) : SV_Target
         viewPos, rd, maxDist,
         sunDir, float3(sunI),
         Rbot, Rtop,
-        transmittanceLUT, multiScatterLUT, g_sampler,
+        transmittanceLUT, multiScatterLUT, 
         transmittance);
 
     bool groundBlocking = (gndHit.x > 0.0 && gndHit.x < gndHit.y);

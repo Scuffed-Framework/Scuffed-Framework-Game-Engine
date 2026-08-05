@@ -89,18 +89,18 @@ float2 atmosUV(float height, float cosSun, float bottomRadius, float topRadius)
     return float2(x, y);
 }
 
-float3 sampleTransmittance(Texture2D lut, SamplerState texSampler, float height, float cosSun,
+float3 sampleTransmittance(Sampler2D lut, float height, float cosSun,
                            float bottomRadius, float topRadius)
 {
     float2 uv = atmosUV(height, cosSun, bottomRadius, topRadius);
-    return lut.SampleLevel(texSampler, uv, 0.0).rgb;
+    return lut.SampleLevel(uv, 0.0).rgb;
 }
 
-float3 sampleMultiScatter(Texture2D lut, SamplerState texSampler, float height, float cosSun,
+float3 sampleMultiScatter(Sampler2D lut, float height, float cosSun,
                           float bottomRadius, float topRadius)
 {
     float2 uv = atmosUV(height, cosSun, bottomRadius, topRadius);
-    return lut.SampleLevel(texSampler, uv, 0.0).rgb;
+    return lut.SampleLevel(uv, 0.0).rgb;
 }
 
 
@@ -165,8 +165,7 @@ float3 calculateScattering(
     float3 start, float3 dir, float maxDist,
     float3 lightDir, float3 lightIntensity,
     float planetRadius, float atmosRadius,
-    texture2D transmittanceLUT, texture2D multiScatterLUT,
-    SamplerState texSampler,
+    Sampler2D transmittanceLUT, Sampler2D multiScatterLUT,
     out float3 transmittance)
 {
     float a = dot(dir, dir);
@@ -229,14 +228,14 @@ float3 calculateScattering(
 
         float cosSunI = dot(normalize(posI), lightDir);
         float hI      = length(posI);
-        float3 sunTrans = sampleTransmittance(transmittanceLUT, texSampler, hI, cosSunI,
+        float3 sunTrans = sampleTransmittance(transmittanceLUT, hI, cosSunI,
                                             planetRadius, atmosRadius);
 
         float3 attn = camTrans * sunTrans;
         totalRay += density.x * attn;
         totalMie += density.y * attn;
 
-        float3 ms      = sampleMultiScatter(multiScatterLUT, texSampler, hI, cosSunI,
+        float3 ms      = sampleMultiScatter(multiScatterLUT, hI, cosSunI,
                                           planetRadius, atmosRadius);
         float3 sigma_s = RAY_BETA * (density.x / dt)
                      + MIE_BETA * (density.y / dt);

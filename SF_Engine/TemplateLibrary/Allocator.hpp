@@ -38,16 +38,16 @@
 
 namespace SFTL
 {
-    template <class _Ty>
-    constexpr void destroy_at(_Ty *const _Location) noexcept
+    template <class Type>
+    constexpr void destroy_at(Type *const _Location) noexcept
     {
-        if constexpr (is_array_v<_Ty>)
+        if constexpr (is_array_v<Type>)
         {
             _STD _Destroy_range(_STD begin(*_Location), _STD end(*_Location));
         }
         else
         {
-            _Location->~_Ty();
+            _Location->~Type();
         }
     }
     template <typename T>

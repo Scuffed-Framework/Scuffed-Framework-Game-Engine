@@ -2,7 +2,7 @@
 
 #define VK_NO_PROTOTYPES
 
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <optional>
 #include <string>
 #include <vector>

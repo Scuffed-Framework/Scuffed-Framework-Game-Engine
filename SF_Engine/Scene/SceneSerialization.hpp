@@ -1,12 +1,12 @@
 #pragma once
 #include <XML/XMLReader.hpp>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <Entity/Entity.hpp>
 
 namespace SF::Engine
 {
     // Helper free functions to keep Serialize/Deserialize clean
-    inline void SerializeVec3(XMLNode &node, const std::string &name, const glm::vec3 &v)
+    inline void SerializeVec3(XMLNode &node, const std::string &name, const Vec3 &v)
     {
         XMLNode child = node.AddChild(name);
         child.SetAttribute("x", v.x);
@@ -14,18 +14,18 @@ namespace SF::Engine
         child.SetAttribute("z", v.z);
     }
 
-    inline glm::vec3 DeserializeVec3(const XMLNode &node, const std::string &name, glm::vec3 defaultVal = {})
+    inline Vec3 DeserializeVec3(const XMLNode &node, const std::string &name, Vec3 defaultVal = {})
     {
         XMLNode child = node.GetChild(name);
         if (!child.IsValid())
             return defaultVal;
-        glm::vec3 out = defaultVal;
+        Vec3 out = defaultVal;
         child.GetAttribute("x", out.x);
         child.GetAttribute("y", out.y);
         child.GetAttribute("z", out.z);
         return out;
     }
-    inline void SerializeVec4(XMLNode &node, const std::string &name, const glm::vec4 &v)
+    inline void SerializeVec4(XMLNode &node, const std::string &name, const Vec4 &v)
     {
         XMLNode child = node.AddChild(name);
         child.SetAttribute("x", v.x);
@@ -34,12 +34,12 @@ namespace SF::Engine
         child.SetAttribute("w", v.w);
     }
 
-    inline glm::vec4 DeserializeVec4(const XMLNode &node, const std::string &name, glm::vec4 defaultVal = {})
+    inline Vec4 DeserializeVec4(const XMLNode &node, const std::string &name, Vec4 defaultVal = {})
     {
         XMLNode child = node.GetChild(name);
         if (!child.IsValid())
             return defaultVal;
-        glm::vec4 out = defaultVal;
+        Vec4 out = defaultVal;
         child.GetAttribute("x", out.x);
         child.GetAttribute("y", out.y);
         child.GetAttribute("z", out.z);

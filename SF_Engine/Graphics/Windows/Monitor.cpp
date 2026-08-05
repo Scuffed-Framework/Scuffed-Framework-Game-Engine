@@ -13,7 +13,7 @@ namespace SF::Engine
         return monitor == glfwGetPrimaryMonitor();
     }
 
-    Vector2Uint Monitor::GetWorkareaSize() const
+    UVec2 Monitor::GetWorkareaSize() const
     {
         int32_t width;
         int32_t height;
@@ -21,15 +21,15 @@ namespace SF::Engine
         return {width, height};
     }
 
-    Vector2Uint Monitor::GetWorkareaPosition() const
+    UVec2 Monitor::GetWorkareaPosition() const
     {
         int32_t xPos;
         int32_t yPos;
         glfwGetMonitorWorkarea(monitor, &xPos, &yPos, nullptr, nullptr);
-        return Vector2Uint(xPos, yPos);
+        return UVec2(xPos, yPos);
     }
 
-    Vector2Uint Monitor::GetSize() const
+    UVec2 Monitor::GetSize() const
     {
         int32_t widthMM;
         int32_t heightMM;
@@ -37,7 +37,7 @@ namespace SF::Engine
         return {widthMM, heightMM};
     }
 
-    Vector2float Monitor::GetContentScale() const
+    Vec2 Monitor::GetContentScale() const
     {
         float xScale;
         float yScale;
@@ -45,7 +45,7 @@ namespace SF::Engine
         return {xScale, yScale};
     }
 
-    Vector2Uint Monitor::GetPosition() const
+    UVec2 Monitor::GetPosition() const
     {
         int32_t xpos;
         int32_t ypos;

@@ -5,7 +5,7 @@ namespace SF::Engine
 {
     Image2d makeTextureFromColor(Color col)
     {
-        auto bitmap = std::make_unique<Bitmap>(Vector2Uint{1, 1}, 4);
+        auto bitmap = std::make_unique<Bitmap>(UVec2{1, 1}, 4);
 
         const uint32_t packed = col.ToInt(Color::PackingOrder::RGBA);
         uint8_t *data = bitmap->GetData().get();
@@ -30,7 +30,7 @@ namespace SF::Engine
 
     struct PBRMaterialPushConstatns
     {
-        glm::vec4 baseColor; // rgba
+        Vec4 baseColor; // rgba
         float metallicFactor;
         float roughnessFactor;
         float aoFactor;

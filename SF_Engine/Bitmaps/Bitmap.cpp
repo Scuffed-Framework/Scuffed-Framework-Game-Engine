@@ -7,13 +7,13 @@ namespace SF::Engine
         Load(std::move(filename));
     }
 
-    Bitmap::Bitmap(const Vector2Uint& size, uint32_t bytesPerPixel)
+    Bitmap::Bitmap(const UVec2& size, uint32_t bytesPerPixel)
         : size(size), bytesPerPixel(bytesPerPixel)
     {
         data = std::make_unique<uint8_t[]>(CalculateLength(size, bytesPerPixel));
     }
 
-    Bitmap::Bitmap(std::unique_ptr<uint8_t[]>&& data, const Vector2Uint& size,
+    Bitmap::Bitmap(std::unique_ptr<uint8_t[]>&& data, const UVec2& size,
                    uint32_t bytesPerPixel)
         : data(std::move(data)), size(size), bytesPerPixel(bytesPerPixel)
     {
@@ -34,7 +34,7 @@ namespace SF::Engine
         return CalculateLength(size, bytesPerPixel);
     }
 
-    uint32_t Bitmap::CalculateLength(const Vector2Uint& size, uint32_t bytesPerPixel)
+    uint32_t Bitmap::CalculateLength(const UVec2& size, uint32_t bytesPerPixel)
     {
         return size.x * size.y * bytesPerPixel;
     }

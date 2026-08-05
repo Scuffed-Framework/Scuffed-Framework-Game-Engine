@@ -7,7 +7,7 @@ namespace SF::Engine
     PerlinNoiseLUT::PerlinNoiseLUT(uint32_t size)
     {
         texture_ = std::make_unique<Image2d>(
-            Vector2Uint{size, size},
+            UVec2{size, size},
             VK_FORMAT_R8_UNORM,
             VK_IMAGE_LAYOUT_GENERAL,
             VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);

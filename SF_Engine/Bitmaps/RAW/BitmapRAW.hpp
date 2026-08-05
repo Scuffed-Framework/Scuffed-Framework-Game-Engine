@@ -137,7 +137,7 @@ namespace SF::Engine
             ConvertToRGBA8(rawData.data(), data.get(), width, height, format, byteOrder);
 
             bitmap.SetData(std::move(data));
-            bitmap.SetSize(Vector2Uint(width, height));
+            bitmap.SetSize(UVec2(width, height));
             bitmap.SetBytesPerPixel(4);
             bitmap.SetFilename(filename);
         }

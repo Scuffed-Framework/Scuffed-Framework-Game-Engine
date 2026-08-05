@@ -60,10 +60,10 @@ namespace SF::Engine
 
         if (viewport.GetSize())
             renderArea.SetExtent(
-                Vector2Uint(viewport.GetScale() * Vector2float(*viewport.GetSize())));
+                UVec2(viewport.GetScale() * Vec2(*viewport.GetSize())));
         else
-            renderArea.SetExtent(Vector2Uint(
-                viewport.GetScale() * Vector2float(WindowManager::Get()->GetWindow(0)->GetSize())));
+            renderArea.SetExtent(UVec2(
+                viewport.GetScale() * Vec2(WindowManager::Get()->GetWindow(0)->GetSize())));
 
         // Don't mark as out of date with a zero extent : window is probably minimized.
         // Rebuilding with zero extent creates an invalid framebuffer and crashes.

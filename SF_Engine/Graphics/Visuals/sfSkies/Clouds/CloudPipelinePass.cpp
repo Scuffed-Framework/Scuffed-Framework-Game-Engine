@@ -103,7 +103,6 @@ namespace SF::Engine
 
         // binding=2 : blue noise 2D
         VkDescriptorImageInfo b2{};
-        b2.sampler = blueNoiseLUT_->GetTexture()->GetSampler();
         b2.imageView = blueNoiseLUT_->GetTexture()->GetView();
         b2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet w2{};
@@ -111,25 +110,23 @@ namespace SF::Engine
         w2.dstSet = descSet_->GetDescriptorSet();
         w2.dstBinding = 2;
         w2.descriptorCount = 1;
-        w2.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w2.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         w2.pImageInfo = &b2;
 
         // binding=3 : alligator noise 3D (4-channel Nubis Cubed noise)
         VkDescriptorImageInfo b3{};
-        b3.sampler = pWorleyLUT_->GetTexture()->GetSampler();
         b3.imageView = pWorleyLUT_->GetTexture()->GetView();
         b3.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet w3{};
         w3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         w3.dstSet = descSet_->GetDescriptorSet();
-        w3.dstBinding = 3;
+        w3.dstBinding = 3;  
         w3.descriptorCount = 1;
-        w3.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w3.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         w3.pImageInfo = &b3;
 
         // binding=4 : transmittance LUT
         VkDescriptorImageInfo b4{};
-        b4.sampler = transmittanceLUT_->GetTexture()->GetSampler();
         b4.imageView = transmittanceLUT_->GetTexture()->GetView();
         b4.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet w4{};
@@ -137,12 +134,11 @@ namespace SF::Engine
         w4.dstSet = descSet_->GetDescriptorSet();
         w4.dstBinding = 4;
         w4.descriptorCount = 1;
-        w4.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w4.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         w4.pImageInfo = &b4;
 
         // binding=5 : multi-scatter LUT
         VkDescriptorImageInfo b5{};
-        b5.sampler = multiScatterLUT_->GetTexture()->GetSampler();
         b5.imageView = multiScatterLUT_->GetTexture()->GetView();
         b5.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet w5{};
@@ -150,11 +146,10 @@ namespace SF::Engine
         w5.dstSet = descSet_->GetDescriptorSet();
         w5.dstBinding = 5;
         w5.descriptorCount = 1;
-        w5.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w5.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         w5.pImageInfo = &b5;
 
         VkDescriptorImageInfo b6{};
-        b6.sampler = cloudNoise_->GetBaseTexture()->GetSampler();
         b6.imageView = cloudNoise_->GetBaseTexture()->GetView();
         b6.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet w6{};
@@ -162,11 +157,10 @@ namespace SF::Engine
         w6.dstSet = descSet_->GetDescriptorSet();
         w6.dstBinding = 6;
         w6.descriptorCount = 1;
-        w6.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w6.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         w6.pImageInfo = &b6;
 
         VkDescriptorImageInfo b7{};
-        b7.sampler = cloudNoise_->GetDetailTexture()->GetSampler();
         b7.imageView = cloudNoise_->GetDetailTexture()->GetView();
         b7.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet w7{};
@@ -174,11 +168,12 @@ namespace SF::Engine
         w7.dstSet = descSet_->GetDescriptorSet();
         w7.dstBinding = 7;
         w7.descriptorCount = 1;
-        w7.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w7.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         w7.pImageInfo = &b7;
 
         VkDescriptorImageInfo b8{};
-        b8.sampler = aerialPerspRange_->GetAerialPerspectiveRange()->GetSampler(); // shit i forgot to initialize it
+        // spared because it was too funny
+        // b8.sampler = aerialPerspRange_->GetAerialPerspectiveRange()->GetSampler(); // shit i forgot to initialize it
         b8.imageView = aerialPerspRange_->GetAerialPerspectiveRange()->GetView();
         b8.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         VkWriteDescriptorSet w8{};
@@ -186,39 +181,65 @@ namespace SF::Engine
         w8.dstSet = descSet_->GetDescriptorSet();
         w8.dstBinding = 8;
         w8.descriptorCount = 1;
-        w8.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w8.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         w8.pImageInfo = &b8;
-
+        
         BindSharedCameraData(11, 1, descSet_.get());
 
-        DescriptorSet::Update({w0, w1, w2, w3, w4, w5, w6, w7, w8});
+        VkDescriptorImageInfo b12{};
+        b12.sampler = SharedSamplers::GetLinearRepeatSampler();
+        // imageView left null — this is a pure sampler-only binding (VK_DESCRIPTOR_TYPE_SAMPLER),
+        // not a combined image sampler.
+
+        VkWriteDescriptorSet w12{};
+        w12.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w12.dstSet = descSet_->GetDescriptorSet();
+        w12.dstBinding = 12;
+        w12.descriptorCount = 1;
+        w12.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;   // not COMBINED_IMAGE_SAMPLER
+        w12.pImageInfo = &b12;
+
+        VkDescriptorImageInfo b13{};
+        b13.sampler = SharedSamplers::GetLinearClampSampler();
+        // imageView left null — this is a pure sampler-only binding (VK_DESCRIPTOR_TYPE_SAMPLER),
+        // not a combined image sampler.
+
+        VkWriteDescriptorSet w13{};
+        w13.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w13.dstSet = descSet_->GetDescriptorSet();
+        w13.dstBinding = 13;
+        w13.descriptorCount = 1;
+        w13.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;   // not COMBINED_IMAGE_SAMPLER
+        w13.pImageInfo = &b13;
+
+        DescriptorSet::Update({w0, w1, w2, w3, w4, w5, w6, w7, /*w8,tempdisabled*/ w12, w13});
     }
 
-    void CloudPipelinePass::SetFrameData(const glm::mat4 &invProj,
-                                         const glm::mat4 &invView,
-                                         const glm::vec3 &cameraPos,
-                                         const glm::vec3 &planetPos,
-                                         const glm::vec3 &sunDir,
+    void CloudPipelinePass::SetFrameData(const Mat4 &invProj,
+                                         const Mat4 &invView,
+                                         const Vec3 &cameraPos,
+                                         const Vec3 &planetPos,
+                                         const Vec3 &sunDir,
                                          glm::vec2 screenSize)
     {
-        const glm::vec3 sd = glm::length(sunDir) > 1e-6f
-                                 ? glm::normalize(sunDir)
-                                 : glm::vec3(0.577f, 0.577f, 0.577f);
+        const Vec3 sd = glm::length(sunDir) > 1e-6f
+                                 ? normalize(sunDir)
+                                 : Vec3(0.577f, 0.577f, 0.577f);
         cachedSunDir_ = sd;
 
         const float ruToM = params_.bottomRadius / params_.renderUnitRadius;
-        const glm::vec3 pos = (cameraPos - planetPos) * ruToM;
+        const Vec3 pos = (cameraPos - planetPos) * ruToM;
 
         frameData_.invProj = invProj;
         frameData_.invView = invView;
-        frameData_.cameraPos = glm::vec4(pos, 0.0f);
-        frameData_.planetPos = glm::vec4(0.0f);
-        frameData_.sunDir = glm::vec4(sd, params_.sunIntensity);
+        frameData_.cameraPos = Vec4(pos, 0.0f);
+        frameData_.planetPos = Vec4(0.0f);
+        frameData_.sunDir = Vec4(sd, params_.sunIntensity);
         frameData_.bottomRadius = params_.bottomRadius;
         frameData_.topRadius = params_.topRadius;
         frameData_.renderUnitRadius = params_.renderUnitRadius;
         frameData_.screenSize = screenSize;
-        frameData_.sunCol = glm::vec4(1);
+        frameData_.sunCol = Vec4(1);
     }
 
     void CloudPipelinePass::PreRender(const CommandBuffer &cmd)
@@ -238,29 +259,28 @@ namespace SF::Engine
         if (!depthImg || !colorImg)
             return; // not ready yet, e.g. first frame
 
-        if (depthImg != lastDepthImg_ || colorImg != lastColorImg_)
+
+        VkImageView depthView = depthImg->GetView();
+        VkImageView colorView = colorImg->GetView();
+        VkImageView lastDepthView = lastDepthImg_ ? lastDepthImg_->GetView() : VK_NULL_HANDLE;
+        VkImageView lastColorView = lastColorImg_ ? lastColorImg_->GetView() : VK_NULL_HANDLE;
+
+
+        if (depthView != lastDepthView || colorView != lastColorView)
         {
             lastDepthImg_ = depthImg;
             lastColorImg_ = colorImg;
 
-            VkDescriptorImageInfo dInfo{depthImg->GetSampler(), depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-            VkDescriptorImageInfo cInfo{colorImg->GetSampler(), colorImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+            VkDescriptorImageInfo dInfo{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
             VkWriteDescriptorSet w9{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
             w9.dstSet = descSet_->GetDescriptorSet();
             w9.dstBinding = 9;
             w9.descriptorCount = 1;
-            w9.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            w9.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
             w9.pImageInfo = &dInfo;
 
-            VkWriteDescriptorSet w10{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-            w10.dstSet = descSet_->GetDescriptorSet();
-            w10.dstBinding = 10;
-            w10.descriptorCount = 1;
-            w10.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            w10.pImageInfo = &cInfo;
-
-            DescriptorSet::Update({w9, w10});
+            DescriptorSet::Update({w9});
         }
 
         totalTime_ += 0.016f;
@@ -282,12 +302,15 @@ namespace SF::Engine
 
         ubo.cloudDensityScale = densityScale;
         ubo.cloudCoverage = coverage;
+        ubo.cloudDetailScale = cloudDetailScale;
+        ubo.cloudCurlNoiseScale = cloudCurlNoiseScale;
+        ubo.cloudBaseNoiseScale = cloudBaseNoiseScale;
+        ubo.cloudWeatherUVScale = cloudWeatherUVScale;
 
         ubo.time = totalTime_;
-        if (!ubo.frameIndex) // if null/unitialized, start at 0
-            ubo.frameIndex = 0;
-        else
-            ubo.frameIndex = (ubo.frameIndex + 1) % 256;
+
+        frameCounter_ = (frameCounter_ + 1) % 256;
+        ubo.frameIndex = static_cast<int>(frameCounter_);
 
         cloudUBO_->Update(ubo);
     }

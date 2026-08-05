@@ -1,4 +1,4 @@
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 namespace SF::Engine
 {
     struct AtmosphereSettings
@@ -8,17 +8,17 @@ namespace SF::Engine
 
         float sunIntensity;       // lux-ish scale
         float sunAngularDiameter; // usually ~0.53 degrees
-        glm::vec3 sunDirection;   // normalized vector
+        Vec3 sunDirection;   // normalized vector
 
         float moonIntensity;
-        glm::vec3 moonDirection;
+        Vec3 moonDirection;
 
         // Rayleigh scattering parameters
-        glm::vec3 rayleighScattering;
+        Vec3 rayleighScattering;
         float rayleighHeight;
 
         // Mie scattering
-        glm::vec3 mieScattering;
+        Vec3 mieScattering;
         float mieHeight;
         float mieAnisotropy; // 0–1 (forward scattering)
 

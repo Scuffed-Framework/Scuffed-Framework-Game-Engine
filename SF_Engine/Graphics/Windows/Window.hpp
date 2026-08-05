@@ -26,7 +26,7 @@ namespace SF::Engine
          * @param checkFullscreen If in fullscreen and true size will be the screens size.
          * @return The size of the window.
          */
-        const Vector2Uint &GetSize(bool checkFullscreen = true) const
+        const UVec2 &GetSize(bool checkFullscreen = true) const
         {
             return (fullscreen && checkFullscreen) ? fullscreenSize : size;
         }
@@ -35,7 +35,7 @@ namespace SF::Engine
          * Sets the window size.
          * @param size The new size in pixels.
          */
-        void SetSize(const Vector2int &size);
+        void SetSize(const IVec2 &size);
 
         /**
          * Gets the aspect ratio between the windows width and height.
@@ -50,7 +50,7 @@ namespace SF::Engine
          * Gets the windows position in pixels.
          * @return The windows position.
          */
-        const Vector2Uint &GetPosition() const
+        const UVec2 &GetPosition() const
         {
             return position;
         }
@@ -59,7 +59,7 @@ namespace SF::Engine
          * Sets the window position to a new position in pixels.
          * @param position The new position in pixels.
          */
-        void SetPosition(const Vector2int &position);
+        void SetPosition(const IVec2 &position);
 
         /**
          * Gets the window's title.
@@ -240,7 +240,7 @@ namespace SF::Engine
          * Gets the mouses position.
          * @return The mouses position.
          */
-        const Vector2double &GetMousePosition() const
+        const DVec2 &GetMousePosition() const
         {
             return mousePosition;
         }
@@ -249,13 +249,13 @@ namespace SF::Engine
          * Sets the mouse position.
          * @param position The new mouse position.
          */
-        void SetMousePosition(const Vector2double &mousePosition);
+        void SetMousePosition(const DVec2 &mousePosition);
 
         /**
          * Gets the mouse position delta.
          * @return The mouse position delta.
          */
-        const Vector2double &GetMousePositionDelta() const
+        const DVec2 &GetMousePositionDelta() const
         {
             return mousePositionDelta;
         }
@@ -264,7 +264,7 @@ namespace SF::Engine
          * Gets the mouses virtual scroll position.
          * @return The mouses virtual scroll position.
          */
-        const Vector2double &GetMouseScroll() const
+        const DVec2 &GetMouseScroll() const
         {
             return mouseScroll;
         }
@@ -273,13 +273,13 @@ namespace SF::Engine
          * Sets the mouse virtual scroll position.
          * @param scroll The new mouse virtual scroll position.
          */
-        void SetMouseScroll(const Vector2double &scroll);
+        void SetMouseScroll(const DVec2 &scroll);
 
         /**
          * Gets the mouse scroll delta.
          * @return The mouse scroll delta.
          */
-        const Vector2double &GetMouseScrollDelta() const
+        const DVec2 &GetMouseScrollDelta() const
         {
             return mouseScrollDelta;
         }
@@ -300,7 +300,7 @@ namespace SF::Engine
          * Called when the window is resized.
          * @return The rocket::signal.
          */
-        rocket::signal<void(Vector2Uint)> &OnSize()
+        rocket::signal<void(UVec2)> &OnSize()
         {
             return onSize;
         }
@@ -309,7 +309,7 @@ namespace SF::Engine
          * Called when the window is moved.
          * @return The rocket::signal.
          */
-        rocket::signal<void(Vector2Uint)> &OnPosition()
+        rocket::signal<void(UVec2)> &OnPosition()
         {
             return onPosition;
         }
@@ -435,7 +435,7 @@ namespace SF::Engine
          * Called when the mouse moves.
          * @return The delegate.
          */
-        rocket::signal<void(Vector2double)> &OnMousePosition()
+        rocket::signal<void(DVec2)> &OnMousePosition()
         {
             return onMousePosition;
         }
@@ -444,7 +444,7 @@ namespace SF::Engine
          * Called when the scroll wheel changes.
          * @return The delegate.
          */
-        rocket::signal<void(Vector2double)> &OnMouseScroll()
+        rocket::signal<void(DVec2)> &OnMouseScroll()
         {
             return onMouseScroll;
         }
@@ -471,10 +471,10 @@ namespace SF::Engine
         std::size_t id;
         GLFWwindow *window = nullptr;
 
-        Vector2Uint size;
-        Vector2Uint fullscreenSize;
+        UVec2 size;
+        UVec2 fullscreenSize;
 
-        Vector2Uint position;
+        UVec2 position;
 
         std::string title;
         bool borderless = false;
@@ -489,15 +489,15 @@ namespace SF::Engine
         bool windowSelected = false;
         bool cursorHidden = false;
 
-        Vector2double mouseLastPosition;
-        Vector2double mousePosition;
-        Vector2double mousePositionDelta;
-        Vector2double mouseLastScroll;
-        Vector2double mouseScroll;
-        Vector2double mouseScrollDelta;
+        DVec2 mouseLastPosition;
+        DVec2 mousePosition;
+        DVec2 mousePositionDelta;
+        DVec2 mouseLastScroll;
+        DVec2 mouseScroll;
+        DVec2 mouseScrollDelta;
 
-        rocket::signal<void(Vector2Uint)> onSize;
-        rocket::signal<void(Vector2Uint)> onPosition;
+        rocket::signal<void(UVec2)> onSize;
+        rocket::signal<void(UVec2)> onPosition;
         rocket::signal<void(std::string)> onTitle;
         rocket::signal<void(bool)> onBorderless;
         rocket::signal<void(bool)> onResizable;
@@ -511,8 +511,8 @@ namespace SF::Engine
         rocket::signal<void(Key, InputAction, bitmask::bitmask<InputMod>)> onKey;
         rocket::signal<void(char)> onChar;
         rocket::signal<void(MouseButton, InputAction, bitmask::bitmask<InputMod>)> onMouseButton;
-        rocket::signal<void(Vector2double)> onMousePosition;
-        rocket::signal<void(Vector2double)> onMouseScroll;
+        rocket::signal<void(DVec2)> onMousePosition;
+        rocket::signal<void(DVec2)> onMouseScroll;
 
     public:
         WindowId GetId() { return id; }

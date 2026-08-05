@@ -1,0 +1,47 @@
+#ifndef VERTOUT_COMMON
+#define VERTOUT_COMMON
+
+struct VSInput
+{
+    float3 position     : POSITION;
+    float3 normal       : NORMAL;
+    float4 tangent      : TANGENT;     // xyz = tangent, w = handedness
+    float2 uv0          : TEXCOORD0;
+    float2 uv1          : TEXCOORD1;
+    float4 color        : COLOR0;
+};
+
+
+struct VSOutput
+{
+    // Required
+    float4 position     : SV_Position;
+
+    // Clip/world/object
+    float4 clipPos      : TEXCOORD0;
+    float3 worldPos     : TEXCOORD1;
+    float3 objectPos    : TEXCOORD2;
+    float3 viewPos      : TEXCOORD3;
+
+    // Basis
+    float3 worldNormal  : TEXCOORD4;
+    float3 worldTangent : TEXCOORD5;
+    float3 worldBitangent : TEXCOORD6;
+    float3x3 tbn        : TEXCOORD7;
+
+    // UVs
+    float2 uv0          : TEXCOORD10;
+    float2 uv1          : TEXCOORD11;
+
+    // Misc
+    float4 color        : COLOR0;
+    float4 screenPos    : TEXCOORD12;
+    float4 fragCoord    : TEXCOORD13;
+
+    // Camera
+    float3 viewDir      : TEXCOORD14;
+    float  linearDepth  : TEXCOORD15;
+};
+
+
+#endif

@@ -37,16 +37,17 @@ struct CloudUBO
 [[vk::binding(1, 0)]]
 ConstantBuffer<CloudUBO> cloud;
 
-[[vk::binding(0, 0)]]
-Texture2D<float4> inBaseNoiseTexture;
-[[vk::binding(0, 1)]]
-Texture2D<float4> inDetailNoiseTexture;
-[[vk::binding(0, 2)]]
-Texture2D<float4> inCurlNoiseTexture;
-[[vk::binding(0, 3)]]
-Texture2D<float4> inWeatherTexture;
+[[vk::binding(3, 0)]]
+Texture3D<float4> alligatorNoise;
 
-[[vk::binding(0, 10)]]
+[[vk::binding(6, 0)]]
+Texture3D<float> baseNoise;
+
+[[vk::binding(7, 0)]]
+Texture3D<float> detailNoise;
+
+
+[[vk::binding(12, 0)]]
 SamplerState linearRepeatSampler;
 
 struct ParticipatingMedia
@@ -74,27 +75,48 @@ float cloudMap(float3 posMeter, float normalizeHeight, float time)
 
     float3 windOffset = (windDirection + float3(0.0, 0.1, 0.0)) * time * cloudSpeed;
 
-    float2 sampleUv = posKm.xz * cloud.cloudWeatherUVScale;
-    float4 weatherValue = inWeatherTexture.SampleLevel(linearRepeatSampler, sampleUv, 0.0);
+    float3 sampleUv = float3(
+        posKm.x * cloud.cloudWeatherUVScale,
+        0.5, // fixed Z slice in the 3D texture
+        posKm.z * cloud.cloudWeatherUVScale
+    );
+
+    float weatherValue = alligatorNoise.SampleLevel(
+        linearRepeatSampler,
+        sampleUv,
+        0.0
+    ).b;
 
     // Fix: Use .xy for the UV coordinates
-    float2 curlUv = (time * cloudSpeed * 50.0 + posMeter.xz) * 0.000001 + 0.5;
-    float localCoverage = inCurlNoiseTexture.SampleLevel(linearRepeatSampler, curlUv, 0.0).x;
+    float3 curlUv = float3(
+        posMeter.x,
+        posMeter.y,
+        posMeter.z
+    ) * 0.000001;
+
+    curlUv.xz += time * cloudSpeed * 50.0 * 0.000001;
+    curlUv += 0.5;
+
+    float localCoverage = alligatorNoise.SampleLevel(
+        linearRepeatSampler,
+        curlUv,
+        0.0
+    ).r;
+
     localCoverage = saturate(localCoverage * 3.0 - 0.75) * 0.2;
 
     float coverage = saturate(kCoverage * (localCoverage + weatherValue.x));
     float gradienShape = remap(normalizeHeight, 0.00, 0.10, 0.1, 1.0) * remap(normalizeHeight, 0.10, 0.80, 1.0, 0.2);
 
-    // Fix: Use .xy to convert float3 to float2 for UV coordinates
-    float2 baseUv = (posKm + windOffset).xy * cloud.cloudDetailScale;
-    float basicNoise = inBaseNoiseTexture.SampleLevel(linearRepeatSampler, baseUv, 0.0).r;
+    float3 baseUv = (posKm + windOffset) * cloud.cloudDetailScale;
+    float basicNoise = baseNoise.SampleLevel(linearRepeatSampler, baseUv, 0.0).r;
     float basicCloudNoise = gradienShape * basicNoise;
 
     float basicCloudWithCoverage = coverage * remap(basicCloudNoise, 1.0 - coverage, 1, 0, 1);
 
     float3 sampleDetailNoise = posKm - windOffset * 0.15;
-    float2 detailUv = sampleDetailNoise.xy * cloud.cloudDetailScale;
-    float detailNoiseComposite = inDetailNoiseTexture.SampleLevel(linearRepeatSampler, detailUv, 0.0).r;
+    float3 detailUv = sampleDetailNoise * cloud.cloudDetailScale;
+    float detailNoiseComposite = detailNoise.SampleLevel(linearRepeatSampler, detailUv, 0.0).r;
     float detailNoiselerpByHeight = 0.2 * lerp(detailNoiseComposite, 1 - detailNoiseComposite, saturate(normalizeHeight * 10.0));
 
     float densityShape = saturate(0.01 + normalizeHeight * 1.15) * kDensity *

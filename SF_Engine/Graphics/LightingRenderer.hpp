@@ -7,7 +7,7 @@
 #include <Graphics/Mesh/MeshFactory.hpp>
 #include "Windows/WindowManager.hpp"
 
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 
@@ -44,7 +44,7 @@ namespace SF::Engine
             // Default lights
             Light sun{};
             sun.type = Lighting::LightType::Directional;
-            sun.direction = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f));
+            sun.direction = normalize(Vec3(-0.5f, -1.0f, -0.3f));
             sun.color = {1.0f, 0.95f, 0.85f};
             sun.intensity = 3.0f;
             lightManager_->AddLight(sun);
@@ -71,7 +71,6 @@ namespace SF::Engine
 
         void Update() override
         {
-            using namespace SF::Engine;
 
             // Rotate the demo cube
             static auto start = std::chrono::steady_clock::now();
@@ -79,29 +78,29 @@ namespace SF::Engine
                           std::chrono::steady_clock::now() - start)
                           .count();
 
-            glm::mat4 model = glm::rotate(glm::mat4(1.0f), t,
-                                          glm::vec3(0.5f, 1.0f, 0.0f));
+            Mat4 model = glm::rotate(Mat4(1.0f), t,
+                                          Vec3(0.5f, 1.0f, 0.0f));
 
             // Build frame data : in a real app pull from Camera
             auto *wnd = SF::Engine::WindowManager::Get()->GetWindow(0);
             float aspect = wnd ? wnd->GetAspectRatio() : 1.0f;
 
-            glm::mat4 view = glm::lookAt(
-                glm::vec3(0.0f, 1.5f, 4.0f),
-                glm::vec3(0.0f),
-                glm::vec3(0.0f, 1.0f, 0.0f));
-            glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
+            Mat4 view = glm::lookAt(
+                Vec3(0.0f, 1.5f, 4.0f),
+                Vec3(0.0f),
+                Vec3(0.0f, 1.0f, 0.0f));
+            Mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
             proj[1][1] *= -1.0f; // Vulkan Y-flip
 
             Lighting::GpuFrameData fd{};
             fd.view = view;
             fd.proj = proj;
             fd.viewProj = proj * view;
-            fd.invView = glm::inverse(view);
-            fd.invProj = glm::inverse(proj);
-            fd.invViewProj = glm::inverse(fd.viewProj);
-            fd.cameraPos = glm::vec4(0.0f, 1.5f, 4.0f, 0.1f);
-            fd.cameraDir = glm::vec4(glm::normalize(glm::vec3(0.0f) - glm::vec3(0.0f, 1.5f, 4.0f)), 100.0f);
+            fd.invView = inverse(view);
+            fd.invProj = inverse(proj);
+            fd.invViewProj = inverse(fd.viewProj);
+            fd.cameraPos = Vec4(0.0f, 1.5f, 4.0f, 0.1f);
+            fd.cameraDir = Vec4(normalize(Vec3(0.0f) - Vec3(0.0f, 1.5f, 4.0f)), 100.0f);
             fd.screenSize = wnd ? glm::vec2(wnd->GetSize().x, wnd->GetSize().y) : glm::vec2(800, 600);
             fd.invScreenSize = 1.0f / fd.screenSize;
             fd.nearPlane = 0.1f;
@@ -190,7 +189,7 @@ namespace SF::Engine
             // Default lights
             Light sun{};
             sun.type = Lighting::LightType::Directional;
-            sun.direction = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f));
+            sun.direction = normalize(Vec3(-0.5f, -1.0f, -0.3f));
             sun.color = {1.0f, 0.95f, 0.85f};
             sun.intensity = 3.0f;
             lightManager_->AddLight(sun);

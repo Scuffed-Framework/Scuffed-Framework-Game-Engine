@@ -15,7 +15,7 @@ public:
     {
         _Mtx_storage._Critical_section = {};
         _Mtx_storage._Thread_id = -1;
-        _Mtx_storage._Type = _Flags | _Mtx_try;
+        _Mtx_storage.Typepe = _Flags | _Mtx_try;
         _Mtx_storage._Count = 0;
     }
 

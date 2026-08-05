@@ -55,7 +55,7 @@ namespace SF::Engine
         descSet_ = std::make_unique<DescriptorSet>(*pipeline_);
 
         // 1×1 fallback textures
-        Vector2Uint one{1, 1};
+        UVec2 one{1, 1};
         fallbackWhite_ = std::make_unique<Image2d>(
             one, VK_FORMAT_R8G8B8A8_UNORM,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -77,7 +77,7 @@ namespace SF::Engine
     //  Submit
     void GBufferPass::Submit(std::shared_ptr<Mesh> mesh,
                              const MeshMaterial &material,
-                             const glm::mat4 &transform)
+                             const Mat4 &transform)
     {
         drawList_.push_back({std::move(mesh), material, transform});
     }

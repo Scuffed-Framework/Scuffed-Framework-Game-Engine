@@ -12,14 +12,12 @@ RWTexture3D<float4> aerialPerspTransGB;
 [[vk::binding(3, 0)]]
 RWTexture2D<float> aerialPerspRange;
 
+// Combined sampler+texture using Sampler2D
 [[vk::binding(4, 0)]]
-Texture2D<float4> transmittanceLUT;
+Sampler2D transmittanceLUT;
 
 [[vk::binding(5, 0)]]
-Texture2D<float4> multiScatterLUT;
-
-[[vk::binding(6, 0)]]
-SamplerState g_sampler;
+Sampler2D multiScatterLUT;
 
 // Reconstruct a world-space ray direction from NDC (x,y) and the UBO matrices.
 float3 ndcToRayDir(float2 ndc)
@@ -75,7 +73,7 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
         return;
     }
 
-    float startDist = max(atmoHit.x, 0.0);          // camera may be inside atmo
+    float startDist = max(atmoHit.x, 0.0);
     float endDist = atmoHit.y;
 
     // Clamp to ground if the ray hits the planet surface.
@@ -101,7 +99,6 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
     float3 totalScatter = float3(0.0);
     float3 totalTransmit = float3(1.0);
 
-    // distanceTravelled tracks position along [0, distToTravel].
     float distanceTravelled = 0.0;
 
     for (int i = 0; i < sliceCount; i++)
@@ -109,9 +106,9 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
         float sliceFrac = float(i + 1) / float(sliceCount);
         float targetDist;
         if (nonLinear)
-            targetDist = sliceDepth(sliceFrac, distToTravel);  // quadratic
+            targetDist = sliceDepth(sliceFrac, distToTravel);
         else
-            targetDist = sliceFrac * distToTravel;              // linear
+            targetDist = sliceFrac * distToTravel;
 
         float stepSize = targetDist - distanceTravelled;
 
@@ -120,8 +117,8 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
         float rI = length(posI);
         float altI = max(rI - Rbot, 0.0);
 
-        float3 sigma_s = float3(0.0);   // scattering coefficient at this point
-        float3 sigma_t = float3(0.0);   // extinction coefficient at this point
+        float3 sigma_s = float3(0.0);
+        float3 sigma_t = float3(0.0);
 
         float rhoRay = exp(-altI / HEIGHT_RAY);
         float rhoMie = exp(-altI / HEIGHT_MIE);
@@ -135,13 +132,21 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
         float3 weight = (float3(1.0) - T_step) / max(sigma_t, float3(1e-7));
 
         float cosSunI = dot(posI / rI, sunDir);
-        float3 sunTrans = sampleTransmittance(transmittanceLUT, g_sampler, rI, cosSunI, Rbot, Rtop);
+        
+        // Calculate UV coordinates for LUT sampling
+        float normalizedHeight = (rI - Rbot) / (Rtop - Rbot);
+        float2 lutUV = float2(
+            saturate(cosSunI * 0.5 + 0.5),
+            saturate(normalizedHeight)
+        );
+        
+        float3 sunTrans = transmittanceLUT.SampleLevel(lutUV, 0).r;
+        float3 ms = multiScatterLUT.SampleLevel(lutUV, 0).rgb;
 
         float3 singleScatter = totalTransmit * weight * sunTrans
                             * (phaseR * RAY_BETA * rhoRay
                             + phaseM * MIE_BETA * rhoMie);
 
-        float3 ms = sampleMultiScatter(multiScatterLUT, g_sampler, rI, cosSunI, Rbot, Rtop);
         float3 multiS = totalTransmit * weight * ms * sigma_s;
 
         totalScatter += (singleScatter + multiS) * sunI;

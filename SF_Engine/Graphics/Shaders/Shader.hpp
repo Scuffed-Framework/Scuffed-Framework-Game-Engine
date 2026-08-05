@@ -3,7 +3,7 @@
 #define VK_NO_PROTOTYPES
 
 #include <filesystem>
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <map>
 #include <memory>
 #include <optional>

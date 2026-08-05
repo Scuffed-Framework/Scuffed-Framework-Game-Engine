@@ -59,31 +59,31 @@ namespace SF::Engine
          * Gets the workarea size of the monitor.
          * @return The size, in pixels, of the display area.
          */
-        Vector2Uint GetWorkareaSize() const;
+        UVec2 GetWorkareaSize() const;
 
         /**
          * Gets the workarea size of the monitor.
          * @return The size, in pixels, of the display area.
          */
-        Vector2Uint GetWorkareaPosition() const;
+        UVec2 GetWorkareaPosition() const;
 
         /**
          * Gets the physical size of the monitor.
          * @return The size, in millimetres, of the display area.
          */
-        Vector2Uint GetSize() const;
+        UVec2 GetSize() const;
 
         /**
          * Gets the content scale of the monitor.
          * @return The content scale, the ratio between the current DPI and the platform's default DPI.
          */
-        Vector2float GetContentScale() const;
+        Vec2 GetContentScale() const;
 
         /**
          * Gets the position of the monitor's viewport on the virtual screen.
          * @return The position of the monitor's viewport.
          */
-        Vector2Uint GetPosition() const;
+        UVec2 GetPosition() const;
 
         /**
          * Gets the name of this monitor.

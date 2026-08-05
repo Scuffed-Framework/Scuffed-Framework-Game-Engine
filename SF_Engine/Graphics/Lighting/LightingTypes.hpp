@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <cstdint>
 
 namespace SF::Engine::Lighting
@@ -22,13 +22,13 @@ namespace SF::Engine::Lighting
     // std430, 64 bytes exactly
     struct alignas(16) GpuLight
     {
-        glm::vec3 position;
+        Vec3 position;
         float radius;
 
-        glm::vec3 color;
+        Vec3 color;
         float intensity;
 
-        glm::vec3 direction;
+        Vec3 direction;
         float innerConeAngle; // cos(inner half-angle), spot only
 
         float outerConeAngle; // cos(outer half-angle), spot only
@@ -41,8 +41,8 @@ namespace SF::Engine::Lighting
     // Cluster AABB (view-space)
     struct GpuCluster
     {
-        glm::vec4 minAABB;
-        glm::vec4 maxAABB;
+        Vec4 minAABB;
+        Vec4 maxAABB;
     };
 
     // Per-cluster light list header
@@ -55,15 +55,15 @@ namespace SF::Engine::Lighting
     // std140 : must be multiple of 16 bytes
     struct alignas(16) GpuFrameData
     {
-        glm::mat4 view;
-        glm::mat4 proj;
-        glm::mat4 viewProj;
-        glm::mat4 invView;
-        glm::mat4 invProj;
-        glm::mat4 invViewProj;
+        Mat4 view;
+        Mat4 proj;
+        Mat4 viewProj;
+        Mat4 invView;
+        Mat4 invProj;
+        Mat4 invViewProj;
 
-        glm::vec4 cameraPos; // w = near
-        glm::vec4 cameraDir; // w = far
+        Vec4 cameraPos; // w = near
+        Vec4 cameraDir; // w = far
         glm::vec2 screenSize;
         glm::vec2 invScreenSize;
 
@@ -80,7 +80,7 @@ namespace SF::Engine::Lighting
         // Filled by the renderer each frame alongside the directional light.
         // Used by Lit.shader to modulate the ambient term so the scene goes dark
         // when the sun dips below the horizon (matching the atmosphere response).
-        glm::vec4 sunDirIntensity; // .xyz = towardSun, .w = intensity (0 at night)
+        Vec4 sunDirIntensity; // .xyz = towardSun, .w = intensity (0 at night)
     };
     static_assert(sizeof(GpuFrameData) % 16 == 0);
 }

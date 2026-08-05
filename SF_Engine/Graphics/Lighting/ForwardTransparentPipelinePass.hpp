@@ -7,7 +7,7 @@
 #include <Graphics/Images/ImageDepth.hpp>
 #include <Graphics/Mesh/Mesh.hpp>
 #include "LightManager.hpp"
-#include <glm/glm.hpp>
+#include <Math/BasicMath.hpp>
 #include <memory>
 #include <vector>
 
@@ -16,8 +16,8 @@ namespace SF::Engine
     // Push constants for ForwardTransparent.shader : 96 bytes
     struct alignas(4) TransparentPushConstants
     {
-        glm::mat4 model;
-        glm::vec4 baseColor = {1, 1, 1, 1};
+        Mat4 model;
+        Vec4 baseColor = {1, 1, 1, 1};
         float roughness = 0.05f;
         float metallic = 0.0f;
         float ior = 1.5f; // glass default

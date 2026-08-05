@@ -1,6 +1,8 @@
 #ifndef WORLEY_NOISE_SI
 #define WORLEY_NOISE_SI
 
+
+
 // Simple 3D hash (fast & tileable)
 float hash13(float3 p)
 {

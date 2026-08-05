@@ -69,14 +69,14 @@ namespace SF::Engine
             for (uint32_t col = 0; col < gridW; ++col)
             {
                 PatchVertex &v = vertices[row * gridW + col];
-                v.position = glm::vec3(
+                v.position = Vec3(
                     -halfX + static_cast<float>(col) * stepX,
                     0.0f,
                     -halfZ + static_cast<float>(row) * stepZ);
                 v.uv = glm::vec2(
                     static_cast<float>(col) * invN,
                     static_cast<float>(row) * invN);
-                v.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+                v.normal = Vec3(0.0f, 1.0f, 0.0f);
             }
         }
 
@@ -88,10 +88,10 @@ namespace SF::Engine
             std::as_bytes(std::span(vertices)));
     }
 
-    void OceanTessellatedMesh::writeVertices(const glm::vec3 &origin,
-                                             const glm::vec3 &tangentU,
-                                             const glm::vec3 &tangentV,
-                                             const glm::vec3 &planetCenter,
+    void OceanTessellatedMesh::writeVertices(const Vec3 &origin,
+                                             const Vec3 &tangentU,
+                                             const Vec3 &tangentV,
+                                             const Vec3 &planetCenter,
                                              float planetRadius)
     {
         const uint32_t gridW = patchCount_ + 1;
@@ -112,12 +112,12 @@ namespace SF::Engine
                 const float localZ = -halfZ + static_cast<float>(row) * stepZ;
 
                 // Point on the flat tangent plane.
-                const glm::vec3 flatPos = origin + tangentU * localX + tangentV * localZ;
+                const Vec3 flatPos = origin + tangentU * localX + tangentV * localZ;
 
                 // Project outward onto the sphere: direction from planet
                 // center through the flat-plane point, scaled to radius.
-                const glm::vec3 dir = glm::normalize(flatPos - planetCenter);
-                const glm::vec3 spherePos = planetCenter + dir * planetRadius;
+                const Vec3 dir = normalize(flatPos - planetCenter);
+                const Vec3 spherePos = planetCenter + dir * planetRadius;
 
                 PatchVertex &v = vertices[row * gridW + col];
                 v.position = spherePos;
@@ -158,17 +158,17 @@ namespace SF::Engine
         vertexBuffer_->UnmapMemory();
     }
 
-    void OceanTessellatedMesh::RegenerateAt(const glm::vec3 &cameraPos,
-                                            const glm::vec3 &planetCenter,
+    void OceanTessellatedMesh::RegenerateAt(const Vec3 &cameraPos,
+                                            const Vec3 &planetCenter,
                                             float planetRadius)
     {
         // Direction from planet center to camera ("up" at the camera's location).
-        glm::vec3 up = cameraPos - planetCenter;
+        Vec3 up = cameraPos - planetCenter;
         const float upLen = glm::length(up);
         if (upLen < 1e-5f)
         {
             // Degenerate (camera at planet center), fall back to world up.
-            up = glm::vec3(0.0f, 1.0f, 0.0f);
+            up = Vec3(0.0f, 1.0f, 0.0f);
         }
         else
         {
@@ -176,15 +176,15 @@ namespace SF::Engine
         }
 
         // Point on the sphere directly "below" the camera.
-        const glm::vec3 surfacePoint = planetCenter + up * planetRadius;
+        const Vec3 surfacePoint = planetCenter + up * planetRadius;
 
         // Build an arbitrary orthonormal tangent basis at surfacePoint.
-        glm::vec3 reference = glm::vec3(0.0f, 1.0f, 0.0f);
+        Vec3 reference = Vec3(0.0f, 1.0f, 0.0f);
         if (std::abs(glm::dot(reference, up)) > 0.99f)
-            reference = glm::vec3(1.0f, 0.0f, 0.0f);
+            reference = Vec3(1.0f, 0.0f, 0.0f);
 
-        const glm::vec3 tangentU = glm::normalize(glm::cross(reference, up));
-        const glm::vec3 tangentV = glm::normalize(glm::cross(up, tangentU));
+        const Vec3 tangentU = normalize(cross(reference, up));
+        const Vec3 tangentV = normalize(cross(up, tangentU));
 
 #ifdef SF_OCEAN_DEBUG_LOG
         {

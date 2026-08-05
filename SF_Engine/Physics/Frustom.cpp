@@ -2,7 +2,7 @@
 
 namespace SF::Engine
 {
-    void Frustum::Update(const Matrix4float& view, const Matrix4float& projection)
+    void Frustum::Update(const Mat4& view, const Mat4& projection)
     {
         std::array<float, 16> clip;
 
@@ -91,7 +91,7 @@ namespace SF::Engine
         NormalizePlane(5);
     }
 
-    bool Frustum::PointInFrustum(const Vector3float& position) const
+    bool Frustum::PointInFrustum(const Vec3& position) const
     {
         for (uint32_t i = 0; i < 6; i++)
         {
@@ -106,7 +106,7 @@ namespace SF::Engine
         return true;
     }
 
-    bool Frustum::SphereInFrustum(const Vector3float& position, float radius) const
+    bool Frustum::SphereInFrustum(const Vec3& position, float radius) const
     {
         for (uint32_t i = 0; i < 6; i++)
         {
@@ -121,7 +121,7 @@ namespace SF::Engine
         return true;
     }
 
-    bool Frustum::CubeInFrustum(const Vector3float& min, const Vector3float& max) const
+    bool Frustum::CubeInFrustum(const Vec3& min, const Vec3& max) const
     {
         for (uint32_t i = 0; i < 6; i++)
         {

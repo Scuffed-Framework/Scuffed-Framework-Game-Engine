@@ -650,8 +650,8 @@ namespace SFTL
     inline constexpr bool is_nothrow_constructible_v =
         is_nothrow_constructible<T, Args...>::value;
 
-    template <class _Ty>
-    constexpr bool is_object_v = is_const_v<const _Ty> && !is_void_v<_Ty>;
+    template <class Type>
+    constexpr bool is_object_v = is_const_v<const Type> && !is_void_v<Type>;
 
     namespace detail
     {
@@ -872,8 +872,8 @@ namespace SFTL
         };
     } // namespace detail
 
-    template <class _Ty>
-    using _Remove_cvref_t = remove_cv_t<remove_reference_t<_Ty>>;
+    template <class Type>
+    using _Remove_cvref_t = remove_cv_t<remove_reference_t<Type>>;
 
     template <typename T>
     struct is_destructible : detail::_is_destructible_cat<T>
@@ -1087,9 +1087,9 @@ namespace SFTL
         b = move(tmp);
     }
 
-    template <class _Ty>
-    constexpr conditional_t<!is_nothrow_move_constructible_v<_Ty> && is_copy_constructible_v<_Ty>, const _Ty &, _Ty &&>
-    move_if_noexcept(_Ty &_Arg) noexcept
+    template <class Type>
+    constexpr conditional_t<!is_nothrow_move_constructible_v<Type> && is_copy_constructible_v<Type>, const Type &, Type &&>
+    move_if_noexcept(Type &_Arg) noexcept
     {
         return SFTL::move(_Arg);
     }

@@ -6,7 +6,7 @@
 
 namespace SF::Engine
 {
-    Image2dArray::Image2dArray(const Vector2Uint &extent, uint32_t arrayLayers, VkFormat format, VkImageLayout layout, VkImageUsageFlags usage,
+    Image2dArray::Image2dArray(const UVec2 &extent, uint32_t arrayLayers, VkFormat format, VkImageLayout layout, VkImageUsageFlags usage,
                                VkFilter filter, VkSamplerAddressMode addressMode, bool anisotropic, bool mipmap)
         : Image(filter, addressMode, VK_SAMPLE_COUNT_1_BIT, layout,
                 usage | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,

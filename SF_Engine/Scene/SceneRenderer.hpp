@@ -72,7 +72,7 @@ namespace SF::Engine
             if (config_.enableAtmosphere)
             {
                 AtmosphereData earthData{ config_.atmosphereParams, {} };
-                glm::vec3 earthPos = {0.0f, -config_.atmosphereParams.bottomRadius, 0.0f};
+                Vec3 earthPos = {0.0f, -config_.atmosphereParams.bottomRadius, 0.0f};
                 // TODO: load from xml
                 atmoController->AddAtmosphere("Earth", earthData, earthPos);
 
