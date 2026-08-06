@@ -1,7 +1,7 @@
 #include "MatroskaAudioLoader.hpp"
 #include <iomanip>
 
-#include <Matroska/Matroska/KaxContexts.h>
+#include <matroska/KaxContexts.h>
 
 namespace SF::Engine
 {
@@ -10,61 +10,6 @@ namespace SF::Engine
     MatroskaAudioLoader::~MatroskaAudioLoader()
     {
         Reset();
-    }
-
-    void MatroskaAudioLoader::Reset()
-    {
-        if (level2)
-        {
-            delete level2;
-            level2 = nullptr;
-        }
-        if (level1)
-        {
-            delete level1;
-            level1 = nullptr;
-        }
-        if (level0)
-        {
-            delete level0;
-            level0 = nullptr;
-        }
-    }
-
-    bool MatroskaAudioLoader::Load()
-    {
-        try
-        {
-            // Open file using StdIOCallback
-            ioCallback = std::make_unique<StdIOCallback>(filePath.c_str(), MODE_READ);
-            ebmlStream = std::make_unique<EbmlStream>(*ioCallback);
-
-            // Find the EBML head
-            level0 = ebmlStream->FindNextID(EBML_INFO(EbmlHead), 0xFFFFFFFFL);
-            if (!level0)
-            {
-                return false;
-            }
-
-            EbmlHead* head = static_cast<EbmlHead*>(level0);
-            ParseEbmlHead(head);
-
-            // Find the segment
-            level0 = ebmlStream->FindNextID(EBML_INFO(KaxSegment), 0xFFFFFFFFL);
-            if (!level0)
-            {
-                return false;
-            }
-
-            KaxSegment* segment = static_cast<KaxSegment*>(level0);
-            ParseSegment(segment);
-
-            return true;
-        }
-        catch (const std::exception& e)
-        {
-            return false;
-        }
     }
 
     void MatroskaAudioLoader::ParseEbmlHead(EbmlHead* head)
@@ -367,16 +312,199 @@ namespace SF::Engine
                       << segmentInfo.duration / 1000.0 << " seconds" << "\n";
         }
     }
+    void MatroskaAudioLoader::Reset()
+    {
+        pendingFrames.clear();
+        segmentElement = nullptr;
+        segmentDataStartPos = 0;
+        clusterScanPos = 0;
+
+        if (level2) { delete level2; level2 = nullptr; }
+        if (level1) { delete level1; level1 = nullptr; }
+        if (level0) { delete level0; level0 = nullptr; }
+    }
+
+    bool MatroskaAudioLoader::Load()
+    {
+        try
+        {
+            ioCallback = std::make_unique<StdIOCallback>(filePath.c_str(), MODE_READ);
+            ebmlStream = std::make_unique<EbmlStream>(*ioCallback);
+
+            level0 = ebmlStream->FindNextID(EBML_INFO(EbmlHead), 0xFFFFFFFFL);
+            if (!level0) return false;
+
+            EbmlHead* head = static_cast<EbmlHead*>(level0);
+            ParseEbmlHead(head);
+
+            level0 = ebmlStream->FindNextID(EBML_INFO(KaxSegment), 0xFFFFFFFFL);
+            if (!level0) return false;
+
+            KaxSegment* segment = static_cast<KaxSegment*>(level0);
+
+            // Capture these BEFORE ParseSegment consumes the stream, so ReadNextFrame/
+            // SeekToTimestamp can independently re-scan the segment for clusters later.
+            segmentElement = segment;
+            segmentDataStartPos = ebmlStream->I_O().getFilePointer();
+            clusterScanPos = segmentDataStartPos;
+
+            ParseSegment(segment);
+
+            return true;
+        }
+        catch (const std::exception& e)
+        {
+            return false;
+        }
+    }
+
+    bool MatroskaAudioLoader::IsAudioTrack(uint64_t trackNumber) const
+    {
+        for (const auto& t : audioTracks)
+        {
+            if (t.trackNumber == trackNumber)
+                return true;
+        }
+        return false;
+    }
+
+    void MatroskaAudioLoader::ExtractFramesFromBlock(KaxInternalBlock& block, bool keyframe,
+                                                    std::deque<AudioFrame>& out)
+    {
+        uint64_t trackNum = block.TrackNum();
+        if (!IsAudioTrack(trackNum))
+            return; // ignore video/subtitle blocks entirely
+
+        uint64_t globalTc = block.GlobalTimecode();
+
+        for (unsigned int i = 0; i < block.NumberFrames(); ++i)
+        {
+            DataBuffer& buf = block.GetBuffer(i);
+
+            AudioFrame frame;
+            frame.trackNumber = trackNum;
+            frame.timestamp = globalTc;
+            frame.keyframe = keyframe;
+            frame.data.assign(reinterpret_cast<const uint8_t*>(buf.Buffer()),
+                            reinterpret_cast<const uint8_t*>(buf.Buffer()) + buf.Size());
+
+            out.push_back(std::move(frame));
+        }
+    }
+
+    bool MatroskaAudioLoader::LoadNextClusterFrames()
+    {
+        if (!segmentElement)
+            return false;
+
+        ebmlStream->I_O().setFilePointer(clusterScanPos);
+
+        int segUpperLvl = 0;
+        EbmlElement* el = ebmlStream->FindNextElement(EBML_CONTEXT(segmentElement), segUpperLvl,
+                                                    0xFFFFFFFFL, true);
+
+        // Skip anything that isn't a cluster (SeekHead, Cues, another Info block, etc.)
+        while (el && EbmlId(*el) != EBML_ID(KaxCluster))
+        {
+            if (segUpperLvl > 0) { delete el; return false; } // walked past the segment
+            el->SkipData(*ebmlStream, EBML_CONTEXT(el));
+            delete el;
+            el = ebmlStream->FindNextElement(EBML_CONTEXT(segmentElement), segUpperLvl,
+                                            0xFFFFFFFFL, true);
+        }
+
+        if (!el || segUpperLvl > 0)
+        {
+            if (el) delete el;
+            return false; // no more clusters -- end of stream
+        }
+
+        KaxCluster* cluster = static_cast<KaxCluster*>(el);
+
+        int clUpperLvl = 0;
+        EbmlElement* cel = ebmlStream->FindNextElement(EBML_CONTEXT(cluster), clUpperLvl,
+                                                        0xFFFFFFFFL, true);
+        while (cel)
+        {
+            if (clUpperLvl > 0) { delete cel; break; }
+
+            if (EbmlId(*cel) == EBML_ID(KaxClusterTimecode))
+            {
+                KaxClusterTimecode& tc = *static_cast<KaxClusterTimecode*>(cel);
+                tc.ReadData(ebmlStream->I_O());
+                cluster->InitTimecode(uint64(tc), segmentInfo.timecodeScale);
+            }
+            else if (EbmlId(*cel) == EBML_ID(KaxSimpleBlock))
+            {
+                KaxSimpleBlock& sb = *static_cast<KaxSimpleBlock*>(cel);
+                sb.ReadData(ebmlStream->I_O());
+                sb.SetParent(*cluster);
+                ExtractFramesFromBlock(sb, sb.IsKeyframe(), pendingFrames);
+            }
+            else if (EbmlId(*cel) == EBML_ID(KaxBlockGroup))
+            {
+                KaxBlockGroup* bg = static_cast<KaxBlockGroup*>(cel);
+                EbmlElement* bgFoundElt = nullptr;
+                int bgUpperLvl = 0;
+                bg->Read(*ebmlStream, EBML_CONTEXT(bg), bgUpperLvl, bgFoundElt, true);
+
+                KaxBlock* blk = FindChild<KaxBlock>(*bg);
+                if (blk)
+                {
+                    // Standard Matroska convention: a block with no ReferenceBlock child
+                    // depends on nothing else, i.e. it's a keyframe.
+                    bool isKey = (bg->FindElt(EBML_INFO(KaxReferenceBlock)) == nullptr);
+                    blk->SetParent(*cluster);
+                    ExtractFramesFromBlock(*blk, isKey, pendingFrames);
+                }
+            }
+            else
+            {
+                cel->SkipData(*ebmlStream, EBML_CONTEXT(cel));
+            }
+
+            delete cel;
+            cel = ebmlStream->FindNextElement(EBML_CONTEXT(cluster), clUpperLvl, 0xFFFFFFFFL, true);
+        }
+
+        clusterScanPos = ebmlStream->I_O().getFilePointer();
+        delete cluster;
+
+        return true;
+    }
 
     bool MatroskaAudioLoader::ReadNextFrame(AudioFrame& frame)
     {
-        // This would require maintaining state and reading clusters
-        return false;
+        while (pendingFrames.empty())
+        {
+            if (!LoadNextClusterFrames())
+                return false; // genuinely out of clusters
+        }
+
+        frame = std::move(pendingFrames.front());
+        pendingFrames.pop_front();
+        return true;
     }
 
     void MatroskaAudioLoader::SeekToTimestamp(uint64_t timestamp)
     {
-        // Implementation would use KaxCues for seeking
-    }
+        if (!segmentElement)
+            return;
+        pendingFrames.clear();
+        clusterScanPos = segmentDataStartPos;
 
+        while (true)
+        {
+            if (!LoadNextClusterFrames())
+                return; // reached EOF without finding the timestamp; stream left at end
+
+            if (pendingFrames.empty())
+                continue; // cluster had no audio-track frames, keep scanning
+
+            if (pendingFrames.front().timestamp >= timestamp)
+                return; // ready, next ReadNextFrame() starts here
+
+            pendingFrames.clear(); // whole cluster was before the target, discard and continue
+        }
+    }
 }  // namespace SF::Engine

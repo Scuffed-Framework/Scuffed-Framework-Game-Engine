@@ -1,4 +1,5 @@
 # SHADERS
 
-#CORE 
+#CORE
+1. replace bitmask.hpp
 3. Update the .sh scripts (haven't for like 4 months)

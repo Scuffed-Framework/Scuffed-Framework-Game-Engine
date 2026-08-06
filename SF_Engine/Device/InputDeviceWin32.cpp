@@ -44,6 +44,8 @@ namespace SF::Engine
 
         if (axisCount >= 4)
             return DeviceType::FlightStick;
+
+        else return DeviceType::INVALID;
     }
 
     struct EnumCtx

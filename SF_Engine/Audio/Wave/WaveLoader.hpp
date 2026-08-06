@@ -1,4 +1,6 @@
 #include <cstdint>
+#include "WaveSoundBuffer.hpp"
+#include "dr_wav.hpp"
 
 namespace SF::Engine
 {

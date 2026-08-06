@@ -78,6 +78,13 @@ class SfEngineConan(ConanFile):
 
         # Scripting
         self.requires("sol2/3.3.0")
+
+        # LGPL requires shared libraries
+        self.requires("libebml/1.4.7", options={"shared": True})
+        self.requires("libmatroska/1.7.1", options={"shared": True})
+
+        self.requires("openfbx/cci.20210426")
+        self.requires("tinyobjloader/2.0.0-rc10")
     
     def layout(self):
         cmake_layout(self)

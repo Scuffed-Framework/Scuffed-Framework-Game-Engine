@@ -7,20 +7,22 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <deque>
 
 // EBML includes
-#include <Matroska/EBML/EbmlHead.h>
-#include <Matroska/EBML/EbmlStream.h>
-#include <Matroska/EBML/StdIOCallback.h>
+#include <ebml/EbmlHead.h>
+#include <ebml/EbmlSubHead.h>
+#include <ebml/EbmlStream.h>
+#include <ebml/StdIOCallback.h>
 
 // Matroska includes
-#include <Matroska/Matroska/KaxBlock.h>
-#include <Matroska/Matroska/KaxBlockData.h>
-#include <Matroska/Matroska/KaxCluster.h>
-#include <Matroska/Matroska/KaxCues.h>
-#include <Matroska/Matroska/KaxSeekHead.h>
-#include <Matroska/Matroska/KaxSegment.h>
-#include <Matroska/Matroska/KaxTracks.h>
+#include <matroska/KaxBlock.h>
+#include <matroska/KaxBlockData.h>
+#include <matroska/KaxCluster.h>
+#include <matroska/KaxCues.h>
+#include <matroska/KaxSeekHead.h>
+#include <matroska/KaxSegment.h>
+#include <matroska/KaxTracks.h>
 
 #ifndef uint64
 using uint64 = uint64_t;
@@ -93,8 +95,12 @@ namespace SF::Engine
         EbmlElement* level0 = nullptr;
         EbmlElement* level1 = nullptr;
         EbmlElement* level2 = nullptr;
-
         int upperLevel = 0;
+
+        KaxSegment* segmentElement = nullptr;   // non-owning alias into level0; level0 still owns/deletes it
+        filepos_t   segmentDataStartPos = 0;    // file offset of the first byte inside the segment payload
+        filepos_t   clusterScanPos = 0;         // resume point for the next cluster scan
+        std::deque<AudioFrame> pendingFrames;   // frames extracted from the most recently loaded cluster
 
         void ParseEbmlHead(EbmlHead* head);
         void ParseSegment(KaxSegment* segment);
@@ -102,6 +108,10 @@ namespace SF::Engine
         void ParseTracks(KaxTracks* tracks);
         void ParseTrackEntry(KaxTrackEntry* entry);
         void ParseCluster(KaxCluster* cluster);
+
+        bool LoadNextClusterFrames();   // scans forward for the next KaxCluster, fills pendingFrames
+        void ExtractFramesFromBlock(KaxInternalBlock& block, bool keyframe, std::deque<AudioFrame>& out);
+        bool IsAudioTrack(uint64_t trackNumber) const;
 
         void Reset();
     };

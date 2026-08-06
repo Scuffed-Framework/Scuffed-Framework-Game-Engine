@@ -214,7 +214,7 @@ float4 CloudMarch(float3 origin, float3 dir, float3 sunDir,
 }
 
 [shader("fragment")]
-float4 fsmain(VSOutput input, float4 fragCoord : SV_Position) : SV_Target
+float4 fsmain(VSOutput input, float4 fragCoord: SV_Position) : SV_Target
 {
     float2 uv = input.uv;
     float2 ndc = uv * 2.0 - 1.0;
@@ -224,7 +224,7 @@ float4 fsmain(VSOutput input, float4 fragCoord : SV_Position) : SV_Target
     viewPos /= viewPos.w;
     float3 rayDir = normalize(mul(camera.inverseView, float4(viewPos.xyz, 0.0)).xyz);
 
-    float3 rayOrigin = camera.cameraPosition.xyz;
+    float3 rayOrigin = atmo.cameraPos.xyz;
     float3 sunDir = atmo.sunDir.xyz;
 
     float depth = sceneDepth.SampleLevel(g_sampler, uv, 0.0).r;
@@ -239,7 +239,16 @@ float4 fsmain(VSOutput input, float4 fragCoord : SV_Position) : SV_Target
 
     hit.dstThroughShell = max(0.0, min(hit.dstToShell + hit.dstThroughShell, sceneDist) - hit.dstToShell);
 
+    if (hit.dstThroughShell <= 0.0)
+    {
+        return float4(0.0);
+    }
+
     float4 cloudResult = CloudMarch(rayOrigin, rayDir, sunDir, hit.dstToShell, hit.dstThroughShell, fragCoord.xy);
 
-    return float4(rayDir * 0.5 + 0.5, 1.0) + cloudResult * 0.00001;
+    float exposure = 1.0;
+    float3 exposedColor = cloudResult.rgb * exposure;
+    float3 finalColor = exposedColor / (1.0 + exposedColor);
+
+    return float4(finalColor, cloudResult.a);
 }

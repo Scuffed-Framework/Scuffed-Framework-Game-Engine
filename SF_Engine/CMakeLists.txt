@@ -52,6 +52,13 @@ find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
 find_package(sol2 REQUIRED)
 find_package(libraw CONFIG REQUIRED)
 
+find_package(EBML REQUIRED)
+find_package(Matroska REQUIRED)
+
+find_package(openfbx REQUIRED)        
+find_package(TinyOBJLoader REQUIRED)  
+
+
 file(GLOB_RECURSE ENGINE_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
@@ -210,6 +217,10 @@ target_link_libraries(SF_Engine PUBLIC
     box3d::box3d
     libraw::libraw
     slang::slang
+    EBML::ebml 
+    Matroska::Matroska
+    openfbx::openfbx          
+    tinyobjloader::tinyobjloader
 )
 
 target_include_directories(SF_Engine PUBLIC
@@ -218,6 +229,8 @@ target_include_directories(SF_Engine PUBLIC
     $<TARGET_PROPERTY:spirv-cross::spirv-cross,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:SPIRV-Tools,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:spirv-reflect-static,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:EBML::ebml,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:Matroska::Matroska,INTERFACE_INCLUDE_DIRECTORIES>
     # hopefully this works
     $<TARGET_PROPERTY:box3d::box3d,INTERFACE_INCLUDE_DIRECTORIES>
 )

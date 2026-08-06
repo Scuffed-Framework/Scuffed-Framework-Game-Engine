@@ -1,6 +1,4 @@
 #pragma once
-
-#include <LowLevel/BitMask.hpp>
 #include <type_traits>
 #include <utility>
 

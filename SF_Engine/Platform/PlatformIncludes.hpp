@@ -132,4 +132,13 @@ namespace SF::Engine
 #error Unsupported platform.
 #endif
     };
+
+    enum OperatingSystem
+    {
+        Windows_Or_Xbox,
+        Linux,
+        MacOs,
+        IOS,
+        Android,
+    };
 }

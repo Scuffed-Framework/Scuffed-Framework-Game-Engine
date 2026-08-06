@@ -28,6 +28,7 @@ namespace SF::Engine
         ControlYoke, // Full yoke: pitch/roll/throttle + many buttons
         Throttle,    // Standalone throttle quadrant (HOTAS)
         Rudder,      // Standalone rudder pedals
+        INVALID,
     };
 
     struct Device_T
