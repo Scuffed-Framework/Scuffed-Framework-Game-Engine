@@ -75,11 +75,11 @@ namespace SF::Engine
 
         float densityScale = 1.0f;
         float coverage = 0.5;
-        float cloudDetailScale = 1.0f;
+        float cloudDetailScale = 0.00025f;
         float cloudBaseNoiseScale = 1.0f;
         float cloudCurlNoiseScale = 1.0f;
 
-        float cloudWeatherUVScale = 1.0f;
+        float cloudWeatherUVScale = 0.00005f;
         float percipitationBias = 1.0f;
         float FadeDistance2d = 1.0f;
         float fadeSmoothDist = 1.0f;

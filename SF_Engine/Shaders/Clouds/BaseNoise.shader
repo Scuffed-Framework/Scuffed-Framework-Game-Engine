@@ -5,6 +5,7 @@
 #define kBasicNoiselerpFactor 0.5
 
 [[vk::binding(0, 0)]]
+[[vk::image_format("r8")]]
 RWTexture3D<float4> imageBasicNoise;
 
 float remap(float x, float a, float b, float c, float d)

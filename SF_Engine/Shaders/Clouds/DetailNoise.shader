@@ -3,6 +3,7 @@
 #define kDetailFrequency 8.0
 
 [[vk::binding(0, 0)]]
+[[vk::image_format("r8")]]
 RWTexture3D<float> imageWorleyNoise;
 
 [numthreads(8, 8, 1)]

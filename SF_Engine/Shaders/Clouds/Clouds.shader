@@ -213,9 +213,26 @@ float4 CloudMarch(float3 origin, float3 dir, float3 sunDir,
     return float4(luminance, 1.0 - transmittance);
 }
 
+// DEBUG:
+float4 KeepBindingsAlive(float2 uv)
+{
+    float4 keep = float4(0, 0, 0, 0);
+    keep += blueNoise.SampleLevel(g_sampler, uv, 0.0);
+    keep += transmittanceLUT.SampleLevel(g_sampler, uv, 0.0);
+    keep += multiScatterLUT.SampleLevel(g_sampler, uv, 0.0);
+    keep.r += aerialPerspRange.SampleLevel(g_sampler, uv, 0.0);
+    keep.r += sceneDepth.SampleLevel(g_sampler, uv, 0.0);
+    keep += alligatorNoise.SampleLevel(linearRepeatSampler, float3(uv, 0.0), 0.0);
+    keep.r += baseNoise.SampleLevel(linearRepeatSampler, float3(uv, 0.0), 0.0);
+    keep.r += detailNoise.SampleLevel(linearRepeatSampler, float3(uv, 0.0), 0.0);
+    return keep;
+}
+
 [shader("fragment")]
 float4 fsmain(VSOutput input, float4 fragCoord: SV_Position) : SV_Target
 {
+    float4 keepAlive = KeepBindingsAlive(input.uv);
+
     float2 uv = input.uv;
     float2 ndc = uv * 2.0 - 1.0;
 
@@ -240,9 +257,7 @@ float4 fsmain(VSOutput input, float4 fragCoord: SV_Position) : SV_Target
     hit.dstThroughShell = max(0.0, min(hit.dstToShell + hit.dstThroughShell, sceneDist) - hit.dstToShell);
 
     if (hit.dstThroughShell <= 0.0)
-    {
-        return float4(0.0);
-    }
+        return float4(0, 0, 0, 0) + keepAlive * 0.00001;
 
     float4 cloudResult = CloudMarch(rayOrigin, rayDir, sunDir, hit.dstToShell, hit.dstThroughShell, fragCoord.xy);
 
@@ -250,5 +265,5 @@ float4 fsmain(VSOutput input, float4 fragCoord: SV_Position) : SV_Target
     float3 exposedColor = cloudResult.rgb * exposure;
     float3 finalColor = exposedColor / (1.0 + exposedColor);
 
-    return float4(finalColor, cloudResult.a);
+    return float4(finalColor, cloudResult.a) + keepAlive * 0.00001;
 }

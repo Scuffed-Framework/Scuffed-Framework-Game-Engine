@@ -4,6 +4,7 @@
 
 namespace SF::Engine
 {
+    class DescriptorSet;
     /**
      * @brief some global samplers
      *
@@ -18,6 +19,11 @@ namespace SF::Engine
         static VkSampler GetLinearRepeatSampler() { return linearRepeatSampler_; }
         static VkSampler GetNearestClampSampler() { return nearestClampSampler_; }
         static VkSampler GetNearestRepeatSampler() { return nearestRepeatSampler_; }
+
+        static void BindLinearClampSampler(int Location, int Set, DescriptorSet* Desc);
+        static void BindLinearRepeatSampler(int Location, int Set, DescriptorSet* Desc);
+        static void BindNearestClampSampler(int Location, int Set, DescriptorSet* Desc);
+        static void BindNearestRepeatSampler(int Location, int Set, DescriptorSet* Desc);
 
     private:
         static VkSampler linearClampSampler_;

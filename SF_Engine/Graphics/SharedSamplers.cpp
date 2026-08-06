@@ -76,4 +76,64 @@ namespace SF::Engine
         nearestClampSampler_ = VK_NULL_HANDLE;
         nearestRepeatSampler_ = VK_NULL_HANDLE;
     }
+
+    void BindLinearClampSampler(int Location, int Set, DescriptorSet *Desc)
+    {
+        VkDescriptorImageInfo info{};
+        info.sampler = SharedSamplers::GetLinearClampSampler();
+
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = Desc->GetDescriptorSet();
+        write.dstBinding = 13;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER; // not COMBINED_IMAGE_SAMPLER
+        write.pImageInfo = &info;
+        DescriptorSet::Update({write});
+    }
+
+    void BindLinearRepeatSampler(int Location, int Set, DescriptorSet *Desc)
+    {
+        VkDescriptorImageInfo info{};
+        info.sampler = SharedSamplers::GetLinearRepeatSampler();
+
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = Desc->GetDescriptorSet();
+        write.dstBinding = 13;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER; // not COMBINED_IMAGE_SAMPLER
+        write.pImageInfo = &info;
+        DescriptorSet::Update({write});
+    }
+
+    void BindNearestClampSampler(int Location, int Set, DescriptorSet *Desc)
+    {
+        VkDescriptorImageInfo info{};
+        info.sampler = SharedSamplers::GetNearestClampSampler();
+
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = Desc->GetDescriptorSet();
+        write.dstBinding = 13;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER; // not COMBINED_IMAGE_SAMPLER
+        write.pImageInfo = &info;
+        DescriptorSet::Update({write});
+    }
+    
+    void BindNearestRepeatSampler(int Location, int Set, DescriptorSet *Desc)
+    {
+        VkDescriptorImageInfo info{};
+        info.sampler = SharedSamplers::GetNearestRepeatSampler();
+
+        VkWriteDescriptorSet write{};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = Desc->GetDescriptorSet();
+        write.dstBinding = 13;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER; // not COMBINED_IMAGE_SAMPLER
+        write.pImageInfo = &info;
+        DescriptorSet::Update({write});
+    }
 }

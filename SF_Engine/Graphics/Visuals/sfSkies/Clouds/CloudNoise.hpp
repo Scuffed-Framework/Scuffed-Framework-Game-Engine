@@ -52,10 +52,8 @@ namespace SF::Engine
         
         void Bake(const CommandBuffer &cmd)
         {
-            // On re-bake the image may already be SHADER_READ_ONLY_OPTIMAL; transition back.
             if (baked_)
             {
-
                 Image::InsertImageMemoryBarrier(
                     cmd, BaseNoiseTexture_->GetImage(),
                     VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
@@ -70,40 +68,30 @@ namespace SF::Engine
                     VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
             }
 
-            pipelineA_->BindPipeline(cmd);
-            pipelineB_->BindPipeline(cmd);
-
-            descSetA_->BindDescriptor(cmd);
-            descSetB_->BindDescriptor(cmd);
-
             auto ext1 = BaseNoiseTexture_->GetExtent();
             auto ext2 = DetailNoiseTexture_->GetExtent();
-            vkCmdDispatch(cmd, ext1.width, ext1.height, 1);
-            vkCmdDispatch(cmd, ext2.width, ext2.height, 1);
+
+            pipelineA_->BindPipeline(cmd);
+            descSetA_->BindDescriptor(cmd);
+            vkCmdDispatch(cmd, (ext1.width + 7) / 8, (ext1.height + 7) / 8, ext1.depth);
+
+            pipelineB_->BindPipeline(cmd);
+            descSetB_->BindDescriptor(cmd);
+            vkCmdDispatch(cmd, (ext2.width + 7) / 8, (ext2.height + 7) / 8, ext2.depth);
 
             Image::InsertImageMemoryBarrier(
-                cmd,
-                BaseNoiseTexture_->GetImage(),
-                VK_ACCESS_SHADER_WRITE_BIT,
-                VK_ACCESS_SHADER_READ_BIT,
-                VK_IMAGE_LAYOUT_GENERAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                1, 0, 1, 0);
+                cmd, BaseNoiseTexture_->GetImage(),
+                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
 
             Image::InsertImageMemoryBarrier(
-                cmd,
-                DetailNoiseTexture_->GetImage(),
-                VK_ACCESS_SHADER_WRITE_BIT,
-                VK_ACCESS_SHADER_READ_BIT,
-                VK_IMAGE_LAYOUT_GENERAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                1, 0, 1, 0);
+                cmd, DetailNoiseTexture_->GetImage(),
+                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
 
             baked_ = true;
             BaseNoiseTexture_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

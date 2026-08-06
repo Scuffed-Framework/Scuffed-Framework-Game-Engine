@@ -1,5 +1,10 @@
 # SHADERS
+1. Fix clouds and atmosphere
 
 #CORE
 1. replace bitmask.hpp
+2. SPLASH SCREEN
 3. Update the .sh scripts (haven't for like 4 months)
+4. make more beginner friendly than unity
+5. Terrain
+6. More HDR
