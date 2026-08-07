@@ -31,7 +31,6 @@ find_package(OpenCLICDLoader REQUIRED)              # OpenCLICDLoaderConfig.cmak
 find_package(freetype CONFIG REQUIRED)              # freetype-config.cmake
 find_package(glfw3 CONFIG REQUIRED)                 # glfw3-config.cmake
 find_package(glm CONFIG REQUIRED)                   # glm-config.cmake
-find_package(glslang CONFIG REQUIRED)               # glslang-config.cmake
 find_package(imgui CONFIG REQUIRED)                 # imgui-config.cmake
 find_package(implot CONFIG REQUIRED)                # implot-config.cmake
 find_package(imguizmo CONFIG REQUIRED)              # imguizmo-config.cmake
@@ -196,8 +195,6 @@ target_link_libraries(SF_Engine PUBLIC
     Freetype::Freetype
     glfw
     glm::glm
-    glslang::glslang
-    glslang::SPIRV
     imgui::imgui
     implot::implot
     imguizmo::imguizmo
