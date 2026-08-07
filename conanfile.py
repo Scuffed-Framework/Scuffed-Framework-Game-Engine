@@ -63,7 +63,6 @@ class SfEngineConan(ConanFile):
         # Vulkan
         self.requires("spirv-reflect/1.4.313.0")
         self.requires("spirv-cross/1.4.313.0")
-        self.requires("glslang/1.4.313.0")
         self.requires("vulkan-headers/1.4.313.0")
         self.requires("vulkan-loader/1.4.313.0")
         self.requires("volk/1.4.313.0")
