@@ -2,10 +2,9 @@
 1. Fix clouds and atmosphere
 
 #CORE
-1. replace bitmask.hpp
-2. SPLASH SCREEN
-3. Update the .sh scripts (haven't for like 4 months)
-4. make more beginner friendly than unity
-5. Terrain
-6. More HDR
-7. Remove Matroska/EBML externals and update MatroskaAudio in <Audio>
+1. SPLASH SCREEN
+2. Update the .sh scripts (haven't for like 4 months)
+3. make more beginner friendly than unity
+4. Terrain
+5. More HDR
+6. Remove Matroska/EBML externals and update MatroskaAudio in <Audio>
