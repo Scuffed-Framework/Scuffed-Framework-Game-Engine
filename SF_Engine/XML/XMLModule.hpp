@@ -185,4 +185,4 @@ namespace SF::Engine
 }
 
 // Include implementation
-#include "XMLReader.inl"
+#include "XMLModule.inl"
