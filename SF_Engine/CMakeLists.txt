@@ -51,9 +51,6 @@ find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
 find_package(sol2 REQUIRED)
 find_package(libraw CONFIG REQUIRED)
 
-find_package(EBML REQUIRED)
-find_package(Matroska REQUIRED)
-
 find_package(openfbx REQUIRED)        
 find_package(TinyOBJLoader REQUIRED)  
 
@@ -214,8 +211,6 @@ target_link_libraries(SF_Engine PUBLIC
     box3d::box3d
     libraw::libraw
     slang::slang
-    EBML::ebml 
-    Matroska::Matroska
     openfbx::openfbx          
     tinyobjloader::tinyobjloader
 )

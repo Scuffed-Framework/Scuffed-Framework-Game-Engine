@@ -7,4 +7,3 @@
 3. make more beginner friendly than unity
 4. Terrain
 5. More HDR
-6. Remove Matroska/EBML externals and update MatroskaAudio in <Audio>

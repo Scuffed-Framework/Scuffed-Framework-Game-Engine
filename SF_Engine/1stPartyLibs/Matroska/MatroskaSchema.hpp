@@ -10,11 +10,6 @@ namespace SF::Matroska
         using namespace EBML;
         
         Schema schema;
-
-        // --- EBML header (RFC 8794) ---
-        // Every well-formed EBML/Matroska file starts with one of these; a
-        // schema that can't classify them can still parse a file (unknown
-        // IDs default to Binary) but reports wrong kinds for it.
         schema.set(EBML::ids::EBML, Element::Kind::Master);
         schema.set(EBML::ids::EBMLVersion, Element::Kind::UInt);
         schema.set(EBML::ids::EBMLReadVersion, Element::Kind::UInt);
@@ -74,6 +69,7 @@ namespace SF::Matroska
         schema.set(ids::Duration, Element::Kind::Float);
         schema.set(ids::DateUTC, Element::Kind::Date);
         schema.set(ids::SegmentUID, Element::Kind::Binary);
+        schema.set(ids::Title, Element::Kind::Utf8);
         schema.set(ids::SegmentFilename, Element::Kind::String);
         schema.set(ids::PrevUID, Element::Kind::Binary);
         schema.set(ids::NextUID, Element::Kind::Binary);
@@ -240,7 +236,7 @@ namespace SF::Matroska
         schema.add_children(ids::Seek, { ids::SeekID, ids::SeekPosition });
         schema.add_children(ids::Info, {
             ids::TimecodeScale, ids::Duration, ids::MuxingApp, ids::WritingApp, ids::DateUTC,
-            ids::SegmentUID, ids::SegmentFilename, ids::PrevUID, ids::PrevFilename, ids::NextUID,
+            ids::SegmentUID, ids::Title, ids::SegmentFilename, ids::PrevUID, ids::PrevFilename, ids::NextUID,
             ids::NextFilename, ids::SegmentFamily, ids::ChapterTranslate, ids::TimecodeScaleDenominator,
             EBML::ids::Void
         });

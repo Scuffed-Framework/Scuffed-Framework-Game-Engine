@@ -33,6 +33,7 @@ namespace SF::Matroska
         inline constexpr SF::EBML::Identifier SegmentFamily{0x4444};
         inline constexpr SF::EBML::Identifier ChapterTranslate{0x6924};
         inline constexpr SF::EBML::Identifier TimecodeScaleDenominator{0x2AD7B3};
+        inline constexpr SF::EBML::Identifier Title{0x7BA9};
 
         // Track elements
         inline constexpr SF::EBML::Identifier TrackEntry{0xAE};
