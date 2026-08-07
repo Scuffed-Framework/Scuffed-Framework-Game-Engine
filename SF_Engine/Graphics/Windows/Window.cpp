@@ -140,21 +140,13 @@ namespace SF::Engine
     }
 
     void CallbackKey(GLFWwindow *glfwWindow, int32_t key, int32_t scancode, int32_t action,
-                     int32_t mods)
+                    int32_t mods)
     {
         if (ImGuiReady())
             ImGui_ImplGlfw_KeyCallback(glfwWindow, key, scancode, action, mods);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->onKey(static_cast<Key>(key), static_cast<InputAction>(action),
-                      bitmask::bitmask<InputMod>(mods));
-    }
-
-    void CallbackChar(GLFWwindow *glfwWindow, uint32_t codepoint)
-    {
-        if (ImGuiReady())
-            ImGui_ImplGlfw_CharCallback(glfwWindow, codepoint);
-        auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
-        window->onChar(static_cast<char>(codepoint));
+                    Bitmask::Bitmask<InputMod>(mods));  
     }
 
     void CallbackMouseButton(GLFWwindow *glfwWindow, int32_t button, int32_t action, int32_t mods)
@@ -163,7 +155,15 @@ namespace SF::Engine
             ImGui_ImplGlfw_MouseButtonCallback(glfwWindow, button, action, mods);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->onMouseButton(static_cast<MouseButton>(button), static_cast<InputAction>(action),
-                              bitmask::bitmask<InputMod>(mods));
+                            Bitmask::Bitmask<InputMod>(mods));
+    }    
+
+    void CallbackChar(GLFWwindow *glfwWindow, uint32_t codepoint)
+    {
+        if (ImGuiReady())
+            ImGui_ImplGlfw_CharCallback(glfwWindow, codepoint);
+        auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+        window->onChar(static_cast<char>(codepoint));
     }
 
     void CallbackCursorPos(GLFWwindow *glfwWindow, double xpos, double ypos)

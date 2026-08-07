@@ -1,5 +1,5 @@
 #pragma once
-#include <LowLevel/BitMask.hpp>
+#include <LowLevel/Bitmask.hpp>
 #include <LowLevel/rocket.hpp>
 
 namespace SF::Engine
@@ -15,7 +15,7 @@ namespace SF::Engine
         Slash = 47,
         _0 = 48,
         _1 = 49,
-        _2 = 50,
+        _2 = 50,    
         _3 = 51,
         _4 = 52,
         _5 = 53,
@@ -152,8 +152,6 @@ namespace SF::Engine
         Repeat = 3
     };
 
-    ENABLE_BITMASK_OPERATORS(InputAction)
-
     enum class InputMod : int32_t
     {
         None = 0,
@@ -164,5 +162,7 @@ namespace SF::Engine
         CapsLock = 16,
         NumLock = 32
     };
-    ENABLE_BITMASK_OPERATORS(InputMod)
+    
 }
+ENABLE_BITMASK_OPERATORS(SF::Engine::InputAction)
+ENABLE_BITMASK_OPERATORS(SF::Engine::InputMod)

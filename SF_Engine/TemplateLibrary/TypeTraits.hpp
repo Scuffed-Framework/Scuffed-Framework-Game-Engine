@@ -1094,6 +1094,8 @@ namespace SFTL
         return SFTL::move(_Arg);
     }
 
+    using std::underlying_type_t;
+
     using std::is_constant_evaluated;
 
     using std::is_trivial;

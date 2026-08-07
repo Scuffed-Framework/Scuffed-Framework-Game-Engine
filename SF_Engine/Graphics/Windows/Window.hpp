@@ -4,7 +4,7 @@
 
 #include <volk.h>
 #include <Input/ButtonCodes.hpp>
-#include <LowLevel/BitMask.hpp>
+#include <LowLevel/Bitmask.hpp>
 #include <LowLevel/rocket.hpp>
 #include "Monitor.hpp"
 
@@ -408,7 +408,7 @@ namespace SF::Engine
          * Called when a key changes state.
          * @return The delegate.
          */
-        rocket::signal<void(Key, InputAction, bitmask::bitmask<InputMod>)> &OnKey()
+        rocket::signal<void(Key, InputAction, Bitmask::Bitmask<InputMod>)> &OnKey()  
         {
             return onKey;
         }
@@ -426,7 +426,7 @@ namespace SF::Engine
          * Called when a mouse button changes state.
          * @return The delegate.
          */
-        rocket::signal<void(MouseButton, InputAction, bitmask::bitmask<InputMod>)> &OnMouseButton()
+        rocket::signal<void(MouseButton, InputAction, Bitmask::Bitmask<InputMod>)> &OnMouseButton()  
         {
             return onMouseButton;
         }
@@ -508,23 +508,13 @@ namespace SF::Engine
         rocket::signal<void(bool)> onIconify;
         rocket::signal<void(bool)> onEnter;
         rocket::signal<void(std::vector<std::string>)> onDrop;
-        rocket::signal<void(Key, InputAction, bitmask::bitmask<InputMod>)> onKey;
+        rocket::signal<void(Key, InputAction, Bitmask::Bitmask<InputMod>)> onKey;  
         rocket::signal<void(char)> onChar;
-        rocket::signal<void(MouseButton, InputAction, bitmask::bitmask<InputMod>)> onMouseButton;
+        rocket::signal<void(MouseButton, InputAction, Bitmask::Bitmask<InputMod>)> onMouseButton;  
         rocket::signal<void(DVec2)> onMousePosition;
         rocket::signal<void(DVec2)> onMouseScroll;
 
     public:
         WindowId GetId() { return id; }
-    };
-}
-
-namespace magic_enum::customize
-{
-    template <>
-    struct enum_range<SF::Engine::Key>
-    {
-        inline constexpr static int min = -1;
-        inline constexpr static int max = 400;
     };
 }

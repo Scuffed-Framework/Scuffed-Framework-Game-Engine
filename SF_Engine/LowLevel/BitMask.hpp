@@ -1,338 +1,220 @@
-/**
- * BSD 2-Clause License
- *
- * Copyright (c) 2017, Gabriel Aubut-Lussier
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * https://dalzhim.github.io/2017/08/11/Improving-the-enum-class-bitmask
- * https://stackoverflow.com/a/8498694/6251899
- **/
-
 #pragma once
 
-#include <type_traits>
+#include <TemplateLibrary/TypeTraits.hpp>
 
-#include "MagicEnum.hpp"
-
-namespace bitmask
+namespace SF::Engine::Bitmask
 {
-    /**
-     * @brief Wrapper for an enumerator that provides implicit bool conversion
-     */
-    template <typename T>
-    struct enumerator
+    // Wrapper type for enum Bitmasks
+    template <typename Enum, typename = ::SFTL::enable_if_t<::SFTL::is_enum_v<Enum>>>
+    class Bitmask
     {
-        using underlying_type = typename std::underlying_type_t<T>;
+    public:
+        using underlying_type = ::SFTL::underlying_type_t<Enum>;
 
-        constexpr enumerator(const T &value) : value(value)
+        constexpr Bitmask() noexcept : value(0) {}
+        constexpr Bitmask(Enum e) noexcept : value(static_cast<underlying_type>(e)) {}
+        constexpr explicit Bitmask(underlying_type v) noexcept : value(v) {}
+
+        // Conversion to underlying type
+        constexpr explicit operator underlying_type() const noexcept { return value; }
+
+        // Bitwise operations
+        constexpr Bitmask& operator|=(Enum e) noexcept
         {
+            value |= static_cast<underlying_type>(e);
+            return *this;
         }
 
-        constexpr operator bool() const
+        constexpr Bitmask& operator&=(Enum e) noexcept
         {
-            return static_cast<underlying_type>(value) != 0;
+            value &= static_cast<underlying_type>(e);
+            return *this;
         }
 
-        constexpr operator T() const { return value; }
-
-        T value;
-    };
-
-    /**
-     * @brief Wrapper that differentiates combined enumerators from a single enumerator
-     * to prevent accidental comparisons between a bitmask and a single enumerator
-     * using operator== or operator!=
-     */
-    template <typename T>
-    struct bitmask
-    {
-        using underlying_type = typename std::underlying_type_t<T>;
-
-        constexpr bitmask() : value(static_cast<underlying_type>(0))
+        constexpr Bitmask& operator^=(Enum e) noexcept
         {
+            value ^= static_cast<underlying_type>(e);
+            return *this;
         }
 
-        constexpr bitmask(const T &value) : value(static_cast<underlying_type>(value))
+        constexpr Bitmask& operator|=(const Bitmask& other) noexcept
         {
+            value |= other.value;
+            return *this;
         }
 
-        constexpr bitmask(const underlying_type &value) : value(value)
+        constexpr Bitmask& operator&=(const Bitmask& other) noexcept
         {
+            value &= other.value;
+            return *this;
         }
 
-        constexpr bitmask(const enumerator<T> &enumerator) : value(static_cast<underlying_type>(enumerator.value))
+        constexpr Bitmask& operator^=(const Bitmask& other) noexcept
         {
+            value ^= other.value;
+            return *this;
         }
 
-        constexpr explicit operator bool() const { return value != 0; }
+        // Bitwise NOT
+        constexpr Bitmask operator~() const noexcept
+        {
+            return Bitmask(~value);
+        }
 
+        // Conversion to bool
+        constexpr explicit operator bool() const noexcept { return value != 0; }
+
+        // Get raw value
+        constexpr underlying_type get() const noexcept { return value; }
+
+    private:
         underlying_type value;
     };
+
+    // Operator overloads for enum + Bitmask
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator|(Enum lhs, Enum rhs) noexcept
+    {
+        return Bitmask<Enum>(lhs) |= rhs;
+    }
+
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator&(Enum lhs, Enum rhs) noexcept
+    {
+        return Bitmask<Enum>(lhs) &= rhs;
+    }
+
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator^(Enum lhs, Enum rhs) noexcept
+    {
+        return Bitmask<Enum>(lhs) ^= rhs;
+    }
+
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator|(Bitmask<Enum> lhs, Enum rhs) noexcept
+    {
+        return lhs |= rhs;
+    }
+
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator&(Bitmask<Enum> lhs, Enum rhs) noexcept
+    {
+        return lhs &= rhs;
+    }
+
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator^(Bitmask<Enum> lhs, Enum rhs) noexcept
+    {
+        return lhs ^= rhs;
+    }
+
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator|(Enum lhs, Bitmask<Enum> rhs) noexcept
+    {
+        return rhs | lhs;
+    }
+
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator&(Enum lhs, Bitmask<Enum> rhs) noexcept
+    {
+        return rhs & lhs;
+    }
+
+    template <typename Enum>
+    constexpr Bitmask<Enum> operator^(Enum lhs, Bitmask<Enum> rhs) noexcept
+    {
+        return rhs ^ lhs;
+    }
+
+    // Comparison operators
+    template <typename Enum>
+    constexpr bool operator==(const Bitmask<Enum>& lhs, const Bitmask<Enum>& rhs) noexcept
+    {
+        return lhs.get() == rhs.get();
+    }
+
+    template <typename Enum>
+    constexpr bool operator!=(const Bitmask<Enum>& lhs, const Bitmask<Enum>& rhs) noexcept
+    {
+        return lhs.get() != rhs.get();
+    }
+
+    template <typename Enum>
+    constexpr bool operator==(const Bitmask<Enum>& lhs, Enum rhs) noexcept
+    {
+        return lhs.get() == static_cast<typename Bitmask<Enum>::underlying_type>(rhs);
+    }
+
+    template <typename Enum>
+    constexpr bool operator!=(const Bitmask<Enum>& lhs, Enum rhs) noexcept
+    {
+        return lhs.get() != static_cast<typename Bitmask<Enum>::underlying_type>(rhs);
+    }
+
+    template <typename Enum>
+    constexpr bool operator==(Enum lhs, const Bitmask<Enum>& rhs) noexcept
+    {
+        return rhs == lhs;
+    }
+
+    template <typename Enum>
+    constexpr bool operator!=(Enum lhs, const Bitmask<Enum>& rhs) noexcept
+    {
+        return rhs != lhs;
+    }
+
+    // Check if a specific flag is set
+    template <typename Enum>
+    constexpr bool is_set(const Bitmask<Enum>& mask, Enum flag) noexcept
+    {
+        return (mask.get() & static_cast<typename Bitmask<Enum>::underlying_type>(flag)) != 0;
+    }
+
+    // Set a flag
+    template <typename Enum>
+    constexpr Bitmask<Enum> set(Bitmask<Enum> mask, Enum flag) noexcept
+    {
+        return mask | flag;
+    }
+
+    // Clear a flag
+    template <typename Enum>
+    constexpr Bitmask<Enum> clear(Bitmask<Enum> mask, Enum flag) noexcept
+    {
+        return Bitmask<Enum>(mask.get() & ~static_cast<typename Bitmask<Enum>::underlying_type>(flag));
+    }
+
+    // Toggle a flag
+    template <typename Enum>
+    constexpr Bitmask<Enum> toggle(Bitmask<Enum> mask, Enum flag) noexcept
+    {
+        return mask ^ flag;
+    }
+
+    // Create mask from multiple flags
+    template <typename Enum, typename... Enums>
+    constexpr Bitmask<Enum> make_mask(Enum first, Enums... rest) noexcept
+    {
+        using underlying_type = typename Bitmask<Enum>::underlying_type;
+        underlying_type result = static_cast<underlying_type>(first);
+        ((result |= static_cast<underlying_type>(rest)), ...);
+        return Bitmask<Enum>(result);
+    }
 }
 
-#define ENABLE_BITMASK_OPERATORS(T)                                                                                                                                             \
-    constexpr bool operator==(const bitmask::enumerator<T> &lhs, const bitmask::enumerator<T> &rhs)                                                                             \
-    {                                                                                                                                                                           \
-        return lhs.value == rhs.value;                                                                                                                                          \
-    }                                                                                                                                                                           \
-    constexpr bool operator==(const bitmask::bitmask<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                                   \
-    {                                                                                                                                                                           \
-        return lhs.value == rhs.value;                                                                                                                                          \
-    }                                                                                                                                                                           \
-    constexpr bool operator==(const bitmask::enumerator<T> &lhs, const T &rhs)                                                                                                  \
-    {                                                                                                                                                                           \
-        return lhs.value == rhs;                                                                                                                                                \
-    }                                                                                                                                                                           \
-    constexpr bool operator==(const T &lhs, const bitmask::enumerator<T> &rhs)                                                                                                  \
-    {                                                                                                                                                                           \
-        return lhs == rhs.value;                                                                                                                                                \
-    }                                                                                                                                                                           \
-    constexpr bool operator!=(const bitmask::enumerator<T> &lhs, const bitmask::enumerator<T> &rhs)                                                                             \
-    {                                                                                                                                                                           \
-        return lhs.value != rhs.value;                                                                                                                                          \
-    }                                                                                                                                                                           \
-    constexpr bool operator!=(const bitmask::bitmask<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                                   \
-    {                                                                                                                                                                           \
-        return lhs.value != rhs.value;                                                                                                                                          \
-    }                                                                                                                                                                           \
-    constexpr bool operator!=(const bitmask::enumerator<T> &lhs, const T &rhs)                                                                                                  \
-    {                                                                                                                                                                           \
-        return lhs.value != rhs;                                                                                                                                                \
-    }                                                                                                                                                                           \
-    constexpr bool operator!=(const T &lhs, const bitmask::enumerator<T> &rhs)                                                                                                  \
-    {                                                                                                                                                                           \
-        return lhs != rhs.value;                                                                                                                                                \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator~(const T &value)                                                                                                                     \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(~static_cast<underlying_type>(value))};                                                                                                          \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator~(const bitmask::enumerator<T> &lhs)                                                                                                  \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(~static_cast<underlying_type>(lhs.value))};                                                                                                      \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator~(const bitmask::bitmask<T> &lhs)                                                                                                     \
-    {                                                                                                                                                                           \
-        return {static_cast<T>(~lhs.value)};                                                                                                                                    \
-    }                                                                                                                                                                           \
-    constexpr bitmask::enumerator<T> operator&(const T &lhs, const T &rhs)                                                                                                      \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        assert((static_cast<underlying_type>(lhs) & (static_cast<underlying_type>(lhs) - 1)) == 0);                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) & static_cast<underlying_type>(rhs))};                                                                         \
-    }                                                                                                                                                                           \
-    constexpr bitmask::enumerator<T> operator&(const bitmask::enumerator<T> &lhs, const bitmask::enumerator<T> &rhs)                                                            \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) & static_cast<underlying_type>(rhs.value))};                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator&(const bitmask::bitmask<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                     \
-    {                                                                                                                                                                           \
-        return {static_cast<T>(lhs.value & rhs.value)};                                                                                                                         \
-    }                                                                                                                                                                           \
-    constexpr bitmask::enumerator<T> operator&(const bitmask::enumerator<T> &lhs, const T &rhs)                                                                                 \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) & static_cast<underlying_type>(rhs))};                                                                   \
-    }                                                                                                                                                                           \
-    constexpr bitmask::enumerator<T> operator&(const T &lhs, const bitmask::enumerator<T> &rhs)                                                                                 \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) & static_cast<underlying_type>(rhs.value))};                                                                   \
-    }                                                                                                                                                                           \
-    constexpr bitmask::enumerator<T> operator&(const bitmask::bitmask<T> &lhs, const T &rhs)                                                                                    \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(lhs.value & static_cast<underlying_type>(rhs))};                                                                                                 \
-    }                                                                                                                                                                           \
-    constexpr bitmask::enumerator<T> operator&(const T &lhs, const bitmask::bitmask<T> &rhs)                                                                                    \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) & rhs.value)};                                                                                                 \
-    }                                                                                                                                                                           \
-    constexpr bitmask::enumerator<T> operator&(const bitmask::enumerator<T> &lhs, const bitmask::bitmask<T> &rhs)                                                               \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) & rhs.value)};                                                                                           \
-    }                                                                                                                                                                           \
-    constexpr bitmask::enumerator<T> operator&(const bitmask::bitmask<T> &lhs, const bitmask::enumerator<T> &rhs)                                                               \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(lhs.value & static_cast<underlying_type>(rhs.value))};                                                                                           \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const T &lhs, const T &rhs)                                                                                                         \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) | static_cast<underlying_type>(rhs))};                                                                         \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const bitmask::enumerator<T> &lhs, const bitmask::enumerator<T> &rhs)                                                               \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) | static_cast<underlying_type>(rhs.value))};                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const bitmask::bitmask<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                     \
-    {                                                                                                                                                                           \
-        return {static_cast<T>(lhs.value | rhs.value)};                                                                                                                         \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const bitmask::enumerator<T> &lhs, const T &rhs)                                                                                    \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) | static_cast<underlying_type>(rhs))};                                                                   \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const T &lhs, const bitmask::enumerator<T> &rhs)                                                                                    \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) | static_cast<underlying_type>(rhs.value))};                                                                   \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const bitmask::bitmask<T> &lhs, const T &rhs)                                                                                       \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(lhs.value | static_cast<underlying_type>(rhs))};                                                                                                 \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const T &lhs, const bitmask::bitmask<T> &rhs)                                                                                       \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) | rhs.value)};                                                                                                 \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const bitmask::enumerator<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                  \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) | rhs.value)};                                                                                           \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator|(const bitmask::bitmask<T> &lhs, const bitmask::enumerator<T> &rhs)                                                                  \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(lhs.value | static_cast<underlying_type>(rhs.value))};                                                                                           \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const T &lhs, const T &rhs)                                                                                                         \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) ^ static_cast<underlying_type>(rhs))};                                                                         \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const bitmask::enumerator<T> &lhs, const bitmask::enumerator<T> &rhs)                                                               \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) ^ static_cast<underlying_type>(rhs.value))};                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const bitmask::bitmask<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                     \
-    {                                                                                                                                                                           \
-        return {static_cast<T>(lhs.value ^ rhs.value)};                                                                                                                         \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const bitmask::enumerator<T> &lhs, const T &rhs)                                                                                    \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) ^ static_cast<underlying_type>(rhs))};                                                                   \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const T &lhs, const bitmask::enumerator<T> &rhs)                                                                                    \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) ^ static_cast<underlying_type>(rhs.value))};                                                                   \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const bitmask::bitmask<T> &lhs, const T &rhs)                                                                                       \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(lhs.value ^ static_cast<underlying_type>(rhs))};                                                                                                 \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const T &lhs, const bitmask::bitmask<T> &rhs)                                                                                       \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs) ^ rhs.value)};                                                                                                 \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const bitmask::enumerator<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                  \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(static_cast<underlying_type>(lhs.value) ^ rhs.value)};                                                                                           \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> operator^(const bitmask::bitmask<T> &lhs, const bitmask::enumerator<T> &rhs)                                                                  \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        return {static_cast<T>(lhs.value ^ static_cast<underlying_type>(rhs.value))};                                                                                           \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator&=(bitmask::bitmask<T> &lhs, const T &rhs)                                                                                           \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        lhs.value &= static_cast<underlying_type>(rhs);                                                                                                                         \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator&=(bitmask::bitmask<T> &lhs, const bitmask::enumerator<T> &rhs)                                                                      \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        lhs.value &= static_cast<underlying_type>(rhs.value);                                                                                                                   \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator&=(bitmask::bitmask<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                         \
-    {                                                                                                                                                                           \
-        lhs.value &= rhs.value;                                                                                                                                                 \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator|=(bitmask::bitmask<T> &lhs, const T &rhs)                                                                                           \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        lhs.value |= static_cast<underlying_type>(rhs);                                                                                                                         \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator|=(bitmask::bitmask<T> &lhs, const bitmask::enumerator<T> &rhs)                                                                      \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        lhs.value |= static_cast<underlying_type>(rhs.value);                                                                                                                   \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator|=(bitmask::bitmask<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                         \
-    {                                                                                                                                                                           \
-        lhs.value |= rhs.value;                                                                                                                                                 \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator^=(bitmask::bitmask<T> &lhs, const T &rhs)                                                                                           \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        lhs.value ^= static_cast<underlying_type>(rhs);                                                                                                                         \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator^=(bitmask::bitmask<T> &lhs, const bitmask::enumerator<T> &rhs)                                                                      \
-    {                                                                                                                                                                           \
-        using underlying_type = typename std::underlying_type_t<T>;                                                                                                             \
-        lhs.value ^= static_cast<underlying_type>(rhs.value);                                                                                                                   \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    constexpr bitmask::bitmask<T> &operator^=(bitmask::bitmask<T> &lhs, const bitmask::bitmask<T> &rhs)                                                                         \
-    {                                                                                                                                                                           \
-        lhs.value ^= rhs.value;                                                                                                                                                 \
-        return lhs;                                                                                                                                                             \
-    }                                                                                                                                                                           \
-    /*constexpr std::ostream &operator<<(std::ostream &lhs, const T &rhs) {                                                                                                     \
-       return lhs << static_cast<std::underlying_type_t<T>>(rhs);                                                                                                               \
-    }                                                                                                                                                                           \
-    constexpr std::istream &operator>>(std::istream &lhs, const T &rhs) {                                                                                                       \
-        return lhs >> static_cast<std::underlying_type_t<T>>(rhs);                                                                                                              \
-    }                                                                                                                                                                           \
-    constexpr std::ostream &operator<<(std::ostream &lhs, const bitmask::bitmask<T> &rhs) {                                                                                     \
-       static_assert(!std::is_same_v<typename bitmask::bitmask<T>::underlying_type, std::underlying_type_t<T>>, "A bitmask can't be compared to an enumerator. Use & first.");  \
-       return lhs << rhs.value;                                                                                                                                                 \
-    }                                                                                                                                                                           \
-    constexpr std::istream &operator>>(std::istream &lhs, const bitmask::bitmask<T> &rhs) {                                                                                     \
-        static_assert(!std::is_same_v<typename bitmask::bitmask<T>::underlying_type, std::underlying_type_t<T>>, "A bitmask can't be compared to an enumerator. Use & first."); \
-        return lhs >> rhs.value;                                                                                                                                                \
-    }*/
+// Helper macro to enable Bitmask operations on an enum class
+#define ENABLE_BITMASK_OPERATORS(Enum) \
+    namespace SF::Engine::Bitmask { \
+        inline constexpr Bitmask<Enum> operator|(Enum lhs, Enum rhs) noexcept \
+        { \
+            return Bitmask<Enum>(lhs) |= rhs; \
+        } \
+        inline constexpr Bitmask<Enum> operator&(Enum lhs, Enum rhs) noexcept \
+        { \
+            return Bitmask<Enum>(lhs) &= rhs; \
+        } \
+        inline constexpr Bitmask<Enum> operator^(Enum lhs, Enum rhs) noexcept \
+        { \
+            return Bitmask<Enum>(lhs) ^= rhs; \
+        } \
+    }
