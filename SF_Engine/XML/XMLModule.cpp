@@ -1,4 +1,4 @@
-#include "XMLReader.hpp"
+#include "XMLModule.hpp"
 #include <Engine/Log/Log.hpp>
 #include <sstream>
 #include <cstdarg>

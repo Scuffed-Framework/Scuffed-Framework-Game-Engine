@@ -1,5 +1,5 @@
 #pragma once
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 #include <Math/BasicMath.hpp>
 #include <Entity/Entity.hpp>
 

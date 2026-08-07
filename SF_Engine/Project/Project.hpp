@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <Filesystem/File.hpp>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 #include <Engine/Module.hpp>
 #include <Gui/UIRegistry.hpp>
 #include <Filesystem/ImGuiFileDialog.hpp>

@@ -3,7 +3,7 @@
 #include <Math/Vectors/Vector.hpp>
 #include <Components/Component.hpp>
 #include <Math/Matrix/Matrix4.hpp>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 #include <Scene/SceneSerialization.hpp>
 #include <glm/gtx/euler_angles.hpp>
 

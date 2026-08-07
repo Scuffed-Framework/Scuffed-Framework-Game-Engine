@@ -3,7 +3,7 @@
 #include <Graphics/Buffers/Buffer.hpp>
 #include <Graphics/Commands/CommandBuffer.hpp>
 #include <Graphics/Mesh/Vertex.hpp>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 #include <Components/Component.hpp>
 #include <span>
 #include <vector>

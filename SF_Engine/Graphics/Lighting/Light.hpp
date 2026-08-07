@@ -5,7 +5,7 @@
 #include <Math/Vectors/Vector.hpp>
 #include <Math/BasicMath.hpp>
 #include <string>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 #include <Scene/SceneSerialization.hpp>
 #include <Components/Component.hpp>
 

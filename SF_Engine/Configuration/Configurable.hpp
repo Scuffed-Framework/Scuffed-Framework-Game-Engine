@@ -1,6 +1,6 @@
 #pragma once
 #include <Delegates/Delegate.hpp>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 
 template <typename TDerived, typename TContainer>
 class Configurable : public Serializable

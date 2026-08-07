@@ -11,7 +11,7 @@
 #include <Math/BasicMath.hpp>
 #include <memory>
 #include <vector>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 
 namespace SF::Engine
 {

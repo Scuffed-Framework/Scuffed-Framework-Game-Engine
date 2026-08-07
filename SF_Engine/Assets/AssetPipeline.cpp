@@ -2,7 +2,7 @@
 
 #include <Filesystem/File.hpp>
 #include <Engine/Log/Log.hpp>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 
 namespace SF::Engine
 {

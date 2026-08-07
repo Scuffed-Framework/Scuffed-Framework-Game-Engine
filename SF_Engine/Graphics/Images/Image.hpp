@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <typeindex>
 #include <type_traits>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 
 #include <Reflection/RTTISingle.hpp>
 #include <Assets/SerializationRegistry.hpp>

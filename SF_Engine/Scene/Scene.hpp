@@ -9,7 +9,7 @@
 #include <Graphics/Lighting/LitMeshPipelinePass.hpp>
 #include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 #include "SceneSerialization.hpp"
 #include "EngineUI.hpp"
 #include <Scene/Types.hpp>

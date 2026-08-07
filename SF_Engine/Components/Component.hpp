@@ -1,7 +1,7 @@
 #pragma once
 
 #include <UtilityClasses/StreamFactory.hpp>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 
 namespace SF::Engine
 {

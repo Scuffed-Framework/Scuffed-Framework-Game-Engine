@@ -3,7 +3,7 @@
 #include <Default/DefaultScene.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Filesystem/File.hpp>
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 
 #include <fstream>
 #include <sstream>

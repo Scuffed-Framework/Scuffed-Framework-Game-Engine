@@ -1,6 +1,6 @@
 #pragma once
 
-#include <XML/XMLReader.hpp>
+#include <XML/XMLModule.hpp>
 #include <ID/GUID.hpp>
 #include <Controllers/Controller.hpp>
 #include <span>
