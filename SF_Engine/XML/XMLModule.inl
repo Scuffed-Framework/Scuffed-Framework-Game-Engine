@@ -3,7 +3,7 @@
 namespace SF::Engine
 {
     template <typename T>
-    bool XMLReader::Serialize(const std::string &name, const T &object, const std::string &filename)
+    bool XMLModule::Serialize(const std::string &name, const T &object, const std::string &filename)
     {
         static_assert(std::is_base_of_v<Serializable, T>,
                       "T must inherit from Serializable");
@@ -14,7 +14,7 @@ namespace SF::Engine
     }
 
     template <typename T>
-    bool XMLReader::Deserialize(const std::string &filename, T &object)
+    bool XMLModule::Deserialize(const std::string &filename, T &object)
     {
         static_assert(std::is_base_of_v<Serializable, T>,
                       "T must inherit from Serializable");

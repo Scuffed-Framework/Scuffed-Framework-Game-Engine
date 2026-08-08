@@ -21,9 +21,9 @@ namespace SF::Engine
 
         void Save() override
         {
-            XMLReader writer;
-            writer.SetRootNode(RTTI_TypeName());
-            XMLNode root = writer.GetRootNode();
+            XMLModule* writer = XMLModule::Get();
+            writer->SetRootNode(RTTI_TypeName());
+            XMLNode root = writer->GetRootNode();
             AssetBase::Serialize(root);
 
             root.SetAttribute("Filename", filename.string());

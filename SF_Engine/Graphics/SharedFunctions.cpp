@@ -67,6 +67,11 @@ namespace SF::Engine
         return inverse(GetProjection());
     }
 
+    Mat4 GetPrevViewProjection()
+    {
+        return CameraController::Get().GetActive()->GetPrevViewProjection();
+    }
+
     float GetFarPlane()
     {
         return CameraController::Get().GetActive()->GetFarPlane();

@@ -7,3 +7,5 @@
 3. make more beginner friendly than unity
 4. Terrain
 5. More HDR
+6. Clouds C++
+7. Bindless shader resources like DAXA

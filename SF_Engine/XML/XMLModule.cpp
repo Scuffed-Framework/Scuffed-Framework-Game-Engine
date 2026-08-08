@@ -206,21 +206,21 @@ namespace SF::Engine
         return XMLNode(child, doc);
     }
 
-    // XMLReader
+    // XMLModule
 
-    XMLReader::XMLReader() : document(nullptr), rootNode(nullptr)
+    XMLModule::XMLModule() : document(nullptr), rootNode(nullptr)
     {
         xmlInitParser();
-        xmlSetGenericErrorFunc(this, &XMLReader::ErrorHandler);
+        xmlSetGenericErrorFunc(this, &XMLModule::ErrorHandler);
     }
 
-    XMLReader::~XMLReader()
+    XMLModule::~XMLModule()
     {
         Clear();
         xmlCleanupParser();
     }
 
-    void XMLReader::Clear()
+    void XMLModule::Clear()
     {
         if (document)
         {
@@ -231,15 +231,15 @@ namespace SF::Engine
         lastError.clear();
     }
 
-    void XMLReader::SetError(const std::string &error)
+    void XMLModule::SetError(const std::string &error)
     {
         lastError = error;
-        Log::Error("XMLReader: {}", error);
+        Log::Error("XMLModule: {}", error);
     }
 
-    void XMLReader::ErrorHandler(void *ctx, const char *msg, ...)
+    void XMLModule::ErrorHandler(void *ctx, const char *msg, ...)
     {
-        auto *self = static_cast<XMLReader *>(ctx);
+        auto *self = static_cast<XMLModule *>(ctx);
         char buf[512];
         va_list args;
         va_start(args, msg);
@@ -251,7 +251,7 @@ namespace SF::Engine
 
     // File / string I/O
 
-    bool XMLReader::LoadFromFile(const std::string &filename)
+    bool XMLModule::LoadFromFile(const std::string &filename)
     {
         Clear();
         document = xmlReadFile(filename.c_str(), nullptr, XML_PARSE_NOBLANKS);
@@ -264,14 +264,14 @@ namespace SF::Engine
         return true;
     }
 
-    bool XMLReader::SaveToFile(const std::string &filename) const
+    bool XMLModule::SaveToFile(const std::string &filename) const
     {
         if (!document)
             return false;
         return xmlSaveFormatFileEnc(filename.c_str(), document, "UTF-8", 1) >= 0;
     }
 
-    bool XMLReader::LoadFromString(const std::string &content)
+    bool XMLModule::LoadFromString(const std::string &content)
     {
         Clear();
         document = xmlReadMemory(
@@ -286,7 +286,7 @@ namespace SF::Engine
         return true;
     }
 
-    std::string XMLReader::SaveToString() const
+    std::string XMLModule::SaveToString() const
     {
         if (!document)
             return {};
@@ -302,12 +302,12 @@ namespace SF::Engine
 
     // Root node
 
-    XMLNode XMLReader::GetRootNode() const
+    XMLNode XMLModule::GetRootNode() const
     {
         return XMLNode(rootNode, document);
     }
 
-    void XMLReader::SetRootNode(const std::string &rootName)
+    void XMLModule::SetRootNode(const std::string &rootName)
     {
         Clear();
         document = xmlNewDoc(reinterpret_cast<const xmlChar *>("1.0"));
@@ -318,12 +318,12 @@ namespace SF::Engine
 
     // Static value helpers
 
-    std::string XMLReader::SerializeValue(int value)
+    std::string XMLModule::SerializeValue(int value)
     {
         return std::to_string(value);
     }
 
-    std::string XMLReader::SerializeValue(float value)
+    std::string XMLModule::SerializeValue(float value)
     {
         std::ostringstream ss;
         ss.precision(8);
@@ -331,17 +331,17 @@ namespace SF::Engine
         return ss.str();
     }
 
-    std::string XMLReader::SerializeValue(bool value)
+    std::string XMLModule::SerializeValue(bool value)
     {
         return value ? "true" : "false";
     }
 
-    std::string XMLReader::SerializeValue(const std::string &value)
+    std::string XMLModule::SerializeValue(const std::string &value)
     {
         return value;
     }
 
-    bool XMLReader::DeserializeValue(const std::string &str, int &out)
+    bool XMLModule::DeserializeValue(const std::string &str, int &out)
     {
         try
         {
@@ -354,7 +354,7 @@ namespace SF::Engine
         }
     }
 
-    bool XMLReader::DeserializeValue(const std::string &str, float &out)
+    bool XMLModule::DeserializeValue(const std::string &str, float &out)
     {
         try
         {
@@ -367,24 +367,24 @@ namespace SF::Engine
         }
     }
 
-    bool XMLReader::DeserializeValue(const std::string &str, bool &out)
+    bool XMLModule::DeserializeValue(const std::string &str, bool &out)
     {
         out = (str == "true" || str == "1");
         return true;
     }
 
-    bool XMLReader::DeserializeValue(const std::string &str, std::string &out)
+    bool XMLModule::DeserializeValue(const std::string &str, std::string &out)
     {
         out = str;
         return true;
     }
 
-    std::string XMLReader::SerializeValue(const GUID &value)
+    std::string XMLModule::SerializeValue(const GUID &value)
     {
         return value.ToString(); // or whatever GUID's canonical string accessor is
     }
 
-    bool XMLReader::DeserializeValue(const std::string &str, GUID &out)
+    bool XMLModule::DeserializeValue(const std::string &str, GUID &out)
     {
         out = GUID::FromString(str);
         return true;

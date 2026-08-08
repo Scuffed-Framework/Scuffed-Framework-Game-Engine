@@ -43,5 +43,39 @@ struct VSOutput
     float  linearDepth  : TEXCOORD15;
 };
 
+// idk
+VSOutput BuildVSOutput(
+    float3 objectPos,
+    float3 worldPos,
+    float3 viewPos,
+    float4 clipPos,
+    float3x3 tbn, // already orthonormalized world-space TBN
+    float2 uv0, float2 uv1,
+    float4 color,
+    float3 cameraWorldPos)
+{
+    VSOutput o;
+    o.position = clipPos;
+    o.clipPos = clipPos;
+    o.worldPos = worldPos;
+    o.objectPos = objectPos;
+    o.viewPos = viewPos;
+
+    o.worldNormal = tbn[2]; // convention: TBN columns are (T, B, N)
+    o.worldTangent = tbn[0];
+    o.worldBitangent = tbn[1];
+    o.tbn = tbn;
+
+    o.uv0 = uv0;
+    o.uv1 = uv1;
+    o.color = color;
+
+    o.screenPos = clipPos; // divide by w in pixel shader, or precompute here if preferred
+    o.fragCoord = clipPos;
+    o.viewDir = normalize(cameraWorldPos - worldPos);
+    o.linearDepth = viewPos.z; // sign/convention depends on your view-space handedness
+
+    return o;
+}
 
 #endif

@@ -13,7 +13,7 @@ Sampler2D multiScatterLUT;
 Sampler2D skyViewLUT;
 
 [[vk::binding(4, 0)]]
-Sampler3D aerialPerspColorRGBTransR;  // Note: Sampler3D for 3D textures
+Sampler3D aerialPerspColorRGBTransR;
 
 [[vk::binding(5, 0)]]
 Sampler3D aerialPerspTransGB;

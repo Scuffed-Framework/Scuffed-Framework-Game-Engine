@@ -158,17 +158,17 @@ namespace SF::Engine
             return ProjectResult::InvalidFormat; // already exists
 
         // 2. Build the XML document and serialise into it.
-        XMLReader writer;
-        writer.SetRootNode("Project"); // creates the xmlDoc + root element
-        XMLNode root = writer.GetRootNode();
+        XMLModule* writer = XMLModule::Get();
+        writer->SetRootNode("Project"); // creates the xmlDoc + root element
+        XMLNode root = writer->GetRootNode();
 
         auto proj = std::make_unique<Project>();
         proj->name = name;
         proj->Path = xmlPath;
         proj->Serialize(root); // writes name + projectFilePath attributes
 
-        // 3. Save to disk – XMLReader handles everything, no File needed.
-        if (!writer.SaveToFile(xmlPath.string()))
+        // 3. Save to disk – XMLModule handles everything, no File needed.
+        if (!writer->SaveToFile(xmlPath.string()))
             return ProjectResult::UnknownError;
 
         proj->projectXML = File(xmlPath); // keep the File handle for later use
@@ -196,11 +196,11 @@ namespace SF::Engine
             return ProjectResult::NotFound;
 
         // 1. Parse the XML file.
-        XMLReader reader;
-        if (!reader.LoadFromFile(xmlPath.string()))
+        XMLModule* reader = XMLModule::Get();
+        if (!reader->LoadFromFile(xmlPath.string()))
             return ProjectResult::InvalidFormat;
 
-        XMLNode root = reader.GetRootNode();
+        XMLNode root = reader->GetRootNode();
         if (root.GetName() != "Project")
             return ProjectResult::InvalidFormat;
 

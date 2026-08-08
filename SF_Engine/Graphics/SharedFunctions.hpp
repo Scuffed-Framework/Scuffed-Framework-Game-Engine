@@ -18,6 +18,7 @@ namespace SF::Engine
     Mat4 GetInvView();
     Mat4 GetProjection();
     Mat4 GetInvProjection();
+    Mat4 GetPrevViewProjection();
     float GetFarPlane();
     float GetNearPlane();
     float GetFOV();

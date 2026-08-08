@@ -67,15 +67,15 @@ namespace SF::Engine
         std::unique_ptr<Scene> ParseXML(const std::string &xmlText,
                                         std::string &outError)
         {
-            XMLReader reader;
-            if (!reader.LoadFromString(xmlText))
+            XMLModule* reader = XMLModule::Get();
+            if (!reader->LoadFromString(xmlText))
             {
-                outError = "XML parse error: " + reader.GetLastError();
+                outError = "XML parse error: " + reader->GetLastError();
                 return nullptr;
             }
 
             // Read optional renderer config from root attributes
-            XMLNode root = reader.GetRootNode();
+            XMLNode root = reader->GetRootNode();
             SceneRendererConfig cfg;
             std::string name = root.GetAttribute("name");
 

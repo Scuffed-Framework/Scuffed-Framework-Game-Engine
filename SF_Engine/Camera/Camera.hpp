@@ -55,7 +55,12 @@ namespace SF::Engine
             return TypeInformation<Component>::GetTypeName<Camera>();
         }
 
-        virtual void Update(Window *, float /*DeltaTime*/, bool /*imguiWantsMouse*/, bool /*imguiWantsKeyboard*/) = 0;
+        virtual void Update(Window *window, float /*DeltaTime*/, bool /*imguiWantsMouse*/, bool /*imguiWantsKeyboard*/)
+        {
+            if(!window) return;
+            CachePrevViewProjection();
+        };
+        
         virtual void Start() {}
         /**
          * Gets the distance of the near pane of the view frustum.
@@ -164,7 +169,7 @@ namespace SF::Engine
                 return InfiniteFarProjection(aspect);
 
             Mat4 p = glm::perspective(glm::radians(fovDeg), aspect, nearPlane, farPlane);
-            p[1][1] *= -1.0f; // flip y cuz vulkan yk
+            p[1][1] *= -1.0f; // flip   y cuz vulkan yk
             return p;
         }
 
@@ -180,11 +185,34 @@ namespace SF::Engine
 
         Mat4 viewMatrix;
         Mat4 projectionMatrix;
+        Mat4 prevViewProjection{1.0f}; // last frame's VP, snapshotted before this frame's update
 
         Frustum viewFrustum;
         Ray viewRay;
 
     public:
+        /**
+         * Gets the view-projection matrix from the previous frame, before the current
+         * frame's camera update. Intended for temporal effects (TAA, motion vectors,
+         * volumetric/cloud reprojection, etc).
+         * @return The previous frame's view-projection matrix.
+         */
+        const Mat4 &GetPrevViewProjection() const
+        {
+            return prevViewProjection;
+        }
+
+        /**
+         * Snapshots the current viewMatrix/projectionMatrix into prevViewProjection.
+         * MUST be called by derived Update() implementations BEFORE recomputing
+         * viewMatrix/projectionMatrix for the new frame, or the previous-frame value
+         * will just be whatever was already there (stale/garbage on frame 0).
+         */
+        void CachePrevViewProjection()
+        {
+            prevViewProjection = projectionMatrix * viewMatrix;
+        }
+        
         void SetPosition(Vec3 p) { position = p; }
 
         Mat4 InfiniteFarProjection(float aspect) const

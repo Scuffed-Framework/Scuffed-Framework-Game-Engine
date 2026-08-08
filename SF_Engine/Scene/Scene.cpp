@@ -150,13 +150,13 @@ namespace SF::Engine
 
     void Scene::SaveXML(const std::string &filename)
     {
-        if (auto *xml = XMLReader::Get())
+        if (auto *xml = XMLModule::Get())
             xml->Serialize("Scene", *this, filename);
     }
 
     void Scene::ReadXML(const std::string &filename)
     {
-        if (auto *xml = XMLReader::Get())
+        if (auto *xml = XMLModule::Get())
             xml->Deserialize(filename, *this);
     }
 

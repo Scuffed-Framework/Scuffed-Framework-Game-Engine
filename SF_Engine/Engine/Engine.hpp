@@ -296,7 +296,6 @@ namespace SF::Engine
         {
             return gameInstance.get();
         }
-        static XMLReader writer;
     };
 
     inline std::filesystem::path GetEngineRootPath()

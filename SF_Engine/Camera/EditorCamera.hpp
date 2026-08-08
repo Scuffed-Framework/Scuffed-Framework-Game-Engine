@@ -48,10 +48,9 @@ namespace SF::Engine
             return TypeInformation<Component>::GetTypeName<EditorCamera>();
         }
 
-        void Update(Window *window, float dt, bool /*imguiWantsMouse*/, bool imguiWantsKeyboard) override
-        {
-            if (!window)
-                return;
+        void Update(Window *window, float dt, bool imguiWantsMouse, bool imguiWantsKeyboard) override
+        {   
+            Camera::Update(window, dt, imguiWantsMouse, imguiWantsKeyboard);
 
             bool rmb = window->GetMouseButton(MouseButton::Right) != InputAction::Release;
 

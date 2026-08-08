@@ -48,13 +48,13 @@ namespace SF::Engine
             std::string raw;
             if (!GetAttribute(name, raw))
                 return false;
-            return XMLReader::DeserializeValue(raw, out);
+            return XMLModule::DeserializeValue(raw, out);
         }
 
         template <typename T>
         void SetAttribute(const std::string &name, const T &value)
         {
-            SetAttribute(name, XMLReader::SerializeValue(value));
+            SetAttribute(name, XMLModule::SerializeValue(value));
         }
 
         template <typename T>
@@ -63,13 +63,13 @@ namespace SF::Engine
             XMLNode child = GetChild(childName);
             if (!child.IsValid())
                 return false;
-            return XMLReader::DeserializeValue(child.GetContent(), out);
+            return XMLModule::DeserializeValue(child.GetContent(), out);
         }
 
         template <typename T>
         void SetChildContent(const std::string &childName, const T &value)
         {
-            std::string serialized = XMLReader::SerializeValue(value);
+            std::string serialized = XMLModule::SerializeValue(value);
             XMLNode child = GetChild(childName);
             if (child.IsValid())
                 child.SetContent(serialized);
@@ -117,7 +117,7 @@ namespace SF::Engine
     private:
         xmlNodePtr node;
         xmlDocPtr doc;
-        friend class XMLReader;
+        friend class XMLModule;
     };
 
     class Serializable
@@ -129,16 +129,16 @@ namespace SF::Engine
         virtual void Deserialize(const XMLNode &node) = 0;
     };
 
-    class XMLReader : public ModuleRegistrar<XMLReader>
+    class XMLModule : public ModuleRegistrar<XMLModule>
     {
-        REGISTER_MODULE(XMLReader, ModuleStage::Normal, Requires<>{});
+        REGISTER_MODULE(XMLModule, ModuleStage::Normal, Requires<>{});
 
     public:
-        XMLReader();
-        ~XMLReader();
+        XMLModule();
+        ~XMLModule();
 
-        XMLReader(const XMLReader &) = delete;
-        XMLReader &operator=(const XMLReader &) = delete;
+        XMLModule(const XMLModule &) = delete;
+        XMLModule &operator=(const XMLModule &) = delete;
 
         void Update() override {}
 

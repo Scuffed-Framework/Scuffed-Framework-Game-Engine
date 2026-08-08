@@ -104,7 +104,7 @@ namespace SF::Engine
         SharedCameraData.inverseProjection = GetInvProjection();
         SharedCameraData.inverseView = GetInvView();
         SharedCameraData.viewProjection = GetProjection();
-        SharedCameraData.prevViewProjection = GetProjection(); // TODO: PREVIOUS
+        SharedCameraData.prevViewProjection = GetPrevViewProjection(); // :)
         SharedCameraData.view = GetView();
         GetSharedCameraBuffer().Update(SharedCameraData);
     }

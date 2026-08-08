@@ -38,15 +38,15 @@ namespace SF::Engine
             return;
         }
 
-        XMLReader reader;
-        if (!reader.LoadFromFile(kManifestPath))
+        XMLModule* reader = XMLModule::Get();
+        if (!reader->LoadFromFile(kManifestPath))
         {
             Log::Error("AssetController: failed to parse manifest '{}': {}",
-                       kManifestPath, reader.GetLastError());
+                       kManifestPath, reader->GetLastError());
             return;
         }
 
-        XMLNode root = reader.GetRootNode();
+        XMLNode root = reader->GetRootNode();
         const auto &factories = Factories();
 
         for (XMLNode entry : root.GetChildren("Asset"))
