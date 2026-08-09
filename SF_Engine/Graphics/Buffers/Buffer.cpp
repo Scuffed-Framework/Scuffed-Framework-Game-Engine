@@ -12,7 +12,7 @@ namespace SF::Engine
         : size_(size)
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
-        auto *vmaAllocator = RenderSystem::Get()->getAllocator();
+        auto *vmaAllocator = RenderSystem::Get()->GetAllocator();
 
         auto graphicsFamily = logicalDevice->GetGraphicsFamily();
         auto presentFamily = logicalDevice->GetPresentFamily();
@@ -90,7 +90,7 @@ namespace SF::Engine
     {
         if (buffer_ != VK_NULL_HANDLE)
         {
-            auto *vmaAllocator = RenderSystem::Get()->getAllocator();
+            auto *vmaAllocator = RenderSystem::Get()->GetAllocator();
 
             if (mappedData_ && !persistentlyMapped_)
             {
@@ -123,7 +123,7 @@ namespace SF::Engine
             // Clean up existing resources
             if (buffer_ != VK_NULL_HANDLE)
             {
-                auto *vmaAllocator = RenderSystem::Get()->getAllocator();
+                auto *vmaAllocator = RenderSystem::Get()->GetAllocator();
                 if (mappedData_ && !persistentlyMapped_)
                 {
                     UnmapMemory();
@@ -155,7 +155,7 @@ namespace SF::Engine
             return;
         }
 
-        auto *vmaAllocator = RenderSystem::Get()->getAllocator();
+        auto *vmaAllocator = RenderSystem::Get()->GetAllocator();
         RenderSystem::CheckVkResult(vmaMapMemory(*vmaAllocator, allocation_, data));
 
         if (!persistentlyMapped_)
@@ -173,7 +173,7 @@ namespace SF::Engine
 
         if (mappedData_)
         {
-            auto *vmaAllocator = RenderSystem::Get()->getAllocator();
+            auto *vmaAllocator = RenderSystem::Get()->GetAllocator();
             vmaUnmapMemory(*vmaAllocator, allocation_);
             mappedData_ = nullptr;
         }
@@ -181,13 +181,13 @@ namespace SF::Engine
 
     void Buffer::FlushMemory(VkDeviceSize offset, VkDeviceSize size)
     {
-        auto *vmaAllocator = RenderSystem::Get()->getAllocator();
+        auto *vmaAllocator = RenderSystem::Get()->GetAllocator();
         RenderSystem::CheckVkResult(vmaFlushAllocation(*vmaAllocator, allocation_, offset, size));
     }
 
     void Buffer::InvalidateMemory(VkDeviceSize offset, VkDeviceSize size)
     {
-        auto *vmaAllocator = RenderSystem::Get()->getAllocator();
+        auto *vmaAllocator = RenderSystem::Get()->GetAllocator();
         RenderSystem::CheckVkResult(
             vmaInvalidateAllocation(*vmaAllocator, allocation_, offset, size));
     }
@@ -195,7 +195,7 @@ namespace SF::Engine
     VmaAllocationInfo Buffer::GetAllocationInfo() const
     {
         VmaAllocationInfo info;
-        auto *vmaAllocator = RenderSystem::Get()->getAllocator();
+        auto *vmaAllocator = RenderSystem::Get()->GetAllocator();
         vmaGetAllocationInfo(*vmaAllocator, allocation_, &info);
         return info;
     }

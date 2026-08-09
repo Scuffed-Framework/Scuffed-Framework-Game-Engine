@@ -12,6 +12,7 @@
 
 #include <Camera/Camera.hpp>
 #include "SharedFunctions.hpp"
+#include "Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp"
 
 namespace SF::Engine
 {
@@ -50,6 +51,7 @@ namespace SF::Engine
         CreatePipelineCache();
         Log::Info("Pipeline cache created");
 
+        AtmoLUTs::Get().Init();
         Log::Info("RenderSystem fully initialized");
     } 
     
@@ -63,6 +65,7 @@ namespace SF::Engine
     {
         // pre shutdown code 
         DestroySharedCameraBuffer();
+        AtmoLUTs::Get().Shutdown();
         SharedSamplers::DestroySamplers();
     }
 

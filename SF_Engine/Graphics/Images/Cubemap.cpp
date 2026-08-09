@@ -84,20 +84,20 @@ namespace SF::Engine
 
         VkBuffer stagingBuffer;
         VmaAllocation stagingAllocation;
-        vmaCreateBuffer(*RenderSystem::Get()->getAllocator(), &bufferInfo, &allocInfo,
+        vmaCreateBuffer(*RenderSystem::Get()->GetAllocator(), &bufferInfo, &allocInfo,
                         &stagingBuffer, &stagingAllocation, nullptr);
 
         // Map and copy data
         void* data;
-        vmaMapMemory(*RenderSystem::Get()->getAllocator(), stagingAllocation, &data);
+        vmaMapMemory(*RenderSystem::Get()->GetAllocator(), stagingAllocation, &data);
         std::memcpy(data, pixels, bufferSize);
-        vmaUnmapMemory(*RenderSystem::Get()->getAllocator(), stagingAllocation);
+        vmaUnmapMemory(*RenderSystem::Get()->GetAllocator(), stagingAllocation);
 
         // Copy to image
         CopyBufferToImage(stagingBuffer, image, extent, layerCount, baseArrayLayer);
 
         // Cleanup
-        vmaDestroyBuffer(*RenderSystem::Get()->getAllocator(), stagingBuffer, stagingAllocation);
+        vmaDestroyBuffer(*RenderSystem::Get()->GetAllocator(), stagingBuffer, stagingAllocation);
     }
 
     void Cubemap::Load(std::unique_ptr<Bitmap> loadBitmap)
@@ -161,20 +161,20 @@ namespace SF::Engine
 
             VkBuffer stagingBuffer;
             VmaAllocation stagingAllocation;
-            vmaCreateBuffer(*RenderSystem::Get()->getAllocator(), &bufferInfo, &allocInfo,
+            vmaCreateBuffer(*RenderSystem::Get()->GetAllocator(), &bufferInfo, &allocInfo,
                             &stagingBuffer, &stagingAllocation, nullptr);
 
             // Map and copy data
             void* data;
-            vmaMapMemory(*RenderSystem::Get()->getAllocator(), stagingAllocation, &data);
+            vmaMapMemory(*RenderSystem::Get()->GetAllocator(), stagingAllocation, &data);
             std::memcpy(data, loadBitmap->GetData().get(), bufferSize);
-            vmaUnmapMemory(*RenderSystem::Get()->getAllocator(), stagingAllocation);
+            vmaUnmapMemory(*RenderSystem::Get()->GetAllocator(), stagingAllocation);
 
             // Copy to image
             CopyBufferToImage(stagingBuffer, image, extent, arrayLayers, 0);
 
             // Cleanup
-            vmaDestroyBuffer(*RenderSystem::Get()->getAllocator(), stagingBuffer,
+            vmaDestroyBuffer(*RenderSystem::Get()->GetAllocator(), stagingBuffer,
                              stagingAllocation);
         }
 

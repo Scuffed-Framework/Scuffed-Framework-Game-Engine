@@ -246,7 +246,7 @@ namespace SF::Engine
         VmaAllocator alloc;
 
     public:
-        VmaAllocator *getAllocator()
+        VmaAllocator *GetAllocator()
         {
             return &alloc;
         }

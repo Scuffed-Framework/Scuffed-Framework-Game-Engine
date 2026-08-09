@@ -29,7 +29,7 @@ namespace SF::Engine
     Image::~Image()
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
-        auto alloc = RenderSystem::Get()->getAllocator();
+        auto alloc = RenderSystem::Get()->GetAllocator();
 
         vkDestroyImageView(*logicalDevice, view, nullptr);
         vkDestroySampler(*logicalDevice, sampler, nullptr);
@@ -74,7 +74,7 @@ namespace SF::Engine
     std::unique_ptr<Bitmap> Image::GetBitmap(uint32_t mipLevel, uint32_t arrayLayer) const
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
-        VmaAllocator *alloc = RenderSystem::Get()->getAllocator();
+        VmaAllocator *alloc = RenderSystem::Get()->GetAllocator();
 
         UVec2 size(int32_t(extent.width >> mipLevel), int32_t(extent.height >> mipLevel));
 
@@ -161,7 +161,7 @@ namespace SF::Engine
                             VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
                             uint32_t mipLevels, uint32_t arrayLayers, VkImageType type)
     {
-        auto allocator = RenderSystem::Get()->getAllocator();
+        auto allocator = RenderSystem::Get()->GetAllocator();
 
         VkImageCreateInfo imageCreateInfo = {};
         imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
