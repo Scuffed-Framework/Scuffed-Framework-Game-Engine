@@ -1,10 +1,5 @@
 #pragma once
 
-// Always use the engine-local ImGui copy, never the Conan-installed one.
-// The engine context is created with ocornut/imgui so all ImGuiStyle access
-// must go through the same header to guarantee matching struct layout.
-#include <ImGui/ocornut/imgui.h>
-
 namespace SF::Engine
 {
     class ImGuiDefaultStyle
@@ -12,5 +7,7 @@ namespace SF::Engine
     public:
         static void SetStyle();
         static void SetStyle2();
+        static void SetStyle3();
+        static void SetStyle4();
     };
 }

@@ -154,6 +154,7 @@ namespace SF::Engine
          */
         void ResetRenderStages();
 
+        uint32_t GetVkAPIVersion();
     private:
         /**
          * @brief Per-surface synchronization and command buffers

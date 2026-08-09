@@ -1,6 +1,7 @@
 #pragma once
 
 #define VK_NO_PROTOTYPES
+#define IMGUI_IMPL_VULKAN_NO_PROTOTYPES 
 #include <volk.h>
 
 #include <Graphics/PipelinePassManager.hpp>

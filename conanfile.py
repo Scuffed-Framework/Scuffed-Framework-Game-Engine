@@ -51,7 +51,6 @@ class SfEngineConan(ConanFile):
         
         # ImGui Extensions
         self.requires("implot/0.16")
-        self.requires("imguizmo/1.83")
         
         # XML Parsing
         self.requires("libxml2/2.12.5")

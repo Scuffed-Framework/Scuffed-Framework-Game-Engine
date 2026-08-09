@@ -337,10 +337,6 @@ inline bool inRadioButton(const char *vLabel, bool vToggled)
     {
         ImVec4 bua = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
         ImVec4 te = ImGui::GetStyleColorVec4(ImGuiCol_Text);
-        ImGui::PushStyleColor(ImGuiCol_Button, te);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, te);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, te);
-        ImGui::PushStyleColor(ImGuiCol_Text, bua);
     }
     pressed = IMGUI_BUTTON(vLabel);
     if (vToggled)
@@ -411,10 +407,6 @@ inline bool inToggleButton(const char *vLabel, bool *vToggled)
         // ImVec4 buh = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
         // ImVec4 bu = ImGui::GetStyleColorVec4(ImGuiCol_Button);
         ImVec4 te = ImGui::GetStyleColorVec4(ImGuiCol_Text);
-        ImGui::PushStyleColor(ImGuiCol_Button, te);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, te);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, te);
-        ImGui::PushStyleColor(ImGuiCol_Text, bua);
     }
 
     pressed = IMGUI_BUTTON(vLabel);
@@ -4063,7 +4055,6 @@ bool IGFD::PlacesFeature::m_DrawPlacesPane(FileDialogInternal &vFileDialogIntern
                                 }
                                 if (group_ptr->canBeEdited)
                                 {
-                                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
                                     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
                                     if (ImGui::SmallButton(editPlaceButtonString "##ImGuiFileDialogPlaceEditButton"))
                                     {
@@ -4698,7 +4689,6 @@ bool IGFD::KeyExplorerFeature::m_BeginFlashItem(size_t vIdx)
 
         ImVec4 hov = ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered);
         hov.w = m_FlashAlpha;
-        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, hov);
         res = true;
     }
 
@@ -5300,11 +5290,6 @@ void IGFD::FileDialog::m_BeginFileColorIconStyle(std::shared_ptr<FileInfos> vFil
     }
 
     vOutStr += " " + vFileInfos->fileNameExt;
-
-    if (vOutShowColor)
-    {
-        ImGui::PushStyleColor(ImGuiCol_Text, vFileInfos->fileStyle->color);
-    }
     if (*vOutFont)
     {
 #if IMGUI_VERSION_NUM < 19201

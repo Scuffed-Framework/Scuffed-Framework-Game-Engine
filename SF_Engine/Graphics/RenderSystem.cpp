@@ -615,4 +615,20 @@ namespace SF::Engine
         perSurfaceBuffer->currentFrame =
             (perSurfaceBuffer->currentFrame + 1) % swapchain->GetImageCount();
     }
+
+    uint32_t RenderSystem::GetVkAPIVersion()
+    {
+        uint32_t apiVersion = 0;
+    
+        // vkEnumerateInstanceVersion is available in Vulkan 1.1+
+        if (vkEnumerateInstanceVersion(&apiVersion) == VK_SUCCESS) {
+            uint32_t major = VK_API_VERSION_MAJOR(apiVersion);
+            uint32_t minor = VK_API_VERSION_MINOR(apiVersion);
+            uint32_t patch = VK_API_VERSION_PATCH(apiVersion);
+            
+            return VK_MAKE_VERSION(major, minor, patch);
+        } else {
+            return VK_API_VERSION_1_0;
+        }
+    }
 }

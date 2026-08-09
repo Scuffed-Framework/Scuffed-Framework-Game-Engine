@@ -33,7 +33,6 @@ find_package(glfw3 CONFIG REQUIRED)                 # glfw3-config.cmake
 find_package(glm CONFIG REQUIRED)                   # glm-config.cmake
 find_package(imgui CONFIG REQUIRED)                 # imgui-config.cmake
 find_package(implot CONFIG REQUIRED)                # implot-config.cmake
-find_package(imguizmo CONFIG REQUIRED)              # imguizmo-config.cmake
 find_package(libxml2 CONFIG REQUIRED)               # libxml2-config.cmake
 find_package(libsodium CONFIG REQUIRED)             # libsodium-config.cmake
 find_package(spirv-cross CONFIG REQUIRED)           # spirv-cross-config.cmake
@@ -194,7 +193,6 @@ target_link_libraries(SF_Engine PUBLIC
     glm::glm
     imgui::imgui
     implot::implot
-    imguizmo::imguizmo
     LibXml2::LibXml2
     libsodium::libsodium
     spirv-cross::spirv-cross

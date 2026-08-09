@@ -51,14 +51,14 @@ namespace SF::Engine
     namespace WidgetTheme
     {
         inline constexpr ImVec4 kAccent = {0.00f, 0.54f, 1.00f, 1.00f};
-        inline constexpr ImVec4 kAccentDim = {0.00f, 0.54f, 1.00f, 0.20f};
+        inline constexpr ImVec4 kAccentDim = {0.00f, 0.54f, 1.00f, 1.00f};
         inline constexpr ImVec4 kRed = {0.86f, 0.20f, 0.20f, 1.00f};
-        inline constexpr ImVec4 kRedDim = {0.86f, 0.20f, 0.20f, 0.25f};
+        inline constexpr ImVec4 kRedDim = {0.86f, 0.20f, 0.20f, 1.00f};
         inline constexpr ImVec4 kGreen = {0.20f, 0.80f, 0.20f, 1.00f};
-        inline constexpr ImVec4 kGreenDim = {0.20f, 0.80f, 0.20f, 0.25f};
+        inline constexpr ImVec4 kGreenDim = {0.20f, 0.80f, 0.20f, 1.00f};
         inline constexpr ImVec4 kBlue = {0.20f, 0.40f, 1.00f, 1.00f};
-        inline constexpr ImVec4 kBlueDim = {0.20f, 0.40f, 1.00f, 0.25f};
-        inline constexpr ImVec4 kComponentBg = {0.08f, 0.08f, 0.08f, 0.80f};
+        inline constexpr ImVec4 kBlueDim = {0.20f, 0.40f, 1.00f, 1.00f};
+        inline constexpr ImVec4 kComponentBg = {0.08f, 0.08f, 0.08f, 1.00f};
         inline constexpr ImVec4 kHeaderBg = {0.12f, 0.12f, 0.14f, 1.00f};
     } // namespace WidgetTheme
 
@@ -125,7 +125,7 @@ namespace SF::Engine
             char lbl[64];
             std::snprintf(lbl, sizeof(lbl), "%s##Rst_%s", label, m_sectionLabel);
             ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 52.0f + ImGui::GetCursorPosX());
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 0.8f));
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
             ImGui::SmallButton(lbl);
             ImGui::PopStyleColor();
             ImGui::Spacing();
@@ -411,7 +411,7 @@ namespace SF::Engine
         }                                                                                        \
         ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 52.0f + ImGui::GetCursorPosX()); \
         ImGui::PushStyleColor(ImGuiCol_Button,                                                   \
-                              ImVec4(0.2f, 0.2f, 0.2f, 0.8f));                                   \
+                              ImVec4(0.2f, 0.2f, 0.2f, 1.0f));                                   \
         if (ImGui::SmallButton("Reset##_wb_rst"))                                                \
         {                                                                                        \
             expr;                                                                                \

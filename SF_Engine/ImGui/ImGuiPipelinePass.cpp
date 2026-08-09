@@ -104,6 +104,16 @@ namespace SF::Engine
                                                     ? physDevice->GetMsaaSamples()
                                                     : VK_SAMPLE_COUNT_1_BIT;
 
+        VkInstance vulkan_instance = RenderSystem::Get()->GetInstance()->GetInstance();
+
+        // 2. Pass the handle itself casted to void*, rather than a pointer to the handle
+        ImGui_ImplVulkan_LoadFunctions(RenderSystem::Get()->GetVkAPIVersion(), [](const char *function_name, void *user_data)
+                                       {
+                                           // Cast the void* directly back to a VkInstance
+                                           return vkGetInstanceProcAddr(static_cast<VkInstance>(user_data), function_name);
+                                       },
+                                       reinterpret_cast<void *>(vulkan_instance));
+
         if (!ImGui_ImplVulkan_Init(&initInfo))
             throw std::runtime_error("ImGuiPipelinePass: ImGui_ImplVulkan_Init failed");
 
