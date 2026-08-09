@@ -5,7 +5,6 @@
 #define SHARED_SAMPLER_SET 1
 #endif
 
-// These samplers' mipmapMode are point. Commonly use for RT read.
 layout(set = SHARED_SAMPLER_SET, binding = 0) uniform SamplerState pointClampEdgeSampler;
 layout(set = SHARED_SAMPLER_SET, binding = 1) uniform SamplerState pointClampBorder0000Sampler;
 layout(set = SHARED_SAMPLER_SET, binding = 2) uniform SamplerState pointRepeatSampler;

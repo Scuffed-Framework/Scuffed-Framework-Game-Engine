@@ -1,6 +1,7 @@
 #include "ComputePipeline.hpp"
 
 #include <Engine/Log/Log.hpp>
+#include <Graphics/SharedSamplers.hpp>
 #include <Graphics/RenderSystem.hpp>
 #include <Graphics/Shaders/Parser/Parser.hpp>
 #include <stdexcept>
@@ -107,10 +108,12 @@ namespace SF::Engine
         for (const auto &pc : pcs)
             ranges.push_back({pc.stageFlags, pc.offset, pc.size});
 
+        VkDescriptorSetLayout setLayouts[2] = {descriptorSetLayout, SharedSamplers::GetSharedSamplerSetLayout()};
+
         VkPipelineLayoutCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        info.setLayoutCount = 1;
-        info.pSetLayouts = &descriptorSetLayout;
+        info.setLayoutCount = 2; // was 1
+        info.pSetLayouts = setLayouts;
         info.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
         info.pPushConstantRanges = ranges.data();
 

@@ -5,10 +5,8 @@
 namespace SF::Engine
 {
     class DescriptorSet;
-    /**
-     * @brief some global samplers
-     *
-     */
+    class CommandBuffer;
+
     class SharedSamplers
     {
     public:
@@ -20,15 +18,30 @@ namespace SF::Engine
         static VkSampler GetNearestClampSampler() { return nearestClampSampler_; }
         static VkSampler GetNearestRepeatSampler() { return nearestRepeatSampler_; }
 
-        static void BindLinearClampSampler(int Location, int Set, DescriptorSet* Desc);
-        static void BindLinearRepeatSampler(int Location, int Set, DescriptorSet* Desc);
-        static void BindNearestClampSampler(int Location, int Set, DescriptorSet* Desc);
-        static void BindNearestRepeatSampler(int Location, int Set, DescriptorSet* Desc);
+        static const VkDescriptorSetLayout &GetSharedSamplerSetLayout() { return sharedSetLayout_; }
+        static void BindSharedSamplerSet(const CommandBuffer &cmd, VkPipelineLayout pipelineLayout,
+                                          VkPipelineBindPoint bindPoint, uint32_t setIndex = 1);
 
     private:
+        static void CreateSharedSamplerDescriptorSet();
+
         static VkSampler linearClampSampler_;
         static VkSampler linearRepeatSampler_;
         static VkSampler nearestClampSampler_;
         static VkSampler nearestRepeatSampler_;
+
+        // Matches Samplers.si bindings 0-9 exactly.
+        static VkSampler pointClampEdge_;
+        static VkSampler pointClampBorder0000_;
+        static VkSampler pointRepeat_;
+        static VkSampler linearClampBorder0000_;
+        static VkSampler linearClampBorder1111_;
+        static VkSampler pointClampBorder1111_;
+        static VkSampler linearClampEdgeMipFilter_;
+        static VkSampler linearRepeatMipFilter_;
+
+        static VkDescriptorSetLayout sharedSetLayout_;
+        static VkDescriptorPool sharedSetPool_;
+        static VkDescriptorSet sharedSet_;
     };
 }
