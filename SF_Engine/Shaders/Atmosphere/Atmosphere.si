@@ -1,6 +1,8 @@
 #ifndef Atmosphere_Include
 #define Atmosphere_Include
 
+// ATMOSPHERE IN METERS. EVERYTHING IN METERS.
+
 struct AtmoUBO
 {
     float4x4 invProj;
@@ -250,6 +252,53 @@ float3 calculateScattering(
           + phaseM * MIE_BETA * totalMie
           + totalMS
           + optI.x * AMBIENT_BETA) * lightIntensity;
+}
+
+float fromUnitToSubUvs(float u, float resolution) { return (u + 0.5f / resolution) * (resolution / (resolution + 1.0f)); }
+
+void skyViewLutParamsToUv(
+    in const AtmoUBO atmosphere,
+    in bool bIntersectGround,
+    in float viewZenithCosAngle,
+    in float lightViewCosAngle,
+    in float viewHeight,
+    in float2 lutSize,
+    out float2 uv)
+{
+    float vHorizon = sqrt(viewHeight * viewHeight - atmosphere.bottomRadius * atmosphere.bottomRadius);
+
+    // Ground to horizon cos.
+    float cosBeta = vHorizon / viewHeight;
+
+    float beta = acos(cosBeta);
+    float zenithHorizonAngle = kPI - beta;
+
+    if (!bIntersectGround)
+    {
+        float coord = acos(viewZenithCosAngle) / zenithHorizonAngle;
+        coord = 1.0 - coord;
+        coord = sqrt(coord); // Non-linear sky view lut.
+
+        coord = 1.0 - coord;
+        uv.y = coord * 0.5f;
+    }
+    else
+    {
+        float coord = (acos(viewZenithCosAngle) - zenithHorizonAngle) / beta;
+        coord = sqrt(coord); // Non-linear sky view lut.
+
+        uv.y = coord * 0.5f + 0.5f;
+    }
+
+    // UV x remap.
+    {
+        float coord = -lightViewCosAngle * 0.5f + 0.5f;
+        coord = sqrt(coord);
+        uv.x = coord;
+    }
+
+    // Constrain uvs to valid sub texel range (avoid zenith derivative issue making LUT usage visible)
+    uv = float2(fromUnitToSubUvs(uv.x, lutSize.x), fromUnitToSubUvs(uv.y, lutSize.y));
 }
 
 #endif
