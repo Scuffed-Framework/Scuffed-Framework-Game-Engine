@@ -107,8 +107,8 @@ namespace SF::Engine::Shaders
         // `resolvedSource` as a module. Returns an empty optional + `outError`
         // set on failure.
         std::optional<SlangModuleHandle> LoadSlangModule(const ParsedShader &shader,
-                                                          const std::string &resolvedSource,
-                                                          std::string &outError)
+                                                         const std::string &resolvedSource,
+                                                         std::string &outError)
         {
             slang::IGlobalSession *globalSession = GetSlangGlobalSession();
             if (!globalSession)
@@ -165,8 +165,8 @@ namespace SF::Engine::Shaders
         // Composes + links + generates SPIR-V for a single already-discovered
         // entry point out of an already-loaded module.
         std::vector<uint32_t> CompileEntryPointFromModule(slang::ISession *session, slang::IModule *module,
-                                                           const std::string &entryName, ShaderStage stage,
-                                                           std::string &outError)
+                                                          const std::string &entryName, ShaderStage stage,
+                                                          std::string &outError)
         {
             Slang::ComPtr<slang::IEntryPoint> entry;
             Slang::ComPtr<slang::IBlob> diagnostics;
@@ -368,7 +368,7 @@ namespace SF::Engine::Shaders
         {
             std::string compileError;
             auto spirv = CompileEntryPointFromModule(handle->session.get(), handle->module,
-                                                      ep.name, ep.stage, compileError);
+                                                     ep.name, ep.stage, compileError);
             if (spirv.empty())
             {
                 setError(compileError);
@@ -477,7 +477,7 @@ namespace SF::Engine::Shaders
                 shader.hasWorkgroupSizeOverride = true;
             }
             else if ((directive == "multi_compile" || directive == "multi_compile_local") &&
-                    tokens.size() >= 2)
+                     tokens.size() >= 2)
             {
                 shader.multiCompileKeywords.emplace_back(tokens.begin() + 1, tokens.end());
             }
@@ -538,13 +538,6 @@ namespace SF::Engine::Shaders
         }
     }
 
-    // Preprocessing
-    //
-    // Whole-file now -- there's no per-stage substring to splice defines into,
-    // since stages are just ordinary functions tagged [shader("...")] living
-    // in the same scope. Caller-supplied defines and #pragma specialize decls
-    // apply to the entire compiled module.
-
     std::string ShaderParser::preprocess(const ParsedShader &shader,
                                          const std::vector<SF::Engine::Shader::Define> &defines)
     {
@@ -565,10 +558,13 @@ namespace SF::Engine::Shaders
                       (sc.defaultValue.empty() ? "0" : sc.defaultValue) + ";\n";
         }
 
-        std::string body = result + shader.source;
+        if (shader.language == ShaderLanguage::GLSL)
+            result += "#version 450 core\n";
 
-        // #version is GLSL-only; strip whatever the author left in and re-add
-        // ours at the top. Left alone for HLSL/Slang-tagged shaders.
+        result += "#line 1 \"" + shader.filepath + "\"\n";
+
+        std::string body = shader.source;
+
         if (shader.language == ShaderLanguage::GLSL)
         {
             size_t vpos = body.find("#version");
@@ -578,12 +574,8 @@ namespace SF::Engine::Shaders
                 body.erase(vpos, end == std::string::npos ? std::string::npos : end - vpos + 1);
                 vpos = body.find("#version");
             }
-            body = "#version 450 core\n" + body;
         }
 
-        std::string basePath = "./Shaders";
-
-        return body;
+        return result + body;
     }
-
 } // namespace SF::Engine::Shaders

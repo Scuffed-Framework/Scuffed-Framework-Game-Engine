@@ -31,14 +31,14 @@ struct VSOutput
 };
 
 // 13-tap Gaussian weights (sigma ~2.0, summing to 1.0)
-const int TAPS = 13;
-const float W[13] = float[](
+const static int TAPS = 13;
+const static float W[13] = float[](
     0.00598, 0.02132, 0.05988, 0.13209, 0.22821,
     0.31062,
     0.22821, 0.13209, 0.05988, 0.02132, 0.00598,
     0.0, 0.0   // padding to fixed array size : unused
 );
-const int HALF = 5; // offsets run -5..+5 (11 taps used with the centre)
+const static int HALF = 5; // offsets run -5..+5 (11 taps used with the centre)
 
 [shader("vertex")]
 VSOutput vsMain(uint vertexID : SV_VertexID)
