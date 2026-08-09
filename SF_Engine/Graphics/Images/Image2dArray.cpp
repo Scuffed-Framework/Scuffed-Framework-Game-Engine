@@ -14,7 +14,7 @@ namespace SF::Engine
           anisotropic(anisotropic),
           mipmap(mipmap)
     {
-        if (this->extent.width == 0 || this->extent.height == 0)
+        if (this->extent.x == 0 || this->extent.y == 0)
         {
             return;
         }
@@ -37,7 +37,7 @@ namespace SF::Engine
           anisotropic(anisotropic),
           mipmap(mipmap)
     {
-        if (extent.width == 0 || extent.height == 0)
+        if (extent.x == 0 || extent.y == 0)
         {
             return;
         }
@@ -85,7 +85,7 @@ namespace SF::Engine
             region.imageSubresource.baseArrayLayer = layer;
             region.imageSubresource.layerCount = 1;
             region.imageOffset = {0, 0, 0};
-            region.imageExtent = extent;
+            region.imageExtent = VkExtent3D{extent.x, extent.y, extent.z};
             bufferCopyRegions.push_back(region);
         }
 
@@ -112,7 +112,7 @@ namespace SF::Engine
     {
         // Calculate size based on format - assuming 4 bytes per pixel for R8G8B8A8
         uint32_t bytesPerPixel = 4;
-        VkDeviceSize layerSize = extent.width * extent.height * bytesPerPixel;
+        VkDeviceSize layerSize = extent.x * extent.y * bytesPerPixel;
 
         Buffer bufferStaging(layerSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
