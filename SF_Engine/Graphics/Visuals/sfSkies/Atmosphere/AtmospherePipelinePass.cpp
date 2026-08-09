@@ -11,7 +11,6 @@ namespace SF::Engine
         : PipelinePass(stage), params_(params)
     {
         vkDeviceWaitIdle(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice());
-        atmoLUTs_ = std::make_unique<AtmoLUTs>();
         ubo_ = std::make_unique<UniformBuffer>(sizeof(AtmosphereFrameUBO));
 
         pipeline_ = std::make_unique<RenderPipeline>(
@@ -38,8 +37,8 @@ namespace SF::Engine
         w0.pBufferInfo = &bi;
 
         VkDescriptorImageInfo ii1{};
-        ii1.sampler = atmoLUTs_->GetTransmittanceLUT()->GetTexture()->GetSampler();
-        ii1.imageView = atmoLUTs_->GetTransmittanceLUT()->GetTexture()->GetView();
+        ii1.sampler = AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetSampler();
+        ii1.imageView = AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetView();
         ii1.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkWriteDescriptorSet w1{};
@@ -51,8 +50,8 @@ namespace SF::Engine
         w1.pImageInfo = &ii1;
 
         VkDescriptorImageInfo ii2{};
-        ii2.sampler = atmoLUTs_->GetMultiScatterLUT()->GetTexture()->GetSampler();
-        ii2.imageView = atmoLUTs_->GetMultiScatterLUT()->GetTexture()->GetView();
+        ii2.sampler = AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetSampler();
+        ii2.imageView = AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetView();
         ii2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkWriteDescriptorSet w2{};
@@ -64,8 +63,8 @@ namespace SF::Engine
         w2.pImageInfo = &ii2;
 
         VkDescriptorImageInfo ii3{};
-        ii3.sampler = atmoLUTs_->GetSkyViewLUT()->GetTexture()->GetSampler();
-        ii3.imageView = atmoLUTs_->GetSkyViewLUT()->GetTexture()->GetView();
+        ii3.sampler = AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetSampler();
+        ii3.imageView = AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetView();
         ii3.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkWriteDescriptorSet w3{};
@@ -77,8 +76,8 @@ namespace SF::Engine
         w3.pImageInfo = &ii3;
 
         VkDescriptorImageInfo ii4{};
-        ii4.sampler = atmoLUTs_->GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetSampler();
-        ii4.imageView = atmoLUTs_->GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetView();
+        ii4.sampler = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetSampler();
+        ii4.imageView = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetView();
         ii4.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkWriteDescriptorSet w4{};
@@ -90,8 +89,8 @@ namespace SF::Engine
         w4.pImageInfo = &ii4;
 
         VkDescriptorImageInfo ii5{};
-        ii5.sampler = atmoLUTs_->GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetSampler();
-        ii5.imageView = atmoLUTs_->GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetView();
+        ii5.sampler = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetSampler();
+        ii5.imageView = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetView();
         ii5.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkWriteDescriptorSet w5{};
@@ -103,8 +102,8 @@ namespace SF::Engine
         w5.pImageInfo = &ii5;
 
         VkDescriptorImageInfo ii6{};
-        ii6.sampler = atmoLUTs_->GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetSampler();
-        ii6.imageView = atmoLUTs_->GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetView();
+        ii6.sampler = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetSampler();
+        ii6.imageView = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetView();
         ii6.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkWriteDescriptorSet w6{};
@@ -195,7 +194,7 @@ namespace SF::Engine
         svp.topRadius = params_.topRadius;
         svp._pad = 0.0f;
         svp.cameraPos = Vec4(viewPosSI, 0.0f);
-        atmoLUTs_->GetSkyViewLUT()->SetParams(svp);
+        AtmoLUTs::Get().GetSkyViewLUT()->SetParams(svp);
     }
 
     void AtmospherePipelinePass::PreRender(const CommandBuffer &commandBuffer)
@@ -203,11 +202,11 @@ namespace SF::Engine
         ubo_->Update(frameData_);
 
         // SkyView: re-baked every frame (sun angle / camera height may change)
-        atmoLUTs_->GetSkyViewLUT()->Bake(commandBuffer);
+        AtmoLUTs::Get().GetSkyViewLUT()->Bake(commandBuffer);
 
         // Aerial perspective: re-baked every frame (depends on camera matrices +
         // position).  Cost is negligible: 4×4 workgroups, 32 slice iterations.
-        atmoLUTs_->GetAerialPerspectiveLUT()->Bake(commandBuffer, frameData_);
+        AtmoLUTs::Get().GetAerialPerspectiveLUT()->Bake(commandBuffer, frameData_);
         SetSceneBuffers(); // call again to update
     }
 

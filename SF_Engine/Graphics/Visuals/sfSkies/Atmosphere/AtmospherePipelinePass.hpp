@@ -40,9 +40,6 @@ namespace SF::Engine
         AtmosphereParams &GetParams() { return params_; }
         const AtmosphereParams &GetParams() const { return params_; }
 
-        const AtmoLUTs *GetAtmosphereSharedLUTs() const { return atmoLUTs_.get(); }
-        AtmoLUTs *GetAtmosphereSharedLUTs() { return atmoLUTs_.get(); }
-
     private:
         AtmosphereParams params_;
 
@@ -51,7 +48,6 @@ namespace SF::Engine
         std::unique_ptr<UniformBuffer> ubo_;
 
         AtmosphereFrameUBO frameData_{};
-        std::unique_ptr<AtmoLUTs> atmoLUTs_;
 
         const Image2d *lastColor_ = nullptr;
         const ImageDepth *lastDepth_ = nullptr;
