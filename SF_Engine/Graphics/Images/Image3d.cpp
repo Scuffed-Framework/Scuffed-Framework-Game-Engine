@@ -95,9 +95,9 @@ namespace SF::Engine
     void Image3d::Upload(const uint8_t *voxels, size_t voxelSize)
     {
         const size_t totalBytes =
-            static_cast<size_t>(extent.width) *
-            extent.height *
-            extent.depth *
+            static_cast<size_t>(extent.x) *
+            extent.y *
+            extent.z *
             voxelSize;
 
         voxelSize_ = voxelSize;

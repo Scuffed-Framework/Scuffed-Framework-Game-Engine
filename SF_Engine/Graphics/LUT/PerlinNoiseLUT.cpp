@@ -49,7 +49,7 @@ namespace SF::Engine
         descSet_->BindDescriptor(cmd);
 
         auto ext = texture_->GetExtent();
-        vkCmdDispatch(cmd, ext.width, ext.height, 1);
+        vkCmdDispatch(cmd, ext.x, ext.y, 1);
 
         Image::InsertImageMemoryBarrier(
             cmd,
