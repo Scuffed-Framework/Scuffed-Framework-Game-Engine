@@ -147,6 +147,16 @@ namespace SF::Engine
         vkCmdDispatch(commandBuffer, gx, gy, 1);
     }
 
+    void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer, const UVec3 &extent,
+                                    const int LOCAL_X, const int LOCAL_Y, const int LOCAL_Z) const
+    {
+        uint32_t gx = (extent.x + LOCAL_X - 1) / LOCAL_X;
+        uint32_t gy = (extent.y + LOCAL_Y - 1) / LOCAL_Y;
+        uint32_t gz = (extent.z + LOCAL_Z - 1) / LOCAL_Z;
+
+        vkCmdDispatch(commandBuffer, gx, gy, gz);
+    }
+
     void ComputePipeline::ReloadShader(const std::vector<uint32_t> &newSpirv)
     {
         auto *dev = RenderSystem::Get()->GetLogicalDevice();
