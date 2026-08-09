@@ -1,0 +1,22 @@
+#ifndef SAMPLER_S
+#define SAMPLER_S
+
+#ifndef SHARED_SAMPLER_SET
+#define SHARED_SAMPLER_SET 1
+#endif
+
+// These samplers' mipmapMode are point. Commonly use for RT read.
+layout(set = SHARED_SAMPLER_SET, binding = 0) uniform SamplerState pointClampEdgeSampler;
+layout(set = SHARED_SAMPLER_SET, binding = 1) uniform SamplerState pointClampBorder0000Sampler;
+layout(set = SHARED_SAMPLER_SET, binding = 2) uniform SamplerState pointRepeatSampler;
+layout(set = SHARED_SAMPLER_SET, binding = 3) uniform SamplerState linearClampEdgeSampler;
+layout(set = SHARED_SAMPLER_SET, binding = 4) uniform SamplerState linearClampBorder0000Sampler;
+layout(set = SHARED_SAMPLER_SET, binding = 5) uniform SamplerState linearRepeatSampler;
+layout(set = SHARED_SAMPLER_SET, binding = 6) uniform SamplerState linearClampBorder1111Sampler;
+layout(set = SHARED_SAMPLER_SET, binding = 7) uniform SamplerState pointClampBorder1111Sampler;
+
+// With mip filter
+layout(set = SHARED_SAMPLER_SET, binding = 8) uniform SamplerState linearClampEdgeMipFilterSampler;
+layout(set = SHARED_SAMPLER_SET, binding = 9) uniform SamplerState linearRepeatMipFilterSampler;
+
+#endif

@@ -1,0 +1,38 @@
+#ifndef DITHER_S
+#define DITHER_S
+// Bayer dither
+float Bayer2(float2 a)
+{
+    a = floor(a);
+    return fract(a.x * 0.5f + a.y * a.y * 0.75f);
+}
+
+// Bayer dither qualities
+#define Bayer4(a) (Bayer2(0.5 * (a)) * 0.25 + Bayer2(a))
+#define Bayer8(a) (Bayer4(0.5 * (a)) * 0.25 + Bayer2(a))
+#define Bayer16(a) (Bayer8(0.5 * (a)) * 0.25 + Bayer2(a))
+#define Bayer32(a) (Bayer16(0.5 * (a)) * 0.25 + Bayer2(a))
+#define Bayer64(a) (Bayer32(0.5 * (a)) * 0.25 + Bayer2(a))
+
+// Returns -1 for negative input, +1 for positive input
+// When negative, is the inverse of the dither pattern such that the union of GetDither8(-x) and GetDither8(x) is solid
+float GetDither8(float continuousValue, float2 screenPixel)
+{
+    float fade = clamp(abs(continuousValue), 0.0, 1.0);
+    float coverage = fade;
+    float bayer = Bayer8(screenPixel);
+
+    float ret = (bayer < coverage) ? 1.0 : -1.0;
+    if (continuousValue < 0)
+    {
+        ret *= -1.0;
+    }
+    return ret;
+}
+
+float GetDither8Simple(float coverage, float2 screenPixel)
+{
+    float bayer = Bayer8(screenPixel);
+    return (bayer < coverage) ? -1.0 : 1.0;
+}
+#endif
