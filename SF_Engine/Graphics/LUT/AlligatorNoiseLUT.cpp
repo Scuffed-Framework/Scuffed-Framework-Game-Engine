@@ -7,7 +7,7 @@ namespace SF::Engine
     AlligatorNoiseLUT::AlligatorNoiseLUT(uint32_t size)
     {
         texture_ = std::make_unique<Image3d>(
-            VkExtent3D{size, size, size},
+            UVec3{size, size, size},
             VK_FORMAT_R8G8B8A8_UNORM,
             VK_IMAGE_LAYOUT_GENERAL,
             VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);

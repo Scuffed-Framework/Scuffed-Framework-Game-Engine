@@ -111,7 +111,7 @@ namespace SF::Engine
         : size_(size)
     {
         texture_ = std::make_unique<Image3d>(
-            VkExtent3D{size_, size_, size_},
+            UVec3{size_, size_, size_},
             VK_FORMAT_R8G8B8A8_UNORM,
             VK_IMAGE_LAYOUT_GENERAL,
             VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,

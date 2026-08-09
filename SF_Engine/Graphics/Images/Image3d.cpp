@@ -6,7 +6,7 @@
 namespace SF::Engine
 {
 
-    Image3d::Image3d(const VkExtent3D &extent,
+    Image3d::Image3d(const UVec3 &extent,
                      VkFormat format,
                      VkImageLayout layout,
                      VkImageUsageFlags usage,
@@ -27,7 +27,7 @@ namespace SF::Engine
         InternalCreate();
     }
 
-    Image3d::Image3d(const VkExtent3D &extent,
+    Image3d::Image3d(const UVec3 &extent,
                      const uint8_t *voxels,
                      size_t voxelSizeBytes,
                      VkFormat format,

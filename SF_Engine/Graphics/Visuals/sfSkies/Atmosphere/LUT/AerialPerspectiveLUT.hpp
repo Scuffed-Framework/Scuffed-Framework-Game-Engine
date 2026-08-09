@@ -31,13 +31,13 @@ namespace SF::Engine
             ubo_ = std::make_unique<UniformBuffer>(sizeof(AtmosphereFrameUBO));
 
             aerialPerspColorRGBTransR_ = std::make_unique<Image3d>(
-                VkExtent3D{width_, height_, depth_},
+                UVec3{width_, height_, depth_},
                 VK_FORMAT_R16G16B16A16_SFLOAT,
                 VK_IMAGE_LAYOUT_GENERAL,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
             aerialPerspTransGB_ = std::make_unique<Image3d>(
-                VkExtent3D{width_, height_, depth_},
+                UVec3{width_, height_, depth_},
                 VK_FORMAT_R16G16_SFLOAT,
                 VK_IMAGE_LAYOUT_GENERAL,
                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);

@@ -13,7 +13,7 @@ namespace SF::Engine
 
     Image::Image(VkFilter filter, VkSamplerAddressMode addressMode, VkSampleCountFlagBits samples,
                  VkImageLayout layout, VkImageUsageFlags usage, VkFormat format, uint32_t mipLevels,
-                 uint32_t arrayLayers, const VkExtent3D &extent)
+                 uint32_t arrayLayers, const UVec3 &extent)
         : extent(extent),
           samples(samples),
           usage(usage),
@@ -76,7 +76,7 @@ namespace SF::Engine
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
         VmaAllocator *alloc = RenderSystem::Get()->GetAllocator();
 
-        UVec2 size(int32_t(extent.width >> mipLevel), int32_t(extent.height >> mipLevel));
+        UVec2 size(int32_t(extent.x >> mipLevel), int32_t(extent.y >> mipLevel));
 
         VkImage dstImage;
         VmaAllocation dstAllocation = VK_NULL_HANDLE;
@@ -109,10 +109,10 @@ namespace SF::Engine
         return bitmap;
     }
 
-    uint32_t Image::GetMipLevels(const VkExtent3D &extent)
+    uint32_t Image::GetMipLevels(const UVec3 &extent)
     {
         return static_cast<uint32_t>(
-            std::floor(std::log2(std::max(extent.width, std::max(extent.height, extent.depth)))) +
+            std::floor(std::log2(std::max(extent.x, std::max(extent.y, extent.z)))) +
             1);
     }
 
@@ -156,7 +156,7 @@ namespace SF::Engine
                std::end(STENCIL_FORMATS);
     }
 
-    void Image::CreateImage(VkImage &image, VmaAllocation &allocation, const VkExtent3D &extent,
+    void Image::CreateImage(VkImage &image, VmaAllocation &allocation, const UVec3 &extent,
                             VkFormat format, VkSampleCountFlagBits samples, VkImageTiling tiling,
                             VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
                             uint32_t mipLevels, uint32_t arrayLayers, VkImageType type)
@@ -168,7 +168,7 @@ namespace SF::Engine
         imageCreateInfo.flags = arrayLayers == 6 ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0;
         imageCreateInfo.imageType = type;
         imageCreateInfo.format = format;
-        imageCreateInfo.extent = extent;
+        imageCreateInfo.extent = VkExtent3D(extent.x, extent.y, extent.z);
         imageCreateInfo.mipLevels = mipLevels;
         imageCreateInfo.arrayLayers = arrayLayers;
         imageCreateInfo.samples = samples;
@@ -191,7 +191,7 @@ namespace SF::Engine
             throw std::runtime_error("vmaCreateImage succeeded but image handle is null");
         Log::Info("CreateImage: handle=0x{:x} format={} {}x{}x{}",
                   (uint64_t)image, (int)format,
-                  extent.width, extent.height, extent.depth);
+                  extent.x, extent.y, extent.z);
     }
 
     void Image::CreateImageSampler(VkSampler &sampler, VkFilter filter,
@@ -247,7 +247,7 @@ namespace SF::Engine
             vkCreateImageView(*logicalDevice, &imageViewCreateInfo, nullptr, &imageView));
     }
 
-    void Image::CreateMipmaps(const VkImage &image, const VkExtent3D &extent, VkFormat format,
+    void Image::CreateMipmaps(const VkImage &image, const UVec3 &extent, VkFormat format,
                               VkImageLayout dstImageLayout, uint32_t mipLevels,
                               uint32_t baseArrayLayer, uint32_t layerCount)
     {
@@ -284,13 +284,13 @@ namespace SF::Engine
                                  &barrier0);
 
             VkImageBlit imageBlit = {};
-            imageBlit.srcOffsets[1] = {int32_t(extent.width >> (i - 1)),
-                                       int32_t(extent.height >> (i - 1)), 1};
+            imageBlit.srcOffsets[1] = {int32_t(extent.x >> (i - 1)),
+                                       int32_t(extent.y >> (i - 1)), 1};
             imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             imageBlit.srcSubresource.mipLevel = i - 1;
             imageBlit.srcSubresource.baseArrayLayer = baseArrayLayer;
             imageBlit.srcSubresource.layerCount = layerCount;
-            imageBlit.dstOffsets[1] = {int32_t(extent.width >> i), int32_t(extent.height >> i), 1};
+            imageBlit.dstOffsets[1] = {int32_t(extent.x >> i), int32_t(extent.y >> i), 1};
             imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             imageBlit.dstSubresource.mipLevel = i;
             imageBlit.dstSubresource.baseArrayLayer = baseArrayLayer;
@@ -462,7 +462,7 @@ namespace SF::Engine
     }
 
     void Image::CopyBufferToImage(const VkBuffer &buffer, const VkImage &image,
-                                  const VkExtent3D &extent, uint32_t layerCount,
+                                  const UVec3 &extent, uint32_t layerCount,
                                   uint32_t baseArrayLayer)
     {
         CommandBuffer commandBuffer(true); // must begin before recording
@@ -476,7 +476,7 @@ namespace SF::Engine
         region.imageSubresource.baseArrayLayer = baseArrayLayer;
         region.imageSubresource.layerCount = layerCount;
         region.imageOffset = {0, 0, 0};
-        region.imageExtent = extent;
+        region.imageExtent = VkExtent3D{extent.x, extent.y, extent.z};
         vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                1, &region);
 
@@ -484,7 +484,7 @@ namespace SF::Engine
     }
 
     bool Image::CopyImage(const VkImage &srcImage, VkImage &dstImage, VmaAllocation &alloc,
-                          VkFormat srcFormat, const VkExtent3D &extent,
+                          VkFormat srcFormat, const UVec3 &extent,
                           VkImageLayout srcImageLayout, uint32_t mipLevel, uint32_t arrayLayer)
     {
         auto physicalDevice = RenderSystem::Get()->GetPhysicalDevice();
@@ -544,9 +544,9 @@ namespace SF::Engine
         if (supportsBlit)
         {
             // Define the region to blit (we will blit the whole swapchain image).
-            VkOffset3D blitSize = {static_cast<int32_t>(extent.width),
-                                   static_cast<int32_t>(extent.height),
-                                   static_cast<int32_t>(extent.depth)};
+            VkOffset3D blitSize = {static_cast<int32_t>(extent.x),
+                                   static_cast<int32_t>(extent.y),
+                                   static_cast<int32_t>(extent.z)};
 
             VkImageBlit imageBlitRegion = {};
             imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -575,7 +575,7 @@ namespace SF::Engine
             imageCopyRegion.dstSubresource.mipLevel = 0;
             imageCopyRegion.dstSubresource.baseArrayLayer = 0;
             imageCopyRegion.dstSubresource.layerCount = 1;
-            imageCopyRegion.extent = extent;
+            imageCopyRegion.extent = VkExtent3D{extent.x, extent.y, extent.z};
             vkCmdCopyImage(commandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage,
                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopyRegion);
         }

@@ -42,7 +42,7 @@ namespace SF::Engine
          * @param extent The number of data elements in each dimension of the base level.
          */
         Image(VkFilter filter, VkSamplerAddressMode addressMode, VkSampleCountFlagBits samples, VkImageLayout layout, VkImageUsageFlags usage,
-              VkFormat format, uint32_t mipLevels, uint32_t arrayLayers, const VkExtent3D &extent);
+              VkFormat format, uint32_t mipLevels, uint32_t arrayLayers, const UVec3 &extent);
 
         ~Image();
 
@@ -57,8 +57,8 @@ namespace SF::Engine
          */
         std::unique_ptr<Bitmap> GetBitmap(uint32_t mipLevel = 0, uint32_t arrayLayer = 0) const;
 
-        const VkExtent3D &GetExtent() const { return extent; }
-        UVec2 GetSize() const { return {extent.width, extent.height}; }
+        const UVec3 &GetExtent() const { return extent; }
+        UVec2 GetSize() const { return {extent.x, extent.y}; }
         VkFormat GetFormat() const { return format; }
         VkSampleCountFlagBits GetSamples() const { return samples; }
         VkImageUsageFlags GetUsage() const { return usage; }
@@ -72,7 +72,7 @@ namespace SF::Engine
         const VkSampler &GetSampler() const { return sampler; }
         const VkImageView &GetView() const { return view; }
 
-        static uint32_t GetMipLevels(const VkExtent3D &extent);
+        static uint32_t GetMipLevels(const UVec3 &extent);
 
         void SetLayout(VkImageLayout newLayout) { layout = newLayout; }
 
@@ -99,27 +99,27 @@ namespace SF::Engine
          */
         static bool HasStencil(VkFormat format);
 
-        static void CreateImage(VkImage &image, VmaAllocation &allocation, const VkExtent3D &extent, VkFormat format, VkSampleCountFlagBits samples,
+        static void CreateImage(VkImage &image, VmaAllocation &allocation, const UVec3 &extent, VkFormat format, VkSampleCountFlagBits samples,
                                 VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t mipLevels, uint32_t arrayLayers, VkImageType type);
         static void CreateImageSampler(VkSampler &sampler, VkFilter filter, VkSamplerAddressMode addressMode, bool anisotropic, uint32_t mipLevels);
         static void CreateImageView(const VkImage &image, VkImageView &imageView, VkImageViewType type, VkFormat format, VkImageAspectFlags imageAspect,
                                     uint32_t mipLevels, uint32_t baseMipLevel, uint32_t layerCount, uint32_t baseArrayLayer);
-        static void CreateMipmaps(const VkImage &image, const VkExtent3D &extent, VkFormat format, VkImageLayout dstImageLayout, uint32_t mipLevels,
+        static void CreateMipmaps(const VkImage &image, const UVec3 &extent, VkFormat format, VkImageLayout dstImageLayout, uint32_t mipLevels,
                                   uint32_t baseArrayLayer, uint32_t layerCount);
         static void TransitionImageLayout(const VkImage &image, VkFormat format, VkImageLayout srcImageLayout, VkImageLayout dstImageLayout,
                                           VkImageAspectFlags imageAspect, uint32_t mipLevels, uint32_t baseMipLevel, uint32_t layerCount, uint32_t baseArrayLayer);
         static void InsertImageMemoryBarrier(const CommandBuffer &commandBuffer, const VkImage &image, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask,
                                              VkImageLayout oldImageLayout, VkImageLayout newImageLayout, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask,
                                              VkImageAspectFlags imageAspect, uint32_t mipLevels, uint32_t baseMipLevel, uint32_t layerCount, uint32_t baseArrayLayer);
-        static void CopyBufferToImage(const VkBuffer &buffer, const VkImage &image, const VkExtent3D &extent, uint32_t layerCount, uint32_t baseArrayLayer);
-        static bool CopyImage(const VkImage &srcImage, VkImage &dstImage, VmaAllocation &alloc, VkFormat srcFormat, const VkExtent3D &extent,
+        static void CopyBufferToImage(const VkBuffer &buffer, const VkImage &image, const UVec3 &extent, uint32_t layerCount, uint32_t baseArrayLayer);
+        static bool CopyImage(const VkImage &srcImage, VkImage &dstImage, VmaAllocation &alloc, VkFormat srcFormat, const UVec3 &extent,
                               VkImageLayout srcImageLayout, uint32_t mipLevel, uint32_t arrayLayer);
 
         void Serialize(XMLNode &node) const override;
         void Deserialize(const XMLNode &node) override;
 
     protected:
-        VkExtent3D extent;
+        UVec3 extent;
         VkSampleCountFlagBits samples;
         VkImageUsageFlags usage;
         VkFormat format = VK_FORMAT_UNDEFINED;

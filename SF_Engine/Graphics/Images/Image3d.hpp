@@ -17,7 +17,7 @@ namespace SF::Engine
         /**
          * Creates an empty 3D image with the given dimensions.
          */
-        Image3d(const VkExtent3D &extent,
+        Image3d(const UVec3 &extent,
                 VkFormat format = VK_FORMAT_R8G8B8A8_UNORM,
                 VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
@@ -30,7 +30,7 @@ namespace SF::Engine
         /**
          * Creates a 3D image from in-memory voxel data.
          */
-        Image3d(const VkExtent3D &extent,
+        Image3d(const UVec3 &extent,
                 const uint8_t *voxels,
                 size_t voxelSizeBytes,
                 VkFormat format = VK_FORMAT_R8G8B8A8_UNORM,
