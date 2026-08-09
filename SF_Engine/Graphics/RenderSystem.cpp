@@ -57,14 +57,14 @@ namespace SF::Engine
     {
         SharedSamplers::CreateSamplers();
         CreateSharedCameraBuffer();
-        AtmoLUTs::Get().Init();
+        AtmoLUTs::Init();
     }
 
     void RenderSystem::PreShutdown()
     {
         // pre shutdown code 
         DestroySharedCameraBuffer();
-        AtmoLUTs::Get().Shutdown();
+        AtmoLUTs::Shutdown();
         SharedSamplers::DestroySamplers();
     }
 
