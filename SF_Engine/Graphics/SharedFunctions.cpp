@@ -43,6 +43,7 @@ namespace SF::Engine
         return lights[0].light.intensity;
     }
 
+    // TODO: Get current window
     Vec2 GetScreenSize()
     {
         return Vec2(WindowManager::Get()->GetWindow(0)->GetSize().x, WindowManager::Get()->GetWindow(0)->GetSize().y);
@@ -128,6 +129,7 @@ namespace SF::Engine
     const ImageDepth *GetSceneDepth(const std::string &attachmentName)
     {
         auto *rs = RenderSystem::Get();
+        // get attachment is a descriptor
         return dynamic_cast<const ImageDepth *>(rs->GetAttachment(attachmentName));
     }
 
@@ -142,5 +144,10 @@ namespace SF::Engine
         w0.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         w0.pBufferInfo = &bi;
         DescriptorSet::Update({w0});
+    }
+
+    const Image2d* GetGBufferAlbedo()
+    {
+        return dynamic_cast<const Image2d*>(RenderSystem::Get()->GetAttachment("gbuf_albedo"));
     }
 }

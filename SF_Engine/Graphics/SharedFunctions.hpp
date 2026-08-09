@@ -31,8 +31,9 @@ namespace SF::Engine
     int64_t GetDeltaTimeNanoS();
 
     const Image2d *GetSceneHDR();
-    const ImageDepth *GetSceneDepth(
-        const std::string &attachmentName = "gbuf_depth");
+    const ImageDepth *GetSceneDepth(const std::string &attachmentName = "gbuf_depth");
+
+    const Image2d* GetGBufferAlbedo();
 
     void BindSharedCameraData(int bind, int count, DescriptorSet* set);
 }
