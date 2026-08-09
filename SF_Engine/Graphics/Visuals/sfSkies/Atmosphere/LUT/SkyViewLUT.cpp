@@ -61,7 +61,7 @@ namespace SF::Engine
         // no vkCmdPushConstants
 
         auto ext = texture_->GetExtent();
-        vkCmdDispatch(cmd, (ext.width + 7) / 8, (ext.height + 7) / 8, 1);
+        vkCmdDispatch(cmd, (ext.x + 7) / 8, (ext.y + 7) / 8, 1);
 
         Image::InsertImageMemoryBarrier(
             cmd, texture_->GetImage(),

@@ -34,7 +34,7 @@ namespace SF::Engine
           anisotropic(anisotropic),
           mipmap(mipmap)
     {
-        if (this->extent.width == 0 || this->extent.height == 0)
+        if (this->extent.x == 0 || this->extent.y == 0)
         {
             return;
         }
@@ -57,7 +57,7 @@ namespace SF::Engine
           anisotropic(anisotropic),
           mipmap(mipmap)
     {
-        if (extent.width == 0 || extent.height == 0)
+        if (extent.x == 0 || extent.y == 0)
         {
             return;
         }
@@ -110,7 +110,7 @@ namespace SF::Engine
 
     void Image2d::SetPixels(const uint8_t *pixels, uint32_t layerCount, uint32_t baseArrayLayer)
     {
-        Buffer bufferStaging(extent.width * extent.height * components * layerCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        Buffer bufferStaging(extent.x * extent.y * components * layerCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                              VMA_MEMORY_USAGE_CPU_ONLY);
 
         void *data;

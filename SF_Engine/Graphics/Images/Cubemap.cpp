@@ -54,7 +54,7 @@ namespace SF::Engine
 
     std::unique_ptr<Bitmap> Cubemap::GetBitmap(uint32_t mipLevel) const
     {
-        auto size = UVec2(extent.width, extent.height) >> mipLevel;
+        auto size = UVec2(extent.x, extent.y) >> mipLevel;
         auto sizeSide = size.x * size.y * components;
         auto bitmap =
             std::make_unique<Bitmap>(UVec2(size.x, size.y * arrayLayers), components);
@@ -72,7 +72,7 @@ namespace SF::Engine
 
     void Cubemap::SetPixels(const uint8_t* pixels, uint32_t layerCount, uint32_t baseArrayLayer)
     {
-        VkDeviceSize bufferSize = extent.width * extent.height * components * arrayLayers;
+        VkDeviceSize bufferSize = extent.x * extent.y * components * arrayLayers;
 
         // Create staging buffer with VMA
         VkBufferCreateInfo bufferInfo = {VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
@@ -127,7 +127,7 @@ namespace SF::Engine
             components = loadBitmap->GetBytesPerPixel();
         }
 
-        if (extent.width == 0 || extent.height == 0)
+        if (extent.x == 0 || extent.y == 0)
         {
             return;
         }

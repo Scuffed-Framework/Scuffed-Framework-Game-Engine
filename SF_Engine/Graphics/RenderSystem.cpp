@@ -50,8 +50,6 @@ namespace SF::Engine
 
         CreatePipelineCache();
         Log::Info("Pipeline cache created");
-
-        AtmoLUTs::Get().Init();
         Log::Info("RenderSystem fully initialized");
     } 
     
@@ -59,6 +57,7 @@ namespace SF::Engine
     {
         SharedSamplers::CreateSamplers();
         CreateSharedCameraBuffer();
+        AtmoLUTs::Get().Init();
     }
 
     void RenderSystem::PreShutdown()
