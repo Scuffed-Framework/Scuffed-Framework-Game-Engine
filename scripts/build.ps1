@@ -10,6 +10,8 @@ param(
 $buildType = "debug"
 if ($r) { $buildType = "release" }
 
+$out = "000-Build-$buildType-x64"
+
 $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root
 
@@ -108,6 +110,8 @@ Import-VsDevEnvironment
 
 cmake --build --preset conan2-$buildType
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed" -ForegroundColor Red; Pop-Location; exit 1 }
+
+Copy-Item -Path "../SF_Engine/Shaders" -Destination "$out/" -Force
 
 Write-Host "==> Build succeeded" -ForegroundColor Green
 Pop-Location
