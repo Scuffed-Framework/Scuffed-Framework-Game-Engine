@@ -50,9 +50,13 @@ namespace SF::Engine
             this->enabled = enable;
         }
 
+        int GetOrder() const { return order; }
+        void SetOrder(int o) { order = o; }
+
     private:
         bool enabled = true;
         Pipeline::Stage stage;
+        int order = 0;
     };
 
     template class TypeInformation<PipelinePass>;
@@ -102,13 +106,13 @@ namespace SF::Engine
          * @return The added renderer.
          */
         template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
-        T *Add(const Pipeline::Stage &stage, std::unique_ptr<T> &&pass) // renamed here cuz msvc developers snort too much cocaine and causes parsing errors
+        T *Add(const Pipeline::Stage &stage, std::unique_ptr<T> &&pass)
         {
             const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
 
-            stages.emplace(StageIndex{stage, PipelinePasss.size()}, typeId);
+            stages.emplace(StageIndex{stage, pass->GetOrder()}, typeId);
 
-            PipelinePasss[typeId] = std::move(pass); // and here
+            PipelinePasss[typeId] = std::move(pass);
             return static_cast<T *>(PipelinePasss[typeId].get());
         }
 
@@ -126,7 +130,7 @@ namespace SF::Engine
         }
 
     private:
-        using StageIndex = std::pair<Pipeline::Stage, std::size_t>;
+        using StageIndex = std::pair<Pipeline::Stage, int>;
 
         void RemovePipelinePassStage(const TypeId &id);
 

@@ -29,7 +29,8 @@ namespace SF::Engine
         ~ComputePipeline();
 
         void CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent) const;
-        void CmdRender(const CommandBuffer &commandBuffer, const UVec3 &extent, const int LOCAL_X, const int LOCAL_Y, const int LOCAL_Z) const;
+        void CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent, const uint32_t X, const uint32_t Y, const uint32_t Z) const;
+        void CmdRender(const CommandBuffer &commandBuffer, const UVec3 &extent, const uint32_t LOCAL_X, const uint32_t LOCAL_Y, const uint32_t LOCAL_Z) const;
 
         const std::filesystem::path &GetShaderStage() const { return shaderStage; }
         const std::vector<Shader::Define> &GetDefines() const { return defines; }

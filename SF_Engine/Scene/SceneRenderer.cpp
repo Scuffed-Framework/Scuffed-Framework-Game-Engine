@@ -50,8 +50,8 @@ namespace SF::Engine
         Camera *cam = cameraController->GetActive();
 
         float aspect = wnd ? wnd->GetAspectRatio() : 1.0f;
-        glm::vec2 screenSize = wnd ? glm::vec2(wnd->GetSize().x, wnd->GetSize().y)
-                                   : glm::vec2(1280.0f, 720.0f);
+        Vec2 screenSize = wnd ? Vec2(wnd->GetSize().x, wnd->GetSize().y)
+                                   : Vec2(1280.0f, 720.0f);
 
         Mat4 view = cam->GetView();
         Mat4 proj = cam->GetProjection(aspect);

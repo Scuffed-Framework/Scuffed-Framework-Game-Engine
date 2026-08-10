@@ -33,7 +33,7 @@ namespace SF::Engine
         Vec4 position; // xyz = world pos,  w = lifetime remaining (s)
         Vec4 velocity; // xyz = velocity,   w = total lifetime (s)
         Vec4 color;    // rgba, linear
-        glm::vec2 size;     // x = current size, y = initial size
+        Vec2 size;     // x = current size, y = initial size
         float rotation;     // radians
         float _pad0;
     };

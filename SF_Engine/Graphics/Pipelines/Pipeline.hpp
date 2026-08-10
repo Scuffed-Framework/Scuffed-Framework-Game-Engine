@@ -15,6 +15,13 @@ namespace SF::Engine
          * Represents position in the render structure, first value being the renderpass and second for subpass.
          */
         using Stage = std::pair<uint32_t, uint32_t>;
+        /*
+        struct Stage
+        {
+            uint32_t RenderPass;
+            uint32_t SubPass;
+        };
+        */
 
         Pipeline() = default;
         virtual ~Pipeline() = default;

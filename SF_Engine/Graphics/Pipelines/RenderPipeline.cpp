@@ -130,19 +130,19 @@ namespace SF::Engine
 
         Shaders::ShaderParser parser;
         Log::Info("Loading shader: {} (cwd={})", shaderPath.string(),
-                std::filesystem::current_path().string());
+                  std::filesystem::current_path().string());
         auto parsedShaderOpt = parser.parse(shaderPath.string());
 
         if (!parsedShaderOpt)
             throw std::runtime_error("Failed to parse shader '" + shaderPath.string() +
-                                    "': " + parser.getLastError());
+                                     "': " + parser.getLastError());
 
         Shaders::ParsedShader &parsedShader = *parsedShaderOpt;
 
         auto compiledOpt = parser.compileAll(parsedShader, defines);
         if (!compiledOpt)
             throw std::runtime_error("Failed to compile shader '" + shaderPath.string() +
-                                    "': " + parser.getLastError());
+                                     "': " + parser.getLastError());
 
         std::vector<uint32_t> vertexSpirv, fragmentSpirv, tessCtrlSpv, tessEvalSpv;
         bool hasVertexShader = false, hasFragmentShader = false;
@@ -203,6 +203,13 @@ namespace SF::Engine
         for (const auto &b : descriptorBindings)
             typeCounts[b.descriptorType] += b.descriptorCount;
 
+        typeCounts[VK_DESCRIPTOR_TYPE_SAMPLER] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_SAMPLER], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER], 16u);
+        
         std::vector<VkDescriptorPoolSize> poolSizes;
         for (const auto &[type, count] : typeCounts)
             poolSizes.push_back({type, count * 8192});

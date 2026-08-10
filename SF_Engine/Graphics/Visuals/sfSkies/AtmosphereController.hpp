@@ -43,7 +43,7 @@ namespace SF::Engine
 
         void SetFrameData(const Mat4 &invProj, const Mat4 &invView,
                            const Vec3 &cameraPos, const Vec3 &sunDir,
-                           const glm::vec2 &screenSize)
+                           const Vec2 &screenSize)
         {
             for (auto &entry : entries_)
             {

@@ -13,7 +13,7 @@ namespace SF::Engine
 
     Vec3 GetMainDirectionalLightDirection();
     float GetMainDirectionalLightIntensity();
-    glm::vec2 GetScreenSize();
+    Vec2 GetScreenSize();
     Mat4 GetView();
     Mat4 GetInvView();
     Mat4 GetProjection();

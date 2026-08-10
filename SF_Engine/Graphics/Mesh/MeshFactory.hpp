@@ -93,7 +93,7 @@ namespace SF::Engine::MeshFactory
                     std::cos(phi),
                     std::sin(phi) * std::sin(theta)
                 };
-                glm::vec2 uv  = {float(j)/float(slices), float(i)/float(stacks)};
+                Vec2 uv  = {float(j)/float(slices), float(i)/float(stacks)};
                 Vec3 tan = {-std::sin(theta), 0, std::cos(theta)};
                 verts.push_back({pos, normalize(pos), uv, tan});
             }

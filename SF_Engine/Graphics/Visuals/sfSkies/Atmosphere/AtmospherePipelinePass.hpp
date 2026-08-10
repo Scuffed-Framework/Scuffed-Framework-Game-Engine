@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Graphics/PipelinePassManager.hpp>
-#include <Graphics/Pipelines/RenderPipeline.hpp>
+#include <Graphics/Pipelines/ComputePipeline.hpp>
 #include <Graphics/Descriptors/DescriptorSet.hpp>
 #include <Graphics/Buffers/UniformBuffer.hpp>
 #include "LUT/TransmittanceLUT.hpp"
@@ -16,6 +16,9 @@
 
 namespace SF::Engine
 {
+    // Composites the sky / aerial-perspective result directly into the "hdr"
+    // scene-colour image via a compute dispatch (RWTexture2D read-modify-write),
+    // rather than drawing a fullscreen triangle into a separate attachment.
     class AtmospherePipelinePass : public PipelinePass
     {
     public:
@@ -25,6 +28,8 @@ namespace SF::Engine
 
         void PreRender(const CommandBuffer &commandBuffer);
 
+        // Transitions "hdr" to VK_IMAGE_LAYOUT_GENERAL, dispatches the compute
+        // shader, then transitions it back for whatever consumes it next.
         void Render(const CommandBuffer &commandBuffer) override;
 
         void SetSceneBuffers();
@@ -33,7 +38,7 @@ namespace SF::Engine
                           const Vec3 &cameraPos,
                           const Vec3 &planetPos,
                           const Vec3 &sunDir,
-                          glm::vec2 screenSize);
+                          Vec2 screenSize);
 
         void SetParams(const AtmosphereParams &params) { params_ = params; }
 
@@ -43,12 +48,15 @@ namespace SF::Engine
     private:
         AtmosphereParams params_;
 
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::unique_ptr<ComputePipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
         std::unique_ptr<UniformBuffer> ubo_;
 
         AtmosphereFrameUBO frameData_{};
 
+        // "hdr" is now both the compute target (binding 8, storage image) and
+        // the thing we track for change detection, so lastColor_ doubles as
+        // "which image we last wrote descriptor binding 8 for".
         const Image2d *lastColor_ = nullptr;
         const ImageDepth *lastDepth_ = nullptr;
     };

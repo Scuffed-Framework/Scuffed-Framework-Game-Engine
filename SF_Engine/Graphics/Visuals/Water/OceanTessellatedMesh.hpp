@@ -44,7 +44,7 @@ namespace SF::Engine
          */
         explicit OceanTessellatedMesh(
             uint32_t patchCount = 32,
-            const glm::vec2 &patchExtent = glm::vec2(4000.f, 4000.f));
+            const Vec2 &patchExtent = Vec2(4000.f, 4000.f));
 
         ~OceanTessellatedMesh() = default;
 
@@ -96,7 +96,7 @@ namespace SF::Engine
                            float planetRadius);
 
         uint32_t patchCount_;
-        glm::vec2 patchExtent_;
+        Vec2 patchExtent_;
 
         std::unique_ptr<Buffer> vertexBuffer_;
         std::unique_ptr<Buffer> indexBuffer_;

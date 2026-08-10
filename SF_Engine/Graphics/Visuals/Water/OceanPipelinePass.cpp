@@ -476,7 +476,7 @@ namespace SF::Engine
         frameData_.time = accumulatedTime_;
 
         auto sz = window->GetSize();
-        frameData_.screenSize = glm::vec2(sz.x, sz.y);
+        frameData_.screenSize = Vec2(sz.x, sz.y);
 
         syncParamsToFrameData();
 

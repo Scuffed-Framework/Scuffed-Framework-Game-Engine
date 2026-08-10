@@ -150,8 +150,16 @@ namespace SF::Engine
         vkCmdDispatch(commandBuffer, gx, gy, 1);
     }
 
+    void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer,
+                                    const UVec2 &extent, const uint32_t X, const uint32_t Y, const uint32_t Z) const
+    {
+        uint32_t gx = (extent.x + X - 1) / X;
+        uint32_t gy = (extent.y + Y - 1) / Y;
+        vkCmdDispatch(commandBuffer, gx, gy, 1);
+    }
+
     void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer, const UVec3 &extent,
-                                    const int LOCAL_X, const int LOCAL_Y, const int LOCAL_Z) const
+                                    const uint32_t LOCAL_X, const uint32_t LOCAL_Y, const uint32_t LOCAL_Z) const
     {
         uint32_t gx = (extent.x + LOCAL_X - 1) / LOCAL_X;
         uint32_t gy = (extent.y + LOCAL_Y - 1) / LOCAL_Y;

@@ -10,7 +10,7 @@
 
 namespace SF::Engine
 {
-    OceanTessellatedMesh::OceanTessellatedMesh(uint32_t patchCount, const glm::vec2 &patchExtent)
+    OceanTessellatedMesh::OceanTessellatedMesh(uint32_t patchCount, const Vec2 &patchExtent)
         : patchCount_(patchCount), patchExtent_(patchExtent)
     {
         if (patchCount < 1)
@@ -73,7 +73,7 @@ namespace SF::Engine
                     -halfX + static_cast<float>(col) * stepX,
                     0.0f,
                     -halfZ + static_cast<float>(row) * stepZ);
-                v.uv = glm::vec2(
+                v.uv = Vec2(
                     static_cast<float>(col) * invN,
                     static_cast<float>(row) * invN);
                 v.normal = Vec3(0.0f, 1.0f, 0.0f);
@@ -121,7 +121,7 @@ namespace SF::Engine
 
                 PatchVertex &v = vertices[row * gridW + col];
                 v.position = spherePos;
-                v.uv = glm::vec2(
+                v.uv = Vec2(
                     static_cast<float>(col) * invN,
                     static_cast<float>(row) * invN);
                 // Outward radial normal; Gerstner waves perturb this further

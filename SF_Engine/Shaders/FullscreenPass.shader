@@ -1,19 +1,20 @@
-#include "VertexShaderCommon.si"
+struct VSOutput
+{
+    float4 position : SV_POSITION;
+    float2 uv0 : TEXCOORD0;
+};
 
 [shader("vertex")]
-VSOutput vertexMain(
-    float3 pos : POSITION, 
-    float4 inColor : COLOR,
-    float2 inUv : TEXCOORD0
-) {
+VSOutput vertexMain(uint vertexID : SV_VertexID)
+{
     VSOutput output;
-    output.position = float4(pos, 1.0);
-    output.uv0 = inUv;
-    output.color = inColor;
+    float2 uv = float2((vertexID << 1) & 2, vertexID & 2);
+    output.position = float4(uv * 2.0 - 1.0, 0.0, 1.0);
+    output.uv0 = uv;
     return output;
 }
 
-[[vk::binding(0, 0)]]
+[[vk::binding(1, 0)]]
 Sampler2D<float4> colorSampler;
 
 [shader("fragment")]

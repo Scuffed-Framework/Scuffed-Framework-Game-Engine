@@ -116,7 +116,7 @@ namespace SF::Engine
 
                 PatchVertex &v = vertices[row * gridW + col];
                 v.position = spherePos;
-                v.uv = glm::vec2(static_cast<float>(col) * invN, static_cast<float>(row) * invN);
+                v.uv = Vec2(static_cast<float>(col) * invN, static_cast<float>(row) * invN);
                 v.normal = dir;
             }
         }

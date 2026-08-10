@@ -64,8 +64,8 @@ namespace SF::Engine::Lighting
 
         Vec4 cameraPos; // w = near
         Vec4 cameraDir; // w = far
-        glm::vec2 screenSize;
-        glm::vec2 invScreenSize;
+        Vec2 screenSize;
+        Vec2 invScreenSize;
 
         float nearPlane;
         float farPlane;
@@ -74,7 +74,7 @@ namespace SF::Engine::Lighting
 
         uint32_t lightCount;
         uint32_t frameIndex;
-        glm::vec2 _pad;
+        Vec2 _pad;
 
         // Sun: world-space direction toward the sun (unit vector), w = sunIntensity.
         // Filled by the renderer each frame alongside the directional light.

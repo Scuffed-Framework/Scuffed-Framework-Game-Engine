@@ -47,6 +47,7 @@ namespace SF::Engine
 
 
             uboD_ = std::make_unique<UniformBuffer>(sizeof(WeatherParams));
+            uboD_->Update(params_);
 
             pipelineA_ = std::make_unique<ComputePipeline>(
                 "Shaders/Clouds/BaseNoise.shader");
@@ -85,7 +86,7 @@ namespace SF::Engine
             w2.dstSet = descSetC_->GetDescriptorSet();
 
             VkWriteDescriptorSet w3 = info3.GetWriteDescriptorSet();
-            w3.dstSet = descSetC_->GetDescriptorSet();
+            w3.dstSet = descSetD_->GetDescriptorSet();
             
             VkDescriptorBufferInfo bufInfoA{uboD_->GetBuffer(), 0, VK_WHOLE_SIZE};
             VkWriteDescriptorSet b1{};
@@ -134,6 +135,7 @@ namespace SF::Engine
                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                     VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
             }
+            // uboD_->Update(params_); maybe?
 
             auto ext0 = BaseNoiseTexture_->GetExtent();
             auto ext1 = DetailNoiseTexture_->GetExtent();
@@ -152,8 +154,8 @@ namespace SF::Engine
             descSetC_->BindDescriptor(cmd);
             vkCmdDispatch(cmd, (ext2.x + 7) / 8, (ext2.y + 7) / 8, 1);
 
-            pipelineC_->BindPipeline(cmd);
-            descSetC_->BindDescriptor(cmd);
+            pipelineD_->BindPipeline(cmd);
+            descSetD_->BindDescriptor(cmd);
             vkCmdDispatch(cmd, (ext3.x + 7) / 8, (ext3.y + 7) / 8, 1);
 
             Image::InsertImageMemoryBarrier(

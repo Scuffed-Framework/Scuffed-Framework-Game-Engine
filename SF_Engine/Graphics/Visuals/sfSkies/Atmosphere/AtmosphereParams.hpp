@@ -25,8 +25,9 @@ namespace SF::Engine
         float bottomRadius;     // metres
         float topRadius;        // metres
         float renderUnitRadius; // unused by shader, kept for UBO size alignment
-        glm::vec2 screenSize;
+        Vec2 screenSize;
         Vec3 sunCol;
+        Vec3 UnUsed = Vec3(0);
     };
     static_assert(sizeof(AtmosphereFrameUBO) % 16 == 0);
 

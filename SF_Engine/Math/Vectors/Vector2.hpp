@@ -7,7 +7,7 @@
 namespace SF::Engine
 {
     // GLM is better
-    using Vec2 = glm::vec2;
+    using Vec2 = Vec2;
     using DVec2 = glm::dvec2;
     using IVec2 = glm::ivec2;
     using UVec2 = glm::uvec2;

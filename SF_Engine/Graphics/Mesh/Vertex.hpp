@@ -15,7 +15,7 @@ namespace SF::Engine
     {
         Vec3 position = {};
         Vec3 normal = {};
-        glm::vec2 texCoord = {};
+        Vec2 texCoord = {};
         Vec3 tangent = {};
 
         bool operator==(const Vertex &) const = default;
@@ -39,7 +39,7 @@ namespace SF::Engine
     struct PatchVertex
     {
         Vec3 position;
-        glm::vec2 uv;
+        Vec2 uv;
         Vec3 normal;
 
         static Shader::VertexInput GetVertexInput()

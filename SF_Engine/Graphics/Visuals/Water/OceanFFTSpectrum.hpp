@@ -43,8 +43,8 @@ namespace SF::Engine
         float highCutoff = 9000.0f;
 
         // Choppiness (per-axis displacement scale, Tessendorf's "lambda").
-        glm::vec2 lambda = glm::vec2(1.0f, 1.0f);
-        glm::vec2 normalStrength = glm::vec2(1.0f, 1.0f);
+        Vec2 lambda = Vec2(1.0f, 1.0f);
+        Vec2 normalStrength = Vec2(1.0f, 1.0f);
 
         int seed = 12345;
 
@@ -54,7 +54,7 @@ namespace SF::Engine
         float foamAdd = 0.5f;
         float foamThreshold = 0.0f;
 
-        glm::vec2 wind = glm::vec2(1.0f, 1.0f);
+        Vec2 wind = Vec2(1.0f, 1.0f);
 
         // 8 entries: [cascade][0]=local wind sea, [cascade][1]=swell.
         // scale=0 on the swell entry disables it for that cascade.
@@ -89,10 +89,10 @@ namespace SF::Engine
         float highCutoff;
         int seed;
         float _pad0, _pad1;
-        glm::vec2 wind;           // 8
-        glm::vec2 lambda;         // 8
-        glm::vec2 normalStrength; // 8
-        glm::vec2 _pad2;
+        Vec2 wind;           // 8
+        Vec2 lambda;         // 8
+        Vec2 normalStrength; // 8
+        Vec2 _pad2;
         uint32_t N, lengthScale0, lengthScale1, lengthScale2;
         uint32_t lengthScale3;
         float foamBias, foamDecayRate, foamAdd;

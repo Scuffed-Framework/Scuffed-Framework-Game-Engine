@@ -90,7 +90,7 @@ namespace SF::Engine
     struct PerStageData
     {
         Vec3 worldPos;
-        glm::vec2 texCoord;
+        Vec2 texCoord;
         Vec3 worldNormal;
         Vec3 worldTangent;
         Vec3 worldBitangent;

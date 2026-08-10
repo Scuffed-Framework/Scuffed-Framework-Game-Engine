@@ -15,6 +15,7 @@ struct AtmoUBO
     float renderUnitRadius;
     float2 screenSize;
     float3 sunColor;
+    float3 UnUsed;
 };
 
 struct SkyViewUBO
@@ -299,6 +300,42 @@ void skyViewLutParamsToUv(
 
     // Constrain uvs to valid sub texel range (avoid zenith derivative issue making LUT usage visible)
     uv = float2(fromUnitToSubUvs(uv.x, lutSize.x), fromUnitToSubUvs(uv.y, lutSize.y));
+}
+float3 arbitraryPerp(float3 n)
+{
+    float3 a = (abs(n.x) < 0.9) ? float3(1, 0, 0) : float3(0, 1, 0);
+    return normalize(cross(n, a));
+}
+float3 sampleSkyView(float3 rd, float3 viewPos, float3 sunDir, float camR, float botRadius, Sampler2D skyViewLUT)
+{
+    float3 up = normalize(viewPos);
+
+    float3 sunHoriz = sunDir - dot(sunDir, up) * up;
+    float sunHorizLen = length(sunHoriz);
+    float3 sunProj = (sunHorizLen > 1e-4)
+                         ? (sunHoriz / sunHorizLen)
+                         : arbitraryPerp(up);
+    float3 perpAxis = cross(up, sunProj);
+
+    float sinTh = clamp(dot(rd, up), -1.0, 1.0);
+    float theta = asin(sinTh);
+    float v = skyViewEncodeV(theta, camR, botRadius);
+
+    float3 rdH = rd - sinTh * up;
+    float rdHLen = length(rdH);
+    float u_coord;
+    if (rdHLen < 1e-4)
+    {
+        u_coord = 0.0;
+    }
+    else
+    {
+        float3 rdHoriz = rdH / rdHLen;
+        float phi = atan2(dot(rdHoriz, perpAxis), dot(rdHoriz, sunProj));
+        u_coord = abs(phi) / kPI;
+    }
+
+    return skyViewLUT.SampleLevel(float2(u_coord, v), 0.0).rgb;
 }
 
 #endif

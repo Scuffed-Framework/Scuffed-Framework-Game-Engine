@@ -101,7 +101,7 @@ namespace SF::Engine
             fd.invViewProj = inverse(fd.viewProj);
             fd.cameraPos = Vec4(0.0f, 1.5f, 4.0f, 0.1f);
             fd.cameraDir = Vec4(normalize(Vec3(0.0f) - Vec3(0.0f, 1.5f, 4.0f)), 100.0f);
-            fd.screenSize = wnd ? glm::vec2(wnd->GetSize().x, wnd->GetSize().y) : glm::vec2(800, 600);
+            fd.screenSize = wnd ? Vec2(wnd->GetSize().x, wnd->GetSize().y) : Vec2(800, 600);
             fd.invScreenSize = 1.0f / fd.screenSize;
             fd.nearPlane = 0.1f;
             fd.farPlane = 100.0f;

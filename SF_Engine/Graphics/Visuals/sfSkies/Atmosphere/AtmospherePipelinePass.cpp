@@ -1,6 +1,7 @@
 #include "AtmospherePipelinePass.hpp"
 #include <Graphics/RenderSystem.hpp>
 #include <Graphics/Descriptors/DescriptorSet.hpp>
+#include <Graphics/Descriptors/DescriptorSetBuilder.hpp>
 #include <Graphics/SharedFunctions.hpp>
 #include <Graphics/SharedSamplers.hpp>
 
@@ -10,116 +11,41 @@ namespace SF::Engine
                                                    const AtmosphereParams &params)
         : PipelinePass(stage), params_(params)
     {
+        PipelinePass::SetOrder(0);
         vkDeviceWaitIdle(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice());
         ubo_ = std::make_unique<UniformBuffer>(sizeof(AtmosphereFrameUBO));
 
-        pipeline_ = std::make_unique<RenderPipeline>(
-            stage,
+        // NOTE: entry point renamed vertex/fragment "atmo_vs"/"atmo_fs" -> compute
+        // "atmo_cs" now that Atmosphere.shader is a [numthreads(8,8,1)] kernel.
+        pipeline_ = std::make_unique<ComputePipeline>(
             "Shaders/Atmosphere/Atmosphere.shader",
-            std::vector<Shader::VertexInput>{},
-            std::vector<Shader::Define>{},
-            RenderPipeline::Mode::Polygon,
-            RenderPipeline::Depth::Read, // was Depth::Read
-            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-            VK_POLYGON_MODE_FILL,
-            VK_CULL_MODE_NONE,
-            VK_FRONT_FACE_COUNTER_CLOCKWISE);
+            std::vector<Shader::Define>{});
 
         descSet_ = std::make_unique<DescriptorSet>(*pipeline_);
 
-        VkDescriptorBufferInfo bi{ubo_->GetBuffer(), 0, VK_WHOLE_SIZE};
-        VkWriteDescriptorSet w0{};
-        w0.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w0.dstSet = descSet_->GetDescriptorSet();
-        w0.dstBinding = 0;
-        w0.descriptorCount = 1;
-        w0.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        w0.pBufferInfo = &bi;
+        // see this is so much cleaner than the bunch of manual assembly stuff
+        auto Writes = DescriptorSetWriteBuilder(*descSet_)
+                          .Buffer(0, ubo_->GetBuffer(), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+                          .CombinedImageSampler(1, AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetView(),
+                                                AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                          .CombinedImageSampler(2, AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetView(),
+                                                AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                          .CombinedImageSampler(3, AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetView(),
+                                                AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                          .CombinedImageSampler(4, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetView(),
+                                                AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                          .CombinedImageSampler(5, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetView(),
+                                                AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                          .CombinedImageSampler(6, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetView(),
+                                                AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                          .Build();
 
-        VkDescriptorImageInfo ii1{};
-        ii1.sampler = AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetSampler();
-        ii1.imageView = AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetView();
-        ii1.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        VkWriteDescriptorSet w1{};
-        w1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w1.dstSet = descSet_->GetDescriptorSet();
-        w1.dstBinding = 1;
-        w1.descriptorCount = 1;
-        w1.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        w1.pImageInfo = &ii1;
-
-        VkDescriptorImageInfo ii2{};
-        ii2.sampler = AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetSampler();
-        ii2.imageView = AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetView();
-        ii2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        VkWriteDescriptorSet w2{};
-        w2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w2.dstSet = descSet_->GetDescriptorSet();
-        w2.dstBinding = 2;
-        w2.descriptorCount = 1;
-        w2.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        w2.pImageInfo = &ii2;
-
-        VkDescriptorImageInfo ii3{};
-        ii3.sampler = AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetSampler();
-        ii3.imageView = AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetView();
-        ii3.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        VkWriteDescriptorSet w3{};
-        w3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w3.dstSet = descSet_->GetDescriptorSet();
-        w3.dstBinding = 3;
-        w3.descriptorCount = 1;
-        w3.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        w3.pImageInfo = &ii3;
-
-        VkDescriptorImageInfo ii4{};
-        ii4.sampler = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetSampler();
-        ii4.imageView = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetView();
-        ii4.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        VkWriteDescriptorSet w4{};
-        w4.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w4.dstSet = descSet_->GetDescriptorSet();
-        w4.dstBinding = 4;
-        w4.descriptorCount = 1;
-        w4.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        w4.pImageInfo = &ii4;
-
-        VkDescriptorImageInfo ii5{};
-        ii5.sampler = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetSampler();
-        ii5.imageView = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetView();
-        ii5.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        VkWriteDescriptorSet w5{};
-        w5.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w5.dstSet = descSet_->GetDescriptorSet();
-        w5.dstBinding = 5;
-        w5.descriptorCount = 1;
-        w5.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        w5.pImageInfo = &ii5;
-
-        VkDescriptorImageInfo ii6{};
-        ii6.sampler = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetSampler();
-        ii6.imageView = AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetView();
-        ii6.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        VkWriteDescriptorSet w6{};
-        w6.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w6.dstSet = descSet_->GetDescriptorSet();
-        w6.dstBinding = 6;
-        w6.descriptorCount = 1;
-        w6.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        w6.pImageInfo = &ii6;
-
-        DescriptorSet::Update({w0, w1, w2, w3, w4, w5, w6});
+        Writes.Apply();
     }
 
     void AtmospherePipelinePass::SetSceneBuffers()
     {
-        const Image2d *sceneColor = GetSceneHDR();
+        const Image2d *sceneColor = GetSceneHDR(); // "hdr" attachment — now our compute read/write target
         const ImageDepth *sceneDepth = GetSceneDepth();
 
         if (!sceneColor || !sceneDepth)
@@ -132,33 +58,12 @@ namespace SF::Engine
         lastDepth_ = sceneDepth;
 
         assert(sceneColor != nullptr);
-        VkDescriptorImageInfo ci{};
-        ci.sampler = sceneColor->GetSampler();
-        ci.imageView = sceneColor->GetView();
-        ci.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        auto Writes = DescriptorSetWriteBuilder(*descSet_)
+                          .CombinedImageSampler(7, sceneDepth->GetView(), sceneDepth->GetSampler(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+                          .Image(8, sceneColor->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                          .Build();
 
-        VkWriteDescriptorSet wc{};
-        wc.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        wc.dstSet = descSet_->GetDescriptorSet();
-        wc.dstBinding = 7;
-        wc.descriptorCount = 1;
-        wc.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        wc.pImageInfo = &ci;
-
-        VkDescriptorImageInfo di{};
-        di.sampler = sceneDepth->GetSampler();
-        di.imageView = sceneDepth->GetView();
-        di.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-
-        VkWriteDescriptorSet wd{};
-        wd.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        wd.dstSet = descSet_->GetDescriptorSet();
-        wd.dstBinding = 8;
-        wd.descriptorCount = 1;
-        wd.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        wd.pImageInfo = &di;
-
-        DescriptorSet::Update({wc, wd});
+        Writes.Apply();
     }
 
     void AtmospherePipelinePass::SetFrameData(const Mat4 &invProj,
@@ -166,11 +71,11 @@ namespace SF::Engine
                                               const Vec3 &cameraPos,
                                               const Vec3 &planetPos,
                                               const Vec3 &sunDir,
-                                              glm::vec2 screenSize)
+                                              Vec2 screenSize)
     {
         const Vec3 sd = glm::length(sunDir) > 1e-6f
-                                 ? normalize(sunDir)
-                                 : Vec3(0.577f, 0.577f, 0.577f);
+                            ? normalize(sunDir)
+                            : Vec3(0.577f, 0.577f, 0.577f);
 
         const float ruToM = params_.bottomRadius / params_.renderUnitRadius;
         Vec3 viewPosSI = Vec3(
@@ -197,23 +102,75 @@ namespace SF::Engine
         AtmoLUTs::Get().GetSkyViewLUT()->SetParams(svp);
     }
 
+    namespace
+    {
+        // hdr comes out of the opaque pass in COLOR_ATTACHMENT_OPTIMAL (or
+        // whatever RenderStage transitions it to once that render pass ends).
+        // A compute shader can only read/write it as a storage image while
+        // it's in GENERAL, so we flip it there for the dispatch and flip it
+        // back to SHADER_READ_ONLY_OPTIMAL afterwards for whatever consumes
+        // "hdr" next (tonemap / blit-to-swapchain / etc).
+        //
+        // NOTE: this assumes Image2d exposes GetImage() (raw VkImage) the same
+        // way it already exposes GetSampler()/GetView(); adjust if the real
+        // accessor is named differently.
+        void TransitionHdrLayout(const CommandBuffer &commandBuffer, const Image2d *hdr,
+                                 VkImageLayout oldLayout, VkImageLayout newLayout,
+                                 VkAccessFlags srcAccess, VkAccessFlags dstAccess,
+                                 VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
+        {
+            VkImageMemoryBarrier barrier{};
+            barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            barrier.oldLayout = oldLayout;
+            barrier.newLayout = newLayout;
+            barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            barrier.image = const_cast<Image2d *>(hdr)->GetImage();
+            barrier.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+            barrier.srcAccessMask = srcAccess;
+            barrier.dstAccessMask = dstAccess;
+
+            vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0,
+                                 0, nullptr, 0, nullptr, 1, &barrier);
+        }
+    }
+
     void AtmospherePipelinePass::PreRender(const CommandBuffer &commandBuffer)
     {
+        // Must run BEFORE the lastColor_ guard below — lastColor_ is only ever
+        // populated as a side effect of this call. Checking the guard first
+        // (as in an earlier draft) meant lastColor_ could never get set on the
+        // first frame, and the pass would silently no-op forever after that.
+        SetSceneBuffers();
+
+        if (!lastColor_)
+            return; // scene attachments not available yet (e.g. before first frame)
+
         ubo_->Update(frameData_);
 
-        // SkyView: re-baked every frame (sun angle / camera height may change)
         AtmoLUTs::Get().GetSkyViewLUT()->Bake(commandBuffer);
-
-        // Aerial perspective: re-baked every frame (depends on camera matrices +
-        // position).  Cost is negligible: 4×4 workgroups, 32 slice iterations.
         AtmoLUTs::Get().GetAerialPerspectiveLUT()->Bake(commandBuffer, frameData_);
-        SetSceneBuffers(); // call again to update
+
+        TransitionHdrLayout(commandBuffer, lastColor_,
+                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+                            VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_->GetPipeline());
+        descSet_->BindDescriptor(commandBuffer);
+
+        UVec3 extent{static_cast<uint32_t>(frameData_.screenSize.x),
+                     static_cast<uint32_t>(frameData_.screenSize.y),
+                     1u};
+        pipeline_->CmdRender(commandBuffer, extent, /*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1);
+
+        TransitionHdrLayout(commandBuffer, lastColor_,
+                            VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                            VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
     }
 
     void AtmospherePipelinePass::Render(const CommandBuffer &commandBuffer)
     {
-        pipeline_->BindPipeline(commandBuffer);
-        descSet_->BindDescriptor(commandBuffer);
-        vkCmdDraw(commandBuffer, 3, 1, 0, 0);
     }
 }

@@ -56,7 +56,7 @@ namespace SF::Engine
         // patchCount: coarse grid divisions per axis; total patches = patchCount².
         // 32 → 1024 quad patches; each subdivided by the tessellator at runtime.
         uint32_t patchCount = 32;
-        glm::vec2 patchExtent = glm::vec2(16000.0f, 16000.0f);
+        Vec2 patchExtent = Vec2(16000.0f, 16000.0f);
     };
 
     //  GPU uniform buffer  –  must match OceanCommon.si layout exactly (std140)
@@ -68,7 +68,7 @@ namespace SF::Engine
         Mat4 invProj;    // 128      64
         Vec3 cameraPos;  // 192      12
         float time;           // 204       4
-        glm::vec2 screenSize; // 208       8
+        Vec2 screenSize; // 208       8
         float _pad0;          // 216       4
         float _pad1;          // 220       4
         //  224, 16-byte aligned
