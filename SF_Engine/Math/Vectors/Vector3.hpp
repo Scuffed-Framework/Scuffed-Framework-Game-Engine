@@ -13,13 +13,13 @@ namespace SF::Engine
     using TVec3 = glm::tvec3<glm::uint16>;
     using BVec3 = glm::bvec3;
 
-    inline glm::ivec3 operator+(const glm::ivec3 &lhs, const UVec3 &rhs) noexcept
+    inline IVec3 operator+(const IVec3 &lhs, const UVec3 &rhs) noexcept
     {
-        return lhs + glm::ivec3(static_cast<int>(rhs.x), static_cast<int>(rhs.y), static_cast<int>(rhs.z));
+        return lhs + IVec3(static_cast<int>(rhs.x), static_cast<int>(rhs.y), static_cast<int>(rhs.z));
     }
 
-    inline glm::ivec3 operator+(const UVec3 &lhs, const glm::ivec3 &rhs) noexcept
+    inline IVec3 operator+(const UVec3 &lhs, const IVec3 &rhs) noexcept
     {
-        return glm::ivec3(static_cast<int>(lhs.x), static_cast<int>(lhs.y), static_cast<int>(lhs.z)) + rhs;
+        return IVec3(static_cast<int>(lhs.x), static_cast<int>(lhs.y), static_cast<int>(lhs.z)) + rhs;
     }
 }

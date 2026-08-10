@@ -13,23 +13,23 @@ namespace SF::Engine
     using TVec4 = glm::tvec4<glm::uint16>;
     using BVec4 = glm::bvec4;
 
-    inline glm::ivec4 operator+(const glm::ivec4 &lhs, const UVec4 &rhs) noexcept
+    inline IVec4 operator+(const IVec4 &lhs, const UVec4 &rhs) noexcept
     {
-        return lhs + glm::ivec4(static_cast<int>(rhs.x), static_cast<int>(rhs.y), static_cast<int>(rhs.z), static_cast<int>(rhs.w));
+        return lhs + IVec4(static_cast<int>(rhs.x), static_cast<int>(rhs.y), static_cast<int>(rhs.z), static_cast<int>(rhs.w));
     }
 
-    inline glm::ivec4 operator+(const UVec4 &lhs, const glm::ivec4 &rhs) noexcept
+    inline IVec4 operator+(const UVec4 &lhs, const IVec4 &rhs) noexcept
     {
-        return glm::ivec4(static_cast<int>(lhs.x), static_cast<int>(lhs.y), static_cast<int>(lhs.z), static_cast<int>(lhs.w)) + rhs;
+        return IVec4(static_cast<int>(lhs.x), static_cast<int>(lhs.y), static_cast<int>(lhs.z), static_cast<int>(lhs.w)) + rhs;
     }
 
-    inline glm::ivec4 operator-(const glm::ivec4 &lhs, const UVec4 &rhs) noexcept
+    inline IVec4 operator-(const IVec4 &lhs, const UVec4 &rhs) noexcept
     {
-        return lhs - glm::ivec4(static_cast<int>(rhs.x), static_cast<int>(rhs.y), static_cast<int>(rhs.z), static_cast<int>(rhs.w));
+        return lhs - IVec4(static_cast<int>(rhs.x), static_cast<int>(rhs.y), static_cast<int>(rhs.z), static_cast<int>(rhs.w));
     }
 
-    inline glm::ivec4 operator-(const UVec4 &lhs, const glm::ivec4 &rhs) noexcept
+    inline IVec4 operator-(const UVec4 &lhs, const IVec4 &rhs) noexcept
     {
-        return glm::ivec4(static_cast<int>(lhs.x), static_cast<int>(lhs.y), static_cast<int>(lhs.z), static_cast<int>(lhs.w)) - rhs;
+        return IVec4(static_cast<int>(lhs.x), static_cast<int>(lhs.y), static_cast<int>(lhs.z), static_cast<int>(lhs.w)) - rhs;
     }
 }

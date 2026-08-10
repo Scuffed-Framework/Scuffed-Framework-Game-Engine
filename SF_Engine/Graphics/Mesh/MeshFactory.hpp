@@ -3,6 +3,7 @@
 #include "Mesh.hpp"
 #include <memory>
 #include <numbers>
+#include <Math/BasicMath.hpp>
 
 namespace SF::Engine::MeshFactory
 {
