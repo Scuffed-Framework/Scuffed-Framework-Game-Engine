@@ -90,7 +90,7 @@ namespace SF::Engine
         frameData_.topRadius = params_.topRadius;
         frameData_.renderUnitRadius = params_.renderUnitRadius;
         frameData_.screenSize = screenSize;
-        frameData_.sunCol = Vec3(1); // rgb base color (its white)
+        frameData_.sunCol = Vec3(1);
 
         SkyViewPushConstants svp{};
         svp.sunDir = Vec4(sd, params_.sunIntensity);

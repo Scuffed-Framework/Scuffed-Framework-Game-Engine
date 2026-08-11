@@ -1,11 +1,23 @@
 # SHADERS
 1. Fix clouds and atmosphere
+2. Probed Stochastic SSR
+3. RTGI
+
+
 
 #CORE
 1. SPLASH SCREEN
 2. Update the .sh scripts (haven't for like 4 months)
-3. make more beginner friendly than unity
+3. make more beginner friendly than unity (big api improvements)
 4. Terrain
-5. More HDR
+5. HDR rendering (and in hdr window (might need fullscreen))
 6. Clouds C++
 7. Bindless shader resources like DAXA
+
+#Editor:
+Panels, cmd, explorer, black profiler bar, profiler
+sponza
+amazon lumberyard cafe
+
+API Issues:
+Render() called on already active renderpass

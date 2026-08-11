@@ -71,12 +71,12 @@ namespace SF::Engine
 
             if (config_.enableAtmosphere)
             {
-                AtmosphereData earthData{ config_.atmosphereParams, {} };
                 Vec3 earthPos = {0.0f, -config_.atmosphereParams.bottomRadius, 0.0f};
                 // TODO: load from xml
                 atmoController->AddAtmosphere("Earth", earthData, earthPos);
 
-                cloudPass_ = AddPipelinePass<CloudPipelinePass>(Pipeline::Stage{1, 0}, config_.atmosphereParams);
+                cloudPass_ = AddPipelinePass<CloudPipelinePass>(Pipeline::Stage{1, 0}, earthData);
+                AddPipelinePass<FullscreenPass>(Pipeline::Stage{1, 0}, "hdr", "Shaders/FullscreenPass.shader");
             }
 
             GetPipelinePassManager()->RunInitCallbacks();
@@ -100,6 +100,7 @@ namespace SF::Engine
 
     private:
         SceneRendererConfig config_;
+        AtmosphereData earthData{ config_.atmosphereParams, {} };
 
         std::unique_ptr<LightManager> lightManager_;
         LitMeshPipelinePass *litPass_ = nullptr;

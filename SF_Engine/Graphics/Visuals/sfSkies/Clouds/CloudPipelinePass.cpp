@@ -1,46 +1,24 @@
-#include <ImGui/ocornut/imgui.h>
+#include <Gui/ocornut/imgui.h>
 
 #include "CloudPipelinePass.hpp"
 #include <Graphics/RenderSystem.hpp>
 #include <Graphics/Descriptors/DescriptorSet.hpp>
 #include <glm/gtc/constants.hpp>
 #include <Graphics/SharedFunctions.hpp>
+#include <Graphics/SharedSamplers.hpp>
+#include <Graphics/Descriptors/DescriptorSetBuilder.hpp>
+#include <Graphics/Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp>
+
 namespace SF::Engine
 {
     bool CloudPipelinePass::isWindowOpen = true;
 
-    CloudPipelinePass::CloudPipelinePass(Pipeline::Stage stage,
-                                         const AtmosphereParams &params)
-        : PipelinePass(stage), params_(params)
+    CloudPipelinePass::CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data)
+        : PipelinePass(stage), data_(data)
     {
-        blueNoiseLUT_ = std::make_unique<BlueNoiseLUT>(128);
-        {
-            CommandBuffer cmd(true);
-            blueNoiseLUT_->Bake(cmd);
-            cmd.SubmitIdle();
-        }
-
-        pWorleyLUT_ = std::make_unique<PerlinWorleyNoiseLUT>(128);
-        {
-            CommandBuffer cmd(true);
-            pWorleyLUT_->Bake(cmd);
-            cmd.SubmitIdle();
-        }
-
-        transmittanceLUT_ = std::make_unique<TransmittanceLUT>(256, 64);
-        {
-            CommandBuffer cmd(true);
-            transmittanceLUT_->Bake(cmd);
-            cmd.SubmitIdle();
-        }
-
-        multiScatterLUT_ = std::make_unique<MultiScatterLUT>(
-            transmittanceLUT_->GetTexture(), 32, 32);
-        {
-            CommandBuffer cmd(true);
-            multiScatterLUT_->Bake(cmd);
-            cmd.SubmitIdle();
-        }
+        PipelinePass::SetOrder(100);
+        uiHandle = UIRegistry::Get().Register([this]
+                                              { DrawImGuiPanel(); });
 
         atmoUBO_ = std::make_unique<UniformBuffer>(sizeof(AtmosphereFrameUBO));
         cloudUBO_ = std::make_unique<UniformBuffer>(sizeof(CloudUBO));
@@ -52,28 +30,114 @@ namespace SF::Engine
             cmd.SubmitIdle();
         }
 
-        aerialPerspRange_ = std::make_unique<AerialPerspectiveLUT>(
-            transmittanceLUT_->GetTexture(), multiScatterLUT_->GetTexture(), 128, 32);
+        UVec2 fullRes = UVec2(GetScreenSize().x, GetScreenSize().y);
+        UVec2 quarterRes{fullRes.x / 4, fullRes.y / 4};
+
+        raymarchPipeline_ = std::make_unique<ComputePipeline>("Shaders/Clouds/RaymarchClouds.shader");
+        reconstructPipeline_ = std::make_unique<ComputePipeline>("Shaders/Clouds/Reconstruct.shader");
+        compositePipeline_ = std::make_unique<ComputePipeline>("Shaders/Clouds/Composite.shader");
+
+        raymarchSet_ = std::make_unique<DescriptorSet>(*raymarchPipeline_);
+        for (uint32_t i = 0; i < kFramesInFlight; ++i)
+        {
+            reconstructSet_[i] = std::make_unique<DescriptorSet>(*reconstructPipeline_);
+            compositeSet_[i] = std::make_unique<DescriptorSet>(*compositePipeline_);
+        }
+
+        // Create a 1x1 dummy texture for frame 0 history fallback
+        dummyTexture_ = std::make_unique<Image2d>(UVec2{1, 1}, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                  VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
         {
             CommandBuffer cmd(true);
-            aerialPerspRange_->Bake(cmd, AtmosphereFrameUBO());
+
+            Image::InsertImageMemoryBarrier(cmd, dummyTexture_->GetImage(),
+                                            0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                                            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+
+            VkClearColorValue clearColor{};
+            clearColor.float32[0] = 0.0f;
+            clearColor.float32[1] = 0.0f;
+            clearColor.float32[2] = 0.0f;
+            clearColor.float32[3] = 1.0f;
+            VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+            vkCmdClearColorImage(cmd, dummyTexture_->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColor, 1, &range);
+
+            Image::InsertImageMemoryBarrier(cmd, dummyTexture_->GetImage(),
+                                            VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+
+            cmd.SubmitIdle();
+        }
+        dummyTexture_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        // Create images - constructor transitions UNDEFINED -> GENERAL
+        cloudRenderRT_ = std::make_unique<Image2d>(quarterRes, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                                   VK_IMAGE_LAYOUT_GENERAL,
+                                                   VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        cloudDepthRT_ = std::make_unique<Image2d>(quarterRes, VK_FORMAT_R32_SFLOAT,
+                                                  VK_IMAGE_LAYOUT_GENERAL,
+                                                  VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        cloudFogRT_ = std::make_unique<Image2d>(quarterRes, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                                VK_IMAGE_LAYOUT_GENERAL,
+                                                VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+        for (uint32_t i = 0; i < kFramesInFlight; ++i)
+        {
+            reconColor_[i] = std::make_unique<Image2d>(fullRes, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                                       VK_IMAGE_LAYOUT_GENERAL,
+                                                       VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+            reconDepth_[i] = std::make_unique<Image2d>(fullRes, VK_FORMAT_R32_SFLOAT,
+                                                       VK_IMAGE_LAYOUT_GENERAL,
+                                                       VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+            reconFog_[i] = std::make_unique<Image2d>(fullRes, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                                     VK_IMAGE_LAYOUT_GENERAL,
+                                                     VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        }
+
+        // Transition all images to SHADER_READ_ONLY_OPTIMAL before BindDescriptors()
+        {
+            CommandBuffer cmd(true);
+
+            auto transitionToReadOnly = [&](Image2d *img)
+            {
+                Image::InsertImageMemoryBarrier(cmd, img->GetImage(),
+                                                0, VK_ACCESS_SHADER_READ_BIT,
+                                                VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+            };
+
+            transitionToReadOnly(cloudRenderRT_.get());
+            transitionToReadOnly(cloudDepthRT_.get());
+            transitionToReadOnly(cloudFogRT_.get());
+
+            for (uint32_t i = 0; i < kFramesInFlight; ++i)
+            {
+                transitionToReadOnly(reconColor_[i].get());
+                transitionToReadOnly(reconDepth_[i].get());
+                transitionToReadOnly(reconFog_[i].get());
+            }
+
             cmd.SubmitIdle();
         }
 
-        pipeline_ = std::make_unique<RenderPipeline>(
-            stage,
-            "Shaders/Clouds/Clouds.shader",
-            std::vector<Shader::VertexInput>{},
-            std::vector<Shader::Define>{},
-            RenderPipeline::Mode::Polygon,
-            RenderPipeline::Depth::Read,
-            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-            VK_POLYGON_MODE_FILL,
-            VK_CULL_MODE_NONE,
-            VK_FRONT_FACE_COUNTER_CLOCKWISE);
-        
-        descSet_ = std::make_unique<DescriptorSet>(*pipeline_);
-        // this fails
+        // Update CPU-side layout tracking
+        cloudRenderRT_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        cloudDepthRT_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        cloudFogRT_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        for (uint32_t i = 0; i < kFramesInFlight; ++i)
+        {
+            reconColor_[i]->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            reconDepth_[i]->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            reconFog_[i]->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        }
+
+        // NOW call BindDescriptors() - images are already in SHADER_READ_ONLY_OPTIMAL
         BindDescriptors();
 
         isWindowOpen = true;
@@ -81,138 +145,59 @@ namespace SF::Engine
 
     void CloudPipelinePass::BindDescriptors()
     {
-        // binding=0 : AtmosphereFrameUBO
-        VkDescriptorBufferInfo atmoBuf{atmoUBO_->GetBuffer(), 0, VK_WHOLE_SIZE};
-        VkWriteDescriptorSet w0{};
-        w0.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w0.dstSet = descSet_->GetDescriptorSet();
-        w0.dstBinding = 0;
-        w0.descriptorCount = 1;
-        w0.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        w0.pBufferInfo = &atmoBuf;
+        // --- Raymarch set ---
+        auto raymarchWrites = DescriptorSetWriteBuilder(*raymarchSet_)
+                                  .Image(2, cloudRenderRT_->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                  .Image(6, cloudNoise_->GetBaseTexture()->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                  .Image(7, cloudNoise_->GetDetailTexture()->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                  .Image(8, cloudNoise_->GetWeatherTexture()->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                  .Image(9, cloudNoise_->GetCurlTexture()->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                  .Image(10, AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                  .Image(11, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                  .Image(14, cloudDepthRT_->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                  .CombinedImageSampler(20, AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetView(), AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetSampler(), 
+                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                  .Image(22, cloudFogRT_->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                  .Buffer(21, cloudUBO_->GetBuffer())
+                                  .CombinedImageSampler(27, AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetView(),
+                                                        SharedSamplers::GetLinearClampSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                  .Buffer(29, atmoUBO_->GetBuffer())
+                                  .Build();
+        raymarchWrites.Apply();
+        BindSharedCameraData(31, 1, raymarchSet_.get());
 
-        // binding=1 : CloudUBO
-        VkDescriptorBufferInfo cloudBuf{cloudUBO_->GetBuffer(), 0, VK_WHOLE_SIZE};
-        VkWriteDescriptorSet w1{};
-        w1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w1.dstSet = descSet_->GetDescriptorSet();
-        w1.dstBinding = 1;
-        w1.descriptorCount = 1;
-        w1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        w1.pBufferInfo = &cloudBuf;
+        for (uint32_t i = 0; i < kFramesInFlight; ++i)
+        {
+            // --- Reconstruct set: only static bindings ---
+            auto reconstructWrites = DescriptorSetWriteBuilder(*reconstructSet_[i])
+                                         .Image(3, cloudRenderRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                         .Image(15, cloudDepthRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                         .Image(23, cloudFogRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                         .Buffer(21, cloudUBO_->GetBuffer())
+                                         .Buffer(29, atmoUBO_->GetBuffer())
+                                         // Initialize write targets with GENERAL layout
+                                         .Image(12, reconColor_[i]->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                         .Image(16, reconDepth_[i]->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                         .Image(24, reconFog_[i]->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                         // Initialize history with dummy texture
+                                         .Image(18, dummyTexture_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                         .Image(19, dummyTexture_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                         .Image(26, dummyTexture_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                         .Build();
+            reconstructWrites.Apply();
+            BindSharedCameraData(31, 1, reconstructSet_[i].get());
 
-        // binding=2 : blue noise 2D
-        VkDescriptorImageInfo b2{};
-        b2.imageView = blueNoiseLUT_->GetTexture()->GetView();
-        b2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        VkWriteDescriptorSet w2{};
-        w2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w2.dstSet = descSet_->GetDescriptorSet();
-        w2.dstBinding = 2;
-        w2.descriptorCount = 1;
-        w2.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        w2.pImageInfo = &b2;
-
-        // binding=3 : alligator noise 3D (4-channel Nubis Cubed noise)
-        VkDescriptorImageInfo b3{};
-        b3.imageView = pWorleyLUT_->GetTexture()->GetView();
-        b3.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        VkWriteDescriptorSet w3{};
-        w3.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w3.dstSet = descSet_->GetDescriptorSet();
-        w3.dstBinding = 3;  
-        w3.descriptorCount = 1;
-        w3.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        w3.pImageInfo = &b3;
-
-        // binding=4 : transmittance LUT
-        VkDescriptorImageInfo b4{};
-        b4.imageView = transmittanceLUT_->GetTexture()->GetView();
-        b4.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        VkWriteDescriptorSet w4{};
-        w4.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w4.dstSet = descSet_->GetDescriptorSet();
-        w4.dstBinding = 4;
-        w4.descriptorCount = 1;
-        w4.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        w4.pImageInfo = &b4;
-
-        // binding=5 : multi-scatter LUT
-        VkDescriptorImageInfo b5{};
-        b5.imageView = multiScatterLUT_->GetTexture()->GetView();
-        b5.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        VkWriteDescriptorSet w5{};
-        w5.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w5.dstSet = descSet_->GetDescriptorSet();
-        w5.dstBinding = 5;
-        w5.descriptorCount = 1;
-        w5.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        w5.pImageInfo = &b5;
-
-        VkDescriptorImageInfo b6{};
-        b6.imageView = cloudNoise_->GetBaseTexture()->GetView();
-        b6.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        VkWriteDescriptorSet w6{};
-        w6.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w6.dstSet = descSet_->GetDescriptorSet();
-        w6.dstBinding = 6;
-        w6.descriptorCount = 1;
-        w6.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        w6.pImageInfo = &b6;
-
-        VkDescriptorImageInfo b7{};
-        b7.imageView = cloudNoise_->GetDetailTexture()->GetView();
-        b7.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        VkWriteDescriptorSet w7{};
-        w7.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w7.dstSet = descSet_->GetDescriptorSet();
-        w7.dstBinding = 7;
-        w7.descriptorCount = 1;
-        w7.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        w7.pImageInfo = &b7;
-
-        VkDescriptorImageInfo b8{};
-        // spared because it was too funny
-        // b8.sampler = aerialPerspRange_->GetAerialPerspectiveRange()->GetSampler(); // shit i forgot to initialize it
-        b8.imageView = aerialPerspRange_->GetAerialPerspectiveRange()->GetView();
-        b8.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        VkWriteDescriptorSet w8{};
-        w8.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w8.dstSet = descSet_->GetDescriptorSet();
-        w8.dstBinding = 8;
-        w8.descriptorCount = 1;
-        w8.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        w8.pImageInfo = &b8;
-        
-        BindSharedCameraData(11, 1, descSet_.get());
-
-        VkDescriptorImageInfo b12{};
-        b12.sampler = SharedSamplers::GetLinearRepeatSampler();
-        // imageView left null — this is a pure sampler-only binding (VK_DESCRIPTOR_TYPE_SAMPLER),
-        // not a combined image sampler.
-
-        VkWriteDescriptorSet w12{};
-        w12.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w12.dstSet = descSet_->GetDescriptorSet();
-        w12.dstBinding = 12;
-        w12.descriptorCount = 1;
-        w12.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;   // not COMBINED_IMAGE_SAMPLER
-        w12.pImageInfo = &b12;
-
-        VkDescriptorImageInfo b13{};
-        b13.sampler = SharedSamplers::GetLinearClampSampler();
-        // imageView left null — this is a pure sampler-only binding (VK_DESCRIPTOR_TYPE_SAMPLER),
-        // not a combined image sampler.
-
-        VkWriteDescriptorSet w13{};
-        w13.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w13.dstSet = descSet_->GetDescriptorSet();
-        w13.dstBinding = 13;
-        w13.descriptorCount = 1;
-        w13.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;   // not COMBINED_IMAGE_SAMPLER
-        w13.pImageInfo = &b13;
-
-        DescriptorSet::Update({w0, w1, w2, w3, w4, w5, w6, w7, /*w8,tempdisabled*/ w12, w13});
+            // --- Composite set: only static bindings ---
+            auto compositeWrites = DescriptorSetWriteBuilder(*compositeSet_[i])
+                                       .Image(10, AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                       .Buffer(21, cloudUBO_->GetBuffer())
+                                       .CombinedImageSampler(27, AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetView(),
+                                                             SharedSamplers::GetLinearClampSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                       .Buffer(29, atmoUBO_->GetBuffer())
+                                       .Build();
+            compositeWrites.Apply();
+            BindSharedCameraData(31, 1, compositeSet_[i].get());
+        }
     }
 
     void CloudPipelinePass::SetFrameData(const Mat4 &invProj,
@@ -220,33 +205,29 @@ namespace SF::Engine
                                          const Vec3 &cameraPos,
                                          const Vec3 &planetPos,
                                          const Vec3 &sunDir,
-                                         glm::vec2 screenSize)
+                                         Vec2 screenSize)
     {
         const Vec3 sd = glm::length(sunDir) > 1e-6f
-                                 ? normalize(sunDir)
-                                 : Vec3(0.577f, 0.577f, 0.577f);
+                            ? normalize(sunDir)
+                            : Vec3(0.577f, 0.577f, 0.577f);
         cachedSunDir_ = sd;
 
-        const float ruToM = params_.bottomRadius / params_.renderUnitRadius;
+        const float ruToM = data_.params.bottomRadius / data_.params.renderUnitRadius;
         const Vec3 pos = (cameraPos - planetPos) * ruToM;
 
-        frameData_.invProj = invProj;
-        frameData_.invView = invView;
-        frameData_.cameraPos = Vec4(pos, 0.0f);
-        frameData_.planetPos = Vec4(0.0f);
-        frameData_.sunDir = Vec4(sd, params_.sunIntensity);
-        frameData_.bottomRadius = params_.bottomRadius;
-        frameData_.topRadius = params_.topRadius;
-        frameData_.renderUnitRadius = params_.renderUnitRadius;
-        frameData_.screenSize = screenSize;
-        frameData_.sunCol = Vec4(1);
+        data_.ubo.invProj = invProj;
+        data_.ubo.invView = invView;
+        data_.ubo.cameraPos = Vec4(pos, 0.0f);
+        data_.ubo.planetPos = Vec4(0.0f);
+        data_.ubo.sunDir = Vec4(sd, data_.params.sunIntensity);
+        data_.ubo.bottomRadius = data_.params.bottomRadius;
+        data_.ubo.topRadius = data_.params.topRadius;
+        data_.ubo.renderUnitRadius = data_.params.renderUnitRadius;
+        data_.ubo.screenSize = screenSize;
+        data_.ubo.sunCol = Vec4(1);
     }
 
     void CloudPipelinePass::PreRender(const CommandBuffer &cmd)
-    {
-    }
-
-    void CloudPipelinePass::Render(const CommandBuffer &cmd)
     {
         if (!enabled)
             return;
@@ -257,46 +238,311 @@ namespace SF::Engine
         auto *depthImg = dynamic_cast<const ImageDepth *>(depthDesc);
         auto *colorImg = dynamic_cast<const Image2d *>(colorDesc);
         if (!depthImg || !colorImg)
-            return; // not ready yet, e.g. first frame
+            return;
 
+        const uint32_t cur = frameSlot_ % kFramesInFlight;
+        const uint32_t hist = (frameSlot_ + kFramesInFlight - 1) % kFramesInFlight;
+        const bool hasHistory = (framesSinceStart_ > 0);
 
-        VkImageView depthView = depthImg->GetView();
-        VkImageView colorView = colorImg->GetView();
-        VkImageView lastDepthView = lastDepthImg_ ? lastDepthImg_->GetView() : VK_NULL_HANDLE;
-        VkImageView lastColorView = lastColorImg_ ? lastColorImg_->GetView() : VK_NULL_HANDLE;
-
-
-        if (depthView != lastDepthView || colorView != lastColorView)
+        // ===================================================================
+        // Transition scene color to GENERAL for compute write
+        // ===================================================================
         {
-            lastDepthImg_ = depthImg;
-            lastColorImg_ = colorImg;
+            VkImageLayout currentColorLayout = colorImg->GetLayout();
+            if (currentColorLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+            {
+                Image::InsertImageMemoryBarrier(cmd, const_cast<Image2d *>(colorImg)->GetImage(),
+                                                0, VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT,
+                                                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+                                                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+            }
+            else
+            {
+                Image::InsertImageMemoryBarrier(cmd, const_cast<Image2d *>(colorImg)->GetImage(),
+                                                VK_ACCESS_SHADER_READ_BIT,
+                                                VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT,
+                                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+                                                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+            }
+        }
 
-            VkDescriptorImageInfo dInfo{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+        // ===================================================================
+        // Update composite set: scene color/depth targets
+        // ===================================================================
+        {
+            VkDescriptorImageInfo colorInfo{};
+            colorInfo.sampler = VK_NULL_HANDLE;
+            colorInfo.imageView = colorImg->GetView();
+            colorInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-            VkWriteDescriptorSet w9{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-            w9.dstSet = descSet_->GetDescriptorSet();
-            w9.dstBinding = 9;
-            w9.descriptorCount = 1;
-            w9.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            w9.pImageInfo = &dInfo;
+            VkDescriptorImageInfo depthInfo{};
+            depthInfo.sampler = VK_NULL_HANDLE;
+            depthInfo.imageView = depthImg->GetView();
+            depthInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
-            DescriptorSet::Update({w9});
+            VkWriteDescriptorSet writes[2]{};
+            writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[0].dstSet = compositeSet_[cur]->GetDescriptorSet();
+            writes[0].dstBinding = 0;
+            writes[0].descriptorCount = 1;
+            writes[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            writes[0].pImageInfo = &colorInfo;
+
+            writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[1].dstSet = compositeSet_[cur]->GetDescriptorSet();
+            writes[1].dstBinding = 4;
+            writes[1].descriptorCount = 1;
+            writes[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            writes[1].pImageInfo = &depthInfo;
+
+            DescriptorSet::Update({writes[0], writes[1]});
         }
 
         totalTime_ += 0.016f;
-        atmoUBO_->Update(frameData_);
-        UpdateCloudUBO();   
-        pipeline_->BindPipeline(cmd);
-        descSet_->BindDescriptor(cmd);
-        vkCmdDraw(cmd, 3, 1, 0, 0);
+        atmoUBO_->Update(data_.ubo);
+        UpdateCloudUBO();
+
+        auto qext = cloudRenderRT_->GetExtent();
+        auto fext = colorImg->GetExtent();
+
+        // ===================================================================
+        // Raymarch pass
+        // ===================================================================
+        {
+            Image2d *quarterImages[3] = {cloudRenderRT_.get(), cloudDepthRT_.get(), cloudFogRT_.get()};
+
+            // Pre-write barriers: transition to GENERAL
+            for (int i = 0; i < 3; ++i)
+            {
+                VkImageLayout currentLayout = quarterImages[i]->GetLayout();
+
+                Image::InsertImageMemoryBarrier(cmd, quarterImages[i]->GetImage(),
+                                                VK_ACCESS_SHADER_READ_BIT,
+                                                VK_ACCESS_SHADER_WRITE_BIT,
+                                                currentLayout,
+                                                VK_IMAGE_LAYOUT_GENERAL,
+                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+                quarterImages[i]->SetLayout(VK_IMAGE_LAYOUT_GENERAL);
+            }
+
+            // Dispatch raymarch
+            raymarchPipeline_->BindPipeline(cmd);
+            raymarchSet_->BindDescriptor(cmd);
+            SharedSamplers::BindSharedSamplerSet(cmd, raymarchPipeline_->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE);
+            raymarchPipeline_->CmdRender(cmd, UVec2(qext.x, qext.y), /*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1);
+
+            // Post-write barriers: transition to SHADER_READ_ONLY_OPTIMAL
+            for (int i = 0; i < 3; ++i)
+            {
+                Image::InsertImageMemoryBarrier(cmd, quarterImages[i]->GetImage(),
+                                                VK_ACCESS_SHADER_WRITE_BIT,
+                                                VK_ACCESS_SHADER_READ_BIT,
+                                                VK_IMAGE_LAYOUT_GENERAL,
+                                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+                quarterImages[i]->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
+
+            // Global memory barrier to ensure writes are visible
+            VkMemoryBarrier memoryBarrier{};
+            memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+            memoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+            memoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            vkCmdPipelineBarrier(cmd,
+                                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
+        }
+
+        // ===================================================================
+        // Transition reconstruction targets to GENERAL for writing
+        // ===================================================================
+        {
+            Image2d *reconTargets[3] = {reconColor_[cur].get(), reconDepth_[cur].get(), reconFog_[cur].get()};
+            for (int i = 0; i < 3; ++i)
+            {
+                VkImageLayout currentLayout = reconTargets[i]->GetLayout();
+
+                Image::InsertImageMemoryBarrier(cmd, reconTargets[i]->GetImage(),
+                                                VK_ACCESS_SHADER_READ_BIT,
+                                                VK_ACCESS_SHADER_WRITE_BIT,
+                                                currentLayout,
+                                                VK_IMAGE_LAYOUT_GENERAL,
+                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+                reconTargets[i]->SetLayout(VK_IMAGE_LAYOUT_GENERAL);
+            }
+        }
+
+        // ===================================================================
+        // Update reconstruction set descriptor
+        // ===================================================================
+        {
+            VkDescriptorImageInfo imageInfos[9]{};
+            VkDescriptorBufferInfo bufferInfos[2]{};
+            VkWriteDescriptorSet writes[11]{};
+            uint32_t writeCount = 0;
+
+            auto addImageWrite = [&](uint32_t binding, VkImageView view, VkImageLayout layout, VkDescriptorType type)
+            {
+                imageInfos[writeCount].sampler = VK_NULL_HANDLE;
+                imageInfos[writeCount].imageView = view;
+                imageInfos[writeCount].imageLayout = layout;
+
+                writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writes[writeCount].dstSet = reconstructSet_[cur]->GetDescriptorSet();
+                writes[writeCount].dstBinding = binding;
+                writes[writeCount].descriptorCount = 1;
+                writes[writeCount].descriptorType = type;
+                writes[writeCount].pImageInfo = &imageInfos[writeCount];
+                writeCount++;
+            };
+
+            auto addBufferWrite = [&](uint32_t binding, VkBuffer buffer)
+            {
+                uint32_t bufIdx = writeCount - 9;
+                bufferInfos[bufIdx].buffer = buffer;
+                bufferInfos[bufIdx].offset = 0;
+                bufferInfos[bufIdx].range = VK_WHOLE_SIZE;
+
+                writes[writeCount].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                writes[writeCount].dstSet = reconstructSet_[cur]->GetDescriptorSet();
+                writes[writeCount].dstBinding = binding;
+                writes[writeCount].descriptorCount = 1;
+                writes[writeCount].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                writes[writeCount].pBufferInfo = &bufferInfos[bufIdx];
+                writeCount++;
+            };
+
+            // Static read-only inputs (quarter-res targets are in SHADER_READ_ONLY_OPTIMAL)
+            addImageWrite(3, cloudRenderRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+            addImageWrite(15, cloudDepthRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+            addImageWrite(23, cloudFogRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+
+            // Current frame write targets (in GENERAL layout)
+            addImageWrite(12, reconColor_[cur]->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+            addImageWrite(16, reconDepth_[cur]->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+            addImageWrite(24, reconFog_[cur]->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+
+            // History read bindings
+            if (hasHistory)
+            {
+                // Valid history: use previous frame's reconstruction outputs
+                addImageWrite(18, reconColor_[hist]->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+                addImageWrite(19, reconDepth_[hist]->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+                addImageWrite(26, reconFog_[hist]->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+            }
+            else
+            {
+                // Frame 0: use dummy texture to avoid layout conflict
+                // (current frame's images are in GENERAL, can't be read as SHADER_READ_ONLY_OPTIMAL)
+                addImageWrite(18, dummyTexture_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+                addImageWrite(19, dummyTexture_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+                addImageWrite(26, dummyTexture_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+            }
+
+            // Uniform buffers
+            addBufferWrite(21, cloudUBO_->GetBuffer());
+            addBufferWrite(29, atmoUBO_->GetBuffer());
+
+            DescriptorSet::Update(std::vector<VkWriteDescriptorSet>(writes, writes + writeCount));
+        }
+
+        // ===================================================================
+        // Update composite set to read reconstruction outputs
+        // ===================================================================
+        {
+            VkDescriptorImageInfo imageInfos[2]{};
+
+            imageInfos[0].sampler = VK_NULL_HANDLE;
+            imageInfos[0].imageView = reconColor_[cur]->GetView();
+            imageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            imageInfos[1].sampler = VK_NULL_HANDLE;
+            imageInfos[1].imageView = reconFog_[cur]->GetView();
+            imageInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            VkWriteDescriptorSet writes[2]{};
+            writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[0].dstSet = compositeSet_[cur]->GetDescriptorSet();
+            writes[0].dstBinding = 13;
+            writes[0].descriptorCount = 1;
+            writes[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            writes[0].pImageInfo = &imageInfos[0];
+
+            writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[1].dstSet = compositeSet_[cur]->GetDescriptorSet();
+            writes[1].dstBinding = 25;
+            writes[1].descriptorCount = 1;
+            writes[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            writes[1].pImageInfo = &imageInfos[1];
+
+            DescriptorSet::Update({writes[0], writes[1]});
+        }
+
+        // ===================================================================
+        // Reconstruct pass
+        // ===================================================================
+        reconstructPipeline_->BindPipeline(cmd);
+        reconstructSet_[cur]->BindDescriptor(cmd);
+        SharedSamplers::BindSharedSamplerSet(cmd, reconstructPipeline_->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE);
+        reconstructPipeline_->CmdRender(cmd, UVec3(fext.x, fext.y, fext.z), /*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1);
+
+        // Transition reconstruction outputs to SHADER_READ_ONLY_OPTIMAL
+        {
+            Image2d *reconImages[3] = {reconColor_[cur].get(), reconDepth_[cur].get(), reconFog_[cur].get()};
+            for (int i = 0; i < 3; ++i)
+            {
+                Image::InsertImageMemoryBarrier(cmd, reconImages[i]->GetImage(),
+                                                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                                VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                                VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+                reconImages[i]->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
+        }
+
+        // ===================================================================
+        // Composite pass
+        // ===================================================================
+        compositePipeline_->BindPipeline(cmd);
+        compositeSet_[cur]->BindDescriptor(cmd);
+        SharedSamplers::BindSharedSamplerSet(cmd, compositePipeline_->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE);
+        compositePipeline_->CmdRender(cmd, UVec2(fext.x, fext.y), /*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1);
+
+        // Transition scene color back to SHADER_READ_ONLY_OPTIMAL
+        Image::InsertImageMemoryBarrier(cmd, const_cast<Image2d *>(colorImg)->GetImage(),
+                                        VK_ACCESS_SHADER_WRITE_BIT,
+                                        VK_ACCESS_SHADER_READ_BIT,
+                                        VK_IMAGE_LAYOUT_GENERAL,
+                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                        VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+        const_cast<Image2d *>(colorImg)->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        ++frameSlot_;
+        ++framesSinceStart_;
+    }
+
+    void CloudPipelinePass::Render(const CommandBuffer &cmd)
+    {
     }
 
     void CloudPipelinePass::UpdateCloudUBO()
     {
         CloudUBO ubo{};
 
-        ubo.cloudBottomRadius = params_.bottomRadius + minAlt;
-        ubo.cloudTopRadius = params_.bottomRadius + maxAlt;
+        ubo.cloudBottomRadius = data_.params.bottomRadius + minAlt;
+        ubo.cloudTopRadius = data_.params.bottomRadius + maxAlt;
         ubo.stepCount = static_cast<float>(marchSteps);
         ubo.lightStepCount = static_cast<float>(lightMarchSteps);
 
@@ -308,6 +554,9 @@ namespace SF::Engine
         ubo.cloudWeatherUVScale = cloudWeatherUVScale;
 
         ubo.time = totalTime_;
+        ubo.Wind = Wind;
+        ubo.Speed = Speed;
+        ubo.unused = unused;
 
         frameCounter_ = (frameCounter_ + 1) % 256;
         ubo.frameIndex = static_cast<int>(frameCounter_);
@@ -319,6 +568,20 @@ namespace SF::Engine
     {
         if (!isWindowOpen)
             return;
+
+        ImGui::Begin("Cloud Debug", &isWindowOpen);
+        ImGui::Checkbox("Enabled", &enabled);
+        ImGui::SliderFloat("Min Altitude", &minAlt, 1000.0f, 50000.0f);
+        ImGui::SliderFloat("Max Altitude", &maxAlt, 1000.0f, 50000.0f);
+        ImGui::SliderFloat("Density Scale", &densityScale, 0.0f, 10.0f);
+        ImGui::SliderFloat("Coverage", &coverage, 0.0f, 1.0f);
+        ImGui::SliderInt("March Steps", &marchSteps, 4, 128);
+        ImGui::SliderInt("Light March Steps", &lightMarchSteps, 2, 32);
+        ImGui::SliderFloat("Base Noise Scale", &cloudBaseNoiseScale, 0.1f, 10.0f);
+        ImGui::SliderFloat("Detail Scale", &cloudDetailScale, 0.1f, 10.0f);
+        ImGui::SliderFloat("Curl Noise Scale", &cloudCurlNoiseScale, 0.0f, 5.0f);
+        ImGui::SliderFloat("Weather UV Scale", &cloudWeatherUVScale, 0.1f, 10.0f);
+        ImGui::End();
     }
 
 } // namespace SF::Engine
