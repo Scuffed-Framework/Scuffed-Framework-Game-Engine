@@ -76,6 +76,11 @@ namespace SF::Engine
                 atmoController->AddAtmosphere("Earth", earthData, earthPos);
 
                 cloudPass_ = AddPipelinePass<CloudPipelinePass>(Pipeline::Stage{1, 0}, earthData);
+
+                // disable cloud pass cuz its fucked
+                cloudPass_->SetEnabled(false);
+                // disable cloud pass cuz its fucked
+
                 AddPipelinePass<FullscreenPass>(Pipeline::Stage{1, 0}, "hdr", "Shaders/FullscreenPass.shader");
             }
 
