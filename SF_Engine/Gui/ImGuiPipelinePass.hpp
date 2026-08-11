@@ -10,9 +10,9 @@
 // Always use the GLFW backend : it auto-installs all input callbacks and works
 // on every platform (including Windows). The Win32 backend is only needed when
 // GLFW is not in use.
-#include <ImGui/ocornut/imgui.h>
-#include <ImGui/ocornut/imgui_impl_glfw.h>
-#include <ImGui/ocornut/imgui_impl_vulkan.h>
+#include <Gui/ocornut/imgui.h>
+#include <Gui/ocornut/imgui_impl_glfw.h>
+#include <Gui/ocornut/imgui_impl_vulkan.h>
 
 #include <functional>
 
