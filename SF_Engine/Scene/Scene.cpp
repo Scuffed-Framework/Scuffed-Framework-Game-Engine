@@ -1,15 +1,15 @@
 #include "Scene.hpp"
-#include <Graphics/Renderer.hpp>
-#include <Graphics/Stage.hpp>
-#include <Graphics/Mesh/MeshFactory.hpp>
-#include <Graphics/Windows/WindowManager.hpp>
+#include <Rendering/Renderer.hpp>
+#include <Rendering/Stage.hpp>
+#include <Rendering/Mesh/MeshFactory.hpp>
+#include <Rendering/Windows/WindowManager.hpp>
 #include <Gui/ImGuiPipelinePass.hpp>
-#include <Graphics/Lighting/Lighting.hpp>
-#include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
-#include <Graphics/Lighting/LightingTypes.hpp>
+#include <Rendering/Lighting/Lighting.hpp>
+#include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
+#include <Rendering/Lighting/LightingTypes.hpp>
 #include <Scene/Scene.hpp>
 
-#include <Graphics/PipelinePassManager.hpp>
+#include <Rendering/PipelinePassManager.hpp>
 
 #include <Math/BasicMath.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,9 +17,9 @@
 #include <string>
 
 #include <Scene/SceneRenderer.hpp>
-#include <Graphics/RenderSystem.hpp>
+#include <Rendering/RenderSystem.hpp>
 #include <Bitmaps/Bitmap.hpp>
-#include <Graphics/Images/ImageDepth.hpp>
+#include <Rendering/Images/ImageDepth.hpp>
 
 #include <Scene/SceneManager.hpp>
 

@@ -1,16 +1,16 @@
 #pragma once
-#include <Graphics/Renderer.hpp>
-#include <Graphics/Stage.hpp>
-#include <Graphics/Lighting/ClusterCullPipelinePass.hpp>
-#include <Graphics/Lighting/LitMeshPipelinePass.hpp>
-#include <Graphics/Mesh/Mesh.hpp>
-#include <Graphics/Images/Image2d.hpp>
-#include <Graphics/Stage.hpp>
-#include <Graphics/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
-#include <Graphics/Visuals/sfSkies/AtmosphereController.hpp>
+#include <Rendering/Renderer.hpp>
+#include <Rendering/Stage.hpp>
+#include <Rendering/Lighting/ClusterCullPipelinePass.hpp>
+#include <Rendering/Lighting/LitMeshPipelinePass.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <Rendering/Images/Image2d.hpp>
+#include <Rendering/Stage.hpp>
+#include <Rendering/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
+#include <Rendering/Visuals/sfSkies/AtmosphereController.hpp>
 
-#include <Graphics/PipelinePassInit.hpp>
-#include <Graphics/RenderPass/FullscreenPass.hpp>
+#include <Rendering/PipelinePassInit.hpp>
+#include <Rendering/RenderPass/FullscreenPass.hpp>
 
 namespace SF::Engine
 {

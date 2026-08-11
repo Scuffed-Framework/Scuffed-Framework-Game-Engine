@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
 #include <memory>
-#include <Graphics/Mesh/Mesh.hpp>
-#include <Graphics/Lighting/LightingTypes.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <Rendering/Lighting/LightingTypes.hpp>
 #include <Math/Transform.hpp>
-#include <Graphics/Lighting/Light.hpp>
-#include <Graphics/Lighting/LitMeshPipelinePass.hpp>
+#include <Rendering/Lighting/Light.hpp>
+#include <Rendering/Lighting/LitMeshPipelinePass.hpp>
 
 namespace SF::Engine
 {

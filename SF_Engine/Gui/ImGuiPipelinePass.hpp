@@ -4,8 +4,8 @@
 #define IMGUI_IMPL_VULKAN_NO_PROTOTYPES 
 #include <volk.h>
 
-#include <Graphics/PipelinePassManager.hpp>
-#include <Graphics/Commands/CommandBuffer.hpp>
+#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/Commands/CommandBuffer.hpp>
 
 // Always use the GLFW backend : it auto-installs all input callbacks and works
 // on every platform (including Windows). The Win32 backend is only needed when

@@ -5,18 +5,18 @@
 #include <Entity/EntityHolder.hpp>
 #include "SystemHolder.hpp"
 
-#include <Graphics/Mesh/Mesh.hpp>
-#include <Graphics/Lighting/LitMeshPipelinePass.hpp>
-#include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <Rendering/Lighting/LitMeshPipelinePass.hpp>
+#include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 
 #include <XML/XMLModule.hpp>
 #include "SceneSerialization.hpp"
 #include "EngineUI.hpp"
 #include <Scene/Types.hpp>
 #include <Scene/SceneRenderer.hpp>
-#include <Graphics/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
+#include <Rendering/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
 
-#include <Graphics/Images/Image2d.hpp>
+#include <Rendering/Images/Image2d.hpp>
 #include <Controllers/CameraController.hpp>
 
 namespace SF::Engine

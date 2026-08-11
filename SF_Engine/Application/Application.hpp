@@ -46,8 +46,8 @@
 #include <Platform/PlatformIncludes.hpp>
 
 #include <Scene/SceneManager.hpp>
-#include <Graphics/Windows/WindowManager.hpp>
-#include <Graphics/RenderSystem.hpp>
+#include <Rendering/Windows/WindowManager.hpp>
+#include <Rendering/RenderSystem.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Engine/InitGame/GameInfo.hpp>
 #include <TemplateLibrary/TypeTraits.hpp>

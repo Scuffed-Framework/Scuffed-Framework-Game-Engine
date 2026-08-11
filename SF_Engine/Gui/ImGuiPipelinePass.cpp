@@ -1,10 +1,10 @@
 #include "ImGuiPipelinePass.hpp"
 
-#include <Graphics/RenderSystem.hpp>
-#include <Graphics/Windows/WindowManager.hpp>
-#include <Graphics/Commands/CommandBuffer.hpp>
-#include <Graphics/RenderPass/RenderPass.hpp>
-#include <Graphics/Stage.hpp>
+#include <Rendering/RenderSystem.hpp>
+#include <Rendering/Windows/WindowManager.hpp>
+#include <Rendering/Commands/CommandBuffer.hpp>
+#include <Rendering/RenderPass/RenderPass.hpp>
+#include <Rendering/Stage.hpp>
 
 #include <GLFW/glfw3.h>
 
@@ -66,7 +66,7 @@ namespace SF::Engine
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
         ImGui::StyleColorsDark();
 
         if (!ImGui_ImplGlfw_InitForVulkan(glfwWindow, /*install_callbacks=*/false))
@@ -160,8 +160,9 @@ namespace SF::Engine
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        ImGui::DockSpaceOverViewport(0u, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar);
         BuildUI();
-
+        
         ImGui::Render();
         ImDrawData *drawData = ImGui::GetDrawData();
         if (drawData && drawData->TotalVtxCount > 0)

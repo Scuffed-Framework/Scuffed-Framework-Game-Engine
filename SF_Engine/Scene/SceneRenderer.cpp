@@ -1,8 +1,8 @@
 #include "SceneRenderer.hpp"
-#include <Graphics/RenderSystem.hpp>
-#include <Graphics/Windows/WindowManager.hpp>
+#include <Rendering/RenderSystem.hpp>
+#include <Rendering/Windows/WindowManager.hpp>
 #include <Gui/ImGuiPipelinePass.hpp>
-#include <Graphics/PipelinePassManager.hpp>
+#include <Rendering/PipelinePassManager.hpp>
 #include <Gui/UIRegistry.hpp>
 #include <Scene/Scene.hpp>
 #include <glm/gtc/matrix_transform.hpp>

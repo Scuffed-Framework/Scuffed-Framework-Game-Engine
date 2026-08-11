@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Graphics/Windows/Window.hpp>
+#include <Rendering/Windows/Window.hpp>
 #include <Math/BasicMath.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>

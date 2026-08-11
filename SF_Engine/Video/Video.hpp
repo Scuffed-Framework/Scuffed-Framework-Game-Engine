@@ -2,7 +2,7 @@
 #include <Engine/Module.hpp>
 #include <volk.h>
 #include <vulkan/vulkan_video.hpp
-#include <Graphics/RenderSystem.hpp>
+#include <Rendering/RenderSystem.hpp>
 
 namespace SF::Engine
 {

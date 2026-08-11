@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Engine/Engine.hpp>
-#include <Graphics/RenderSystem.hpp>
+#include <Rendering/RenderSystem.hpp>
 #include <TemplateLibrary/DynamicArray.hpp>
 #include "Scene.hpp"
 

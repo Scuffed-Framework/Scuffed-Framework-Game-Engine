@@ -5,8 +5,8 @@
 #include <Physics/Frustum.hpp>
 #include <Physics/Ray.hpp>
 #include <Math/Math.hpp>
-#include <Graphics/Windows/Window.hpp>
-#include <Graphics/Buffers/UniformBuffer.hpp>
+#include <Rendering/Windows/Window.hpp>
+#include <Rendering/Buffers/UniformBuffer.hpp>
 
 namespace SF::Engine
 {

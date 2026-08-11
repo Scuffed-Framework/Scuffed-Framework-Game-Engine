@@ -10381,7 +10381,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
     {
         if (ImGui::BeginTabItem("Primitives"))
         {
-            IMGUI_DEMO_MARKER("Examples/Custom rendering/Primitives");
+            IMGUI_DEMO_MARKER("Examples/Custom Rendering/Primitives");
             ImGui::PushItemWidth(-ImGui::GetFontSize() * 15);
             ImGui::PushItemFlag(ImGuiItemFlags_LiveEditOnInput, true);
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -10511,7 +10511,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
 
         if (ImGui::BeginTabItem("Canvas"))
         {
-            IMGUI_DEMO_MARKER("Examples/Custom rendering/Canvas");
+            IMGUI_DEMO_MARKER("Examples/Custom Rendering/Canvas");
             static ImVector<ImVec2> points;
             static ImVec2 scrolling(0.0f, 0.0f);
             static bool opt_enable_grid = true;
@@ -10609,7 +10609,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
 
         if (ImGui::BeginTabItem("BG/FG draw lists"))
         {
-            IMGUI_DEMO_MARKER("Examples/Custom rendering/BG & FG draw lists");
+            IMGUI_DEMO_MARKER("Examples/Custom Rendering/BG & FG draw lists");
             static bool draw_bg = true;
             static bool draw_fg = true;
             ImGui::Checkbox("Draw in Background draw list", &draw_bg);
@@ -10631,7 +10631,7 @@ static void ShowExampleAppCustomRendering(bool* p_open)
         // but you can also instantiate your own ImDrawListSplitter if you need to nest them.
         if (ImGui::BeginTabItem("Draw Channels"))
         {
-            IMGUI_DEMO_MARKER("Examples/Custom rendering/Draw Channels");
+            IMGUI_DEMO_MARKER("Examples/Custom Rendering/Draw Channels");
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             {
                 ImGui::Text("Blue shape is drawn first: appears in back");

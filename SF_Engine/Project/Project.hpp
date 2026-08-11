@@ -6,7 +6,7 @@
 #include <Engine/Module.hpp>
 #include <Gui/UIRegistry.hpp>
 #include <Filesystem/ImGuiFileDialog.hpp>
-#include <Graphics/Images/Image2d.hpp>
+#include <Rendering/Images/Image2d.hpp>
 
 namespace SF::Engine
 {

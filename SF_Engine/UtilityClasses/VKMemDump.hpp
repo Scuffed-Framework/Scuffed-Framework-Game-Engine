@@ -31,7 +31,7 @@
 #include <string_view>
 #include <vector>
 
-#include <Graphics/RenderSystem.hpp>
+#include <Rendering/RenderSystem.hpp>
 #include <Engine/Engine.hpp>
 
 #ifdef VK_DUMP_STB_IMAGE_WRITE
