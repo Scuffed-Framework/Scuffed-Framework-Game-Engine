@@ -1,6 +1,6 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImGuiDefault.hpp"
-#include <ImGui/ImGuizmoIncludes.hpp>
+#include <Gui/ImGuizmoIncludes.hpp>
 
 namespace SF::Engine
 {

@@ -19,12 +19,12 @@ namespace SF::Engine
     {
         Mat4 invProj;
         Mat4 invView;
-        Vec4 cameraPos;    // .xyz = viewPos in metres (camera - planet centre)
-        Vec4 planetPos;    // .xyz = planet centre (always vec3(0) in shader convention)
-        Vec4 sunDir;       // .xyz = toward sun (unit vector), .w = sunIntensity
-        float bottomRadius;     // metres
-        float topRadius;        // metres
-        float renderUnitRadius; // unused by shader, kept for UBO size alignment
+        Vec4 cameraPos;
+        Vec4 planetPos;
+        Vec4 sunDir;
+        float bottomRadius;
+        float topRadius;
+        float renderUnitRadius;
         Vec2 screenSize;
         Vec3 sunCol;
         Vec3 UnUsed = Vec3(0);

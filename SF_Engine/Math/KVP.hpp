@@ -41,7 +41,7 @@ namespace SF::Engine
     struct KeyValuePair
     {
         Key key;
-        Value value;
+        Value value = static_cast<Value>(~Value{0});
 
         // Default constructor
         KeyValuePair() = default;

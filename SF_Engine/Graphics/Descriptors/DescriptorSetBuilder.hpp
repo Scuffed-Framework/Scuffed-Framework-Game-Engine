@@ -20,6 +20,13 @@ namespace SF::Engine
         }
     };
 
+
+    struct SamplerDescriptorType
+    {
+        VkDescriptorType Combined = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        VkDescriptorType JustSampler = VK_DESCRIPTOR_TYPE_SAMPLER;
+    };
+
     class DescriptorSetWriteBuilder : public BuilderPattern<DescriptorSetWriteBuilder, DescriptorSetWrites>
     {
     public:
@@ -61,9 +68,9 @@ namespace SF::Engine
             return ImageImpl(binding, view, layout, sampler, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         }
 
-        DescriptorSetWriteBuilder &Sampler(uint32_t binding, VkSampler sampler)
+        DescriptorSetWriteBuilder &Sampler(uint32_t binding, VkImageView view, VkSampler sampler, VkImageLayout layout)
         {
-            return ImageImpl(binding, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED, sampler,
+            return ImageImpl(binding, view, layout, sampler,
                               VK_DESCRIPTOR_TYPE_SAMPLER);
         }
 

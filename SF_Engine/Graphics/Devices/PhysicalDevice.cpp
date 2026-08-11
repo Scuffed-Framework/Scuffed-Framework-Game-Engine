@@ -11,9 +11,9 @@ namespace SF::Engine
 {
     static const std::vector<VkSampleCountFlagBits> STAGE_FLAG_BITS = {
         VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_16_BIT,
-        VK_SAMPLE_COUNT_8_BIT,  VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT};
+        VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_2_BIT};
 
-    PhysicalDevice::PhysicalDevice(const Instance& instance) : instance(instance)
+    PhysicalDevice::PhysicalDevice(const Instance &instance) : instance(instance)
     {
         uint32_t physicalDeviceCount;
         vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
@@ -25,7 +25,8 @@ namespace SF::Engine
         vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
 
         physicalDevice = ChoosePhysicalDevice(physicalDevices);
-        if (!physicalDevice) throw std::runtime_error("Failed to find a suitable GPU");
+        if (!physicalDevice)
+            throw std::runtime_error("Failed to find a suitable GPU");
 
         // Query all properties using Vulkan 1.1+ feature chain
         QueryDeviceProperties();
@@ -54,12 +55,14 @@ namespace SF::Engine
         vulkan11Properties.pNext = &vulkan12Properties;
 
         // Query base properties with chain
-        VkPhysicalDeviceProperties2 properties2 = {};
         properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
         properties2.pNext = &vulkan11Properties;
 
         vkGetPhysicalDeviceProperties2(physicalDevice, &properties2);
         properties = properties2.properties;
+
+        indexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES;
+        indexingProperties.pNext = 0;
     }
 
     void PhysicalDevice::QueryDeviceFeatures()
@@ -85,25 +88,26 @@ namespace SF::Engine
     }
 
     VkPhysicalDevice PhysicalDevice::ChoosePhysicalDevice(
-        const std::vector<VkPhysicalDevice>& devices)
+        const std::vector<VkPhysicalDevice> &devices)
     {
         // Store devices with their scores
         std::multimap<uint32_t, VkPhysicalDevice> rankedDevices;
 
-        for (const auto& device : devices)
+        for (const auto &device : devices)
         {
             uint32_t score = EnumeratePhysicalDevice(device);
-            if (score > 0)  // Only consider suitable devices
+            if (score > 0) // Only consider suitable devices
                 rankedDevices.insert({score, device});
         }
 
-        if (rankedDevices.empty()) return VK_NULL_HANDLE;
+        if (rankedDevices.empty())
+            return VK_NULL_HANDLE;
 
         // Return the highest scored device
         return rankedDevices.rbegin()->second;
     }
 
-    uint32_t PhysicalDevice::EnumeratePhysicalDevice(const VkPhysicalDevice& device)
+    uint32_t PhysicalDevice::EnumeratePhysicalDevice(const VkPhysicalDevice &device)
     {
         // Check required extensions
         uint32_t extensionPropertyCount;
@@ -113,10 +117,10 @@ namespace SF::Engine
                                              extensionProperties.data());
 
         // Verify all required extensions are present
-        for (const char* requiredExtension : LogicalDevice::DeviceExtensions)
+        for (const char *requiredExtension : LogicalDevice::DeviceExtensions)
         {
             bool found = false;
-            for (const auto& availableExtension : extensionProperties)
+            for (const auto &availableExtension : extensionProperties)
             {
                 if (strcmp(requiredExtension, availableExtension.extensionName) == 0)
                 {
@@ -125,7 +129,8 @@ namespace SF::Engine
                 }
             }
 
-            if (!found) return 0;  // Missing required extension
+            if (!found)
+                return 0; // Missing required extension
         }
 
         // Get device properties and features
@@ -156,21 +161,21 @@ namespace SF::Engine
         // Device type scoring (higher is better)
         switch (deviceProperties.deviceType)
         {
-            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-                score += 10000;  // Dedicated GPU is best
-                break;
-            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-                score += 1000;  // Integrated GPU is second best
-                break;
-            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-                score += 500;  // Virtual GPU is acceptable
-                break;
-            case VK_PHYSICAL_DEVICE_TYPE_CPU:
-                score += 100;  // CPU rendering is last resort
-                break;
-            default:
-                score += 50;
-                break;
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+            score += 10000; // Dedicated GPU is best
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+            score += 1000; // Integrated GPU is second best
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+            score += 500; // Virtual GPU is acceptable
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_CPU:
+            score += 100; // CPU rendering is last resort
+            break;
+        default:
+            score += 50;
+            break;
         }
 
         // Vulkan API version bonus
@@ -180,19 +185,24 @@ namespace SF::Engine
         if (apiMajor >= 1)
         {
             if (apiMinor >= 3)
-                score += 300;  // Vulkan 1.3+
+                score += 300; // Vulkan 1.3+
             else if (apiMinor >= 2)
-                score += 200;  // Vulkan 1.2
+                score += 200; // Vulkan 1.2
             else if (apiMinor >= 1)
-                score += 100;  // Vulkan 1.1
+                score += 100; // Vulkan 1.1
         }
 
         // Modern feature bonuses
-        if (vk12Features.timelineSemaphore) score += 50;
-        if (vk12Features.descriptorIndexing) score += 50;
-        if (vk12Features.bufferDeviceAddress) score += 50;
-        if (vk13Features.dynamicRendering) score += 50;
-        if (vk13Features.synchronization2) score += 50;
+        if (vk12Features.timelineSemaphore)
+            score += 50;
+        if (vk12Features.descriptorIndexing)
+            score += 50;
+        if (vk12Features.bufferDeviceAddress)
+            score += 50;
+        if (vk13Features.dynamicRendering)
+            score += 50;
+        if (vk13Features.synchronization2)
+            score += 50;
 
         // Memory size bonus (more VRAM is better)
         VkPhysicalDeviceMemoryProperties memProps;
@@ -212,14 +222,18 @@ namespace SF::Engine
         score += deviceProperties.limits.maxImageDimension2D / 1000;
 
         // Compute shader support bonus
-        if (deviceProperties.limits.maxComputeWorkGroupCount[0] > 0) score += 20;
+        if (deviceProperties.limits.maxComputeWorkGroupCount[0] > 0)
+            score += 20;
 
         // Geometry and tessellation shader support
-        if (deviceFeatures.geometryShader) score += 10;
-        if (deviceFeatures.tessellationShader) score += 10;
+        if (deviceFeatures.geometryShader)
+            score += 10;
+        if (deviceFeatures.tessellationShader)
+            score += 10;
 
         // Essential feature requirements
-        if (!deviceFeatures.samplerAnisotropy) score /= 2;  // Heavily penalize but don't disqualify
+        if (!deviceFeatures.samplerAnisotropy)
+            score /= 2; // Heavily penalize but don't disqualify
 
         return score;
     }
@@ -229,38 +243,39 @@ namespace SF::Engine
         auto counts = std::min(properties.limits.framebufferColorSampleCounts,
                                properties.limits.framebufferDepthSampleCounts);
 
-        for (const auto& sampleFlag : STAGE_FLAG_BITS)
+        for (const auto &sampleFlag : STAGE_FLAG_BITS)
         {
-            if (counts & sampleFlag) return sampleFlag;
+            if (counts & sampleFlag)
+                return sampleFlag;
         }
 
         return VK_SAMPLE_COUNT_1_BIT;
     }
 
     void PhysicalDevice::LogVulkanDevice(
-        const VkPhysicalDeviceProperties& deviceProperties,
-        const std::vector<VkExtensionProperties>& extensionProperties)
+        const VkPhysicalDeviceProperties &deviceProperties,
+        const std::vector<VkExtensionProperties> &extensionProperties)
     {
         std::stringstream ss;
 
         // Device type
         switch (deviceProperties.deviceType)
         {
-            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-                ss << "Integrated";
-                break;
-            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-                ss << "Discrete";
-                break;
-            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-                ss << "Virtual";
-                break;
-            case VK_PHYSICAL_DEVICE_TYPE_CPU:
-                ss << "CPU";
-                break;
-            default:
-                ss << "Other (" << deviceProperties.deviceType << ")";
-                break;
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+            ss << "Integrated";
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+            ss << "Discrete";
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+            ss << "Virtual";
+            break;
+        case VK_PHYSICAL_DEVICE_TYPE_CPU:
+            ss << "CPU";
+            break;
+        default:
+            ss << "Other (" << deviceProperties.deviceType << ")";
+            break;
         }
 
         ss << " Physical Device: " << deviceProperties.deviceID;
@@ -268,24 +283,24 @@ namespace SF::Engine
         // Vendor
         switch (deviceProperties.vendorID)
         {
-            case 0x8086:
-                ss << " \"Intel\"";
-                break;
-            case 0x10DE:
-                ss << " \"NVIDIA\"";
-                break;
-            case 0x1002:
-                ss << " \"AMD\"";
-                break;
-            case 0x13B5:
-                ss << " \"ARM\"";
-                break;
-            case 0x5143:
-                ss << " \"Qualcomm\"";
-                break;
-            default:
-                ss << " \"0x" << std::hex << deviceProperties.vendorID << std::dec << "\"";
-                break;
+        case 0x8086:
+            ss << " \"Intel\"";
+            break;
+        case 0x10DE:
+            ss << " \"NVIDIA\"";
+            break;
+        case 0x1002:
+            ss << " \"AMD\"";
+            break;
+        case 0x13B5:
+            ss << " \"ARM\"";
+            break;
+        case 0x5143:
+            ss << " \"Qualcomm\"";
+            break;
+        default:
+            ss << " \"0x" << std::hex << deviceProperties.vendorID << std::dec << "\"";
+            break;
         }
 
         ss << " \"" << deviceProperties.deviceName << "\"\n";
@@ -298,14 +313,14 @@ namespace SF::Engine
 
         // Driver Version (vendor-specific interpretation)
         ss << "Driver Version: ";
-        if (deviceProperties.vendorID == 0x10DE)  // NVIDIA
+        if (deviceProperties.vendorID == 0x10DE) // NVIDIA
         {
             ss << ((deviceProperties.driverVersion >> 22) & 0x3ff) << "."
                << ((deviceProperties.driverVersion >> 14) & 0xff) << "."
                << ((deviceProperties.driverVersion >> 6) & 0xff) << "."
                << (deviceProperties.driverVersion & 0x3f) << '\n';
         }
-        else  // Standard Vulkan version format
+        else // Standard Vulkan version format
         {
             ss << VK_VERSION_MAJOR(deviceProperties.driverVersion) << "."
                << VK_VERSION_MINOR(deviceProperties.driverVersion) << "."
@@ -316,7 +331,8 @@ namespace SF::Engine
         for (size_t i = 0; i < extensionProperties.size(); i++)
         {
             ss << extensionProperties[i].extensionName;
-            if (i < extensionProperties.size() - 1) ss << ", ";
+            if (i < extensionProperties.size() - 1)
+                ss << ", ";
         }
         ss << "\n\n";
 
@@ -338,27 +354,27 @@ namespace SF::Engine
 
         switch (msaaSamples)
         {
-            case VK_SAMPLE_COUNT_64_BIT:
-                ss << "64x";
-                break;
-            case VK_SAMPLE_COUNT_32_BIT:
-                ss << "32x";
-                break;
-            case VK_SAMPLE_COUNT_16_BIT:
-                ss << "16x";
-                break;
-            case VK_SAMPLE_COUNT_8_BIT:
-                ss << "8x";
-                break;
-            case VK_SAMPLE_COUNT_4_BIT:
-                ss << "4x";
-                break;
-            case VK_SAMPLE_COUNT_2_BIT:
-                ss << "2x";
-                break;
-            default:
-                ss << "1x";
-                break;
+        case VK_SAMPLE_COUNT_64_BIT:
+            ss << "64x";
+            break;
+        case VK_SAMPLE_COUNT_32_BIT:
+            ss << "32x";
+            break;
+        case VK_SAMPLE_COUNT_16_BIT:
+            ss << "16x";
+            break;
+        case VK_SAMPLE_COUNT_8_BIT:
+            ss << "8x";
+            break;
+        case VK_SAMPLE_COUNT_4_BIT:
+            ss << "4x";
+            break;
+        case VK_SAMPLE_COUNT_2_BIT:
+            ss << "2x";
+            break;
+        default:
+            ss << "1x";
+            break;
         }
         ss << '\n';
 

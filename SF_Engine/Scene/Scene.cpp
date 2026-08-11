@@ -3,7 +3,7 @@
 #include <Graphics/Stage.hpp>
 #include <Graphics/Mesh/MeshFactory.hpp>
 #include <Graphics/Windows/WindowManager.hpp>
-#include <ImGui/ImGuiPipelinePass.hpp>
+#include <Gui/ImGuiPipelinePass.hpp>
 #include <Graphics/Lighting/Lighting.hpp>
 #include <Graphics/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 #include <Graphics/Lighting/LightingTypes.hpp>

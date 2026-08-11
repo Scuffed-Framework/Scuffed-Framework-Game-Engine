@@ -1,7 +1,7 @@
 #pragma once
 #include "AssetPipeline.hpp"
 #include <Gui/UIRegistry.hpp>
-#include <ImGui/ocornut/imgui.h>
+#include <Gui/ocornut/imgui.h>
 
 namespace SF::Engine
 {

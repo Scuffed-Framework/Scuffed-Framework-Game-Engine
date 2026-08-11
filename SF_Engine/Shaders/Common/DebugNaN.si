@@ -1,0 +1,36 @@
+#ifndef DEBUG_NANS_S
+#define DEBUG_NANS_S
+bool isNanBits(float x)
+{
+    uint bits = asuint(x);
+    uint exponent = bits & 0x7F800000u;
+    uint mantissa = bits & 0x007FFFFFu;
+    return (exponent == 0x7F800000u) && (mantissa != 0u);
+}
+
+bool isInfBits(float x)
+{
+    uint bits = asuint(x);
+    return (bits & 0x7FFFFFFFu) == 0x7F800000u;
+}
+
+bool anyBadFloat(float v)
+{
+    return isBadFloat(v);
+}
+
+bool isBadFloat(float x)
+{
+    return isNanBits(x) || isInfBits(x);
+}
+
+bool anyBadFloat(float3 v)
+{
+    return isBadFloat(v.x) || isBadFloat(v.y) || isBadFloat(v.z);
+}
+
+bool anyBadFloat(float4 v)
+{
+    return isBadFloat(v.x) || isBadFloat(v.y) || isBadFloat(v.z) || isBadFloat(v.w);
+}
+#endif

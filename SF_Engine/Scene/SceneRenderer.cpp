@@ -1,7 +1,7 @@
 #include "SceneRenderer.hpp"
 #include <Graphics/RenderSystem.hpp>
 #include <Graphics/Windows/WindowManager.hpp>
-#include <ImGui/ImGuiPipelinePass.hpp>
+#include <Gui/ImGuiPipelinePass.hpp>
 #include <Graphics/PipelinePassManager.hpp>
 #include <Gui/UIRegistry.hpp>
 #include <Scene/Scene.hpp>

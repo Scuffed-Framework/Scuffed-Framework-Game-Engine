@@ -107,7 +107,7 @@ SOFTWARE.
 #ifdef IMGUI_INTERNAL_INCLUDE
 #include IMGUI_INTERNAL_INCLUDE
 #else // IMGUI_INTERNAL_INCLUDE
-#include <ImGui/ocornut/imgui_internal.h>
+#include <Gui/ocornut/imgui_internal.h>
 #endif // IMGUI_INTERNAL_INCLUDE
 
 // legacy compatibility 1.89

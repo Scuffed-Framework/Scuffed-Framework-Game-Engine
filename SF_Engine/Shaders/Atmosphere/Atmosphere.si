@@ -8,7 +8,7 @@ struct AtmoUBO
     float4x4 invProj;
     float4x4 invView;
     float4 cameraPos;
-    float4 planetPos;
+    float4 planetPos;   
     float4 sunDir;
     float bottomRadius;
     float topRadius;
@@ -336,6 +336,12 @@ float3 sampleSkyView(float3 rd, float3 viewPos, float3 sunDir, float camR, float
     }
 
     return skyViewLUT.SampleLevel(float2(u_coord, v), 0.0).rgb;
+}
+
+float3 GetSkyAmbientColor(float3 worldPos, float3 sunDirection, float camHeight, float bottomRadius, Sampler2D<float4> lutImage)
+{
+    float3 upVector = normalize(worldPos);
+    return sampleSkyView(upVector, worldPos, sunDirection, camHeight, bottomRadius, lutImage);
 }
 
 #endif
