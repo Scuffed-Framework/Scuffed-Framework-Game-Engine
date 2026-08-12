@@ -32,8 +32,8 @@ namespace SF::Engine
             }
         }
 
-        // annoying as fuck, I know. Getting the logical device inside the RenderSystem constructor is too early,
-        // so we have to call this after the RenderSystem is fully initialized. I don't like it either.
+        // annoying, getting the logical device inside the RenderSystem constructor is too early,
+        // so we have to call this after the RenderSystem is fully initialized.
         RenderSystem::Get()->PostInit();
 
         gameInstance = std::make_unique<GameInstance>();

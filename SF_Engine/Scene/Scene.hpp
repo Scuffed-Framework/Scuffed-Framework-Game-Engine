@@ -11,7 +11,6 @@
 
 #include <XML/XMLModule.hpp>
 #include "SceneSerialization.hpp"
-#include "EngineUI.hpp"
 #include <Scene/Types.hpp>
 #include <Scene/SceneRenderer.hpp>
 #include <Rendering/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
@@ -47,10 +46,28 @@ namespace SF::Engine
         void RemoveSystem() { systems.Remove<T>(); }
         void ClearSystems();
 
-        Entity* GetEntity(const std::string& name) const;
-        Entity* CreateEntity();
-        Entity* CreatePrefabEntity(const std::string& filename);
-        std::vector<Entity*> QueryAllEntities();
+        Entity *GetEntity(const std::string &name) const;
+        Entity *GetEntity(const EntityId &id);
+        Entity *CreateEntity();
+        EntityHolder *GetEntities() { return &entities; }
+        std::vector<Entity *> QueryAllEntities();
+
+        void RemoveEntity(Entity *entity) { entities.Remove(entity); }
+        void AddEntity(std::string name, Entity *parent = nullptr)
+        {
+            if (parent = nullptr)
+                entities.CreateEntity(name);
+            else
+                entities.CreateChildEntity(parent, name);
+        }
+        void ReparentEntity(EntityId childId, EntityId newParentId)
+        {
+            auto *child = entities.FindById(childId);
+            auto *newParent = entities.FindById(newParentId);
+            if (!child || !newParent || child == newParent)
+                return;
+            entities.Reparent(child, newParent);
+        }
 
         template <typename T>
         T *GetComponent(bool allowDisabled = false)
@@ -107,11 +124,6 @@ namespace SF::Engine
             lights_.clear();
         }
 
-        static std::vector<SceneLight> GetAllLights(Scene *scene)
-        {
-            return scene->lights_;
-        }
-
     protected:
         // Subclasses can set these before Initialize() to opt into features.
         bool sunEnabled = false;
@@ -134,9 +146,6 @@ namespace SF::Engine
         AtmospherePipelinePass *atmoPass_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
 
-        std::vector<SceneObject> objects_;
-        std::vector<SceneLight> lights_;
-
         float elapsed_ = 0.0f;
         uint32_t frameIndex_ = 0;
 
@@ -147,7 +156,6 @@ namespace SF::Engine
 
         std::chrono::steady_clock::time_point lastFrameTime_;
 
-        EngineUI ui_;
         int selectedObj_ = -1;
         int selectedLight_ = -1;
 
@@ -155,14 +163,14 @@ namespace SF::Engine
         {
             for (auto &sl : lights_)
             {
-                sl.light.position = sl.transform.position;
-                if (sl.light.type == Lighting::LightType::Directional)
+                sl->GetComponent<Light>()->position = sl->GetComponent<Transform>()->position;
+                if (sl->GetComponent<Light>()->type == Lighting::LightType::Directional)
                 {
-                    Vec3 rot = glm::radians(sl.transform.rotation);
+                    Vec3 rot = glm::radians(sl->GetComponent<Transform>()->rotation);
                     Mat4 m = glm::rotate(Mat4(1.0f), rot.y, {0, 1, 0});
                     m = glm::rotate(m, rot.x, {1, 0, 0});
                     m = glm::rotate(m, rot.z, {0, 0, 1});
-                    sl.light.direction = normalize(Vec3(m * Vec4(0, -1, 0, 0)));
+                    sl->GetComponent<Light>()->direction = normalize(Vec3(m * Vec4(0, -1, 0, 0)));
                 }
             }
         }
@@ -173,7 +181,7 @@ namespace SF::Engine
                 return;
             lightManager_->ClearLights();
             for (auto &sl : lights_)
-                lightManager_->AddLight(sl.light);
+                lightManager_->AddLight(*sl->GetComponent<Light>());
         }
 
         std::string name;
@@ -181,5 +189,30 @@ namespace SF::Engine
     public:
         const std::string GetName() { return name; }
         static const ImageDepth *GetDepthTexture();
+
+        SceneObject *AddObject(const std::string &name, Entity *parent = nullptr);
+        SceneLight *AddLight(const std::string &name, Lighting::LightType type,
+                             const Vec3 &color, float intensity,
+                             const Vec3 &position, const Vec3 &rotation,
+                             Entity *parent = nullptr);
+
+        void RemoveObject(SceneObject *obj);
+        void RemoveLight(SceneLight *light);
+
+        const std::vector<SceneObject *> &GetObjects() const { return objects_; }
+        const std::vector<SceneLight *> &GetLights() const { return lights_; }
+
+        static std::vector<SceneLight *> GetAllLights(Scene *scene) { return scene->lights_; }
+
+    private:
+        // Non-owning flat caches for fast iteration (rendering, serialization,
+        // hierarchy UI). Real ownership lives in the Entity tree inside
+        // `entities` (EntityHolder -> EntityRegistry -> roots/children).
+        std::vector<SceneObject *> objects_;
+        std::vector<SceneLight *> lights_;
+
+        // kind: 0 = root, 1 = objects_[index] is the parent, 2 = lights_[index] is the parent
+        std::pair<int, int> FindParentRef(Entity *e) const;
+        void RemoveEntitySubtree(Entity *rootEntity);
     };
 }

@@ -21,18 +21,17 @@ namespace SF::Engine
         Vec3 rotDeg,
         float radius = 10.0f)
     {
-        SceneLight &sl = lights.emplace_back();
+        SceneLight &sl = lights.emplace_back(name);
 
-        sl.name = name;
-        sl.light.name = name;
-        sl.light.type = type;
-        sl.light.color = color;
-        sl.light.intensity = intensity;
-        sl.light.radius = radius;
-        sl.light.castShadow = true;
+        sl.GetComponent<Light>()->name = name;
+        sl.GetComponent<Light>()->type = type;
+        sl.GetComponent<Light>()->color = color;
+        sl.GetComponent<Light>()->intensity = intensity;
+        sl.GetComponent<Light>()->radius = radius;
+        sl.GetComponent<Light>()->castShadow = true;
 
-        sl.transform.position = pos;
-        sl.transform.rotation = rotDeg;
+        sl.GetComponent<Transform>()->position = pos;
+        sl.GetComponent<Transform>()->rotation = rotDeg;
 
         if (type == Lighting::LightType::Directional)
         {
@@ -40,7 +39,7 @@ namespace SF::Engine
             Mat4 m = glm::rotate(Mat4(1.0f), rot.y, {0, 1, 0});
             m = glm::rotate(m, rot.x, {1, 0, 0});
             m = glm::rotate(m, rot.z, {0, 0, 1});
-            sl.light.direction = normalize(Vec3(m * Vec4(0, -1, 0, 0)));
+            sl.GetComponent<Light>()->direction = normalize(Vec3(m * Vec4(0, -1, 0, 0)));
         }
 
         return sl;

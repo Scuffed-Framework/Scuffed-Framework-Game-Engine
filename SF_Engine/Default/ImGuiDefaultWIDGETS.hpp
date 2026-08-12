@@ -60,4 +60,5 @@ namespace SF::Engine
          */
         static void Draw(Light &light, const char *id = "##Light");
     };
+    void RegisterDefaultComponentWidgets();
 }

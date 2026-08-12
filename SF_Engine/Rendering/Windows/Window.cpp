@@ -53,7 +53,7 @@ namespace SF::Engine
     {
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->closed = true;
-        Engine::Get()->RequestClose(); // Who the fuck commented this out?
+        Engine::Get()->RequestClose();
         window->onClose();
     }
 

@@ -41,7 +41,6 @@
 #include <memory>
 #include <cmath>
 
-// std::format but not shit
 namespace SFTL
 {
     namespace Detail

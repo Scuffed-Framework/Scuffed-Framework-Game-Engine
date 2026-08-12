@@ -77,9 +77,9 @@ namespace SF::Engine
 
                 cloudPass_ = AddPipelinePass<CloudPipelinePass>(Pipeline::Stage{1, 0}, earthData);
 
-                // disable cloud pass cuz its fucked
+                // disable cloud pass cuz its broken
                 cloudPass_->SetEnabled(false);
-                // disable cloud pass cuz its fucked
+                // disable cloud pass cuz its broken
 
                 AddPipelinePass<FullscreenPass>(Pipeline::Stage{1, 0}, "hdr", "Shaders/FullscreenPass.shader");
             }
@@ -110,7 +110,7 @@ namespace SF::Engine
         std::unique_ptr<LightManager> lightManager_;
         LitMeshPipelinePass *litPass_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
-
+        
         bool uiCallbackSet_ = false;
     };
 }

@@ -484,6 +484,19 @@ namespace SF::Engine
         {
             return Get().m_drawFns.count(std::type_index(typeid(T))) > 0;
         }
+        static bool DrawByType(std::type_index ti, void *compPtr, const char *id)
+        {
+            auto &reg = Get();
+            auto it = reg.m_drawFns.find(ti);
+            if (it == reg.m_drawFns.end())
+                return false;
+            it->second(compPtr, id);
+            return true;
+        }
+        static bool HasType(std::type_index ti)
+        {
+            return Get().m_drawFns.count(ti) > 0;
+        }
 
     private:
         ComponentWidgetRegistry() = default;

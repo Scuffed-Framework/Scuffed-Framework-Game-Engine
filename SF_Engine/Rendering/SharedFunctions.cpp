@@ -24,7 +24,7 @@ namespace SF::Engine
             if (lights.empty())
                 return Vec3(0.0f);
 
-            return normalize(lights[0].light.direction);
+            return normalize(lights[0]->GetComponent<Light>()->direction);
         }
         else
         {
@@ -40,7 +40,7 @@ namespace SF::Engine
         if (lights.empty())
             return 0.0f;
 
-        return lights[0].light.intensity;
+        return lights[0]->GetComponent<Light>()->intensity;
     }
 
     // TODO: Get current window

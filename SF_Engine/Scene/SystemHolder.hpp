@@ -16,7 +16,7 @@ namespace SF::Engine
          * @tparam T The System type.
          * @return If the System exists.
          */
-        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T*, System*>>>
+        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, System *>>>
         bool Has() const
         {
             const auto it = systems.find(TypeInfo<System>::GetTypeId<T>());
@@ -29,8 +29,8 @@ namespace SF::Engine
          * @tparam T The System type.
          * @return The System.
          */
-        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T*, System*>>>
-        T* Get() const
+        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, System *>>>
+        T *Get() const
         {
             auto it = systems.find(TypeInfo<System>::GetTypeId<T>());
 
@@ -40,7 +40,7 @@ namespace SF::Engine
                 return nullptr;
             }
 
-            return static_cast<T*>(it->second.get());
+            return static_cast<T *>(it->second.get());
         }
 
         /**
@@ -48,8 +48,8 @@ namespace SF::Engine
          * @tparam T The System type.
          * @param system The System.
          */
-        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T*, System*>>>
-        void Add(std::unique_ptr<T>&& system)
+        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, System *>>>
+        void Add(std::unique_ptr<T> &&system)
         {
             // Remove previous System, if it exists.
             Remove<T>();
@@ -64,7 +64,7 @@ namespace SF::Engine
          * Removes a System.
          * @tparam T The System type.
          */
-        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T*, System*>>>
+        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, System *>>>
         void Remove()
         {
             const auto typeId = TypeInfo<System>::GetTypeId<T>();
@@ -84,15 +84,15 @@ namespace SF::Engine
          * @param func The function to pass each System into, System object and System ID.
          */
         template <typename Func>
-        void ForEach(Func&& func)
+        void ForEach(Func &&func)
         {
-            for (auto& [typeId, system] : systems)
+            for (auto &[typeId, system] : systems)
             {
                 try
                 {
                     func(typeId, system.get());
                 }
-                catch (const std::exception& e)
+                catch (const std::exception &e)
                 {
                     Log::Error("{}", e.what());
                 }

@@ -6,6 +6,7 @@
 #include <Gui/UIRegistry.hpp>
 #include <Scene/Scene.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <Math/Transform.hpp>
 #include <chrono>
 
 namespace SF::Engine
@@ -30,8 +31,6 @@ namespace SF::Engine
                 GetPipelinePassManager()->Get<ImGuiPipelinePass>()->SetDrawCallback(
                     [this, scene]()
                     {
-                        scene->ui_.Draw({scene->GetCamera()->GetActive(), &scene->objects_, &scene->lights_,
-                                         &scene->selectedObj_, &scene->selectedLight_});
                         UIRegistry::Get().DrawAll();
                     });
         }
@@ -51,7 +50,7 @@ namespace SF::Engine
 
         float aspect = wnd ? wnd->GetAspectRatio() : 1.0f;
         Vec2 screenSize = wnd ? Vec2(wnd->GetSize().x, wnd->GetSize().y)
-                                   : Vec2(1280.0f, 720.0f);
+                              : Vec2(1280.0f, 720.0f);
 
         Mat4 view = cam->GetView();
         Mat4 proj = cam->GetProjection(aspect);
@@ -81,12 +80,12 @@ namespace SF::Engine
         Vec3 sunColor = Vec3(1.0f, 1.0f, 1.0f);
         float sunInt = 1.0f;
         if (!scene->lights_.empty() &&
-            scene->lights_[0].light.type == Lighting::LightType::Directional)
+            scene->lights_[0]->GetComponent<Light>()->type == Lighting::LightType::Directional)
         {
-            Vec3 ld = normalize(scene->lights_[0].light.direction);
+            Vec3 ld = normalize(scene->lights_[0]->GetComponent<Light>()->direction);
             sunDir = -ld;
-            sunColor = scene->lights_[0].light.color;
-            sunInt = scene->lights_[0].light.intensity;
+            sunColor = scene->lights_[0]->GetComponent<Light>()->color;
+            sunInt = scene->lights_[0]->GetComponent<Light>()->intensity;
         }
         fd.sunDirIntensity = Vec4(sunDir, sunInt);
 
@@ -98,31 +97,31 @@ namespace SF::Engine
 
         for (auto &obj : scene->objects_)
         {
-            if (obj.enabled && obj.mesh)
-                litPass_->Submit(obj.mesh, obj.material, obj.transform.ToMatrix());
+            if (obj->enabled && obj->mesh)
+                litPass_->Submit(obj->mesh, obj->material, obj->GetComponent<Transform>()->ToMatrix());
         }
 
         if (atmoController && !atmoController->Empty())
         {
             Vec3 atmoSun = sunDir;
             if (!scene->lights_.empty() &&
-                scene->lights_[0].light.type == Lighting::LightType::Directional)
+                scene->lights_[0]->GetComponent<Light>()->type == Lighting::LightType::Directional)
             {
-                Vec3 ld = normalize(scene->lights_[0].light.direction);
+                Vec3 ld = normalize(scene->lights_[0]->GetComponent<Light>()->direction);
                 if (glm::length(ld) > 0.5f)
                     atmoSun = -ld;
             }
             atmoController->SetFrameData(inverse(proj), inverse(view),
-                                          cam->GetPosition(), atmoSun, screenSize);
+                                         cam->GetPosition(), atmoSun, screenSize);
         }
 
         if (cloudPass_)
         {
             Vec3 cloudSun = sunDir;
             if (!scene->lights_.empty() &&
-                scene->lights_[0].light.type == Lighting::LightType::Directional)
+                scene->lights_[0]->GetComponent<Light>()->type == Lighting::LightType::Directional)
             {
-                Vec3 ld = normalize(scene->lights_[0].light.direction);
+                Vec3 ld = normalize(scene->lights_[0]->GetComponent<Light>()->direction);
                 if (glm::length(ld) > 0.5f)
                     cloudSun = -ld;
             }

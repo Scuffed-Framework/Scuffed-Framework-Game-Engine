@@ -42,7 +42,7 @@
 namespace SFTL
 {
     template <typename T, class Allocator = allocator<T>>
-    class DynamicArray // SFTL version of std::vector(shit) but with less shit
+    class DynamicArray
     {
     public:
         using value_type = T;

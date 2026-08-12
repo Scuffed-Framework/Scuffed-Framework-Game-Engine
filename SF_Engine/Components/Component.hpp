@@ -16,6 +16,7 @@ namespace SF::Engine
 
         virtual void Start() {}
         virtual void Update() {}
+        virtual void Reset() {}
         virtual TypeId GetTypeId() const = 0;
         virtual std::string_view GetTypeName() const = 0;
 

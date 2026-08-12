@@ -28,7 +28,7 @@ namespace SF::Engine
         }
 
         template <typename T>
-        class Registrar /*: public thisfuckingsucks*/
+        class Registrar /*: public thissucks*/
         {
         protected:
             template <typename... Args>

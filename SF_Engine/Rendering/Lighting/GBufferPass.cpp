@@ -63,6 +63,9 @@ namespace SF::Engine
             VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT,
             VK_SAMPLE_COUNT_1_BIT, false, false);
 
+        uint8_t whitePixels[4] = {255, 255, 255, 255};
+        fallbackWhite_->SetPixels(whitePixels, 1, 0);
+
         fallbackNormal_ = std::make_unique<Image2d>(
             one, VK_FORMAT_R8G8B8A8_UNORM,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -70,6 +73,8 @@ namespace SF::Engine
             VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT,
             VK_SAMPLE_COUNT_1_BIT, false, false);
 
+        uint8_t normalPixels[4] = {128, 128, 255, 255};
+        fallbackNormal_->SetPixels(normalPixels, 1, 0);
         WriteFrameDescriptors();
         WriteMaterialDescriptors(MeshMaterial{});
     }

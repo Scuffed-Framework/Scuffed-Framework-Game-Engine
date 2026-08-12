@@ -13,7 +13,7 @@
 #include <Filesystem/File.hpp>
 #include <LowLevel/Rocket.hpp>
 
-// Undefine problematic macros (fuck you microsoft)
+// Undefine problematic macros (microslop)
 #ifdef major
 #undef major
 #endif
@@ -24,7 +24,7 @@
 #if _PLATFORM_WINDOWS
 
 // Must define NOMINMAX before windows.h to prevent min/max macro pollution
-#ifndef NOMINMAX // Fuck you again microsoft
+#ifndef NOMINMAX
 #define NOMINMAX
 #endif
 
@@ -51,6 +51,7 @@
 #include <Engine/Log/Log.hpp>
 #include <Engine/InitGame/GameInfo.hpp>
 #include <TemplateLibrary/TypeTraits.hpp>
+#include <Default/ImGuiDefaultWIDGETS.hpp>
 
 #define INFO_CHECK \
     if (!Info)     \
@@ -81,7 +82,8 @@ namespace SF::Engine
             Success,
             FailedToGetEngineModules,
             FailedToCreateGameWindow,
-            NoApplicationlicationInfo
+            NoApplicationlicationInfo,
+            Failure
         };
 
         std::unique_ptr<ApplicationInfo> Info;
@@ -92,7 +94,7 @@ namespace SF::Engine
         {
             auto exeDir = GetExecutablePath().parent_path();
             std::filesystem::current_path(exeDir);
-            engine = std::make_unique<Engine>(exeDir);
+            engine = std::make_unique<Engine>(exeDir.string());
 
             wndMgr = SF::Engine::WindowManager::Get();
             renderer = SF::Engine::RenderSystem::Get();
@@ -123,19 +125,28 @@ namespace SF::Engine
             window->SetResizable(true);
             window->SetTitleColor(SF::Engine::Color());
 
+            RegisterDefaultComponentWidgets();
             return InitializationReturn::Success;
         }
 
         // call my update first :)
+        // Main loop  drive all module stages in the correct order:
+        //   Normal  : SceneManager (Initialize / Start / Update+Render)
+        //   Render  : RenderSystem (pipeline pass execution + present)
         virtual void Update()
+        {
+            wndMgr->Update();
+            sceneMgr->Update();
+            renderer->Update();
+        }
+
+        void AppLoop()
         {
             while (!window->IsClosed())
             {
-                wndMgr->Update();
-                sceneMgr->Update();
-                renderer->Update();
+                Update();
             }
-            OnShutdown(); // hook for derived classes, engine still alive here
+            OnShutdown();
         }
 
     protected:

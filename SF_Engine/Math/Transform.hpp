@@ -14,7 +14,7 @@ namespace SF::Engine
      */
     class Transform : public Component::Registrar<Transform>
     {
-        inline static const bool Registered = Register("transform");
+        inline static const bool Registered = Register("Transform");
 
     public:
         /**
@@ -25,6 +25,8 @@ namespace SF::Engine
          */
         Transform(const Vec3 &position = {}, const Vec3 &rotation = {}, const Vec3 &scale = Vec3(1.0f));
         ~Transform() = default;
+
+        std::string_view GetTypeName() const override {return "Transform";}
 
         Mat4 GetWorldMatrix() const;
         Vec3 GetPosition() const;
@@ -81,7 +83,7 @@ namespace SF::Engine
             return T * R * S;
         }
 
-        void Reset()
+        void Reset() override
         {
             position = {0.0f, 0.0f, 0.0f};
             rotation = {0.0f, 0.0f, 0.0f};

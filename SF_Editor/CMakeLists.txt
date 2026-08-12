@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.0)
 
 project("SF_Editor"
     VERSION 1.0.0
-    DESCRIPTION "An ode to science in the form of a modpack"
+    DESCRIPTION "Scufed Framework Editor Application"
     LANGUAGES C CXX
 )
 

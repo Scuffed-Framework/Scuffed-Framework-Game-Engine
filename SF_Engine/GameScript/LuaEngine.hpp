@@ -25,7 +25,8 @@ namespace SF::Engine::Scripting::Lua
         void Init();
         void Shutdown();
 
-        void Update() override {
+        void Update() override 
+        {
 
         };
 

@@ -71,53 +71,7 @@ namespace SF::Engine
 
         void Update() override
         {
-
-            // Rotate the demo cube
-            static auto start = std::chrono::steady_clock::now();
-            float t = std::chrono::duration<float>(
-                          std::chrono::steady_clock::now() - start)
-                          .count();
-
-            Mat4 model = glm::rotate(Mat4(1.0f), t,
-                                          Vec3(0.5f, 1.0f, 0.0f));
-
-            // Build frame data : in a real app pull from Camera
-            auto *wnd = SF::Engine::WindowManager::Get()->GetWindow(0);
-            float aspect = wnd ? wnd->GetAspectRatio() : 1.0f;
-
-            Mat4 view = glm::lookAt(
-                Vec3(0.0f, 1.5f, 4.0f),
-                Vec3(0.0f),
-                Vec3(0.0f, 1.0f, 0.0f));
-            Mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
-            proj[1][1] *= -1.0f; // Vulkan Y-flip
-
-            Lighting::GpuFrameData fd{};
-            fd.view = view;
-            fd.proj = proj;
-            fd.viewProj = proj * view;
-            fd.invView = inverse(view);
-            fd.invProj = inverse(proj);
-            fd.invViewProj = inverse(fd.viewProj);
-            fd.cameraPos = Vec4(0.0f, 1.5f, 4.0f, 0.1f);
-            fd.cameraDir = Vec4(normalize(Vec3(0.0f) - Vec3(0.0f, 1.5f, 4.0f)), 100.0f);
-            fd.screenSize = wnd ? Vec2(wnd->GetSize().x, wnd->GetSize().y) : Vec2(800, 600);
-            fd.invScreenSize = 1.0f / fd.screenSize;
-            fd.nearPlane = 0.1f;
-            fd.farPlane = 100.0f;
-            fd.time = t;
-            fd.lightCount = lightManager_->GetLightCount();
-
-            lightManager_->Upload(fd);
-
-            // Submit demo cube : grey metallic material
-            MeshMaterial mat{};
-            mat.baseColor = {0.7f, 0.7f, 0.75f, 1.0f};
-            mat.roughnessFactor = 0.3f;
-            mat.metallicFactor = 0.8f;
-            litPass_->Submit(
-                std::shared_ptr<SF::Engine::Mesh>(demoMesh_.get(), [](auto *) {}),
-                mat, model);
+            // litPass_->Submit();
         }
 
         SF::Engine::LightManager *GetLightManager() { return lightManager_.get(); }

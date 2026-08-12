@@ -29,5 +29,10 @@ namespace SF::Engine
         }
         return changed;
     }
-
+    static void HorizontalSpacer(float width)
+    {
+        ImGui::SameLine();
+        ImGui::Dummy(ImVec2(width, 0.0f));
+        ImGui::SameLine();
+    }
 }

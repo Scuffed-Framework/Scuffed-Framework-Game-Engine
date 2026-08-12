@@ -6,7 +6,7 @@
 
 namespace SF::Engine
 {
-     SF_DECLARE_WIDGET(Transform, "Transform", 70.0f){
+    SF_DECLARE_WIDGET(Transform, "Transform", 70.0f){
         SF_WIDGET_VEC3("Position", comp.position, 0, 0, 0, 0.05f)
             SF_WIDGET_VEC3("Rotation", comp.rotation, 0, 0, 0, 0.5f)
                 SF_WIDGET_VEC3("Scale", comp.scale, 1, 1, 1, 0.01f)
@@ -47,7 +47,7 @@ namespace SF::Engine
         SF_WIDGET_BOOL("Cast Shadow", comp.castShadow)
         // Intensity bar drawn outside via legacy wrapper below
     }
-    
+
     SF_DECLARE_WIDGET_END(Light)
 
     void TransformWidget::Draw(Transform &t, const char *id)
@@ -69,5 +69,8 @@ namespace SF::Engine
         // The intensity bar is drawn separately here for legacy compat.
         // In a future cleanup, use SF_WIDGET_BAR inside the DSL block.
         //   SF_WIDGET_BAR(light.intensity, 50.0f, light.color)
+    }
+    void RegisterDefaultComponentWidgets()
+    {
     }
 } // namespace SF::Engine
