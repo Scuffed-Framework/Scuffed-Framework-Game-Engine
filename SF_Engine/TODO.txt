@@ -1,6 +1,6 @@
 # SHADERS
 1. Fix PBR Shading
-2. Fix clouds
+2. Fix clouds ( view depke's video from GP)
 3. Probed Stochastic SSR
 4. RTGI
 5. fix atmosphere color bands in night area + >100km bugging when night far from 0 0 0
