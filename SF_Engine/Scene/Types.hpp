@@ -13,13 +13,15 @@ namespace SF::Engine
     struct SceneObject : public Entity, public Serializable
     {
     public:
-        MeshMaterial material;
         std::shared_ptr<Mesh> mesh;
         bool enabled = true;
         std::string meshSourcePath; // e.g. "assets/meshes/cube.obj"
 
-        explicit SceneObject(const std::string &objName, Entity *objParent = nullptr)
-            : Entity(objName, objParent) {}
+        SceneObject(const std::string &objName, Entity *objParent = nullptr)
+            : Entity(objName, objParent)
+        {
+            Entity::AddComponent<MeshMaterial>();
+        }
 
         void Serialize(XMLNode &node) const override
         {
@@ -31,7 +33,7 @@ namespace SF::Engine
             Entity::GetComponent<Transform>()->Serialize(tNode);
 
             XMLNode matNode = node.AddChild("material");
-            material.Serialize(matNode);
+            Entity::GetComponent<MeshMaterial>()->Serialize(matNode);
         }
 
         void Deserialize(const XMLNode &node) override
@@ -48,7 +50,7 @@ namespace SF::Engine
 
             XMLNode matNode = node.GetChild("material");
             if (matNode.IsValid())
-                material.Deserialize(matNode);
+                Entity::GetComponent<MeshMaterial>()->Deserialize(matNode);
         }
     };
 

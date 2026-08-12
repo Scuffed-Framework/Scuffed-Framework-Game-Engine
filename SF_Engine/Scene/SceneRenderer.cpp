@@ -98,7 +98,7 @@ namespace SF::Engine
         for (auto &obj : scene->objects_)
         {
             if (obj->enabled && obj->mesh)
-                litPass_->Submit(obj->mesh, obj->material, obj->GetComponent<Transform>()->ToMatrix());
+                litPass_->Submit(obj->mesh, *obj->GetComponent<MeshMaterial>(), obj->GetComponent<Transform>()->ToMatrix());
         }
 
         if (atmoController && !atmoController->Empty())

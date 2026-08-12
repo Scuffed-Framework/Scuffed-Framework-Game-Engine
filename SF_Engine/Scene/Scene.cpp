@@ -35,15 +35,15 @@ namespace SF::Engine
 
         SceneObject *cube = AddObject("Cube");
         cube->meshSourcePath = "__cube__";
-        cube->material.baseColor = {0.72f, 0.72f, 0.78f, 1.0f};
-        cube->material.roughnessFactor = 0.25f;
-        cube->material.metallicFactor = 0.85f;
+        cube->GetComponent<MeshMaterial>()->baseColor = {0.72f, 0.72f, 0.78f, 1.0f};
+        cube->GetComponent<MeshMaterial>()->roughnessFactor = 0.25f;
+        cube->GetComponent<MeshMaterial>()->metallicFactor = 0.85f;
 
         SceneObject* floor = AddObject("Cube 2");
         floor->meshSourcePath = "__cube__";
-        floor->material.baseColor = {1.0f, 1.0f, 1.0f, 1.0f};
-        floor->material.roughnessFactor = 0.0f;
-        floor->material.metallicFactor = 0.0f;
+        floor->GetComponent<MeshMaterial>()->baseColor = {1.0f, 1.0f, 1.0f, 1.0f};
+        floor->GetComponent<MeshMaterial>()->roughnessFactor = 0.0f;
+        floor->GetComponent<MeshMaterial>()->metallicFactor = 0.0f;
         floor->GetComponent<Transform>()->scale = {1000.0f, 1.0f, 1000.0f};
 
         lastFrameTime_ = std::chrono::steady_clock::now();

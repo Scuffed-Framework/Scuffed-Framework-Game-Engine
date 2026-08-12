@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 #include <XML/XMLModule.hpp>
+#include <Components/Component.hpp>
 
 namespace SF::Engine
 {
@@ -38,7 +39,7 @@ namespace SF::Engine
                   "LitPushConstants exceeds minimum guaranteed push constant size");
 
     //  Per-mesh material textures + constants
-    struct MeshMaterial : public Serializable
+    struct MeshMaterial : public Serializable, public Component::Registrar<MeshMaterial>
     {
         std::shared_ptr<Image2d> albedo;   // bind=4  (white if null)
         std::shared_ptr<Image2d> normal;   // bind=5  (flat if null)
@@ -50,6 +51,15 @@ namespace SF::Engine
         float metallicFactor = 0.0f;
         float aoFactor = 1.0f;
         float emissiveFactor = 0.0f;
+
+        void Reset() override
+        {
+            baseColor = {1, 1, 1, 1};
+            roughnessFactor = 1.0f;
+            metallicFactor = 0.0f;
+            aoFactor = 1.0f;
+            emissiveFactor = 0.0f;
+        }
 
         void Serialize(XMLNode &node) const override
         {
