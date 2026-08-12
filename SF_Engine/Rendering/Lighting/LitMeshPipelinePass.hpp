@@ -39,7 +39,7 @@ namespace SF::Engine
                   "LitPushConstants exceeds minimum guaranteed push constant size");
 
     //  Per-mesh material textures + constants
-    struct MeshMaterial : public Serializable, public Component::Registrar<MeshMaterial>
+    struct MeshMaterial : public Component::Registrar<MeshMaterial>
     {
         std::shared_ptr<Image2d> albedo;   // bind=4  (white if null)
         std::shared_ptr<Image2d> normal;   // bind=5  (flat if null)
