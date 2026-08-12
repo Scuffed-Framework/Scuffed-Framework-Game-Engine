@@ -1,0 +1,185 @@
+/*
+ * Copyright (c) Contributors to the Open 3D Engine Project.
+ * For complete copyright and license terms please see the LICENSE at the root of this distribution.
+ *
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
+ *
+ */
+
+#pragma once
+
+/**
+ * This file is focused on providing BRDF (bi-directional reflectance distribution function)
+ * implementations. In other words, surface interactions that result light to reflect in some way
+ * rather than transmit.
+ **/
+
+#include <Common/Math.si>
+#include "GGX.slang"
+#include "Fresnel.slang"
+
+
+// ------- Diffuse Lighting -------
+
+//! Simple Lambertian BRDF. 
+float3 DiffuseLambertian(float3 albedo, float3 normal, float3 dirToLight, float3 diffuseResponse)
+{
+    float NdotL = saturate(dot(normal, dirToLight));
+    return albedo * NdotL * INV_PI * diffuseResponse;
+}
+
+// Normalized Disney diffuse function taken from Frostbite's PBR course notes (page 10):
+// https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/course-notes-moving-frostbite-to-pbr-v32.pdf
+float3 NormalizedDisneyDiffuse(float3 albedo, float3 normal, float3 dirToCamera, float3 dirToLight, float roughnessLinear)
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+    float NdotV = saturate(dot(normal, dirToCamera));
+    float NdotL = saturate(dot(normal, dirToLight));
+    float HdotV = saturate(dot(halfVector, dirToCamera)); // Note that HdotL = HdotV, so we don't need to calculate both
+
+    float energyBias = lerp(0.0, 0.5, roughnessLinear);
+    float energyFactor = lerp(1.0, 1.0/1.51, roughnessLinear);
+    float fd90 = energyBias + 2.0 * HdotV * HdotV * roughnessLinear;
+    float3 f0 = float3(1.0, 1.0, 1.0);
+    float lightScatter = FresnelSchlickF90(NdotL, f0, fd90).r;
+    float viewScatter = FresnelSchlickF90(NdotV, f0, fd90).r;
+
+    return albedo * lightScatter * viewScatter * energyFactor * NdotL * INV_PI;
+}
+
+//! Extended Lambertian + Fresnel diffuse model from Respawn's GDC2017 slides(page 113):
+//! https://twvideo01.ubm-us.net/o1/vault/gdc2017/Presentations/Hammon_Earl_PBR_Diffuse_Lighting.pdf
+float3 DiffuseTitanfall(float roughnessA, float3 albedo, float3 normal, float3 dirToLight, float3 dirToCamera)
+{
+    float NdotL = saturate(dot(normal, dirToLight));
+    float NdotV = saturate(dot(normal, dirToCamera));
+    float LdotV = saturate(dot(dirToLight, dirToCamera));
+
+    // Squared length of L + V <=> | L + V |^2
+    float LplusV_LenSq = 2.0 + 2.0 * LdotV;
+    float NdotH = (NdotL + NdotV) * rsqrt(LplusV_LenSq);
+
+    float facing = LplusV_LenSq * 0.25;
+
+    // empirical formula for rough surfaces
+    float rough = facing * (0.9 - 0.4 * facing) * ((0.5 + NdotH) / NdotH);
+
+    // used double Fresnel as the smooth term, 
+    // though it can be replaced with other diffuse function as well like pure lambertian
+    float smooth = 1.05 * FresnelSchlickF90(NdotL, float3(1.0, 1.0, 1.0), 0.0).x * FresnelSchlickF90(NdotV, float3(1.0, 1.0, 1.0), 0.0).x;
+    float single = INV_PI * lerp(smooth, rough, roughnessA);
+
+    // coarse approximation of multiple scattering
+    float multi = 0.1159 * roughnessA;
+
+    return albedo * (single + albedo * multi) * NdotL;
+}
+
+
+// ------- Specular Lighting -------
+
+//! Computes specular response from surfaces with microgeometry. The common form for microfacet
+//! implementations is D * G * F / (4.0 * NdotL * NdotV), with D G F being swappable terms.
+//! This is currently set up to use GGX terms.
+//!
+//! @param roughnessA2  alpha roughness ^ 2 (alpha roughness is the unpacked form of artist authored linear roughness and is what is used for lighting calculations)
+//! @param specularF0   the fresnel f0 spectral value of the surface
+float3 SpecularGGX( float3 dirToCamera, float3 dirToLight, float3 normal, float3 specularF0, float NdotV, float roughnessA2, float3 multiScatterCompensation )
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+    float NdotH = saturate(dot(normal, halfVector));
+    float NdotL = saturate(dot(normal, dirToLight));
+    float HdotV = saturate(dot(halfVector, dirToCamera)); // Note that HdotL = HdotV, so we don't need to calculate both
+
+    // D, G and F from the lighting equation
+    // Note: the division by (4.0 * NdotL * NdotV) is already factored out in the G function as an optimization
+    float D = NormalDistributionGGX(NdotH, roughnessA2);
+    float G = GeometricShadowingMaskingGGXCorrelated(NdotV, NdotL, roughnessA2);
+    float3 F = FresnelSchlick(HdotV, specularF0);
+
+    D = max(0.0, D);
+    G = max(0.0, G);
+
+    // Multiply with multiscattering compensation in order to take account for several specular light bounces.
+    // Note: the specific order and placement of float() here is deliberate and prevents half precision issues on mobile/Quest
+    float3 specularLighting = (float((D * G) * NdotL) * F) * multiScatterCompensation;
+
+    return specularLighting;
+}
+
+float3 AnisotropicGGX( float3 dirToCamera, float3 dirToLight, float3 normal, float3 tangent, float3 bitangent, float2 anisotropyFactors,
+                       float3 specularF0, float NdotV, float3 multiScatterCompensation )
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+    float NdotH = saturate(dot(normal, halfVector));
+    float NdotL = saturate(dot(normal, dirToLight));
+    float HdotV = saturate(dot(halfVector, dirToCamera)); // Note that HdotL = HdotV, so we don't need to calculate both
+
+    // D, G and F from the lighting equation
+    // Note: the division by (4.0 * NdotL * NdotV) is already factored out in the G function as an optimization
+    float D = NormalDistibution_AnisotropicGGX( NdotH, halfVector, tangent, bitangent, anisotropyFactors );
+    float G = ShadowingMasking_AnisotropicSmithGGXCorrelated(tangent, bitangent, dirToCamera, dirToLight, NdotV, NdotL, anisotropyFactors);
+    float3 F = FresnelSchlick(HdotV, specularF0);
+
+    D = max(0.0, D);
+    G = max(0.0, G);
+
+    // Multiply with multiscattering compensation in order to take account for several specular light bounces.
+    return multiScatterCompensation * (D * G * F * NdotL);
+}
+
+float3 SpecularGGXMobile(float3 dirToCamera, float3 dirToLight, float3 normal, float3 specularF0, float roughnessA2, float roughnessA, float roughnessLinear)
+{
+    //! See "Optimizing PBR for Mobile" from Siggraph 2015 moving mobile graphics course
+    //! https://community.arm.com/events/1155
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+    float NdotH = saturate(dot(normal, halfVector));
+    float LdotH = saturate(dot(dirToLight, halfVector));
+    float NdotL = saturate(dot(normal, dirToLight));
+
+    float LdotH2 = LdotH * LdotH;
+    float D = (NdotH * roughnessA2 - NdotH) * NdotH + 1.000001;
+    float denom = 4 * PI_ * D * D * max(0.1, LdotH2)  * (roughnessLinear + 0.5);
+    float specularTerm = (roughnessA2/denom);
+
+    // Prevent FP16 overflow on mobiles
+    specularTerm = specularTerm - F16MIN;
+    specularTerm = clamp(specularTerm, 0.0, 100.0);
+    return specularTerm * NdotL * specularF0;
+}
+
+float3 ClearCoatGGX(float NdotH, float HdotL, float NdotL, float3 normal, float roughnessA, float3 F)
+{
+    // Specular Anti-Aliasing correction
+    float roughnessA2 = roughnessA * roughnessA;
+    //if(o_applySpecularAA)
+    //{
+    //    roughnessA2 = ApplySpecularAA(roughnessA2, normal);
+    //}
+
+    float D = NormalDistributionGGX(NdotH, roughnessA2);
+    // Kelemen geometry term : Kelemen. C. and Szirmay-Kalos. L. 2001
+    // "A Microfacet Based Coupled Specular-Matte BRDF Model with Importance Sampling"
+    float G = 0.25 / max(HdotL * HdotL, 1e-4);
+
+    D = max(0.0, D);
+    G = max(0.0, G);
+
+    // the common denominator 4 * NdotL * NdotV is included in the simplified G term
+    return float(D) * G * F * NdotL;
+}
+
+float3 ClearCoatSpecular(const float3 dirToLight, const float3 dirToCamera, const float3 surfaceClearCoatNormal, float surfaceClearCoatFactor, float surfaceClearCoatRoughness, const float3 specular)
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+    float NdotH = saturate(dot(surfaceClearCoatNormal, halfVector));
+    float NdotL = saturate(dot(surfaceClearCoatNormal, dirToLight));
+    float HdotL = saturate(dot(halfVector, dirToLight));
+
+    // HdotV = HdotL due to the definition of half vector
+    float3 clearCoatF = FresnelSchlick(HdotL, 0.04) * surfaceClearCoatFactor;
+    float clearCoatRoughness = max(surfaceClearCoatRoughness * surfaceClearCoatRoughness, 0.0005);
+    float3 clearCoatSpecular = ClearCoatGGX(NdotH, HdotL, NdotL, surfaceClearCoatNormal, clearCoatRoughness, clearCoatF);
+
+    return specular * (1.0 - clearCoatF) + clearCoatSpecular;
+}

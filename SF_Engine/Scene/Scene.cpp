@@ -33,11 +33,14 @@ namespace SF::Engine
                  {1.0f, 1.0f, 1.0f}, 3.0f,
                  {0.0f, 5.0f, 0.0f}, {0.0f, 0.0f, 0.0f});
 
+        AddLight("Point", Lighting::LightType::Point, {1,1,1}, 10.0, {0, 20, 0}, {0,0,0});
+
         SceneObject *cube = AddObject("Cube");
         cube->meshSourcePath = "__cube__";
         cube->GetComponent<MeshMaterial>()->baseColor = {0.72f, 0.72f, 0.78f, 1.0f};
         cube->GetComponent<MeshMaterial>()->roughnessFactor = 0.25f;
         cube->GetComponent<MeshMaterial>()->metallicFactor = 0.85f;
+        cube->GetComponent<Transform>()->position = {0.0f, 2.0f, 0.0f};
 
         SceneObject* floor = AddObject("Cube 2");
         floor->meshSourcePath = "__cube__";
@@ -98,6 +101,21 @@ namespace SF::Engine
         return ptr;
     }
 
+    SceneObject *Scene::AddObject(const std::string &name, Transform &transform, Entity *parent)
+    {
+        SceneObject *ptr = parent
+                               ? entities.CreateChildEntity<SceneObject>(parent, name)
+                               : entities.CreateEntity<SceneObject>(name);
+
+        auto A = ptr->GetComponent<Transform>();
+        A->position = transform.position;
+        A->rotation = transform.rotation;
+        A->scale    = transform.scale;
+
+        objects_.push_back(ptr);
+        return ptr;
+    }
+
     SceneLight *Scene::AddLight(const std::string &name, Lighting::LightType type,
                                 const Vec3 &color, float intensity,
                                 const Vec3 &position, const Vec3 &rotation,
@@ -109,6 +127,28 @@ namespace SF::Engine
 
         ptr->GetComponent<Transform>()->position = position;
         ptr->GetComponent<Transform>()->rotation = rotation;
+        ptr->GetComponent<Light>()->type = type;
+        ptr->GetComponent<Light>()->color = color;
+        ptr->GetComponent<Light>()->intensity = intensity;
+        ptr->GetComponent<Light>()->name = name;
+
+        lights_.push_back(ptr);
+        SyncLightTransforms();
+        RebuildLightManager();
+        return ptr;
+    }
+
+    SceneLight *Scene::AddLight(const std::string &name, Lighting::LightType type,
+                                const Vec3 &color, float intensity,
+                                Transform &transform,
+                                Entity *parent)
+    {
+        SceneLight *ptr = parent
+                              ? entities.CreateChildEntity<SceneLight>(parent, name)
+                              : entities.CreateEntity<SceneLight>(name);
+
+        ptr->GetComponent<Transform>()->position = transform.position;
+        ptr->GetComponent<Transform>()->rotation = transform.rotation;
         ptr->GetComponent<Light>()->type = type;
         ptr->GetComponent<Light>()->color = color;
         ptr->GetComponent<Light>()->intensity = intensity;

@@ -25,6 +25,8 @@ namespace SF::Engine
         SF::Engine::Entity* GetSelectedEntity() const { return m_selectedEntity; }
         EntityId GetSelectedId() const { return m_selectedId; }
 
+        void DrawCreateOptions();
+
     private:
         void DrawEntityNode(SF::Engine::Entity* entity);
         void DrawRowBackground(float height);

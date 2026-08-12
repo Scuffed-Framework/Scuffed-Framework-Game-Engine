@@ -17,6 +17,7 @@
 7. Bindless shader resources like DAXA
 8. multi window support
 9. Finish ParticleSystem
+10. Lumen-style Radiance Cache with Screen Probe Gather GI (Diffuse & Specular). (https://github.com/qiutang98/chord)
 
 #Editor:
 Panels, cmd, explorer, black profiler bar, profiler

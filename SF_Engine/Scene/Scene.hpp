@@ -191,9 +191,15 @@ namespace SF::Engine
         static const ImageDepth *GetDepthTexture();
 
         SceneObject *AddObject(const std::string &name, Entity *parent = nullptr);
+        SceneObject *AddObject(const std::string &name, Transform &transform, Entity *parent = nullptr);
         SceneLight *AddLight(const std::string &name, Lighting::LightType type,
                              const Vec3 &color, float intensity,
                              const Vec3 &position, const Vec3 &rotation,
+                             Entity *parent = nullptr);
+
+        SceneLight *AddLight(const std::string &name, Lighting::LightType type,
+                             const Vec3 &color, float intensity,
+                             Transform &transform,
                              Entity *parent = nullptr);
 
         void RemoveObject(SceneObject *obj);

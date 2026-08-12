@@ -10,6 +10,7 @@ namespace SF::Engine
     void HierarchyPanel::Draw()
     {
         EntityRegistry &registry = SceneManager::Get()->GetScene()->GetEntities()->GetRegistry();
+        Scene *scene = SceneManager::Get()->GetScene();
         ImGui::Begin("Hierarchy", &ShowHierarchy);
 
         // Search filter
@@ -77,11 +78,7 @@ namespace SF::Engine
         // Handle right-click context menu
         if (ImGui::BeginPopupContextWindow("HierarchyContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
         {
-            if (ImGui::MenuItem("Create Empty Entity"))
-            {
-                registry.CreateEntity("New Entity");
-                m_needsRefresh = true;
-            }
+            DrawCreateOptions();
             ImGui::EndPopup();
         }
 
@@ -239,6 +236,51 @@ namespace SF::Engine
         {
             m_selectedEntity = nullptr;
             m_selectedId = 0;
+        }
+    }
+
+    void HierarchyPanel::DrawCreateOptions()
+    {
+        EntityRegistry &registry = SceneManager::Get()->GetScene()->GetEntities()->GetRegistry();
+        Scene *scene = SceneManager::Get()->GetScene();
+        if (ImGui::BeginMenu("Create"))
+        {
+            if (ImGui::BeginMenu("Object"))
+            {
+                if (ImGui::MenuItem("Empty Entity"))
+                {
+                    registry.CreateEntity("New Entity");
+                    m_needsRefresh = true;
+                }
+                if (ImGui::MenuItem("Cube"))
+                {
+                    SceneObject *cube = scene->AddObject("Cube");
+                    cube->meshSourcePath = "__cube__";
+
+                    m_needsRefresh = true;
+                }
+                // add more, also add more __mesh__ stuff
+            }
+            if (ImGui::BeginMenu("Light"))
+            {
+                if (ImGui::MenuItem("Directional Light"))
+                {
+                    scene->AddLight("Directional Light", Lighting::LightType::Directional, {1, 1, 1}, 10, {0, 0, 0}, {0, 0, 0});
+                    m_needsRefresh = true;
+                }
+                if (ImGui::MenuItem("Point Light"))
+                {
+                    scene->AddLight("Point Light", Lighting::LightType::Point, {1, 1, 1}, 10, {0, 0, 0}, {0, 0, 0});
+                    m_needsRefresh = true;
+                }
+                if (ImGui::MenuItem("Spot Light"))
+                {
+                    scene->AddLight("Spot Light", Lighting::LightType::Spot, {1, 1, 1}, 10, {0, 0, 0}, {0, 0, 0});
+                    m_needsRefresh = true;
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenu();
         }
     }
 }

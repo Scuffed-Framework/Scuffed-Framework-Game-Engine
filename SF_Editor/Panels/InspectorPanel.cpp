@@ -80,6 +80,7 @@ namespace SF::Engine
             }
         }
         ImGui::PopItemWidth();
+        ImGui::SameLine();
 
         // Active toggle
         bool active = m_entity->IsActive();
@@ -162,13 +163,13 @@ namespace SF::Engine
 
         static int selectedComponent = -1;
         const char *components[] = {
-            "Transform",
-            "Mesh Renderer",
-            "Camera",
-            "Light",
-            "Rigidbody",
-            "Collider",
-            "Script"};
+            "No",
+            "No",
+            "No",
+            "No",
+            "No",
+            "No",
+            "No"}; // when I add ComponentRegistry::Get()->GetAll()
 
         ImGui::PushItemWidth(-1);
         if (ImGui::Combo("##AddComponent", &selectedComponent, components, IM_ARRAYSIZE(components)))
@@ -177,13 +178,13 @@ namespace SF::Engine
             switch (selectedComponent)
             {
             case 0:
-                // m_entity->AddComponent<TransformComponent>();
+                // m_entity->AddComponent<idk>();
                 break;
             case 1:
-                // m_entity->AddComponent<MeshRendererComponent>();
+                // m_entity->AddComponent<dihh>();
                 break;
             case 2:
-                // m_entity->AddComponent<CameraComponent>();
+                // m_entity->AddComponent<67>();
                 break;
                 // ... add other cases
             }

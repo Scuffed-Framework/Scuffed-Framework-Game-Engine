@@ -52,6 +52,15 @@ namespace SF::Engine
         Vec2 screenSize = wnd ? Vec2(wnd->GetSize().x, wnd->GetSize().y)
                               : Vec2(1280.0f, 720.0f);
 
+        uint32_t curW = static_cast<uint32_t>(screenSize.x);
+        uint32_t curH = static_cast<uint32_t>(screenSize.y);
+        if ((curW != lastScreenW_ || curH != lastScreenH_) && clusterCull_)
+        {
+            clusterCull_->MarkDirty();
+            lastScreenW_ = curW;
+            lastScreenH_ = curH;
+        }
+
         Mat4 view = cam->GetView();
         Mat4 proj = cam->GetProjection(aspect);
 

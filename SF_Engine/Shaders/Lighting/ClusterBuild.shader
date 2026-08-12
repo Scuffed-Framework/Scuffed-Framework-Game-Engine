@@ -54,37 +54,39 @@ float3 lineIntersectZPlane(float3 a, float3 b, float z)
 
 [shader("compute")]
 [numthreads(1, 1, 1)]
-void computeMain(uint3 groupID : SV_GroupID)
+void computeMain(uint3 groupID: SV_GroupID)
 {
     uint3 id = groupID;
     uint idx = id.x + id.y * CLUSTER_X + id.z * CLUSTER_X * CLUSTER_Y;
 
-    // Tile size in screen pixels
     float2 tileSize = frame.screenSize / float2(CLUSTER_X, CLUSTER_Y);
 
-    // Screen-space corners of this tile
-    float4 ss_min = float4(float2(id.xy)      * tileSize, -1.0, 1.0);
-    float4 ss_max = float4(float2(id.xy + 1u) * tileSize, -1.0, 1.0);
+    float4 ss_topLeft = float4(float2(id.x, id.y) * tileSize, -1.0, 1.0);
+    float4 ss_topRight = float4(float2(id.x + 1u, id.y) * tileSize, -1.0, 1.0);
+    float4 ss_botLeft = float4(float2(id.x, id.y + 1u) * tileSize, -1.0, 1.0);
+    float4 ss_botRight = float4(float2(id.x + 1u, id.y + 1u) * tileSize, -1.0, 1.0);
 
-    // View-space near/far for this depth slice (exponential distribution)
     float near = frame.nearPlane;
-    float far  = frame.farPlane;
-    float sliceNear = -near * pow(far / near, float(id.z)      / float(CLUSTER_Z));
-    float sliceFar  = -near * pow(far / near, float(id.z + 1u) / float(CLUSTER_Z));
+    float far = frame.farPlane;
+    float sliceNear = -near * pow(far / near, float(id.z) / float(CLUSTER_Z));
+    float sliceFar = -near * pow(far / near, float(id.z + 1u) / float(CLUSTER_Z));
 
-    // Project tile corners to view space at near/far planes
     float3 eye = float3(0.0, 0.0, 0.0);
-    float3 minNear = screen2View(ss_min).xyz;
-    float3 maxNear = screen2View(ss_max).xyz;
 
-    float3 p000 = lineIntersectZPlane(eye, minNear, sliceNear);
-    float3 p001 = lineIntersectZPlane(eye, minNear, sliceFar);
-    float3 p010 = lineIntersectZPlane(eye, float3(ss_min.x, ss_max.y, 0), sliceNear);
-    float3 p011 = lineIntersectZPlane(eye, float3(ss_min.x, ss_max.y, 0), sliceFar);
-    float3 p100 = lineIntersectZPlane(eye, float3(ss_max.x, ss_min.y, 0), sliceNear);
-    float3 p101 = lineIntersectZPlane(eye, float3(ss_max.x, ss_min.y, 0), sliceFar);
-    float3 p110 = lineIntersectZPlane(eye, maxNear, sliceNear);
-    float3 p111 = lineIntersectZPlane(eye, maxNear, sliceFar);
+    // Unproject ALL FOUR corners through screen2View before intersecting
+    float3 viewTopLeft = screen2View(ss_topLeft).xyz;
+    float3 viewTopRight = screen2View(ss_topRight).xyz;
+    float3 viewBotLeft = screen2View(ss_botLeft).xyz;
+    float3 viewBotRight = screen2View(ss_botRight).xyz;
+
+    float3 p000 = lineIntersectZPlane(eye, viewTopLeft, sliceNear);
+    float3 p001 = lineIntersectZPlane(eye, viewTopLeft, sliceFar);
+    float3 p010 = lineIntersectZPlane(eye, viewBotLeft, sliceNear);
+    float3 p011 = lineIntersectZPlane(eye, viewBotLeft, sliceFar);
+    float3 p100 = lineIntersectZPlane(eye, viewTopRight, sliceNear);
+    float3 p101 = lineIntersectZPlane(eye, viewTopRight, sliceFar);
+    float3 p110 = lineIntersectZPlane(eye, viewBotRight, sliceNear);
+    float3 p111 = lineIntersectZPlane(eye, viewBotRight, sliceFar);
 
     float3 minV = min(min(min(p000, p001), min(p010, p011)), min(min(p100, p101), min(p110, p111)));
     float3 maxV = max(max(max(p000, p001), max(p010, p011)), max(max(p100, p101), max(p110, p111)));

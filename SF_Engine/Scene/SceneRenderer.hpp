@@ -18,7 +18,7 @@ namespace SF::Engine
 
     struct SceneRendererConfig
     {
-        bool enableAtmosphere = false; 
+        bool enableAtmosphere = false;
         AtmosphereParams atmosphereParams /*Earth*/ = []
         {
             AtmosphereParams ap;
@@ -62,12 +62,13 @@ namespace SF::Engine
             lightManager_ = std::make_unique<LightManager>();
 
             // Stage 0: Opaque geometry safely renders into scene_color + gbuf_depth (scene_color is hdr)
-            AddPipelinePass<ClusterCullPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
+            clusterCull_ = AddPipelinePass<ClusterCullPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
             litPass_ = AddPipelinePass<LitMeshPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
 
             atmoController = std::make_unique<AtmosphereController>(
-            Pipeline::Stage{1, 0},
-            [this](Pipeline::Stage s, const AtmosphereParams &p) { return AddPipelinePass<AtmospherePipelinePass>(s, p); });
+                Pipeline::Stage{1, 0},
+                [this](Pipeline::Stage s, const AtmosphereParams &p)
+                { return AddPipelinePass<AtmospherePipelinePass>(s, p); });
 
             if (config_.enableAtmosphere)
             {
@@ -85,6 +86,7 @@ namespace SF::Engine
             }
 
             GetPipelinePassManager()->RunInitCallbacks();
+            
         }
 
         void Update() override {} // Heavy per-frame work is driven by RenderScene()
@@ -100,17 +102,20 @@ namespace SF::Engine
         LitMeshPipelinePass *GetLitPass() { return litPass_; }
         CloudPipelinePass *GetCloudPass() { return cloudPass_; }
         AtmosphereController *GetAtmosphereController() { return atmoController.get(); }
+        ClusterCullPipelinePass *GetClusterCull() { return clusterCull_; } // add
 
         std::unique_ptr<AtmosphereController> atmoController;
 
     private:
         SceneRendererConfig config_;
-        AtmosphereData earthData{ config_.atmosphereParams, {} };
+        AtmosphereData earthData{config_.atmosphereParams, {}};
 
         std::unique_ptr<LightManager> lightManager_;
         LitMeshPipelinePass *litPass_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
-        
+        ClusterCullPipelinePass *clusterCull_ = nullptr;
+
         bool uiCallbackSet_ = false;
+        uint32_t lastScreenH_ = 600Ui32, lastScreenW_ = 800Ui32;
     };
 }
