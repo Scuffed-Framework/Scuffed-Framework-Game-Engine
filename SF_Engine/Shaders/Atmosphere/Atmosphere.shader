@@ -21,34 +21,25 @@ ConstantBuffer<AtmoUBO> u;
 Sampler2D transmittanceLUT;
 
 [[vk::binding(2, 0)]]
-Sampler2D multiScatterLUT;
-
-[[vk::binding(3, 0)]]
 Sampler2D skyViewLUT;
 
-[[vk::binding(4, 0)]]
+[[vk::binding(3, 0)]]
 Sampler3D aerialPerspColorRGBTransR;
 
-[[vk::binding(5, 0)]]
+[[vk::binding(4, 0)]]
 Sampler3D aerialPerspTransGB;
 
-[[vk::binding(6, 0)]]
+[[vk::binding(5, 0)]]
 Sampler2D aerialPerspRange;
 
-[[vk::binding(7, 0)]]
+[[vk::binding(6, 0)]]
 Sampler2D sceneDepth;
 
-// Scene HDR colour, bound as a read-write storage image (VK_IMAGE_LAYOUT_GENERAL).
-// This is the "hdr" attachment produced by the opaque pass — the atmosphere
-// kernel reads it as the background and writes the composited result back
-// into the exact same texel.
-[[vk::binding(8, 0)]]
+[[vk::binding(7, 0)]]
 RWTexture2D<float4> hdrColor;
 
-
-
 float3 sunDisk(float3 rd, float3 sunDir, float sunIntensity,
-                float3 viewPos, float bottomRadius, float topRadius)
+               float3 viewPos, float bottomRadius, float topRadius)
 {
     const float SUN_ANGULAR_RADIUS = 0.0045;
     float cosAngle = dot(rd, sunDir);
@@ -56,22 +47,22 @@ float3 sunDisk(float3 rd, float3 sunDir, float sunIntensity,
         cos(SUN_ANGULAR_RADIUS * 1.05),
         cos(SUN_ANGULAR_RADIUS * 0.95),
         cosAngle);
-    if (diskWeight <= 0.0) return float3(0.0);
+    if (diskWeight <= 0.0)
+        return float3(0.0);
     float camR = length(viewPos);
     float cosSun = dot(viewPos / camR, sunDir);
-    float3 T = sampleTransmittance(transmittanceLUT, camR, cosSun,
-                                    bottomRadius, topRadius);
+    float3 T = getSpaceTransmittance(transmittanceLUT, viewPos, sunDir, bottomRadius, topRadius);
     return diskWeight * sunIntensity * T;
 }
 
 void sampleAerialPerspective(float2 screenUV, float sceneDist,
-                                out float3 outScatter, out float3 outTransmit)
+                             out float3 outScatter, out float3 outTransmit)
 {
-    float maxDist = max(aerialPerspRange.SampleLevel( screenUV, 0.0).r, 0.001);
+    float maxDist = max(aerialPerspRange.SampleLevel(screenUV, 0.0).r, 0.001);
     float t = clamp(sqrt(sceneDist / maxDist), 0.0, 1.0);
 
-    float4 ct = aerialPerspColorRGBTransR.SampleLevel( float3(screenUV, t), 0.0);
-    float2 tgb = aerialPerspTransGB.SampleLevel( float3(screenUV, t), 0.0).rg;
+    float4 ct = aerialPerspColorRGBTransR.SampleLevel(float3(screenUV, t), 0.0);
+    float2 tgb = aerialPerspTransGB.SampleLevel(float3(screenUV, t), 0.0).rg;
 
     outScatter = ct.rgb;
     outTransmit = float3(ct.a, tgb.r, tgb.g);
@@ -86,13 +77,13 @@ float depthToViewDist(float depth, float2 ndc)
 
 [shader("compute")]
 [numthreads(8, 8, 1)]
-void atmo_cs(uint3 globalThreadID : SV_DispatchThreadID)
+void atmo_cs(uint3 globalThreadID: SV_DispatchThreadID)
 {
     uint2 dims;
     hdrColor.GetDimensions(dims.x, dims.y);
-
     uint2 pixel = globalThreadID.xy;
-    if (any(pixel >= dims)) return;
+    if (any(pixel >= dims))
+        return;
 
     float2 screenUV = (float2(pixel) + 0.5) / float2(dims);
     float2 ndc = screenUV * 2.0 - 1.0;
@@ -112,10 +103,9 @@ void atmo_cs(uint3 globalThreadID : SV_DispatchThreadID)
         viewPos = float3(0.0, Rbot + 1.0, 0.0);
     else if (vpLen < Rbot + 1.0)
         viewPos = viewPos * ((Rbot + 1.0) / vpLen);
-
     float camHeight = length(viewPos);
 
-    float depth = sceneDepth.SampleLevel( screenUV, 0.0).r;
+    float depth = sceneDepth.SampleLevel(screenUV, 0.0).r;
     if (depth > 0.0)
     {
         // Geometry hit: composite aerial perspective directly over whatever
@@ -125,55 +115,25 @@ void atmo_cs(uint3 globalThreadID : SV_DispatchThreadID)
 
         float3 scatter, transmit;
         sampleAerialPerspective(screenUV, sceneDist, scatter, transmit);
-
         hdrColor[pixel] = float4(surface * transmit + scatter, 1.0);
         return;
     }
 
     float2 atmoHit = raySphereIntersect(viewPos, rd, Rtop);
-
     float camAlt = camHeight - Rbot;
     float atmoThickness = Rtop - Rbot;
 
     float3 col;
     float atmAlpha;
+    // Inside atmosphere → SkyView LUT
+    col = sampleSkyView(rd, viewPos, sunDir, camHeight, Rbot, skyViewLUT);
+    col += sunDisk(rd, sunDir, sunI, viewPos, Rbot, Rtop);
+    col = 1.0 - exp(-col);
 
-    if (camAlt < atmoThickness - 1.0)
-    {
-        // Inside atmosphere → SkyView LUT
-        col = sampleSkyView(rd, viewPos, sunDir, camHeight, Rbot, skyViewLUT);
-        col += sunDisk(rd, sunDir, sunI, viewPos, Rbot, Rtop);
-        col = 1.0 - exp(-col);
+    float cosSky = dot(normalize(viewPos), rd);
+    float3 skyTrans = sampleTransmittance(transmittanceLUT, camHeight,
+                                          cosSky, Rbot, Rtop);
+    atmAlpha = 1.0 - dot(skyTrans, float3(0.2126, 0.7152, 0.0722));
 
-        float cosSky = dot(normalize(viewPos), rd);
-        float3 skyTrans = sampleTransmittance(transmittanceLUT,  camHeight,
-                                                cosSky, Rbot, Rtop);
-        atmAlpha = 1.0 - dot(skyTrans, float3(0.2126, 0.7152, 0.0722));
-    }
-    else
-    {
-        // Above atmosphere → full raymarch
-        float maxDist = atmoHit.y;
-        float2 gndHit = raySphereIntersect(viewPos, rd, Rbot);
-        if (gndHit.x > 0.0 && gndHit.x < gndHit.y)
-            maxDist = gndHit.x;
-
-        float3 transmittance;
-        col = calculateScattering(
-            viewPos, rd, maxDist,
-            sunDir, float3(sunI),
-            Rbot, Rtop,
-            transmittanceLUT, multiScatterLUT,
-            transmittance);
-
-        bool groundBlocking = (gndHit.x > 0.0 && gndHit.x < gndHit.y);
-        if (!groundBlocking)
-            col += sunDisk(rd, sunDir, sunI, viewPos, Rbot, Rtop);
-
-        col = 1.0 - exp(-col);
-        atmAlpha = 1.0 - dot(transmittance, float3(0.2126, 0.7152, 0.0722));
-    }
     hdrColor[pixel] = float4(col, 1.0);
-    
-    // DBG: hdrColor[pixel] = float4(col.x-col.x, 1.0, 0.0, 1.0);
 }

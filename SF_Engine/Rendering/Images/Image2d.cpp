@@ -3,6 +3,7 @@
 #include <Bitmaps/Bitmap.hpp>
 #include <Rendering/Buffers/Buffer.hpp>
 #include <Rendering/RenderSystem.hpp>
+#include <stdexcept>
 
 namespace SF::Engine
 {
@@ -34,6 +35,8 @@ namespace SF::Engine
           anisotropic(anisotropic),
           mipmap(mipmap)
     {
+        components = BytesPerPixelForFormat(format);
+
         if (this->extent.x == 0 || this->extent.y == 0)
         {
             return;
@@ -119,5 +122,51 @@ namespace SF::Engine
         bufferStaging.UnmapMemory();
 
         CopyBufferToImage(bufferStaging.GetBuffer(), image, extent, layerCount, baseArrayLayer);
+    }
+
+    uint32_t Image2d::BytesPerPixelForFormat(VkFormat format)
+    {
+        switch (format)
+        {
+        case VK_FORMAT_R8_UNORM:
+        case VK_FORMAT_R8_SNORM:
+        case VK_FORMAT_R8_UINT:
+        case VK_FORMAT_R8_SINT:
+        case VK_FORMAT_R8_SRGB:
+            return 1;
+        case VK_FORMAT_R8G8_UNORM:
+        case VK_FORMAT_R8G8_SNORM:
+        case VK_FORMAT_R16_SFLOAT:
+        case VK_FORMAT_R16_UNORM:
+        case VK_FORMAT_R16_SNORM:
+        case VK_FORMAT_R16_UINT:
+        case VK_FORMAT_R16_SINT:
+            return 2;
+        case VK_FORMAT_R8G8B8A8_UNORM:
+        case VK_FORMAT_R8G8B8A8_SRGB:
+        case VK_FORMAT_R8G8B8A8_SNORM:
+        case VK_FORMAT_B8G8R8A8_UNORM:
+        case VK_FORMAT_B8G8R8A8_SRGB:
+        case VK_FORMAT_R16G16_SFLOAT:
+        case VK_FORMAT_R16G16_UNORM:
+        case VK_FORMAT_R16G16_SNORM:
+        case VK_FORMAT_R32_SFLOAT:
+        case VK_FORMAT_R32_UINT:
+        case VK_FORMAT_R32_SINT:
+            return 4;
+        case VK_FORMAT_R16G16B16A16_SFLOAT:
+        case VK_FORMAT_R16G16B16A16_UNORM:
+        case VK_FORMAT_R16G16B16A16_SNORM:
+        case VK_FORMAT_R32G32_SFLOAT:
+            return 8;
+        case VK_FORMAT_R32G32B32A32_SFLOAT:
+        case VK_FORMAT_R32G32B32A32_UINT:
+            return 16;
+        default:
+            // Unlisted format used with the extent ctor + SetPixels : add it
+            // above rather than silently guessing wrong.
+            throw std::runtime_error("Image2d::BytesPerPixelForFormat: unhandled VkFormat");
+        }
+        
     }
 }

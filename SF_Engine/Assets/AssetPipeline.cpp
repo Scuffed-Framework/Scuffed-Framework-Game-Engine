@@ -3,6 +3,8 @@
 #include <Filesystem/File.hpp>
 #include <Engine/Log/Log.hpp>
 #include <XML/XMLModule.hpp>
+#include <assimp/Importer.hpp>
+#include <Project/Project.hpp>
 
 namespace SF::Engine
 {
@@ -25,26 +27,30 @@ namespace SF::Engine
         factories.emplace(type, std::move(factory));
     }
 
-    void AssetController::Initialize()
+    void AssetController::ProjectLoaded()
     {
-        assets_.clear();
-
-        constexpr const char *kManifestPath = "Assets/AssetManifest.xml";
+        const std::filesystem::path kManifestPath = ProjectManager::Get()->GetProjectAssetPath() / "AssetManifest.xml";
 
         if (!File::Exists(kManifestPath))
         {
             Log::Warning("AssetController: no manifest found at '{}', starting with an empty asset set.",
-                         kManifestPath);
-            return;
+                         kManifestPath.string().c_str()); // Use .string().c_str()
         }
 
-        XMLModule* reader = XMLModule::Get();
-        if (!reader->LoadFromFile(kManifestPath))
+        XMLModule *reader = XMLModule::Get();
+        if (!reader->LoadFromFile(kManifestPath.string()))
         {
             Log::Error("AssetController: failed to parse manifest '{}': {}",
-                       kManifestPath, reader->GetLastError());
-            return;
+                       kManifestPath.string().c_str(), // Use .string().c_str()
+                       reader->GetLastError());
         }
+    }
+
+    bool AssetController::Initialize()
+    {
+        assets_.clear();
+
+        XMLModule *reader = XMLModule::Get();
 
         XMLNode root = reader->GetRootNode();
         const auto &factories = Factories();
@@ -74,6 +80,7 @@ namespace SF::Engine
             assets_.push_back(std::move(asset));
         }
 
+        return true;
         Log::Info("AssetController: loaded {} asset entries from manifest.", assets_.size());
     }
 

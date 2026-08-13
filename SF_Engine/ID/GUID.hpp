@@ -1,6 +1,4 @@
-#ifndef GUID_H
-#define GUID_H
-
+#pragma once //  todo: move this into UtilityClasses/
 #include <array>
 #include <cstdint>
 #include <string>
@@ -329,4 +327,15 @@ namespace SF::Engine
     constexpr GUID GUID_Namespace_OID = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"_guid;
     constexpr GUID GUID_Namespace_X500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"_guid;
 }
-#endif // GUID_H
+namespace std
+{
+    template <>
+    struct hash<SF::Engine::GUID>
+    {
+        size_t operator()(const SF::Engine::GUID &guid) const
+        {
+            // Use the built-in Hash struct from GUID
+            return SF::Engine::GUID::Hash{}(guid);
+        }
+    };
+}

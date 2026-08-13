@@ -1,16 +1,16 @@
 #pragma once
 #include <Rendering/Renderer.hpp>
 #include <Rendering/Stage.hpp>
-#include <Rendering/Lighting/ClusterCullPipelinePass.hpp>
-#include <Rendering/Lighting/LitMeshPipelinePass.hpp>
+#include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/Images/Image2d.hpp>
-#include <Rendering/Stage.hpp>
 #include <Rendering/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
 #include <Rendering/Visuals/sfSkies/AtmosphereController.hpp>
+#include <Rendering/Visuals/SSR/SSRPipelinePass.hpp>
 
 #include <Rendering/PipelinePassInit.hpp>
 #include <Rendering/RenderPass/FullscreenPass.hpp>
+#include <Rendering/Mesh/MeshFactory.hpp>
 
 namespace SF::Engine
 {
@@ -35,25 +35,37 @@ namespace SF::Engine
     public:
         SceneRenderer(SceneRendererConfig cfg = {}) : config_(std::move(cfg))
         {
-            // Stage 0: opaque forward pass — depth + offscreen HDR color
+            // Stage 0 : GBuffer (off-screen MRT, no swapchain). Replaces the
+            // old forward "gbuf_depth"+"hdr" pair — SSR (and any future
+            // deferred-only effect) needs normals/roughness/metallic per
+            // pixel, which a forward-lit-straight-to-hdr pass can't provide.
             AddRenderStage(std::make_unique<RenderStage>(
                 std::vector<Attachment>{
                     Attachment{0, "gbuf_depth", Attachment::Type::Depth},
-                    Attachment{1, "hdr", Attachment::Type::Image,
-                               false, VK_FORMAT_R16G16B16A16_SFLOAT,
-                               Color{0.0f, 0.0f, 0.0f, 1.0f}},
+                    Attachment{1, "gbuf_albedo", Attachment::Type::Image,
+                               false, VK_FORMAT_R8G8B8A8_UNORM},
+                    Attachment{2, "gbuf_normal", Attachment::Type::Image,
+                               false, VK_FORMAT_R16G16_SNORM},
+                    Attachment{3, "gbuf_pbr", Attachment::Type::Image,
+                               false, VK_FORMAT_R8G8B8A8_UNORM},
                 },
                 std::vector<SubpassType>{
-                    SubpassType{0, {0, 1}},
+                    SubpassType{0, {0, 1, 2, 3}},
                 }));
 
-            // Stage 1: composite (atmosphere+clouds, or plain blit) → swapchain
+            // Stage 1 : Lighting (+ sky/clouds) → SSR + Transparent → Tonemap.
+            // Same 3-subpass layout as LightingRenderer.hpp.
             AddRenderStage(std::make_unique<RenderStage>(
                 std::vector<Attachment>{
-                    Attachment{0, "swapchain", Attachment::Type::Swapchain},
+                    Attachment{0, "hdr", Attachment::Type::Image,
+                               false, VK_FORMAT_R16G16B16A16_SFLOAT,
+                               Color{0.0f, 0.0f, 0.0f, 1.0f}},
+                    Attachment{1, "swapchain", Attachment::Type::Swapchain},
                 },
                 std::vector<SubpassType>{
-                    SubpassType{0, {0}},
+                    SubpassType{0, {0}}, // deferred lighting (+ atmosphere/clouds) → hdr
+                    SubpassType{1, {0}}, // forward transparent → hdr
+                    SubpassType{2, {1}}, // tonemap → swapchain
                 }));
         }
 
@@ -61,10 +73,32 @@ namespace SF::Engine
         {
             lightManager_ = std::make_unique<LightManager>();
 
-            // Stage 0: Opaque geometry safely renders into scene_color + gbuf_depth (scene_color is hdr)
+            // Stage 0 : GBuffer geometry pass — writes gbuf_depth/albedo/normal/pbr.
             clusterCull_ = AddPipelinePass<ClusterCullPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
-            litPass_ = AddPipelinePass<LitMeshPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
+            gbuffer_ = AddPipelinePass<GBufferPass>(Pipeline::Stage{0, 0}, *lightManager_);
 
+            // Stage 1, subpass 0 : Deferred lighting resolve → hdr.
+            AddPipelinePass<DeferredLightPipelinePass>(Pipeline::Stage{1, 0}, *lightManager_);
+
+            // Stage 1, subpass 1 : Probed Stochastic SSR (compute, runs in
+            // PreRender — reads this frame's GBuffer + last frame's hdr, see
+            // SSRPipelinePass for the timing note) followed by the
+            // transparent forward pass.
+            ssr_ = AddPipelinePass<SSRPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
+            AddPipelinePass<ForwardTransparentPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
+
+            // Stage 1, subpass 2 : Tonemap hdr → swapchain (unconditional —
+            // previously this only ran when atmosphere was enabled, leaving
+            // nothing writing to swapchain otherwise).
+            AddPipelinePass<FullscreenPass>(
+                Pipeline::Stage{1, 2}, "hdr", "Shaders/CompositeSampler.shader");
+
+            // Atmosphere/clouds draw directly into "hdr" as part of stage 1
+            // subpass 0, alongside DeferredLightPipelinePass — registration
+            // order below places them after it in the same subpass, and
+            // PipelinePassManager preserves per-stage insertion order, so
+            // they correctly draw sky/cloud on top of (behind, depth-tested)
+            // the lit scene rather than needing a separate hdr->hdr blit.
             atmoController = std::make_unique<AtmosphereController>(
                 Pipeline::Stage{1, 0},
                 [this](Pipeline::Stage s, const AtmosphereParams &p)
@@ -81,12 +115,9 @@ namespace SF::Engine
                 // disable cloud pass cuz its broken
                 cloudPass_->SetEnabled(false);
                 // disable cloud pass cuz its broken
-
-                AddPipelinePass<FullscreenPass>(Pipeline::Stage{1, 0}, "hdr", "Shaders/FullscreenPass.shader");
             }
 
             GetPipelinePassManager()->RunInitCallbacks();
-            
         }
 
         void Update() override {} // Heavy per-frame work is driven by RenderScene()
@@ -99,10 +130,11 @@ namespace SF::Engine
 
         // Accessors
         LightManager *GetLightManager() { return lightManager_.get(); }
-        LitMeshPipelinePass *GetLitPass() { return litPass_; }
+        GBufferPass *GetGBuffer() { return gbuffer_; }
+        SSRPipelinePass *GetSSR() { return ssr_; }
         CloudPipelinePass *GetCloudPass() { return cloudPass_; }
         AtmosphereController *GetAtmosphereController() { return atmoController.get(); }
-        ClusterCullPipelinePass *GetClusterCull() { return clusterCull_; } // add
+        ClusterCullPipelinePass *GetClusterCull() { return clusterCull_; }
 
         std::unique_ptr<AtmosphereController> atmoController;
 
@@ -111,7 +143,8 @@ namespace SF::Engine
         AtmosphereData earthData{config_.atmosphereParams, {}};
 
         std::unique_ptr<LightManager> lightManager_;
-        LitMeshPipelinePass *litPass_ = nullptr;
+        GBufferPass *gbuffer_ = nullptr;
+        SSRPipelinePass *ssr_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
         ClusterCullPipelinePass *clusterCull_ = nullptr;
 

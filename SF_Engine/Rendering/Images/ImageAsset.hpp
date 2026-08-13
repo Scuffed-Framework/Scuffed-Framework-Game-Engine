@@ -5,10 +5,12 @@
 #include "Image2d.hpp"
 #include "Image2dArray.hpp"
 #include "Image3d.hpp"
+#include <Engine/Engine.hpp>
+#include <fstream>
 
 namespace SF::Engine
 {
-    template <typename TImage>
+    template <typename TImage = Image2d>
     class ImageAsset : public AssetBase
     {
         SF_RTTI(ImageAsset<TImage>, AssetBase)
@@ -21,7 +23,7 @@ namespace SF::Engine
 
         void Save() override
         {
-            XMLModule* writer = XMLModule::Get();
+            XMLModule *writer = XMLModule::Get();
             writer->SetRootNode(RTTI_TypeName());
             XMLNode root = writer->GetRootNode();
             AssetBase::Serialize(root);
@@ -29,26 +31,68 @@ namespace SF::Engine
             root.SetAttribute("Filename", filename.string());
             if (texture)
             {
-                // Pulled straight off the live Image, not duplicated as
-                // separate asset fields.
                 root.SetAttribute("Filter", static_cast<int>(texture->GetFilter()));
                 root.SetAttribute("AddressMode", static_cast<int>(texture->GetAddressMode()));
                 root.SetAttribute("Format", static_cast<int>(texture->GetFormat()));
                 root.SetAttribute("Samples", static_cast<int>(texture->GetSamples()));
                 root.SetAttribute("MipLevels", static_cast<int>(texture->GetMipLevels()));
                 root.SetAttribute("ArrayLayers", static_cast<int>(texture->GetArrayLevels()));
+                root.SetAttribute("UsageBits", static_cast<int>(texture->GetUsage()));
                 root.SetAttribute("Layout", static_cast<int>(texture->GetLayout()));
             }
 
-            writer.SaveToFile((GetEngineAssetsPath() / (name + ".xml")).string());
+            writer->SaveToFile((GetEngineAssetsPath() / (name + ".xml")).string());
         }
 
         bool Load(std::span<const uint8_t> payload) override
         {
-            auto bitmap = Bitmap::DecodeFromMemory(payload);
-            if (!bitmap)
+            if (filename.empty())
                 return false;
-            texture = std::make_shared<TImage>(std::move(bitmap)); // uses TImage's Bitmap ctor
+
+            XMLModule *writer = XMLModule::Get();
+            XMLNode root = writer->GetRootNode();
+            AssetBase::Deserialize(root);
+
+            auto bitmap = std::make_unique<Bitmap>(filename);
+            if (!bitmap || !*bitmap)
+                return false;
+
+            int rawFormat{}, rawLayout{}, rawUsage{}, rawFilter{}, rawAddressMode{};
+            root.GetAttribute("Format", rawFormat);
+            root.GetAttribute("Layout", rawLayout);
+            root.GetAttribute("UsageBits", rawUsage);
+            root.GetAttribute("Filter", rawFilter);
+            root.GetAttribute("AddressMode", rawAddressMode);
+
+            auto format = static_cast<VkFormat>(rawFormat);
+            auto layout = static_cast<VkImageLayout>(rawLayout);
+            auto usage = static_cast<VkImageUsageFlags>(rawUsage);
+            auto filter = static_cast<VkFilter>(rawFilter);
+            auto addressMode = static_cast<VkSamplerAddressMode>(rawAddressMode);
+
+            if constexpr (std::is_same_v<TImage, Image2d> || std::is_same_v<TImage, Cubemap>)
+            {
+                texture = std::make_shared<TImage>(
+                    std::move(bitmap), format, layout, usage, filter, addressMode);
+            }
+            else if constexpr (std::is_same_v<TImage, Image2dArray>)
+            {
+                int rawLayerCount{1};
+                root.GetAttribute("ArrayLayers", rawLayerCount);
+                texture = std::make_shared<TImage>(
+                    std::move(bitmap), static_cast<uint32_t>(rawLayerCount),
+                    format, layout, usage, filter, addressMode);
+            }
+            else if constexpr (std::is_same_v<TImage, Image3d>)
+            {
+                // TODO: Saving 3d textures
+                return false;
+            }
+            else
+            {
+                static_assert(!sizeof(TImage), "ImageAsset<TImage>::Load: no loading strategy for this TImage");
+            }
+
             return texture != nullptr;
         }
 
@@ -63,13 +107,4 @@ namespace SF::Engine
             texture = std::make_shared<TImage>(std::forward<Args>(args)...);
         }
     };
-
-    /*
-    void SomeInitFunction()
-    {
-        auto Image2dAsset = AssetController::Get().RegisterAsset<ImageAsset<Image2d>>("MyTexture");
-        auto Image3dAsset = AssetController::Get().RegisterAsset<ImageAsset<Image3d>>("CloudNoise");
-        auto Image2dArrayAsset = AssetController::Get().RegisterAsset<ImageAsset<Image2dArray>>("ShadowCascades");
-    }
-    */
 }

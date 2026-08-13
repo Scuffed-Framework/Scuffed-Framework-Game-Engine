@@ -28,15 +28,14 @@ namespace SF::Engine
                           .Buffer(0, ubo_->GetBuffer(), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
                           .CombinedImageSampler(1, AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetView(),
                                                 AtmoLUTs::Get().GetTransmittanceLUT()->GetTexture()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                          .CombinedImageSampler(2, AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetView(),
-                                                AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                          .CombinedImageSampler(3, AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetView(),
+                          // .CombinedImageSampler(2, AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetView(), AtmoLUTs::Get().GetMultiScatterLUT()->GetTexture()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                          .CombinedImageSampler(2, AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetView(),
                                                 AtmoLUTs::Get().GetSkyViewLUT()->GetTexture()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                          .CombinedImageSampler(4, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetView(),
+                          .CombinedImageSampler(3, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetView(),
                                                 AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveColorRGBTransR()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                          .CombinedImageSampler(5, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetView(),
+                          .CombinedImageSampler(4, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetView(),
                                                 AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveTransGB()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                          .CombinedImageSampler(6, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetView(),
+                          .CombinedImageSampler(5, AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetView(),
                                                 AtmoLUTs::Get().GetAerialPerspectiveLUT()->GetAerialPerspectiveRange()->GetSampler(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                           .Build();
 
@@ -59,8 +58,8 @@ namespace SF::Engine
 
         assert(sceneColor != nullptr);
         auto Writes = DescriptorSetWriteBuilder(*descSet_)
-                          .CombinedImageSampler(7, sceneDepth->GetView(), sceneDepth->GetSampler(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
-                          .Image(8, sceneColor->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                          .CombinedImageSampler(6, sceneDepth->GetView(), sceneDepth->GetSampler(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+                          .Image(7, sceneColor->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
                           .Build();
 
         Writes.Apply();
@@ -94,11 +93,10 @@ namespace SF::Engine
 
         SkyViewPushConstants svp{};
         svp.sunDir = Vec4(sd, params_.sunIntensity);
-        svp.cameraHeight = glm::length(viewPosSI) - params_.bottomRadius;
+        svp.camPos = Vec4(viewPosSI, 0);
         svp.bottomRadius = params_.bottomRadius;
         svp.topRadius = params_.topRadius;
-        svp._pad = 0.0f;
-        svp.cameraPos = Vec4(viewPosSI, 0.0f);
+        svp.pad0_ = Vec4(0);
         AtmoLUTs::Get().GetSkyViewLUT()->SetParams(svp);
     }
 

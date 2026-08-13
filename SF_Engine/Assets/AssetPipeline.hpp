@@ -5,7 +5,9 @@
 #include <Controllers/Controller.hpp>
 #include <span>
 #include <TemplateLibrary/DynamicArray.hpp>
+#include <filesystem>
 #include <Reflection/RTTI/RTTICast.hpp>
+#include <Engine/Module.hpp>
 
 namespace SF::Engine
 {
@@ -25,8 +27,7 @@ namespace SF::Engine
         Font,
         Material,
         Library, // Dll, or rsc file
-        AnimationStateMachine,
-        Text
+        AnimationStateMachine
     };
 
     class AssetBase : public Serializable
@@ -36,6 +37,7 @@ namespace SF::Engine
         std::string name;
         AssetType type;
         GUID guid = GUID::Generate();
+
 
         virtual ~AssetBase() = default;
 
@@ -85,11 +87,12 @@ namespace SF::Engine
 
     using AssetFactoryFn = std::function<std::shared_ptr<AssetBase>()>;
 
-    class AssetController : public StaticController<AssetController>
+    class AssetController : public Module::Registrar<AssetController>
     {
     public:
         void Update(float dt) {}
-        void Initialize();
+        bool Initialize() override;
+        void ProjectLoaded();
         void Shutdown() { assets_.clear(); }
 
         static void RegisterFactory(AssetType type, AssetFactoryFn factory);
@@ -100,7 +103,7 @@ namespace SF::Engine
         std::shared_ptr<AssetBase> FindByName(std::string_view name) const;
 
         template <typename T>
-        std::shared_ptr<Asset<T>> Get(const GUID &guid) const
+        std::shared_ptr<Asset<T>> GetAsset(const GUID &guid) const
         {
             return ::SF::RTTI::rtti_pointer_cast<Asset<T>>(FindByGUID(guid));
         }
@@ -136,7 +139,4 @@ namespace SF::Engine
                                              { return std::make_shared<T>(); });
         }
     };
-
-    template <typename Payload>
-    using DataAssetRegistrar = AssetRegistrar<Asset<Payload>>;
 }

@@ -1,0 +1,184 @@
+#ifndef SSR_COMMON_SI
+#define SSR_COMMON_SI
+// Probed Stochastic SSR — shared structures & helpers.
+//
+// Mirrors the Clouds/CloudCommon.si convention: one shared include per
+// subsystem, pulled in by every compute stage (RayGen, Trace, Temporal,
+// Spatial, Composite) so the resource layout, math, and GBuffer decode
+// stay byte-identical across all five passes.
+//
+// GBuffer layout consumed here (see Shaders/Lighting/GBuffer.shader):
+//   gbuf_depth  reversed-Z depth (clear = 0.0, near = 1.0, far -> 0.0)
+//   gbuf_normal RG16_SNORM, octahedral-encoded world-space normal
+//   gbuf_pbr    RGBA8      r=roughness g=metallic b=AO a=emissive
+//
+// kCam (SSR_CAMERA_BIND, set 0) is the shared engine Camera UBO
+// (Shaders/Common/Camera.si) written every frame by
+// RenderSystem::UpdateSharedCameraData() — it carries prevViewProjection,
+// which is what makes temporal reprojection possible here.
+
+#include "Noise/BlueNoise.si"
+#include "Common/Camera.si"
+#include "Common/Math.si"
+#include "Common/DebugNaN.si"
+#include "PBR/Microfacet/GGX.slang"
+#include "PBR/Microfacet/Fresnel.slang"
+
+#ifndef SSR_CAMERA_BIND
+#define SSR_CAMERA_BIND 31
+#endif
+
+// Debug view modes (SSRParams.debugView), selected from the ImGui panel.
+#define SSR_DEBUG_NONE       0
+#define SSR_DEBUG_RAYDIR     1
+#define SSR_DEBUG_TRACE_RAW  2
+#define SSR_DEBUG_TEMPORAL   3
+#define SSR_DEBUG_SPATIAL    4
+#define SSR_DEBUG_CONFIDENCE 5
+
+// std140-compatible, matches SSRParams in SSRPipelinePass.hpp exactly
+// (7 x 16-byte rows — see the static_assert next to the C++ definition).
+struct SSRParams
+{
+    float2 screenSize;
+    float2 invScreenSize;
+
+    int   maxSteps;
+    float thickness;
+    float strideScale;
+    int   frameIndex;
+
+    float maxRoughness;
+    float intensity;
+    float temporalBlendMin;
+    float temporalBlendMax;
+
+    float spatialRadiusPx;
+    float varianceClampGamma;
+    int   debugView;
+    int   binarySearchSteps;
+
+    float3 ambientSkyColor;
+    float  ambientIntensity;
+
+    float3 ambientGroundColor;
+    float  edgeFadeStart;
+
+    int   bTemporalEnabled;
+    int   bSpatialEnabled;
+    int   bProbeFallbackEnabled;
+    float depthBufferThicknessBias;
+};
+
+// ---------------------------------------------------------------------
+// GBuffer decode
+// ---------------------------------------------------------------------
+
+// Same convention as GBuffer.shader's octEncode / DeferredLight.shader's octDecode.
+float3 SSR_OctDecodeNormal(float2 f)
+{
+    float3 n = float3(f, 1.0 - abs(f.x) - abs(f.y));
+    if (n.z < 0.0) n.xy = (1.0 - abs(n.yx)) * sign(n.xy);
+    return normalize(n);
+}
+
+// ---------------------------------------------------------------------
+// Position reconstruction (reversed-Z: clear=0, near=1, far->0)
+// ---------------------------------------------------------------------
+
+// depth is clamped away from 0 (the far/background value in reversed-Z) so
+// the homogeneous divide never sees w==0 — same guard Reconstruct.shader
+// uses for the cloud system's own depth reads.
+//
+// Camera.si has no combined inverse-view-projection field, so — like
+// Reconstruct.shader / GBuffer.shader elsewhere in the engine — this
+// un-projects in two steps: clip -> view (inverseProjection), then
+// view -> world (inverseView).
+float3 SSR_WorldPosFromDepth(float2 uv, float depth, float4x4 invProj, float4x4 invView)
+{
+    float safeDepth = max(depth, 1e-6);
+    float4 clip = float4(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, safeDepth, 1.0);
+    float4 viewPosH = mul(invProj, clip);
+    float3 viewPos = viewPosH.xyz / viewPosH.w;
+    float4 wp = mul(invView, float4(viewPos, 1.0));
+    return wp.xyz;
+}
+
+float3 SSR_ViewPosFromDepth(float2 uv, float depth, float4x4 invProj)
+{
+    float safeDepth = max(depth, 1e-6);
+    float4 clip = float4(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, safeDepth, 1.0);
+    float4 vp = mul(invProj, clip);
+    return vp.xyz / vp.w;
+}
+
+// Positive-forward view-space depth (matches DeferredLight.shader's
+// clusterIdx convention: viewZ = -(view * worldPos).z). Used for the
+// ray-march thickness test instead of raw nonlinear depth, since reversed-Z
+// depth resolution is extremely non-uniform near the far plane.
+float SSR_ViewZ(float3 worldPos, float4x4 view)
+{
+    return -(mul(view, float4(worldPos, 1.0))).z;
+}
+
+// World-space position -> screen UV + reversed-Z NDC depth. Used every
+// march step to walk a world/view-space ray across the depth buffer.
+float3 SSR_WorldToScreenUV(float3 worldPos, float4x4 viewProj)
+{
+    float4 clip = mul(viewProj, float4(worldPos, 1.0));
+    float3 ndc = clip.xyz / max(clip.w, 1e-6);
+    float2 uv = float2(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5);
+    return float3(uv, ndc.z);
+}
+
+bool SSR_UvInBounds(float2 uv)
+{
+    return all(uv >= float2(0.0, 0.0)) && all(uv <= float2(1.0, 1.0));
+}
+
+// Smooth falloff as a hit/probe sample approaches the screen border, so
+// off-screen information doesn't hard-cut into a visible seam — it fades
+// into the probe fallback instead.
+float SSR_ScreenEdgeFade(float2 uv, float fadeStart)
+{
+    float2 d = min(uv, 1.0 - uv);
+    float2 fade = saturate(d / max(fadeStart, 1e-4));
+    return fade.x * fade.y;
+}
+
+// ---------------------------------------------------------------------
+// Stochastic reflection direction
+// ---------------------------------------------------------------------
+
+// Perceptual roughness -> GGX alpha (matches the artist-facing "roughness"
+// stored in gbuf_pbr.r; squared once here so every caller uses the same
+// convention as PBR/Microfacet/GGX.slang's ImportanceSampleGGX).
+float SSR_RoughnessToAlpha(float perceptualRoughness)
+{
+    float r = clamp(perceptualRoughness, 0.02, 1.0);
+    return r * r;
+}
+
+// Importance-samples a microfacet normal from the roughness lobe (blue-noise
+// driven xi, see RayGen.shader) and reflects V about it. This is the
+// "stochastic" part of stochastic SSR: rather than one deterministic mirror
+// ray, each pixel/frame traces one sample from the specular lobe, and
+// TemporalAccumulate.shader integrates those samples over time.
+float3 SSR_SampleReflectionDir(float2 xi, float3 N, float3 V, float roughnessA, out float NdotH)
+{
+    float3 Hs = ImportanceSampleGGX(xi, roughnessA, N);
+    NdotH = saturate(dot(N, Hs));
+    float3 R = reflect(-V, Hs);
+    return R;
+}
+
+// GGX(NdotH) * NdotH / (4 * HdotV) — divides out onto the reflection-vector
+// sampling measure so TemporalAccumulate/composite can weight lower-PDF
+// (edge-of-lobe) samples down instead of over-brightening rough surfaces.
+float SSR_GGXReflectionPdf(float NdotH, float HdotV, float roughnessA2)
+{
+    float D = NormalDistributionGGX(NdotH, roughnessA2);
+    return max(D * NdotH / max(4.0 * HdotV, 1e-4), 1e-5);
+}
+
+#endif // SSR_COMMON_SI

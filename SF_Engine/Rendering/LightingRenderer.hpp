@@ -5,6 +5,7 @@
 #include <Rendering/RenderPass/FullscreenPass.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
+#include <Rendering/Visuals/SSR/SSRPipelinePass.hpp>
 #include "Windows/WindowManager.hpp"
 
 #include <Math/BasicMath.hpp>
@@ -133,12 +134,15 @@ namespace SF::Engine
             // Stage 1, subpass 0 : Deferred lighting resolve
             AddPipelinePass<DeferredLightPipelinePass>(Pipeline::Stage{1, 0}, *lightManager_);
 
-            // Stage 1, subpass 1 : Transparent forward pass
+            // Stage 1, subpass 1 : Probed Stochastic SSR (compute, runs in
+            // PreRender — see SSRPipelinePass for the cross-stage hdr/gbuffer
+            // read timing notes) followed by the transparent forward pass.
+            ssr_ = AddPipelinePass<SSRPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
             AddPipelinePass<ForwardTransparentPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
 
             // Stage 1, subpass 2 : Tonemap hdr → swapchain
             AddPipelinePass<FullscreenPass>(
-                Pipeline::Stage{1, 2}, "hdr", "Shaders/FullscreenPass.shader");
+                Pipeline::Stage{1, 2}, "hdr", "Shaders/CompositeSampler.shader");
 
             // Default lights
             Light sun{};
@@ -165,9 +169,11 @@ namespace SF::Engine
 
         SF::Engine::LightManager *GetLightManager() { return lightManager_.get(); }
         SF::Engine::GBufferPass *GetGBuffer() { return gbuffer_; }
+        SF::Engine::SSRPipelinePass *GetSSR() { return ssr_; }
 
     private:
         std::unique_ptr<SF::Engine::LightManager> lightManager_;
         SF::Engine::GBufferPass *gbuffer_ = nullptr;
+        SF::Engine::SSRPipelinePass *ssr_ = nullptr;
     };
 }

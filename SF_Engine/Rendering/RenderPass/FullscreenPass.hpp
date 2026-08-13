@@ -39,7 +39,7 @@ namespace SF::Engine
         explicit FullscreenPass(Pipeline::Stage stage,
                                 std::string sourceAttachment = "scene",
                                 const std::filesystem::path &shaderPath =
-                                    "Shaders/FullscreenPass.shader");
+                                    "Shaders/CompositeSampler.shader");
 
         ~FullscreenPass() override = default;
 

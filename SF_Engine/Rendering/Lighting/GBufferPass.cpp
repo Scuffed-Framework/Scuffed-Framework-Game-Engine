@@ -1,5 +1,6 @@
 #include "GBufferPass.hpp"
 #include <Rendering/RenderSystem.hpp>
+#include <Rendering/SharedSamplers.hpp>
 namespace SF::Engine
 {
     //  helpers (same pattern as LitMeshPipelinePass)
@@ -15,6 +16,10 @@ namespace SF::Engine
         w.pBufferInfo = i;
         return w;
     }
+    // GBuffer.shader declares its material inputs as plain Texture2D (bindings
+    // 1-4) plus one separate SamplerState (binding 5) — not a combined
+    // image-sampler — so the descriptor writes/layout must be SAMPLED_IMAGE,
+    // not COMBINED_IMAGE_SAMPLER.
     static VkWriteDescriptorSet GBufWImg(VkDescriptorSet d, uint32_t b,
                                          const VkDescriptorImageInfo *i)
     {
@@ -23,14 +28,26 @@ namespace SF::Engine
         w.dstSet = d;
         w.dstBinding = b;
         w.descriptorCount = 1;
-        w.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        w.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        w.pImageInfo = i;
+        return w;
+    }
+    static VkWriteDescriptorSet GBufWSampler(VkDescriptorSet d, uint32_t b,
+                                             const VkDescriptorImageInfo *i)
+    {
+        VkWriteDescriptorSet w{};
+        w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w.dstSet = d;
+        w.dstBinding = b;
+        w.descriptorCount = 1;
+        w.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
         w.pImageInfo = i;
         return w;
     }
     static VkDescriptorImageInfo GBufImgInfo(const Image2d *img)
     {
         VkDescriptorImageInfo ii{};
-        ii.sampler = img->GetSampler();
+        ii.sampler = VK_NULL_HANDLE; // SAMPLED_IMAGE : sampler comes from binding 5, not per-texture
         ii.imageView = img->GetView();
         ii.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         return ii;
@@ -91,8 +108,13 @@ namespace SF::Engine
     void GBufferPass::WriteFrameDescriptors()
     {
         VkDescriptorBufferInfo frameInfo{lm_.GetFrameUBO().GetBuffer(), 0, VK_WHOLE_SIZE};
+
+        VkDescriptorImageInfo samplerInfo{};
+        samplerInfo.sampler = SharedSamplers::GetLinearRepeatSampler();
+
         DescriptorSet::Update({
             GBufWUbo(descSet_->GetDescriptorSet(), 0, &frameInfo),
+            GBufWSampler(descSet_->GetDescriptorSet(), 5, &samplerInfo),
         });
     }
 

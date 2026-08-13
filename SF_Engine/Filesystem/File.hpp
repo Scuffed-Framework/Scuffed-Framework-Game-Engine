@@ -99,6 +99,7 @@ namespace SF::Engine
 
         // File system operations
         static bool Exists(const std::string &path);
+        static bool Exists(const std::filesystem::path &path);
         bool Exists() const;
 
         static bool Delete(const std::string &path);
@@ -306,6 +307,10 @@ namespace SF::Engine
     }
 
     inline bool File::Exists(const std::string &path)
+    {
+        return fs::exists(path);
+    }
+    inline bool File::Exists(const std::filesystem::path &path)
     {
         return fs::exists(path);
     }

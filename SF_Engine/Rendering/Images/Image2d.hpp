@@ -107,6 +107,13 @@ namespace SF::Engine
     private:
         void Load(std::unique_ptr<Bitmap> loadBitmap = nullptr);
 
+        // Bytes-per-texel for formats constructible via the extent-based
+        // ctor : that ctor never goes through Load() (which is the only
+        // other place `components` gets set, from the source Bitmap), so
+        // SetPixels() would otherwise stage a zero-size buffer for any
+        // image built that way. Extend as new formats need SetPixels support.
+        static uint32_t BytesPerPixelForFormat(VkFormat format);
+
         std::filesystem::path filename;
         bool anisotropic;
         bool mipmap;

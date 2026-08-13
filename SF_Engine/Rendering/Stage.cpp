@@ -21,7 +21,11 @@ namespace SF::Engine
         // Build clear values and per-subpass metadata
         for (const auto &subpass : this->subpasses)
         {
-            uint32_t count = 0;
+            uint32_t colorCount = 0; // excludes depth : this is what RenderPipeline::CreatePipelineMrt()
+                                     // uses to size pColorBlendState, which must match the real
+                                     // VkSubpassDescription::colorAttachmentCount (Renderpass.cpp
+                                     // already separates depth into pDepthStencilAttachment, so a
+                                     // depth-inclusive count here mismatches it).
             bool multisampled = false;
 
             for (auto bindingIndex : subpass.GetAttachmentBindings())
@@ -39,15 +43,15 @@ namespace SF::Engine
                 {
                     auto c = att->GetClearColor();
                     clearValue.color = {c.r, c.g, c.b, c.a};
+                    colorCount++;
                 }
                 clearValues.emplace_back(clearValue);
-                count++;
 
                 if (att->IsMultisampled())
                     multisampled = true;
             }
 
-            subpassAttachmentCount.emplace_back(count);
+            subpassAttachmentCount.emplace_back(colorCount);
             subpassMultisampled.emplace_back(multisampled);
         }
     }

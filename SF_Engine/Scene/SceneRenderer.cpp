@@ -20,7 +20,7 @@ namespace SF::Engine
 
     void SceneRenderer::RenderScene(Scene *scene)
     {
-        if (!litPass_ || !lightManager_ || !scene)
+        if (!gbuffer_ || !lightManager_ || !scene)
             return;
 
         if (!uiCallbackSet_)
@@ -50,7 +50,7 @@ namespace SF::Engine
 
         float aspect = wnd ? wnd->GetAspectRatio() : 1.0f;
         Vec2 screenSize = wnd ? Vec2(wnd->GetSize().x, wnd->GetSize().y)
-                              : Vec2(1280.0f, 720.0f);
+                              : Vec2(800.0f, 600.0f);
 
         uint32_t curW = static_cast<uint32_t>(screenSize.x);
         uint32_t curH = static_cast<uint32_t>(screenSize.y);
@@ -107,7 +107,7 @@ namespace SF::Engine
         for (auto &obj : scene->objects_)
         {
             if (obj->enabled && obj->mesh)
-                litPass_->Submit(obj->mesh, *obj->GetComponent<MeshMaterial>(), obj->GetComponent<Transform>()->ToMatrix());
+                gbuffer_->Submit(obj->mesh, *obj->GetComponent<MeshMaterial>(), obj->GetComponent<Transform>()->ToMatrix());
         }
 
         if (atmoController && !atmoController->Empty())

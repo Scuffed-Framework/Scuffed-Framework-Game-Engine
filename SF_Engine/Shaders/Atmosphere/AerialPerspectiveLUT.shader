@@ -32,12 +32,13 @@ float sliceDepth(float p, float maxDist)
 }
 
 [numthreads(8, 8, 1)]
-void main(uint3 globalThreadID : SV_DispatchThreadID)
+void main(uint3 globalThreadID: SV_DispatchThreadID)
 {
     int3 lutSize;
     aerialPerspColorRGBTransR.GetDimensions(lutSize.x, lutSize.y, lutSize.z);
     int2 coord2 = int2(globalThreadID.xy);
-    if (any(coord2 >= lutSize.xy)) return;
+    if (any(coord2 >= lutSize.xy))
+        return;
 
     int sliceCount = lutSize.z;
     float2 uv = (float2(coord2) + 0.5) / float2(lutSize.xy);
@@ -88,9 +89,7 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
     float mumu = mu * mu;
     float gg = G * G;
     float phaseR = 3.0 / (16.0 * kPI) * (1.0 + mumu);
-    float phaseM = 3.0 / (8.0 * kPI)
-                    * ((1.0 - gg) * (mumu + 1.0))
-                    / (pow(1.0 + gg - 2.0 * mu * G, 1.5) * (2.0 + gg));
+    float phaseM = 3.0 / (8.0 * kPI) * ((1.0 - gg) * (mumu + 1.0)) / (pow(1.0 + gg - 2.0 * mu * G, 1.5) * (2.0 + gg));
 
     float camHeight = length(viewPos);
     bool nonLinear = (camHeight < Rtop);
@@ -132,20 +131,10 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
         float3 weight = (float3(1.0) - T_step) / max(sigma_t, float3(1e-7));
 
         float cosSunI = dot(posI / rI, sunDir);
-        
-        // Calculate UV coordinates for LUT sampling
-        float normalizedHeight = (rI - Rbot) / (Rtop - Rbot);
-        float2 lutUV = float2(
-            saturate(cosSunI * 0.5 + 0.5),
-            saturate(normalizedHeight)
-        );
-        
-        float3 sunTrans = transmittanceLUT.SampleLevel(lutUV, 0).r;
-        float3 ms = multiScatterLUT.SampleLevel(lutUV, 0).rgb;
+        float3 sunTrans = sampleTransmittance(transmittanceLUT, rI, cosSunI, Rbot, Rtop);
+        float3 ms = sampleMultiScatter(multiScatterLUT, rI, cosSunI, Rbot, Rtop);
 
-        float3 singleScatter = totalTransmit * weight * sunTrans
-                            * (phaseR * RAY_BETA * rhoRay
-                            + phaseM * MIE_BETA * rhoMie);
+        float3 singleScatter = totalTransmit * weight * sunTrans * (phaseR * RAY_BETA * rhoRay + phaseM * MIE_BETA * rhoMie);
 
         float3 multiS = totalTransmit * weight * ms * sigma_s;
 

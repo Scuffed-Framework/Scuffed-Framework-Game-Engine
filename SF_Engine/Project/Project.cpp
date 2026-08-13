@@ -4,6 +4,7 @@
 #include <numeric>
 #include <fstream>
 #include <GUI/GuiMembers.hpp>
+#include <Assets/AssetPipeline.hpp>
 
 namespace SF::Engine
 {
@@ -36,8 +37,19 @@ namespace SF::Engine
         if (std::filesystem::exists(xmlPath))
             return ProjectResult::InvalidFormat; // already exists
 
-        // 2. Build the XML document and serialise into it.
-        XMLModule* writer = XMLModule::Get();
+        // 2. Create the asset manifest
+        std::filesystem::path manifestPath = path / "Assets" / "AssetManifest.xml";
+        XMLModule *manifestWriter = XMLModule::Get();
+        manifestWriter->SetRootNode("AssetManifest"); // creates empty manifest with just root element
+
+        if (!manifestWriter->SaveToFile(manifestPath.string()))
+        {
+            Log::Error("ProjectManager: failed to create asset manifest at '{}'", manifestPath.string());
+            return ProjectResult::UnknownError;
+        }
+
+        // 3. Build the XML document and serialise into it.
+        XMLModule *writer = XMLModule::Get();
         writer->SetRootNode("Project"); // creates the xmlDoc + root element
         XMLNode root = writer->GetRootNode();
 
@@ -46,13 +58,13 @@ namespace SF::Engine
         proj->Path = xmlPath;
         proj->Serialize(root); // writes name + projectFilePath attributes
 
-        // 3. Save to disk – XMLModule handles everything, no File needed.
+        // 4. Save to disk – XMLModule handles everything, no File needed.
         if (!writer->SaveToFile(xmlPath.string()))
             return ProjectResult::UnknownError;
 
         proj->projectXML = File(xmlPath); // keep the File handle for later use
 
-        // 4. Register in recent list and make active.
+        // 5. Register in recent list and make active.
         ProjectLoadeInfo info;
         info.name = name;
         info.projectPath = xmlPath;
@@ -61,6 +73,7 @@ namespace SF::Engine
         delete currentLoadedProject;
         currentLoadedProject = proj.release();
         projectWindowOpen = false;
+        AssetController::Get()->ProjectLoaded();
         return ProjectResult::Success;
     }
 
@@ -75,7 +88,7 @@ namespace SF::Engine
             return ProjectResult::NotFound;
 
         // 1. Parse the XML file.
-        XMLModule* reader = XMLModule::Get();
+        XMLModule *reader = XMLModule::Get();
         if (!reader->LoadFromFile(xmlPath.string()))
             return ProjectResult::InvalidFormat;
 
@@ -111,6 +124,7 @@ namespace SF::Engine
         delete currentLoadedProject;
         currentLoadedProject = proj.release();
         projectWindowOpen = false;
+        AssetController::Get()->ProjectLoaded();
         return ProjectResult::Success;
     }
 

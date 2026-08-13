@@ -151,11 +151,11 @@ namespace SF::Engine
             return;
 
         pipeline_->BindPipeline(commandBuffer);
-        descSet_->BindDescriptor(commandBuffer);
 
         for (auto &dc : drawList_)
         {
             WriteMaterialDescriptors(dc.material);
+            descSet_->BindDescriptor(commandBuffer); // moved inside loop, after the write
 
             LitPushConstants pc{};
             pc.model = dc.transform;
