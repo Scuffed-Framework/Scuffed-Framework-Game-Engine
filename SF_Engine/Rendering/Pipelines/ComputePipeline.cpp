@@ -4,6 +4,7 @@
 #include <Rendering/SharedSamplers.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/Shaders/Parser/Parser.hpp>
+#include <Engine/Engine.hpp>
 #include <stdexcept>
 
 namespace SF::Engine
@@ -38,9 +39,9 @@ namespace SF::Engine
 
         Shaders::ShaderParser parser;
         Log::Info("Loading compute shader: {} (cwd={})",
-                  shaderStage.string(), std::filesystem::current_path().string());
+                  shaderStage.string(), GetExecutablePath().string());
 
-        auto parsedOpt = parser.parse(shaderStage.string());
+        auto parsedOpt = parser.parse(std::filesystem::path(GetExecutablePath()/shaderStage).string());
         if (!parsedOpt)
             throw std::runtime_error("Failed to parse compute shader '" +
                                      shaderStage.string() + "': " + parser.getLastError());

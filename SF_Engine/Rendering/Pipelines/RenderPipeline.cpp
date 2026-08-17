@@ -1,7 +1,8 @@
 #include "RenderPipeline.hpp"
 #include <Engine/Log/Log.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Shaders/Parser/Parser.hpp> // only needed in .cpp, not header
+#include <Rendering/Shaders/Parser/Parser.hpp>
+#include <Engine/Engine.hpp>
 #include <filesystem>
 
 namespace SF::Engine
@@ -130,8 +131,8 @@ namespace SF::Engine
 
         Shaders::ShaderParser parser;
         Log::Info("Loading shader: {} (cwd={})", shaderPath.string(),
-                  std::filesystem::current_path().string());
-        auto parsedShaderOpt = parser.parse(shaderPath.string());
+                  GetExecutablePath().string());
+        auto parsedShaderOpt = parser.parse(std::filesystem::path(GetExecutablePath() / shaderPath).string());
 
         if (!parsedShaderOpt)
             throw std::runtime_error("Failed to parse shader '" + shaderPath.string() +

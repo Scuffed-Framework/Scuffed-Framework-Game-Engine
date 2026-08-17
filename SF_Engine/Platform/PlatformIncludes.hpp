@@ -72,7 +72,7 @@ namespace SF::Engine
         if (len == -1)
             throw std::runtime_error("readlink failed");
 
-        return std::filesystem::path(std::string(buffer.data(), static_cast<size_t>(len)));
+        return std::filesystem::path(std::string(buffer.data(), static_cast<size_t>(len))).parent_path();
     }
 }
 
