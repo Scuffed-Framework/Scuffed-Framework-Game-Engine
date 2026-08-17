@@ -264,6 +264,7 @@ namespace SF::Engine
                     ImGui::EndMenu();
                 }
                 // add more, also add more __mesh__ stuff
+                ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Light"))
             {
