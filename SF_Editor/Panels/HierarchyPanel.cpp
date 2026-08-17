@@ -254,14 +254,12 @@ namespace SF::Engine
                 {
                     registry.CreateEntity("New Entity");
                     m_needsRefresh = true;
-                    ImGui::EndMenu();
                 }
                 if (ImGui::MenuItem("Cube"))
                 {
                     SceneObject *cube = scene->AddObject("Cube");
                     cube->meshSourcePath = "__cube__";
                     m_needsRefresh = true;
-                    ImGui::EndMenu();
                 }
                 // add more, also add more __mesh__ stuff
                 ImGui::EndMenu();
@@ -272,19 +270,16 @@ namespace SF::Engine
                 {
                     scene->AddLight("Directional Light", Lighting::LightType::Directional, {1, 1, 1}, 10, {0, 0, 0}, {0, 0, 0});
                     m_needsRefresh = true;
-                    ImGui::EndMenu();
                 }
                 if (ImGui::MenuItem("Point Light"))
                 {
                     scene->AddLight("Point Light", Lighting::LightType::Point, {1, 1, 1}, 10, {0, 0, 0}, {0, 0, 0});
                     m_needsRefresh = true;
-                    ImGui::EndMenu();
                 }
                 if (ImGui::MenuItem("Spot Light"))
                 {
                     scene->AddLight("Spot Light", Lighting::LightType::Spot, {1, 1, 1}, 10, {0, 0, 0}, {0, 0, 0});
                     m_needsRefresh = true;
-                    ImGui::EndMenu();
                 }
                 ImGui::EndMenu();
             }
