@@ -264,6 +264,8 @@ namespace SF::Engine
     void AssetBrowser::DrawAssetGrid()
     {
         auto controller = AssetController::Get();
+        if(controller == nullptr) 
+            return;
         const auto &assets = controller->assets_;
 
         ImGui::BeginChild("AssetGrid", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
