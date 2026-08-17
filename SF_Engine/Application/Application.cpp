@@ -23,7 +23,7 @@ namespace SF::Engine
 
         return std::filesystem::path(buffer.data());
 
-#elif __PLATFORM_MACOS
+#elif _PLATFORM_MACOS
         uint32_t size = 0;
         _NSGetExecutablePath(nullptr, &size);
 
@@ -33,7 +33,7 @@ namespace SF::Engine
 
         return std::filesystem::weakly_canonical(buffer.data());
 
-#elif __PLATFORM_LINUX
+#elif _PLATFORM_LINUX
         std::vector<char> buffer(1024);
         ssize_t size = 0;
 
