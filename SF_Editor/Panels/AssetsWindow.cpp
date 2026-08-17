@@ -1,4 +1,6 @@
 #include "AssetsWindow.hpp"
+#include <Project/Project.hpp>
+#include <Gui/GuiMembers.hpp>
 
 namespace SF::Engine
 {
@@ -48,6 +50,12 @@ namespace SF::Engine
         else
         {
             DrawAssetGrid();
+        }
+
+        if (ImGui::BeginPopupContextWindow("AssetBrowserContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+        {
+            DrawContextMenu();
+            ImGui::EndPopup();
         }
 
         ImGui::End();
@@ -878,5 +886,34 @@ namespace SF::Engine
 
         m_previewCache[guid] = preview;
         return preview;
+    }
+
+    void AssetBrowser::DrawContextMenu()
+    {
+        if (ImGui::BeginMenu("New"))
+        {
+            // BASIC
+            if(ImGui::MenuItem("Folder"))
+            {
+                auto AssetPath = ProjectManager::Get()->GetProjectAssetPath();
+                // todo: what dir are we browsing in? / Folder Icon with text for folder, return or click off = create
+            }
+            if(ImGui::MenuItem("Prefab"))
+            {
+                // ShowPrefabWizzard();
+            }
+
+            ImGui::Separator();
+            // SHADERS
+            if(ImGui::MenuItem("Shader"))
+            {
+                // CreateDefaultShader(path);
+            }
+            if(ImGui::MenuItem("Shader Include"))
+            {
+                // CreateDefaultShaderInclude(path);
+            }
+            ImGui::EndMenu();
+        }
     }
 }

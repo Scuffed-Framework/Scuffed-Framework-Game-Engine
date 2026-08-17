@@ -141,9 +141,6 @@ namespace SFTL
 
     namespace Detail
     {
-        template <typename...>
-        using void_t = void;
-
         template <typename T>
         T &&DeclVal() noexcept;
 

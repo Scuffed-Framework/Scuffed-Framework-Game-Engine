@@ -1095,6 +1095,32 @@ namespace SFTL
         return SFTL::move(_Arg);
     }
 
+    template <typename Argument1, typename Argument2, typename Result>
+    struct binary_function
+    {
+        typedef Argument1 first_argument_type;
+        typedef Argument2 second_argument_type;
+        typedef Result result_type;
+    };
+
+    template <typename Type>
+    struct equal_to : public binary_function<Type, Type, bool>
+    {
+        constexpr bool operator()(const Type &a, const Type &b) const
+        {
+            return a == b;
+        }
+    };
+
+    template <typename Type>
+    struct not_equal_to : public binary_function<Type, Type, bool>
+    {
+        constexpr bool operator()(const Type &a, const Type &b) const
+        {
+            return a != b;
+        }
+    };
+
     using std::underlying_type_t;
 
     using std::is_constant_evaluated;

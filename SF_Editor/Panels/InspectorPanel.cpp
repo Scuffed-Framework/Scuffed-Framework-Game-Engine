@@ -181,7 +181,7 @@ namespace SF::Engine
                 // m_entity->AddComponent<idk>();
                 break;
             case 1:
-                // m_entity->AddComponent<dihh>();
+                // m_entity->AddComponent<skibidi>();
                 break;
             case 2:
                 // m_entity->AddComponent<67>();
@@ -200,7 +200,6 @@ namespace SF::Engine
 
         bool modified = false;
 
-        // Example property drawing - adapt based on your component types
         ImGui::Indent();
 
         // Transform properties example

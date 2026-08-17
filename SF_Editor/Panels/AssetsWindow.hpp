@@ -3,7 +3,6 @@
 #include <Gui/UIRegistry.hpp>
 #include <Gui/ocornut/imgui.h>
 #include <Gui/ocornut/imgui_internal.h>
-#include <Project/Project.hpp>
 #include <Gui/IconHeaders/IconMaterialDesign.hpp>
 #include <algorithm>
 #include <cctype>
@@ -80,6 +79,8 @@ namespace SF::Engine
         template <typename TImage>
         void CreateImageAsset();
         void RefreshAssets();
+
+        void DrawContextMenu();
 
         // Helper to get or create texture preview
         template <typename TImage>

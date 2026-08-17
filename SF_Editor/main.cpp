@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <iostream>
 
-#include "LevelEditor.hpp"
+#include "Application/LevelEditor.hpp"
 
 int main()
 {
