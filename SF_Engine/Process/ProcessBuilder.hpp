@@ -1,6 +1,6 @@
 #pragma once
 #include <UtilityClasses/Patterns.hpp>
-#include "PID.hpp"
+#include "Process.hpp"
 
 namespace SF::Engine
 {
@@ -13,13 +13,13 @@ namespace SF::Engine
             return Self();
         }
 
-        ProcessBuilder &Arguments(::SFTL::DynamicArray<::SFTL::String> args)
+        ProcessBuilder &Arguments(::SFTL::DynamicArray<std::string> args)
         {
             arguments_ = std::move(args);
             return Self();
         }
 
-        ProcessBuilder &Argument(::SFTL::String arg)
+        ProcessBuilder &Argument(std::string arg)
         {
             arguments_.push_back(std::move(arg));
             return Self();
@@ -38,7 +38,7 @@ namespace SF::Engine
 
     private:
         std::filesystem::path executable_;
-        ::SFTL::DynamicArray<::SFTL::String> arguments_;
+        ::SFTL::DynamicArray<std::string> arguments_;
         std::filesystem::path workingDirectory_;
     };
 }

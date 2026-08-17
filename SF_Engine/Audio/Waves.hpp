@@ -1,3 +1,4 @@
+#pragma once
 #include <AL/al.h>
 
 namespace SF::Engine::Audio

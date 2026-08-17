@@ -75,7 +75,7 @@ namespace SF::Engine
 
             entry.GetAttribute("Name", asset->name);
             asset->type = assetType;
-            entry.GetAttribute("GUID", asset->guid);
+            asset->uuid = UUID::FromString(entry.GetAttribute(std::string(std::string("UUID"))));
 
             assets_.push_back(std::move(asset));
         }
@@ -97,11 +97,11 @@ namespace SF::Engine
         }
     }
 
-    std::shared_ptr<AssetBase> AssetController::FindByGUID(const GUID &guid) const
+    std::shared_ptr<AssetBase> AssetController::FindByUUID(const UUID &guid) const
     {
         for (const auto &asset : assets_)
         {
-            if (asset && asset->guid == guid)
+            if (asset && asset->uuid == guid)
             {
                 return asset;
             }

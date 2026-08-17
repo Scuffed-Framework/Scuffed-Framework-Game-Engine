@@ -37,7 +37,7 @@ namespace SF::Engine
         ViewMode m_viewMode = ViewMode::Grid;
         std::string m_searchFilter;
         AssetType m_typeFilter = static_cast<AssetType>(-1); // -1 = All
-        std::optional<GUID> m_selectedAsset;
+        std::optional<UUID> m_selectedAsset;
         float m_thumbnailSize = 80.0f;
         bool m_showThumbnails = true;
 
@@ -48,7 +48,7 @@ namespace SF::Engine
             UVec2 size;
             bool isValid = false;
         };
-        std::unordered_map<GUID, TexturePreview> m_previewCache;
+        std::unordered_map<UUID, TexturePreview> m_previewCache;
         template <typename Func>
         bool TryWithImageTexture(const std::shared_ptr<AssetBase> &asset, Func &&fn);
 
@@ -83,6 +83,6 @@ namespace SF::Engine
 
         // Helper to get or create texture preview
         template <typename TImage>
-        TexturePreview GetOrCreatePreview(const GUID &guid, const std::shared_ptr<TImage> &texture);
+        TexturePreview GetOrCreatePreview(const UUID &guid, const std::shared_ptr<TImage> &texture);
     };
 }

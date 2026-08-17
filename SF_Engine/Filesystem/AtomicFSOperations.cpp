@@ -1,5 +1,6 @@
 #include "AtomicFSOperations.hpp"
 #include <stdexcept>
+#include <mutex>
 
 namespace SF::Engine
 {

@@ -32,7 +32,7 @@ namespace SF::Engine
         template <typename T>
         bool HasPipelinePass() const
         {
-            return PipelinePassManager.Has<T>();
+            return PassManager.Has<T>();
         }
 
         /**
@@ -43,7 +43,7 @@ namespace SF::Engine
         template <typename T>
         T *GetPipelinePass() const
         {
-            return PipelinePassManager.Get<T>();
+            return PassManager.Get<T>();
         }
 
         /**
@@ -56,7 +56,7 @@ namespace SF::Engine
         template <typename T, typename... Args>
         T *AddPipelinePass(const Pipeline::Stage &pipelineStage, Args &&...args)
         {
-            return PipelinePassManager.Add<T>(
+            return PassManager.Add<T>(
                 pipelineStage, std::make_unique<T>(pipelineStage, std::forward<Args>(args)...));
         }
 
@@ -67,7 +67,7 @@ namespace SF::Engine
         template <typename T>
         void RemovePipelinePass()
         {
-            PipelinePassManager.Remove<T>();
+            PassManager.Remove<T>();
         }
 
         /**
@@ -75,7 +75,7 @@ namespace SF::Engine
          */
         void ClearPipelinePasss()
         {
-            PipelinePassManager.Clear();
+            PassManager.Clear();
         }
 
         bool IsStarted() const { return started; }
@@ -94,11 +94,11 @@ namespace SF::Engine
             renderStages.emplace_back(std::move(renderStage));
         }
 
-        PipelinePassManager *GetPipelinePassManager() { return &PipelinePassManager; }
+        PipelinePassManager *GetPipelinePassManager() { return &PassManager; }
 
     private:
         bool started = false;
         std::vector<std::unique_ptr<RenderStage>> renderStages;
-        PipelinePassManager PipelinePassManager;
+        PipelinePassManager PassManager;
     };
 }

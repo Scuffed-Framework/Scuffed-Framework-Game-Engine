@@ -12,8 +12,6 @@ namespace SF::Engine
     SSRPipelinePass::SSRPipelinePass(Pipeline::Stage stage, LightManager &lightManager)
         : PipelinePass(stage), lm_(lightManager)
     {
-        // Run after the deferred-light subpass (writes hdr) and before
-        // forward-transparent — see LightingRenderer.hpp registration.
         PipelinePass::SetOrder(50);
 
         uiHandle_ = UIRegistry::Get().Register([this]
@@ -22,7 +20,7 @@ namespace SF::Engine
         ssrUBO_ = std::make_unique<UniformBuffer>(sizeof(SSRParams));
 
         CreateResources();
-        CreatePipelines();
+        CreatePipelines(stage);
         BindStaticDescriptors();
 
         isWindowOpen = true;
@@ -121,21 +119,35 @@ namespace SF::Engine
         }
     }
 
-    void SSRPipelinePass::CreatePipelines()
+    void SSRPipelinePass::CreatePipelines(Pipeline::Stage stage)
     {
         rayGenPipeline_ = std::make_unique<ComputePipeline>("Shaders/SSR/RayGen.shader");
         tracePipeline_ = std::make_unique<ComputePipeline>("Shaders/SSR/Trace.shader");
         temporalPipeline_ = std::make_unique<ComputePipeline>("Shaders/SSR/TemporalAccumulate.shader");
         spatialPipeline_ = std::make_unique<ComputePipeline>("Shaders/SSR/SpatialFilter.shader");
-        compositePipeline_ = std::make_unique<ComputePipeline>("Shaders/SSR/Composite.shader");
+
+        // Graphics : fullscreen triangle, additive blend into "hdr" — see
+        // class comment in the header for why this can't be compute.
+        compositePipeline_ = std::make_unique<RenderPipeline>(
+            stage,
+            "Shaders/SSR/Composite.shader",
+            std::vector<Shader::VertexInput>{}, // no VBO
+            std::vector<Shader::Define>{},
+            RenderPipeline::Mode::Polygon,
+            RenderPipeline::Depth::None,
+            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+            VK_POLYGON_MODE_FILL,
+            VK_CULL_MODE_NONE,
+            VK_FRONT_FACE_COUNTER_CLOCKWISE,
+            false);
 
         rayGenSet_ = std::make_unique<DescriptorSet>(*rayGenPipeline_);
         traceSet_ = std::make_unique<DescriptorSet>(*tracePipeline_);
+        compositeSet_ = std::make_unique<DescriptorSet>(*compositePipeline_);
         for (uint32_t i = 0; i < kFramesInFlight; ++i)
         {
             temporalSet_[i] = std::make_unique<DescriptorSet>(*temporalPipeline_);
             spatialSet_[i] = std::make_unique<DescriptorSet>(*spatialPipeline_);
-            compositeSet_[i] = std::make_unique<DescriptorSet>(*compositePipeline_);
         }
     }
 
@@ -162,6 +174,18 @@ namespace SF::Engine
         traceWrites.Apply();
         BindSharedCameraData(kSSRCameraBind, 1, traceSet_.get());
 
+        // --- Composite (graphics) : filteredRT_/rayDirRT_ are SSR's own
+        // persistent images (pointer never changes, only contents do), so
+        // they're bound once here. gbuffer bindings (1-4) are rewritten in
+        // Render() only when the attachment pointer actually changes. ---
+        auto compositeWrites = DescriptorSetWriteBuilder(*compositeSet_)
+                                   .Buffer(0, ssrUBO_->GetBuffer())
+                                   .Image(5, filteredRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                   .Image(6, rayDirRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                   .Build();
+        compositeWrites.Apply();
+        BindSharedCameraData(kSSRCameraBind, 1, compositeSet_.get());
+
         for (uint32_t i = 0; i < kFramesInFlight; ++i)
         {
             // --- TemporalAccumulate[i] : static bindings; history read
@@ -180,9 +204,7 @@ namespace SF::Engine
             BindSharedCameraData(kSSRCameraBind, 1, temporalSet_[i].get());
 
             // --- SpatialFilter[i] : reads accumColor_[i]/accumMoments_[i]
-            // (this frame's temporal output — no ping-pong needed on the
-            // read side since spatial filtering doesn't carry state
-            // across frames), writes filteredRT_. ---
+            // (this frame's temporal output), writes filteredRT_. ---
             auto spatialWrites = DescriptorSetWriteBuilder(*spatialSet_[i])
                                      .Buffer(0, ssrUBO_->GetBuffer())
                                      .Image(4, accumColor_[i]->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -191,18 +213,6 @@ namespace SF::Engine
                                      .Build();
             spatialWrites.Apply();
             BindSharedCameraData(kSSRCameraBind, 1, spatialSet_[i].get());
-
-            // --- Composite[i] : gbuffer/hdr bindings rewritten per-frame
-            // in PreRender (cross-stage attachments). ---
-            auto compositeWrites = DescriptorSetWriteBuilder(*compositeSet_[i])
-                                       .Buffer(0, ssrUBO_->GetBuffer())
-                                       .Image(5, filteredRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                                       .Image(6, rayDirRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                                       .Image(7, traceColorRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                                       .Image(8, accumColor_[i]->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                                       .Build();
-            compositeWrites.Apply();
-            BindSharedCameraData(kSSRCameraBind, 1, compositeSet_[i].get());
         }
     }
 
@@ -249,10 +259,9 @@ namespace SF::Engine
         auto *rs = RenderSystem::Get();
         auto *depthImg = dynamic_cast<const ImageDepth *>(rs->GetAttachment("gbuf_depth"));
         auto *normalImg = dynamic_cast<const Image2d *>(rs->GetAttachment("gbuf_normal"));
-        auto *albedoImg = dynamic_cast<const Image2d *>(rs->GetAttachment("gbuf_albedo"));
         auto *pbrImg = dynamic_cast<const Image2d *>(rs->GetAttachment("gbuf_pbr"));
         auto *colorImg = dynamic_cast<const Image2d *>(rs->GetAttachment("hdr"));
-        if (!depthImg || !normalImg || !albedoImg || !pbrImg || !colorImg)
+        if (!depthImg || !normalImg || !pbrImg || !colorImg)
             return;
 
         UpdateUBO();
@@ -261,34 +270,21 @@ namespace SF::Engine
         const uint32_t hist = (frameSlot_ + kFramesInFlight - 1) % kFramesInFlight;
         const bool hasHistory = (framesSinceStart_ > 0);
 
-        // ===================================================================
-        // Transition hdr to GENERAL : Trace samples it, Composite read-
-        // modify-writes it via RWTexture2D. Same dance CloudPipelinePass
-        // does for the same attachment.
-        // ===================================================================
-        {
-            VkImageLayout cur_layout = colorImg->GetLayout();
-            VkAccessFlags srcAccess = (cur_layout == VK_IMAGE_LAYOUT_UNDEFINED) ? 0 : VK_ACCESS_SHADER_READ_BIT;
-            VkImageLayout srcLayout = (cur_layout == VK_IMAGE_LAYOUT_UNDEFINED) ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-            Image::InsertImageMemoryBarrier(cmd, const_cast<Image2d *>(colorImg)->GetImage(),
-                                            srcAccess, VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT,
-                                            srcLayout, VK_IMAGE_LAYOUT_GENERAL,
-                                            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                                            VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
-            const_cast<Image2d *>(colorImg)->SetLayout(VK_IMAGE_LAYOUT_GENERAL);
-        }
-
         auto ext = colorImg->GetExtent();
         UVec2 full{ext.x, ext.y};
 
         // ===================================================================
         // RayGen : rewrite gbuffer reads (attachment pointers can change on
         // resize), transition rayDir/rayData to GENERAL, dispatch.
+        //
+        // gbuf_depth's *actual* Vulkan-tracked layout after stage 0's
+        // renderpass ends is DEPTH_STENCIL_READ_ONLY_OPTIMAL (RenderPass.cpp
+        // : Attachment::Type::Depth -> that finalLayout), not
+        // SHADER_READ_ONLY_OPTIMAL — every gbuf_depth binding below uses the
+        // correct one.
         // ===================================================================
         {
-            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo normalII{VK_NULL_HANDLE, normalImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo pbrII{VK_NULL_HANDLE, pbrImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
@@ -334,11 +330,17 @@ namespace SF::Engine
         }
 
         // ===================================================================
-        // Trace (+ probe fallback on miss)
+        // Trace (+ probe fallback on miss). Reads "hdr" as a plain sampled
+        // texture — it is genuinely in SHADER_READ_ONLY_OPTIMAL right now
+        // (this PreRender runs before this frame's stage-1 renderpass has
+        // begun, so "hdr" still holds last frame's fully resolved,
+        // finalLayout-transitioned content). No transition needed, and none
+        // of SSR touches "hdr" again until Render() draws into it later
+        // this same frame as an actual subpass.
         // ===================================================================
         {
-            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-            VkDescriptorImageInfo hdrII{VK_NULL_HANDLE, colorImg->GetView(), VK_IMAGE_LAYOUT_GENERAL};
+            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
+            VkDescriptorImageInfo hdrII{VK_NULL_HANDLE, colorImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
             VkWriteDescriptorSet writes[2]{};
             writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -384,13 +386,10 @@ namespace SF::Engine
         }
 
         // ===================================================================
-        // TemporalAccumulate[cur] : point the history bindings at slot
-        // `hist` (or the dummy texture on the very first frame), rewrite
-        // gbuf_depth, transition accumColor_[cur]/accumMoments_[cur] to
-        // GENERAL, dispatch.
+        // TemporalAccumulate[cur]
         // ===================================================================
         {
-            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo histColorII{VK_NULL_HANDLE,
                                               hasHistory ? accumColor_[hist]->GetView() : dummyTexture_->GetView(),
                                               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
@@ -440,12 +439,12 @@ namespace SF::Engine
         }
 
         // ===================================================================
-        // SpatialFilter[cur] : reads accumColor_[cur]/accumMoments_[cur]
-        // (already static-bound in BindStaticDescriptors — no rewrite
-        // needed besides gbuffer), writes filteredRT_.
+        // SpatialFilter[cur] -> filteredRT_ (read by Render() later this
+        // same frame, once this whole PreRender has finished and the
+        // subpass containing SSR's fullscreen draw actually executes).
         // ===================================================================
         {
-            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo normalII{VK_NULL_HANDLE, normalImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo pbrII{VK_NULL_HANDLE, pbrImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
 
@@ -475,61 +474,66 @@ namespace SF::Engine
             SharedSamplers::BindSharedSamplerSet(cmd, spatialPipeline_->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE);
             spatialPipeline_->CmdRender(cmd, full, 8, 8, 1);
 
+            // Back to SHADER_READ_ONLY_OPTIMAL : this IS the layout Render()
+            // expects, and nothing else touches filteredRT_ before then.
             Image::InsertImageMemoryBarrier(cmd, filteredRT_->GetImage(),
                                             VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
                                             VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
             filteredRT_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
-        // ===================================================================
-        // Composite[cur] : rewrite gbuffer + hdr bindings, dispatch
-        // straight into hdr (RWTexture2D read-modify-write).
-        // ===================================================================
+        ++frameSlot_;
+        ++framesSinceStart_;
+    }
+
+    void SSRPipelinePass::Render(const CommandBuffer &cmd)
+    {
+        if (!enabled)
+            return;
+
+        auto *rs = RenderSystem::Get();
+        auto *normalImg = dynamic_cast<const Image2d *>(rs->GetAttachment("gbuf_normal"));
+        auto *albedoImg = dynamic_cast<const Image2d *>(rs->GetAttachment("gbuf_albedo"));
+        auto *pbrImg = dynamic_cast<const Image2d *>(rs->GetAttachment("gbuf_pbr"));
+        auto *depthImgD = dynamic_cast<const ImageDepth *>(rs->GetAttachment("gbuf_depth"));
+        if (!depthImgD || !normalImg || !albedoImg || !pbrImg)
+            return;
+
+        if (depthImgD != compositeLastDepth_ || normalImg != compositeLastNormal_ ||
+            albedoImg != compositeLastAlbedo_ || pbrImg != compositeLastPbr_)
         {
-            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+            compositeLastDepth_ = depthImgD;
+            compositeLastNormal_ = normalImg;
+            compositeLastAlbedo_ = albedoImg;
+            compositeLastPbr_ = pbrImg;
+
+            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImgD->GetView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo normalII{VK_NULL_HANDLE, normalImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo albedoII{VK_NULL_HANDLE, albedoImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo pbrII{VK_NULL_HANDLE, pbrImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-            VkDescriptorImageInfo hdrII{VK_NULL_HANDLE, colorImg->GetView(), VK_IMAGE_LAYOUT_GENERAL};
 
-            VkWriteDescriptorSet writes[5]{};
-            VkDescriptorImageInfo infos[5] = {depthII, normalII, albedoII, pbrII, hdrII};
-            uint32_t bindings[5] = {1, 2, 3, 4, 9};
-            VkDescriptorType types[5] = {
-                VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                VK_DESCRIPTOR_TYPE_STORAGE_IMAGE};
-            for (int i = 0; i < 5; ++i)
+            VkWriteDescriptorSet writes[4]{};
+            VkDescriptorImageInfo infos[4] = {depthII, normalII, albedoII, pbrII};
+            uint32_t bindings[4] = {1, 2, 3, 4};
+            for (int i = 0; i < 4; ++i)
             {
                 writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                writes[i].dstSet = compositeSet_[cur]->GetDescriptorSet();
+                writes[i].dstSet = compositeSet_->GetDescriptorSet();
                 writes[i].dstBinding = bindings[i];
                 writes[i].descriptorCount = 1;
-                writes[i].descriptorType = types[i];
+                writes[i].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
                 writes[i].pImageInfo = &infos[i];
             }
-            DescriptorSet::Update({writes[0], writes[1], writes[2], writes[3], writes[4]});
-
-            compositePipeline_->BindPipeline(cmd);
-            compositeSet_[cur]->BindDescriptor(cmd);
-            SharedSamplers::BindSharedSamplerSet(cmd, compositePipeline_->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE);
-            compositePipeline_->CmdRender(cmd, full, 8, 8, 1);
+            DescriptorSet::Update({writes[0], writes[1], writes[2], writes[3]});
         }
 
-        // Transition hdr back to SHADER_READ_ONLY_OPTIMAL for the
-        // forward-transparent and tonemap subpasses that follow it.
-        Image::InsertImageMemoryBarrier(cmd, const_cast<Image2d *>(colorImg)->GetImage(),
-                                        VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-                                        VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                                        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                                        VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
-        const_cast<Image2d *>(colorImg)->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-        ++frameSlot_;
-        ++framesSinceStart_;
+        compositePipeline_->BindPipeline(cmd);
+        compositeSet_->BindDescriptor(cmd);
+        SharedSamplers::BindSharedSamplerSet(cmd, compositePipeline_->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS);
+        vkCmdDraw(cmd, 3, 1, 0, 0);
     }
 
     void SSRPipelinePass::DrawImGuiPanel()

@@ -7,7 +7,7 @@
 #include <TemplateLibrary/Types.hpp>
 #include <TemplateLibrary/TypeTraits.hpp>
 #include <TemplateLibrary/TypeTraits.hpp>
-#include <TemplateLibrary/Containers/AdvancedString.hpp>
+#include <string>
 
 namespace SF::Engine
 {

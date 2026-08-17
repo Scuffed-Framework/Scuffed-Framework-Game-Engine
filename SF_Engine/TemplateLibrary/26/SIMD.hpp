@@ -247,44 +247,44 @@ namespace SFTL
         if constexpr (is_same_v<T, float> && bytes == 64)
         {
             __m512 in;
-            __builtin_memcpy(&in, &v._data, sizeof(in));
+            SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m512 out = _mm512_sqrt_ps(in);
-            __builtin_memcpy(&r, &out, sizeof(r));
+            SFTL_BI_MCPY(&r, &out, sizeof(r));
         }
         else if constexpr (is_same_v<T, float> && bytes == 32)
         {
             __m256 in;
-            __builtin_memcpy(&in, &v._data, sizeof(in));
+            SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m256 out = _mm256_sqrt_ps(in);
-            __builtin_memcpy(&r, &out, sizeof(r));
+            SFTL_BI_MCPY(&r, &out, sizeof(r));
         }
         else if constexpr (is_same_v<T, float> && bytes == 16)
         {
             __m128 in;
-            __builtin_memcpy(&in, &v._data, sizeof(in));
+            SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m128 out = _mm_sqrt_ps(in);
-            __builtin_memcpy(&r, &out, sizeof(r));
+            SFTL_BI_MCPY(&r, &out, sizeof(r));
         }
         else if constexpr (is_same_v<T, double> && bytes == 64)
         {
             __m512d in;
-            __builtin_memcpy(&in, &v._data, sizeof(in));
+            SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m512d out = _mm512_sqrt_pd(in);
-            __builtin_memcpy(&r, &out, sizeof(r));
+            SFTL_BI_MCPY(&r, &out, sizeof(r));
         }
         else if constexpr (is_same_v<T, double> && bytes == 32)
         {
             __m256d in;
-            __builtin_memcpy(&in, &v._data, sizeof(in));
+            SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m256d out = _mm256_sqrt_pd(in);
-            __builtin_memcpy(&r, &out, sizeof(r));
+            SFTL_BI_MCPY(&r, &out, sizeof(r));
         }
         else if constexpr (is_same_v<T, double> && bytes == 16)
         {
             __m128d in;
-            __builtin_memcpy(&in, &v._data, sizeof(in));
+            SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m128d out = _mm_sqrt_pd(in);
-            __builtin_memcpy(&r, &out, sizeof(r));
+            SFTL_BI_MCPY(&r, &out, sizeof(r));
         }
         else
         {

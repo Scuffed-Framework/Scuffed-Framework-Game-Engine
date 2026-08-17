@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Math/Vectors/Vector.hpp>
+#include <vector>
 #include "Cursor.hpp" // This has glfw3.h
 
 namespace SF::Engine

@@ -9,13 +9,13 @@
 #include <compare>
 #include <stdexcept>
 #include <string_view>
-#include <type_traits>
-#include <iterator>
+#include "../Iterators.hpp"
 #include <ostream>
 #include "../DynamicArray.hpp"
-#include "../TypeTraits.hpp"
-#include "../Allocator.hpp"
 #include "../Iterators.hpp"
+#include "InitializerList.hpp"
+#include "../Allocator.hpp"
+#include "../Char.hpp"
 
 namespace SFTL
 {
@@ -36,14 +36,14 @@ namespace SFTL
         };
 
         template <typename T>
-        constexpr size_t HashSpan(const T *data, size_t count)
+        constexpr size_type HashSpan(const T *data, size_type count)
         {
-            size_t hash = 14695981039346656037ull;
-            constexpr size_t prime = 1099511628211ull;
-            for (size_t i = 0; i < count; ++i)
+            size_type hash = 14695981039346656037ull;
+            constexpr size_type prime = 1099511628211ull;
+            for (size_type i = 0; i < count; ++i)
             {
                 const auto *bytes = reinterpret_cast<const unsigned char *>(data + i);
-                for (size_t b = 0; b < sizeof(T); ++b)
+                for (size_type b = 0; b < sizeof(T); ++b)
                 {
                     hash ^= bytes[b];
                     hash *= prime;
@@ -57,19 +57,19 @@ namespace SFTL
     class AdvancedStringView
     {
         const T *data_ = nullptr;
-        size_t size_ = 0;
+        size_type size_ = 0;
 
     public:
         constexpr AdvancedStringView() = default;
-        constexpr AdvancedStringView(const T *d, size_t s) : data_(d), size_(s) {}
+        constexpr AdvancedStringView(const T *d, size_type s) : data_(d), size_(s) {}
         constexpr AdvancedStringView(std::basic_string_view<T> sv) : data_(sv.data()), size_(sv.size()) {}
 
         constexpr const T *Data() const { return data_; }
-        constexpr size_t Size() const { return size_; }
+        constexpr size_type Size() const { return size_; }
         constexpr bool Empty() const { return size_ == 0; }
         constexpr const T *begin() const { return data_; }
         constexpr const T *end() const { return data_ + size_; }
-        constexpr const T &operator[](size_t i) const { return data_[i]; }
+        constexpr const T &operator[](size_type i) const { return data_[i]; }
 
         constexpr operator std::basic_string_view<T>() const { return {data_, size_}; }
 
@@ -90,10 +90,8 @@ namespace SFTL
         static_assert(is_trivial_v<T>, "AdvancedString requires a trivial character type");
 
     private:
-        using AllocTraits = allocator_traits<Allocator>;
-
-        static constexpr size_t kInlineBytes = sizeof(T *) + sizeof(size_t);
-        static constexpr size_t kInlineCapacity =
+        static constexpr size_type kInlineBytes = sizeof(T *) + sizeof(size_type);
+        static constexpr size_type kInlineCapacity =
             (kInlineBytes / sizeof(T)) > 1 ? (kInlineBytes / sizeof(T)) - 1 : 1;
 
         union Storage
@@ -105,8 +103,8 @@ namespace SFTL
         };
 
         Storage storage_;
-        size_t size_ = 0;
-        size_t capacity_ = kInlineCapacity;
+        size_type size_ = 0;
+        size_type capacity_ = kInlineCapacity;
         Allocator alloc_;
 
         bool IsHeap() const { return capacity_ > kInlineCapacity; }
@@ -116,34 +114,34 @@ namespace SFTL
         void DestroyHeap()
         {
             if (IsHeap())
-                AllocTraits::deallocate(alloc_, storage_.heapBuf, capacity_ + 1);
+                ::SFTL::allocator_traits<Allocator>::deallocate(alloc_, storage_.heapBuf, capacity_ + 1);
         }
 
-        void GrowPreserving(size_t newCapacity)
+        void GrowPreserving(size_type newCapacity)
         {
             if (newCapacity <= capacity_)
                 return;
 
-            size_t grown = capacity_ + capacity_ / 2;
+            size_type grown = capacity_ + capacity_ / 2;
             if (grown < newCapacity)
                 grown = newCapacity;
 
-            T *newBuf = AllocTraits::allocate(alloc_, grown + 1);
+            T *newBuf = ::SFTL::allocator_traits<Allocator>::allocate(alloc_, grown + 1);
             copy(Ptr(), Ptr() + size_, newBuf);
             DestroyHeap();
             storage_.heapBuf = newBuf;
             capacity_ = grown;
         }
 
-        void AssignRaw(const T *src, size_t count)
+        void AssignRaw(const T *src, size_type count)
         {
             if (count > capacity_)
             {
-                size_t grown = capacity_ + capacity_ / 2;
+                size_type grown = capacity_ + capacity_ / 2;
                 if (grown < count)
                     grown = count;
 
-                T *newBuf = AllocTraits::allocate(alloc_, grown + 1);
+                T *newBuf = ::SFTL::allocator_traits<Allocator>::allocate(alloc_, grown + 1);
                 DestroyHeap();
                 storage_.heapBuf = newBuf;
                 capacity_ = grown;
@@ -171,9 +169,9 @@ namespace SFTL
             other.capacity_ = kInlineCapacity;
         }
 
-        static size_t StrLen(const T *s)
+        static size_type StrLen(const T *s)
         {
-            size_t n = 0;
+            size_type n = 0;
             while (s[n] != T{})
                 ++n;
             return n;
@@ -182,12 +180,11 @@ namespace SFTL
     public:
         using value_type = T;
         using allocator_type = Allocator;
-        using size_type = size_t;
         using difference_type = ptrdiff_t;
         using reference = T &;
         using const_reference = const T &;
-        using pointer = typename AllocTraits::pointer;
-        using const_pointer = typename AllocTraits::const_pointer;
+        using pointer = typename ::SFTL::allocator_traits<Allocator>::pointer;
+        using const_pointer = typename ::SFTL::allocator_traits<Allocator>::const_pointer;
         using iterator = T *;
         using const_iterator = const T *;
         using reverse_iterator = ::SFTL::reverse_iterator<iterator>;
@@ -253,7 +250,7 @@ namespace SFTL
             MoveFrom(other);
         }
 
-        AdvancedString(std::initializer_list<T> ilist, const Allocator &alloc = Allocator())
+        AdvancedString(initializer_list<T> ilist, const Allocator &alloc = Allocator())
             : alloc_(alloc)
         {
             AssignRaw(ilist.begin(), ilist.size());
@@ -352,15 +349,15 @@ namespace SFTL
             if (size_ <= kInlineCapacity)
             {
                 T *heap = storage_.heapBuf;
-                size_t n = size_;
+                size_type n = size_;
                 copy(heap, heap + n, storage_.inlineBuf);
-                AllocTraits::deallocate(alloc_, heap, capacity_ + 1);
+                ::SFTL::allocator_traits<Allocator>::deallocate(alloc_, heap, capacity_ + 1);
                 size_ = n;
                 capacity_ = kInlineCapacity;
                 Ptr()[size_] = T{};
                 return;
             }
-            T *newBuf = AllocTraits::allocate(alloc_, size_ + 1);
+            T *newBuf = ::SFTL::allocator_traits<Allocator>::allocate(alloc_, size_ + 1);
             copy(storage_.heapBuf, storage_.heapBuf + size_, newBuf);
             DestroyHeap();
             storage_.heapBuf = newBuf;
@@ -479,8 +476,8 @@ namespace SFTL
         void swap(AdvancedString &other) noexcept
         {
             AdvancedString tmp(std::move(other));
-            other = std::move(*this);
-            *this = std::move(tmp);
+            other = move(*this);
+            *this = move(tmp);
         }
 
         AdvancedString substr(size_type pos = 0, size_type count = npos) const
@@ -501,7 +498,7 @@ namespace SFTL
         int compare(const AdvancedString &rhs) const noexcept
         {
             size_type n = std::min(size_, rhs.size_);
-            int r = n ? std::memcmp(Ptr(), rhs.Ptr(), n * sizeof(T)) : 0;
+            int r = n ? memcmp(Ptr(), rhs.Ptr(), n * sizeof(T)) : 0;
             if (r != 0)
                 return r;
             if (size_ < rhs.size_)
@@ -596,20 +593,20 @@ namespace SFTL
                 return AdvancedString();
 
             DynamicArray<char> narrow;
-            narrow.resize(static_cast<size_t>(size) + 1);
+            narrow.resize(static_cast<size_type>(size) + 1);
             std::vsnprintf(narrow.data(), narrow.size(), fmt, args);
 
             if constexpr (is_same_v<T, char>)
             {
-                return AdvancedString(narrow.data(), static_cast<size_t>(size));
+                return AdvancedString(narrow.data(), static_cast<size_type>(size));
             }
             else
             {
                 DynamicArray<T> wide;
-                wide.resize(static_cast<size_t>(size));
-                for (size_t i = 0; i < static_cast<size_t>(size); ++i)
+                wide.resize(static_cast<size_type>(size));
+                for (size_type i = 0; i < static_cast<size_type>(size); ++i)
                     wide[i] = Detail::WidenChar<T>::From(static_cast<unsigned char>(narrow[i]));
-                return AdvancedString(wide.data(), static_cast<size_t>(size));
+                return AdvancedString(wide.data(), static_cast<size_type>(size));
             }
         }
 

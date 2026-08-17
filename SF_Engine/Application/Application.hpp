@@ -30,15 +30,13 @@
 
 #define __INTRIN_H_ // Prevent intrinsics header inclusion
 #include <windows.h>
-#if GCC
-#include <x86intrin.h>
-#endif
 #elif defined(_PLATFORM_MACOS)
 // macOS
 #include <mach-o/dyld.h>
 #elif defined(_PLATFORM_LINUX)
 // Linux
 #include <unistd.h>
+#include <x86intrin.h>
 #endif
 
 #include <Engine/VersionSemantic.hpp>
@@ -53,11 +51,9 @@
 #include <TemplateLibrary/TypeTraits.hpp>
 #include <Default/ImGuiDefaultWIDGETS.hpp>
 
-#define INFO_CHECK \
-    if (!Info)     \
-    {              \
-        return;    \
-    }
+#ifdef Started
+#undef Success
+#endif
 
 namespace SF::Engine
 {
@@ -71,10 +67,13 @@ namespace SF::Engine
         friend class Engine;
 
     private:
-        WindowManager *wndMgr = SF::Engine::WindowManager::Get();
-        RenderSystem *renderer = SF::Engine::RenderSystem::Get();
-        SceneManager *sceneMgr = SF::Engine::SceneManager::Get();
+        WindowManager *wndMgr = WindowManager::Get();
+        RenderSystem *renderer = RenderSystem::Get();
+        SceneManager *sceneMgr = SceneManager::Get();
         std::unique_ptr<Engine> engine;
+        bool started_ = false;
+        std::string path_;
+        std::vector<File> modules_;
 
     public:
         enum InitializationReturn
@@ -87,6 +86,12 @@ namespace SF::Engine
         };
 
         std::unique_ptr<ApplicationInfo> Info;
+
+        constexpr auto InfoCheck() -> void
+        {
+            if(!Info) return;
+        }
+
         Window *window;
 
         explicit Application(ApplicationInfo info, const Version &version = {1, 0, 0})
@@ -140,6 +145,10 @@ namespace SF::Engine
             renderer->Update();
         }
 
+    protected:
+        virtual void OnShutdown() {} // optional override point, no-op by default
+
+    public:
         void AppLoop()
         {
             while (!window->IsClosed())
@@ -149,17 +158,13 @@ namespace SF::Engine
             OnShutdown();
         }
 
-    protected:
-        virtual void OnShutdown() {} // optional override point, no-op by default
-
-    public:
         /**
          * @brief Gets the Applicationlication's name.
          * @return The Applicationlication's name.
          */
-        [[nodiscard]] const ::SFTL::String &GetName() const noexcept
+        [[nodiscard]] const std::string &GetName() const noexcept
         {
-            INFO_CHECK
+            InfoCheck();
             return Info->name;
         }
 
@@ -167,9 +172,9 @@ namespace SF::Engine
          * @brief Sets the Applicationlication's name for driver support.
          * @param name The new Applicationlication name.
          */
-        void SetName(::SFTL::String name)
+        void SetName(std::string name)
         {
-            INFO_CHECK
+            InfoCheck();
             Info->name = name;
         }
 
@@ -179,7 +184,7 @@ namespace SF::Engine
          */
         [[nodiscard]] const Version &GetVersion() const noexcept
         {
-            INFO_CHECK
+            InfoCheck();
             return Info->version;
         }
 
@@ -189,7 +194,7 @@ namespace SF::Engine
          */
         void SetVersion(const Version &version) noexcept
         {
-            INFO_CHECK
+            InfoCheck();
             Info->version = version;
         }
 
@@ -221,12 +226,6 @@ namespace SF::Engine
             return GetExecutablePathImpl();
         }
 
-    private:
-        bool started_ = false;
-        std::string path_;
-        std::vector<File> modules_;
-
-    public:
         enum class ShutdownReturn
         {
             Success,

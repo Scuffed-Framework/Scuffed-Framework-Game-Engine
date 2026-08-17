@@ -8,7 +8,7 @@
 #include <span>
 #include <vector>
 #include <Scene/SceneSerialization.hpp>
-#include <ID/GUID.hpp>
+#include <UtilityClasses/UUID.hpp>
 
 namespace SF::Engine
 {
@@ -49,21 +49,21 @@ namespace SF::Engine
         uint32_t vertexCount_ = 0;
         uint32_t indexCount_ = 0;
 
-        GUID ID;
+        UUID ID;
 
     public:
         void Serialize(XMLNode &node) const override
         {
             Component::Serialize(node);
             XMLNode mesh = node.AddChild("Mesh");
-            mesh.SetAttribute("GUID", ID.ToString());
+            mesh.SetAttribute(std::string("UUID"), ID.ToString());
         }
 
         void Deserialize(const XMLNode &node) override
         {
             Component::Deserialize(node);
             XMLNode mesh = node.GetChild("Mesh");
-            mesh.GetAttribute("GUID", ID);
+            ID = UUID::FromString(mesh.GetAttribute(std::string("UUID")));
         }
     };
 }

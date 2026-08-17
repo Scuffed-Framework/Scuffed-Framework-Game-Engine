@@ -31,14 +31,15 @@
 /* OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE      */
 /* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                              */
 /******************************************************************************/
-// UtilityClasses/Char.hpp - A file containing char utilities.
+// SFTL/Char.hpp - A file containing char utilities.
 #include <cstddef>
-#include <type_traits>
+#include "Types.hpp"
+#include "TypeTraits.hpp"
 
 namespace SF::Engine
 {
-    template <typename T, std::size_t N>
-    constexpr std::size_t size(const T (&)[N]) noexcept
+    template <typename T, ::SFTL::size_type N>
+    constexpr::SFTL::size_type size(const T (&)[N]) noexcept
     {
         return N;
     }
@@ -96,9 +97,9 @@ namespace SF::Engine
     }
 
     // String length (constexpr)
-    constexpr std::size_t strlen(const char *str) noexcept
+    constexpr::SFTL::size_type strlen(const char *str) noexcept
     {
-        std::size_t len = 0;
+       ::SFTL::size_type len = 0;
         while (str[len] != '\0')
             ++len;
         return len;
@@ -115,9 +116,9 @@ namespace SF::Engine
         return static_cast<unsigned char>(*s1) - static_cast<unsigned char>(*s2);
     }
 
-    constexpr int strncmp(const char *s1, const char *s2, std::size_t n) noexcept
+    constexpr int strncmp(const char *s1, const char *s2,::SFTL::size_type n) noexcept
     {
-        for (std::size_t i = 0; i < n; ++i)
+        for (::SFTL::size_type i = 0; i < n; ++i)
         {
             if (s1[i] != s2[i])
                 return static_cast<unsigned char>(s1[i]) - static_cast<unsigned char>(s2[i]);
@@ -206,29 +207,29 @@ namespace SF::Engine
     }
 
     // Memory operations
-    constexpr void *memset(void *dest, int ch, std::size_t count) noexcept
+    constexpr void *memset(void *dest, int ch,::SFTL::size_type count) noexcept
     {
         unsigned char *d = static_cast<unsigned char *>(dest);
         unsigned char value = static_cast<unsigned char>(ch);
-        for (std::size_t i = 0; i < count; ++i)
+        for (::SFTL::size_type i = 0; i < count; ++i)
             d[i] = value;
         return dest;
     }
 
-    constexpr void *memcpy(void *dest, const void *src, std::size_t count) noexcept
+    constexpr void *memcpy(void *dest, const void *src,::SFTL::size_type count) noexcept
     {
         unsigned char *d = static_cast<unsigned char *>(dest);
         const unsigned char *s = static_cast<const unsigned char *>(src);
-        for (std::size_t i = 0; i < count; ++i)
+        for (::SFTL::size_type i = 0; i < count; ++i)
             d[i] = s[i];
         return dest;
     }
 
-    constexpr int memcmp(const void *lhs, const void *rhs, std::size_t count) noexcept
+    constexpr int memcmp(const void *lhs, const void *rhs,::SFTL::size_type count) noexcept
     {
         const unsigned char *l = static_cast<const unsigned char *>(lhs);
         const unsigned char *r = static_cast<const unsigned char *>(rhs);
-        for (std::size_t i = 0; i < count; ++i)
+        for (::SFTL::size_type i = 0; i < count; ++i)
         {
             if (l[i] != r[i])
                 return l[i] - r[i];

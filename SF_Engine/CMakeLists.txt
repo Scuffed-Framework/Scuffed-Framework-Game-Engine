@@ -50,6 +50,11 @@ find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
 find_package(sol2 REQUIRED)
 find_package(libraw CONFIG REQUIRED)
 
+if(UNIX)
+    find_package(udev)
+    find_package(evdev)
+endif()
+
 find_package(openfbx REQUIRED)        
 find_package(TinyOBJLoader REQUIRED)  
 
@@ -212,6 +217,12 @@ target_link_libraries(SF_Engine PUBLIC
     openfbx::openfbx          
     tinyobjloader::tinyobjloader
 )
+if(UNIX)
+    target_link_libraries(SF_Engine PRIVATE
+        evdev
+        udev
+    )
+endif()
 
 target_include_directories(SF_Engine PUBLIC
     $<TARGET_PROPERTY:volk::volk,INTERFACE_INCLUDE_DIRECTORIES>

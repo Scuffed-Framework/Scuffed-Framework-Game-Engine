@@ -6,7 +6,7 @@
 
 #include <TemplateLibrary/Types.hpp>
 #include <TemplateLibrary/TypeTraits.hpp>
-#include <TemplateLibrary/Containers/AdvancedString.hpp>
+#include <string>
 #include <TemplateLibrary/DynamicArray.hpp>
 
 using namespace SFTL;

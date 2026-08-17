@@ -51,7 +51,7 @@ namespace SFTL
     typedef short int16;
     typedef char int8;
 
-    typedef uint64 size_t;
+    typedef uint64 size_type;
 
     using word = uint16;
     using dword = uint32;

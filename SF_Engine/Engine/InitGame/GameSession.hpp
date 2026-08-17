@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <Audio/Microphone.hpp>
 #include <string>
-#include <ID/GUID.hpp>
+#include <UtilityClasses/UUID.hpp>
 
 namespace SF::Engine
 {
@@ -16,12 +16,12 @@ namespace SF::Engine
         MicrophoneSpeechMode micMode = MicrophoneSpeechMode::PushToTalk;
         std::wstring sessionName;
 
-        GUID GetNextPlayerID();
+        UUID GetNextPlayerID();
 
         virtual bool ProcessAutoLogin();
-        virtual void OnLoginComplete(const GUID &playerID, bool success, const std::string &error);
+        virtual void OnLoginComplete(const UUID &playerID, bool success, const std::string &error);
         virtual std::string ApproveLogin(const std::string options);
 
-        virtual void RegisterPlayer(const GUID &playerID, bool fromInvitation);
+        virtual void RegisterPlayer(const UUID &playerID, bool fromInvitation);
     };
 }

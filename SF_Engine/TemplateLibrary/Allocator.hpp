@@ -43,7 +43,7 @@ namespace SFTL
     {
         if constexpr (is_array_v<Type>)
         {
-            _STD _Destroy_range(_STD begin(*_Location), _STD end(*_Location));
+            _Destroy_range(std::begin(*_Location), end(*_Location));
         }
         else
         {
@@ -62,7 +62,6 @@ namespace SFTL
         using const_pointer = const T *;
         using reference = T &;
         using const_reference = const T &;
-        using size_type = ::SFTL::size_t;
         using difference_type = ::SFTL::ptrdiff_t;
 
         using propagate_on_container_move_assignment = true_type;
@@ -206,7 +205,7 @@ namespace SFTL
         template <typename Alloc, typename = void>
         struct AllocSizeType
         {
-            using type = ::SFTL::size_t;
+            using type = ::SFTL::size_type;
         };
         template <typename Alloc>
         struct AllocSizeType<Alloc, void_t<typename Alloc::size_type>>
@@ -340,7 +339,7 @@ namespace SFTL
         using const_void_pointer = typename Detail::AllocConstVoidPointer<Alloc>::type;
 
         using difference_type = typename Detail::AllocDifferenceType<Alloc>::type;
-        using size_type = typename Detail::AllocSizeType<Alloc>::type;
+        using alloc_size_type = typename Detail::AllocSizeType<Alloc>::type;
 
         using propagate_on_container_copy_assignment = typename Detail::AllocPOCCA<Alloc>::type;
         using propagate_on_container_move_assignment = typename Detail::AllocPOCMA<Alloc>::type;
@@ -353,20 +352,20 @@ namespace SFTL
         template <typename U>
         using rebind_traits = allocator_traits<rebind_alloc<U>>;
 
-        [[nodiscard]] static pointer allocate(Alloc &a, size_type n)
+        [[nodiscard]] static pointer allocate(Alloc &a, alloc_size_type n)
         {
             return a.allocate(n);
         }
 
-        [[nodiscard]] static pointer allocate(Alloc &a, size_type n, const_void_pointer hint)
+        [[nodiscard]] static pointer allocate(Alloc &a, alloc_size_type n, const_void_pointer hint)
         {
-            if constexpr (Detail::HasAllocateHint<Alloc, size_type, const_void_pointer>::value)
+            if constexpr (Detail::HasAllocateHint<Alloc, alloc_size_type, const_void_pointer>::value)
                 return a.allocate(n, hint);
             else
                 return a.allocate(n);
         }
 
-        static void deallocate(Alloc &a, pointer p, size_type n)
+        static void deallocate(Alloc &a, pointer p, alloc_size_type n)
         {
             a.deallocate(p, n);
         }
@@ -389,12 +388,12 @@ namespace SFTL
                 p->~T();
         }
 
-        static size_type max_size(const Alloc &a) noexcept
+        static alloc_size_type max_size(const Alloc &a) noexcept
         {
             if constexpr (Detail::HasMaxSize<Alloc>::value)
                 return a.max_size();
             else
-                return static_cast<size_type>(-1) / sizeof(value_type);
+                return static_cast<alloc_size_type>(-1) / sizeof(value_type);
         }
 
         static Alloc select_on_container_copy_construction(const Alloc &a)

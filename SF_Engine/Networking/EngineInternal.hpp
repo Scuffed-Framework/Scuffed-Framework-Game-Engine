@@ -1,5 +1,5 @@
 #include "URL.hpp"
-#include <ID/GUID.hpp>
+#include <UtilityClasses/UUID.hpp>
 
 namespace SF::Engine::Networking
 {
@@ -7,9 +7,9 @@ namespace SF::Engine::Networking
     struct IPAddress
     {
     };
-    struct AddressOrGUID
+    struct AddressOrUUID
     {
-        GUID id;
+        UUID id;
     };
     void ClientConnect()
     {

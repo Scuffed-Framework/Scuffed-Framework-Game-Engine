@@ -1,10 +1,8 @@
 #pragma once
 #include <string>
-#include <ID/GUID.hpp>
+#include <UtilityClasses/UUID.hpp>
 #include <TemplateLibrary/TypeTraits.hpp>
 #include <TemplateLibrary/Types.hpp>
-
-using GUID = SF::Engine::GUID; // microslop might have seeped in
 
 using namespace SFTL;
 namespace SF::Engine
@@ -14,7 +12,7 @@ namespace SF::Engine
     {
     public:
         std::string Name;
-        GUID PlayerID;
+        UUID PlayerID;
 
         // internet (lil scripty might lag the server :sob:)
         int32 CurrentNetSpeed;

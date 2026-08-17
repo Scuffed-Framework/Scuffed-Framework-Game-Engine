@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Rendering/Images/Image2d.hpp>
-#include "Swapchain.hpp"
+#include "SwapChain.hpp"
 
 namespace SF::Engine
 {

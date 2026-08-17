@@ -7,6 +7,11 @@
 #include <array>
 #include "Pipeline.hpp"
 
+// some linux include defines None
+#ifdef None
+#undef None
+#endif
+
 namespace SF::Engine
 {
     class ImageDepth;

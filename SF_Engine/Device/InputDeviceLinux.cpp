@@ -1,7 +1,7 @@
 #ifdef _PLATFORM_LINUX
-#include "InputDevice.h"
-#include <libudev.h>           // link: -ludev
-#include <libevdev/libevdev.h> // link: -levdev
+#include "InputDevice.hpp"
+#include <libudev.h>           
+#include <libevdev-1.0/libevdev/libevdev.h> 
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstring>
@@ -53,9 +53,9 @@ namespace SF::Engine
                                     : DeviceType::FlightStick;
         }
         if (prop("ID_INPUT_TABLET"))
-            return DeviceType::Unknown;
+            return DeviceType::INVALID;
 
-        return DeviceType::Unknown;
+        return DeviceType::INVALID;
     }
 
     std::vector<Device_T> EnumerateDevices()

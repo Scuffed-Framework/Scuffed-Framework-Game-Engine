@@ -44,7 +44,6 @@
 #ifdef MINOR
 #undef MINOR
 #endif
-// also might work for linux/mac stuff but idk
 
 namespace SF::Engine
 {
@@ -54,6 +53,7 @@ namespace SF::Engine
     class Engine : NoCopy
     {
     public:
+        using RegMap = ::SF::Engine::Module::RegistryMap;
         /**
          * Gets the engines instance.
          * @return The current engine instance.
@@ -238,9 +238,9 @@ namespace SF::Engine
         }
 
     private:
-        void CreateModule(Module::RegistryMap::const_iterator it, const ModuleFilter &filter);
+        void CreateModule(RegMap::const_iterator it, const ModuleFilter &filter);
         void DestroyModule(TypeId id);
-        void UpdateStage(Module::Stage stage);
+        void UpdateStage(ModuleStage stage);
 
         static Engine *Instance;
 
@@ -248,7 +248,7 @@ namespace SF::Engine
         Version version;
 
         std::map<TypeId, std::unique_ptr<Module>> modules;
-        std::map<Module::Stage, std::vector<TypeId>> moduleStages;
+        std::map<ModuleStage, std::vector<TypeId>> moduleStages;
 
         LayerStack layerStack;
 

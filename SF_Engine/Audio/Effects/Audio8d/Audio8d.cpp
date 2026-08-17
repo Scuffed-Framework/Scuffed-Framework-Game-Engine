@@ -1,4 +1,4 @@
-#include "Audio8D.hpp"
+#include "Audio8d.hpp"
 
 #include <cmath>
 #include <iostream>

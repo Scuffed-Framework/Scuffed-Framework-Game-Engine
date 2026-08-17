@@ -1,7 +1,7 @@
-#include "Framebuffer.hpp"
+#include "FrameBuffer.hpp"
 
 #include <Rendering/Images/ImageDepth.hpp>
-#include <Rendering/Renderpass/Renderpass.hpp>
+#include "RenderPass.hpp"
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/Stage.hpp>
 

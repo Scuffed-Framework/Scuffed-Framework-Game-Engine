@@ -1,4 +1,4 @@
-#include "Swapchain.hpp"
+#include "SwapChain.hpp"
 
 #include <algorithm>
 #include <limits>

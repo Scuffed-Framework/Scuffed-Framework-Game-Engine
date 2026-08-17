@@ -1,7 +1,7 @@
 #pragma once
 
 #include <XML/XMLModule.hpp>
-#include <ID/GUID.hpp>
+#include <UtilityClasses/UUID.hpp>
 #include <Controllers/Controller.hpp>
 #include <span>
 #include <TemplateLibrary/DynamicArray.hpp>
@@ -36,7 +36,7 @@ namespace SF::Engine
     public:
         std::string name;
         AssetType type;
-        GUID guid = GUID::Generate();
+        UUID uuid = UUID::Generate();
 
 
         virtual ~AssetBase() = default;
@@ -56,7 +56,7 @@ namespace SF::Engine
             XMLNode asset = node.AddChild("Asset");
             asset.SetAttribute("Name", name);
             asset.SetAttribute("Type", static_cast<int>(type));
-            asset.SetAttribute("GUID", guid.ToString());
+            asset.SetAttribute(std::string("UUID"), uuid.ToString());
         }
 
         void Deserialize(const XMLNode &node) override
@@ -66,7 +66,7 @@ namespace SF::Engine
             int rawType{};
             asset.GetAttribute("Type", rawType);
             type = static_cast<AssetType>(rawType);
-            asset.GetAttribute("GUID", guid);
+            uuid = UUID::FromString(asset.GetAttribute(std::string(std::string("UUID"))));
         }
     };
 
@@ -99,13 +99,13 @@ namespace SF::Engine
 
         void SaveAll();
 
-        std::shared_ptr<AssetBase> FindByGUID(const GUID &guid) const;
+        std::shared_ptr<AssetBase> FindByUUID(const UUID &guid) const;
         std::shared_ptr<AssetBase> FindByName(std::string_view name) const;
 
         template <typename T>
-        std::shared_ptr<Asset<T>> GetAsset(const GUID &guid) const
+        std::shared_ptr<Asset<T>> GetAsset(const UUID &guid) const
         {
-            return ::SF::RTTI::rtti_pointer_cast<Asset<T>>(FindByGUID(guid));
+            return ::SF::RTTI::rtti_pointer_cast<Asset<T>>(FindByUUID(guid));
         }
 
         SFTL::DynamicArray<std::shared_ptr<AssetBase>> assets_;

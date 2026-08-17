@@ -2,6 +2,11 @@
 #include <Scene/Scene.hpp>
 #include <Configuration/PlayInLevelEditorSettings.hpp> // enum PlayInEditorType
 
+#ifdef Success
+#undef Success
+#endif
+
+//TODO: when build system is done, implement this.
 namespace SF::Engine
 {
     struct PlayInEditorResult

@@ -379,15 +379,49 @@ namespace SF::Engine
         return true;
     }
 
-    std::string XMLModule::SerializeValue(const GUID &value)
+    std::string XMLModule::SerializeValue(const UUID &value)
     {
-        return value.ToString(); // or whatever GUID's canonical string accessor is
+        return value.ToString();
     }
 
-    bool XMLModule::DeserializeValue(const std::string &str, GUID &out)
+    bool XMLModule::DeserializeValue(const std::string &str, UUID &out)
     {
-        out = GUID::FromString(str);
+        out = UUID::FromString(str);
         return true;
     }
+
+    template <typename T>
+    void XMLNode::SetAttribute(const std::string &name, const T &value)
+    {
+        SetAttribute(name, XMLModule::SerializeValue(value));
+    }
+    template <typename T>
+    bool XMLNode::GetChildContent(const std::string &childName, T &out) const
+    {
+        XMLNode child = GetChild(childName);
+        if (!child.IsValid())
+            return false;
+        return XMLModule::DeserializeValue(child.GetContent(), out);
+    }
+
+    template <typename T>
+    void XMLNode::SetChildContent(const std::string &childName, const T &value)
+    {
+        std::string serialized = XMLModule::SerializeValue(value);
+        XMLNode child = GetChild(childName);
+        if (child.IsValid())
+            child.SetContent(serialized);
+        else
+            AddChild(childName, serialized);
+    }
+    template <typename T>
+    bool XMLNode::GetAttribute(const std::string &name, T &out) const
+    {
+        std::string raw;
+        if (!GetAttribute(name, raw))
+            return false;
+        return XMLModule::DeserializeValue(raw, out);
+    }
+
 
 } // namespace SF::Engine

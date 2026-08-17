@@ -1,6 +1,10 @@
 #pragma once
 #include <LowLevel/Bitmask.hpp>
-#include <LowLevel/rocket.hpp>
+#include <LowLevel/Rocket.hpp>
+
+#ifdef None
+#undef None
+#endif
 
 namespace SF::Engine
 {

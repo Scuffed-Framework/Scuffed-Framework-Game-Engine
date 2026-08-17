@@ -39,12 +39,12 @@ namespace SFTL
 #define SFTL_VERIFY(cond, message) \
     ((void)((cond) || (printf(message), 0)))
 
-    inline void *__builtin_memcpy(void *dest, const void *src, size_t n) noexcept
+    inline void *SFTL_BI_MCPY(void *dest, const void *src, size_type n) noexcept
     {
         auto *d = static_cast<unsigned char *>(dest);
         auto const *s = static_cast<unsigned char const *>(src);
 
-        for (size_t i = 0; i < n; ++i)
+        for (size_type i = 0; i < n; ++i)
             d[i] = s[i];
 
         return dest;
@@ -166,12 +166,12 @@ namespace SFTL
                     __y = static_cast<Type &&>(__tmp);
                 }
 
-                template <class Type1, class Type2, size_t _Size>
-                constexpr void operator()(Type1 (&__t)[_Size], Type2 (&__u)[_Size]) const
+                template <class Type1, class Type2, size_type sz>
+                constexpr void operator()(Type1 (&__t)[sz], Type2 (&__u)[sz]) const
                     noexcept(noexcept(operator()(__t[0], __u[0])))
                     requires requires(_swap_FN __fn) { __fn(__t[0], __u[0]); }
                 {
-                    for (size_t __i = 0; __i < _Size; ++__i)
+                    for (size_type __i = 0; __i < sz; ++__i)
                     {
                         operator()(__t[__i], __u[__i]);
                     }
@@ -243,6 +243,36 @@ namespace SFTL
         return dest;
     }
 
+    inline void *SFTL_memmove(void *dest, const void *src, size_type count)
+    {
+        unsigned char *d = static_cast<unsigned char *>(dest);
+        const unsigned char *s = static_cast<const unsigned char *>(src);
+
+        if (d == s || count == 0)
+        {
+            return dest;
+        }
+
+        if (d < s)
+        {
+            // Copy forward
+            for (size_type i = 0; i < count; ++i)
+            {
+                d[i] = s[i];
+            }
+        }
+        else
+        {
+            // Copy backward to prevent overwrite
+            for (size_type i = count; i > 0; --i)
+            {
+                d[i - 1] = s[i - 1];
+            }
+        }
+
+        return dest;
+    }
+
     template <class In, class Out>
     constexpr Out copy(In first, In last, Out dest)
     {
@@ -250,9 +280,9 @@ namespace SFTL
         {
             if (!std::is_constant_evaluated())
             {
-                const auto count = static_cast<size_t>(last - first);
+                const auto count = static_cast<size_type>(last - first);
                 if (count != 0)
-                    std::memmove(dest, first, count * sizeof(*dest));
+                    SFTL_memmove(dest, first, count * sizeof(*dest));
                 return dest + count;
             }
         }

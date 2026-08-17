@@ -2,6 +2,7 @@
 
 #include <Rendering/PipelinePassManager.hpp>
 #include <Rendering/Pipelines/ComputePipeline.hpp>
+#include <Rendering/Pipelines/RenderPipeline.hpp>
 #include <Rendering/Buffers/UniformBuffer.hpp>
 #include <Rendering/Descriptors/DescriptorSet.hpp>
 #include <Rendering/Images/Image2d.hpp>
@@ -73,28 +74,38 @@ namespace SF::Engine
     /**
      * @brief Probed Stochastic Screen-Space Reflections.
      *
-     * Five-stage compute pipeline, each stage its own dispatch so any of
-     * them can be toggled or inspected independently (see debugView and
-     * the bXxxEnabled flags below):
+     * GBuffer/hdr -> RayGen -> Trace (+ probe fallback on miss)
+     *              -> TemporalAccumulate -> SpatialFilter -> Composite
      *
-     *   GBuffer/hdr -> RayGen -> Trace (+ probe fallback on miss)
-     *                -> TemporalAccumulate -> SpatialFilter -> Composite
+     * Split across PreRender() and Render() for a reason that isn't
+     * optional: every attachment in this engine's renderpasses uses
+     * loadOp=VK_ATTACHMENT_LOAD_OP_CLEAR (RenderPass.cpp), and PreRender for
+     * every subpass in a render stage runs before that render stage's
+     * renderpass begins. A compute dispatch that read-modify-writes "hdr"
+     * from PreRender — the way CloudPipelinePass's Composite step does —
+     * gets unconditionally clobbered by that clear the instant the
+     * renderpass starts, before anything downstream ever sees it.
      *
-     * Runs entirely in PreRender() (Render() is a no-op), following the
-     * same cross-stage-attachment pattern as CloudPipelinePass: it reads
-     * "gbuf_depth"/"gbuf_normal"/"gbuf_albedo"/"gbuf_pbr" (fully up to date
-     * for this frame, since GBuffer stage 0 has already completed by the
-     * time stage 1's PreRender runs) and "hdr" (one frame stale at the
-     * point PreRender reads it, since all of stage 1's PreRender calls run
-     * before stage 1's renderpass — i.e. before DeferredLightPipelinePass
-     * writes this frame's lit color into hdr). That one-frame lag on the
-     * scene-colour input is an accepted trade-off already present in
-     * Clouds' compositing and is generally imperceptible once temporal
-     * accumulation is smoothing the result anyway.
+     * So:
+     *   - PreRender() runs RayGen/Trace/TemporalAccumulate/SpatialFilter —
+     *     pure compute, touching only SSR's own private images (never
+     *     "hdr"), writing the final result into filteredRT_.
+     *   - Render() is a normal graphics draw (fullscreen triangle, additive
+     *     blend) into "hdr", executed as SSR's own dedicated subpass —
+     *     see SceneRenderer.hpp, where it sits between the deferred-light
+     *     subpass and the forward-transparent subpass. Because it's a real
+     *     subpass draw rather than a pre-renderpass compute write, it reads
+     *     the *current* frame's freshly-lit "hdr" (no one-frame lag on this
+     *     side), and its contribution correctly persists into the
+     *     transparent and tonemap subpasses that follow within the same
+     *     renderpass instance.
      *
-     * Register at Pipeline::Stage{1, 1} in LightingRenderer, after the
-     * deferred-light subpass and before forward-transparent — see
-     * LightingRenderer.hpp.
+     * Trace.shader's read of "hdr" (for the reflected scene colour at a
+     * screen-space hit) still happens in PreRender, before this frame's
+     * deferred-light subpass has run — so that one read is one frame stale
+     * (sees last frame's fully composited "hdr", which is a valid, fully
+     * resolved image sitting in SHADER_READ_ONLY_OPTIMAL at that point).
+     * Only the *write* side needed to move.
      */
     class SSRPipelinePass : public PipelinePass
     {
@@ -103,7 +114,7 @@ namespace SF::Engine
         ~SSRPipelinePass() override = default;
 
         void PreRender(const CommandBuffer &cmd) override;
-        void Render(const CommandBuffer &cmd) override {}
+        void Render(const CommandBuffer &cmd) override;
 
         void DrawImGuiPanel();
 
@@ -137,7 +148,7 @@ namespace SF::Engine
 
     private:
         void CreateResources();
-        void CreatePipelines();
+        void CreatePipelines(Pipeline::Stage stage);
         void BindStaticDescriptors();
         void UpdateUBO();
 
@@ -149,7 +160,14 @@ namespace SF::Engine
         std::unique_ptr<ComputePipeline> tracePipeline_;
         std::unique_ptr<ComputePipeline> temporalPipeline_;
         std::unique_ptr<ComputePipeline> spatialPipeline_;
-        std::unique_ptr<ComputePipeline> compositePipeline_;
+
+        // Graphics : the only stage that touches "hdr" — see class comment.
+        std::unique_ptr<RenderPipeline> compositePipeline_;
+        std::unique_ptr<DescriptorSet> compositeSet_;
+        const ImageDepth *compositeLastDepth_ = nullptr;
+        const Image2d *compositeLastNormal_ = nullptr;
+        const Image2d *compositeLastAlbedo_ = nullptr;
+        const Image2d *compositeLastPbr_ = nullptr;
 
         static constexpr uint32_t kFramesInFlight = 3;
 
@@ -162,7 +180,7 @@ namespace SF::Engine
         std::unique_ptr<Image2d> rayDataRT_;   // r=roughnessA g=metallic b=skyMask a=pdf
         std::unique_ptr<Image2d> traceColorRT_;// rgb=radiance, a=confidence
         std::unique_ptr<Image2d> traceHitRT_;  // r=hitMask g=hitT b=pdf
-        std::unique_ptr<Image2d> filteredRT_;  // rgb=denoised, a=confidence
+        std::unique_ptr<Image2d> filteredRT_;  // rgb=denoised, a=confidence — read by Render()
 
         // Carries state across frames -> must be ping-ponged (same
         // reasoning as CloudPipelinePass's reconColor_/reconDepth_/reconFog_).
@@ -173,7 +191,6 @@ namespace SF::Engine
         std::unique_ptr<DescriptorSet> traceSet_;
         std::unique_ptr<DescriptorSet> temporalSet_[kFramesInFlight];
         std::unique_ptr<DescriptorSet> spatialSet_[kFramesInFlight];
-        std::unique_ptr<DescriptorSet> compositeSet_[kFramesInFlight];
 
         std::unique_ptr<Image2d> dummyTexture_; // frame-0 history fallback (RGBA16F, 1x1)
 

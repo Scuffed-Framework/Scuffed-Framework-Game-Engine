@@ -1,7 +1,6 @@
 #include "LitMeshPipelinePass.hpp"
 
 #include <Rendering/RenderSystem.hpp>
-#include <crtdbg.h>
 #include <Rendering/Images/Image2d.hpp>
 #include <Bitmaps/Bitmap.hpp>
 
@@ -72,7 +71,6 @@ namespace SF::Engine
     LitMeshPipelinePass::LitMeshPipelinePass(Pipeline::Stage stage, LightManager &lightManager)
         : PipelinePass(stage), lm_(lightManager)
     {
-        _ASSERTE(_CrtCheckMemory()); // HEAP CHECK F (before LitMeshPipelinePass pipeline)
         pipeline_ = std::make_unique<RenderPipeline>(
             stage,
             "Shaders/Lit.shader",

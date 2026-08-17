@@ -39,6 +39,7 @@
 #include <mutex>
 #include <queue>
 #include <future>
+#include <cmath>
 
 namespace SF::Engine
 {

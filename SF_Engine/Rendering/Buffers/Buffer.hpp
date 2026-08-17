@@ -10,6 +10,10 @@
 #include <optional>
 #include <span>
 
+#ifdef Status
+#undef Status
+#endif
+
 namespace SF::Engine
 {
     // Modern concepts for type safety

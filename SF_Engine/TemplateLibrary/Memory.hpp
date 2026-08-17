@@ -273,7 +273,7 @@ namespace SFTL
         const _Dx &get_deleter() const noexcept { return _deleter; }
 
         explicit operator bool() const noexcept { return _ptr != nullptr; }
-        Type &operator[](size_t i) const { return _ptr[i]; }
+        Type &operator[](size_type i) const { return _ptr[i]; }
 
     private:
         pointer _ptr;
@@ -305,7 +305,7 @@ namespace SFTL
         {
             using _Unbounded_array = unique_ptr<Type[]>;
         };
-        template <class Type, size_t _Nx>
+        template <class Type, size_type _Nx>
         struct _unique_if<Type[_Nx]>
         {
             using _Bounded_array = void;
@@ -319,7 +319,7 @@ namespace SFTL
     }
 
     template <class Type>
-    typename detail::_unique_if<Type>::_Unbounded_array make_unique(size_t n)
+    typename detail::_unique_if<Type>::_Unbounded_array make_unique(size_type n)
     {
         using _Elem = remove_extent_t<Type>;
         return unique_ptr<Type>(new _Elem[n]());
@@ -335,7 +335,7 @@ namespace SFTL
     }
 
     template <class Type>
-    typename detail::_unique_if<Type>::_Unbounded_array make_unique_for_overwrite(size_t n)
+    typename detail::_unique_if<Type>::_Unbounded_array make_unique_for_overwrite(size_type n)
     {
         using _Elem = remove_extent_t<Type>;
         return unique_ptr<Type>(new _Elem[n]);

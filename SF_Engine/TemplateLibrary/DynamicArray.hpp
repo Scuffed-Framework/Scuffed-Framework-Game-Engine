@@ -78,24 +78,24 @@ namespace SFTL
             return *this;
         }
 
-        T &operator[](size_t index)
+        T &operator[](size_type index)
         {
             assert(index < size_);
             return data_[index];
         }
 
-        const T &operator[](size_t index) const
+        const T &operator[](size_type index) const
         {
             assert(index < size_);
             return data_[index];
         }
 
-        size_t size() const noexcept { return size_; }
-        size_t capacity() const noexcept { return capacity_; }
+        size_type size() const noexcept { return size_; }
+        size_type capacity() const noexcept { return capacity_; }
 
         void clear()
         {
-            for (size_t i = 0; i < size_; ++i)
+            for (size_type i = 0; i < size_; ++i)
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i);
 
             size_ = 0;
@@ -106,7 +106,7 @@ namespace SFTL
             if (a.size_ != b.size_)
                 return false;
 
-            for (size_t i = 0; i < a.size_; ++i)
+            for (size_type i = 0; i < a.size_; ++i)
             {
                 if (!(a.data_[i] == b.data_[i]))
                     return false;
@@ -116,16 +116,16 @@ namespace SFTL
 
     private:
         T *data_ = nullptr;
-        size_t size_ = 0;
-        size_t capacity_ = 0;
+        size_type size_ = 0;
+        size_type capacity_ = 0;
         Allocator allocator_;
 
         void grow()
         {
-            size_t newCapacity = capacity_ == 0 ? 4 : capacity_ * 2;
+            size_type newCapacity = capacity_ == 0 ? 4 : capacity_ * 2;
             T *newData = allocator_.allocate(newCapacity);
 
-            for (size_t i = 0; i < size_; ++i)
+            for (size_type i = 0; i < size_; ++i)
             {
                 allocator_traits<Allocator>::construct(
                     allocator_, newData + i, ::SFTL::move_if_noexcept(data_[i]));
@@ -152,14 +152,14 @@ namespace SFTL
         }
 
     public:
-        void reserve(size_t newCapacity)
+        void reserve(size_type newCapacity)
         {
             if (newCapacity <= capacity_)
                 return;
 
             T *newData = allocator_.allocate(newCapacity);
 
-            for (size_t i = 0; i < size_; ++i)
+            for (size_type i = 0; i < size_; ++i)
             {
                 allocator_traits<Allocator>::construct(
                     allocator_, newData + i, ::SFTL::move(data_[i]));
@@ -194,7 +194,7 @@ namespace SFTL
         {
             reserve(other.size_);
 
-            for (size_t i = 0; i < other.size_; ++i)
+            for (size_type i = 0; i < other.size_; ++i)
                 push_back(other.data_[i]);
         }
         DynamicArray &operator=(const DynamicArray &other)
@@ -236,20 +236,20 @@ namespace SFTL
             ++size_;
         }
 
-        void resize(size_t newSize)
+        void resize(size_type newSize)
         {
             if (newSize > capacity_)
                 reserve(newSize);
 
             if (newSize > size_)
             {
-                for (size_t i = size_; i < newSize; ++i)
+                for (size_type i = size_; i < newSize; ++i)
                     allocator_traits<Allocator>::construct(
                         allocator_, data_ + i);
             }
             else if (newSize < size_)
             {
-                for (size_t i = newSize; i < size_; ++i)
+                for (size_type i = newSize; i < size_; ++i)
                     allocator_traits<Allocator>::destroy(
                         allocator_, data_ + i);
             }
@@ -257,20 +257,20 @@ namespace SFTL
             size_ = newSize;
         }
 
-        void resize(size_t newSize, const T &value)
+        void resize(size_type newSize, const T &value)
         {
             if (newSize > capacity_)
                 reserve(newSize);
 
             if (newSize > size_)
             {
-                for (size_t i = size_; i < newSize; ++i)
+                for (size_type i = size_; i < newSize; ++i)
                     allocator_traits<Allocator>::construct(
                         allocator_, data_ + i, value);
             }
             else if (newSize < size_)
             {
-                for (size_t i = newSize; i < size_; ++i)
+                for (size_type i = newSize; i < size_; ++i)
                     allocator_traits<Allocator>::destroy(
                         allocator_, data_ + i);
             }
@@ -323,7 +323,7 @@ namespace SFTL
 
             T *newData = allocator_.allocate(size_);
 
-            for (size_t i = 0; i < size_; ++i)
+            for (size_type i = 0; i < size_; ++i)
             {
                 allocator_traits<Allocator>::construct(
                     allocator_, newData + i, ::SFTL::move_if_noexcept(data_[i]));
@@ -338,14 +338,14 @@ namespace SFTL
         T *insert(T *pos, const T &value)
         {
             assert(pos >= begin() && pos <= end());
-            size_t index = pos - data_;
+            size_type index = pos - data_;
 
             if (size_ == capacity_)
             {
                 reserve(capacity_ == 0 ? 4 : capacity_ * 2);
             }
 
-            for (size_t i = size_; i > index; --i)
+            for (size_type i = size_; i > index; --i)
             {
                 allocator_traits<Allocator>::construct(
                     allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i - 1]));
@@ -362,14 +362,14 @@ namespace SFTL
         T *insert(T *pos, T &&value)
         {
             assert(pos >= begin() && pos <= end());
-            size_t index = pos - data_;
+            size_type index = pos - data_;
 
             if (size_ == capacity_)
             {
                 reserve(capacity_ == 0 ? 4 : capacity_ * 2);
             }
 
-            for (size_t i = size_; i > index; --i)
+            for (size_type i = size_; i > index; --i)
             {
                 allocator_traits<Allocator>::construct(
                     allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i - 1]));
@@ -386,11 +386,11 @@ namespace SFTL
         T *erase(T *pos)
         {
             assert(pos >= begin() && pos < end());
-            size_t index = pos - data_;
+            size_type index = pos - data_;
 
             allocator_traits<Allocator>::destroy(allocator_, data_ + index);
 
-            for (size_t i = index; i < size_ - 1; ++i)
+            for (size_type i = index; i < size_ - 1; ++i)
             {
                 allocator_traits<Allocator>::construct(
                     allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i + 1]));
@@ -409,13 +409,13 @@ namespace SFTL
             if (first == last)
                 return first;
 
-            size_t startIndex = first - data_;
-            size_t count = last - first;
+            size_type startIndex = first - data_;
+            size_type count = last - first;
 
-            for (size_t i = startIndex; i < startIndex + count; ++i)
+            for (size_type i = startIndex; i < startIndex + count; ++i)
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i);
 
-            for (size_t i = startIndex; i < size_ - count; ++i)
+            for (size_type i = startIndex; i < size_ - count; ++i)
             {
                 allocator_traits<Allocator>::construct(
                     allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i + count]));
@@ -439,12 +439,12 @@ namespace SFTL
             return !(a == b);
         }
         // Remove all elements matching a value (maintains order)
-        size_t remove(const T &value)
+        size_type remove(const T &value)
         {
             T *writePos = data_;
-            size_t removed = 0;
+            size_type removed = 0;
 
-            for (size_t i = 0; i < size_; ++i)
+            for (size_type i = 0; i < size_; ++i)
             {
                 if (data_[i] == value)
                 {
@@ -467,10 +467,8 @@ namespace SFTL
             return removed;
         }
 
-    
-
         // Fast unordered removal by swapping with last element
-        void swap_remove(size_t index)
+        void swap_remove(size_type index)
         {
             assert(index < size_);
 

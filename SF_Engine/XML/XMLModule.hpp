@@ -9,7 +9,7 @@
 #include <memory>
 #include <functional>
 
-#include <ID/GUID.hpp>
+#include <UtilityClasses/UUID.hpp>
 #include <Reflection/RTTI/RTTI.hpp>
 
 namespace SF::Engine
@@ -43,39 +43,15 @@ namespace SF::Engine
         bool GetAttribute(const std::string &name, bool &out) const;
 
         template <typename T>
-        bool GetAttribute(const std::string &name, T &out) const
-        {
-            std::string raw;
-            if (!GetAttribute(name, raw))
-                return false;
-            return XMLModule::DeserializeValue(raw, out);
-        }
+        bool GetAttribute(const std::string &name, T &out) const;
+        template <typename T>
+        void SetAttribute(const std::string &name, const T &value);
 
         template <typename T>
-        void SetAttribute(const std::string &name, const T &value)
-        {
-            SetAttribute(name, XMLModule::SerializeValue(value));
-        }
+        bool GetChildContent(const std::string &childName, T &out) const;
 
         template <typename T>
-        bool GetChildContent(const std::string &childName, T &out) const
-        {
-            XMLNode child = GetChild(childName);
-            if (!child.IsValid())
-                return false;
-            return XMLModule::DeserializeValue(child.GetContent(), out);
-        }
-
-        template <typename T>
-        void SetChildContent(const std::string &childName, const T &value)
-        {
-            std::string serialized = XMLModule::SerializeValue(value);
-            XMLNode child = GetChild(childName);
-            if (child.IsValid())
-                child.SetContent(serialized);
-            else
-                AddChild(childName, serialized);
-        }
+        void SetChildContent(const std::string &childName, const T &value);
 
         // Bulk get attributes into a map
         std::unordered_map<std::string, std::string>
@@ -162,13 +138,13 @@ namespace SF::Engine
         static std::string SerializeValue(float value);
         static std::string SerializeValue(bool value);
         static std::string SerializeValue(const std::string &value);
-        static std::string SerializeValue(const GUID &value);
+        static std::string SerializeValue(const UUID &value);
 
         static bool DeserializeValue(const std::string &str, int &out);
         static bool DeserializeValue(const std::string &str, float &out);
         static bool DeserializeValue(const std::string &str, bool &out);
         static bool DeserializeValue(const std::string &str, std::string &out);
-        static bool DeserializeValue(const std::string &str, GUID &out);
+        static bool DeserializeValue(const std::string &str, UUID &out);
 
         // Error handling
         std::string GetLastError() const { return lastError; }

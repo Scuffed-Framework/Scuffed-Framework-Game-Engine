@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <numeric>
 #include <fstream>
-#include <GUI/GuiMembers.hpp>
+#include <Gui/GuiMembers.hpp>
 #include <Assets/AssetPipeline.hpp>
 
 namespace SF::Engine

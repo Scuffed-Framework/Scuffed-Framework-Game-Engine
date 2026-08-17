@@ -40,6 +40,7 @@
 #include <concepts>
 #include <functional>
 #include <cmath>
+#include <utility>
 
 namespace SF::Engine
 {

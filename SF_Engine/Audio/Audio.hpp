@@ -2,7 +2,7 @@
 
 #include <Engine/Engine.hpp>
 #include <Controllers/CameraController.hpp>
-#include <LowLevel/rocket.hpp>
+#include <LowLevel/Rocket.hpp>
 #ifdef _Platform_Mac
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>

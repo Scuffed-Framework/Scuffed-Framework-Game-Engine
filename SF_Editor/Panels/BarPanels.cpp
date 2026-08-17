@@ -134,7 +134,7 @@ namespace SF::Engine
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         
-        ImGui::Text("SF Engine {}", Engine_VERSION);
+        ImGui::Text("SF Engine Version: %*s", (int)Engine_VERSION.length(), Engine_VERSION.data());
         HorizontalSpacer(40);
         if(ProjectManager::Get()->IsAProjectLoaded())
             ImGui::Text((std::string("Project: ") + ProjectManager::Get()->GetCurrentProject()->name).c_str());

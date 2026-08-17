@@ -198,7 +198,7 @@ namespace SF::Engine
                 for (const auto &subpass : renderStage->GetSubpasses())
                 {
                     stage.second = subpass.GetBinding();
-                    renderer->PipelinePassManager.PreRenderStage(stage, *commandBuffer);
+                    renderer->PassManager.PreRenderStage(stage, *commandBuffer);
                 }
                 stage.second = 0;
 
@@ -218,7 +218,7 @@ namespace SF::Engine
                 for (const auto &subpass : renderStage->GetSubpasses())
                 {
                     stage.second = subpass.GetBinding();
-                    renderer->PipelinePassManager.RenderStage(stage, *commandBuffer);
+                    renderer->PassManager.RenderStage(stage, *commandBuffer);
 
                     if (subpass.GetBinding() != renderStage->GetSubpasses().back().GetBinding())
                         vkCmdNextSubpass(*commandBuffer, VK_SUBPASS_CONTENTS_INLINE);

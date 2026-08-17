@@ -13,7 +13,9 @@
 #include <optional>
 
 #include <Commands/CommandsWindow.hpp>
-
+#ifdef Always
+#undef Always
+#endif
 namespace SF::Engine::Scripting::Lua
 {
     class LuaEngine : public ModuleRegistrar<LuaEngine>

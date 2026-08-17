@@ -40,8 +40,8 @@ namespace SFTL
 {
     class Any
     {
-        static constexpr size_t SboSize = 64;
-        static constexpr size_t SboAlign = alignof(max_align_t);
+        static constexpr size_type SboSize = 64;
+        static constexpr size_type SboAlign = alignof(max_align_t);
 
         struct Ops
         {

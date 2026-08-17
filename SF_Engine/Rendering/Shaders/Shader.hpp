@@ -15,6 +15,10 @@
 
 #include <volk.h>
 
+#ifdef None
+#undef None
+#endif
+
 namespace SF::Engine
 {
     struct UniformInfo

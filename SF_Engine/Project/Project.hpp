@@ -8,6 +8,10 @@
 #include <Filesystem/ImGuiFileDialog.hpp>
 #include <Rendering/Images/Image2d.hpp>
 
+#ifdef Success
+#undef Success
+#endif
+
 namespace SF::Engine
 {
     struct ProjectTemplate
@@ -79,11 +83,11 @@ namespace SF::Engine
             return currentLoadedProject != nullptr;
         }
 
-        std::filesystem::path GetProjectPath() { return currentLoadedProject->Path; }
-        std::filesystem::path GetProjectAssetPath() { return currentLoadedProject->Path / "Assets"; }
-        std::filesystem::path GetProjectLogPath() { return currentLoadedProject->Path / "Logs"; }
-        std::filesystem::path GetProjectCachePath() { return currentLoadedProject->Path / "Cache"; }
-        std::filesystem::path GetProjectBuildPath() { return currentLoadedProject->Path / "Build"; }
+        std::filesystem::path GetProjectPath() { return currentLoadedProject->Path.parent_path(); }
+        std::filesystem::path GetProjectAssetPath() { return currentLoadedProject->Path.parent_path() / "Assets"; }
+        std::filesystem::path GetProjectLogPath() { return currentLoadedProject->Path.parent_path() / "Logs"; }
+        std::filesystem::path GetProjectCachePath() { return currentLoadedProject->Path.parent_path() / "Cache"; }
+        std::filesystem::path GetProjectBuildPath() { return currentLoadedProject->Path.parent_path() / "Build"; }
 
         Project *GetCurrentProject() { return currentLoadedProject; }
 

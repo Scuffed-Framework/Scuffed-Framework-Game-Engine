@@ -32,6 +32,6 @@ namespace SF::Engine
         EntityId m_entityId = 0;
         EntityRegistry* m_registry = nullptr;
         bool m_needsRefresh = true;
-        ::SFTL::size_t reg;
+        ::SFTL::size_type reg;
     };
 }

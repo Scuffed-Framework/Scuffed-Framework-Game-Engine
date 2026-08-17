@@ -11,6 +11,10 @@
 #include <UtilityClasses/NoCopy.hpp>
 #include <UtilityClasses/TypeInformation.hpp>
 
+#ifdef Always
+#undef Always
+#endif
+
 namespace SF::Engine
 {
     // Forward declaration
@@ -34,7 +38,7 @@ namespace SF::Engine
         ManualStartup, // default
         OnEngineInit,
         Normal,
-        PostEngineInit
+        PostMainWindowInit
     };
 
     /**

@@ -1,10 +1,11 @@
 #pragma once
 #include "Scene.hpp"
-#include <ID/GUID.hpp>
+#include <UtilityClasses/UUID.hpp>
 #include "SceneRenderer.hpp"
 
 namespace SF::Engine
 {
+    // wire this in eventually
     struct SceneContext
     {
         enum class Type
@@ -23,7 +24,7 @@ namespace SF::Engine
         Scene *scene = nullptr;
 
         // Unique ID (PIE worlds need multiple copies)
-        GUID id = GUID::Generate();
+        UUID id = UUID::Generate();
 
         // Runtime state
         bool isPaused = false;

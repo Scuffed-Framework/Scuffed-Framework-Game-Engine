@@ -34,6 +34,7 @@
 
 #pragma once
 #include <type_traits> // intrinsics 🥀
+#include "Types.hpp"
 
 namespace SFTL
 {
@@ -340,7 +341,7 @@ namespace SFTL
     struct is_array<T[]> : true_type
     {
     };
-    template <typename T, size_t N>
+    template <typename T, size_type N>
     struct is_array<T[N]> : true_type
     {
     };
@@ -744,7 +745,7 @@ namespace SFTL
     {
         using type = T;
     };
-    template <typename T, size_t N>
+    template <typename T, size_type N>
     struct remove_extent<T[N]>
     {
         using type = T;
@@ -800,7 +801,7 @@ namespace SFTL
         struct _is_bounded_array : false_type
         {
         };
-        template <typename T, size_t N>
+        template <typename T, size_type N>
         struct _is_bounded_array<T[N]> : true_type
         {
         };

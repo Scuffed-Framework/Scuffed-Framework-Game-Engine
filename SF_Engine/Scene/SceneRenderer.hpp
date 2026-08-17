@@ -53,8 +53,14 @@ namespace SF::Engine
                     SubpassType{0, {0, 1, 2, 3}},
                 }));
 
-            // Stage 1 : Lighting (+ sky/clouds) → SSR + Transparent → Tonemap.
-            // Same 3-subpass layout as LightingRenderer.hpp.
+            // Stage 1 : Lighting (+ sky/clouds) → SSR composite → Transparent
+            // → Tonemap. SSR gets its own dedicated subpass (1) between
+            // deferred-light and forward-transparent — it needs to be a real
+            // subpass, not folded into another one, because its Render() is
+            // a genuine draw into "hdr" (see SSRPipelinePass's class comment
+            // for why the old compute-write-in-PreRender approach silently
+            // did nothing: every attachment here uses loadOp=CLEAR, which
+            // wipes any PreRender write the instant this renderpass starts).
             AddRenderStage(std::make_unique<RenderStage>(
                 std::vector<Attachment>{
                     Attachment{0, "hdr", Attachment::Type::Image,
@@ -64,8 +70,9 @@ namespace SF::Engine
                 },
                 std::vector<SubpassType>{
                     SubpassType{0, {0}}, // deferred lighting (+ atmosphere/clouds) → hdr
-                    SubpassType{1, {0}}, // forward transparent → hdr
-                    SubpassType{2, {1}}, // tonemap → swapchain
+                    SubpassType{1, {0}}, // SSR composite (additive blend) → hdr
+                    SubpassType{2, {0}}, // forward transparent → hdr
+                    SubpassType{3, {1}}, // tonemap → swapchain
                 }));
         }
 
@@ -80,18 +87,22 @@ namespace SF::Engine
             // Stage 1, subpass 0 : Deferred lighting resolve → hdr.
             AddPipelinePass<DeferredLightPipelinePass>(Pipeline::Stage{1, 0}, *lightManager_);
 
-            // Stage 1, subpass 1 : Probed Stochastic SSR (compute, runs in
-            // PreRender — reads this frame's GBuffer + last frame's hdr, see
-            // SSRPipelinePass for the timing note) followed by the
-            // transparent forward pass.
+            // Stage 1, subpass 1 : Probed Stochastic SSR. PreRender() runs
+            // the RayGen/Trace/TemporalAccumulate/SpatialFilter compute
+            // stages (against this frame's fresh GBuffer + last frame's
+            // resolved hdr); Render() is a real subpass draw that additively
+            // blends the result into this frame's hdr, after deferred
+            // lighting (subpass 0) and before forward-transparent.
             ssr_ = AddPipelinePass<SSRPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
-            AddPipelinePass<ForwardTransparentPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
 
-            // Stage 1, subpass 2 : Tonemap hdr → swapchain (unconditional —
+            // Stage 1, subpass 2 : Transparent forward pass.
+            AddPipelinePass<ForwardTransparentPipelinePass>(Pipeline::Stage{1, 2}, *lightManager_);
+
+            // Stage 1, subpass 3 : Tonemap hdr → swapchain (unconditional —
             // previously this only ran when atmosphere was enabled, leaving
             // nothing writing to swapchain otherwise).
             AddPipelinePass<FullscreenPass>(
-                Pipeline::Stage{1, 2}, "hdr", "Shaders/CompositeSampler.shader");
+                Pipeline::Stage{1, 3}, "hdr", "Shaders/CompositeSampler.shader");
 
             // Atmosphere/clouds draw directly into "hdr" as part of stage 1
             // subpass 0, alongside DeferredLightPipelinePass — registration
@@ -149,6 +160,6 @@ namespace SF::Engine
         ClusterCullPipelinePass *clusterCull_ = nullptr;
 
         bool uiCallbackSet_ = false;
-        uint32_t lastScreenH_ = 600Ui32, lastScreenW_ = 800Ui32;
+        uint32_t lastScreenH_ = 600, lastScreenW_ = 800;
     };
 }

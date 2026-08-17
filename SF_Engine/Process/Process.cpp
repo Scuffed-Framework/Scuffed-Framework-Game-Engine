@@ -1,4 +1,4 @@
-#include "PID.hpp"
+#include "Process.hpp"
 
 #ifdef _WIN32
 
@@ -181,7 +181,7 @@ namespace SF::Engine
 
     Process Process::Launch(
         const std::filesystem::path &exe,
-        const SFTL::DynamicArray<SFTL::AdvancedString<char>> &,
+        const SFTL::DynamicArray<std::string> &,
         const std::filesystem::path &)
     {
         Process result;
@@ -361,7 +361,7 @@ namespace SF::Engine
 
     Process Process::Launch(
         const std::filesystem::path &exe,
-        const SFTL::DynamicArray<SFTL::AdvancedString<char>> &,
+        const SFTL::DynamicArray<std::string> &,
         const std::filesystem::path &)
     {
         Process result;

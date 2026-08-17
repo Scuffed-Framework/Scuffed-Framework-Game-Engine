@@ -55,9 +55,11 @@ elseif(MSVC)
     )
 endif()
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ignore:4099,4098")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4099,4098")
-add_compile_options(/wd4005 /wd4224 /wd4267 /wd4244)
+if(MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ignore:4099,4098")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4099,4098")
+    add_compile_options(/wd4005 /wd4224 /wd4267 /wd4244)
+endif()
 
 file(GLOB_RECURSE SF_Editor_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"

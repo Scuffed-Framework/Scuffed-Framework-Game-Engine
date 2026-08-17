@@ -1,18 +1,18 @@
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
 
-#include <ID/GUID.hpp>
+#include <UtilityClasses/UUID.hpp>
 
 namespace SF::Engine
 {
     class Object
     {
     public:
-        Object() : guid(GUID::Generate()) {}
+        Object() : uuid(UUID::Generate()) {}
 
-        Object(const Object &other) : guid(GUID::Generate()) {}
+        Object(const Object &other) : uuid(UUID::Generate()) {}
 
-        Object(Object &&other) noexcept : guid(std::move(other.guid)) {}
+        Object(Object &&other) noexcept : uuid(std::move(other.uuid)) {}
 
         Object &operator=(const Object &other)
         {
@@ -23,33 +23,33 @@ namespace SF::Engine
         {
             if (this != &other)
             {
-                guid = std::move(other.guid);
+                uuid = std::move(other.uuid);
             }
             return *this;
         }
 
         virtual ~Object() = default;
 
-        const GUID &GetGUID() const { return guid; }
+        const UUID &GetUUID() const { return uuid; }
 
-        std::string GetGUIDString() const { return guid.ToString(); }
+        std::string GetUUIDString() const { return uuid.ToString(); }
 
-        bool IsNull() const { return guid.IsNull(); }
+        bool IsNull() const { return uuid.IsNull(); }
 
-        bool operator==(const Object &other) const { return guid == other.guid; }
-        bool operator!=(const Object &other) const { return guid != other.guid; }
-        bool operator<(const Object &other) const { return guid < other.guid; }
+        bool operator==(const Object &other) const { return uuid == other.uuid; }
+        bool operator!=(const Object &other) const { return uuid != other.uuid; }
+        bool operator<(const Object &other) const { return uuid < other.uuid; }
 
-        struct GUIDHash
+        struct UUIDHash
         {
             size_t operator()(const Object &obj) const
             {
-                return GUID::Hash()(obj.guid);
+                return UUID::Hash()(obj.uuid);
             }
         };
 
     protected:
-        GUID guid;
+        UUID uuid;
     };
 }
 

@@ -16,7 +16,7 @@ done
 echo "==> Build type: $BUILD_TYPE"
 
 echo "==> Running Conan..."
-conan install . -s build_type=$BUILD_TYPE --build=missing -of=build/$BUILD_TYPE
+conan install . -s build_type=$BUILD_TYPE --build=missing
 
 echo "==> Running CMake configure..."
 cmake -B build/$BUILD_TYPE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -S .

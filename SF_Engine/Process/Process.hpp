@@ -1,7 +1,7 @@
 #pragma once
 #include <TemplateLibrary/Types.hpp>
 #include <TemplateLibrary/DynamicArray.hpp>
-#include <TemplateLibrary/Containers/AdvancedString.hpp>
+#include <string>
 #include <filesystem>
 
 #include <Platform/PlatformIncludes.hpp>
@@ -44,7 +44,7 @@ namespace SF::Engine
         explicit Process(std::filesystem::path program, std::filesystem::path directory)
             : Process(std::move(program), {}, std::move(directory)) {}
         explicit Process(std::filesystem::path program,
-                         ::SFTL::DynamicArray<::SFTL::String> args,
+                         ::SFTL::DynamicArray<std::string> args,
                          std::filesystem::path directory)
         {
             *this = Launch(program, args, directory);
@@ -75,7 +75,7 @@ namespace SF::Engine
 
         static Process Launch(
             const std::filesystem::path &executable,
-            const ::SFTL::DynamicArray<::SFTL::String> &arguments = {},
+            const ::SFTL::DynamicArray<std::string> &arguments = {},
             const std::filesystem::path &workingDirectory = {});
 
     private:

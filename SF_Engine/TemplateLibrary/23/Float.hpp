@@ -35,7 +35,7 @@
 // stdfloat header implementation (because msvc doesn't support it yet)
 #pragma once
 
-#include <TemplateLibrary/Operations.hpp>
+#include "../Operations.hpp"
 
 namespace SFTL
 {
@@ -86,7 +86,7 @@ namespace SFTL
         {
             unsigned int x;
             static_assert(sizeof(x) == sizeof(f), "expected 32-bit float");
-            __builtin_memcpy(&x, &f, sizeof(x));
+            SFTL_BI_MCPY(&x, &f, sizeof(x));
 
             unsigned int sign = (x >> 16) & 0x8000u;
             int exp = int((x >> 23) & 0xFF) - 127 + 15;
@@ -127,7 +127,7 @@ namespace SFTL
             }
 
             float f;
-            __builtin_memcpy(&f, &bits, sizeof(f));
+            SFTL_BI_MCPY(&f, &bits, sizeof(f));
             return f;
         }
     };
@@ -207,7 +207,7 @@ namespace SFTL
         static unsigned short from_float(float f) noexcept
         {
             unsigned int x;
-            __builtin_memcpy(&x, &f, sizeof(x));
+            SFTL_BI_MCPY(&x, &f, sizeof(x));
             // round-to-nearest-even on the truncated 16 bits
             unsigned int rounded = x + 0x7FFFu + ((x >> 16) & 1u);
             return static_cast<unsigned short>(rounded >> 16);
@@ -217,7 +217,7 @@ namespace SFTL
         {
             unsigned int bits = static_cast<unsigned int>(b) << 16;
             float f;
-            __builtin_memcpy(&f, &bits, sizeof(f));
+            SFTL_BI_MCPY(&f, &bits, sizeof(f));
             return f;
         }
     };

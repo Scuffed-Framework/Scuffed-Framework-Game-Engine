@@ -1,4 +1,4 @@
-#pragma once //  todo: move this into UtilityClasses/
+#pragma once //  todo: move this into UtilityClasses/ resolved 8/15/28 
 #include <array>
 #include <cstdint>
 #include <string>
@@ -10,7 +10,7 @@
 #include <algorithm>
 namespace SF::Engine
 {
-    class GUID
+    class UUID
     {
     private:
         std::array<uint8_t, 16> data;
@@ -41,14 +41,14 @@ namespace SF::Engine
         }
 
     public:
-        // Default constructor (creates null GUID) - constexpr
-        constexpr GUID() : data{0} {}
+        // Default constructor (creates null UUID) - constexpr
+        constexpr UUID() : data{0} {}
 
         // Constexpr constructor from array - needed for literal type
-        constexpr GUID(const std::array<uint8_t, 16> &arr) : data(arr) {}
+        constexpr UUID(const std::array<uint8_t, 16> &arr) : data(arr) {}
 
         // Constexpr constructor from initializer list
-        constexpr GUID(std::initializer_list<uint8_t> init) : data{0}
+        constexpr UUID(std::initializer_list<uint8_t> init) : data{0}
         {
             size_t i = 0;
             for (auto val : init)
@@ -59,46 +59,46 @@ namespace SF::Engine
         }
 
         // Constexpr copy constructor
-        constexpr GUID(const GUID &other) = default;
+        constexpr UUID(const UUID &other) = default;
 
         // Constexpr assignment
-        constexpr GUID &operator=(const GUID &other) = default;
+        constexpr UUID &operator=(const UUID &other) = default;
 
-        // Generate a new GUID (version 4, variant 1) - NOT constexpr
-        static GUID Generate()
+        // Generate a new UUID (version 4, variant 1) - NOT constexpr
+        static UUID Generate()
         {
-            GUID guid;
+            UUID uuid;
             auto &engine = get_random_engine();
 
             // Fill with random bytes
-            for (auto &byte : guid.data)
+            for (auto &byte : uuid.data)
             {
                 byte = random_byte();
             }
 
             // Set version to 4 (random)
-            guid.data[6] = (guid.data[6] & 0x0F) | 0x40;
+            uuid.data[6] = (uuid.data[6] & 0x0F) | 0x40;
 
             // Set variant to RFC 4122
-            guid.data[8] = (guid.data[8] & 0x3F) | 0x80;
+            uuid.data[8] = (uuid.data[8] & 0x3F) | 0x80;
 
-            return guid;
+            return uuid;
         }
 
         // Create from existing bytes - NOT constexpr
-        static GUID FromBytes(const uint8_t bytes[16])
+        static UUID FromBytes(const uint8_t bytes[16])
         {
-            GUID guid;
-            std::memcpy(guid.data.data(), bytes, 16);
-            return guid;
+            UUID uuid;
+            std::memcpy(uuid.data.data(), bytes, 16);
+            return uuid;
         }
 
         // Create from string (can throw std::invalid_argument) - NOT constexpr
-        static GUID FromString(const std::string &str)
+        static UUID FromString(const std::string &str)
         {
             if (str.length() != 36)
             {
-                throw std::invalid_argument("Invalid GUID string length");
+                throw std::invalid_argument("Invalid UUID string length");
             }
 
             std::array<uint8_t, 16> arr{};
@@ -112,7 +112,7 @@ namespace SF::Engine
                 if (i >= 35 || !isxdigit(static_cast<unsigned char>(str[i])) ||
                     !isxdigit(static_cast<unsigned char>(str[i + 1])))
                 {
-                    throw std::invalid_argument("Invalid GUID format");
+                    throw std::invalid_argument("Invalid UUID format");
                 }
 
                 std::string byteStr = str.substr(i, 2);
@@ -120,14 +120,14 @@ namespace SF::Engine
                 i++; // Skip second hex digit
             }
 
-            return GUID(arr);
+            return UUID(arr);
         }
 
         // Constexpr version for compile-time string parsing
         template <size_t N>
-        static constexpr GUID FromStringConstexpr(const char (&str)[N])
+        static constexpr UUID FromStringConstexpr(const char (&str)[N])
         {
-            static_assert(N == 37, "GUID string must be exactly 36 characters plus null terminator");
+            static_assert(N == 37, "UUID string must be exactly 36 characters plus null terminator");
 
             std::array<uint8_t, 16> arr{};
             size_t idx = 0;
@@ -146,7 +146,7 @@ namespace SF::Engine
                       (str[i + 1] >= 'a' && str[i + 1] <= 'f') ||
                       (str[i + 1] >= 'A' && str[i + 1] <= 'F')))
                 {
-                    return GUID(); // Return null GUID on error
+                    return UUID(); // Return null UUID on error
                 }
 
                 uint8_t high = hex_char_to_byte(str[i]);
@@ -155,11 +155,11 @@ namespace SF::Engine
                 i++; // Skip second hex digit
             }
 
-            return GUID(arr);
+            return UUID(arr);
         }
 
         // Alternative: Use a raw pointer with length check
-        static constexpr GUID FromStringConstexpr(const char *str)
+        static constexpr UUID FromStringConstexpr(const char *str)
         {
             // We can't verify length at compile-time with raw pointer
             // So we'll just parse what we get
@@ -174,7 +174,7 @@ namespace SF::Engine
                 // Check if we have enough characters
                 if (i >= 35 || str[i + 1] == '\0')
                 {
-                    return GUID();
+                    return UUID();
                 }
 
                 uint8_t high = hex_char_to_byte(str[i]);
@@ -185,14 +185,14 @@ namespace SF::Engine
 
             if (idx != 16)
             {
-                return GUID(); // Didn't parse enough bytes
+                return UUID(); // Didn't parse enough bytes
             }
 
-            return GUID(arr);
+            return UUID(arr);
         }
 
         // Comparison operators - constexpr
-        constexpr bool operator==(const GUID &other) const
+        constexpr bool operator==(const UUID &other) const
         {
             for (size_t i = 0; i < 16; ++i)
             {
@@ -202,12 +202,12 @@ namespace SF::Engine
             return true;
         }
 
-        constexpr bool operator!=(const GUID &other) const
+        constexpr bool operator!=(const UUID &other) const
         {
             return !(*this == other);
         }
 
-        constexpr bool operator<(const GUID &other) const
+        constexpr bool operator<(const UUID &other) const
         {
             for (size_t i = 0; i < 16; ++i)
             {
@@ -219,7 +219,7 @@ namespace SF::Engine
             return false;
         }
 
-        // Check if null GUID (all zeros) - constexpr
+        // Check if null UUID (all zeros) - constexpr
         constexpr bool IsNull() const
         {
             for (auto byte : data)
@@ -288,11 +288,11 @@ namespace SF::Engine
         // For use in std::unordered_map
         struct Hash
         {
-            size_t operator()(const GUID &guid) const
+            size_t operator()(const UUID &uuid) const
             {
                 // Use std::hash on the underlying bytes
                 size_t hash = 0;
-                const uint64_t *ptr = reinterpret_cast<const uint64_t *>(guid.data.data());
+                const uint64_t *ptr = reinterpret_cast<const uint64_t *>(uuid.data.data());
                 std::hash<uint64_t> hasher;
                 hash ^= hasher(ptr[0]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
                 hash ^= hasher(ptr[1]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
@@ -301,41 +301,41 @@ namespace SF::Engine
         };
     };
 
-    // User-defined literal for compile-time GUIDs - constexpr
-    consteval GUID operator"" _guid(const char *str, size_t len)
+    // User-defined literal for compile-time UUIDs - constexpr
+    consteval UUID operator"" _uuid(const char *str, size_t len)
     {
         if (len != 36)
         {
-            // In compile-time context, return null GUID for invalid length
-            return GUID();
+            // In compile-time context, return null UUID for invalid length
+            return UUID();
         }
 
         // Use the constexpr parsing function
-        return GUID::FromStringConstexpr(str);
+        return UUID::FromStringConstexpr(str);
     }
 
-    // Null GUID constant - constexpr
-    constexpr GUID NullGUID = GUID();
+    // Null UUID constant - constexpr
+    constexpr UUID NullUUID = UUID();
 
-    // Predefined GUIDs (compile-time)
-    constexpr GUID GUID_Zero = GUID();
-    constexpr GUID GUID_Max = GUID({0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF});
+    // Predefined UUIDs (compile-time)
+    constexpr UUID UUID_Zero = UUID();
+    constexpr UUID UUID_Max = UUID({0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF});
 
-    // Common/well-known GUIDs
-    constexpr GUID GUID_Namespace_DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"_guid;
-    constexpr GUID GUID_Namespace_URL = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"_guid;
-    constexpr GUID GUID_Namespace_OID = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"_guid;
-    constexpr GUID GUID_Namespace_X500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"_guid;
+    // Common/well-known UUIDs
+    constexpr UUID UUID_Namespace_DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"_uuid;
+    constexpr UUID UUID_Namespace_URL = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"_uuid;
+    constexpr UUID UUID_Namespace_OID = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"_uuid;
+    constexpr UUID UUID_Namespace_X500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"_uuid;
 }
 namespace std
 {
     template <>
-    struct hash<SF::Engine::GUID>
+    struct hash<SF::Engine::UUID>
     {
-        size_t operator()(const SF::Engine::GUID &guid) const
+        size_t operator()(const SF::Engine::UUID &uuid) const
         {
-            // Use the built-in Hash struct from GUID
-            return SF::Engine::GUID::Hash{}(guid);
+            // Use the built-in Hash struct from UUID
+            return SF::Engine::UUID::Hash{}(uuid);
         }
     };
 }

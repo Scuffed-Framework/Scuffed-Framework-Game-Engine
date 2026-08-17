@@ -216,7 +216,7 @@ namespace SF::Engine
         }
 
         // Add score based on GB of VRAM (capped at reasonable amount)
-        score += static_cast<uint32_t>(std::min(totalVRAM / (1024 * 1024 * 1024), 16ULL) * 10);
+        score += static_cast<uint32_t>(std::min(totalVRAM / (1024 * 1024 * 1024), 16UL) * 10);
 
         // Texture size support
         score += deviceProperties.limits.maxImageDimension2D / 1000;

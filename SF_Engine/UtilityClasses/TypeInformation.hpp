@@ -37,8 +37,9 @@
 #include <typeindex>
 #include <unordered_map>
 #include <type_traits>
-#include <string_view>
+#include <string>
 #include <shared_mutex>
+#include <mutex>
 
 #if defined(_MSC_VER)
 #include <windows.h>

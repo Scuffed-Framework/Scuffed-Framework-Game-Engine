@@ -27,7 +27,7 @@ namespace SF::Engine
         void Draw();
 
     private:
-        ::SFTL::size_t reg;
+        ::SFTL::size_type reg;
 
         void DrawMenuBar();
 

@@ -57,13 +57,13 @@ namespace SF::Engine
     bool AssetBrowser::TryWithImageTexture(const std::shared_ptr<AssetBase> &asset, Func &&fn)
     {
         if (auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image2d>>(asset))
-            return a->texture ? (fn(a->texture, a->guid), true) : false;
+            return a->texture ? (fn(a->texture, a->uuid), true) : false;
         if (auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image3d>>(asset))
-            return a->texture ? (fn(a->texture, a->guid), true) : false;
+            return a->texture ? (fn(a->texture, a->uuid), true) : false;
         if (auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image2dArray>>(asset))
-            return a->texture ? (fn(a->texture, a->guid), true) : false;
+            return a->texture ? (fn(a->texture, a->uuid), true) : false;
         if (auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Cubemap>>(asset))
-            return a->texture ? (fn(a->texture, a->guid), true) : false;
+            return a->texture ? (fn(a->texture, a->uuid), true) : false;
         return false;
     }
 
@@ -303,7 +303,7 @@ namespace SF::Engine
 
     void AssetBrowser::DrawAssetTile(const std::shared_ptr<AssetBase> &asset, int index)
     {
-        bool isSelected = m_selectedAsset && *m_selectedAsset == asset->guid;
+        bool isSelected = m_selectedAsset && *m_selectedAsset == asset->uuid;
 
         ImGui::PushID(index);
 
@@ -323,7 +323,7 @@ namespace SF::Engine
         {
             // No outer rtti_pointer_cast<ImageAsset> needed - TryWithImageTexture
             // already tries every concrete image type internally.
-            TryWithImageTexture(asset, [&](auto &tex, const GUID &guid)
+            TryWithImageTexture(asset, [&](auto &tex, const UUID &guid)
                                 {
             auto preview = GetOrCreatePreview(guid, tex);
             if (preview.isValid && preview.textureID)
@@ -346,7 +346,7 @@ namespace SF::Engine
                                   m_showThumbnails ? ImVec4(0.2f, 0.2f, 0.2f, 1.0f) : ImVec4(0.2f, 0.2f, 0.2f, 0.0f));
             if (ImGui::Button(("##" + std::to_string(index)).c_str(), thumbnailSize))
             {
-                m_selectedAsset = asset->guid;
+                m_selectedAsset = asset->uuid;
             }
             ImGui::PopStyleColor();
 
@@ -370,20 +370,20 @@ namespace SF::Engine
         if (ImGui::BeginPopupContextItem())
         {
             if (ImGui::MenuItem(ICON_MD_OPEN_IN_NEW " Open"))
-                m_selectedAsset = asset->guid;
+                m_selectedAsset = asset->uuid;
             if (ImGui::MenuItem(ICON_MD_DELETE " Delete"))
             {
                 // Delete asset
             }
             if (ImGui::MenuItem(ICON_MD_SAVE " Save"))
                 asset->Save();
-            if (ImGui::MenuItem(ICON_MD_CONTENT_COPY " Copy GUID"))
-                ImGui::SetClipboardText(asset->guid.ToString().c_str());
+            if (ImGui::MenuItem(ICON_MD_CONTENT_COPY " Copy UUID"))
+                ImGui::SetClipboardText(asset->uuid.ToString().c_str());
             ImGui::EndPopup();
         }
 
         if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
-            m_selectedAsset = asset->guid;
+            m_selectedAsset = asset->uuid;
 
         ImGui::PopID();
     }
@@ -413,28 +413,28 @@ namespace SF::Engine
 
                 // Name
                 ImGui::TableSetColumnIndex(1);
-                bool isSelected = m_selectedAsset && *m_selectedAsset == asset->guid;
+                bool isSelected = m_selectedAsset && *m_selectedAsset == asset->uuid;
 
                 if (ImGui::Selectable(asset->name.c_str(), isSelected,
                                       ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
                 {
-                    m_selectedAsset = asset->guid;
+                    m_selectedAsset = asset->uuid;
                 }
 
                 // Type
                 ImGui::TableSetColumnIndex(2);
                 ImGui::Text("%s", GetAssetTypeName(asset->type));
 
-                // GUID
+                // UUID
                 ImGui::TableSetColumnIndex(3);
-                std::string guidStr = asset->guid.ToString();
+                std::string guidStr = asset->uuid.ToString();
                 ImGui::Text("%s", guidStr.c_str());
 
                 // Actions
                 ImGui::TableSetColumnIndex(4);
                 if (ImGui::SmallButton((ICON_MD_OPEN_IN_NEW "##open")))
                 {
-                    m_selectedAsset = asset->guid;
+                    m_selectedAsset = asset->uuid;
                 }
                 ImGui::SameLine();
                 if (ImGui::SmallButton((ICON_MD_SAVE "##save")))
@@ -451,7 +451,7 @@ namespace SF::Engine
     {
         ImVec2 previewSize(50, 50);
 
-        bool rendered = TryWithImageTexture(asset, [&](auto &tex, const GUID &guid)
+        bool rendered = TryWithImageTexture(asset, [&](auto &tex, const UUID &guid)
                                             {
         auto preview = GetOrCreatePreview(guid, tex);
         if (preview.isValid && preview.textureID)
@@ -471,7 +471,7 @@ namespace SF::Engine
 
         // Fallback to icon
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 0.5f));
-        std::string previewId = "##preview" + asset->guid.ToString();
+        std::string previewId = "##preview" + asset->uuid.ToString();
         ImGui::Button(previewId.c_str(), previewSize);
         ImGui::PopStyleColor();
 
@@ -487,7 +487,7 @@ namespace SF::Engine
     {
         ImGui::BeginChild("DetailsPanel", ImVec2(0, 0), true);
 
-        auto asset = AssetController::Get()->FindByGUID(*m_selectedAsset);
+        auto asset = AssetController::Get()->FindByUUID(*m_selectedAsset);
         if (!asset)
         {
             ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f),
@@ -531,7 +531,7 @@ namespace SF::Engine
         {
             auto &tex = asset->texture;
             auto extent = tex->GetExtent();
-            auto preview = GetOrCreatePreview(asset->guid, tex);
+            auto preview = GetOrCreatePreview(asset->uuid, tex);
 
             if (preview.isValid && preview.textureID)
             {
@@ -847,7 +847,7 @@ namespace SF::Engine
         asset->Save();
 
         // Select the new asset
-        m_selectedAsset = asset->guid;
+        m_selectedAsset = asset->uuid;
     }
 
     void AssetBrowser::RefreshAssets()
@@ -857,7 +857,7 @@ namespace SF::Engine
 
     // Helper to get or create texture preview
     template <typename TImage>
-    AssetBrowser::TexturePreview AssetBrowser::GetOrCreatePreview(const GUID &guid, const std::shared_ptr<TImage> &texture)
+    AssetBrowser::TexturePreview AssetBrowser::GetOrCreatePreview(const UUID &guid, const std::shared_ptr<TImage> &texture)
     {
         auto it = m_previewCache.find(guid);
         if (it != m_previewCache.end() && it->second.isValid)

@@ -1,7 +1,6 @@
 #include "ClusterCullPipelinePass.hpp"
 #include <Rendering/RenderSystem.hpp>
 #include "LightingTypes.hpp"
-#include <crtdbg.h>
 
 namespace SF::Engine
 {
@@ -33,17 +32,12 @@ namespace SF::Engine
     ClusterCullPipelinePass::ClusterCullPipelinePass(Pipeline::Stage stage, LightManager &lm)
         : PipelinePass(stage), lm_(lm)
     {
-        _ASSERTE(_CrtCheckMemory()); // HEAP CHECK A
         buildPipeline_ = std::make_unique<ComputePipeline>("Shaders/Lighting/ClusterBuild.shader");
-        _ASSERTE(_CrtCheckMemory()); // HEAP CHECK B (after ClusterBuild pipeline)
         cullPipeline_ = std::make_unique<ComputePipeline>("Shaders/Lighting/ClusterCull.shader");
-        _ASSERTE(_CrtCheckMemory()); // HEAP CHECK C (after ClusterCull pipeline)
-
+     
         buildDescSet_ = std::make_unique<DescriptorSet>(*buildPipeline_);
-        _ASSERTE(_CrtCheckMemory()); // HEAP CHECK D (after buildDescSet)
         cullDescSet_ = std::make_unique<DescriptorSet>(*cullPipeline_);
-        _ASSERTE(_CrtCheckMemory()); // HEAP CHECK E (after cullDescSet)
-
+     
         // ClusterBuild: bind=0 frame UBO, bind=1 cluster SSBO
         {
             VkDescriptorBufferInfo fi{lm_.GetFrameUBO().GetBuffer(), 0, VK_WHOLE_SIZE};

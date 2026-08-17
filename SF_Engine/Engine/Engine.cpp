@@ -4,6 +4,10 @@
 #include <Project/Project.hpp>
 #include <GameScript/LuaEngine.hpp>
 
+#ifdef Always
+#undef Always
+#endif
+
 namespace SF::Engine
 {
     Engine *Engine::Instance = nullptr;
@@ -145,7 +149,7 @@ namespace SF::Engine
         return EXIT_SUCCESS;
     }
 
-    void Engine::CreateModule(Module::RegistryMap::const_iterator it, const ModuleFilter &filter)
+    void Engine::CreateModule(RegMap::const_iterator it, const ModuleFilter &filter)
     {
         // Check if module already exists
         if (modules.find(it->first) != modules.end())
@@ -207,7 +211,7 @@ namespace SF::Engine
         modules.erase(it);
     }
 
-    void Engine::UpdateStage(Module::Stage stage)
+    void Engine::UpdateStage(ModuleStage stage)
     {
         auto stageIt = moduleStages.find(stage);
         if (stageIt == moduleStages.end())

@@ -4,8 +4,8 @@
 #include "Math/Vectors/Vector.hpp"
 #include "Images/ImageDepth.hpp"
 #include "RenderPass/FrameBuffer.hpp"
-#include "RenderPass/Renderpass.hpp"
-#include "RenderPass/Swapchain.hpp"
+#include "RenderPass/RenderPass.hpp"
+#include "RenderPass/SwapChain.hpp"
 #include <map>
 
 namespace SF::Engine
