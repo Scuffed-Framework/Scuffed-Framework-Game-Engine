@@ -1,5 +1,5 @@
 #pragma once
-#include <Bitmaps/Bitmap.hpp>
+#include <Assets/Bitmaps/Bitmap.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <cstring>

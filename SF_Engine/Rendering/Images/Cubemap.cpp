@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include <Bitmaps/Bitmap.hpp>
+#include <Assets/Bitmaps/Bitmap.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include "Image.hpp"
 

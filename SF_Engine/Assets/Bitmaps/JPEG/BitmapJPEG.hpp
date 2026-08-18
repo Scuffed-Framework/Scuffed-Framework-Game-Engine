@@ -1,7 +1,7 @@
 #pragma once
 #include <stb_image.h>
 #include <stb_image_write.h>
-#include <Bitmaps/Bitmap.hpp>
+#include <Assets/Bitmaps/Bitmap.hpp>
 #include <Filesystem/File.hpp>
 #include <cstdint>
 #include <stdexcept>

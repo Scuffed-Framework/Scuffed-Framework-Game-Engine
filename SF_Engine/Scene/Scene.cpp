@@ -18,7 +18,7 @@
 
 #include <Scene/SceneRenderer.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <Bitmaps/Bitmap.hpp>
+#include <Assets/Bitmaps/Bitmap.hpp>
 #include <Rendering/Images/ImageDepth.hpp>
 
 #include <Scene/SceneManager.hpp>

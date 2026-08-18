@@ -2,7 +2,7 @@
 
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/Images/Image2d.hpp>
-#include <Bitmaps/Bitmap.hpp>
+#include <Assets/Bitmaps/Bitmap.hpp>
 
 namespace SF::Engine
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Image.hpp"
-#include <Bitmaps/Bitmap.hpp>
+#include <Assets/Bitmaps/Bitmap.hpp>
 #include <filesystem>
 #include <memory>
 

@@ -1,6 +1,6 @@
 #include "Image2dArray.hpp"
 
-#include <Bitmaps/Bitmap.hpp>
+#include <Assets/Bitmaps/Bitmap.hpp>
 #include <Rendering/Buffers/Buffer.hpp>
 #include <Rendering/RenderSystem.hpp>
 

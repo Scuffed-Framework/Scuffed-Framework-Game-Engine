@@ -18,6 +18,7 @@
 
 #Editor:
 finish panels, cmd, explorer, black profiler bar, profiler
+finish shader wizzard
 sponza
 amazon lumberyard cafe
 
