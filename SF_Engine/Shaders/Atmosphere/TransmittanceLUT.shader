@@ -30,7 +30,7 @@ float distToAtmTop(float h, float cosZ)
 }
 
 [numthreads(8, 8, 1)]
-[shader("compute)]
+[shader("compute")]
 void main(uint3 threadId : SV_DispatchThreadID)
 {
     int2 size;

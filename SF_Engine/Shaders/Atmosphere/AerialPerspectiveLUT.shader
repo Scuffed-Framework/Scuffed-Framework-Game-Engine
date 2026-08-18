@@ -32,7 +32,7 @@ float sliceDepth(float p, float maxDist)
 }
 
 [numthreads(8, 8, 1)]
-[shader("compute)]
+[shader("compute")]
 void main(uint3 globalThreadID: SV_DispatchThreadID)
 {
     int3 lutSize;
