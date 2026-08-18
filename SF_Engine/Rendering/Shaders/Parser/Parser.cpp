@@ -393,18 +393,51 @@ namespace SF::Engine::Shaders
 
     std::optional<CompiledShader> ShaderParser::compile(
         const ParsedShader &shader, ShaderStage stage,
-        const std::vector<SF::Engine::Shader::Define> &defines)
+        const std::vector<SF::Engine::Shader::Define> &defines,
+        const std::string &entry)
     {
-        // Note: this recompiles every entry point in the file to grab one --
-        // fine for now, but if you're calling this per-stage in a hot loop,
-        // switch to compileAll() and pick the stage out of the result instead.
-        auto all = compileAll(shader, defines);
-        if (!all)
+        ParsedShader working = shader;
+        if (working.entryPoints.empty() && !discoverEntryPoints(working))
             return std::nullopt;
 
-        for (auto &c : *all)
-            if (c.stage == stage)
-                return std::move(c);
+        std::string resolved = preprocess(working, defines);
+
+        std::string error;
+        auto handle = LoadSlangModule(working, resolved, error);
+        if (!handle)
+        {
+            setError(error);
+            return std::nullopt;
+        }
+
+        CompiledShader result;
+        
+        for(const auto &ep : working.entryPoints)
+        {
+            if(ep.name == entry)
+            {
+                std::string compileError;
+                auto spirv = CompileEntryPointFromModule(handle->session.get(), handle->module,
+                                                        entry, stage, compileError);
+                if (spirv.empty())
+                {
+                    setError(compileError);
+                    std::cerr << "ShaderParser: empty SPIRV for entry '" << entry << "' in '"
+                            << working.name << "'. Error: " << lastError_ << std::endl;
+                    return std::nullopt;
+                }
+
+                CompiledShader compiled;
+                compiled.name = working.name;
+                compiled.stage = stage;
+                compiled.language = working.language;
+                compiled.spirv = std::move(spirv);
+                compiled.entryPoint = entry;
+                compiled.workgroupSize = ep.workgroupSize;
+                compiled.hasWorkgroupSize = ep.hasWorkgroupSize;
+                return compiled;
+            }
+        }
 
         setError("Stage not found in shader: " + std::string(stageToString(stage)));
         return std::nullopt;

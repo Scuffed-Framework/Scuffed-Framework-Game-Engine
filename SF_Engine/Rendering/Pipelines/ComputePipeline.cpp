@@ -15,7 +15,21 @@ namespace SF::Engine
         : shaderStage(std::move(shaderStage)), defines(std::move(defines)), pushDescriptors(pushDescriptors)
     {
         device_ = *RenderSystem::Get()->GetLogicalDevice();
-        CreateShaderProgram();
+        CreateShaderProgram("");
+        CreateDescriptorLayout();
+        CreateDescriptorPool();
+        CreatePipelineLayout();
+        CreatePipelineCompute();
+    }
+
+    ComputePipeline::ComputePipeline(std::filesystem::path shaderStage,
+                                     std::string entry,
+                                     std::vector<Shader::Define> defines,
+                                     bool pushDescriptors)
+        : shaderStage(std::move(shaderStage)), entryOpt(entry), defines(std::move(defines)), pushDescriptors(pushDescriptors)
+    {
+        device_ = *RenderSystem::Get()->GetLogicalDevice();
+        CreateShaderProgram(entry);
         CreateDescriptorLayout();
         CreateDescriptorPool();
         CreatePipelineLayout();
@@ -33,7 +47,7 @@ namespace SF::Engine
         vkDestroyDescriptorPool(device_, descriptorPool, nullptr);
     }
 
-    void ComputePipeline::CreateShaderProgram()
+    void ComputePipeline::CreateShaderProgram(std::string entry)
     {
         auto *dev = RenderSystem::Get()->GetLogicalDevice();
 
@@ -46,7 +60,12 @@ namespace SF::Engine
             throw std::runtime_error("Failed to parse compute shader '" +
                                      shaderStage.string() + "': " + parser.getLastError());
 
-        auto compiledOpt = parser.compile(*parsedOpt, Shaders::ShaderStage::Compute, defines);
+        std::optional<Shaders::CompiledShader> compiledOpt;
+        if(entry.length() == 0)
+            compiledOpt = parser.compile(*parsedOpt, Shaders::ShaderStage::Compute, defines);
+        else
+            compiledOpt = parser.compile(*parsedOpt, Shaders::ShaderStage::Compute, defines, entry);
+
         if (!compiledOpt)
             throw std::runtime_error("Failed to compile compute shader '" +
                                      shaderStage.string() + "': " + parser.getLastError());

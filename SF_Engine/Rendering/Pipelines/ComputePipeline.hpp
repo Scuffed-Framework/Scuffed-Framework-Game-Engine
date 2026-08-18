@@ -26,6 +26,19 @@ namespace SF::Engine
             std::vector<Shader::Define> defines = {},
             bool pushDescriptors = false);
 
+        /**
+         * Creates a new compute pipeline.
+         * @param shaderStage The shader file that will be loaded.
+         * @param entry     the entry point to use
+         * @param defines     A list of preprocessor defines (uses Shader::Define, same as RenderPipeline).
+         * @param pushDescriptors If no actual descriptor sets are allocated but instead pushed.
+         */
+        explicit ComputePipeline(
+            std::filesystem::path shaderStage,
+            std::string entry,
+            std::vector<Shader::Define> defines = {},
+            bool pushDescriptors = false);
+
         ~ComputePipeline();
 
         void CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent) const;
@@ -45,7 +58,7 @@ namespace SF::Engine
         void ReloadShader(const std::vector<uint32_t> &newSpirv);
 
     private:
-        void CreateShaderProgram();
+        void CreateShaderProgram(std::string entry);
         void CreateDescriptorLayout();
         void CreateDescriptorPool();
         void CreatePipelineLayout();
@@ -56,6 +69,7 @@ namespace SF::Engine
         bool pushDescriptors;
 
         std::shared_ptr<Shader> shader;
+        std::string entryOpt;
 
         VkDevice device_ = VK_NULL_HANDLE;
         VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;

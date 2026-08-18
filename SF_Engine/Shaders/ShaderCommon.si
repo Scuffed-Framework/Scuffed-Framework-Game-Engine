@@ -1,14 +1,34 @@
 #ifndef VERTOUT_COMMON
 #define VERTOUT_COMMON
 
+#define Input(x,y) [[vk::binding(x, y)]]
+
 struct VSInput
 {
-    float3 position     : POSITION;
-    float3 normal       : NORMAL;
-    float4 tangent      : TANGENT;     // xyz = tangent, w = handedness
-    float2 uv0          : TEXCOORD0;
-    float2 uv1          : TEXCOORD1;
+    float4 position     : SV_Position;
+    uint vertexID       : SV_VertexID
+
+    // Clip/world/object
+    float4 clipPos      : TEXCOORD0;
+    float3 worldPos     : TEXCOORD1;
+    float3 objectPos    : TEXCOORD2;
+    float3 viewPos      : TEXCOORD3;
+
+    // Basis
+    float3x3 tbn        : TEXCOORD4;
+
+    // UVs
+    float2 uv0          : TEXCOORD5;
+    float2 uv1          : TEXCOORD6;
+
+    // Misc
     float4 color        : COLOR0;
+    float4 screenPos    : TEXCOORD7;
+    float4 fragCoord    : TEXCOORD8;
+
+    // Camera
+    float3 viewDir      : TEXCOORD9;
+    float  linearDepth  : TEXCOORD10;
 };
 
 
@@ -16,6 +36,7 @@ struct VSOutput
 {
     // Required
     float4 position     : SV_Position;
+    uint vertexID       : SV_VertexID
 
     // Clip/world/object
     float4 clipPos      : TEXCOORD0;
@@ -42,6 +63,35 @@ struct VSOutput
     float3 viewDir      : TEXCOORD14;
     float  linearDepth  : TEXCOORD15;
 };
+
+struct FSOutput
+{
+    float4 color : SV_Target;
+};
+
+
+VSOutput RunVertexShader(VSInput in)
+{
+    VSOutput out;
+
+    out.clipPos        = in.clipPos;
+    out.worldPos       = in.worldPos;
+    out.objectPos      = in.objectPos;
+    out.viewPos        = in.viewPos;
+    out.worldNormal    = in.tbn[2];
+    out.worldTangent   = in.tbn[0];
+    out.worldBitangent = in.tbn[1];
+    out.tbn            = in.tbn;
+    out.uv0            = in.uv0;
+    out.uv1            = in.uv1;
+    out.color          = in.color;
+    out.screenPos      = in.screenPos;
+    out.fragCoord      = in.fragCoord;
+    out.viewDir        = in.viewDir;
+    out.linearDepth    = in.linearDepth;
+    
+    return out;
+}
 
 // idk
 VSOutput BuildVSOutput(

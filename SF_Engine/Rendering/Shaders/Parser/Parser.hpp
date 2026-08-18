@@ -102,7 +102,7 @@ namespace SF::Engine::Shaders
         bool discoverEntryPoints(ParsedShader &shader);
 
         std::optional<CompiledShader> compile(const ParsedShader &shader, ShaderStage stage,
-                                              const std::vector<SF::Engine::Shader::Define> &defines = {});
+                                              const std::vector<SF::Engine::Shader::Define> &defines = {}, const std::string &entry = "");
         std::optional<std::vector<CompiledShader>> compileAll(const ParsedShader &shader,
                                               const std::vector<SF::Engine::Shader::Define> &defines = {});
 

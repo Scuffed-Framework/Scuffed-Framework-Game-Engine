@@ -42,7 +42,6 @@ namespace SF::Engine
         {
             Handle handle = nextHandle_++;
             drawFns_.emplace_back(handle, std::move(fn));
-            printf("Registered fn, drawFns_ size: %zu\n", drawFns_.size());
             return handle;
         }
 
