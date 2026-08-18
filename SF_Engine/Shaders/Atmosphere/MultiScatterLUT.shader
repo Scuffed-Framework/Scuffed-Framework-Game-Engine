@@ -26,6 +26,7 @@ float3 fibonacciDir(int i)
 }
 
 [numthreads(1, 1, SPHERE_SAMPLES)]
+[shader("compute)]
 void main(uint3 groupID : SV_GroupID, uint3 localID : SV_GroupThreadID)
 {
     int2 lutSize;

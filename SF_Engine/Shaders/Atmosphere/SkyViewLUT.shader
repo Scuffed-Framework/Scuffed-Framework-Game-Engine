@@ -13,6 +13,7 @@ RWTexture2D<float4> skyViewLUT;
 ConstantBuffer<SkyViewUBO> pc;
 
 [numthreads(8, 8, 1)]
+[shader("compute)]
 void main(uint3 globalThreadID : SV_DispatchThreadID)
 {
     int2 coord = int2(globalThreadID.xy);
