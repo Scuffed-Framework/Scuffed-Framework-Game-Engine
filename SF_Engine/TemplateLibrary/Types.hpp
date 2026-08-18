@@ -58,4 +58,19 @@ namespace SFTL
     using qword = uint64;
 
     using ptrdiff_t = decltype(static_cast<int *>(nullptr) - static_cast<int *>(nullptr)); // https://en.cppreference.com/cpp/types/ptrdiff_t
+
+    namespace Detail
+    {
+        struct mbstate_impl
+        {
+            int count;
+            union
+            {
+                unsigned int wch;
+                char wchb[4];
+            } value;
+        };
+    }
+
+    typedef Detail::mbstate_impl mbstate_type;
 }

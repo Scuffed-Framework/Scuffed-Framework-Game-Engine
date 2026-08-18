@@ -1,28 +1,25 @@
-# SHADERS
-1. Fix PBR Shading
-2. Fix clouds ( view depke's video from GP) + https://qiutang98.github.io/post/%E5%AE%9E%E6%97%B6%E6%B8%B2%E6%9F%93%E5%BC%80%E5%8F%91/%E5%AE%9E%E6%97%B6%E4%BD%93%E7%A7%AF%E4%BA%91%E6%B8%B2%E6%9F%93/ https://github.com/adepke/VanguardEngine/blob/master/VanguardEngine/Shaders/Clouds/Core.hlsli
-3. Probed Stochastic SSR
-4. RTGI
-5. fix atmosphere color bands in night area + >100km bugging when night far from 0 0 0
-
-
-
 #CORE
-1. SPLASH SCREEN
-2. Update the .sh scripts (haven't for like 4 months)
-3. make more beginner friendly than unity (big api improvements)    
-4. Terrain
-5. HDR rendering (and in hdr window (might need fullscreen))
-6. Clouds C++
-7. Bindless shader resources like DAXA
-8. multi window support
-9. Finish ParticleSystem
-10. Lumen-style Radiance Cache with Screen Probe Gather GI (Diffuse & Specular). (https://github.com/qiutang98/chord) "Simple RadianceCache with ScreenProbe GI"
+1. Impl Model System
+2. Finish AssetSystem
+3. FIX SSR
+4. make more beginner friendly than unity (big api improvements) while still having full control    
+5. Clouds
+6. Full PBR
+7. fix atmosphere dual/tri color bands in night area
+8. HDR rendering (and in hdr window (might need fullscreen))
+9. Terrain
+10. Bindless shader resources like DAXA
+11. multi window support
+12. Lumen-style Radiance Cache with Screen Probe Gather GI (Diffuse & Specular). (https://github.com/qiutang98/chord) "Simple RadianceCache with ScreenProbe GI"
+13. Finish ParticleSystem
+
+1000. SPLASH SCREEN
+
 
 #Editor:
-Panels, cmd, explorer, black profiler bar, profiler
+finish panels, cmd, explorer, black profiler bar, profiler
 sponza
 amazon lumberyard cafe
 
-API Issues:
-Render() called on already active renderpass
+API Notes:
+Render() called on already active renderpass, PreRender() before active.

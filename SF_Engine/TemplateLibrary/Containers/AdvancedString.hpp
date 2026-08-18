@@ -675,8 +675,8 @@ namespace SFTL
         return AdvancedString<T, Allocator>::Format(forward<Args>(args)...);
     }
 
-    using String = AdvancedString<char>;
-    using WString = AdvancedString<wchar_t>;
+    // using String = AdvancedString<char>;
+    // using WString = AdvancedString<wchar_t>;
 } // namespace SFTL
 
 namespace std
