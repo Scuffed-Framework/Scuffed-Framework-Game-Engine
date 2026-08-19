@@ -1,5 +1,4 @@
-#ifndef SF_ENGINE_FILE_HPP
-#define SF_ENGINE_FILE_HPP
+#pragma once
 
 #undef CreateDirectory
 #undef GetCurrentDirectory
@@ -19,7 +18,6 @@ namespace fs = std::filesystem;
 
 namespace SF::Engine
 {
-
     enum class FileMode
     {
         Read,
@@ -389,6 +387,29 @@ namespace SF::Engine
         return reinterpret_cast<const T *>(m_data);
     }
 
+    struct DataInput
+    {
+        File *file = nullptr;
+        void *memory = nullptr;
+    };
+
+    inline bool operator==(const DataInput &lhs, const DataInput &rhs)
+    {
+        return lhs.file == rhs.file && lhs.memory == rhs.memory;
+    }
+
 } // namespace SF::Engine
 
-#endif // SF_ENGINE_FILE_HPP
+namespace std
+{
+    template <>
+    struct hash<SF::Engine::DataInput>
+    {
+        size_t operator()(const SF::Engine::DataInput &d) const noexcept
+        {
+            size_t h1 = std::hash<void *>{}(static_cast<void *>(d.file));
+            size_t h2 = std::hash<void *>{}(d.memory);
+            return h1 ^ (h2 << 1);
+        }
+    };
+}
