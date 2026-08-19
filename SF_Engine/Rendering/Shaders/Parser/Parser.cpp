@@ -396,6 +396,21 @@ namespace SF::Engine::Shaders
         const std::vector<SF::Engine::Shader::Define> &defines,
         const std::string &entry)
     {
+
+        auto all = compileAll(shader, defines);
+        if (!all)
+            return std::nullopt;
+        for (auto &c : *all)
+        {
+            if (c.stage == stage)
+            {
+                if (!entry.empty() && c.entryPoint == entry)
+                    return std::move(c); // if we have a specified entry and we find it ret
+                else
+                    return std::move(c); // else just use stage
+            }
+        }
+        /*
         ParsedShader working = shader;
         if (working.entryPoints.empty() && !discoverEntryPoints(working))
             return std::nullopt;
@@ -411,10 +426,10 @@ namespace SF::Engine::Shaders
         }
 
         CompiledShader result;
-        
+
         for(const auto &ep : working.entryPoints)
         {
-            if(ep.name == entry)
+            if(ep.name == entry && ep.stage == stage)
             {
                 std::string compileError;
                 auto spirv = CompileEntryPointFromModule(handle->session.get(), handle->module,
@@ -438,7 +453,7 @@ namespace SF::Engine::Shaders
                 return compiled;
             }
         }
-
+        */
         setError("Stage not found in shader: " + std::string(stageToString(stage)));
         return std::nullopt;
     }

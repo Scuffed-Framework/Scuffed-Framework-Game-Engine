@@ -55,7 +55,7 @@ namespace SF::Engine
         void RemoveEntity(Entity *entity) { entities.Remove(entity); }
         void AddEntity(std::string name, Entity *parent = nullptr)
         {
-            if (parent = nullptr)
+            if (parent = (nullptr))
                 entities.CreateEntity(name);
             else
                 entities.CreateChildEntity(parent, name);
@@ -103,7 +103,7 @@ namespace SF::Engine
         {
             if (!sceneRenderer_)
                 return nullptr;
-            return sceneRenderer_->GetPipelinePass<T>();
+            return GetRenderer()->GetPipelinePass<T>();
         }
 
         void SaveXML(const std::string &filename = "scene.xml");
