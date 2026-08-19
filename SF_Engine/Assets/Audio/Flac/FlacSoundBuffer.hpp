@@ -9,7 +9,7 @@ namespace SF::Engine
         friend class SoundBuffer;
 
     public:
-        static void Load(SoundBuffer &soundBuffer, const std::filesystem::path &filename);
-        static void Write(const SoundBuffer &soundBuffer, const std::filesystem::path &filename);
+        static void Load(SoundBuffer &soundBuffer, const DataInput &input);
+        static void Write(const SoundBuffer &soundBuffer, const std::filesystem::path &file);
     };
 }

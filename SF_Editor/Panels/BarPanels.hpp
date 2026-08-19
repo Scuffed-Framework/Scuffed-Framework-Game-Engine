@@ -36,5 +36,6 @@ namespace SF::Engine
         void AddFolder(const std::string &name, Entity *parent);
 
         void DrawEngineStatusBar();
+        void DrawExecutingPasses();
     };
 }

@@ -14,19 +14,19 @@
 
 namespace SF::Engine
 {
-    void WaveSoundBuffer::Load(SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void WaveSoundBuffer::Load(SoundBuffer &soundBuffer, const DataInput &input)
     {
         drwav wav;
-        if (!drwav_init_file(&wav, filename.string().c_str(), nullptr))
+        if (!drwav_init_file(&wav, input.file->GetName().c_str(), nullptr))
         {
-            std::cerr << "Failed to open WAV file: " << filename << std::endl;
+            std::cerr << "Failed to open WAV file: " << input.file << std::endl;
             return;
         }
 
         if (wav.channels < 1 || wav.channels > 2)
         {
             std::cerr << "Unsupported WAV channel count (" << wav.channels
-                       << ") in " << filename << ", only mono/stereo supported" << std::endl;
+                       << ") in " << input.file << ", only mono/stereo supported" << std::endl;
             drwav_uninit(&wav);
             return;
         }
@@ -43,13 +43,13 @@ namespace SF::Engine
         ALenum error = alGetError();
         if (error != AL_NO_ERROR)
         {
-            std::cerr << "Failed to buffer WAV data for " << filename << ": " << error << std::endl;
+            std::cerr << "Failed to buffer WAV data for " << input.file << ": " << error << std::endl;
         }
 
         drwav_uninit(&wav);
     }
 
-    void WaveSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void WaveSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &file)
     {
         // NOTE: Core OpenAL has no alGetBufferData equivalent, so PCM samples can't be
         // read back out of an AL buffer for re-encoding. Writing requires the decoded
@@ -57,6 +57,6 @@ namespace SF::Engine
         // can be implemented for real. Left as a stub so the extension is still registered.
         (void)soundBuffer;
         std::cerr << "WaveSoundBuffer::Write is not implemented (no PCM readback from OpenAL buffer): "
-                  << filename << std::endl;
+                  << file << std::endl;
     }
 }

@@ -14,19 +14,19 @@
 
 namespace SF::Engine
 {
-    void Mp3SoundBuffer::Load(SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void Mp3SoundBuffer::Load(SoundBuffer &soundBuffer, const DataInput &input)
     {
         drmp3 mp3;
-        if (!drmp3_init_file(&mp3, filename.string().c_str(), nullptr))
+        if (!drmp3_init_file(&mp3, input.file->GetName().c_str(), nullptr))
         {
-            std::cerr << "Failed to open MP3 file: " << filename << std::endl;
+            std::cerr << "Failed to open MP3 file: " << input.file << std::endl;
             return;
         }
 
         if (mp3.channels < 1 || mp3.channels > 2)
         {
             std::cerr << "Unsupported MP3 channel count (" << mp3.channels
-                       << ") in " << filename << ", only mono/stereo supported" << std::endl;
+                       << ") in " << input.file << ", only mono/stereo supported" << std::endl;
             drmp3_uninit(&mp3);
             return;
         }
@@ -36,9 +36,9 @@ namespace SF::Engine
 
         // Re-init required after drmp3_get_pcm_frame_count, which consumes the stream.
         drmp3_uninit(&mp3);
-        if (!drmp3_init_file(&mp3, filename.string().c_str(), nullptr))
+        if (!drmp3_init_file(&mp3, input.file->GetName().c_str(), nullptr))
         {
-            std::cerr << "Failed to reopen MP3 file: " << filename << std::endl;
+            std::cerr << "Failed to reopen MP3 file: " << input.file << std::endl;
             return;
         }
 
@@ -53,17 +53,17 @@ namespace SF::Engine
         ALenum error = alGetError();
         if (error != AL_NO_ERROR)
         {
-            std::cerr << "Failed to buffer MP3 data for " << filename << ": " << error << std::endl;
+            std::cerr << "Failed to buffer MP3 data for " << input.file << ": " << error << std::endl;
         }
 
         drmp3_uninit(&mp3);
     }
 
-    void Mp3SoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void Mp3SoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &file)
     {
         // dr_mp3 is a decoder only; no MP3 encoder is bundled.
         (void)soundBuffer;
         std::cerr << "Mp3SoundBuffer::Write is not supported (dr_mp3 has no encoder): "
-                  << filename << std::endl;
+                  << file << std::endl;
     }
 }

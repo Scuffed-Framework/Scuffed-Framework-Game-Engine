@@ -56,7 +56,7 @@ namespace SF::Engine
 
         explicit operator bool() const noexcept
         {
-            return data != nullptr; // Changed from !data for more autism
+            return data != nullptr;
         }
 
         uint32_t GetLength() const;

@@ -15,25 +15,25 @@ extern "C"
 
 namespace SF::Engine
 {
-    void OggSoundBuffer::Load(SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void OggSoundBuffer::Load(SoundBuffer &soundBuffer, const DataInput &input)
     {
         int channels = 0;
         int sampleRate = 0;
         short *output = nullptr;
 
-        int samplesPerChannel = stb_vorbis_decode_filename(filename.string().c_str(), &channels,
+        int samplesPerChannel = stb_vorbis_decode_filename(input.file->GetName().c_str(), &channels,
                                                              &sampleRate, &output);
 
         if (samplesPerChannel < 0 || output == nullptr)
         {
-            std::cerr << "Failed to decode OGG file: " << filename << std::endl;
+            std::cerr << "Failed to decode OGG file: " << input.file << std::endl;
             return;
         }
 
         if (channels < 1 || channels > 2)
         {
             std::cerr << "Unsupported OGG channel count (" << channels
-                       << ") in " << filename << ", only mono/stereo supported" << std::endl;
+                       << ") in " << input.file << ", only mono/stereo supported" << std::endl;
             free(output);
             return;
         }
@@ -46,17 +46,17 @@ namespace SF::Engine
         ALenum error = alGetError();
         if (error != AL_NO_ERROR)
         {
-            std::cerr << "Failed to buffer OGG data for " << filename << ": " << error << std::endl;
+            std::cerr << "Failed to buffer OGG data for " << input.file << ": " << error << std::endl;
         }
 
         free(output);
     }
 
-    void OggSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void OggSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &file)
     {
         // stb_vorbis is a decoder only; no Ogg Vorbis encoder is bundled.
         (void)soundBuffer;
         std::cerr << "OggSoundBuffer::Write is not supported (stb_vorbis has no encoder): "
-                  << filename << std::endl;
+                  << file << std::endl;
     }
 }

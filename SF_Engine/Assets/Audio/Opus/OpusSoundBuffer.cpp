@@ -14,12 +14,12 @@
 
 namespace SF::Engine
 {
-    void OpusSoundBuffer::Load(SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void OpusSoundBuffer::Load(SoundBuffer &soundBuffer, const DataInput &input)
     {
         dropus opus;
-        if (!dropus_init_file(&opus, filename.string().c_str(), nullptr))
+        if (!dropus_init_file(&opus, input.file->GetName().c_str(), nullptr))
         {
-            std::cerr << "Failed to open WAV file: " << filename << std::endl;
+            std::cerr << "Failed to open WAV file: " << input.file->GetFullPath() << std::endl;
             return;
         }
 
@@ -28,13 +28,13 @@ namespace SF::Engine
         ALenum error = alGetError();
         if (error != AL_NO_ERROR)
         {
-            std::cerr << "Failed to buffer WAV data for " << filename << ": " << error << std::endl;
+            std::cerr << "Failed to buffer WAV data for " << input.file->GetFullPath() << ": " << error << std::endl;
         }
 
         dropus_uninit(&opus);
     }
 
-    void OpusSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void OpusSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &file)
     {
         // NOTE: Core OpenAL has no alGetBufferData equivalent, so PCM samples can't be
         // read back out of an AL buffer for re-encoding. Writing requires the decoded
@@ -42,6 +42,6 @@ namespace SF::Engine
         // can be implemented for real. Left as a stub so the extension is still registered.
         (void)soundBuffer;
         std::cerr << "OpusSoundBuffer::Write is not implemented (no PCM readback from OpenAL buffer): "
-                  << filename << std::endl;
+                  << file << std::endl;
     }
 }

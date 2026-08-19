@@ -1,7 +1,7 @@
 #pragma once
 #include <AL/al.h>
 
-namespace SF::Engine::Audio
+namespace SF::Engine
 {
     struct ExtraAudioWaves
     {

@@ -14,19 +14,19 @@
 
 namespace SF::Engine
 {
-    void FlacSoundBuffer::Load(SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void FlacSoundBuffer::Load(SoundBuffer &soundBuffer, const DataInput &input)
     {
-        drflac *flac = drflac_open_file(filename.string().c_str(), nullptr);
+        drflac *flac = drflac_open_file(input.file->GetName().c_str(), nullptr);
         if (!flac)
         {
-            std::cerr << "Failed to open FLAC file: " << filename << std::endl;
+            std::cerr << "Failed to open FLAC file: " << input.file << std::endl;
             return;
         }
 
         if (flac->channels < 1 || flac->channels > 2)
         {
             std::cerr << "Unsupported FLAC channel count (" << flac->channels
-                       << ") in " << filename << ", only mono/stereo supported" << std::endl;
+                       << ") in " << input.file << ", only mono/stereo supported" << std::endl;
             drflac_close(flac);
             return;
         }
@@ -43,17 +43,17 @@ namespace SF::Engine
         ALenum error = alGetError();
         if (error != AL_NO_ERROR)
         {
-            std::cerr << "Failed to buffer FLAC data for " << filename << ": " << error << std::endl;
+            std::cerr << "Failed to buffer FLAC data for " << input.file << ": " << error << std::endl;
         }
 
         drflac_close(flac);
     }
 
-    void FlacSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &filename)
+    void FlacSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &file)
     {
         // dr_flac is a decoder only; no FLAC encoder is bundled.
         (void)soundBuffer;
         std::cerr << "FlacSoundBuffer::Write is not supported (dr_flac has no encoder): "
-                  << filename << std::endl;
+                  << file << std::endl;
     }
 }

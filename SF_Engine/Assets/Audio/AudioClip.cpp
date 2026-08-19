@@ -5,12 +5,12 @@
 #else
 #include <al.h>
 #endif
+#include <iostream>
 
 namespace SF::Engine
 {
-    // Remove autism
-    AudioClip::AudioClip(const std::string &filename, const Audio::Type &type, bool begin, bool loop, float gain, float pitch)
-        : buffer(SoundBuffer::Create(filename)),
+    AudioClip::AudioClip(const DataInput &input, const Audio::Type &type, bool begin, bool loop, float gain, float pitch)
+        : buffer(SoundBuffer::Create(input)),
           type(type),
           gain(gain),
           pitch(pitch),
@@ -27,7 +27,62 @@ namespace SF::Engine
             Play(loop);
     }
 
-    // Remove autism
+    AudioClip::AudioClip(std::shared_ptr<SoundBuffer> buffer, const Audio::Type &type,
+                         bool begin, bool loop, float gain, float pitch)
+        : buffer(std::move(buffer)),
+          type(type),
+          gain(gain),
+          pitch(pitch),
+          source(0)
+    {
+        if (!this->buffer)
+        {
+            std::cerr << "AudioClip: constructed with a null SoundBuffer" << std::endl;
+            return;
+        }
+
+        alGenSources(1, &source);
+        alSourcei(source, AL_BUFFER, this->buffer->GetBuffer());
+        Audio::CheckAl(alGetError());
+
+        SetGain(gain);
+        SetPitch(pitch);
+
+        if (begin)
+            Play(loop);
+    }
+
+    AudioClip::AudioClip(AudioClip &&other) noexcept
+        : buffer(std::move(other.buffer)), source(other.source),
+          position(other.position), direction(other.direction), velocity(other.velocity),
+          type(other.type), gain(other.gain), pitch(other.pitch), length(other.length)
+    {
+        other.source = 0;
+    }
+
+    AudioClip &AudioClip::operator=(AudioClip &&other) noexcept
+    {
+        if (this != &other)
+        {
+            if (source != 0)
+            {
+                alDeleteSources(1, &source);
+                Audio::CheckAl(alGetError());
+            }
+            buffer = std::move(other.buffer);
+            source = other.source;
+            position = other.position;
+            direction = other.direction;
+            velocity = other.velocity;
+            type = other.type;
+            gain = other.gain;
+            pitch = other.pitch;
+            length = other.length;
+            other.source = 0;
+        }
+        return *this;
+    }
+
     AudioClip::~AudioClip()
     {
         if (source != 0)

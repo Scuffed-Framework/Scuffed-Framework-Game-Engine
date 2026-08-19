@@ -8,13 +8,28 @@
 #include <Project/Project.hpp>
 #include <Engine/Version.hpp>
 #include "Panels.hpp"
+#include <Assets/Audio/AudioClip.hpp>
+#include <Assets/Audio/Waves.hpp>
 
 namespace SF::Engine
 {
+    float freq, time;
     void BarPanels::Draw()
     {
         DrawMenuBar();
+        DrawExecutingPasses();
         DrawEngineStatusBar();
+    }
+
+    void TestAudio(ALuint dat, float freq, float time)
+    {
+        static std::shared_ptr<SoundBuffer> buffer;
+        static AudioClip clip;
+
+        buffer = SoundBuffer::CreateWave(dat, freq, time);
+        clip = AudioClip(buffer);
+        clip.SetEnabled(true);
+        clip.Play();
     }
 
     void BarPanels::DrawMenuBar()
@@ -67,6 +82,7 @@ namespace SF::Engine
             {
                 ImGui::MenuItem("Hierarchy", nullptr, &ShowHierarchy);
                 ImGui::MenuItem("Inspector", nullptr, &ShowInspector);
+                ImGui::MenuItem("Pipeline Controller", nullptr, &ShowExecutingPasses);
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Camera"))
@@ -105,6 +121,24 @@ namespace SF::Engine
                     CameraController::Get().GetActive()->SetPosition({0.0f, 1000000.0f, 0.0f});
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("Test"))
+            {
+                
+                ImGui::InputFloat("freq##cs", &freq);
+                ImGui::InputFloat("time##cs", &time);
+
+                if (ImGui::MenuItem("Sawtooth Wave"))
+                    TestAudio(ExtraAudioWaves::Wave_Sawtooth, freq, time);
+                if (ImGui::MenuItem("Sine Wave"))
+                    TestAudio(ExtraAudioWaves::Wave_Sine, freq, time);
+                if (ImGui::MenuItem("Square Wave"))
+                    TestAudio(ExtraAudioWaves::Wave_Square, freq, time);
+                if (ImGui::MenuItem("Triangle Wave"))
+                    TestAudio(ExtraAudioWaves::Wave_Triangle, freq, time);
+                if (ImGui::MenuItem("White Noise"))
+                    TestAudio(ExtraAudioWaves::Wave_WhiteNoise, freq, time);
+                ImGui::EndMenu();
+            }
 
             // FPS right-aligned
             char fpsBuf[32];
@@ -127,22 +161,42 @@ namespace SF::Engine
         ImGui::SetNextWindowBgAlpha(0.55f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 3));
         ImGui::Begin("##statusbar", nullptr,
-                        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs |
-                            ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove |
-                            ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
+                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs |
+                         ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        
-        ImGui::Text("SF Engine Version: %*s", (int)Engine_VERSION.length(), Engine_VERSION.data());
+
+        ImGui::Text("SF Engine Version: {}", Engine_VERSION);
         HorizontalSpacer(40);
-        if(ProjectManager::Get()->IsAProjectLoaded())
+        if (ProjectManager::Get()->IsAProjectLoaded())
             ImGui::Text((std::string("Project: ") + ProjectManager::Get()->GetCurrentProject()->name).c_str());
-        
+
         ImGui::PopStyleVar();
         ImGui::PopStyleColor();
 
         ImGui::End();
         ImGui::PopStyleVar();
+    }
+
+    void BarPanels::DrawExecutingPasses()
+    {
+        ImGui::Begin("Pipeline Controller", &ShowExecutingPasses);
+
+        // todo: fix
+        // for(PipelinePass* pass : SceneManager::Get()->GetScene()->GetPipelinePass())
+        //{
+        //    bool enabled;
+        //    if(ImGui::Checkbox("Enabled", &enabled))
+        //    {
+        //        if(pass->IsEnabled())
+        //            pass->SetEnabled(false);
+        //        else
+        //            pass->SetEnabled(true);
+        //    }
+        //    ImGui::Separator();
+        //}
+        ImGui::End();
     }
 }
