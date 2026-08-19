@@ -97,6 +97,11 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         -Wall
         -Wextra
         -Wpedantic
+        -Wmissing-field-initializers
+        -Wreorder
+        -Wdeprecated-literal-operator
+        -Wunused-variable
+        -Wunused-parameter
     )
 endif()
 # Ensure Conan generators path is available to all subdirectories
@@ -112,16 +117,4 @@ add_subdirectory(
     "${CMAKE_SOURCE_DIR}/SF_Editor"                
     "${BASE_OUTPUT_DIR}/SF_Editor_Build"           
 )
-
-set(VERSION_HEADER "./SF_Engine/Engine/Version.hpp")
-
-set(BUILD_FILE "./build_number.txt")
-
-if(EXISTS "${BUILD_FILE}")
-    file(READ "${BUILD_FILE}" LAST_BUILD)
-    math(EXPR BUILD_NUMBER "${LAST_BUILD} + 1")
-else()
-    set(BUILD_NUMBER 0)
-endif()
-
-#timestamps moved to ./scripts/build
+# Version moved to ./scripts/build
