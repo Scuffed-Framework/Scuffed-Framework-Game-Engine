@@ -61,10 +61,10 @@ namespace SF::Engine
                                      shaderStage.string() + "': " + parser.getLastError());
 
         std::optional<Shaders::CompiledShader> compiledOpt;
-        if(entry.length() == 0)
-            compiledOpt = parser.compile(*parsedOpt, Shaders::ShaderStage::Compute, defines);
-        else
+        if(!entry.empty())
             compiledOpt = parser.compile(*parsedOpt, Shaders::ShaderStage::Compute, defines, entry);
+        else
+            compiledOpt = parser.compile(*parsedOpt, Shaders::ShaderStage::Compute, defines);
 
         if (!compiledOpt)
             throw std::runtime_error("Failed to compile compute shader '" +
