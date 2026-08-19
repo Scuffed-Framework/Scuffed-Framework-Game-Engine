@@ -1,6 +1,6 @@
 #pragma once
-#include <stb_image.h>
-#include <stb_image_write.h>
+#include <LowLevel/stb_image.h>
+#include <LowLevel/stb_image_write.h>
 #include <Assets/Bitmaps/Bitmap.hpp>
 #include <Filesystem/File.hpp>
 #include <cstdint>

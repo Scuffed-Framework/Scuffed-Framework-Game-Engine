@@ -1,5 +1,5 @@
 #pragma once
-#include <stb_image.h>
+#include <LowLevel/stb_image.h>
 #include <Assets/Bitmaps/Bitmap.hpp>
 #include <cstdint>
 #include <cstring>
