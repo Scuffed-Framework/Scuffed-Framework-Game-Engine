@@ -30,7 +30,7 @@ namespace SF::Engine
             if (stageIndex.first != stage)
                 continue;
 
-            if (auto &PipelinePass = PipelinePasss[typeId])
+            if (auto &PipelinePass = PipelinePasses[typeId])
                 if (PipelinePass->IsEnabled())
                     PipelinePass->PreRender(commandBuffer);
         }
@@ -46,7 +46,7 @@ namespace SF::Engine
                 continue;
             }
 
-            if (auto &PipelinePass = PipelinePasss[typeId])
+            if (auto &PipelinePass = PipelinePasses[typeId])
             {
                 if (PipelinePass->IsEnabled())
                 {

@@ -74,8 +74,8 @@ namespace SF::Engine
         template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
         bool Has() const
         {
-            const auto it = PipelinePasss.find(TypeInfo<PipelinePass>::template GetTypeId<T>());
-            return it != PipelinePasss.end() && it->second;
+            const auto it = PipelinePasses.find(TypeInfo<PipelinePass>::template GetTypeId<T>());
+            return it != PipelinePasses.end() && it->second;
         }
 
         template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
@@ -83,7 +83,7 @@ namespace SF::Engine
         {
             const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
 
-            if (auto it = PipelinePasss.find(typeId); it != PipelinePasss.end() && it->second)
+            if (auto it = PipelinePasses.find(typeId); it != PipelinePasses.end() && it->second)
                 return static_cast<T *>(it->second.get());
 
             return nullptr;
@@ -95,7 +95,7 @@ namespace SF::Engine
             const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
 
             RemovePipelinePassStage(typeId);
-            PipelinePasss.erase(typeId);
+            PipelinePasses.erase(typeId);
         }
 
         /**
@@ -112,12 +112,12 @@ namespace SF::Engine
 
             stages.emplace(StageIndex{stage, pass->GetOrder()}, typeId);
 
-            PipelinePasss[typeId] = std::move(pass);
-            return static_cast<T *>(PipelinePasss[typeId].get());
+            PipelinePasses[typeId] = std::move(pass);
+            return static_cast<T *>(PipelinePasses[typeId].get());
         }
 
         /**
-         * Clears all PipelinePasss.
+         * Clears all PipelinePasses.
          */
         void Clear();
 
@@ -135,7 +135,7 @@ namespace SF::Engine
         void RemovePipelinePassStage(const TypeId &id);
 
         /**
-         * Calls PreRender() on all PipelinePasss registered for a stage.
+         * Calls PreRender() on all PipelinePasses registered for a stage.
          * Must be called BEFORE StartRenderpass for that stage.
          * @param stage The PipelinePass stage.
          * @param commandBuffer An open command buffer (outside any renderpass).
@@ -143,14 +143,14 @@ namespace SF::Engine
         void PreRenderStage(const Pipeline::Stage &stage, const CommandBuffer &commandBuffer);
 
         /**
-         * Iterates through all PipelinePasss.
+         * Iterates through all PipelinePasses.
          * @param stage The PipelinePass stage.
          * @param commandBuffer The command buffer to record render command into.
          */
         void RenderStage(const Pipeline::Stage &stage, const CommandBuffer &commandBuffer);
 
-        /// List of all PipelinePasss.
-        std::unordered_map<TypeId, std::unique_ptr<PipelinePass>> PipelinePasss;
+        /// List of all PipelinePasses.
+        std::unordered_map<TypeId, std::unique_ptr<PipelinePass>> PipelinePasses;
         /// List of PipelinePass stages.
         std::multimap<StageIndex, TypeId> stages;
     };
