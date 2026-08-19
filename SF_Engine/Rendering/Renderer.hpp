@@ -71,7 +71,7 @@ namespace SF::Engine
         }
 
         /**
-         * Clears all PipelinePasss.
+         * Clears all PipelinePasses.
          */
         void ClearPipelinePasss()
         {

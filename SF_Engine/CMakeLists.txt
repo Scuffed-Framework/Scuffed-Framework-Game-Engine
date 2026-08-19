@@ -87,8 +87,6 @@ target_compile_definitions(SF_Engine PUBLIC
     VK_NO_PROTOTYPES
 )
 
-target_include_directories(SF_Engine PRIVATE "./")
-
 if(WIN32)
     target_compile_definitions(SF_Engine PUBLIC
         _PLATFORM_WINDOWS
@@ -232,6 +230,7 @@ target_include_directories(SF_Engine PUBLIC
     $<TARGET_PROPERTY:spirv-reflect-static,INTERFACE_INCLUDE_DIRECTORIES>
     # hopefully this works
     $<TARGET_PROPERTY:box3d::box3d,INTERFACE_INCLUDE_DIRECTORIES>
+    "../SF_Engine"
 )
 
 if(MSVC)
