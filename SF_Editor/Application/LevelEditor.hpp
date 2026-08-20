@@ -4,6 +4,7 @@
 #include "Panels/InspectorPanel.hpp"
 #include "Panels/BarPanels.hpp"
 #include "Panels/AssetsWindow.hpp"
+#include <Commands/CommandsWindow.hpp>
 
 namespace SF::Engine
 {
@@ -21,7 +22,8 @@ namespace SF::Engine
               hierarchy(std::make_unique<HierarchyPanel>()),
               inspector(std::make_unique<InspectorPanel>()),
               panels(std::make_unique<BarPanels>()),
-              assetBrowser(std::make_unique<AssetBrowser>())
+              assetBrowser(std::make_unique<AssetBrowser>()),
+              cmdWindow(std::make_unique<CommandWindow>())
         {
         }
 
@@ -51,5 +53,6 @@ namespace SF::Engine
         std::unique_ptr<InspectorPanel> inspector;
         std::unique_ptr<BarPanels> panels;
         std::unique_ptr<AssetBrowser> assetBrowser;
+        std::unique_ptr<CommandWindow> cmdWindow;
     };
 }
