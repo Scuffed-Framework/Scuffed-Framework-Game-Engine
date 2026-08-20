@@ -84,7 +84,7 @@ namespace SF::Engine
         uint32 m_usedCount[kBindingCount];
     };
 
-    std::vector<SF::Engine::BindlessReflectionData> ReflectBindlessLayout(Slang::ComPtr<slang::IComponentType> linkedProgram)
+    inline std::vector<SF::Engine::BindlessReflectionData> ReflectBindlessLayout(Slang::ComPtr<slang::IComponentType> linkedProgram)
     {
         std::vector<SF::Engine::BindlessReflectionData> reflectedBindings;
         slang::ProgramLayout *layout = linkedProgram->getLayout();

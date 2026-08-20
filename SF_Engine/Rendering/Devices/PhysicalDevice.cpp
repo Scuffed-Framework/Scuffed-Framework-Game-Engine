@@ -61,8 +61,32 @@ namespace SF::Engine
         vkGetPhysicalDeviceProperties2(physicalDevice, &properties2);
         properties = properties2.properties;
 
-        indexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES;
-        indexingProperties.pNext = 0;
+        // who ever put multiline copying in vscode, you are sigma
+        indexingProperties.sType                                                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES;
+        indexingProperties.maxUpdateAfterBindDescriptorsInAllPools              = vulkan12Properties.maxUpdateAfterBindDescriptorsInAllPools;
+        indexingProperties.shaderUniformBufferArrayNonUniformIndexingNative     = vulkan12Properties.shaderUniformBufferArrayNonUniformIndexingNative;
+        indexingProperties.shaderSampledImageArrayNonUniformIndexingNative      = vulkan12Properties.shaderSampledImageArrayNonUniformIndexingNative;
+        indexingProperties.shaderStorageBufferArrayNonUniformIndexingNative     = vulkan12Properties.shaderStorageBufferArrayNonUniformIndexingNative;
+        indexingProperties.shaderStorageImageArrayNonUniformIndexingNative      = vulkan12Properties.shaderStorageImageArrayNonUniformIndexingNative;
+        indexingProperties.shaderInputAttachmentArrayNonUniformIndexingNative   = vulkan12Properties.shaderInputAttachmentArrayNonUniformIndexingNative;
+        indexingProperties.robustBufferAccessUpdateAfterBind                    = vulkan12Properties.robustBufferAccessUpdateAfterBind;
+        indexingProperties.quadDivergentImplicitLod                             = vulkan12Properties.quadDivergentImplicitLod;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers         = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindSamplers;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers   = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers   = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages    = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindSampledImages;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages    = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindStorageImages;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindInputAttachments = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindInputAttachments;
+        indexingProperties.maxPerStageUpdateAfterBindResources                  = vulkan12Properties.maxPerStageUpdateAfterBindResources;
+        indexingProperties.maxDescriptorSetUpdateAfterBindSamplers              = vulkan12Properties.maxDescriptorSetUpdateAfterBindSamplers;
+        indexingProperties.maxDescriptorSetUpdateAfterBindUniformBuffers        = vulkan12Properties.maxDescriptorSetUpdateAfterBindUniformBuffers;
+        indexingProperties.maxDescriptorSetUpdateAfterBindUniformBuffersDynamic = vulkan12Properties.maxDescriptorSetUpdateAfterBindUniformBuffersDynamic;
+        indexingProperties.maxDescriptorSetUpdateAfterBindStorageBuffers        = vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageBuffers;
+        indexingProperties.maxDescriptorSetUpdateAfterBindStorageBuffersDynamic = vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageBuffersDynamic;
+        indexingProperties.maxDescriptorSetUpdateAfterBindSampledImages         = vulkan12Properties.maxDescriptorSetUpdateAfterBindSampledImages;
+        indexingProperties.maxDescriptorSetUpdateAfterBindStorageImages         = vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageImages;
+        indexingProperties.maxDescriptorSetUpdateAfterBindInputAttachments      = vulkan12Properties.maxDescriptorSetUpdateAfterBindInputAttachments;
+        indexingProperties.pNext                                                = 0;
     }
 
     void PhysicalDevice::QueryDeviceFeatures()
