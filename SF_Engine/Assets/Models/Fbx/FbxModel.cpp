@@ -102,11 +102,11 @@ namespace SF::Engine
                     normal = Vec3(static_cast<float>(n.x), static_cast<float>(n.y), static_cast<float>(n.z));
                 }
 
-                Vec2 uv;
+                Vec3 uv;
                 if (uvs)
                 {
                     ofbx::Vec2 uvValue = uvs[i];
-                    uv = Vec2(static_cast<float>(uvValue.x), 1.0f - static_cast<float>(uvValue.y));
+                    uv = Vec3(static_cast<float>(uvValue.x), 1.0f - static_cast<float>(uvValue.y), 0);
                 }
 
                 vertices.emplace_back(pos, uv, normal);

@@ -124,7 +124,7 @@ namespace SF::Engine
                         uv = Vec2(uvs[2 * i], uvs[2 * i + 1]);
                     }
 
-                    vertices.emplace_back(position, uv, normal);
+                    vertices.emplace_back(position, Vec3(uv, 0), normal);
                 }
 
                 if (primitive.indices >= 0)
