@@ -3,7 +3,7 @@
 #include <Rendering/Images/Imaged2d>
 #include <Assets/Video/Video.hpp>
 #include <unordered_map>
-#include <Engine/Init/SplashScreenQuotes.hpp>
+#include "SplashScreenQuotes.hpp"
 #include <TemplateLibrary/Types.hpp>
 #include "EngineSplashScreen.hpp"
 
