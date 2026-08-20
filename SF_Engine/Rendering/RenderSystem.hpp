@@ -9,6 +9,7 @@
 #include "Renderer.hpp"
 #include "Windows/Surface.hpp"
 #include "Windows/WindowManager.hpp"
+#include "Bindless/Bindless.hpp"
 
 #include <UtilityClasses/NoCopy.hpp>
 
@@ -148,6 +149,8 @@ namespace SF::Engine
             return renderer.get();
         }
 
+        BindlessManager *GetBindlessManager() { return bindlessMgr.get(); }
+
         /**
          * @brief Rebuild render stages, swapchain, and framebuffers.
          * Safe to call from Stage::Normal (outside the render loop).
@@ -245,6 +248,9 @@ namespace SF::Engine
         ElapsedTime elapsedPurge;
 
         VmaAllocator alloc;
+
+        // additional stuff
+        std::unique_ptr<BindlessManager> bindlessMgr;
 
     public:
         VmaAllocator *GetAllocator()

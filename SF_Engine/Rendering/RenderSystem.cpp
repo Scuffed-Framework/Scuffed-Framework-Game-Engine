@@ -56,6 +56,7 @@ namespace SF::Engine
     void RenderSystem::PostInit()
     {
         SharedSamplers::CreateSamplers();
+        bindlessMgr = std::make_unique<BindlessManager>();
         CreateSharedCameraBuffer();
         AtmoLUTs::Init();
     }
