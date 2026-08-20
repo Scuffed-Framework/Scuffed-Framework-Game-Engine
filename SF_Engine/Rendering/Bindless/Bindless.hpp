@@ -2,6 +2,10 @@
 #include <UtilityClasses/NoCopy.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Math/KVP.hpp>
+#ifdef Bool
+#undef Bool
+#endif
+#include <slang.h>
 #include <slang-com-ptr.h>
 
 namespace SF::Engine
@@ -17,7 +21,14 @@ namespace SF::Engine
         BindlessStorageTexelBuffer,
         MAX
     };
-
+    
+    struct BindlessReflectionData
+    {
+        std::string name;
+        uint32 set;
+        uint32 binding;
+    };
+    
     using BindlessIndex = KeyValuePair<uint32, uint32>;
     class BindlessManager : NoCopy
     {
@@ -39,7 +50,7 @@ namespace SF::Engine
         void FreeStorageBuffer(BindlessIndex &index, std::shared_ptr<Buffer> fallback);
         void FreeUniformBuffer(BindlessIndex &index, std::shared_ptr<Buffer> fallback);
 
-        void VerifyShaderLayout(const std::vector<BindlessReflectionData>& reflectionData);
+        void VerifyShaderLayout(const std::vector<BindlessReflectionData> &reflectionData);
 
         const VkDescriptorSetLayout &getSetLayout() const { return m_setLayout; }
         const VkDescriptorSet &getSet() const { return m_set; }
@@ -72,12 +83,7 @@ namespace SF::Engine
         std::queue<uint32> m_freeCount[kBindingCount];
         uint32 m_usedCount[kBindingCount];
     };
-    struct BindlessReflectionData
-    {
-        std::string name;
-        uint32 set;
-        uint32 binding;
-    };
+
     std::vector<SF::Engine::BindlessReflectionData> ReflectBindlessLayout(Slang::ComPtr<slang::IComponentType> linkedProgram)
     {
         std::vector<SF::Engine::BindlessReflectionData> reflectedBindings;
