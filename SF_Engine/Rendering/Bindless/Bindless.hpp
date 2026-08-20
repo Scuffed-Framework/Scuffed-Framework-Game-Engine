@@ -2,92 +2,101 @@
 #include <UtilityClasses/NoCopy.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Math/KVP.hpp>
+#include <slang-com-ptr.h>
 
 namespace SF::Engine
 {
     enum class EBindingType
     {
-        // StructuredBuffer<T>
-        // RWStructuredBuffer<T>
-        // ByteAddressBuffer
-        // RWByteAddressBuffer
-        BindlessStorageBuffer = 0, 
-
-        // ConstantBuffer<T>
+        BindlessStorageBuffer = 0,
         BindlessUniformBuffer,
-
-        // Texture2D<T>
-        // Texture3D<T>
-        // TextureCube<T>
-        BindlessSampledImage, 
-
-        // RWTexture2D<T>
-        // RWTexture3D<T>
-        BindlessStorageImage, 
-
-        // SamplerState
-        // SamplerComparisonState
-        BindlessSampler,   
-
-        // Buffer<T>
-        // BindlessUniformTexelBuffer,
-
-        // RWBuffer<T>
-        // BindlessStorageTexelBuffer,
-
+        BindlessSampledImage,
+        BindlessStorageImage,
+        BindlessSampler,
+        BindlessUniformTexelBuffer,
+        BindlessStorageTexelBuffer,
         MAX
     };
 
     using BindlessIndex = KeyValuePair<uint32, uint32>;
-	class BindlessManager : NoCopy
-	{
-	public:
-		explicit BindlessManager();
-		~BindlessManager();
+    class BindlessManager : NoCopy
+    {
+    public:
+        explicit BindlessManager();
+        ~BindlessManager();
 
-		[[nodiscard]] BindlessIndex RegisterSampler(VkSampler sampler);
-		[[nodiscard]] BindlessIndex RegisterSRV(VkImageView view);
-		[[nodiscard]] BindlessIndex RegisterUAV(VkImageView view);
+        [[nodiscard]] BindlessIndex RegisterSampler(VkSampler sampler);
+        [[nodiscard]] BindlessIndex RegisterSRV(VkImageView view);
+        [[nodiscard]] BindlessIndex RegisterUAV(VkImageView view);
 
-		[[nodiscard]] BindlessIndex RegisterStorageBuffer(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
-		[[nodiscard]] BindlessIndex RegisterUniformBuffer(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
+        [[nodiscard]] BindlessIndex RegisterStorageBuffer(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
+        [[nodiscard]] BindlessIndex RegisterUniformBuffer(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
 
-		void FreeSRV(BindlessIndex& index, Image fallback);
-		void FreeUAV(BindlessIndex& index, Image fallback);
+        void FreeSRV(BindlessIndex &index, Image fallback);
+        void FreeUAV(BindlessIndex &index, Image fallback);
 
-		// Free ssbo bindless.
-		void FreeStorageBuffer(BindlessIndex& index, std::shared_ptr<Buffer> fallback);
-		void FreeUniformBuffer(BindlessIndex& index, std::shared_ptr<Buffer> fallback);
+        // Free ssbo bindless.
+        void FreeStorageBuffer(BindlessIndex &index, std::shared_ptr<Buffer> fallback);
+        void FreeUniformBuffer(BindlessIndex &index, std::shared_ptr<Buffer> fallback);
 
-		const VkDescriptorSetLayout& getSetLayout() const { return m_setLayout; }
-		const VkDescriptorSet& getSet() const { return m_set; }
+        void VerifyShaderLayout(const std::vector<BindlessReflectionData>& reflectionData);
 
-		void Bind(VkCommandBuffer cmd, VkPipelineBindPoint bindPoint, VkPipelineLayout layout) const
-		{
-			vkCmdBindDescriptorSets(cmd, bindPoint, layout, 0, 1, &m_set, 0, nullptr);
-		}
+        const VkDescriptorSetLayout &getSetLayout() const { return m_setLayout; }
+        const VkDescriptorSet &getSet() const { return m_set; }
 
-	private:
-		uint32 RequireIndex(EBindingType type);
-		void FreeIndex(EBindingType type, uint32 index);
+        void Bind(VkCommandBuffer cmd, VkPipelineBindPoint bindPoint, VkPipelineLayout layout) const
+        {
+            vkCmdBindDescriptorSets(cmd, bindPoint, layout, 0, 1, &m_set, 0, nullptr);
+        }
 
-	private:
-		static constexpr auto kBindingCount = static_cast<uint32>(EBindingType::MAX);
+    private:
+        uint32 RequireIndex(EBindingType type);
+        void FreeIndex(EBindingType type, uint32 index);
 
-		VkDescriptorPool m_pool = VK_NULL_HANDLE;
-		VkDescriptorSet m_set = VK_NULL_HANDLE;
-		VkDescriptorSetLayout m_setLayout = VK_NULL_HANDLE;
+    private:
+        static constexpr auto kBindingCount = static_cast<uint32>(EBindingType::MAX);
 
-		struct BindingConfig
-		{
-			VkDescriptorType type;
-			uint32 count;
-			uint32 limit;
-		};
-		BindingConfig m_bindingConfigs[kBindingCount];
+        VkDescriptorPool m_pool = VK_NULL_HANDLE;
+        VkDescriptorSet m_set = VK_NULL_HANDLE;
+        VkDescriptorSetLayout m_setLayout = VK_NULL_HANDLE;
 
-		std::mutex m_lockCount;
-		std::queue<uint32> m_freeCount[kBindingCount];
-		uint32 m_usedCount[kBindingCount];
-	};
+        struct BindingConfig
+        {
+            VkDescriptorType type;
+            uint32 count;
+            uint32 limit;
+        };
+        BindingConfig m_bindingConfigs[kBindingCount];
+
+        std::mutex m_lockCount;
+        std::queue<uint32> m_freeCount[kBindingCount];
+        uint32 m_usedCount[kBindingCount];
+    };
+    struct BindlessReflectionData
+    {
+        std::string name;
+        uint32 set;
+        uint32 binding;
+    };
+    std::vector<SF::Engine::BindlessReflectionData> ReflectBindlessLayout(Slang::ComPtr<slang::IComponentType> linkedProgram)
+    {
+        std::vector<SF::Engine::BindlessReflectionData> reflectedBindings;
+        slang::ProgramLayout *layout = linkedProgram->getLayout();
+        if (!layout)
+            return reflectedBindings;
+
+        unsigned paramCount = layout->getParameterCount();
+        for (unsigned i = 0; i < paramCount; ++i)
+        {
+            slang::VariableLayoutReflection *param = layout->getParameterByIndex(i);
+
+            SF::Engine::BindlessReflectionData data;
+            data.name = param->getName();
+            data.binding = param->getBindingIndex();
+            data.set = param->getBindingSpace();
+
+            reflectedBindings.push_back(data);
+        }
+        return reflectedBindings;
+    }
 }

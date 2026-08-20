@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <Rendering/Bindless/Bindless.hpp>
 
 namespace SF::Engine::Shaders
 {
@@ -166,7 +167,7 @@ namespace SF::Engine::Shaders
         // entry point out of an already-loaded module.
         std::vector<uint32_t> CompileEntryPointFromModule(slang::ISession *session, slang::IModule *module,
                                                           const std::string &entryName, ShaderStage stage,
-                                                          std::string &outError)
+                                                          std::string &outError, bool usesBindless)
         {
             Slang::ComPtr<slang::IEntryPoint> entry;
             Slang::ComPtr<slang::IBlob> diagnostics;
@@ -200,6 +201,12 @@ namespace SF::Engine::Shaders
             {
                 outError = "Slang: link failed: " + DrainDiagnostics(diagnostics);
                 return {};
+            }
+
+            if (usesBindless)
+            { 
+                auto bindings = ReflectBindlessLayout(linkedProgram);
+                RenderSystem::Get()->GetBindlessManager()->VerifyShaderLayout(bindings);
             }
 
             Slang::ComPtr<slang::IBlob> spirvBlob;
@@ -276,6 +283,7 @@ namespace SF::Engine::Shaders
         shader.name = DeriveShaderName(name);
         shader.language = ShaderLanguage::GLSL;
         shader.source = source;
+        shader.usesBindless = source.find("THIS_IS_A_CERTIFIED_HOOD_CLASSIC_I_MEAN_THE_BINDLESS_IMPL") != std::string::npos;
 
         scanPragmas(shader);
 
@@ -368,7 +376,7 @@ namespace SF::Engine::Shaders
         {
             std::string compileError;
             auto spirv = CompileEntryPointFromModule(handle->session.get(), handle->module,
-                                                     ep.name, ep.stage, compileError);
+                                                     ep.name, ep.stage, compileError, shader.usesBindless);
             if (spirv.empty())
             {
                 setError(compileError);

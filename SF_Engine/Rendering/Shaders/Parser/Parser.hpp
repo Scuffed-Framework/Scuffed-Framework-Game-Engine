@@ -59,20 +59,16 @@ namespace SF::Engine::Shaders
         ShaderLanguage language = ShaderLanguage::GLSL;
         std::string source;   // comment-stripped file text; #import/#include not yet expanded
 
-        // Entry points Slang found via [shader("...")] attributes. Empty until
-        // discoverEntryPoints() runs -- compile()/compileAll() do this lazily.
         std::vector<ShaderEntryPointInfo> entryPoints;
 
-        // --- Metadata pulled from #pragma lines ---
         std::vector<ShaderCapabilityRequirement> requirements;
         std::string fallbackShader;
         std::vector<ShaderSpecializationConstant> specializationConstants;
         std::vector<std::vector<std::string>> multiCompileKeywords;
 
-        // #pragma workgroup_size override -- takes precedence over whatever
-        // the compute entry point's [numthreads]/layout(local_size_*) says.
-        glm::uvec3 workgroupSizeOverride = {1, 1, 1};
+        UVec3 workgroupSizeOverride = {1, 1, 1};
         bool hasWorkgroupSizeOverride = false;
+        bool usesBindless = false;
     };
 
     struct CompiledShader

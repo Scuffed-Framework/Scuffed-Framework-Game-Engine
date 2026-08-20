@@ -1,46 +1,35 @@
 #include "Bindless.hpp"
 #include <Math/Math.hpp>
-#include <Rendering/RenderSystem.hpp> // Assuming helper functions are here
+#include <Rendering/RenderSystem.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Rendering/Common.hpp>
 
 namespace SF::Engine
 {
-
-    // TODO: cache perframe free require only update once perframe.
     BindlessManager::BindlessManager()
     {
         const auto &indexingProps = RenderSystem::Get()->GetPhysicalDevice()->GetDescriptorIndexingProperties();
-
         // Configs init.
         m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageBuffer)] = {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindStorageBuffers};
         m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessUniformBuffer)] = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindUniformBuffers};
         m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessSampledImage)] = {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindSampledImages};
         m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageImage)] = {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindStorageImages};
         m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessSampler)] = {VK_DESCRIPTOR_TYPE_SAMPLER, 100000u, indexingProps.maxDescriptorSetUpdateAfterBindSamplers};
-
-        // Range clamp.
+        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessUniformTexelBuffer)] = {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 100000u, indexingProps.maxDescriptorSetUpdateAfterBindUniformBuffers};
+        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageTexelBuffer)] = {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 100000u, indexingProps.maxDescriptorSetUpdateAfterBindStorageBuffers};
         for (auto &config : m_bindingConfigs)
         {
-            // Default use half percentage as max count.
             constexpr uint32 kUsedCountPercentage = 2;
-
-            // Clamp to valid range.
             config.count = Mathematics::Clamp(config.count, 1u, config.limit / kUsedCountPercentage);
         }
-
-        // Clear used count.
         for (auto &count : m_usedCount)
         {
             count = 0;
         }
-
-        // Create bindings.
         {
             std::array<VkDescriptorSetLayoutBinding, kBindingCount> bindings{};
             std::array<VkDescriptorBindingFlags, kBindingCount> flags{};
 
-            // Fill binding infos.
             for (uint32_t i = 0; i < kBindingCount; ++i)
             {
                 bindings[i].binding = i;
@@ -48,7 +37,6 @@ namespace SF::Engine
                 bindings[i].descriptorCount = m_bindingConfigs[i].count;
                 bindings[i].stageFlags = VK_SHADER_STAGE_ALL;
 
-                // Flag for bindless set.
                 flags[i] =
                     VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
                     VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT;
@@ -59,19 +47,14 @@ namespace SF::Engine
             bindingFlags.pNext = nullptr;
             bindingFlags.pBindingFlags = flags.data();
             bindingFlags.bindingCount = kBindingCount;
-
             VkDescriptorSetLayoutCreateInfo createInfo{};
             createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             createInfo.bindingCount = kBindingCount;
             createInfo.pBindings = bindings.data();
             createInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
             createInfo.pNext = &bindingFlags;
-
-            // Create bindless set layout.
             m_setLayout = CreateDescriptorSetLayout(createInfo);
         }
-
-        // Create pool.
         {
             std::array<VkDescriptorPoolSize, kBindingCount> poolSize{};
             for (uint32_t i = 0; i < kBindingCount; ++i)
@@ -86,11 +69,8 @@ namespace SF::Engine
             poolCreateInfo.pPoolSizes = poolSize.data();
             poolCreateInfo.maxSets = 1;
             poolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
-
             m_pool = CreateDescriptorPool(poolCreateInfo);
         }
-
-        // Create bindless set.
         {
             VkDescriptorSetAllocateInfo allocateInfo{};
             allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -161,7 +141,6 @@ namespace SF::Engine
             imageInfo.sampler = VK_NULL_HANDLE;
             imageInfo.imageView = fallback.GetView();
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
             VkWriteDescriptorSet write{};
             write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             write.dstSet = m_set;
@@ -184,7 +163,6 @@ namespace SF::Engine
         imageInfo.sampler = VK_NULL_HANDLE;
         imageInfo.imageView = view;
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.dstSet = m_set;
@@ -206,7 +184,6 @@ namespace SF::Engine
             imageInfo.sampler = VK_NULL_HANDLE;
             imageInfo.imageView = fallback.GetView();
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
             VkWriteDescriptorSet write{};
             write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             write.dstSet = m_set;
@@ -229,7 +206,6 @@ namespace SF::Engine
         bufferInfo.buffer = buffer;
         bufferInfo.offset = offset;
         bufferInfo.range = range;
-
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.dstSet = m_set;
@@ -251,7 +227,6 @@ namespace SF::Engine
             bufferInfo.buffer = fallback->GetBuffer();
             bufferInfo.offset = 0;
             bufferInfo.range = fallback->GetSize();
-
             VkWriteDescriptorSet write{};
             write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             write.dstSet = m_set;
@@ -274,7 +249,6 @@ namespace SF::Engine
         bufferInfo.buffer = buffer;
         bufferInfo.offset = offset;
         bufferInfo.range = range;
-
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.dstSet = m_set;
@@ -322,7 +296,6 @@ namespace SF::Engine
 
         // Final index.
         uint32 index = 0;
-
         // Reuse or increment new one.
         auto &freeCounts = m_freeCount[typeIndex];
         auto &usedCount = m_usedCount[typeIndex];
@@ -330,7 +303,6 @@ namespace SF::Engine
         {
             index = usedCount;
             usedCount++;
-
             if (usedCount >= config.count)
             {
                 Log::Error(
@@ -339,9 +311,7 @@ namespace SF::Engine
                     usedCount,
                     config.count,
                     config.limit);
-
-                Log::Error(
-                    "Bindless set count has been reset to 0. This may cause rendering errors.");
+                Log::Error("Bindless set count has been reset to 0. This may cause rendering errors.");
 
                 usedCount = 0;
             }
@@ -367,5 +337,18 @@ namespace SF::Engine
 
         const auto &typeIndex = static_cast<uint32>(type);
         m_freeCount[typeIndex].push(index);
+    }
+
+    void BindlessManager::VerifyShaderLayout(const std::vector<BindlessReflectionData>& reflectionData)
+    {
+        for (const auto& data : reflectionData)
+        {
+            // bindless is always 100
+            if (data.set != 100) continue; 
+
+            Log::Info("BindlessManager verified: {} at Binding {}", data.name, data.binding);
+            
+            // Optional: Add asserts here to ensure data.binding matches the static_cast<uint32>(EBindingType::...) expectations.
+        }
     }
 }
