@@ -1,5 +1,5 @@
 # build.ps1 : recompile (does NOT re-run conan or cmake configure)
-# Also generates Version.hpp and manages a monthly-resetting build number.
+# Also generates Version.cpp and manages a monthly-resetting build number.
 # Usage: ./scripts/build.ps1
 
 param(
@@ -16,7 +16,7 @@ $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root
 
 $buildStateFile = Join-Path $root "build\.build_state.json"
-$versionHeader = Join-Path $root "SF_Engine\Engine\Version.hpp"
+$versionHeader = Join-Path $root "SF_Engine\Engine\Version.cpp"
 
 $now = Get-Date
 $currentYear = $now.Year
@@ -48,7 +48,7 @@ $newState | ConvertTo-Json | Set-Content $buildStateFile
 
 Write-Host "==> Version: $currentYear.$currentMonthPadded.$buildNumber" -ForegroundColor Cyan
 
-# Generate Version.hpp
+# Generate Version.cpp
 # Numeric fields use plain decimal ints (no leading zero -> no C++ octal-literal bug).
 # The display string uses the zero-padded month for readability.
 $versionHeaderContent = @"

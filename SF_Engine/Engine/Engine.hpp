@@ -48,7 +48,11 @@
 namespace SF::Engine
 {
     // Provide a global constant version of the engine
-    inline constexpr Version EngineVersion{};
+    inline const Version EngineVersion{
+        Engine_VERSION_MAJOR,
+        Engine_VERSION_MINOR,
+        Engine_VERSION_PATCH
+    };
 
     class Engine : NoCopy
     {

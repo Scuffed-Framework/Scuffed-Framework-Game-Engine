@@ -26,7 +26,6 @@ LAST Web build support
 1000. SPLASH SCREEN
 
 #QOL
-find a way to change version on build without recompiling the entire freakin engine
 
 #Editor:
 finish panels, cmd, explorer, black profiler bar, profiler
