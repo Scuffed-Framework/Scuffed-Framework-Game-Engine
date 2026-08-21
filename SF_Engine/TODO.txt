@@ -1,5 +1,4 @@
 #CORE
-1. Impl Model System
 2. Shader hot-reloading (at some point)
 3. Finish AssetSystem
 4. FIX SSR
@@ -9,7 +8,7 @@
 8. fix atmosphere dual/tri color bands in night area
 9. HDR rendering (and in hdr window (might need fullscreen))
 10. Terrain
-11. Bindless shader resources like DAXA
+11. Bindless shader resources
 12. multi window support
 13. Lumen-style Radiance Cache with Screen Probe Gather GI (Diffuse & Specular). (https://github.com/qiutang98/chord) "Simple RadianceCache with ScreenProbe GI"
 14. Finish ParticleSystem
@@ -26,6 +25,8 @@ LAST Web build support
 
 1000. SPLASH SCREEN
 
+#QOL
+find a way to change version on build without recompiling the entire freakin engine
 
 #Editor:
 finish panels, cmd, explorer, black profiler bar, profiler
