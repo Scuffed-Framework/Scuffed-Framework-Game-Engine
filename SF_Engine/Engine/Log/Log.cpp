@@ -15,7 +15,10 @@ namespace SF::Engine
             // Console sink with colors
             auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
             consoleSink->set_pattern("%^[%T] %n: %v%$");
-
+            consoleSink->set_color(spdlog::level::warn, consoleSink->yellow);
+            consoleSink->set_color(spdlog::level::err,  consoleSink->red_bold);
+            consoleSink->set_color(spdlog::level::critical, consoleSink->bold_on_red);
+            
             // File sink
             auto parentPath = filepath.parent_path();
             if (!parentPath.empty())
@@ -31,7 +34,8 @@ namespace SF::Engine
             sinks.push_back(fileSink);
 
             // Create logger
-            s_Logger = std::make_shared<spdlog::logger>(name, sinks.begin(), sinks.end());
+            s_Logger = std::make_shared<spdlog::logger>(name, spdlog::sinks_init_list{consoleSink, fileSink});
+            s_Logger->set_pattern("%^[%H:%M:%S] [%l] %v%$");   // %^...%$ colors the WHOLE line, not just %l
 
             s_Logger->set_level(spdlog::level::info);
             s_Logger->flush_on(spdlog::level::info);
