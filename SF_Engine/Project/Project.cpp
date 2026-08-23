@@ -17,7 +17,8 @@ namespace SF::Engine
     //     <name>.projxml     ← project XML descriptor
 
     ProjectResult ProjectManager::CreateProject(const std::string &name,
-                                                const std::filesystem::path &path)
+                                                const std::filesystem::path &path,
+                                                const std::string &desc)
     {
         if (name.empty())
             return ProjectResult::InvalidFormat;
@@ -37,18 +38,6 @@ namespace SF::Engine
         if (std::filesystem::exists(xmlPath))
             return ProjectResult::InvalidFormat; // already exists
 
-        // 2. Create the asset manifest
-        std::filesystem::path manifestPath = path / "Assets" / "AssetManifest.xml";
-        XMLModule *manifestWriter = XMLModule::Get();
-        manifestWriter->SetRootNode("AssetManifest"); // creates empty manifest with just root element
-
-        if (!manifestWriter->SaveToFile(manifestPath.string()))
-        {
-            Log::Error("ProjectManager: failed to create asset manifest at '{}'", manifestPath.string());
-            return ProjectResult::UnknownError;
-        }
-
-        // 3. Build the XML document and serialise into it.
         XMLModule *writer = XMLModule::Get();
         writer->SetRootNode("Project"); // creates the xmlDoc + root element
         XMLNode root = writer->GetRootNode();
@@ -56,17 +45,17 @@ namespace SF::Engine
         auto proj = std::make_unique<Project>();
         proj->name = name;
         proj->Path = xmlPath;
+        proj->description = desc;
         proj->Serialize(root); // writes name + projectFilePath attributes
 
-        // 4. Save to disk – XMLModule handles everything, no File needed.
         if (!writer->SaveToFile(xmlPath.string()))
             return ProjectResult::UnknownError;
 
         proj->projectXML = File(xmlPath); // keep the File handle for later use
 
-        // 5. Register in recent list and make active.
-        ProjectLoadeInfo info;
+        ProjectLoadInfo info;
         info.name = name;
+        info.description = desc;
         info.projectPath = xmlPath;
         s_recentProjects.insert(s_recentProjects.begin(), std::move(info));
 
@@ -79,7 +68,6 @@ namespace SF::Engine
 
     ProjectResult ProjectManager::LoadProject(const std::filesystem::path &path)
     {
-        // Resolve directory → <dirname>.projxml fallback.
         std::filesystem::path xmlPath = path;
         if (std::filesystem::is_directory(xmlPath))
             xmlPath = xmlPath / (xmlPath.filename().string() + ".projxml");
@@ -106,12 +94,13 @@ namespace SF::Engine
 
         // 3. Update recent-projects list (bubble to front or insert).
         auto it = std::find_if(s_recentProjects.begin(), s_recentProjects.end(),
-                               [&](const ProjectLoadeInfo &p)
+                               [&](const ProjectLoadInfo &p)
                                { return p.projectPath == xmlPath; });
         if (it == s_recentProjects.end())
         {
-            ProjectLoadeInfo info;
+            ProjectLoadInfo info;
             info.name = proj->name;
+            info.description = proj->description;
             info.projectPath = xmlPath;
             s_recentProjects.insert(s_recentProjects.begin(), std::move(info));
         }
@@ -407,7 +396,7 @@ namespace SF::Engine
                 else
                 {
                     result = CreateProject(std::string(s_newName),
-                                           std::filesystem::path(s_newFolder) / s_newName);
+                                           std::filesystem::path(s_newFolder) / s_newName, s_newDesc);
                     if (result == ProjectResult::Success)
                     {
                         // Clear fields on success.

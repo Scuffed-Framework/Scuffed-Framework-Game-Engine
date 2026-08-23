@@ -21,7 +21,7 @@ namespace SF::Engine
         std::string description;
     };
 
-    struct ProjectLoadeInfo
+    struct ProjectLoadInfo
     {
         std::shared_ptr<Image2d> aFrame;
         std::string name;
@@ -49,18 +49,23 @@ namespace SF::Engine
     public:
         std::string name;
         std::filesystem::path Path;
+        std::string description;
         File projectXML;
 
         void Serialize(XMLNode &node) const override
         {
-            node.SetAttribute("name", name);
-            node.SetAttribute("projectFilePath", Path.string());
+            XMLNode projNode = node.AddChild("Project");
+            projNode.SetAttribute("name", name);
+            projNode.SetAttribute("projectFilePath", Path.string());
+            projNode.SetAttribute("Description", description);
         }
         void Deserialize(const XMLNode &node)
         {
-            node.GetAttribute("name", name);
+            XMLNode projNode = node.GetChild("Project");
+            projNode.GetAttribute("name", name);
             std::string pathStr;
-            node.GetAttribute("projectFilePath", pathStr);
+            projNode.GetAttribute("projectFilePath", pathStr);
+            projNode.GetAttribute("Description", description);
             Path = pathStr;
         }
     };
@@ -71,7 +76,7 @@ namespace SF::Engine
         REGISTER_MODULE(ProjectManager, Module::Stage::Normal);
 
     public:
-        ProjectResult CreateProject(const std::string &name, const std::filesystem::path &path);
+        ProjectResult CreateProject(const std::string &name, const std::filesystem::path &path, const std::string& desc);
         ProjectResult LoadProject(const std::filesystem::path &path);
 
         void Update() override;
@@ -110,7 +115,7 @@ namespace SF::Engine
         static char s_newFolder[512] = "";
         static char s_newDesc[1024] = "";
 
-        static std::vector<ProjectLoadeInfo> s_recentProjects;
+        static std::vector<ProjectLoadInfo> s_recentProjects;
         static bool s_recentLoaded = false;
 
         static std::vector<ProjectTemplate> s_templates;
