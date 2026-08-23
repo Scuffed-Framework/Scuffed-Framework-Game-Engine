@@ -133,6 +133,12 @@ namespace SF::Engine
         return BindlessIndex{write.dstArrayElement, 0};
     }
 
+    void BindlessManager::FreeSRV(BindlessIndex &index)
+    {
+        FreeIndex(EBindingType::BindlessSampledImage, index.key);
+        index = {};
+    }
+
     void BindlessManager::FreeSRV(BindlessIndex &index, Image fallback)
     {
         if (fallback.GetImage()) // VkImage GetImage
@@ -339,15 +345,16 @@ namespace SF::Engine
         m_freeCount[typeIndex].push(index);
     }
 
-    void BindlessManager::VerifyShaderLayout(const std::vector<BindlessReflectionData>& reflectionData)
+    void BindlessManager::VerifyShaderLayout(const std::vector<BindlessReflectionData> &reflectionData)
     {
-        for (const auto& data : reflectionData)
+        for (const auto &data : reflectionData)
         {
             // bindless is always 100
-            if (data.set != 100) continue; 
+            if (data.set != 100)
+                continue;
 
             Log::Info("BindlessManager verified: {} at Binding {}", data.name, data.binding);
-            
+
             // Optional: Add asserts here to ensure data.binding matches the static_cast<uint32>(EBindingType::...) expectations.
         }
     }

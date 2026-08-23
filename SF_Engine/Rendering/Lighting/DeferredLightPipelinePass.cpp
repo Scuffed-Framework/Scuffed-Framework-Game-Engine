@@ -99,22 +99,19 @@ namespace SF::Engine
         lastPbr_ = pbr;
         lastDepth_ = depth;
 
-        auto imgInfo = [](const Image *img)
+        auto imgInfo = [](const Image *img, VkImageLayout layout)
         {
             VkDescriptorImageInfo ii{};
             ii.sampler = img->GetSampler();
             ii.imageView = img->GetView();
-            ii.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            ii.imageLayout = layout;
             return ii;
         };
 
-        // Bindings 4-7 are the GBuffer textures (see DeferredLight.shader set=1 bind=0..3
-        // but since the engine uses a single flat descriptor set per pipeline via SPIR-V
-        // reflection, they appear at the binding numbers declared in the shader).
-        VkDescriptorImageInfo albedoII = imgInfo(albedo);
-        VkDescriptorImageInfo normalII = imgInfo(normal);
-        VkDescriptorImageInfo pbrII = imgInfo(pbr);
-        VkDescriptorImageInfo depthII = imgInfo(depth);
+        VkDescriptorImageInfo albedoII = imgInfo(albedo, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkDescriptorImageInfo normalII = imgInfo(normal, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkDescriptorImageInfo pbrII = imgInfo(pbr, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        VkDescriptorImageInfo depthII = imgInfo(depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
         DescriptorSet::Update({
             WriteImg(descSet_->GetDescriptorSet(), 4, &albedoII),

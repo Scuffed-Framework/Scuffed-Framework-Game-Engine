@@ -22,8 +22,7 @@
 #include <thread>
 #include <variant>
 
-// Modern Vulkan with VMA (optional - can be added later)
-// #include <vk_mem_alloc.h>
+// need more vma?
 
 namespace SF::Engine
 {
@@ -31,6 +30,8 @@ namespace SF::Engine
      * @brief Module that manages the Vulkan instance, devices, surfaces, and rendering
      * infrastructure.
      */
+    class BindlessManager;
+
     class RenderSystem final : public ModuleRegistrar<RenderSystem>
     {
         friend class ModuleRegistrar<RenderSystem>;
@@ -45,6 +46,8 @@ namespace SF::Engine
 
         // Module interface implementation
         void Update() override;
+
+        bool TryRecoverDevice();
 
         Module::Stage GetStage() const override
         {

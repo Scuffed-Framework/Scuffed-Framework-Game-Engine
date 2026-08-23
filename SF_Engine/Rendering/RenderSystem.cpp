@@ -13,6 +13,7 @@
 #include <Camera/Camera.hpp>
 #include "SharedFunctions.hpp"
 #include "Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp"
+#include <Rendering/Devices/DeviceRecovery.hpp>
 
 namespace SF::Engine
 {
@@ -51,8 +52,8 @@ namespace SF::Engine
         CreatePipelineCache();
         Log::Info("Pipeline cache created");
         Log::Info("RenderSystem fully initialized");
-    } 
-    
+    }
+
     void RenderSystem::PostInit()
     {
         SharedSamplers::CreateSamplers();
@@ -63,7 +64,7 @@ namespace SF::Engine
 
     void RenderSystem::PreShutdown()
     {
-        // pre shutdown code 
+        // pre shutdown code
         DestroySharedCameraBuffer();
         AtmoLUTs::Shutdown();
         SharedSamplers::DestroySamplers();
@@ -98,10 +99,11 @@ namespace SF::Engine
         }
     }
 
-    void UpdateSharedCameraData(){
+    void UpdateSharedCameraData()
+    {
         SharedCameraData.screenHeight = GetScreenSize().y;
         SharedCameraData.screenWidth = GetScreenSize().x;
-        SharedCameraData.aspectRatio = SharedCameraData.screenWidth/SharedCameraData.screenHeight;
+        SharedCameraData.aspectRatio = SharedCameraData.screenWidth / SharedCameraData.screenHeight;
         SharedCameraData.cameraPosition = GetCameraPosition4();
         SharedCameraData.deltaTime = GetDeltaTime().AsMilliseconds();
         SharedCameraData.inverseProjection = GetInvProjection();
@@ -114,139 +116,151 @@ namespace SF::Engine
 
     void RenderSystem::Update()
     {
-        if (!renderer || WindowManager::Get()->GetWindow(0)->IsIconified())
-            return;
-
-        if (!renderer->started)
+        try
         {
-            ResetRenderStages();
-            renderer->Start();
-            renderer->started = true;
-        }
-
-        renderer->Update();
-        
-        UpdateSharedCameraData();
-
-        // Update all stages first, then check staleness BEFORE any renderpass
-        // is started this frame. Doing this mid-loop (old code) could leave a
-        // command buffer with an unsubmitted vkCmdBeginRenderPass while
-        // RecreatePass() calls vkQueueWaitIdle -> deadlock.
-        for (auto &renderStage : renderer->renderStages)
-            renderStage->Update();
-
-        bool anyOutOfDate = false;
-        for (auto &renderStage : renderer->renderStages)
-        {
-            if (renderStage->IsOutOfDate())
-            {
-                anyOutOfDate = true;
-                break;
-            }
-        }
-
-        if (anyOutOfDate)
-        {
-            RecreatePass(0, *renderer->renderStages.front()); // rebuilds ALL stages internally
-            return;
-        }
-
-        for (auto [id, swapchain] : Enumerate(swapchains))
-        {
-            auto &perSurfaceBuffer = perSurfaceBuffers[id];
-
-            // NOTE: removed the standalone vkWaitForFences(..., UINT64_MAX) that used to
-            // sit here. AcquireNextImage() already waits on this exact fence internally,
-            // with a bounded 1s timeout that converts a timeout into VK_ERROR_OUT_OF_DATE_KHR.
-            // The UINT64_MAX wait here had no such escape hatch: if the fence's paired
-            // Submit() was ever skipped (see the StartRenderpass failure case below,
-            // pre-fix), this call would hang forever with the window fully frozen.
-            auto acquireResult = swapchain->AcquireNextImage(
-                perSurfaceBuffer->presentCompletes[perSurfaceBuffer->currentFrame],
-                perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
-
-            if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
-            {
-                RecreateSwapchain();
+            if (!renderer || WindowManager::Get()->GetWindow(0)->IsIconified())
                 return;
-            }
 
-            if (acquireResult == VK_SUBOPTIMAL_KHR)
+            if (!renderer->started)
             {
-                perSurfaceBuffer->framebufferResized = true;
-            }
-            else if (acquireResult != VK_SUCCESS)
-            {
-                Log::Error("Failed to acquire swap chain image!\n");
-                return;
+                ResetRenderStages();
+                renderer->Start();
+                renderer->started = true;
             }
 
-            // AcquireNextImage() already resets the fence internally right after a
-            // successful acquire, so the old vkResetFences() call here was redundant
-            // dead code — removed.
+            renderer->Update();
 
-            Pipeline::Stage stage;
-            bool wentStale = false;
+            UpdateSharedCameraData();
 
+            // Update all stages first, then check staleness BEFORE any renderpass
+            // is started this frame. Doing this mid-loop (old code) could leave a
+            // command buffer with an unsubmitted vkCmdBeginRenderPass while
+            // RecreatePass() calls vkQueueWaitIdle -> deadlock.
+            for (auto &renderStage : renderer->renderStages)
+                renderStage->Update();
+
+            bool anyOutOfDate = false;
             for (auto &renderStage : renderer->renderStages)
             {
-                auto &commandBuffer =
-                    perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
-
-                if (!commandBuffer->IsRunning())
-                    commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
-
-                for (const auto &subpass : renderStage->GetSubpasses())
+                if (renderStage->IsOutOfDate())
                 {
-                    stage.second = subpass.GetBinding();
-                    renderer->PassManager.PreRenderStage(stage, *commandBuffer);
-                }
-                stage.second = 0;
-
-                if (!StartRenderpass(id, *renderStage))
-                {
-                    // A resize raced us between the up-front staleness check and here.
-                    // The acquire fence has already been reset by AcquireNextImage but
-                    // nothing will submit it on this path — bailing out with `return`
-                    // (old behavior) permanently orphans that fence, and the *next*
-                    // frame's acquire-side wait would block on it indefinitely.
-                    // Instead, treat this as "went stale mid-frame" and let RecreatePass
-                    // fix it up properly before we leave this Update().
-                    wentStale = true;
+                    anyOutOfDate = true;
                     break;
                 }
-
-                for (const auto &subpass : renderStage->GetSubpasses())
-                {
-                    stage.second = subpass.GetBinding();
-                    renderer->PassManager.RenderStage(stage, *commandBuffer);
-
-                    if (subpass.GetBinding() != renderStage->GetSubpasses().back().GetBinding())
-                        vkCmdNextSubpass(*commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
-                }
-
-                EndRenderpass(id, *renderStage);
-                stage.first++;
             }
 
-            if (wentStale)
+            if (anyOutOfDate)
             {
-                RecreatePass(id, *renderer->renderStages.front());
+                RecreatePass(0, *renderer->renderStages.front()); // rebuilds ALL stages internally
                 return;
             }
-        }
 
-        if (elapsedPurge.GetElapsed() != 0)
-        {
-            for (auto it = commandPools.begin(); it != commandPools.end();)
+            for (auto [id, swapchain] : Enumerate(swapchains))
             {
-                if ((*it).second.use_count() <= 1)
+                auto &perSurfaceBuffer = perSurfaceBuffers[id];
+
+                // NOTE: removed the standalone vkWaitForFences(..., UINT64_MAX) that used to
+                // sit here. AcquireNextImage() already waits on this exact fence internally,
+                // with a bounded 1s timeout that converts a timeout into VK_ERROR_OUT_OF_DATE_KHR.
+                // The UINT64_MAX wait here had no such escape hatch: if the fence's paired
+                // Submit() was ever skipped (see the StartRenderpass failure case below,
+                // pre-fix), this call would hang forever with the window fully frozen.
+                auto acquireResult = swapchain->AcquireNextImage(
+                    perSurfaceBuffer->presentCompletes[perSurfaceBuffer->currentFrame],
+                    perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
+
+                if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
                 {
-                    it = commandPools.erase(it);
-                    continue;
+                    RecreateSwapchain();
+                    return;
                 }
-                ++it;
+
+                if (acquireResult == VK_ERROR_DEVICE_LOST)
+                    throw DeviceLostException("AcquireNextImage");
+
+                if (acquireResult == VK_SUBOPTIMAL_KHR)
+                {
+                    perSurfaceBuffer->framebufferResized = true;
+                }
+                else if (acquireResult != VK_SUCCESS)
+                {
+                    Log::Error("Failed to acquire swap chain image!\n");
+                    return;
+                }
+
+                // AcquireNextImage() already resets the fence internally right after a
+                // successful acquire, so the old vkResetFences() call here was redundant
+                // dead code — removed.
+
+                Pipeline::Stage stage;
+                bool wentStale = false;
+
+                for (auto &renderStage : renderer->renderStages)
+                {
+                    auto &commandBuffer =
+                        perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
+
+                    if (!commandBuffer->IsRunning())
+                        commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
+
+                    for (const auto &subpass : renderStage->GetSubpasses())
+                    {
+                        stage.second = subpass.GetBinding();
+                        renderer->PassManager.PreRenderStage(stage, *commandBuffer);
+                    }
+                    stage.second = 0;
+
+                    if (!StartRenderpass(id, *renderStage))
+                    {
+                        // A resize raced us between the up-front staleness check and here.
+                        // The acquire fence has already been reset by AcquireNextImage but
+                        // nothing will submit it on this path — bailing out with `return`
+                        // (old behavior) permanently orphans that fence, and the *next*
+                        // frame's acquire-side wait would block on it indefinitely.
+                        // Instead, treat this as "went stale mid-frame" and let RecreatePass
+                        // fix it up properly before we leave this Update().
+                        wentStale = true;
+                        break;
+                    }
+
+                    for (const auto &subpass : renderStage->GetSubpasses())
+                    {
+                        stage.second = subpass.GetBinding();
+                        renderer->PassManager.RenderStage(stage, *commandBuffer);
+
+                        if (subpass.GetBinding() != renderStage->GetSubpasses().back().GetBinding())
+                            vkCmdNextSubpass(*commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+                    }
+
+                    EndRenderpass(id, *renderStage);
+                    stage.first++;
+                }
+
+                if (wentStale)
+                {
+                    RecreatePass(id, *renderer->renderStages.front());
+                    return;
+                }
             }
+
+            if (elapsedPurge.GetElapsed() != 0)
+            {
+                for (auto it = commandPools.begin(); it != commandPools.end();)
+                {
+                    if ((*it).second.use_count() <= 1)
+                    {
+                        it = commandPools.erase(it);
+                        continue;
+                    }
+                    ++it;
+                }
+            }
+        }
+        catch (const DeviceLostException &e)
+        {
+            Log::Critical("{}", e.what());
+            if (!TryRecoverDevice())
+                throw std::runtime_error("Unrecoverable device loss");
         }
     }
 
@@ -316,9 +330,78 @@ namespace SF::Engine
         if (result >= 0)
             return;
 
-        auto failure = StrVkResult(result);
+        if (result == VK_ERROR_DEVICE_LOST)
+            throw DeviceLostException(StrVkResult(result));
 
-        throw std::runtime_error("Vulkan error: " + failure);
+        throw std::runtime_error("Vulkan error: " + StrVkResult(result));
+    }
+
+    bool RenderSystem::TryRecoverDevice()
+    {
+        Log::Error("[DeviceRecovery] Device lost — attempting recovery");
+
+        // Destroying handles from a lost device is well-defined per spec; only
+        // submitting/waiting on it is not. So teardown order below is safe as-is,
+        // just skip vkDeviceWaitIdle.
+
+        PreShutdown(); // camera buffer, AtmoLUTs, SharedSamplers
+
+        vkDestroyPipelineCache(*logicalDevice, pipelineCache, nullptr);
+        vmaDestroyAllocator(alloc);
+
+        renderer->started = false;
+        swapchains.clear();
+        perSurfaceBuffers.clear(); // raw fence/semaphore handles inside are dead; don't vkDestroy them
+        commandPools.clear();
+        surfaces.clear(); // built against old physicalDevice/logicalDevice — must rebuild per window
+
+        // physicalDevice/logicalDevice recreated below; bindlessMgr also depends on
+        // the old device — add it to PreShutdown()/PostInit() if it isn't already there.
+
+        physicalDevice = std::make_unique<PhysicalDevice>(*instance);
+
+        constexpr int maxAttempts = 3;
+        bool created = false;
+        for (int attempt = 1; attempt <= maxAttempts && !created; ++attempt)
+        {
+            try
+            {
+                logicalDevice = std::make_unique<LogicalDevice>(*instance, *physicalDevice);
+                created = true;
+            }
+            catch (const std::exception &e)
+            {
+                Log::Error("[DeviceRecovery] attempt {}/{}: {}", attempt, maxAttempts, e.what());
+                if (attempt < maxAttempts)
+                    std::this_thread::sleep_for(500ms);
+            }
+        }
+        if (!created)
+            return false;
+
+        // Rebuild surfaces for every existing window (mirrors the OnAddWindow lambda in the ctor)
+        for (auto &window : WindowManager::Get()->GetWindows())
+            surfaces.emplace_back(std::make_unique<Surface>(*instance, *physicalDevice, *logicalDevice, *window));
+
+        VmaAllocatorCreateInfo allocatorCreateInfo = {};
+        allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+        allocatorCreateInfo.physicalDevice = *physicalDevice;
+        allocatorCreateInfo.device = *logicalDevice;
+        allocatorCreateInfo.instance = *instance;
+        VmaVulkanFunctions vmaVulkanFunctions = {};
+        vmaVulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+        vmaVulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+        allocatorCreateInfo.pVulkanFunctions = &vmaVulkanFunctions;
+        if (vmaCreateAllocator(&allocatorCreateInfo, &alloc) != VK_SUCCESS)
+            return false;
+
+        CreatePipelineCache();
+        PostInit(); // camera buffer, AtmoLUTs, SharedSamplers, bindlessMgr
+
+        ResetRenderStages();
+
+        Log::Info("[DeviceRecovery] Recovery successful");
+        return true;
     }
 
     void RenderSystem::CaptureScreenshot(const std::filesystem::path &filename,
@@ -620,15 +703,18 @@ namespace SF::Engine
     uint32_t RenderSystem::GetVkAPIVersion()
     {
         uint32_t apiVersion = 0;
-    
+
         // vkEnumerateInstanceVersion is available in Vulkan 1.1+
-        if (vkEnumerateInstanceVersion(&apiVersion) == VK_SUCCESS) {
+        if (vkEnumerateInstanceVersion(&apiVersion) == VK_SUCCESS)
+        {
             uint32_t major = VK_API_VERSION_MAJOR(apiVersion);
             uint32_t minor = VK_API_VERSION_MINOR(apiVersion);
             uint32_t patch = VK_API_VERSION_PATCH(apiVersion);
-            
+
             return VK_MAKE_VERSION(major, minor, patch);
-        } else {
+        }
+        else
+        {
             return VK_API_VERSION_1_0;
         }
     }

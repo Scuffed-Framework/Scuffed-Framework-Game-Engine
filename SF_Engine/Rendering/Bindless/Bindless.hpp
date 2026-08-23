@@ -44,6 +44,7 @@ namespace SF::Engine
         [[nodiscard]] BindlessIndex RegisterUniformBuffer(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
 
         void FreeSRV(BindlessIndex &index, Image fallback);
+        void FreeSRV(BindlessIndex &index);
         void FreeUAV(BindlessIndex &index, Image fallback);
 
         // Free ssbo bindless.
