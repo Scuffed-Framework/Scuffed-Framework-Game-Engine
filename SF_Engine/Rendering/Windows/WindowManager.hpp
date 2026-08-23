@@ -51,6 +51,10 @@ namespace SF::Engine
 
         std::pair<const char **, uint32_t> GetInstanceExtensions() const;
 
+        std::vector<std::unique_ptr<Window>>& GetWindows() { return windows; }
+
+        std::vector<std::unique_ptr<Monitor>>& GetMonitors() { return monitors; }
+
     private:
         friend void CallbackError(int32_t error, const char *description);
         friend void CallbackMonitor(GLFWmonitor *glfwMonitor, int32_t event);
