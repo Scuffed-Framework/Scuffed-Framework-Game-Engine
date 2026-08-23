@@ -8,80 +8,106 @@
 
 namespace SF::Engine
 {
-    std::unordered_map<AssetType, AssetFactoryFn> &AssetController::Factories()
+    std::unordered_map<std::string, AssetFactoryFn> &AssetController::Factories()
     {
-        static std::unordered_map<AssetType, AssetFactoryFn> factories;
+        static std::unordered_map<std::string, AssetFactoryFn> factories;
         return factories;
     }
 
-    void AssetController::RegisterFactory(AssetType type, AssetFactoryFn factory)
+    void AssetController::RegisterFactory(AssetType type, const std::string &rttiTypeName, AssetFactoryFn factory)
     {
         auto &factories = Factories();
-
-        if (factories.contains(type))
+        if (factories.contains(rttiTypeName))
         {
-            Log::Error("AssetController: factory for AssetType {} registered more than once; ignoring duplicate.", static_cast<int>(type));
+            Log::Error("AssetController: factory for '{}' registered more than once; ignoring duplicate.", rttiTypeName);
             return;
         }
-
-        factories.emplace(type, std::move(factory));
-    }
-
-    void AssetController::ProjectLoaded()
-    {
-        const std::filesystem::path kManifestPath = ProjectManager::Get()->GetProjectAssetPath() / "AssetManifest.xml";
-
-        if (!File::Exists(kManifestPath))
-        {
-            Log::Warning("AssetController: no manifest found at '{}', starting with an empty asset set.",
-                         kManifestPath.string().c_str()); // Use .string().c_str()
-        }
-
-        XMLModule *reader = XMLModule::Get();
-        if (!reader->LoadFromFile(kManifestPath.string()))
-        {
-            Log::Error("AssetController: failed to parse manifest '{}': {}",
-                       kManifestPath.string().c_str(), // Use .string().c_str()
-                       reader->GetLastError());
-        }
+        factories.emplace(rttiTypeName, std::move(factory));
+        // type is kept for filtering only — you can still index it separately if you want fast "all Textures" queries
     }
 
     bool AssetController::Initialize()
     {
-        assets_.clear();
+        // Actual asset loading happens per-project in ProjectLoaded(), once we
+        // know which Assets/ folder to scan. Nothing to do at engine boot.
+        assets_ = SFTL::DynamicArray<std::shared_ptr<AssetBase>>();
+        return true;
+    }
 
-        XMLModule *reader = XMLModule::Get();
+    void AssetController::ProjectLoaded()
+    {
+        if(assets_.size() == 0)
+            assets_.clear();
 
-        XMLNode root = reader->GetRootNode();
-        const auto &factories = Factories();
-
-        for (XMLNode entry : root.GetChildren("Asset"))
+        const std::filesystem::path assetsRoot = ProjectManager::Get()->GetProjectAssetPath();
+        if (!std::filesystem::exists(assetsRoot))
         {
+            Log::Warning("AssetController: assets folder '{}' does not exist yet.", assetsRoot.string());
+            return;
+        }
+
+        const auto &factories = Factories();
+        std::error_code ec;
+
+        for (auto it = std::filesystem::recursive_directory_iterator(assetsRoot, ec);
+             it != std::filesystem::recursive_directory_iterator();
+             it.increment(ec))
+        {
+            if (ec)
+            {
+                Log::Error("AssetController: error scanning '{}': {}", assetsRoot.string(), ec.message());
+                break;
+            }
+            if (it->is_directory() || it->path().extension() != ".meta")
+                continue;
+
+            const std::filesystem::path &metaPath = it->path();
+
+            XMLModule *reader = XMLModule::Get();
+            if (!reader->LoadFromFile(metaPath.string()))
+            {
+                Log::Error("AssetController: failed to parse meta '{}': {}", metaPath.string(), reader->GetLastError());
+                continue;
+            }
+
+            XMLNode metaRoot = reader->GetRootNode();
+            XMLNode assetNode = metaRoot.GetChild("Asset");
+            if (!assetNode.IsValid())
+            {
+                Log::Error("AssetController: meta '{}' has no <Asset> node; skipping.", metaPath.string());
+                continue;
+            }
+
             int rawType{};
-            entry.GetAttribute("Type", rawType);
+            assetNode.GetAttribute("Type", rawType);
             const AssetType assetType = static_cast<AssetType>(rawType);
 
-            auto factoryIt = factories.find(assetType);
+            std::string concreteType;
+            assetNode.GetAttribute("ConcreteType", concreteType);
+
+            auto factoryIt = factories.find(concreteType);
             if (factoryIt == factories.end())
             {
                 std::string name;
-                entry.GetAttribute("Name", name);
-                Log::Error("AssetController: no factory registered for AssetType {} (asset '{}'); skipping.",
-                           static_cast<int>(assetType), name);
+                assetNode.GetAttribute("Name", name);
+                Log::Error("AssetController: no factory for type '{}' (asset '{}'); skipping.",
+                        concreteType, name);
                 continue;
             }
 
             std::shared_ptr<AssetBase> asset = factoryIt->second();
 
-            entry.GetAttribute("Name", asset->name);
-            asset->type = assetType;
-            asset->uuid = UUID::FromString(entry.GetAttribute(std::string(std::string("UUID"))));
+            // "Foo.shader.meta" -> "Foo.shader" (only the trailing .meta is stripped)
+            std::filesystem::path assetDataPath = metaPath;
+            assetDataPath.replace_extension();
+
+            asset->assetPath = assetDataPath;
+            asset->Deserialize(metaRoot);
 
             assets_.push_back(std::move(asset));
         }
 
-        return true;
-        Log::Info("AssetController: loaded {} asset entries from manifest.", assets_.size());
+        Log::Info("AssetController: loaded {} assets from '{}'.", assets_.size(), assetsRoot.string());
     }
 
     void AssetController::SaveAll()
@@ -89,11 +115,9 @@ namespace SF::Engine
         for (auto &asset : assets_)
         {
             if (!asset)
-            {
                 continue;
-            }
-
-            asset->Save();
+            asset->Save();     // write the payload/data file
+            asset->SaveMeta(); // write just this asset's .meta sidecar
         }
     }
 
@@ -121,5 +145,32 @@ namespace SF::Engine
         }
 
         return nullptr;
+    }
+
+    void AssetController::SaveManifest()
+    {
+        if (!ProjectManager::Get()->IsAProjectLoaded())
+        {
+            Log::Warning("AssetController: SaveManifest called with no project loaded; ignoring.");
+            return;
+        }
+
+        const std::filesystem::path manifestPath =
+            ProjectManager::Get()->GetProjectAssetPath() / "AssetManifest.xml";
+
+        XMLModule *writer = XMLModule::Get();
+        writer->SetRootNode("AssetManifest");
+        XMLNode root = writer->GetRootNode();
+
+        for (const auto &asset : assets_)
+        {
+            if (asset)
+                asset->Serialize(root);
+        }
+
+        if (!writer->SaveToFile(manifestPath.string()))
+        {
+            Log::Error("AssetController: failed to save asset manifest to '{}'", manifestPath.string());
+        }
     }
 }

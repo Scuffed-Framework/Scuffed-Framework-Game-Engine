@@ -1,6 +1,8 @@
 #include "AssetsWindow.hpp"
 #include <Project/Project.hpp>
 #include <Gui/GuiMembers.hpp>
+#include "../Wizzards/Shaders.hpp"
+#include "Panels.hpp"
 
 namespace SF::Engine
 {
@@ -34,6 +36,9 @@ namespace SF::Engine
         DrawFilterControls();
         ImGui::Separator();
 
+        if (m_inlineEditMode != InlineEditMode::None && ImGui::IsKeyPressed(ImGuiKey_Escape))
+            CancelInlineFolderEdit();
+
         // Main content area with splitter for details panel
         if (m_viewMode == ViewMode::Details && m_selectedAsset)
         {
@@ -52,13 +57,13 @@ namespace SF::Engine
             DrawAssetGrid();
         }
 
-        if (ImGui::BeginPopupContextWindow("AssetBrowserContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
-        {
-            DrawContextMenu();
-            ImGui::EndPopup();
-        }
-
         ImGui::End();
+        DrawDeleteFolderConfirmPopup();
+
+        if (showCS)
+            ShowCreateShaderWizzard(m_currentPath);
+        if (showCSI)
+            ShowCreateShaderIncludeWizzard(m_currentPath);
     }
 
     template <typename Func>
@@ -272,19 +277,23 @@ namespace SF::Engine
     void AssetBrowser::DrawAssetGrid()
     {
         auto controller = AssetController::Get();
-        if(controller == nullptr) 
+        if (controller == nullptr)
             return;
         const auto &assets = controller->assets_;
 
         ImGui::BeginChild("AssetGrid", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 
         if (m_viewMode == ViewMode::List)
-        {
             DrawListView(assets);
-        }
         else
-        {
             DrawGridView(assets);
+
+        // Right-click on empty grid space -> "New" menu
+        if (ImGui::BeginPopupContextWindow("AssetBrowserContext",
+                ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+        {
+            DrawContextMenu();
+            ImGui::EndPopup();
         }
 
         ImGui::EndChild();
@@ -298,6 +307,20 @@ namespace SF::Engine
 
         if (ImGui::BeginTable("AssetGrid", columns, ImGuiTableFlags_None))
         {
+            int folderIndex = 0;
+            if (std::filesystem::exists(m_currentPath) && std::filesystem::is_directory(m_currentPath))
+            {
+                std::error_code ec;
+                for (const auto &entry : std::filesystem::directory_iterator(m_currentPath, ec))
+                {
+                    if (!entry.is_directory())
+                        continue;
+
+                    ImGui::TableNextColumn();
+                    DrawFolderTile(entry.path(), folderIndex++);
+                }
+            }
+
             int itemIndex = 0;
             for (const auto &asset : assets)
             {
@@ -369,7 +392,7 @@ namespace SF::Engine
         }
 
         ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + thumbnailSize.x);
-        ImGui::TextWrapped("%s", asset->name.c_str());
+        ImGui::TextWrapped("%s", asset->name.c_str()); // todo: click = rename, idk where and how FileSystem/File.hpp finna be used.
         ImGui::PopTextWrapPos();
 
         ImGui::EndGroup();
@@ -377,7 +400,7 @@ namespace SF::Engine
         if (isSelected)
             ImGui::PopStyleColor();
 
-        if (ImGui::BeginPopupContextItem())
+        if (ImGui::BeginPopupContextItem("AssetContext"))
         {
             if (ImGui::MenuItem(ICON_MD_OPEN_IN_NEW " Open"))
                 m_selectedAsset = asset->uuid;
@@ -410,6 +433,55 @@ namespace SF::Engine
             ImGui::TableSetupColumn(ICON_MD_SETTINGS " Actions", ImGuiTableColumnFlags_WidthFixed, 120);
             ImGui::TableHeadersRow();
 
+            // Folders first
+            if (std::filesystem::exists(m_currentPath) && std::filesystem::is_directory(m_currentPath))
+            {
+                std::error_code ec;
+                for (const auto &entry : std::filesystem::directory_iterator(m_currentPath, ec))
+                {
+                    if (!entry.is_directory())
+                        continue;
+
+                    std::filesystem::path folderPath = entry.path();
+                    std::string name = folderPath.filename().string();
+
+                    ImGui::PushID(name.c_str());
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(ICON_MD_FOLDER);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TableSetColumnIndex(1);
+                    bool isEditingThis = (m_inlineEditMode == InlineEditMode::RenameFolder && m_inlineEditPath == folderPath);
+                    if (isEditingThis)
+                    {
+                        DrawFolderNameField(folderPath, -1); // -1 = fill remaining column width
+                    }
+                    else if (ImGui::Selectable(name.c_str(), false,
+                                               ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick))
+                    {
+                        if (ImGui::IsMouseDoubleClicked(0))
+                            m_currentPath = folderPath;
+                    }
+
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::Text("Folder");
+
+                    ImGui::TableSetColumnIndex(3);
+                    if (!isEditingThis)
+                    {
+                        if (ImGui::SmallButton(ICON_MD_DRIVE_FILE_RENAME_OUTLINE "##rename"))
+                            BeginRenameFolder(folderPath);
+                        ImGui::SameLine();
+                        if (ImGui::SmallButton(ICON_MD_DELETE "##delete"))
+                            RequestDeleteFolder(folderPath);
+                    }
+
+                    ImGui::PopID();
+                }
+            }
+
             for (const auto &asset : assets)
             {
                 if (!asset || !ShouldShowAsset(asset))
@@ -417,11 +489,9 @@ namespace SF::Engine
 
                 ImGui::TableNextRow();
 
-                // Preview
                 ImGui::TableSetColumnIndex(0);
                 DrawSmallPreview(asset);
 
-                // Name
                 ImGui::TableSetColumnIndex(1);
                 bool isSelected = m_selectedAsset && *m_selectedAsset == asset->uuid;
 
@@ -431,26 +501,15 @@ namespace SF::Engine
                     m_selectedAsset = asset->uuid;
                 }
 
-                // Type
                 ImGui::TableSetColumnIndex(2);
                 ImGui::Text("%s", GetAssetTypeName(asset->type));
 
-                // UUID
                 ImGui::TableSetColumnIndex(3);
-                std::string guidStr = asset->uuid.ToString();
-                ImGui::Text("%s", guidStr.c_str());
-
-                // Actions
-                ImGui::TableSetColumnIndex(4);
                 if (ImGui::SmallButton((ICON_MD_OPEN_IN_NEW "##open")))
-                {
                     m_selectedAsset = asset->uuid;
-                }
                 ImGui::SameLine();
                 if (ImGui::SmallButton((ICON_MD_SAVE "##save")))
-                {
                     asset->Save();
-                }
             }
 
             ImGui::EndTable();
@@ -888,30 +947,201 @@ namespace SF::Engine
         return preview;
     }
 
+    void AssetBrowser::DrawFolderNameField(const std::filesystem::path &folderPath, float width)
+    {
+        ImGui::SetNextItemWidth(width);
+
+        if (m_inlineEditFocusPending)
+        {
+            ImGui::SetKeyboardFocusHere();
+            m_inlineEditFocusPending = false;
+        }
+
+        bool confirmed = ImGui::InputText("##inlinefoldername", m_inlineEditBuffer, sizeof(m_inlineEditBuffer),
+                                          ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
+
+        if (confirmed)
+            CommitInlineFolderRename();
+        else if (ImGui::IsItemDeactivated()) // clicked away without pressing Enter -> commit, like Unity
+            CommitInlineFolderRename();
+    }
+    void AssetBrowser::DrawFolderTile(const std::filesystem::path &folderPath, int index)
+    {
+        std::string name = folderPath.filename().string();
+        bool isEditingThis = (m_inlineEditMode == InlineEditMode::RenameFolder && m_inlineEditPath == folderPath);
+
+        ImGui::PushID(("folder_" + std::to_string(index)).c_str());
+        ImGui::BeginGroup();
+
+        ImVec2 thumbnailSize(m_thumbnailSize, m_thumbnailSize);
+
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.3f, 0.15f, 1.0f));
+        ImGui::Button("##folderbtn", thumbnailSize);
+        ImGui::PopStyleColor();
+
+        ImVec2 cursorPos = ImGui::GetCursorPos();
+        ImGui::SetCursorPos(ImVec2(
+            cursorPos.x + thumbnailSize.x / 2 - 16,
+            cursorPos.y - thumbnailSize.y / 2 - 16));
+        ImGui::TextUnformatted(ICON_MD_FOLDER);
+        ImGui::SetCursorPos(cursorPos);
+
+        if (isEditingThis)
+        {
+            DrawFolderNameField(folderPath, thumbnailSize.x);
+        }
+        else
+        {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + thumbnailSize.x);
+            ImGui::TextWrapped("%s", name.c_str());
+            ImGui::PopTextWrapPos();
+        }
+
+        ImGui::EndGroup();
+
+        if (!isEditingThis && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+            m_currentPath = folderPath;
+
+        if (!isEditingThis && ImGui::BeginPopupContextItem("FolderContext"))
+        {
+            if (ImGui::MenuItem(ICON_MD_OPEN_IN_NEW " Open"))
+                m_currentPath = folderPath;
+            ImGui::Separator();
+            if (ImGui::MenuItem(ICON_MD_DRIVE_FILE_RENAME_OUTLINE " Rename"))
+                BeginRenameFolder(folderPath);
+            if (ImGui::MenuItem(ICON_MD_DELETE " Delete"))
+                RequestDeleteFolder(folderPath);
+            ImGui::EndPopup();
+        }
+
+        ImGui::PopID();
+    }
+
+    std::filesystem::path AssetBrowser::CreateUniqueFolder(const std::filesystem::path &parent, const std::string &baseName)
+    {
+        std::filesystem::path candidate = parent / baseName;
+        int suffix = 1;
+        while (File::Exists(candidate.string()))
+            candidate = parent / (baseName + " (" + std::to_string(suffix++) + ")");
+        return candidate;
+    }
+
+    void AssetBrowser::BeginRenameFolder(const std::filesystem::path &path)
+    {
+        m_inlineEditMode = InlineEditMode::RenameFolder;
+        m_inlineEditPath = path;
+        std::snprintf(m_inlineEditBuffer, sizeof(m_inlineEditBuffer), "%s", path.filename().string().c_str());
+        m_inlineEditFocusPending = true;
+    }
+
+    void AssetBrowser::CommitInlineFolderRename()
+    {
+        std::string newName = m_inlineEditBuffer;
+        while (!newName.empty() && std::isspace(static_cast<unsigned char>(newName.back())))
+            newName.pop_back();
+
+        if (!newName.empty() && newName != m_inlineEditPath.filename().string())
+        {
+            std::filesystem::path newPath = m_inlineEditPath.parent_path() / newName;
+            if (!File::Exists(newPath.string()) &&
+                File::Rename(m_inlineEditPath.string(), newPath.string()))
+            {
+                if (m_currentPath == m_inlineEditPath)
+                    m_currentPath = newPath;
+            }
+        }
+
+        m_inlineEditMode = InlineEditMode::None;
+        m_inlineEditPath.clear();
+    }
+
+    void AssetBrowser::CancelInlineFolderEdit()
+    {
+        m_inlineEditMode = InlineEditMode::None;
+        m_inlineEditPath.clear();
+    }
+
+    void AssetBrowser::RequestDeleteFolder(const std::filesystem::path &path)
+    {
+        m_deleteTargetPath = path;
+        m_showDeleteConfirmPopup = true;
+    }
+
+    void AssetBrowser::DrawDeleteFolderConfirmPopup()
+    {
+        if (m_showDeleteConfirmPopup)
+        {
+            ImGui::OpenPopup("Delete Folder");
+            m_showDeleteConfirmPopup = false;
+        }
+
+        ImGui::SetNextWindowSize(ImVec2(360, 0), ImGuiCond_Appearing);
+        if (ImGui::BeginPopupModal("Delete Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), ICON_MD_WARNING " Delete this folder and all its contents?");
+            ImGui::TextWrapped("%s", m_deleteTargetPath.string().c_str());
+            ImGui::Separator();
+
+            if (ImGui::Button(ICON_MD_DELETE " Delete", ImVec2(120, 0)))
+            {
+                bool wasCurrentOrParent =
+                    m_currentPath == m_deleteTargetPath ||
+                    (m_currentPath.string().rfind(m_deleteTargetPath.string(), 0) == 0);
+
+                File::DeleteDirectory(m_deleteTargetPath.string(), true);
+
+                if (wasCurrentOrParent && m_deleteTargetPath.has_parent_path())
+                    m_currentPath = m_deleteTargetPath.parent_path();
+
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(ICON_MD_CLOSE " Cancel", ImVec2(120, 0)))
+                ImGui::CloseCurrentPopup();
+
+            ImGui::EndPopup();
+        }
+    }
+
     void AssetBrowser::DrawContextMenu()
     {
         if (ImGui::BeginMenu("New"))
         {
             // BASIC
-            if(ImGui::MenuItem("Folder"))
+            if (ImGui::MenuItem("Folder"))
             {
-                auto AssetPath = ProjectManager::Get()->GetProjectAssetPath();
-                // todo: what dir are we browsing in? / Folder Icon with text for folder, return or click off = create
+                auto uniquePath = CreateUniqueFolder(m_currentPath, "New Folder");
+                if (File::CreateDirectory(uniquePath.string()))
+                    BeginRenameFolder(uniquePath);
             }
-            if(ImGui::MenuItem("Prefab"))
+            if (ImGui::MenuItem("Prefab"))
             {
                 // ShowPrefabWizzard();
             }
 
             ImGui::Separator();
             // SHADERS
-            if(ImGui::MenuItem("Shader"))
+            if (ImGui::MenuItem("Shader"))
             {
-                // CreateDefaultShader(path);
+                showCS = true;
             }
-            if(ImGui::MenuItem("Shader Include"))
+            if (ImGui::MenuItem("Shader Include"))
             {
-                // CreateDefaultShaderInclude(path);
+                showCSI = true;
+            }
+            // Script
+            if (ImGui::BeginMenu("Script"))
+            {
+                if (ImGui::MenuItem("C++ Header"))
+                {
+                }
+                if (ImGui::MenuItem("C++ Source"))
+                {
+                }
+                if (ImGui::MenuItem("Lua Source"))
+                {
+                }
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }

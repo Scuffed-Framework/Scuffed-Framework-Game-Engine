@@ -12,6 +12,7 @@
 
 namespace SF::Engine
 {
+
     class AssetBrowser
     {
     public:
@@ -85,5 +86,28 @@ namespace SF::Engine
         // Helper to get or create texture preview
         template <typename TImage>
         TexturePreview GetOrCreatePreview(const UUID &guid, const std::shared_ptr<TImage> &texture);
+
+        enum class InlineEditMode
+        {
+            None,
+            RenameFolder
+        };
+        InlineEditMode m_inlineEditMode = InlineEditMode::None;
+        std::filesystem::path m_inlineEditPath;
+        char m_inlineEditBuffer[256] = {};
+        bool m_inlineEditFocusPending = false;
+
+        bool m_showDeleteConfirmPopup = false;
+        std::filesystem::path m_deleteTargetPath;
+
+        void DrawFolderTile(const std::filesystem::path &folderPath, int index);
+        void DrawFolderNameField(const std::filesystem::path &folderPath, float width);
+        void DrawDeleteFolderConfirmPopup();
+
+        std::filesystem::path CreateUniqueFolder(const std::filesystem::path &parent, const std::string &baseName);
+        void BeginRenameFolder(const std::filesystem::path &path);
+        void CommitInlineFolderRename();
+        void CancelInlineFolderEdit();
+        void RequestDeleteFolder(const std::filesystem::path &path);
     };
 }

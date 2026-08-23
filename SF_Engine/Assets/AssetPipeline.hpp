@@ -2,12 +2,12 @@
 
 #include <XML/XMLModule.hpp>
 #include <UtilityClasses/UUID.hpp>
-#include <Controllers/Controller.hpp>
 #include <span>
 #include <TemplateLibrary/DynamicArray.hpp>
 #include <filesystem>
 #include <Reflection/RTTI/RTTICast.hpp>
 #include <Engine/Module.hpp>
+#include <Engine/Log/Log.hpp>
 
 namespace SF::Engine
 {
@@ -26,7 +26,7 @@ namespace SF::Engine
         ConfigFile,
         Font,
         Material,
-        Library, // Dll, or rsc file
+        Library, // Dll(...so, dylib...), or rsc file
         AnimationStateMachine
     };
 
@@ -34,6 +34,7 @@ namespace SF::Engine
     {
         SF_RTTI(AssetBase, Serializable)
     public:
+        std::filesystem::path assetPath;
         std::string name;
         AssetType type;
         UUID uuid = UUID::Generate();
@@ -57,6 +58,7 @@ namespace SF::Engine
             asset.SetAttribute("Name", name);
             asset.SetAttribute("Type", static_cast<int>(type));
             asset.SetAttribute(std::string("UUID"), uuid.ToString());
+            asset.SetAttribute("ConcreteType", std::string(RTTI_GetTypeName())); // NEW
         }
 
         void Deserialize(const XMLNode &node) override
@@ -67,6 +69,24 @@ namespace SF::Engine
             asset.GetAttribute("Type", rawType);
             type = static_cast<AssetType>(rawType);
             uuid = UUID::FromString(asset.GetAttribute(std::string(std::string("UUID"))));
+        }
+
+        void SaveMeta() const
+        {
+            if (assetPath.empty())
+            {
+                Log::Error("AssetBase::SaveMeta: '{}' has no assetPath; cannot write .meta", name);
+                return;
+            }
+            XMLModule *writer = XMLModule::Get();
+            writer->SetRootNode("AssetMeta");
+            XMLNode root = writer->GetRootNode();
+            Serialize(root);
+
+            std::filesystem::path metaPath = assetPath;
+            metaPath += ".meta";
+            if (!writer->SaveToFile(metaPath.string()))
+                Log::Error("AssetBase::SaveMeta: failed to write '{}'", metaPath.string());
         }
     };
 
@@ -87,17 +107,20 @@ namespace SF::Engine
 
     using AssetFactoryFn = std::function<std::shared_ptr<AssetBase>()>;
 
-    class AssetController : public Module::Registrar<AssetController>
+    class AssetController : public ModuleRegistrar<AssetController>
     {
+        friend class ModuleRegistrar<AssetController>;
+        REGISTER_MODULE(AssetController, Module::Stage::Normal);
     public:
-        void Update(float dt) {}
+        void Update() {}
         bool Initialize() override;
         void ProjectLoaded();
         void Shutdown() { assets_.clear(); }
 
-        static void RegisterFactory(AssetType type, AssetFactoryFn factory);
+        static void RegisterFactory(AssetType type, const std::string &rttiTypeName, AssetFactoryFn factory);
 
         void SaveAll();
+        void SaveManifest(); 
 
         std::shared_ptr<AssetBase> FindByUUID(const UUID &guid) const;
         std::shared_ptr<AssetBase> FindByName(std::string_view name) const;
@@ -123,7 +146,7 @@ namespace SF::Engine
         }
 
     private:
-        static std::unordered_map<AssetType, AssetFactoryFn> &Factories();
+        static std::unordered_map<std::string, AssetFactoryFn> &Factories();
     };
 
     template <typename T>
@@ -135,8 +158,8 @@ namespace SF::Engine
 
         explicit AssetRegistrar(AssetType type)
         {
-            AssetController::RegisterFactory(type, []
-                                             { return std::make_shared<T>(); });
+            AssetController::RegisterFactory(type, T::RTTI_TypeName(), []
+                                        { return std::make_shared<T>(); });
         }
     };
 }
