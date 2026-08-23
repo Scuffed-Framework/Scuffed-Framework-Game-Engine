@@ -207,6 +207,16 @@ namespace SFTL
             return *this;
         }
 
+        void push_back(const T &value)
+        {
+            if (size_ == capacity_)
+                reserve(capacity_ == 0 ? 4 : capacity_ * 2);
+
+            allocator_traits<Allocator>::construct(
+                allocator_, data_ + size_, value); // copy, not move
+            ++size_;
+        }
+
         void push_back(T &&value)
         {
             if (size_ == capacity_)
@@ -216,15 +226,7 @@ namespace SFTL
                 allocator_, data_ + size_, ::SFTL::move(value));
             ++size_;
         }
-        void push_back(T &value)
-        {
-            if (size_ == capacity_)
-                reserve(capacity_ == 0 ? 4 : capacity_ * 2);
 
-            allocator_traits<Allocator>::construct(
-                allocator_, data_ + size_, ::SFTL::move(value));
-            ++size_;
-        }
         template <typename... Args>
         void emplace_back(Args &&...args)
         {
