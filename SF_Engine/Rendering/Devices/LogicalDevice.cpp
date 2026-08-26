@@ -19,8 +19,11 @@ namespace SF::Engine
 
     LogicalDevice::~LogicalDevice()
     {
-        RenderSystem::CheckVkResult(vkDeviceWaitIdle(logicalDevice));
-        vkDestroyDevice(logicalDevice, nullptr);
+        if (logicalDevice != VK_NULL_HANDLE)
+        {
+            vkDestroyDevice(logicalDevice, nullptr);
+            logicalDevice = VK_NULL_HANDLE;
+        }
     }
 
     void LogicalDevice::CreateQueueIndices()

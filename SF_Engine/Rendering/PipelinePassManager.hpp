@@ -20,7 +20,7 @@ namespace SF::Engine
          */
         explicit PipelinePass(Pipeline::Stage stage) : stage(std::move(stage)) {}
 
-        virtual ~PipelinePass() = default;
+        // virtual ~PipelinePass() = default; nocopy provides
 
         /**
          * Called once per frame BEFORE the renderpass for this stage begins.
@@ -36,12 +36,12 @@ namespace SF::Engine
          */
         virtual void Render(const CommandBuffer &commandBuffer) = 0;
 
-        const Pipeline::Stage &GetStage() const
+        [[nodiscard]] const Pipeline::Stage &GetStage() const
         {
             return stage;
         }
 
-        bool IsEnabled() const
+        [[nodiscard]] bool IsEnabled() const
         {
             return enabled;
         }
@@ -50,7 +50,7 @@ namespace SF::Engine
             this->enabled = enable;
         }
 
-        int GetOrder() const { return order; }
+        [[nodiscard]] int GetOrder() const { return order; }
         void SetOrder(int o) { order = o; }
 
     private:

@@ -181,3 +181,5 @@ namespace SF::Engine
     template <typename T>
     using TypeInfo = TypeInformation<T>;
 }
+
+#define Define_TypeId_Function(base, cl) [[nodiscard]] ::SF::Engine::TypeId GetTypeId() const override { return ::SF::Engine::TypeInformation<base>::GetTypeId<cl>(); }

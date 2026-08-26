@@ -12,6 +12,7 @@
 #include "Bindless/Bindless.hpp"
 
 #include <UtilityClasses/NoCopy.hpp>
+#include <Delegates/MultiCastDelegate.hpp>
 
 #include <filesystem>
 #include <mutex>
@@ -46,8 +47,6 @@ namespace SF::Engine
 
         // Module interface implementation
         void Update() override;
-
-        bool TryRecoverDevice();
 
         Module::Stage GetStage() const override
         {
@@ -128,7 +127,7 @@ namespace SF::Engine
             return id < swapchains.size() ? swapchains[id].get() : nullptr;
         }
 
-        void SetFramebufferResized(std::size_t id)
+        void SetFramebufferResized(std::size_t id) const
         {
             if (id < perSurfaceBuffers.size() && perSurfaceBuffers[id])
                 perSurfaceBuffers[id]->framebufferResized = true;
@@ -152,7 +151,7 @@ namespace SF::Engine
             return renderer.get();
         }
 
-        BindlessManager *GetBindlessManager() { return bindlessMgr.get(); }
+        BindlessManager *GetBindlessManager() const { return bindlessMgr.get(); }
 
         /**
          * @brief Rebuild render stages, swapchain, and framebuffers.
@@ -260,6 +259,10 @@ namespace SF::Engine
         {
             return &alloc;
         }
+
+        MulticastDelegate<VkCommandBuffer, std::size_t> &OnRecordViewports() { return onRecordViewports; }
+    private:
+        MulticastDelegate<VkCommandBuffer, std::size_t> onRecordViewports;
     };
 
     /**
@@ -522,10 +525,7 @@ namespace SF::Engine
             : m_cmd(cmd), m_buffer(buffer), m_offset(offset), m_drawCount(drawCount), m_stride(stride)
         {
             vkCmdDrawIndexedIndirect(m_cmd, m_buffer, m_offset, m_drawCount, m_stride);
-        }
-
-        // No-op destructor since command recording is already done
-        ~IndirectIndexedRendering() = default;
+        };
 
         /**
          * @brief Get the command buffer
@@ -595,8 +595,6 @@ namespace SF::Engine
                                           m_maxDrawCount,
                                           m_stride);
         }
-
-        ~IndirectIndexedCountRendering() = default;
 
         /**
          * @brief Get the command buffer
@@ -686,8 +684,7 @@ namespace SF::Engine
         void drawIndexedIndirect(VkBuffer buffer,
                                  VkDeviceSize offset,
                                  uint32_t drawCount = 1,
-                                 uint32_t stride = sizeof(VkDrawIndexedIndirectCommand))
-        {
+                                 uint32_t stride = sizeof(VkDrawIndexedIndirectCommand)) const {
             vkCmdDrawIndexedIndirect(m_cmd, buffer, offset, drawCount, stride);
         }
 

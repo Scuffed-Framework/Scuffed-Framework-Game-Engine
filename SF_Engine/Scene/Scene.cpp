@@ -68,7 +68,10 @@ namespace SF::Engine
         auto ownedRenderer = std::make_unique<SceneRenderer>(cfg);
         sceneRenderer_ = ownedRenderer.get();
 
-        ImGuiPipelinePass::SetTargetStage(Pipeline::Stage{1, 0});
+        // ImGui must target the stage that actually owns "swapchain" — that's
+        // now stage 2 (its own render pass; see SceneRenderer.hpp for why
+        // tonemap/swapchain was split out of stage 1).
+        ImGuiPipelinePass::SetTargetStage(Pipeline::Stage{2, 0});
 
         if (auto *rs = RenderSystem::Get())
         {
@@ -340,6 +343,12 @@ namespace SF::Engine
     const ImageDepth *Scene::GetDepthTexture()
     {
         return dynamic_cast<const ImageDepth *>(RenderSystem::Get()->GetAttachment("gbuf_depth"));
+    }
+
+    Scene::~Scene()
+    {
+        ClearSystems();
+        ClearEntities();
     }
 
 } // namespace SF::Engine

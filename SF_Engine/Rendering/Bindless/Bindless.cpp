@@ -9,7 +9,6 @@ namespace SF::Engine
     BindlessManager::BindlessManager()
     {
         const auto &indexingProps = RenderSystem::Get()->GetPhysicalDevice()->GetDescriptorIndexingProperties();
-        // Configs init.
         m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageBuffer)] = {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindStorageBuffers};
         m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessUniformBuffer)] = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindUniformBuffers};
         m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessSampledImage)] = {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindSampledImages};
@@ -79,14 +78,16 @@ namespace SF::Engine
             allocateInfo.pSetLayouts = &m_setLayout;
             allocateInfo.descriptorSetCount = 1;
 
-            // Create descriptor.
             RenderSystem::CheckVkResult(vkAllocateDescriptorSets(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(), &allocateInfo, &m_set));
         }
     }
 
     BindlessManager::~BindlessManager()
     {
-        // Destroy all device resource.
+        // Any resources whose Free* was called but whose index deferral hadn't
+        // elapsed yet are abandoned here — that's fine, the whole set/pool/layout
+        // is being destroyed right after this anyway. This is NOT a substitute for
+        // FlushAllPendingFrees() during normal shutdown; see header comment.
         DestroyDescriptorSetLayout(m_setLayout);
         DestroyDescriptorPool(m_pool);
     }
@@ -109,7 +110,7 @@ namespace SF::Engine
 
         vkUpdateDescriptorSets(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(), 1, &write, 0, nullptr);
 
-        return BindlessIndex{write.dstArrayElement, 0}; // Return as KeyValuePair
+        return BindlessIndex{write.dstArrayElement, 0};
     }
 
     BindlessIndex BindlessManager::RegisterSRV(VkImageView view)
@@ -135,13 +136,14 @@ namespace SF::Engine
 
     void BindlessManager::FreeSRV(BindlessIndex &index)
     {
-        FreeIndex(EBindingType::BindlessSampledImage, index.key);
+        std::lock_guard<std::mutex> lock(m_lockCount);
+        m_pendingFrees.push_back({EBindingType::BindlessSampledImage, index.key, m_currentFrame});
         index = {};
     }
 
     void BindlessManager::FreeSRV(BindlessIndex &index, Image fallback)
     {
-        if (fallback.GetImage()) // VkImage GetImage
+        if (fallback.GetImage())
         {
             VkDescriptorImageInfo imageInfo{};
             imageInfo.sampler = VK_NULL_HANDLE;
@@ -154,12 +156,13 @@ namespace SF::Engine
             write.dstBinding = static_cast<uint32>(EBindingType::BindlessSampledImage);
             write.pImageInfo = &imageInfo;
             write.descriptorCount = 1;
-            write.dstArrayElement = index.key; // Use key or access the first element
+            write.dstArrayElement = index.key;
 
             vkUpdateDescriptorSets(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(), 1, &write, 0, nullptr);
         }
 
-        FreeIndex(EBindingType::BindlessSampledImage, index.key);
+        std::lock_guard<std::mutex> lock(m_lockCount);
+        m_pendingFrees.push_back({EBindingType::BindlessSampledImage, index.key, m_currentFrame});
         index = {};
     }
 
@@ -184,7 +187,7 @@ namespace SF::Engine
 
     void BindlessManager::FreeUAV(BindlessIndex &index, Image fallback)
     {
-        if (fallback.GetImage()) // VkImage GetImage
+        if (fallback.GetImage())
         {
             VkDescriptorImageInfo imageInfo{};
             imageInfo.sampler = VK_NULL_HANDLE;
@@ -202,7 +205,8 @@ namespace SF::Engine
             vkUpdateDescriptorSets(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(), 1, &write, 0, nullptr);
         }
 
-        FreeIndex(EBindingType::BindlessStorageImage, index.key);
+        std::lock_guard<std::mutex> lock(m_lockCount);
+        m_pendingFrees.push_back({EBindingType::BindlessStorageImage, index.key, m_currentFrame});
         index = {};
     }
 
@@ -245,7 +249,8 @@ namespace SF::Engine
             vkUpdateDescriptorSets(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(), 1, &write, 0, nullptr);
         }
 
-        FreeIndex(EBindingType::BindlessStorageBuffer, index.key);
+        std::lock_guard<std::mutex> lock(m_lockCount);
+        m_pendingFrees.push_back({EBindingType::BindlessStorageBuffer, index.key, m_currentFrame});
         index = {};
     }
 
@@ -289,7 +294,8 @@ namespace SF::Engine
             vkUpdateDescriptorSets(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(), 1, &write, 0, nullptr);
         }
 
-        FreeIndex(EBindingType::BindlessUniformBuffer, index.key);
+        std::lock_guard<std::mutex> lock(m_lockCount);
+        m_pendingFrees.push_back({EBindingType::BindlessUniformBuffer, index.key, m_currentFrame});
         index = {};
     }
 
@@ -300,9 +306,7 @@ namespace SF::Engine
         const auto &typeIndex = static_cast<uint32>(type);
         const auto &config = m_bindingConfigs[typeIndex];
 
-        // Final index.
         uint32 index = 0;
-        // Reuse or increment new one.
         auto &freeCounts = m_freeCount[typeIndex];
         auto &usedCount = m_usedCount[typeIndex];
         if (freeCounts.empty())
@@ -321,11 +325,6 @@ namespace SF::Engine
 
                 usedCount = 0;
             }
-
-            if (usedCount % 1000 == 0)
-            {
-                // Log or handle warning
-            }
         }
         else
         {
@@ -333,29 +332,52 @@ namespace SF::Engine
             freeCounts.pop();
         }
 
-        // Return result.
         return index;
     }
 
-    void BindlessManager::FreeIndex(EBindingType type, uint32 index)
+    void BindlessManager::FreeIndexImmediate(EBindingType type, uint32 index)
+    {
+        // Caller must already hold m_lockCount.
+        m_freeCount[static_cast<uint32>(type)].push(index);
+    }
+
+    void BindlessManager::Tick()
     {
         std::lock_guard<std::mutex> lock(m_lockCount);
+        ++m_currentFrame;
 
-        const auto &typeIndex = static_cast<uint32>(type);
-        m_freeCount[typeIndex].push(index);
+        if (m_currentFrame < kFramesInFlight)
+            return; // nothing can have aged out yet
+
+        const uint64_t cutoff = m_currentFrame - kFramesInFlight;
+
+        auto it = std::remove_if(m_pendingFrees.begin(), m_pendingFrees.end(),
+            [&](const PendingFree &pf)
+            {
+                if (pf.freedOnFrame > cutoff)
+                    return false;
+                FreeIndexImmediate(pf.type, pf.index);
+                return true;
+            });
+        m_pendingFrees.erase(it, m_pendingFrees.end());
+    }
+
+    void BindlessManager::FlushAllPendingFrees()
+    {
+        std::lock_guard<std::mutex> lock(m_lockCount);
+        for (const auto &pf : m_pendingFrees)
+            FreeIndexImmediate(pf.type, pf.index);
+        m_pendingFrees.clear();
     }
 
     void BindlessManager::VerifyShaderLayout(const std::vector<BindlessReflectionData> &reflectionData)
     {
         for (const auto &data : reflectionData)
         {
-            // bindless is always 100
             if (data.set != 100)
                 continue;
 
             Log::Info("BindlessManager verified: {} at Binding {}", data.name, data.binding);
-
-            // Optional: Add asserts here to ensure data.binding matches the static_cast<uint32>(EBindingType::...) expectations.
         }
     }
 }

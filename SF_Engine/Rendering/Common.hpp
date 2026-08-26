@@ -5,9 +5,9 @@ namespace SF::Engine
     inline VkDescriptorSetLayout CreateDescriptorSetLayout(const VkDescriptorSetLayoutCreateInfo &createInfo)
     {
         VkDescriptorSetLayout layout = VK_NULL_HANDLE;
-        auto device = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice();
+        const auto device = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice();
 
-        VkResult result = vkCreateDescriptorSetLayout(device, &createInfo, nullptr, &layout);
+        const VkResult result = vkCreateDescriptorSetLayout(device, &createInfo, nullptr, &layout);
         RenderSystem::RenderSystem::CheckVkResult(result);
 
         return layout;

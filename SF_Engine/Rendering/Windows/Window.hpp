@@ -449,6 +449,8 @@ namespace SF::Engine
             return onMouseScroll;
         }
 
+        bool ShouldClose() const { return glfwWindowShouldClose(this->window);}
+
     private:
         friend void CallbackWindowPosition(GLFWwindow *glfwWindow, int32_t xpos, int32_t ypos);
         friend void CallbackWindowSize(GLFWwindow *glfwWindow, int32_t width, int32_t height);

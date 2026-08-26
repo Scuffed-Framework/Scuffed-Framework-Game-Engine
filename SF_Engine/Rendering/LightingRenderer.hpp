@@ -165,11 +165,11 @@ namespace SF::Engine
         {
         }
 
-        Image2d *GetHdrColorTarget();
+        static Image2d *GetHdrColorTarget();
 
-        SF::Engine::LightManager *GetLightManager() { return lightManager_.get(); }
-        SF::Engine::GBufferPass *GetGBuffer() { return gbuffer_; }
-        SF::Engine::SSRPipelinePass *GetSSR() { return ssr_; }
+        SF::Engine::LightManager *GetLightManager() const { return lightManager_.get(); }
+        SF::Engine::GBufferPass *GetGBuffer() const { return gbuffer_; }
+        SF::Engine::SSRPipelinePass *GetSSR() const { return ssr_; }
 
     private:
         std::unique_ptr<SF::Engine::LightManager> lightManager_;

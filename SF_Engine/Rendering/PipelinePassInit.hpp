@@ -19,7 +19,7 @@ namespace SF::Engine
 
         void Register(InitFn fn) { fns_.push_back(std::move(fn)); }
 
-        void RunAll(PipelinePassManager &mgr)
+        void RunAll(PipelinePassManager &mgr) const
         {
             for (auto &fn : fns_)
                 fn(mgr);

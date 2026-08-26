@@ -103,7 +103,6 @@ namespace SF::Engine
     template <typename T>
     inline constexpr bool is_ptr_access_v = std::is_pointer_v<T> || is_unique_ptr_v<T> || is_shared_ptr_v<T> || is_weak_ptr_v<T>;
 
-    // TODO C++20: std::to_address
     template <typename T>
     static T *to_address(T *obj) noexcept { return obj; }
 
