@@ -27,7 +27,7 @@ namespace SF::Engine
 
     public:
         explicit Scene(::std::unique_ptr<CameraController> &&cameraController, std::string name, SceneRendererConfig cfg = {});
-        virtual ~Scene() = default;
+        virtual ~Scene();
 
         virtual void Start() = 0;
         virtual void Update();
@@ -141,7 +141,6 @@ namespace SF::Engine
 
         std::unique_ptr<CameraController> cameraController_;
 
-        std::shared_ptr<LightManager> lightManager_;
         LitMeshPipelinePass *litPass_ = nullptr;
         AtmospherePipelinePass *atmoPass_ = nullptr;
         CloudPipelinePass *cloudPass_ = nullptr;
@@ -177,11 +176,11 @@ namespace SF::Engine
 
         void RebuildLightManager()
         {
-            if (!lightManager_)
+            if (!GetLightManager())
                 return;
-            lightManager_->ClearLights();
+            GetLightManager()->ClearLights();
             for (auto &sl : lights_)
-                lightManager_->AddLight(*sl->GetComponent<Light>());
+                GetLightManager()->AddLight(*sl->GetComponent<Light>());
         }
 
         std::string name;
