@@ -3,7 +3,7 @@
 #include <Math/Transform.hpp>
 #include <Math/Vectors/Vector.hpp>
 #include <Entity/Entity.hpp>
-#include <Components/Component.hpp>
+#include <Entity/Components/Component.hpp>
 #include <memory>
 #include "Audio.hpp"
 #include "SoundBuffer.hpp"

@@ -2,11 +2,11 @@
 #include <Gui/ocornut/imgui.h>
 #include <string>
 #include <vector>
-#include <Camera/EditorCamera.hpp>
+#include <Rendering/Camera/EditorCamera.hpp>
 #include <cstdio>
 
 #include <Scene/Types.hpp>
-#include <Default/ImGuiDefaultWIDGETS.hpp>
+#include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
 
 #include <Commands/CommandsWindow.hpp>
 

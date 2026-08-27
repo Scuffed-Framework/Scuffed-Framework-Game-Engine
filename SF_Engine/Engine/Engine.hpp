@@ -9,7 +9,7 @@
 #define NO_MANGLE __attribute__((visibility("default"))) extern "C"
 #define NO_MANGLE_EXPORT __attribute__((visibility("default"))) __declspec(dllexport) extern "C"
 
-#include <LayerStack/LayerStack.hpp>
+#include <LowLevel/LayerStack/LayerStack.hpp>
 #include "Log/Log.hpp"
 #include "Module.hpp"
 
@@ -24,7 +24,7 @@
 #include <Scene/SceneLoading.hpp>
 
 #include <UtilityClasses/Formatter.hpp>
-#include <Threading/ThreadPool.hpp>
+#include <Platform/Threading/ThreadPool.hpp>
 
 #include "InitGame/GameInstance.hpp"
 #include "VersionSemantic.hpp"

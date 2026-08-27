@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Components/Component.hpp>
+#include <Entity/Components/Component.hpp>
 #include <Math/Math.hpp>
 #include <Physics/Frustum.hpp>
 #include <Physics/Ray.hpp>
 #include <Math/Math.hpp>
-#include <Rendering/Windows/Window.hpp>
+#include <Platform/Windows/Window.hpp>
 #include <Rendering/Buffers/UniformBuffer.hpp>
 
 namespace SF::Engine

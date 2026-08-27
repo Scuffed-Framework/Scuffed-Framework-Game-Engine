@@ -1,7 +1,7 @@
 #include "ImGuiPipelinePass.hpp"
 
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Windows/WindowManager.hpp>
+#include <Platform/Windows/WindowManager.hpp>
 #include <Rendering/Commands/CommandBuffer.hpp>
 #include <Rendering/RenderPass/RenderPass.hpp>
 #include <Rendering/Stage.hpp>
@@ -9,7 +9,7 @@
 #include <GLFW/glfw3.h>
 
 #include <stdexcept>
-#include <Default/ImGuiDefault.hpp>
+#include <Configuration/Default/ImGuiDefault.hpp>
 
 namespace SF::Engine
 {

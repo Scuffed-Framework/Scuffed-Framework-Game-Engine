@@ -49,10 +49,10 @@ namespace SF::Engine
             buffer.resize(buffer.size() * 2);
         }
 
-        return std::filesystem::path(std::string(buffer.data(), size));
+        return {std::string(buffer.data(), size)};
 
 #else
         return {};
 #endif
     }
-}
+} // namespace SF::Engine

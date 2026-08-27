@@ -1,10 +1,10 @@
 #include "AssetPipeline.hpp"
 
-#include <Filesystem/File.hpp>
+#include <LowLevel/FileSystem/File.hpp>
 #include <Engine/Log/Log.hpp>
-#include <XML/XMLModule.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
 #include <assimp/Importer.hpp>
-#include <Project/Project.hpp>
+#include <Engine/Project/Project.hpp>
 
 namespace SF::Engine
 {

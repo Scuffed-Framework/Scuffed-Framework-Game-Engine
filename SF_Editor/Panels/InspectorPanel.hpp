@@ -3,7 +3,7 @@
 #include <string>
 #include <functional>
 #include <Entity/Entity.hpp>
-#include <Components/Component.hpp>
+#include <Entity/Components/Component.hpp>
 #include <Gui/UIRegistry.hpp>
 #include <TemplateLibrary/Types.hpp>
 #include <Gui/StaticPanel.hpp>

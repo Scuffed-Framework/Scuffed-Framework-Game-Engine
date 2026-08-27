@@ -2,7 +2,7 @@
 
 #include "ResourceFileHeader.hpp"
 #include "RscCrypto.hpp"
-#include <Filesystem/File.hpp>
+#include <LowLevel/FileSystem/File.hpp>
 
 #include <cstdint>
 #include <optional>

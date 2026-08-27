@@ -3,7 +3,7 @@
 #include <Controllers/CameraController.hpp>
 #include <Engine/Engine.hpp>
 
-#include <Rendering/Windows/WindowManager.hpp>
+#include <Platform/Windows/WindowManager.hpp>
 #include <Rendering/Lighting/LightManager.hpp>
 #include <Rendering/Descriptors/DescriptorSet.hpp>
 

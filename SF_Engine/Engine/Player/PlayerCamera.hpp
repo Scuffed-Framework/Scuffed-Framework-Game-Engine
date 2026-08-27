@@ -1,5 +1,5 @@
 #pragma once
-#include <Camera/Camera.hpp>
+#include <Rendering/Camera/Camera.hpp>
 #include <Entity/Entity.hpp>
 
 namespace SF::Engine

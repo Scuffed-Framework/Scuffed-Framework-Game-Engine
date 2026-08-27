@@ -2,7 +2,7 @@
 #include <Rendering/Images/Image2d.hpp>
 #include <Rendering/Images/ImageDepth.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <Camera/Camera.hpp>
+#include <Rendering/Camera/Camera.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 #include <Gui/ocornut/imgui_impl_vulkan.h>
 #include <array>

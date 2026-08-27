@@ -3,8 +3,8 @@
 #include <Rendering/Buffers/Buffer.hpp>
 #include <Rendering/Commands/CommandBuffer.hpp>
 #include <Rendering/Mesh/Vertex.hpp>
-#include <XML/XMLModule.hpp>
-#include <Components/Component.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
+#include <Entity/Components/Component.hpp>
 #include <span>
 #include <vector>
 #include <Scene/SceneSerialization.hpp>

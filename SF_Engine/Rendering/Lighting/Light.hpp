@@ -5,9 +5,9 @@
 #include <Math/Vectors/Vector.hpp>
 #include <Math/BasicMath.hpp>
 #include <string>
-#include <XML/XMLModule.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
 #include <Scene/SceneSerialization.hpp>
-#include <Components/Component.hpp>
+#include <Entity/Components/Component.hpp>
 
 namespace SF::Engine
 {

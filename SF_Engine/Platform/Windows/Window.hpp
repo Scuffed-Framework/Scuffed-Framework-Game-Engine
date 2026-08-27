@@ -3,7 +3,7 @@
 #define VK_NO_PROTOTYPES
 
 #include <volk.h>
-#include <Input/ButtonCodes.hpp>
+#include <Platform/Input/ButtonCodes.hpp>
 #include <LowLevel/Bitmask.hpp>
 #include <LowLevel/Rocket.hpp>
 #include "Monitor.hpp"

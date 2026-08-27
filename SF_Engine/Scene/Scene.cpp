@@ -2,7 +2,7 @@
 #include <Rendering/Renderer.hpp>
 #include <Rendering/Stage.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
-#include <Rendering/Windows/WindowManager.hpp>
+#include <Platform/Windows/WindowManager.hpp>
 #include <Gui/ImGuiPipelinePass.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>

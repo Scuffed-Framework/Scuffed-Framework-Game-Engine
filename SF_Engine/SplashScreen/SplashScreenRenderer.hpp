@@ -1,5 +1,5 @@
 #pragma once
-#include <Rendering/Windows/WindowManager.hpp>
+#include <Platform/Windows/WindowManager.hpp>
 #include <Rendering/Images/Imaged2d>
 #include <Assets/Video/Video.hpp>
 #include <unordered_map>

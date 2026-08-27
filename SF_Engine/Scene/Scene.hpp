@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Camera/Camera.hpp>
+#include <Rendering/Camera/Camera.hpp>
 #include <LowLevel/Rocket.hpp>
 #include <Entity/EntityHolder.hpp>
 #include "SystemHolder.hpp"
@@ -9,7 +9,7 @@
 #include <Rendering/Lighting/LitMeshPipelinePass.hpp>
 #include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 
-#include <XML/XMLModule.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
 #include "SceneSerialization.hpp"
 #include <Scene/Types.hpp>
 #include <Scene/SceneRenderer.hpp>

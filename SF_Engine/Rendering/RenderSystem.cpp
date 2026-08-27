@@ -10,7 +10,7 @@
 #include "Windows/WindowManager.hpp"
 #include "SharedSamplers.hpp"
 
-#include <Camera/Camera.hpp>
+#include <Rendering/Camera/Camera.hpp>
 #include "SharedFunctions.hpp"
 #include "Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp"
 

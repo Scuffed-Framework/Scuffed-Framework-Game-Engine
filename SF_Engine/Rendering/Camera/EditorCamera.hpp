@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Rendering/Windows/Window.hpp>
+#include <Platform/Windows/Window.hpp>
 #include <Math/BasicMath.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
-#include <Camera/Camera.hpp>
+#include <Rendering/Camera/Camera.hpp>
 
 namespace SF::Engine
 {

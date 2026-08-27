@@ -1,7 +1,7 @@
 #include "Engine.hpp"
-#include <Default/DefaultScene.hpp>
+#include <Configuration/Default/DefaultScene.hpp>
 #include <Scene/SceneManager.hpp>
-#include <Project/Project.hpp>
+#include <Engine/Project/Project.hpp>
 #include <GameScript/LuaEngine.hpp>
 
 #ifdef Always

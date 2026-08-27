@@ -5,7 +5,7 @@
 #include <Gui/ocornut/imgui_stdlib.h>
 #include <Gui/Declare_Widget.hpp>
 #include "Panels.hpp"
-#include <Default/ImGuiDefaultWIDGETS.hpp>
+#include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
 #include <Scene/SceneManager.hpp>
 
 namespace SF::Engine

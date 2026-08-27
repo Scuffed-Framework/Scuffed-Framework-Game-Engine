@@ -1,6 +1,6 @@
 #pragma once
-#include <Camera/Camera.hpp>
-#include <Camera/EditorCamera.hpp>
+#include <Rendering/Camera/Camera.hpp>
+#include <Rendering/Camera/EditorCamera.hpp>
 #include "Controller.hpp"
 
 namespace SF::Engine

@@ -1,5 +1,5 @@
 #include "SceneManager.hpp"
-#include <Default/DefaultScene.hpp>
+#include <Configuration/Default/DefaultScene.hpp>
 
 namespace SF::Engine
 {

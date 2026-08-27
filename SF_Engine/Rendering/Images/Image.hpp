@@ -9,11 +9,11 @@
 #include <filesystem>
 #include <typeindex>
 #include <type_traits>
-#include <XML/XMLModule.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
 
 #include <Reflection/RTTISingle.hpp>
 #include <Assets/SerializationRegistry.hpp>
-#include <XML/XMLNodeWriter.hpp>
+#include <LowLevel/XML/XMLNodeWriter.hpp>
 
 SF_REFLECT_EXTERNAL_TYPE(VkExtent3D)
 SF_REFLECT_EXTERNAL_TYPE(VkExtent2D)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <UtilityClasses/NoCopy.hpp>
-#include <Components/Component.hpp>
+#include <Entity/Components/Component.hpp>
 #include "Entity.hpp"
 #include <vector>
 #include <string>

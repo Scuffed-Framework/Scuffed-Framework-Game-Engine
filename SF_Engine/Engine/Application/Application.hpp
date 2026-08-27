@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-#include <Filesystem/File.hpp>
+#include <LowLevel/FileSystem/File.hpp>
 #include <LowLevel/Rocket.hpp>
 
 // Undefine problematic macros (microslop)
@@ -44,14 +44,19 @@
 #include <Platform/PlatformIncludes.hpp>
 
 #include <Scene/SceneManager.hpp>
-#include <Rendering/Windows/WindowManager.hpp>
+#include <Platform/Windows/WindowManager.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Engine/InitGame/GameInfo.hpp>
 #include <TemplateLibrary/TypeTraits.hpp>
-#include <Default/ImGuiDefaultWIDGETS.hpp>
+#include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
+#include <Rendering/Viewport/Viewport.hpp>
+#include <Rendering/RenderSystem.hpp>
 
 #ifdef Started
+#undef Started
+#endif
+#ifdef Success
 #undef Success
 #endif
 
@@ -60,7 +65,7 @@ namespace SF::Engine
     std::filesystem::path GetExecutablePathImpl();
 
     template <class ApplicationInfo>
-    class Application : public virtual rocket::trackable, NoCopy
+    class Application : NoCopy
     {
         static_assert(std::is_base_of_v<GameInfo, ApplicationInfo>,
                       "ApplicationInfo must derive from GameInfo");
@@ -74,6 +79,8 @@ namespace SF::Engine
         bool started_ = false;
         std::string path_;
         std::vector<File> modules_;
+        std::vector<std::unique_ptr<SceneViewport>> viewports;
+        size_t reg;
 
     public:
         enum InitializationReturn
@@ -87,7 +94,7 @@ namespace SF::Engine
 
         std::unique_ptr<ApplicationInfo> Info;
 
-        constexpr auto InfoCheck() -> void
+        auto InfoCheck() -> void
         {
             if(!Info) return;
         }
@@ -104,6 +111,24 @@ namespace SF::Engine
             wndMgr = SF::Engine::WindowManager::Get();
             renderer = SF::Engine::RenderSystem::Get();
             sceneMgr = SF::Engine::SceneManager::Get();
+
+            viewports.push_back(std::make_unique<SceneViewport>(UVec2{800, 600}));
+
+            renderer->OnRecordViewports().Add([this](VkCommandBuffer cmd, std::size_t frameIndex)
+            {
+                for (auto &vp : viewports)
+                {
+                    vp->Tick(frameIndex);
+                    vp->PrepareForRender(cmd);
+                    vp->BeginRendering(cmd);
+                    // scene draws for this viewport go here
+
+                    vp->EndRendering(cmd);
+                    vp->PrepareForSample(cmd);
+                }
+            });
+            for (auto &vp : viewports)
+                 reg = UIRegistry::Get().Register([this, &vp]{DrawViewport(vp.get());});;
         }
 
         // call my init first :)
