@@ -1,5 +1,5 @@
 #include "AssetsWindow.hpp"
-#include <Project/Project.hpp>
+#include <Engine/Project/Project.hpp>
 #include <Gui/GuiMembers.hpp>
 #include "../Wizzards/Shaders.hpp"
 #include "Panels.hpp"
@@ -10,7 +10,6 @@ namespace SF::Engine
     {
         if (ProjectManager::Get()->IsAProjectLoaded() == false)
         {
-            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Asset Controller not initialized");
             return;
         }
         if (!ImGui::Begin(ICON_MD_FOLDER " Asset Browser", nullptr, ImGuiWindowFlags_MenuBar))
