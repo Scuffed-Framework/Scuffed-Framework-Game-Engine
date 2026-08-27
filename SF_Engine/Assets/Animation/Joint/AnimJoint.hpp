@@ -6,8 +6,9 @@
 
 #include <TemplateLibrary/Types.hpp>
 #include <TemplateLibrary/TypeTraits.hpp>
-#include <string>
 #include <TemplateLibrary/DynamicArray.hpp>
+
+#include "TemplateLibrary/Containers/String.hpp"
 
 using namespace SFTL;
 namespace SF::Engine
@@ -19,9 +20,9 @@ namespace SF::Engine
             SF_RTTI_BASE(Joint)
         public:
             // give no data cuz
-            Joint(uint32 index = 0, String name = "", const Mat4 &bindLocalTransform = Mat4(0)) : index(index),
-                                                                                                                         name(::SFTL::move(name)),
-                                                                                                                         localBindTransform(bindLocalTransform)
+            explicit Joint(uint32 index = 0, ::SFTL::string name = "", const Mat4 &bindLocalTransform = Mat4(0)) : index(index),
+                                                                                                                   name(::SFTL::move(name)),
+                                                                                                                   localBindTransform(bindLocalTransform)
             {
             }
 
@@ -37,8 +38,8 @@ namespace SF::Engine
             uint32 GetIndex() const { return index; }
             void SetIndex(uint32 index) { this->index = index; }
 
-            const String &GetName() const { return name; }
-            void SetName(const String &name) { this->name = name; }
+            const ::SFTL::string &GetName() const { return name; }
+            void SetName(const ::SFTL::string &name) { this->name = name; }
 
             const DynamicArray<Joint> &GetChildren() const { return children; }
 
@@ -51,14 +52,12 @@ namespace SF::Engine
 
         private:
             uint32_t index = 0;
-            String name;
+            ::SFTL::string name;
             DynamicArray<Joint> children;
 
             Mat4 localBindTransform;
             Mat4 inverseBindTransform;
         };
-
-#pragma once
 
         class JointTransform
         {
