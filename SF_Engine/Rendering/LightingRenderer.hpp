@@ -6,7 +6,7 @@
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
 #include <Rendering/Visuals/SSR/SSRPipelinePass.hpp>
-#include "Windows/WindowManager.hpp"
+#include <Platform/Windows/WindowManager.hpp>
 
 #include <Math/BasicMath.hpp>
 #include <glm/gtc/matrix_transform.hpp>

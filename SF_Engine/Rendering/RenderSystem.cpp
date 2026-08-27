@@ -7,7 +7,7 @@
 #include <cstring>
 
 #include "PipelineRenderer.hpp"
-#include "Windows/WindowManager.hpp"
+#include <Platform/Windows/WindowManager.hpp>
 #include "SharedSamplers.hpp"
 
 #include <Rendering/Camera/Camera.hpp>

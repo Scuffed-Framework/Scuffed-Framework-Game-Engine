@@ -7,8 +7,8 @@
 #include "Devices/LogicalDevice.hpp"
 #include "Devices/PhysicalDevice.hpp"
 #include "Renderer.hpp"
-#include "Windows/Surface.hpp"
-#include "Windows/WindowManager.hpp"
+#include <Platform/Windows/Surface.hpp>
+#include <Platform/Windows/WindowManager.hpp>
 #include "Bindless/Bindless.hpp"
 
 #include <UtilityClasses/NoCopy.hpp>
