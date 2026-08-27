@@ -7,7 +7,6 @@
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 #include <Rendering/Lighting/LightingTypes.hpp>
-#include <Scene/Scene.hpp>
 
 #include <Rendering/PipelinePassManager.hpp>
 
