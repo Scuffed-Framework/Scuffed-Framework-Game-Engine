@@ -15,7 +15,6 @@
 #include <chrono>
 #include <string>
 
-#include <Scene/SceneRenderer.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Assets/Bitmaps/Bitmap.hpp>
 #include <Rendering/Images/ImageDepth.hpp>
