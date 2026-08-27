@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Events/EventDispatcher.hpp>
+#include <Communication/Events/EventDispatcher.hpp>
 
 namespace SF::Engine
 {

@@ -2,7 +2,7 @@
 
 #include "Layer.hpp"
 #include "UtilityClasses/NoCopy.hpp"
-#include <Events/EventDispatcher.hpp>
+#include <Communication/Events/EventDispatcher.hpp>
 #include <vector>
 #include <algorithm>
 

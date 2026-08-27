@@ -12,7 +12,7 @@
 #include "Bindless/Bindless.hpp"
 
 #include <UtilityClasses/NoCopy.hpp>
-#include <Delegates/MultiCastDelegate.hpp>
+#include <Communication/Delegates/MultiCastDelegate.hpp>
 
 #include <filesystem>
 #include <mutex>

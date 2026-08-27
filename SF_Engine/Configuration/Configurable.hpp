@@ -1,5 +1,5 @@
 #pragma once
-#include <Delegates/Delegate.hpp>
+#include <Communication/Delegates/Delegate.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 
 template <typename TDerived, typename TContainer>
