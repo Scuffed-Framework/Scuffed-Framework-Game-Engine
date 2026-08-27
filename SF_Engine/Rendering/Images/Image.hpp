@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <LowLevel/XML/XMLModule.hpp>
 
-#include <Reflection/RTTISingle.hpp>
+#include <LowLevel/Reflection/RTTISingle.hpp>
 #include <Assets/SerializationRegistry.hpp>
 #include <LowLevel/XML/XMLNodeWriter.hpp>
 
