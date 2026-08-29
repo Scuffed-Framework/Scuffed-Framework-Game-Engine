@@ -11,7 +11,6 @@
 #include <UtilityClasses/NoCopy.hpp>
 #include <UtilityClasses/TypeInformation.hpp>
 #include <LowLevel/Reflection/RTTI/RTTI.hpp>
-#include <LowLevel/XML/XMLModule.hpp>
 
 #ifdef Always
 #undef Always
@@ -159,10 +158,11 @@ namespace SF::Engine
         };
     };
 
+    class XMLNode;
     /**
      * @brief Base class for all engine modules
      */
-    class Module : public ModuleFactory<Module>, NoCopy, public Serializable
+    class Module : public ModuleFactory<Module>, NoCopy
     {
         SF_RTTI_BASE(Module)
     public:
@@ -211,6 +211,9 @@ namespace SF::Engine
          * @brief Get the module's name (for debugging)
          */
         [[nodiscard]] virtual std::string_view GetName() const = 0;
+
+        virtual void Serialize(XMLNode &) const {}
+        virtual void Deserialize(const XMLNode &) {}
     };
 
     // Explicit template instantiation
