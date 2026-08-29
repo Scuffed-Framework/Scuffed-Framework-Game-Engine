@@ -41,6 +41,8 @@
 #include <shared_mutex>
 #include <mutex>
 
+#include <LowLevel/Reflection/RTTI/TypeId.hpp>
+
 #if defined(_MSC_VER)
 #include <windows.h>
 #include <dbghelp.h>
@@ -183,3 +185,5 @@ namespace SF::Engine
 }
 
 #define Define_TypeId_Function(base, cl) [[nodiscard]] ::SF::Engine::TypeId GetTypeId() const override { return ::SF::Engine::TypeInformation<base>::GetTypeId<cl>(); }
+
+#define TypeId_Name_Function(cl) [[nodiscard]] ::std::string_view GetTypeName() const override {return ::SF::Engine::TypeInformation<cl>::GetTypeName<cl>();}

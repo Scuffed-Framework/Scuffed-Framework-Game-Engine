@@ -250,10 +250,15 @@ namespace SFTL
             MoveFrom(other);
         }
 
-        AdvancedString(initializer_list<T> ilist, const Allocator &alloc = Allocator())
+        explicit AdvancedString(initializer_list<T> ilist, const Allocator &alloc = Allocator())
             : alloc_(alloc)
         {
             AssignRaw(ilist.begin(), ilist.size());
+        }
+
+        explicit AdvancedString(std::string_view* view)
+        {
+            AssignRaw(view->data(), view->size());
         }
 
         AdvancedString &operator=(const AdvancedString &other)
