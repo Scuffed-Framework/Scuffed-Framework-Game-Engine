@@ -2,6 +2,7 @@
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/Descriptors/DescriptorSet.hpp>
 #include <Rendering/Images/Image2d.hpp>
+#include <Engine/Log/Log.hpp>
 
 namespace SF::Engine
 {

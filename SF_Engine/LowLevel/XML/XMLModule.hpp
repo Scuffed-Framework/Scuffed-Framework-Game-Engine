@@ -101,8 +101,8 @@ namespace SF::Engine
         SF_RTTI_BASE(Serializable)
     public:
         virtual ~Serializable() = default;
-        virtual void Serialize(XMLNode &node) const = 0;
-        virtual void Deserialize(const XMLNode &node) = 0;
+        virtual void Serialize(XMLNode &node) const {}
+        virtual void Deserialize(const XMLNode &node) {}
     };
 
     class XMLModule : public ModuleRegistrar<XMLModule>

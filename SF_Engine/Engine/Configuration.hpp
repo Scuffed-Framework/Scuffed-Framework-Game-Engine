@@ -1,9 +1,14 @@
 #pragma once
 #include <Configuration/Configurable.hpp>
 #include <Scene/Scene.hpp>
+#include <Engine/Log/Log.hpp>
 
 namespace SF::Engine
 {
+    struct LogConfig
+    {
+        bool shutUp;
+    };
     struct EngineConfig : Serializable
     {
     public:
