@@ -58,7 +58,7 @@ namespace SF::Engine
             asset.SetAttribute("Name", name);
             asset.SetAttribute("Type", static_cast<int>(type));
             asset.SetAttribute(std::string("UUID"), uuid.ToString());
-            asset.SetAttribute("ConcreteType", std::string(RTTI_GetTypeName())); // NEW
+            asset.SetAttribute("ConcreteType", std::string(RTTI_GetTypeName()));
         }
 
         void Deserialize(const XMLNode &node) override
