@@ -10,6 +10,8 @@
 
 #include <UtilityClasses/NoCopy.hpp>
 #include <UtilityClasses/TypeInformation.hpp>
+#include <LowLevel/Reflection/RTTI/RTTI.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
 
 #ifdef Always
 #undef Always
@@ -85,7 +87,7 @@ namespace SF::Engine
         class Requires // Ensure this is in a public section
         {
         public:
-            std::vector<TypeId> Get() const
+            [[nodiscard]] std::vector<TypeId> Get() const
             {
                 std::vector<TypeId> dependencies;
                 dependencies.reserve(sizeof...(Args));
@@ -160,8 +162,9 @@ namespace SF::Engine
     /**
      * @brief Base class for all engine modules
      */
-    class Module : public ModuleFactory<Module>, NoCopy
+    class Module : public ModuleFactory<Module>, NoCopy, public Serializable
     {
+        SF_RTTI_BASE(Module)
     public:
         /**
          * @brief Module update stages (alias to ModuleStage)
@@ -197,17 +200,17 @@ namespace SF::Engine
         /**
          * @brief Get the module's update stage
          */
-        virtual Stage GetStage() const = 0;
+        [[nodiscard]] virtual Stage GetStage() const = 0;
 
         /**
          * @brief Get the module's type ID
          */
-        virtual TypeId GetTypeId() const = 0;
+        [[nodiscard]] virtual TypeId GetTypeId() const = 0;
 
         /**
          * @brief Get the module's name (for debugging)
          */
-        virtual std::string_view GetName() const = 0;
+        [[nodiscard]] virtual std::string_view GetName() const = 0;
     };
 
     // Explicit template instantiation
@@ -224,17 +227,17 @@ namespace SF::Engine
     public:
         // Implement the pure virtual methods from Module
         // FIX: Changed 'Stage' to 'ModuleStage' (or you could use 'Module::Stage')
-        ModuleStage GetStage() const override
+        [[nodiscard]] ModuleStage GetStage() const override
         {
             return ModuleRegistrar<T>::s_registeredStage;
         }
 
-        TypeId GetTypeId() const override
+        [[nodiscard]] TypeId GetTypeId() const override
         {
             return TypeInfo<Module>::template GetTypeId<T>();
         }
 
-        std::string_view GetName() const override
+        [[nodiscard]] std::string_view GetName() const override
         {
             return ModuleRegistrar<T>::s_registeredName;
         }
