@@ -1,0 +1,51 @@
+#pragma once
+
+#include "Math.si"
+#include "Camera.si"
+#include "Samplers.si"
+
+#define Binding(x,y) [[vk::binding(x,y]]
+#define ImageFormat(x) [[vk::image_format(x)]]
+
+inline uint SetFlag(uint flags, uint bit)
+{
+    return flags | (1U << bit);
+}
+
+inline bool HasFlag(uint flags, uint bit)
+{
+    return (flags & (1U << bit)) != 0U;
+}
+
+inline uint PackColor(uint R, uint G, uint B, uint A)
+{
+    uint color = 0;
+    color |= (R & 0xFF) <<  0;
+    color |= (G & 0xFF) <<  8;
+    color |= (B & 0xFF) << 16;
+    color |= (A & 0xFF) << 24;
+    return color;
+}
+
+inline uint PackColor(uint4 c)
+{
+    return PackColor(c.x, c.y, c.z, c.w);
+}
+
+inline float4 UnpackColor(uint packData)
+{
+    float4 color;
+    color.r = float((packData >>  0) & 0xFF) / 255.0;
+    color.g = float((packData >>  8) & 0xFF) / 255.0;
+    color.b = float((packData >> 16) & 0xFF) / 255.0;
+    color.a = float((packData >> 24) & 0xFF) / 255.0;
+
+    return color;
+}
+#define kHZBMaxMipmapCount 12
+#define kWaveSize 32
+#define kHistogramBinCount 128
+#define kMaxHalfFloat    65504.0f
+#define kMax11BitsFloat  65024.0f
+#define kMax10BitsFloat  64512.0f
+#define kEpsilon 1.192092896e-07F
