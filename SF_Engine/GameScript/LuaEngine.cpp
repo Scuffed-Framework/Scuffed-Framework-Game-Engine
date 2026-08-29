@@ -3,14 +3,19 @@
 
 namespace SF::Engine::Scripting::Lua
 {
-    void LuaEngine::Init()
+    bool LuaEngine::Initialize()
     {
         lua_.open_libraries(
             sol::lib::base,
             sol::lib::math,
             sol::lib::table,
             sol::lib::string,
-            sol::lib::coroutine);
+            sol::lib::coroutine,
+            sol::lib::string,
+            sol::lib::io,
+            sol::lib::utf8
+            );
+        return true;
     }
 
     void LuaEngine::Shutdown()

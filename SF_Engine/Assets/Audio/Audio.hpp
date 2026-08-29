@@ -18,8 +18,7 @@ namespace SF::Engine
      */
     class Audio : public ModuleRegistrar<Audio>
     {
-        inline static const bool Registered = Register(Stage::Pre);
-
+        REGISTER_MODULE(Audio, Module::Stage::Pre);
     public:
         enum class Type
         {
@@ -30,8 +29,9 @@ namespace SF::Engine
         };
 
         Audio();
-        ~Audio();
+        ~Audio() override;
 
+        bool Initialize() override{return true;}
         void Update() override;
 
         static void CheckAl(int32_t result);

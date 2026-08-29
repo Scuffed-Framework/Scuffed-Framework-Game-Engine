@@ -24,8 +24,8 @@ namespace SF::Engine::Scripting::Lua
         REGISTER_MODULE(LuaEngine, Module::Stage::Always); // Or at least I think this is right
 
     public:
-        void Init();
-        void Shutdown();
+        bool Initialize() override;
+        void Shutdown() override;
 
         void Update() override 
         {
