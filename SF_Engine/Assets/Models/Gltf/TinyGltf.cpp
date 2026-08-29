@@ -69,7 +69,7 @@
 #pragma GCC diagnostic ignored "-Wtype-limits"
 #endif // __GNUC__
 
-#include <Engine/JSON.hpp>
+#include <LowLevel/JSON.hpp>
 
 #ifdef TINYGLTF_ENABLE_DRACO
 #include "draco/compression/decode.h"
