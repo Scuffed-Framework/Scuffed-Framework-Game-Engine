@@ -3,6 +3,7 @@
 #include <TemplateLibrary/Containers/String.hpp>
 #include <Engine/Module.hpp>
 #include <UtilityClasses/StreamFactory.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
 
 namespace SF::Engine
 {
@@ -74,22 +75,23 @@ namespace SF::Engine
             return it != s_cvars.end() ? it->second : nullptr;
         }
 
+        bool Initialize() override { return true; }
         void Update() override {}
 
         [[nodiscard]] Stage GetStage() const override { return ModuleStage::Always; }
         [[nodiscard]] std::string_view GetName() const override { return RTTI_GetTypeName(); }
 
-        void Serialize(XMLNode &node) const override
+        void Serialize(XMLNode &node) const
         {
             XMLNode registryNode = node.AddChild("ConsoleVariables");
             for (const auto& [fullName, cvar] : s_cvars)
                 cvar->Serialize(registryNode);
         }
 
-        void Deserialize(const XMLNode &node) override
+        void Deserialize(const XMLNode &node)
         {
             XMLNode registryNode = node.GetChild("ConsoleVariables");
-            for (XMLNode child = registryNode.FirstChild(); child; child = child.NextSibling())
+            for (XMLNode child = registryNode.GetFirstChild(); child.IsValid(); child = child.GetNextSibling())
             {
                 ::SFTL::string mod, nm;
                 child.GetAttribute("Module", mod);
