@@ -158,7 +158,6 @@ namespace SF::Engine
         };
     };
 
-    class XMLNode;
     /**
      * @brief Base class for all engine modules
      */
@@ -211,9 +210,6 @@ namespace SF::Engine
          * @brief Get the module's name (for debugging)
          */
         [[nodiscard]] virtual std::string_view GetName() const = 0;
-
-        virtual void Serialize(XMLNode &) const {}
-        virtual void Deserialize(const XMLNode &) {}
     };
 
     // Explicit template instantiation
