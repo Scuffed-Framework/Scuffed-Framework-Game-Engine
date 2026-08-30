@@ -135,7 +135,11 @@ namespace SF::Engine
     void SharedSamplers::BindSharedSamplerSet(const CommandBuffer &cmd, VkPipelineLayout pipelineLayout,
                                               VkPipelineBindPoint bindPoint, uint32_t setIndex)
     {
-        vkCmdBindDescriptorSets(cmd, bindPoint, pipelineLayout, setIndex, 1, &sharedSet_, 0, nullptr);
+        assert(cmd.GetCommandBuffer() != VK_NULL_HANDLE);
+        assert(pipelineLayout != VK_NULL_HANDLE);
+        assert(sharedSet_ != VK_NULL_HANDLE);
+
+        vkCmdBindDescriptorSets(cmd.GetCommandBuffer(), bindPoint, pipelineLayout, setIndex, 1, &sharedSet_, 0, nullptr);
     }
 
     void SharedSamplers::DestroySamplers()
