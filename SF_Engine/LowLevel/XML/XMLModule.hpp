@@ -32,11 +32,11 @@ namespace SF::Engine
 
         ~XMLNode() = default;
 
-        std::string GetName() const;
-        std::string GetContent() const;
+        [[nodiscard]] std::string GetName() const;
+        [[nodiscard]] std::string GetContent() const;
         void SetContent(const std::string &content);
 
-        std::string GetAttribute(const std::string &name) const;
+        [[nodiscard]] std::string GetAttribute(const std::string &name) const;
         bool GetAttribute(const std::string &name, std::string &out) const;
         bool GetAttribute(const std::string &name, int &out) const;
         bool GetAttribute(const std::string &name, float &out) const;
@@ -54,7 +54,7 @@ namespace SF::Engine
         void SetChildContent(const std::string &childName, const T &value);
 
         // Bulk get attributes into a map
-        std::unordered_map<std::string, std::string>
+        [[nodiscard]] std::unordered_map<std::string, std::string>
         GetAttributes(const std::vector<std::string> &keys) const
         {
             std::unordered_map<std::string, std::string> result;
@@ -79,16 +79,16 @@ namespace SF::Engine
         void SetAttribute(const std::string &name, bool value);
 
         // Child node operations
-        XMLNode GetFirstChild() const;
-        XMLNode GetNextSibling() const;
-        XMLNode GetChild(const std::string &name) const;
-        std::vector<XMLNode> GetChildren(const std::string &name = "") const;
+        [[nodiscard]] XMLNode GetFirstChild() const;
+        [[nodiscard]] XMLNode GetNextSibling() const;
+        [[nodiscard]] XMLNode GetChild(const std::string &name) const;
+        [[nodiscard]] std::vector<XMLNode> GetChildren(const std::string &name = "") const;
 
         XMLNode AddChild(const std::string &name);
         XMLNode AddChild(const std::string &name, const std::string &content);
 
         // Validation
-        bool IsValid() const { return node != nullptr; }
+        [[nodiscard]] bool IsValid() const { return node != nullptr; }
 
     private:
         xmlNodePtr node;
@@ -111,7 +111,7 @@ namespace SF::Engine
 
     public:
         XMLModule();
-        ~XMLModule();
+        ~XMLModule() override;
 
         XMLModule(const XMLModule &) = delete;
         XMLModule &operator=(const XMLModule &) = delete;
@@ -119,12 +119,12 @@ namespace SF::Engine
         void Update() override {}
 
         bool LoadFromFile(const std::string &filename);
-        bool SaveToFile(const std::string &filename) const;
+        [[nodiscard]] bool SaveToFile(const std::string &filename) const;
 
         bool LoadFromString(const std::string &content);
-        std::string SaveToString() const;
+        [[nodiscard]] std::string SaveToString() const;
 
-        XMLNode GetRootNode() const;
+        [[nodiscard]] XMLNode GetRootNode() const;
         void SetRootNode(const std::string &rootName);
 
         template <typename T>
@@ -147,7 +147,7 @@ namespace SF::Engine
         static bool DeserializeValue(const std::string &str, UUID &out);
 
         // Error handling
-        std::string GetLastError() const { return lastError; }
+        [[nodiscard]] std::string GetLastError() const { return lastError; }
 
     private:
         xmlDocPtr document;

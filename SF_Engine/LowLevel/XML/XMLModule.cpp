@@ -139,7 +139,7 @@ namespace SF::Engine
             return {};
         for (xmlNodePtr n = node->children; n; n = n->next)
             if (n->type == XML_ELEMENT_NODE)
-                return XMLNode(n, doc);
+                return {n, doc};
         return {};
     }
 
@@ -149,7 +149,7 @@ namespace SF::Engine
             return {};
         for (xmlNodePtr n = node->next; n; n = n->next)
             if (n->type == XML_ELEMENT_NODE)
-                return XMLNode(n, doc);
+                return {n, doc};
         return {};
     }
 
@@ -163,7 +163,7 @@ namespace SF::Engine
                 continue;
             if (name.empty() ||
                 std::string(reinterpret_cast<const char *>(n->name)) == name)
-                return XMLNode(n, doc);
+                return {n, doc};
         }
         return {};
     }
@@ -192,7 +192,7 @@ namespace SF::Engine
             node, nullptr,
             reinterpret_cast<const xmlChar *>(name.c_str()),
             nullptr);
-        return XMLNode(child, doc);
+        return {child, doc};
     }
 
     XMLNode XMLNode::AddChild(const std::string &name, const std::string &content)
@@ -203,7 +203,7 @@ namespace SF::Engine
             node, nullptr,
             reinterpret_cast<const xmlChar *>(name.c_str()),
             reinterpret_cast<const xmlChar *>(content.c_str()));
-        return XMLNode(child, doc);
+        return {child, doc};
     }
 
     // XMLModule
@@ -304,7 +304,7 @@ namespace SF::Engine
 
     XMLNode XMLModule::GetRootNode() const
     {
-        return XMLNode(rootNode, document);
+        return {rootNode, document};
     }
 
     void XMLModule::SetRootNode(const std::string &rootName)
