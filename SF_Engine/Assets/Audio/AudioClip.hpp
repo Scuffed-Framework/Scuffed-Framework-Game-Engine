@@ -34,39 +34,39 @@ namespace SF::Engine
         AudioClip(AudioClip &&other) noexcept;
         AudioClip &operator=(AudioClip &&other) noexcept;
                    
-        ~AudioClip();
+        ~AudioClip() override;
 
         void Play(bool loop = false);
         void Pause();
         void Resume();
         void Stop();
 
-        bool IsPlaying() const;
+        [[nodiscard]] bool IsPlaying() const;
 
         void SetPosition(const Vec3 &position);
         void SetDirection(const Vec3 &direction);
         void SetVelocity(const Vec3 &velocity);
 
-        const Audio::Type &GetType() const { return type; }
+        [[nodiscard]] const Audio::Type &GetType() const { return type; }
         void SetType(const Audio::Type &type) { this->type = type; }
 
-        float GetGain() const { return gain; }
+        [[nodiscard]] float GetGain() const { return gain; }
         void SetGain(float gain);
 
-        float GetPitch() const { return pitch; }
+        [[nodiscard]] float GetPitch() const { return pitch; }
         void SetPitch(float pitch);
 
         std::shared_ptr<SoundBuffer> buffer;
         uint32_t source = 0;
 
-        Vec3 position;
-        Vec3 direction;
-        Vec3 velocity;
+        Vec3 position{};
+        Vec3 direction{};
+        Vec3 velocity{};
 
         Audio::Type type = Audio::Type::General;
         float gain = 1.0f;
         float pitch = 1.0f;
-        float length;
+        float length{};
     };
 
     class AudioClipSystem
@@ -86,12 +86,11 @@ namespace SF::Engine
 
         static void UpdateVolumes(EntityRegistry &registry)
         {
-            registry.ForEach([](Entity *entity)
-                             {
-                if (auto* clip = entity->GetComponent<AudioClip>())
-                {
-                    clip->SetGain(clip->GetGain()); // recompute with current Audio volume
-                } });
+            registry.ForEach([](Entity *entity){
+            if (auto* clip = entity->GetComponent<AudioClip>())
+            {
+                clip->SetGain(clip->GetGain()); // recompute with current Audio volume
+            } });
         }
     };
 }
