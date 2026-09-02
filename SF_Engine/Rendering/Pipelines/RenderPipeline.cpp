@@ -11,11 +11,14 @@ namespace SF::Engine
         VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_LINE_WIDTH};
 
     RenderPipeline::RenderPipeline(Stage stage, std::filesystem::path shaderPath,
-                                   std::vector<Shader::VertexInput> vertexInputs,
-                                   std::vector<Shader::Define> defines, Mode mode, Depth depth,
-                                   VkPrimitiveTopology topology, VkPolygonMode polygonMode,
-                                   VkCullModeFlags cullMode, VkFrontFace frontFace,
-                                   bool pushDescriptors)
+                               std::vector<Shader::VertexInput> vertexInputs,
+                               std::vector<Shader::Define> defines, Mode mode, Depth depth,
+                               VkPrimitiveTopology topology, VkPolygonMode polygonMode,
+                               VkCullModeFlags cullMode, VkFrontFace frontFace,
+                               bool pushDescriptors,
+                               std::vector<VkDescriptorSetLayout> additionalLayouts,
+                               Blend blend,
+                               std::vector<VkPipelineColorBlendAttachmentState> blendStates)
         : stage(std::move(stage)),
           shaderPath(std::move(shaderPath)),
           vertexInputs(std::move(vertexInputs)),
@@ -28,14 +31,14 @@ namespace SF::Engine
           frontFace(frontFace),
           pushDescriptors(pushDescriptors),
           dynamicStates(DYNAMIC_STATES),
-          pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS)
+          pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS),
+          blend(blend),
+          customBlendStates(std::move(blendStates)),
+          additionalLayouts(std::move(additionalLayouts))
     {
         device_ = *RenderSystem::Get()->GetLogicalDevice();
         std::sort(this->vertexInputs.begin(), this->vertexInputs.end());
         CreateShaderProgram();
-        // Use UPDATE_AFTER_BIND so material texture descriptors can be written
-        // while the previous frame's command buffer is still pending (GPU pipelining).
-
         CreateDescriptorLayout_UpdateAfterBind();
         CreateDescriptorPool();
         CreatePipelineLayout();
@@ -54,6 +57,7 @@ namespace SF::Engine
         }
     }
 
+    // --- constructor 2 (offscreen): member init list ---
     RenderPipeline::RenderPipeline(VkRenderPass offscreenRenderPass, uint32_t subpassIndex,
                                    std::filesystem::path shaderPath,
                                    std::vector<Shader::VertexInput> vertexInputs,
@@ -62,7 +66,10 @@ namespace SF::Engine
                                    VkPrimitiveTopology topology,
                                    VkPolygonMode polygonMode,
                                    VkCullModeFlags cullMode,
-                                   VkFrontFace frontFace)
+                                   VkFrontFace frontFace,
+                                   std::vector<VkDescriptorSetLayout> additionalLayouts,
+                                   Blend blend,
+                                   std::vector<VkPipelineColorBlendAttachmentState> blendStates)
         : stage({0, subpassIndex}),
           shaderPath(std::move(shaderPath)),
           vertexInputs(std::move(vertexInputs)),
@@ -78,7 +85,10 @@ namespace SF::Engine
           pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS),
           offscreenRenderPass_(offscreenRenderPass),
           offscreenSubpass_(subpassIndex),
-          isOffscreen_(true)
+          isOffscreen_(true),
+          blend(blend),
+          customBlendStates(std::move(blendStates)),
+          additionalLayouts(std::move(additionalLayouts))
     {
         device_ = *RenderSystem::Get()->GetLogicalDevice();
         std::sort(this->vertexInputs.begin(), this->vertexInputs.end());
@@ -88,6 +98,83 @@ namespace SF::Engine
         CreatePipelineLayout();
         CreateAttributes();
         CreatePipelinePolygon();
+    }
+
+    VkPipelineColorBlendAttachmentState RenderPipeline::MakeBlendAttachmentState(Blend preset, VkColorComponentFlags writeMask)
+    {
+        VkPipelineColorBlendAttachmentState s = {};
+        s.colorWriteMask = writeMask;
+        s.colorBlendOp = VK_BLEND_OP_ADD;
+        s.alphaBlendOp = VK_BLEND_OP_ADD;
+
+        switch (preset)
+        {
+        case Blend::Opaque:
+            s.blendEnable = VK_FALSE;
+            s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+            break;
+
+        case Blend::AlphaBlend:
+            // out = src*srcA + dst*(1-srcA)  (non-premultiplied "over")
+            s.blendEnable = VK_TRUE;
+            s.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            break;
+
+        case Blend::PremultipliedAlpha:
+            // out = src*1 + dst*(1-srcA)  (shader already premultiplies)
+            s.blendEnable = VK_TRUE;
+            s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            break;
+
+        case Blend::Additive:
+            // out = src*srcA + dst*1
+            s.blendEnable = VK_TRUE;
+            s.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            break;
+
+        case Blend::Multiply:
+            // out = src*dst
+            s.blendEnable = VK_TRUE;
+            s.srcColorBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
+            s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+            break;
+
+        case Blend::Screen:
+            // out = src + dst - src*dst
+            s.blendEnable = VK_TRUE;
+            s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            break;
+
+        case Blend::Custom:
+        default:
+            // Should never actually be used - callers on Custom supply blendStates
+            // directly. Kept valid (disabled blend) as a safe fallback.
+            s.blendEnable = VK_FALSE;
+            s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+            break;
+        }
+
+        return s;
     }
 
     RenderPipeline::~RenderPipeline()
@@ -104,14 +191,24 @@ namespace SF::Engine
 
     const ImageDepth *RenderPipeline::GetDepthStencil(const std::optional<uint32_t> &stage) const
     {
+        if (isOffscreen_ && !stage)
+            throw std::runtime_error(
+                "RenderPipeline::GetDepthStencil: this pipeline is offscreen and isn't tied to a "
+                "RenderSystem stage; pass an explicit stage index, or query the offscreen render "
+                "target's depth image directly instead.");
         return RenderSystem::Get()
             ->GetRenderStage(stage ? *stage : this->stage.first)
             ->GetDepthStencil();
     }
 
     const Image2d *RenderPipeline::GetImage(uint32_t index,
-                                            const std::optional<uint32_t> &stage) const
+                                        const std::optional<uint32_t> &stage) const
     {
+        if (isOffscreen_ && !stage)
+            throw std::runtime_error(
+                "RenderPipeline::GetImage: this pipeline is offscreen and isn't tied to a "
+                "RenderSystem stage; pass an explicit stage index, or query the offscreen render "
+                "target's image directly instead.");
         return RenderSystem::Get()
             ->GetRenderStage(stage ? *stage : this->stage.first)
             ->GetFramebuffer()
@@ -120,6 +217,10 @@ namespace SF::Engine
 
     RenderArea RenderPipeline::GetRenderArea(const std::optional<uint32_t> &stage) const
     {
+        if (isOffscreen_ && !stage)
+            throw std::runtime_error(
+                "RenderPipeline::GetRenderArea: this pipeline is offscreen and isn't tied to a "
+                "RenderSystem stage; pass an explicit stage index instead.");
         return RenderSystem::Get()
             ->GetRenderStage(stage ? *stage : this->stage.first)
             ->GetRenderArea();
@@ -277,14 +378,34 @@ namespace SF::Engine
         }
 
 
-        VkDescriptorSetLayout setLayouts[2] = {descriptorSetLayout, SharedSamplers::GetSharedSamplerSetLayout()};
+        std::vector<VkDescriptorSetLayout> setLayouts;
 
-        VkPipelineLayoutCreateInfo info = {};
+        setLayouts.reserve(2 + additionalLayouts.size());
+
+        setLayouts.push_back(descriptorSetLayout);
+        setLayouts.push_back(SharedSamplers::GetSharedSamplerSetLayout());
+
+        setLayouts.insert(
+            setLayouts.end(),
+            additionalLayouts.begin(),
+            additionalLayouts.end()
+        );
+
+        VkPipelineLayoutCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        info.setLayoutCount = 2;
-        info.pSetLayouts = setLayouts;
-        info.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
-        info.pPushConstantRanges = pushConstantRanges.data();
+
+        info.setLayoutCount =
+            static_cast<uint32_t>(setLayouts.size());
+
+        info.pSetLayouts = setLayouts.data();
+
+        info.pushConstantRangeCount =
+            static_cast<uint32_t>(pushConstantRanges.size());
+
+        info.pPushConstantRanges =
+            pushConstantRanges.empty()
+                ? nullptr
+                : pushConstantRanges.data();
 
         RenderSystem::CheckVkResult(vkCreatePipelineLayout(*logicalDevice, &info, nullptr, &pipelineLayout));
     }
@@ -314,26 +435,20 @@ namespace SF::Engine
         rasterizationState.depthBiasEnable = VK_FALSE;
         rasterizationState.lineWidth = 1.0f;
 
-        // Pre-multiplied alpha blend:
-        //   finalRGB = srcRGB*1 + dstRGB*(1-srcA)  : src RGB is already alpha-scaled
-        //   finalA   = srcA*1   + dstA*(1-srcA)     : standard alpha compositing
-        // This is correct for atmosphere (which outputs pre-multiplied inscatter)
-        // and also works for normal opaque geometry (which outputs alpha=1, srcA=1
-        // so dstRGB is zeroed : i.e. opaque geometry fully replaces background).
-        blendAttachmentStates[0].blendEnable = VK_TRUE;
-        blendAttachmentStates[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-        blendAttachmentStates[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-        blendAttachmentStates[0].colorBlendOp = VK_BLEND_OP_ADD;
-        blendAttachmentStates[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        blendAttachmentStates[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-        blendAttachmentStates[0].alphaBlendOp = VK_BLEND_OP_ADD;
-        blendAttachmentStates[0].colorWriteMask =
-            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
-        if (isOffscreen_)
+        // Single-attachment blend state, covers Mode::Polygon and offscreen pipelines.
+        // Mode::MRT overwrites this with one entry per colour attachment once the
+        // attachment count is known, in CreatePipelineMrt().
+        if (blend == Blend::Custom)
         {
-            blendAttachmentStates[0].blendEnable = VK_FALSE;
+            if (customBlendStates.size() != 1)
+                throw std::runtime_error(
+                    "RenderPipeline: Blend::Custom requires exactly 1 entry in blendStates for a "
+                    "single-attachment pipeline (got " + std::to_string(customBlendStates.size()) + ")");
+            blendAttachmentStates = customBlendStates;
+        }
+        else
+        {
+            blendAttachmentStates = { MakeBlendAttachmentState(blend) };
         }
 
         colourBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -344,8 +459,8 @@ namespace SF::Engine
 
         depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
-        depthStencilState.front = depthStencilState.back;
-        depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
+        depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS; // set back first...
+        depthStencilState.front = depthStencilState.back;        // ...then copy it into front
 
         switch (depth)
         {
@@ -371,9 +486,6 @@ namespace SF::Engine
         viewportState.viewportCount = 1;
         viewportState.scissorCount = 1;
 
-        // Sample count is set to 1x here as a safe default.
-        // CreatePipeline() overrides it from the render stage once the
-        // renderpass is available (IsMultisampled queries per-subpass).
         multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
         multisampleState.sampleShadingEnable = VK_FALSE;
@@ -388,7 +500,6 @@ namespace SF::Engine
 
     void RenderPipeline::CreatePipeline()
     {
-        Log::Info("Creating pipeline");
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
         auto physicalDevice = RenderSystem::Get()->GetPhysicalDevice();
         auto pipelineCache = RenderSystem::Get()->GetPipelineCache();
@@ -473,27 +584,22 @@ namespace SF::Engine
         auto renderStage = RenderSystem::Get()->GetRenderStage(stage.first);
         auto attachmentCount = renderStage->GetAttachmentCount(stage.second);
 
-        std::vector<VkPipelineColorBlendAttachmentState> blendStates;
-        blendStates.reserve(attachmentCount);
-
-        for (uint32_t i = 0; i < attachmentCount; i++)
+        if (blend == Blend::Custom)
         {
-            VkPipelineColorBlendAttachmentState s = {};
-            s.blendEnable = VK_TRUE;
-            s.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            s.colorBlendOp = VK_BLEND_OP_ADD;
-            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            s.alphaBlendOp = VK_BLEND_OP_ADD;
-            s.colorWriteMask =
-                VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-            blendStates.emplace_back(s);
+            if (customBlendStates.size() != attachmentCount)
+                throw std::runtime_error(
+                    "RenderPipeline: Blend::Custom requires exactly " + std::to_string(attachmentCount) +
+                    " entries in blendStates for this MRT pipeline (got " +
+                    std::to_string(customBlendStates.size()) + ")");
+            blendAttachmentStates = customBlendStates;
+        }
+        else
+        {
+            blendAttachmentStates.assign(attachmentCount, MakeBlendAttachmentState(blend));
         }
 
-        colourBlendState.attachmentCount = static_cast<uint32_t>(blendStates.size());
-        colourBlendState.pAttachments = blendStates.data();
+        colourBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());
+        colourBlendState.pAttachments = blendAttachmentStates.data();
 
         CreatePipeline();
     }

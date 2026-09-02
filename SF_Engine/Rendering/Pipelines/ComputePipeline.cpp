@@ -10,10 +10,17 @@
 namespace SF::Engine
 {
     ComputePipeline::ComputePipeline(std::filesystem::path shaderStage,
-                                     std::vector<Shader::Define> defines,
-                                     bool pushDescriptors)
-        : shaderStage(std::move(shaderStage)), defines(std::move(defines)), pushDescriptors(pushDescriptors)
+                                 std::vector<Shader::Define> defines,
+                                 bool pushDescriptors,
+                                 std::vector<VkDescriptorSetLayout> additionalLayouts,
+                                 UVec3 localSize)
+    : shaderStage(std::move(shaderStage)), defines(std::move(defines)),
+      pushDescriptors(pushDescriptors), additionalLayouts(std::move(additionalLayouts)),
+      localSize(localSize)
     {
+        if (localSize.x == 0 || localSize.y == 0 || localSize.z == 0)
+            throw std::runtime_error("ComputePipeline: localSize components must be non-zero");
+
         device_ = *RenderSystem::Get()->GetLogicalDevice();
         CreateShaderProgram("");
         CreateDescriptorLayout();
@@ -25,9 +32,16 @@ namespace SF::Engine
     ComputePipeline::ComputePipeline(std::filesystem::path shaderStage,
                                      std::string entry,
                                      std::vector<Shader::Define> defines,
-                                     bool pushDescriptors)
-        : shaderStage(std::move(shaderStage)), entryOpt(entry), defines(std::move(defines)), pushDescriptors(pushDescriptors)
+                                     bool pushDescriptors,
+                                     std::vector<VkDescriptorSetLayout> additionalLayouts,
+                                     UVec3 localSize)
+        : shaderStage(std::move(shaderStage)), defines(std::move(defines)), pushDescriptors(pushDescriptors),
+          additionalLayouts(std::move(additionalLayouts)), localSize(localSize),
+          entryOpt(entry)
     {
+        if (localSize.x == 0 || localSize.y == 0 || localSize.z == 0)
+            throw std::runtime_error("ComputePipeline: localSize components must be non-zero");
+
         device_ = *RenderSystem::Get()->GetLogicalDevice();
         CreateShaderProgram(entry);
         CreateDescriptorLayout();
@@ -35,6 +49,7 @@ namespace SF::Engine
         CreatePipelineLayout();
         CreatePipelineCompute();
     }
+
 
     ComputePipeline::~ComputePipeline()
     {
@@ -128,12 +143,16 @@ namespace SF::Engine
         for (const auto &pc : pcs)
             ranges.push_back({pc.stageFlags, pc.offset, pc.size});
 
-        VkDescriptorSetLayout setLayouts[2] = {descriptorSetLayout, SharedSamplers::GetSharedSamplerSetLayout()};
+        std::vector<VkDescriptorSetLayout> setLayouts;
+        setLayouts.reserve(2 + additionalLayouts.size());
+        setLayouts.push_back(descriptorSetLayout);
+        setLayouts.push_back(SharedSamplers::GetSharedSamplerSetLayout());
+        setLayouts.insert(setLayouts.end(), additionalLayouts.begin(), additionalLayouts.end());
 
         VkPipelineLayoutCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        info.setLayoutCount = 2; // was 1
-        info.pSetLayouts = setLayouts;
+        info.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
+        info.pSetLayouts = setLayouts.data();
         info.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
         info.pPushConstantRanges = ranges.data();
 
@@ -161,20 +180,22 @@ namespace SF::Engine
         Log::Info("Compute pipeline created successfully");
     }
 
+
     void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer,
                                     const UVec2 &extent) const
     {
-        constexpr uint32_t LOCAL = 16;
-        uint32_t gx = (extent.x + LOCAL - 1) / LOCAL;
-        uint32_t gy = (extent.y + LOCAL - 1) / LOCAL;
+        uint32_t gx = (extent.x + localSize.x - 1) / localSize.x;
+        uint32_t gy = (extent.y + localSize.y - 1) / localSize.y;
         vkCmdDispatch(commandBuffer, gx, gy, 1);
     }
 
-    void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent, const uint32_t X, const uint32_t Y, const uint32_t Z) const
+    void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer,
+                                    const UVec2 &extent, const uint32_t X, const uint32_t Y,
+                                    const uint32_t zGroups) const
     {
         uint32_t gx = (extent.x + X - 1) / X;
         uint32_t gy = (extent.y + Y - 1) / Y;
-        vkCmdDispatch(commandBuffer, gx, gy, 1);
+        vkCmdDispatch(commandBuffer, gx, gy, zGroups);
     }
 
     void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer, const UVec3 &extent,
@@ -183,7 +204,6 @@ namespace SF::Engine
         uint32_t gx = (extent.x + LOCAL_X - 1) / LOCAL_X;
         uint32_t gy = (extent.y + LOCAL_Y - 1) / LOCAL_Y;
         uint32_t gz = (extent.z + LOCAL_Z - 1) / LOCAL_Z;
-
         vkCmdDispatch(commandBuffer, gx, gy, gz);
     }
 
