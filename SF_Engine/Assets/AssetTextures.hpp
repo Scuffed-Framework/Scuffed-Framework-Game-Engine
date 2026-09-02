@@ -1029,7 +1029,7 @@ namespace SF::Engine
                 0xEF, 0xCD, 0x77, 0xDF, 0x7E, 0xFF, 0x0D, 0x78, 0xE0, 0x5E, 0x17, 0x00,
                 0x00, 0x3B};
 
-    std::shared_ptr<Image2d> ConstructLogo(const uint8_t* rawData, size_t size)
+    inline std::shared_ptr<Image2d> ConstructLogo(const uint8_t* rawData, size_t size)
     {
         auto data = std::make_unique<uint8_t[]>(size);
         std::memcpy(data.get(), rawData, size);
