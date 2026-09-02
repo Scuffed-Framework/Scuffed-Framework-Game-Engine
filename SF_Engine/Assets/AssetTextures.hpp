@@ -1,6 +1,6 @@
 #pragma once
 #include <Rendering/Images/Image2d.hpp>
-#include <Assets/Bitmaps/PNG/BimapPNG.hpp>
+#include <Assets/Bitmaps/PNG/BitmapPNG.hpp>
 #include <cstring>
 
 namespace SF::Engine
