@@ -1043,12 +1043,12 @@ namespace SF::Engine
         return std::make_shared<Image2d>(std::move(bitmap));
     }
 
-    std::shared_ptr<Image2d> GetSaveLogo() { return ConstructLogo(SaveLogo, sizeof(SaveLogo)); }
-    std::shared_ptr<Image2d> GetNewLogo()  { return ConstructLogo(NewLogo, sizeof(NewLogo)); }
-    std::shared_ptr<Image2d> GetHppLogo()  { return ConstructLogo(HppLogo, sizeof(HppLogo)); }
-    std::shared_ptr<Image2d> GetHlogo()   { return ConstructLogo(HLogo, sizeof(HLogo)); }
-    std::shared_ptr<Image2d> GetFolderLogo(){ return ConstructLogo(FolderLogo, sizeof(FolderLogo)); }
-    std::shared_ptr<Image2d> GetFileLogo() { return ConstructLogo(FileLogo, sizeof(FileLogo)); }
-    std::shared_ptr<Image2d> GetCLogo()    { return ConstructLogo(CLogo, sizeof(CLogo)); }
-    std::shared_ptr<Image2d> GetCppLogo()  { return ConstructLogo(CppLogo, sizeof(CppLogo)); }
+    inline std::shared_ptr<Image2d> GetSaveLogo() { return ConstructLogo(SaveLogo, sizeof(SaveLogo)); }
+    inline std::shared_ptr<Image2d> GetNewLogo()  { return ConstructLogo(NewLogo, sizeof(NewLogo)); }
+    inline std::shared_ptr<Image2d> GetHppLogo()  { return ConstructLogo(HppLogo, sizeof(HppLogo)); }
+    inline std::shared_ptr<Image2d> GetHlogo()   { return ConstructLogo(HLogo, sizeof(HLogo)); }
+    inline std::shared_ptr<Image2d> GetFolderLogo(){ return ConstructLogo(FolderLogo, sizeof(FolderLogo)); }
+    inline std::shared_ptr<Image2d> GetFileLogo() { return ConstructLogo(FileLogo, sizeof(FileLogo)); }
+    inline std::shared_ptr<Image2d> GetCLogo()    { return ConstructLogo(CLogo, sizeof(CLogo)); }
+    inline std::shared_ptr<Image2d> GetCppLogo()  { return ConstructLogo(CppLogo, sizeof(CppLogo)); }
 }
