@@ -27,6 +27,7 @@ namespace SF::Engine
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
         CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_2D_ARRAY, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
         TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
+        Image::GenerateTexId();
     }
 
     Image2dArray::Image2dArray(std::unique_ptr<Bitmap> &&bitmap, uint32_t arrayLayers, VkFormat format, VkImageLayout layout, VkImageUsageFlags usage,
@@ -106,6 +107,7 @@ namespace SF::Engine
             TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
                                   VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
         }
+        Image::GenerateTexId();
     }
 
     void Image2dArray::SetPixels(const uint8_t *pixels, uint32_t arrayLayer)

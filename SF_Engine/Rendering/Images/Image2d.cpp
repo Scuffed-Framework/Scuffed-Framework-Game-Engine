@@ -109,6 +109,7 @@ namespace SF::Engine
             TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
                                   VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, 1, 0);
         }
+        Image::GenerateTexId();
     }
 
     void Image2d::SetPixels(const uint8_t *pixels, uint32_t layerCount, uint32_t baseArrayLayer)

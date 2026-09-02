@@ -15,8 +15,13 @@
 #include <Assets/SerializationRegistry.hpp>
 #include <LowLevel/XML/XMLNodeWriter.hpp>
 
+#include "Gui/ocornut/imgui.h"
+#include "Gui/ocornut/imgui_impl_vulkan.h"
+
 SF_REFLECT_EXTERNAL_TYPE(VkExtent3D)
+
 SF_REFLECT_EXTERNAL_TYPE(VkExtent2D)
+SF_REFLECT_EXTERNAL_TYPE(ImTextureID)
 
 namespace SF::Engine
 {
@@ -46,7 +51,7 @@ namespace SF::Engine
 
         ~Image();
 
-        WriteDescriptorSetInformation GetWriteDescriptor(uint32_t binding, VkDescriptorType descriptorType, const std::optional<OffsetSize> &offsetSize) const override;
+        [[nodiscard]] WriteDescriptorSetInformation GetWriteDescriptor(uint32_t binding, VkDescriptorType descriptorType, const std::optional<OffsetSize> &offsetSize) const override;
         static VkDescriptorSetLayoutBinding GetDescriptorSetLayout(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags stage, uint32_t count);
 
         /**
@@ -55,22 +60,22 @@ namespace SF::Engine
          * @param arrayLayer The array level to sample.
          * @return A copy of the images pixels.
          */
-        std::unique_ptr<Bitmap> GetBitmap(uint32_t mipLevel = 0, uint32_t arrayLayer = 0) const;
+        [[nodiscard]] std::unique_ptr<Bitmap> GetBitmap(uint32_t mipLevel = 0, uint32_t arrayLayer = 0) const;
 
-        const UVec3 &GetExtent() const { return extent; }
-        UVec2 GetSize() const { return {extent.x, extent.y}; }
-        VkFormat GetFormat() const { return format; }
-        VkSampleCountFlagBits GetSamples() const { return samples; }
-        VkImageUsageFlags GetUsage() const { return usage; }
-        uint32_t GetMipLevels() const { return mipLevels; }
-        uint32_t GetArrayLevels() const { return arrayLayers; }
-        VkFilter GetFilter() const { return filter; }
-        VkSamplerAddressMode GetAddressMode() const { return addressMode; }
-        VkImageLayout GetLayout() const { return layout; }
-        const VkImage &GetImage() { return image; }
-        const VmaAllocation &GetAllocation() { return allocation; }
-        const VkSampler &GetSampler() const { return sampler; }
-        const VkImageView &GetView() const { return view; }
+        [[nodiscard]] const UVec3 &GetExtent() const { return extent; }
+        [[nodiscard]] UVec2 GetSize() const { return {extent.x, extent.y}; }
+        [[nodiscard]] VkFormat GetFormat() const { return format; }
+        [[nodiscard]] VkSampleCountFlagBits GetSamples() const { return samples; }
+        [[nodiscard]] VkImageUsageFlags GetUsage() const { return usage; }
+        [[nodiscard]] uint32_t GetMipLevels() const { return mipLevels; }
+        [[nodiscard]] uint32_t GetArrayLevels() const { return arrayLayers; }
+        [[nodiscard]] VkFilter GetFilter() const { return filter; }
+        [[nodiscard]] VkSamplerAddressMode GetAddressMode() const { return addressMode; }
+        [[nodiscard]] VkImageLayout GetLayout() const { return layout; }
+        [[nodiscard]] const VkImage &GetImage() { return image; }
+        [[nodiscard]] const VmaAllocation &GetAllocation() { return allocation; }
+        [[nodiscard]] const VkSampler &GetSampler() const { return sampler; }
+        [[nodiscard]] const VkImageView &GetView() const { return view; }
 
         static uint32_t GetMipLevels(const UVec3 &extent);
 
@@ -136,7 +141,24 @@ namespace SF::Engine
         VkSampler sampler = VK_NULL_HANDLE;
         VkImageView view = VK_NULL_HANDLE;
 
+        ImTextureID imguiTexId = {};
+        /**
+         * @brief Generates an ImTextureId
+         */
+        void GenerateTexId() const
+        {
+            ImGui_ImplVulkan_AddTexture(GetSampler(), GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        }
+
     public:
+
+
+        /**
+         * @brief Get the ImTextureId
+         * @return ImTextureId
+         */
+        [[nodiscard]] ImTextureID GetTexID() const { return imguiTexId; };
+
         static void EnsureReflected()
         {
             static bool reflected = []
