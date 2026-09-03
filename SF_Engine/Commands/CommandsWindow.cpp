@@ -2,6 +2,8 @@
 #include <Gui/ocornut/imgui.h>
 #include <sstream>
 #include <algorithm>
+#include <cstring>
+#include "ConsoleVariable/ConsoleVariable.hpp"
 
 namespace SF::Engine
 {
@@ -34,12 +36,10 @@ namespace SF::Engine
         };
         auto printCmd = reg.Register<PrintCmd>();
         // Inject log pointer (you could also use a callback or event bus)
-        static_cast<PrintCmd *>(printCmd.get())->log = &m_log;
+        dynamic_cast<PrintCmd *>(printCmd.get())->log = &m_log;
 
         // "help" lists all registered commandlet names
-        // (implement similarly, iterate registry, push to log)
-
-        // "clear" is handled inline in ParseAndExecute before registry lookup
+        // todo: implement, iterate registry, push to log
     }
 
     std::shared_ptr<Commandlet> CommandWindow::Execute(const std::string &input)
@@ -50,6 +50,40 @@ namespace SF::Engine
         if (name == "clear")
         {
             m_log.clear();
+            return nullptr;
+        }
+
+        if (name.starts_with(CommandWindowConsoleVariablePrefix))
+        {
+            const std::string fullName = name.substr(std::strlen(CommandWindowConsoleVariablePrefix));
+
+            IConsoleVariable *cvar = ConsoleVariableRegistry::Find(::SFTL::string(fullName));
+            if (!cvar)
+            {
+                m_log.push_back({LogEntry::Level::Error,
+                                 "CVar '" + fullName + "' not found."});
+                return nullptr;
+            }
+
+            if (args.empty())
+            {
+                // No value given -> treat as a "get"
+                m_log.push_back({LogEntry::Level::Info,
+                                 fullName + " = " + std::string(cvar->ValueToString())});
+                return nullptr;
+            }
+
+            if (!cvar->SetValueFromString(SFTL::string_view(args[0])))
+            {
+                m_log.push_back({LogEntry::Level::Error,
+                                 "Failed to parse '" + args[0] + "' for CVar '" + fullName + "'."});
+                return nullptr;
+            }
+
+            m_log.push_back({LogEntry::Level::Ok, fullName + " set to " + args[0]});
+            m_history.push_front(input);
+            if (m_history.size() > k_maxHistory)
+                m_history.pop_back();
             return nullptr;
         }
 
