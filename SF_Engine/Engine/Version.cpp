@@ -3,7 +3,7 @@
 
 namespace SF::Engine {
 const uint16_t Engine_VERSION_MAJOR = 2026;
-const uint8_t Engine_VERSION_MINOR = 8;
-const uint16_t Engine_VERSION_PATCH = 587;
-const std::string_view Engine_VERSION = "2026.08.587";
+const uint8_t Engine_VERSION_MINOR = 9;
+const uint16_t Engine_VERSION_PATCH = 603;
+const std::string_view Engine_VERSION = "2026.09.603";
 } // namespace SF::Engine

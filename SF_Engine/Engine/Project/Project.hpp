@@ -5,7 +5,7 @@
 #include <LowLevel/XML/XMLModule.hpp>
 #include <Engine/Module.hpp>
 #include <Gui/UIRegistry.hpp>
-#include <LowLevel/FileSystem/ImGuiFileDialog.hpp>
+#include <Gui/FileDialog/ImGuiFileDialog.hpp>
 #include <Rendering/Images/Image2d.hpp>
 
 #ifdef Success

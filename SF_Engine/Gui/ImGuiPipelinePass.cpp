@@ -10,6 +10,8 @@
 
 #include <stdexcept>
 #include <Configuration/Default/ImGuiDefault.hpp>
+#include "epezent/ImPlot.hpp"
+#include "CedricGuillemet/ImGuizmo.h"
 
 namespace SF::Engine
 {
@@ -159,6 +161,7 @@ namespace SF::Engine
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
 
         ImGui::DockSpaceOverViewport(0u, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
         BuildUI();

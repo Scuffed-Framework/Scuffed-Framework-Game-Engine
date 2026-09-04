@@ -141,14 +141,14 @@ namespace SF::Engine
         VkSampler sampler = VK_NULL_HANDLE;
         VkImageView view = VK_NULL_HANDLE;
 
-        ImTextureID imguiTexId = {};
-        /**
-         * @brief Generates an ImTextureId
-         */
-        void GenerateTexId() const
-        {
-            ImGui_ImplVulkan_AddTexture(GetSampler(), GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        }
+            ImTextureID imguiTexId = {};
+            /**
+             * @brief Generates an ImTextureId
+             */
+            void GenerateTexId()
+            {
+                imguiTexId = (ImTextureID)ImGui_ImplVulkan_AddTexture(GetSampler(), GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            }
 
     public:
 
