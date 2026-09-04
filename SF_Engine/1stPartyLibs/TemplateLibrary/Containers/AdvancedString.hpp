@@ -13,6 +13,7 @@
 #include "../Char.hpp"
 #include "../DynamicArray.hpp"
 #include "../Iterators.hpp"
+#include "../Operations.hpp"
 #include "InitializerList.hpp"
 
 namespace SFTL
