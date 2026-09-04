@@ -1,92 +1,89 @@
 #pragma once
 
 #include "../Types.hpp"
+
 namespace SFTL
 {
-    typedef long long streamoff;
-    typedef ptrdiff_t streamsize;
+    typedef long long StreamOffset;
+    typedef ptrdiff_t StreamSize;
 
     template <typename T>
     class fpos
     {
     private:
-        streamoff Moff;
+        StreamOffset Moff;
         T Mstate;
 
     public:
         fpos() : Moff(0), Mstate() {}
 
-        fpos(streamoff off)
+        explicit fpos(StreamOffset off)
             : Moff(off), Mstate() {}
 
         fpos(const fpos &) = default;
         fpos &operator=(const fpos &) = default;
         ~fpos() = default;
 
-        /// Convert to streamoff.
-        operator streamoff() const { return Moff; }
+        explicit operator StreamOffset() const { return Moff; }
 
-        /// Remember the value of @a st.
         void
         state(T st)
         {
             Mstate = st;
         }
 
-        /// Return the last set value of @a st.
-        T
-        state() const
+        T state() const
         {
             return Mstate;
         }
 
-        fpos & operator+=(streamoff off)
+        fpos & operator+=(StreamOffset off)
         {
             Moff += off;
             return *this;
         }
 
-        fpos & operator-=(streamoff off)
+        fpos & operator-=(StreamOffset off)
         {
             Moff -= off;
             return *this;
         }
 
-        fpos operator+(streamoff off) const
+        fpos operator+(StreamOffset off) const
         {
             fpos pos(*this);
             pos += off;
             return pos;
         }
 
-        fpos operator-(streamoff off) const
+        fpos operator-(StreamOffset off) const
         {
             fpos pos(*this);
             pos -= off;
             return pos;
         }
 
-        streamoff operator-(const fpos &other) const
+        StreamOffset operator-(const fpos &other) const
         {
             return Moff - other.Moff;
         }
     };
 
     template <typename T>
-    inline bool operator==(const fpos<T> &lhs, const fpos<T> &rhs)
+    bool operator==(const fpos<T> &lhs, const fpos<T> &rhs)
     {
-        return streamoff(lhs) == streamoff(rhs);
+        return StreamOffset(lhs) == StreamOffset(rhs);
     }
 
     template <typename T>
-    inline bool operator!=(const fpos<T> &lhs, const fpos<T> &rhs)
+    bool operator!=(const fpos<T> &lhs, const fpos<T> &rhs)
     {
-        return streamoff(lhs) != streamoff(rhs);
+        return StreamOffset(lhs) != StreamOffset(rhs);
     }
 
-    typedef fpos<mbstate_type> streampos;
-    typedef fpos<mbstate_type> wstreampos;
-    typedef fpos<mbstate_type> u8streampos;
-    typedef fpos<mbstate_type> u16streampos;
-    typedef fpos<mbstate_type> u32streampos;
+    typedef fpos<mbstate_type> StreamPosition;
+    typedef fpos<mbstate_type> wStreamPosition;
+    typedef fpos<mbstate_type> u8StreamPosition;
+    typedef fpos<mbstate_type> u16StreamPosition;
+    typedef fpos<mbstate_type> u32StreamPosition;
 } // namespace SFTL
