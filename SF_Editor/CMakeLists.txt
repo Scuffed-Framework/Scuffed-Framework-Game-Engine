@@ -60,6 +60,16 @@ if(MSVC)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4099,4098")
     add_compile_options(/wd4005 /wd4224 /wd4267 /wd4244)
 endif()
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(SF_Engine PUBLIC
+            -fsanitize=address
+            -fno-omit-frame-pointer
+    )
+
+    target_link_options(SF_Engine INTERFACE
+            -fsanitize=address
+    )
+endif()
 
 file(GLOB_RECURSE SF_Editor_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"

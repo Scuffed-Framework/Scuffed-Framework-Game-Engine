@@ -1,20 +1,10 @@
 #pragma once
 
-#include <sol/sol.hpp>
 
 #include <Engine/Module.hpp>
 
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <filesystem>
-#include <functional>
-#include <vector>
-#include <optional>
-
-#include <Commands/CommandsWindow.hpp>
 #ifdef Always
-#undef Always
+    #undef Always
 #endif
 namespace SF::Engine::Scripting::Lua
 {
@@ -27,14 +17,10 @@ namespace SF::Engine::Scripting::Lua
         bool Initialize() override;
         void Shutdown() override;
 
-        void Update() override 
-        {
+        void Update() override {
 
         };
 
     private:
-        sol::state lua_;
-
-        std::unordered_map<std::string, sol::table> loadedModules_;
     };
-}
+} // namespace SF::Engine::Scripting::Lua
