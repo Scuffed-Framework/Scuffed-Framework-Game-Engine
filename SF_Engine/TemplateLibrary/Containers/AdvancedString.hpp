@@ -65,8 +65,8 @@ namespace SFTL
         constexpr AdvancedStringView(std::basic_string_view<T> sv) : data_(sv.data()), size_(sv.size()) {}
 
         constexpr const T *Data() const { return data_; }
-        constexpr size_type Size() const { return size_; }
-        constexpr bool Empty() const { return size_ == 0; }
+        [[nodiscard]] constexpr size_type Size() const { return size_; }
+        [[nodiscard]] constexpr bool Empty() const { return size_ == 0; }
         constexpr const T *begin() const { return data_; }
         constexpr const T *end() const { return data_ + size_; }
         constexpr const T &operator[](size_type i) const { return data_[i]; }
@@ -76,6 +76,12 @@ namespace SFTL
         constexpr bool operator==(const AdvancedStringView &rhs) const
         {
             return size_ == rhs.size_ && (data_ == rhs.data_ || std::equal(begin(), end(), rhs.begin()));
+        }
+
+        constexpr bool operator==(const char* rhs) const
+        {
+            size_type len = strlen(rhs);
+            return size_ == len && std::equal(begin(), end(), rhs);
         }
 
         constexpr auto operator<=>(const AdvancedStringView &rhs) const
