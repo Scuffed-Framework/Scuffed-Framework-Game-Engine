@@ -453,9 +453,9 @@ namespace SFTL
 
         iterator erase(const_iterator first, const_iterator last)
         {
-            T *p            = Ptr();
-            size_type start = static_cast<size_type>(first - begin());
-            size_type count = static_cast<size_type>(last - first);
+            T *p       = Ptr();
+            auto start = static_cast<size_type>(first - begin());
+            auto count = static_cast<size_type>(last - first);
             std::move(p + start + count, p + size_, p + start);
             size_ -= count;
             p[size_] = T{};
