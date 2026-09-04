@@ -66,6 +66,66 @@ namespace SF::Engine
         // File class handles flushing internally, nothing to do here
     }
 
+    void BitmapPNG::PNGMemoryReadCallback(png_structp png_ptr, png_bytep data, png_size_t length)
+    {
+        MemoryReadState* state = static_cast<MemoryReadState*>(png_get_io_ptr(png_ptr));
+
+        if (state->offset + length > state->size)
+        {
+            png_error(png_ptr, "Read error: attempted to read past end of memory buffer");
+        }
+
+        std::memcpy(data, state->data + state->offset, length);
+        state->offset += length;
+    }
+
+    void BitmapPNG::DecodeFromLibpng(Bitmap& bitmap, png_structp png, png_infop info,
+                                     const std::filesystem::path& filenameForErrors)
+    {
+        int width = png_get_image_width(png, info);
+        int height = png_get_image_height(png, info);
+        png_byte color_type = png_get_color_type(png, info);
+        png_byte bit_depth = png_get_bit_depth(png, info);
+
+        // Transform to RGBA8
+        if (bit_depth == 16) png_set_strip_16(png);
+
+        if (color_type == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(png);
+
+        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+            png_set_expand_gray_1_2_4_to_8(png);
+
+        if (png_get_valid(png, info, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png);
+
+        if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY ||
+            color_type == PNG_COLOR_TYPE_PALETTE)
+            png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
+
+        if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+            png_set_gray_to_rgb(png);
+
+        png_read_update_info(png, info);
+
+        size_t rowbytes = png_get_rowbytes(png, info);
+        std::unique_ptr<png_bytep[]> row_pointers(new png_bytep[height]);
+
+        for (int y = 0; y < height; y++) row_pointers[y] = new png_byte[rowbytes];
+
+        png_read_image(png, row_pointers.get());
+        constexpr uint32_t bytesPerPixel = 4;
+        auto data = std::make_unique<uint8_t[]>(width * height * bytesPerPixel);
+
+        for (int y = 0; y < height; y++)
+        {
+            memcpy(data.get() + y * width * bytesPerPixel, row_pointers[y], width * bytesPerPixel);
+            delete[] row_pointers[y];
+        }
+        bitmap.SetData(std::move(data));
+        bitmap.SetSize(UVec2(width, height));
+        bitmap.SetBytesPerPixel(bytesPerPixel);
+        bitmap.SetFilename(filenameForErrors);
+    }
+
     void BitmapPNG::Load(Bitmap& bitmap, const std::filesystem::path& filename)
     {
         PNGReadContext ctx;
@@ -102,55 +162,45 @@ namespace SF::Engine
         png_set_sig_bytes(ctx.png, 8);
         png_read_info(ctx.png, ctx.info);
 
-        // Get image info
-        int width = png_get_image_width(ctx.png, ctx.info);
-        int height = png_get_image_height(ctx.png, ctx.info);
-        png_byte color_type = png_get_color_type(ctx.png, ctx.info);
-        png_byte bit_depth = png_get_bit_depth(ctx.png, ctx.info);
+        DecodeFromLibpng(bitmap, ctx.png, ctx.info, filename);
+    }
 
-        // Transform to RGBA8
-        if (bit_depth == 16) png_set_strip_16(ctx.png);
-
-        if (color_type == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(ctx.png);
-
-        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-            png_set_expand_gray_1_2_4_to_8(ctx.png);
-
-        if (png_get_valid(ctx.png, ctx.info, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(ctx.png);
-
-        if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY ||
-            color_type == PNG_COLOR_TYPE_PALETTE)
-            png_set_filler(ctx.png, 0xFF, PNG_FILLER_AFTER);
-
-        if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-            png_set_gray_to_rgb(ctx.png);
-
-        png_read_update_info(ctx.png, ctx.info);
-
-        // Allocate row pointers
-        size_t rowbytes = png_get_rowbytes(ctx.png, ctx.info);
-        std::unique_ptr<png_bytep[]> row_pointers(new png_bytep[height]);
-
-        for (int y = 0; y < height; y++) row_pointers[y] = new png_byte[rowbytes];
-
-        // Read image data
-        png_read_image(ctx.png, row_pointers.get());
-
-        // Copy to contiguous buffer
-        constexpr uint32_t bytesPerPixel = 4;
-        auto data = std::make_unique<uint8_t[]>(width * height * bytesPerPixel);
-
-        for (int y = 0; y < height; y++)
+    void BitmapPNG::LoadFromMemory(Bitmap& bitmap, const uint8_t* pngData, size_t size)
+    {
+        if (!pngData || size < 8)
         {
-            memcpy(data.get() + y * width * bytesPerPixel, row_pointers[y], width * bytesPerPixel);
-            delete[] row_pointers[y];
+            throw std::runtime_error("LoadFromMemory: buffer too small or null");
         }
 
-        // Update bitmap
-        bitmap.SetData(std::move(data));
-        bitmap.SetSize(UVec2(width, height));
-        bitmap.SetBytesPerPixel(bytesPerPixel);
-        bitmap.SetFilename(filename);
+        if (png_sig_cmp(const_cast<png_bytep>(pngData), 0, 8))
+        {
+            throw std::runtime_error("LoadFromMemory: buffer is not a valid PNG");
+        }
+
+        png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+        if (!png) throw std::runtime_error("Failed to create PNG read struct");
+
+        png_infop info = png_create_info_struct(png);
+        if (!info)
+        {
+            png_destroy_read_struct(&png, nullptr, nullptr);
+            throw std::runtime_error("Failed to create PNG info struct");
+        }
+
+        if (setjmp(png_jmpbuf(png)))
+        {
+            png_destroy_read_struct(&png, &info, nullptr);
+            throw std::runtime_error("Error decoding PNG from memory");
+        }
+
+        MemoryReadState state{pngData, size, 8}; // we already consumed the 8-byte signature
+        png_set_read_fn(png, &state, PNGMemoryReadCallback);
+        png_set_sig_bytes(png, 8);
+        png_read_info(png, info);
+
+        DecodeFromLibpng(bitmap, png, info, std::filesystem::path{}); // no filename for embedded data
+
+        png_destroy_read_struct(&png, &info, nullptr);
     }
 
     void BitmapPNG::Write(const Bitmap& bitmap, const std::filesystem::path& filename)
