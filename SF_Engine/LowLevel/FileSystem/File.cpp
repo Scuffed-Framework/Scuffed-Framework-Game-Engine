@@ -1,8 +1,18 @@
 #include "File.hpp"
-#include <cstring>
-#include <system_error>
-#include <thread>
 
+#include <fcntl.h>
+#include <system_error>
+#include <unistd.h>
+#include <utility>
+#include <sys/stat.h>
+
+#ifdef _PLATFORM_WINDOWS
+    #include <windows.h>
+#elif defined _PLATFORM_LINUX
+    #include <sys/mman.h>
+    #include <cstring>
+    #include <cerrno>
+#endif
 namespace SF::Engine
 {
 
@@ -601,7 +611,7 @@ namespace SF::Engine
 
     File::DirectoryIterator File::DirectoryIterator::end() const
     {
-        return DirectoryIterator();
+        return {};
     }
 
     bool File::DirectoryIterator::operator!=(const DirectoryIterator &other) const
@@ -617,7 +627,7 @@ namespace SF::Engine
 
     File File::DirectoryIterator::operator*() const
     {
-        return File(m_iterator->path());
+        return {m_iterator->path()};
     }
 
     File::DirectoryIterator File::begin() const
@@ -626,12 +636,12 @@ namespace SF::Engine
         {
             return DirectoryIterator(m_path.string());
         }
-        return DirectoryIterator();
+        return {};
     }
 
     File::DirectoryIterator File::end() const
     {
-        return DirectoryIterator();
+        return {};
     }
 
     // Stream operators
@@ -672,7 +682,7 @@ namespace SF::Engine
     }
 
     // FileReader implementation
-    FileReader::FileReader(const File &file) : m_file(file)
+    FileReader::FileReader(File file) : m_file(std::move(file))
     {
         m_file.Open(FileMode::Read);
     }
@@ -698,7 +708,7 @@ namespace SF::Engine
     }
 
     // FileWriter implementation
-    FileWriter::FileWriter(const File &file, FileMode mode) : m_file(file)
+    FileWriter::FileWriter(File file, FileMode mode) : m_file(std::move(file))
     {
         m_file.Open(mode);
     }
@@ -726,11 +736,193 @@ namespace SF::Engine
         Close();
     }
 
-    bool MemoryMappedFile::Open(const std::string &path, size_t offset, size_t length)
+    bool MemoryMappedFile::Open(const std::string& path, size_t offset, size_t length)
     {
-        // Platform-specific implementation would go here
-        // This is a stub implementation
-        return false;
+        Close();
+
+    #ifdef _PLATFORM_WINDOWS
+
+        HANDLE file = CreateFileA(
+            path.c_str(),
+            GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ,
+            nullptr,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            nullptr);
+
+        if (file == INVALID_HANDLE_VALUE)
+            return false;
+
+        LARGE_INTEGER fileSize;
+        if (!GetFileSizeEx(file, &fileSize))
+        {
+            CloseHandle(file);
+            return false;
+        }
+
+        if (offset > static_cast<size_t>(fileSize.QuadPart))
+        {
+            CloseHandle(file);
+            return false;
+        }
+
+        size_t available =
+            static_cast<size_t>(fileSize.QuadPart) - offset;
+
+        if (length == 0)
+            length = available;
+
+        if (length > available)
+        {
+            CloseHandle(file);
+            return false;
+        }
+
+        if (length == 0)
+        {
+            CloseHandle(file);
+            return false;
+        }
+
+        SYSTEM_INFO systemInfo;
+        GetSystemInfo(&systemInfo);
+
+        const size_t granularity =
+            systemInfo.dwAllocationGranularity;
+
+        const size_t alignedOffset =
+            offset / granularity * granularity;
+
+        const size_t offsetDelta =
+            offset - alignedOffset;
+
+        const size_t mappingSize =
+            length + offsetDelta;
+
+        HANDLE mapping = CreateFileMappingA(
+            file,
+            nullptr,
+            PAGE_READWRITE,
+            0,
+            0,
+            nullptr);
+
+        if (!mapping)
+        {
+            CloseHandle(file);
+            return false;
+        }
+
+        const DWORD offsetHigh =
+            static_cast<DWORD>(alignedOffset >> 32);
+
+        const DWORD offsetLow =
+            static_cast<DWORD>(alignedOffset & 0xFFFFFFFF);
+
+        void* mappingData = MapViewOfFile(
+            mapping,
+            FILE_MAP_READ | FILE_MAP_WRITE,
+            offsetHigh,
+            offsetLow,
+            mappingSize);
+
+        if (!mappingData)
+        {
+            CloseHandle(mapping);
+            CloseHandle(file);
+            return false;
+        }
+
+        m_fileHandle = file;
+        m_mappingHandle = mapping;
+
+        m_mappingData = static_cast<uint8_t*>(mappingData);
+        m_mappingSize = mappingSize;
+
+        m_data = m_mappingData + offsetDelta;
+        m_size = length;
+        m_offset = offset;
+
+    #else
+
+        int fd = open(path.c_str(), O_RDWR);
+
+        if (fd == -1)
+            return false;
+
+        struct stat fileInfo {};
+
+        if (fstat(fd, &fileInfo) == -1)
+        {
+            close(fd);
+            return false;
+        }
+
+        const size_t fileSize =
+            static_cast<size_t>(fileInfo.st_size);
+
+        if (offset > fileSize)
+        {
+            close(fd);
+            return false;
+        }
+
+        const size_t available = fileSize - offset;
+
+        if (length == 0)
+            length = available;
+
+        if (length > available || length == 0)
+        {
+            close(fd);
+            return false;
+        }
+
+        const long pageSize = sysconf(_SC_PAGE_SIZE);
+
+        if (pageSize <= 0)
+        {
+            close(fd);
+            return false;
+        }
+
+        const size_t alignedOffset =
+            offset / static_cast<size_t>(pageSize)
+            * static_cast<size_t>(pageSize);
+
+        const size_t offsetDelta =
+            offset - alignedOffset;
+
+        const size_t mappingSize =
+            length + offsetDelta;
+
+        void* mappingData = mmap(
+            nullptr,
+            mappingSize,
+            PROT_READ | PROT_WRITE,
+            MAP_SHARED,
+            fd,
+            static_cast<off_t>(alignedOffset));
+
+        if (mappingData == MAP_FAILED)
+        {
+            close(fd);
+            return false;
+        }
+
+        m_fileDescriptor = fd;
+
+        m_mappingData = static_cast<uint8_t*>(mappingData);
+        m_mappingSize = mappingSize;
+
+        m_data = m_mappingData + offsetDelta;
+        m_size = length;
+        m_offset = offset;
+
+    #endif
+
+        return true;
     }
 
     void MemoryMappedFile::Close()
@@ -764,7 +956,40 @@ namespace SF::Engine
 
     void MemoryMappedFile::Flush()
     {
-        // Platform-specific flush
+        if (!m_data || m_size == 0)
+            return;
+
+#ifdef _PLATFORM_WINDOWS
+
+        // Flush modified pages to the underlying file.
+        if (!FlushViewOfFile(m_data, m_size))
+        {
+            // Optional: throw or log GetLastError()
+            throw std::runtime_error("Failed to flush memory mapped view.");
+        }
+
+        // Flush the underlying file buffers as well.
+        if (m_fileHandle)
+        {
+            HANDLE fileHandle = static_cast<HANDLE>(m_fileHandle);
+
+            if (!FlushFileBuffers(fileHandle))
+            {
+                throw std::runtime_error("Failed to flush file buffers.");
+            }
+        }
+
+#elif defined _PLATFORM_LINUX
+
+        // MS_SYNC blocks until changes are written back.
+        if (msync(m_data, m_size, MS_SYNC) == -1)
+        {
+            throw std::runtime_error(
+                std::string("Failed to flush memory mapped file: ") +
+                std::strerror(errno));
+        }
+
+#endif
     }
 
     // FileWatcher implementation

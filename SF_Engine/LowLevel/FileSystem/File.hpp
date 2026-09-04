@@ -4,7 +4,6 @@
 #undef GetCurrentDirectory
 #undef SetCurrentDirectory
 
-#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
@@ -12,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -55,7 +55,7 @@ namespace SF::Engine
         // Constructors
         File() = default;
         explicit File(const std::string &path);
-        File(const fs::path &path);
+        File(fs::path path);
         File(const File &other);
         File(File &&other) noexcept;
         ~File();
@@ -170,8 +170,8 @@ namespace SF::Engine
             DirectoryIterator() = default;
             explicit DirectoryIterator(const std::string &path);
 
-            DirectoryIterator begin() const;
-            DirectoryIterator end() const;
+            [[nodiscard]] DirectoryIterator begin() const;
+            [[nodiscard]] DirectoryIterator end() const;
 
             bool operator!=(const DirectoryIterator &other) const;
             DirectoryIterator &operator++();
@@ -189,7 +189,7 @@ namespace SF::Engine
     class FileReader
     {
     public:
-        explicit FileReader(const File &file);
+        explicit FileReader(File file);
         explicit FileReader(const std::string &path);
 
         template <typename T>
@@ -210,7 +210,7 @@ namespace SF::Engine
     class FileWriter
     {
     public:
-        explicit FileWriter(const File &file, FileMode mode = FileMode::Write);
+        explicit FileWriter(File file, FileMode mode = FileMode::Write);
         explicit FileWriter(const std::string &path, FileMode mode = FileMode::Write);
 
         template <typename T>
@@ -236,9 +236,9 @@ namespace SF::Engine
         bool Open(const std::string &path, size_t offset = 0, size_t length = 0);
         void Close();
 
-        bool IsOpen() const;
-        size_t GetSize() const;
-        const uint8_t *GetData() const;
+        [[nodiscard]] bool IsOpen() const;
+        [[nodiscard]] size_t GetSize() const;
+        [[nodiscard]] const uint8_t *GetData() const;
         uint8_t *GetData();
 
         template <typename T>
@@ -256,6 +256,9 @@ namespace SF::Engine
         uint8_t *m_data = nullptr;
         size_t m_size = 0;
         size_t m_offset = 0;
+
+        uint8_t *m_mappingData = nullptr;
+        size_t m_mappingSize = 0;
     };
 
     // File watcher for monitoring file changes
@@ -297,7 +300,7 @@ namespace SF::Engine
     // Implementation of inline methods
     inline File::File(const std::string &path) : m_path(path) {}
 
-    inline File::File(const fs::path &path) : m_path(path) {}
+    inline File::File(fs::path path) : m_path(std::move(path)) {}
 
     inline bool File::Exists() const
     {
