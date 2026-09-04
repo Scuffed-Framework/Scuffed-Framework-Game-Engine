@@ -42,14 +42,7 @@ namespace SF::Engine
 
         virtual ~AssetBase() = default;
 
-        // Persist assetData to the editor-side loose XML representation.
-        // Not valid to call against a mounted (packed, read-only) archive —
-        // see AssetController::SaveAll().
         virtual void Save() = 0;
-
-        // Populate assetData from raw archive payload bytes (already
-        // decrypted/decompressed by MountedRscFile). Returns false on
-        // malformed payload.
         virtual bool Load(std::span<const uint8_t> payload) = 0;
 
         void Serialize(XMLNode &node) const override

@@ -76,12 +76,11 @@ namespace SF::Engine
         {
             if (VkResult res = vkDeviceWaitIdle(*logicalDevice); res == VK_ERROR_DEVICE_LOST)
             {
-                Log::Critical("[RenderSystem] Device was lost prior to shutdown — exiting immediately, no cleanup.");
+                Log::Critical("[RenderSystem] Device was lost prior to shutdown; exiting immediately, no cleanup.");
                 _Exit(EXIT_FAILURE);
             }
         }
 
-        // normal teardown, unchanged — only reached if device is fine
         renderer = nullptr;
         swapchains.clear();
         PreShutdown();
@@ -182,7 +181,7 @@ namespace SF::Engine
 
             if (acquireResult == VK_ERROR_DEVICE_LOST)
             {
-                Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST during AcquireNextImage — exiting immediately.");
+                Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST during AcquireNextImage; exiting immediately.");
                 _Exit(EXIT_FAILURE);
             }
 
@@ -219,13 +218,6 @@ namespace SF::Engine
 
                 if (!StartRenderpass(id, *renderStage))
                 {
-                    // A resize raced us between the up-front staleness check and here.
-                    // The acquire fence has already been reset by AcquireNextImage but
-                    // nothing will submit it on this path — bailing out with `return`
-                    // (old behavior) permanently orphans that fence, and the *next*
-                    // frame's acquire-side wait would block on it indefinitely.
-                    // Instead, treat this as "went stale mid-frame" and let RecreatePass
-                    // fix it up properly before we leave this Update().
                     wentStale = true;
                     break;
                 }
@@ -331,7 +323,7 @@ namespace SF::Engine
             return;
         if (result == VK_ERROR_DEVICE_LOST)
         {
-            Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST detected — exiting immediately, no cleanup.");
+            Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST detected; exiting immediately, no cleanup.");
             _Exit(EXIT_FAILURE);
         }
 
@@ -518,7 +510,7 @@ namespace SF::Engine
         {
             auto &psb = perSurfaceBuffers[sid];
             // Check ALL stages for a swapchain attachment, not just the one
-            // passed in — RecreatePass may be invoked with any stage as the
+            // passed in; RecreatePass may be invoked with any stage as the
             // trigger, and that stage might not be the one that owns swapchain.
             bool anyStageHasSwapchain = std::any_of(
                 renderer->renderStages.begin(), renderer->renderStages.end(),
@@ -558,7 +550,7 @@ namespace SF::Engine
     bool RenderSystem::StartRenderpass(std::size_t id, RenderStage &renderStage)
     {
         // Staleness is now handled up-front in Update(), so this should never
-        // be true here. Kept as a safety net only — no RecreatePass call,
+        // be true here. Kept as a safety net only; no RecreatePass call,
         // since calling it mid-loop is what caused the resize deadlock.
         if (renderStage.IsOutOfDate())
             return false;
@@ -629,7 +621,7 @@ namespace SF::Engine
         }
         else if (presentResult == VK_ERROR_DEVICE_LOST)
         {
-            Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST during QueuePresent — exiting immediately.");
+            Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST during QueuePresent; exiting immediately.");
             _Exit(EXIT_FAILURE);
         }
         else if (presentResult != VK_SUCCESS)

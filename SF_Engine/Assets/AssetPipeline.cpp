@@ -23,13 +23,10 @@ namespace SF::Engine
             return;
         }
         factories.emplace(rttiTypeName, std::move(factory));
-        // type is kept for filtering only — you can still index it separately if you want fast "all Textures" queries
     }
 
     bool AssetController::Initialize()
     {
-        // Actual asset loading happens per-project in ProjectLoaded(), once we
-        // know which Assets/ folder to scan. Nothing to do at engine boot.
         assets_ = SFTL::DynamicArray<std::shared_ptr<AssetBase>>();
         return true;
     }

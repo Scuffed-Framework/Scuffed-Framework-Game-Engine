@@ -133,10 +133,6 @@ namespace SF::Engine
 
             // Stage 1, subpass 0 : Deferred lighting resolve
             AddPipelinePass<DeferredLightPipelinePass>(Pipeline::Stage{1, 0}, *lightManager_);
-
-            // Stage 1, subpass 1 : Probed Stochastic SSR (compute, runs in
-            // PreRender — see SSRPipelinePass for the cross-stage hdr/gbuffer
-            // read timing notes) followed by the transparent forward pass.
             ssr_ = AddPipelinePass<SSRPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
             AddPipelinePass<ForwardTransparentPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
 

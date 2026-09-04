@@ -65,10 +65,6 @@ namespace SF::Engine
 
         auto ownedRenderer = std::make_unique<SceneRenderer>(cfg);
         sceneRenderer_ = ownedRenderer.get();
-
-        // ImGui must target the stage that actually owns "swapchain" — that's
-        // now stage 2 (its own render pass; see SceneRenderer.hpp for why
-        // tonemap/swapchain was split out of stage 1).
         ImGuiPipelinePass::SetTargetStage(Pipeline::Stage{2, 0});
 
         if (auto *rs = RenderSystem::Get())
@@ -166,9 +162,6 @@ namespace SF::Engine
         if (!rootEntity)
             return;
 
-        // Collect the whole subtree first: DestroyEntity below cascades through
-        // children via unique_ptr, so raw pointers under root dangle the moment
-        // it's called — walk before destroying, not during.
         std::vector<Entity *> subtree;
         std::function<void(Entity *)> collect = [&](Entity *e)
         {
@@ -305,7 +298,7 @@ namespace SF::Engine
             lights_.push_back(light);
         }
 
-        // Reparent in a second pass, once every Entity in this batch exists —
+        // Reparent in a second pass, once every Entity in this batch exists;
         // an object can reference a parent that's deserialized later in the file.
         for (auto &p : pending)
         {

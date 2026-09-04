@@ -78,7 +78,7 @@ namespace SF::Engine
          * @param frontFace The direction to render faces.
          * @param pushDescriptors If no actual descriptor sets are allocated but instead pushed.
          * @param additionalLayouts Extra descriptor set layouts appended after set 0 (this
-         *        pipeline's own set) and set 1 (shared samplers) — e.g. a per-material or
+         *        pipeline's own set) and set 1 (shared samplers); e.g. a per-material or
          *        per-pass set.
          * @param blend Blend preset applied to every colour attachment. In MRT mode every
          *        attachment shares this preset unless you pass Blend::Custom.
@@ -124,7 +124,7 @@ namespace SF::Engine
 
         /**
          * Gets the depth stencil used in a stage. Offscreen pipelines must pass an
-         * explicit `stage` — they aren't tied to a RenderSystem stage.
+         * explicit `stage`; they aren't tied to a RenderSystem stage.
          */
         [[nodiscard]] const ImageDepth *GetDepthStencil(
             const std::optional<uint32_t> &stage = std::nullopt) const;

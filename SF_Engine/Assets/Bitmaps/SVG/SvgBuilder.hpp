@@ -116,7 +116,7 @@ namespace SF::Engine
     }
 
     // ---------------------------------------------------------------------
-    // SvgPathBuilder — fluent construction of a <path> 'd' attribute.
+    // SvgPathBuilder; fluent construction of a <path> 'd' attribute.
     // Product is plain std::string so it can be handed straight to
     // SvgBuilder::Path(...) or stored/reused independently.
     // ---------------------------------------------------------------------

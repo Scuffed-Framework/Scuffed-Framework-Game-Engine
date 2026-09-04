@@ -10,8 +10,8 @@ namespace SF::Engine
     {
         uint32_t resolution   = 1024;
         float    coverageScale = 4.0f;
-        float    heightScale   = 1.0f;   // << coverageScale — height varies more slowly
-        float    typeScale     = 0.25f;  // << heightScale — whole fronts share a type
+        float    heightScale   = 1.0f;   // << coverageScale; height varies more slowly
+        float    typeScale     = 0.25f;  // << heightScale; whole fronts share a type
         float    coverageBias  = 0.0f;
         float    _pad[3]{};              // std140 cbuffer alignment
     };

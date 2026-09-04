@@ -240,7 +240,7 @@ namespace SF::Engine
         for (const auto &child : root->children)
             WalkAndDraw(*child, rootTransform, rootStyle, buffer);
 
-        // buffer.pixels is already tightly-packed RGBA8 — same layout Bitmap expects at bpp=4.
+        // buffer.pixels is already tightly-packed RGBA8; same layout Bitmap expects at bpp=4.
         const uint32_t byteCount = static_cast<uint32_t>(buffer.pixels.size() * sizeof(SvgRaster::Rgba));
         auto pixelData = std::make_unique<uint8_t[]>(byteCount);
         std::memcpy(pixelData.get(), buffer.pixels.data(), byteCount);
@@ -259,7 +259,7 @@ namespace SF::Engine
         if (!src || w == 0 || h == 0)
             throw std::runtime_error("BitmapSvg::Write: bitmap has no pixel data");
 
-        // Normalize to RGBA8 — EncodeBmp only understands that layout.>
+        // Normalize to RGBA8; EncodeBmp only understands that layout.>
         std::vector<uint8_t> rgba(static_cast<size_t>(w) * h * 4);
         for (uint32_t p = 0; p < w * h; ++p)
         {

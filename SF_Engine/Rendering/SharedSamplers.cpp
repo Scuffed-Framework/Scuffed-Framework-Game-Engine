@@ -59,14 +59,14 @@ namespace SF::Engine
             nearestRepeatSampler_ = makeSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_BORDER_COLOR_INT_OPAQUE_BLACK, false);
 
             // Bindings 0-9 in Samplers.si, in exact order:
-            pointClampEdge_ = nearestClampSampler_;                                                                                                          // binding 0 — reuse, same params
-            pointClampBorder0000_ = makeSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, false); // binding 1
-            pointRepeat_ = nearestRepeatSampler_;                                                                                                            // binding 2 — reuse
-            linearClampBorder0000_ = makeSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, false); // binding 4
-            linearClampBorder1111_ = makeSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE, false);      // binding 6
-            pointClampBorder1111_ = makeSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE, false);      // binding 7
-            linearClampEdgeMipFilter_ = makeSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_BORDER_COLOR_INT_OPAQUE_BLACK, true);        // binding 8
-            linearRepeatMipFilter_ = makeSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_BORDER_COLOR_INT_OPAQUE_BLACK, true);                  // binding 9
+            pointClampEdge_ = nearestClampSampler_;
+            pointClampBorder0000_ = makeSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, false);
+            pointRepeat_ = nearestRepeatSampler_;
+            linearClampBorder0000_ = makeSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, false);
+            linearClampBorder1111_ = makeSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE, false);
+            pointClampBorder1111_ = makeSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE, false);
+            linearClampEdgeMipFilter_ = makeSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_BORDER_COLOR_INT_OPAQUE_BLACK, true);
+            linearRepeatMipFilter_ = makeSampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_BORDER_COLOR_INT_OPAQUE_BLACK, true);
         }
         catch (...)
         {
@@ -162,8 +162,6 @@ namespace SF::Engine
         vkDestroySampler(device, pointClampBorder1111_, nullptr);
         vkDestroySampler(device, linearClampEdgeMipFilter_, nullptr);
         vkDestroySampler(device, linearRepeatMipFilter_, nullptr);
-        // pointClampEdge_/pointRepeat_ intentionally not destroyed twice — they alias
-        // nearestClampSampler_/nearestRepeatSampler_.
 
         linearClampSampler_ = linearRepeatSampler_ = nearestClampSampler_ = nearestRepeatSampler_ = VK_NULL_HANDLE;
         pointClampEdge_ = pointClampBorder0000_ = pointRepeat_ = VK_NULL_HANDLE;

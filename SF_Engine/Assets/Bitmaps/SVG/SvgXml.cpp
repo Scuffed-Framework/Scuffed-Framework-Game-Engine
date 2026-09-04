@@ -78,7 +78,7 @@ namespace SF::Engine::SvgXml
                 std::string name = ParseName(c);
                 if (name.empty())
                 {
-                    ++c.i; // malformed — skip a char rather than loop forever
+                    ++c.i; // malformed; skip a char rather than loop forever
                     continue;
                 }
                 c.SkipWs();
@@ -113,7 +113,7 @@ namespace SF::Engine::SvgXml
                         node.children.push_back(std::move(child));
                     continue;
                 }
-                while (!c.Eof() && c.Peek() != '<') // text content — shapes don't need it
+                while (!c.Eof() && c.Peek() != '<') // text content; shapes don't need it
                     c.Get();
             }
         }

@@ -44,7 +44,7 @@ namespace SF::Engine
 
     void AtmospherePipelinePass::SetSceneBuffers()
     {
-        const Image2d *sceneColor = GetSceneHDR(); // "hdr" attachment — now our compute read/write target
+        const Image2d *sceneColor = GetSceneHDR(); // "hdr" attachment; now our compute read/write target
         const ImageDepth *sceneDepth = GetSceneDepth();
 
         if (!sceneColor || !sceneDepth)
@@ -135,7 +135,7 @@ namespace SF::Engine
 
     void AtmospherePipelinePass::PreRender(const CommandBuffer &commandBuffer)
     {
-        // Must run BEFORE the lastColor_ guard below — lastColor_ is only ever
+        // Must run BEFORE the lastColor_ guard below; lastColor_ is only ever
         // populated as a side effect of this call. Checking the guard first
         // (as in an earlier draft) meant lastColor_ could never get set on the
         // first frame, and the pass would silently no-op forever after that.

@@ -99,7 +99,7 @@ namespace SF::Engine
         // Construct the live TImage directly, forwarding whatever ctor args
         // TImage actually needs (extent, format, filter, voxel data, etc).
         // This is what makes ImageAsset<TImage> work uniformly across
-        // Image2d/Image3d/Image2dArray without per-type subclasses — each
+        // Image2d/Image3d/Image2dArray without per-type subclasses; each
         // one just gets called with its own natural constructor signature.
         template <typename... Args>
         void Create(Args &&...args)

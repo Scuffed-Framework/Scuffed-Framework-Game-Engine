@@ -68,7 +68,7 @@ namespace SF::Engine
     {
         if (ti == std::type_index(typeid(Transform)))
         {
-            Log::Warning("Refusing to remove Transform — every entity must have one.");
+            Log::Warning("Refusing to remove Transform, every entity must have one.");
             return false;
         }
 

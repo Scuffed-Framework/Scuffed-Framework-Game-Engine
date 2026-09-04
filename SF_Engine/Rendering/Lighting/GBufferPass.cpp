@@ -17,8 +17,8 @@ namespace SF::Engine
         return w;
     }
     // GBuffer.shader declares its material inputs as plain Texture2D (bindings
-    // 1-4) plus one separate SamplerState (binding 5) — not a combined
-    // image-sampler — so the descriptor writes/layout must be SAMPLED_IMAGE,
+    // 1-4) plus one separate SamplerState (binding 5); not a combined
+    // image-sampler; so the descriptor writes/layout must be SAMPLED_IMAGE,
     // not COMBINED_IMAGE_SAMPLER.
     static VkWriteDescriptorSet GBufWImg(VkDescriptorSet d, uint32_t b,
                                          const VkDescriptorImageInfo *i)

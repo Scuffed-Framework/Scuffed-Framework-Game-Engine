@@ -36,7 +36,7 @@ namespace SF::Engine
             return {};
 
         // vertexBuffer is device-local (see SetVertices), so it can't be
-        // mapped directly — copy it into a host-visible staging buffer first.
+        // mapped directly; copy it into a host-visible staging buffer first.
         Buffer stagingBuffer(vertexBuffer->GetSize(), VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_AUTO,
                              VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT);
 

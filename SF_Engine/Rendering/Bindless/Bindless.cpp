@@ -85,7 +85,7 @@ namespace SF::Engine
     BindlessManager::~BindlessManager()
     {
         // Any resources whose Free* was called but whose index deferral hadn't
-        // elapsed yet are abandoned here — that's fine, the whole set/pool/layout
+        // elapsed yet are abandoned here; that's fine, the whole set/pool/layout
         // is being destroyed right after this anyway. This is NOT a substitute for
         // FlushAllPendingFrees() during normal shutdown; see header comment.
         DestroyDescriptorSetLayout(m_setLayout);

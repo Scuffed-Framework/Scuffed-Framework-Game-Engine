@@ -135,7 +135,7 @@ namespace SF::Engine
 
     struct SvgPath
     {
-        std::string data; // the 'd' attribute — build with SvgPathBuilder
+        std::string data; // the 'd' attribute; build with SvgPathBuilder
         SvgStyle style;
     };
 
@@ -703,7 +703,7 @@ namespace SF::Engine
                 }
                 default:
                     i = d.size();
-                    break; // unsupported command — stop rather than loop forever
+                    break; // unsupported command; stop rather than loop forever
                 }
                 lastCmd = upperCmd;
             }
@@ -781,7 +781,7 @@ namespace SF::Engine
             std::string tag = LocalName(node.tag);
             if (tag == "defs" || tag == "symbol" || tag == "clipPath" || tag == "mask" ||
                 tag == "linearGradient" || tag == "radialGradient" || tag == "style" || tag == "text")
-                return; // unsupported — skipped rather than mis-rendered
+                return; // unsupported; skipped rather than mis-rendered
 
             Mat2x3 transform = parentTransform;
             if (const std::string *t = node.Attr("transform"))

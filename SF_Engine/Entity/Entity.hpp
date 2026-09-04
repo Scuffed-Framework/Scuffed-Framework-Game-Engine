@@ -10,7 +10,7 @@ namespace SF::Engine
     using EntityId = std::uint64_t;
     constexpr std::uint64_t InvalidEntityId = 0u; // should do the trick
     /**
-     * @brief Tag component — presence/state of enabled flag. Entities
+     * @brief Tag component that presence/state of enabled flag. Entities
      * without it are implicitly enabled; only add when something toggles it.
      */
     struct EnabledComponent
@@ -138,7 +138,7 @@ namespace SF::Engine
         {
             if constexpr (std::is_same_v<T, Transform>)
             {
-                Log::Warning("Refusing to remove Transform — every entity must have one.");
+                Log::Warning("Refusing to remove Transform, every entity must have one.");
                 return false;
             }
 
@@ -322,11 +322,6 @@ namespace SF::Engine
         std::string name;
     };
 
-    /**
-     * @brief Owns the scene's root entities and provides fast lookup
-     *        by stable ID. No external dependency, no template
-     *        metaprogramming tax — just unique_ptr ownership.
-     */
     class EntityRegistry
     {
     public:
@@ -353,7 +348,7 @@ namespace SF::Engine
          *        Separate name from CreateEntity<T>(Args...) so root-vs-child
          *        creation can't be confused by overload resolution: a root
          *        entity is owned by `roots`, a child is owned by its parent's
-         *        `children` — mixing those up leaves the registry inconsistent.
+         *        `children`; mixing those up leaves the registry inconsistent.
          */
         template <typename T = Entity, typename... Args>
         T *CreateChildEntity(Entity *parent, Args &&...args)
@@ -484,9 +479,6 @@ namespace SF::Engine
 
             for (Entity *e : toRemove)
             {
-                // Skip entities whose ancestor is also being removed this pass —
-                // DestroyEntity on the ancestor already takes the subtree with it,
-                // and `e` may already be dangling by the time we get to it.
                 if (!IsValid(e))
                     continue;
                 DestroyEntity(e);

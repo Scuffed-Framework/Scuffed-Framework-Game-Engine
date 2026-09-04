@@ -21,11 +21,11 @@ namespace SF::Engine
          * @param defines     A list of preprocessor defines (uses Shader::Define, same as RenderPipeline).
          * @param pushDescriptors If no actual descriptor sets are allocated but instead pushed.
          * @param additionalLayouts Extra descriptor set layouts appended after set 0 (this
-         *        pipeline's own set) and set 1 (shared samplers) — e.g. a bindless or
+         *        pipeline's own set) and set 1 (shared samplers); e.g. a bindless or
          *        per-dispatch set.
          * @param localSize The workgroup size (local_size_x/y/z) this shader was authored
          *        with. Used by the 2-arg CmdRender(extent) overload to compute dispatch
-         *        group counts — must match the shader's actual `local_size_*` layout qualifiers.
+         *        group counts; must match the shader's actual `local_size_*` layout qualifiers.
          *        Must be non-zero in every component.
          */
         explicit ComputePipeline(
@@ -59,7 +59,7 @@ namespace SF::Engine
         void CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent) const;
 
         /// Dispatches ceil(extent.x/X) * ceil(extent.y/Y) groups in x/y, and exactly
-        /// `zGroups` groups in z — e.g. for cubemap faces, cascades, or array layers
+        /// `zGroups` groups in z; e.g. for cubemap faces, cascades, or array layers
         /// that aren't part of `extent`.
         void CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent,
                        const uint32_t X, const uint32_t Y, const uint32_t zGroups) const;
