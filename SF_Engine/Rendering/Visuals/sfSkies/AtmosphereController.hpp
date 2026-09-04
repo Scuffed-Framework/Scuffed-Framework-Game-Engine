@@ -4,10 +4,12 @@
 #include "Atmosphere/AtmospherePipelinePass.hpp"
 
 #include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
+#include <1stPartyLibs/TemplateLibrary/Operations.hpp>
 #include <Math/BasicMath.hpp>
 #include <functional>
 #include <string>
 
+using namespace SFTL;
 namespace SF::Engine
 {
     struct AtmosphereEntry
@@ -30,7 +32,7 @@ namespace SF::Engine
         }
 
         explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory,
-                                      const ::SFTL::DynamicArray<KeyValuePair<std::string, AtmosphereData>> &params) :
+                                      const DynamicArray<KeyValuePair<std::string, AtmosphereData>> &params) :
             stage_(stage), factory_(std::move(factory))
         {
             entries_.reserve(params.size());
@@ -70,7 +72,11 @@ namespace SF::Engine
 
         void AddAtmosphere(const std::string &name, const AtmosphereData &data, const Vec3 &planetPos = {})
         {
-            entries_.emplace_back(AtmosphereEntry{name, data, factory_(stage_, data.params), planetPos, true});
+            entries_.emplace_back(AtmosphereEntry{.name      = name,
+                                                  .data      = data,
+                                                  .pass      = factory_(stage_, data.params),
+                                                  .planetPos = planetPos,
+                                                  .active    = true});
         }
 
         void RemoveAtmosphere(const std::string &name)
@@ -80,7 +86,7 @@ namespace SF::Engine
             entries_.erase(newEnd, entries_.end());
         }
 
-        bool Empty() const { return entries_.empty(); }
+        [[nodiscard]] bool Empty() const { return entries_.empty(); }
 
     private:
         AtmosphereEntry *Find(const std::string &name)
@@ -95,4 +101,4 @@ namespace SF::Engine
         PassFactory factory_;
         ::SFTL::DynamicArray<AtmosphereEntry> entries_;
     };
-}
+} // namespace SF::Engine

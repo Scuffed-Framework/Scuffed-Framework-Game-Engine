@@ -33,10 +33,10 @@
 /******************************************************************************/
 #pragma once
 #include "TypeTraits.hpp"
+#define SFTL_VERIFY(cond, message) ((void) ((cond) || (printf(message), 0)))
 
 namespace SFTL
 {
-#define SFTL_VERIFY(cond, message) ((void) ((cond) || (printf(message), 0)))
 
     inline void *SFTL_BI_MCPY(void *dest, const void *src, size_type n) noexcept
     {
