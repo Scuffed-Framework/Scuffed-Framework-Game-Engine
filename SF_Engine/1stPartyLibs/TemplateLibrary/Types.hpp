@@ -54,11 +54,13 @@ namespace SFTL
 
     typedef uint64 size_type;
 
-    using word = uint16;
+    using word  = uint16;
     using dword = uint32;
     using qword = uint64;
 
-    using ptrdiff_t = decltype(static_cast<int *>(nullptr) - static_cast<int *>(nullptr)); // https://en.cppreference.com/cpp/types/ptrdiff_t
+    using ptrdiff_t = decltype(static_cast<int *>(nullptr) -
+                               static_cast<int *>(nullptr)); // https://en.cppreference.com/cpp/types/ptrdiff_t
+    typedef long int intptr_type;
 
     typedef float floating32;
     typedef double floating64;
@@ -75,7 +77,7 @@ namespace SFTL
                 char WCharBytes[4];
             } value;
         };
-    }
+    } // namespace Detail
 
     typedef Detail::mbstate_impl mbstate_type;
-}
+} // namespace SFTL

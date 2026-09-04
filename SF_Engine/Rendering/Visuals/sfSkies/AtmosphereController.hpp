@@ -1,12 +1,12 @@
 #pragma once
-#include "Atmosphere/AtmospherePipelinePass.hpp"
 #include <Controllers/Controller.hpp>
 #include <Math/KVP.hpp>
+#include "Atmosphere/AtmospherePipelinePass.hpp"
 
-#include <string>
+#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
 #include <Math/BasicMath.hpp>
-#include <TemplateLibrary/DynamicArray.hpp>
 #include <functional>
+#include <string>
 
 namespace SF::Engine
 {
@@ -15,8 +15,8 @@ namespace SF::Engine
         std::string name;
         AtmosphereData data;
         AtmospherePipelinePass *pass = nullptr; // non-owning; owned by PipelinePassManager
-        Vec3 planetPos = {0.0f, 0.0f, 0.0f};
-        bool active = true;
+        Vec3 planetPos               = {0.0f, 0.0f, 0.0f};
+        bool active                  = true;
     };
 
     class AtmosphereController : public StaticController<AtmosphereController>
@@ -24,18 +24,19 @@ namespace SF::Engine
     public:
         using PassFactory = std::function<AtmospherePipelinePass *(Pipeline::Stage, const AtmosphereParams &)>;
 
-        explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory)
-            : stage_(stage), factory_(std::move(factory))
+        explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory) :
+            stage_(stage), factory_(std::move(factory))
         {
         }
 
         explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory,
-                                       const ::SFTL::DynamicArray<KeyValuePair<std::string, AtmosphereData>> &params)
-            : stage_(stage), factory_(std::move(factory))
+                                      const ::SFTL::DynamicArray<KeyValuePair<std::string, AtmosphereData>> &params) :
+            stage_(stage), factory_(std::move(factory))
         {
             entries_.reserve(params.size());
-            for (const auto &[name, data] : params)
-                entries_.emplace_back(AtmosphereEntry{ name, data, factory_(stage_, data.params), {0.0f, 0.0f, 0.0f}, true });
+            for (const auto &[name, data]: params)
+                entries_.emplace_back(
+                        AtmosphereEntry{name, data, factory_(stage_, data.params), {0.0f, 0.0f, 0.0f}, true});
         }
 
         void Update(float DeltaTime) override
@@ -43,11 +44,10 @@ namespace SF::Engine
             // this would be for clouds->SetFrameData(...);
         }
 
-        void SetFrameData(const Mat4 &invProj, const Mat4 &invView,
-                           const Vec3 &cameraPos, const Vec3 &sunDir,
-                           const Vec2 &screenSize)
+        void SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos, const Vec3 &sunDir,
+                          const Vec2 &screenSize)
         {
-            for (auto &entry : entries_)
+            for (auto &entry: entries_)
             {
                 if (!entry.active || !entry.pass)
                     continue;
@@ -70,13 +70,13 @@ namespace SF::Engine
 
         void AddAtmosphere(const std::string &name, const AtmosphereData &data, const Vec3 &planetPos = {})
         {
-            entries_.emplace_back(AtmosphereEntry{ name, data, factory_(stage_, data.params), planetPos, true });
+            entries_.emplace_back(AtmosphereEntry{name, data, factory_(stage_, data.params), planetPos, true});
         }
 
         void RemoveAtmosphere(const std::string &name)
         {
             auto newEnd = ::SFTL::remove_if(entries_.begin(), entries_.end(),
-                [&name](const AtmosphereEntry &e) { return e.name == name; });
+                                            [&name](const AtmosphereEntry &e) { return e.name == name; });
             entries_.erase(newEnd, entries_.end());
         }
 
@@ -85,7 +85,7 @@ namespace SF::Engine
     private:
         AtmosphereEntry *Find(const std::string &name)
         {
-            for (auto &entry : entries_)
+            for (auto &entry: entries_)
                 if (entry.name == name)
                     return &entry;
             return nullptr;

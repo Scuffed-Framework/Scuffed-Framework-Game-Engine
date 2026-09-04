@@ -1,8 +1,8 @@
 #pragma once
-#include <TemplateLibrary/Types.hpp>
-#include <TemplateLibrary/DynamicArray.hpp>
-#include <string>
+#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
+#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <filesystem>
+#include <string>
 
 #include <Platform/PlatformIncludes.hpp>
 
@@ -12,15 +12,9 @@ namespace SF::Engine
     {
         Platform::NativePID Value = Platform::InvalidPID;
 
-        constexpr bool IsValid() const noexcept
-        {
-            return Value != Platform::InvalidPID;
-        }
+        constexpr bool IsValid() const noexcept { return Value != Platform::InvalidPID; }
 
-        constexpr explicit operator bool() const noexcept
-        {
-            return IsValid();
-        }
+        constexpr explicit operator bool() const noexcept { return IsValid(); }
 
         friend constexpr bool operator==(ProcessID, ProcessID) noexcept = default;
     };
@@ -41,10 +35,11 @@ namespace SF::Engine
     public:
         Process() = default;
         explicit Process(ProcessID pid);
-        explicit Process(std::filesystem::path program, std::filesystem::path directory)
-            : Process(std::move(program), {}, std::move(directory)) {}
-        explicit Process(std::filesystem::path program,
-                         ::SFTL::DynamicArray<std::string> args,
+        explicit Process(std::filesystem::path program, std::filesystem::path directory) :
+            Process(std::move(program), {}, std::move(directory))
+        {
+        }
+        explicit Process(std::filesystem::path program, ::SFTL::DynamicArray<std::string> args,
                          std::filesystem::path directory)
         {
             *this = Launch(program, args, directory);
@@ -52,7 +47,7 @@ namespace SF::Engine
 
         ~Process();
 
-        Process(const Process &) = delete;
+        Process(const Process &)            = delete;
         Process &operator=(const Process &) = delete;
 
         Process(Process &&other) noexcept;
@@ -73,10 +68,9 @@ namespace SF::Engine
 
         static Process Current();
 
-        static Process Launch(
-            const std::filesystem::path &executable,
-            const ::SFTL::DynamicArray<std::string> &arguments = {},
-            const std::filesystem::path &workingDirectory = {});
+        static Process Launch(const std::filesystem::path &executable,
+                              const ::SFTL::DynamicArray<std::string> &arguments = {},
+                              const std::filesystem::path &workingDirectory      = {});
 
     private:
         ProcessID m_PID{};

@@ -55,36 +55,33 @@
 //
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cmath>
-#include <concepts>
-#include <cstddef>
-#include <algorithm>
-
-#include <TemplateLibrary/TypeTraits.hpp>
+#include "../TypeTraits.hpp"
 
 #if defined(__GNUC__) || defined(__clang__)
-#define SFTL_SIMD_HAS_VECTOR_EXT 1
+    #define SFTL_SIMD_HAS_VECTOR_EXT 1
 #else
-#define SFTL_SIMD_HAS_VECTOR_EXT 0
+    #define SFTL_SIMD_HAS_VECTOR_EXT 0
 #endif
 
 #if defined(__has_builtin)
-#define SFTL_SIMD_HAS_BUILTIN(x) __has_builtin(x)
+    #define SFTL_SIMD_HAS_BUILTIN(x) __has_builtin(x)
 #else
-#define SFTL_SIMD_HAS_BUILTIN(x) 0
+    #define SFTL_SIMD_HAS_BUILTIN(x) 0
 #endif
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-#include <immintrin.h>
-#define SFTL_SIMD_X86 1
+    #include <immintrin.h>
+    #define SFTL_SIMD_X86 1
 #else
-#define SFTL_SIMD_X86 0
+    #define SFTL_SIMD_X86 0
 #endif
 
 namespace SFTL
 {
-    template <typename T>
+    template<typename T>
     concept Vectorizable = is_arithmetic_v<T>;
 
 #if defined(__AVX512F__)
@@ -97,7 +94,7 @@ namespace SFTL
     inline constexpr size_t native_vector_bytes = 0; // signals "no known vector ISA" below
 #endif
 
-    template <int N>
+    template<int N>
     struct fixed_size
     {
         static constexpr int size = N;
@@ -105,38 +102,38 @@ namespace SFTL
 
     namespace detail
     {
-        template <typename T>
+        template<typename T>
         constexpr int native_lane_count()
         {
             if constexpr (native_vector_bytes == 0)
                 return 1; // no known vector ISA: one lane, i.e. scalar
             else
                 return static_cast<int>(native_vector_bytes / sizeof(T)) > 0
-                           ? static_cast<int>(native_vector_bytes / sizeof(T))
-                           : 1;
+                               ? static_cast<int>(native_vector_bytes / sizeof(T))
+                               : 1;
         }
 
 #if SFTL_SIMD_HAS_VECTOR_EXT
-        template <typename T, size_t N>
+        template<typename T, size_t N>
         struct vector_of_helper
         {
             typedef T type __attribute__((vector_size(N * sizeof(T))));
         };
-        template <typename T, size_t N>
+        template<typename T, size_t N>
         using vector_of = typename vector_of_helper<T, N>::type;
 #endif
     } // namespace detail
 
-    template <typename T>
+    template<typename T>
     using native = fixed_size<detail::native_lane_count<T>()>;
 
-    template <Vectorizable T, typename Abi = native<T>>
+    template<Vectorizable T, typename Abi = native<T>>
     class simd
     {
     public:
         static constexpr size_t size = Abi::size;
-        using value_type = T;
-        using abi_type = Abi;
+        using value_type             = T;
+        using abi_type               = Abi;
 
 #if SFTL_SIMD_HAS_VECTOR_EXT
         using storage_type = detail::vector_of<T, size>;
@@ -235,14 +232,14 @@ namespace SFTL
 
 #if SFTL_SIMD_HAS_VECTOR_EXT
 
-    template <Vectorizable T, typename Abi>
+    template<Vectorizable T, typename Abi>
     simd<T, Abi> sqrt(const simd<T, Abi> &v)
     {
-        using storage_type = typename simd<T, Abi>::storage_type;
+        using storage_type     = typename simd<T, Abi>::storage_type;
         constexpr size_t bytes = simd<T, Abi>::size * sizeof(T);
-#if SFTL_SIMD_HAS_BUILTIN(__builtin_elementwise_sqrt)
+    #if SFTL_SIMD_HAS_BUILTIN(__builtin_elementwise_sqrt)
         storage_type r = __builtin_elementwise_sqrt(v._data);
-#elif SFTL_SIMD_X86
+    #elif SFTL_SIMD_X86
         storage_type r{};
         if constexpr (is_same_v<T, float> && bytes == 64)
         {
@@ -250,58 +247,52 @@ namespace SFTL
             SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m512 out = _mm512_sqrt_ps(in);
             SFTL_BI_MCPY(&r, &out, sizeof(r));
-        }
-        else if constexpr (is_same_v<T, float> && bytes == 32)
+        } else if constexpr (is_same_v<T, float> && bytes == 32)
         {
             __m256 in;
             SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m256 out = _mm256_sqrt_ps(in);
             SFTL_BI_MCPY(&r, &out, sizeof(r));
-        }
-        else if constexpr (is_same_v<T, float> && bytes == 16)
+        } else if constexpr (is_same_v<T, float> && bytes == 16)
         {
             __m128 in;
             SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m128 out = _mm_sqrt_ps(in);
             SFTL_BI_MCPY(&r, &out, sizeof(r));
-        }
-        else if constexpr (is_same_v<T, double> && bytes == 64)
+        } else if constexpr (is_same_v<T, double> && bytes == 64)
         {
             __m512d in;
             SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m512d out = _mm512_sqrt_pd(in);
             SFTL_BI_MCPY(&r, &out, sizeof(r));
-        }
-        else if constexpr (is_same_v<T, double> && bytes == 32)
+        } else if constexpr (is_same_v<T, double> && bytes == 32)
         {
             __m256d in;
             SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m256d out = _mm256_sqrt_pd(in);
             SFTL_BI_MCPY(&r, &out, sizeof(r));
-        }
-        else if constexpr (is_same_v<T, double> && bytes == 16)
+        } else if constexpr (is_same_v<T, double> && bytes == 16)
         {
             __m128d in;
             SFTL_BI_MCPY(&in, &v._data, sizeof(in));
             __m128d out = _mm_sqrt_pd(in);
             SFTL_BI_MCPY(&r, &out, sizeof(r));
-        }
-        else
+        } else
         {
             for (size_t i = 0; i < simd<T, Abi>::size; ++i)
                 r[i] = std::sqrt(v._data[i]);
         }
-#else
+    #else
         storage_type r{};
         for (size_t i = 0; i < simd<T, Abi>::size; ++i)
             r[i] = std::sqrt(v._data[i]);
-#endif
+    #endif
         simd<T, Abi> res;
         res._data = r;
         return res;
     }
 
-    template <Vectorizable T, typename Abi>
+    template<Vectorizable T, typename Abi>
     simd<T, Abi> min(const simd<T, Abi> &a, const simd<T, Abi> &b)
     {
         simd<T, Abi> res;
@@ -309,7 +300,7 @@ namespace SFTL
         return res;
     }
 
-    template <Vectorizable T, typename Abi>
+    template<Vectorizable T, typename Abi>
     simd<T, Abi> max(const simd<T, Abi> &a, const simd<T, Abi> &b)
     {
         simd<T, Abi> res;
@@ -319,7 +310,7 @@ namespace SFTL
 
 #else // !SFTL_SIMD_HAS_VECTOR_EXT (MSVC, or an unrecognized compiler)
 
-    template <Vectorizable T, typename Abi>
+    template<Vectorizable T, typename Abi>
     simd<T, Abi> sqrt(const simd<T, Abi> &v)
     {
         simd<T, Abi> res;
@@ -328,7 +319,7 @@ namespace SFTL
         return res;
     }
 
-    template <Vectorizable T, typename Abi>
+    template<Vectorizable T, typename Abi>
     simd<T, Abi> min(const simd<T, Abi> &a, const simd<T, Abi> &b)
     {
         simd<T, Abi> res;
@@ -337,7 +328,7 @@ namespace SFTL
         return res;
     }
 
-    template <Vectorizable T, typename Abi>
+    template<Vectorizable T, typename Abi>
     simd<T, Abi> max(const simd<T, Abi> &a, const simd<T, Abi> &b)
     {
         simd<T, Abi> res;
@@ -348,7 +339,7 @@ namespace SFTL
 
 #endif
 
-    template <Vectorizable T, typename Abi>
+    template<Vectorizable T, typename Abi>
     T reduce_add(const simd<T, Abi> &v)
     {
         // A genuine horizontal-reduce intrinsic (haddps, or log2(N) shuffle+add
@@ -363,4 +354,4 @@ namespace SFTL
             sum += v[i];
         return sum;
     }
-}
+} // namespace SFTL

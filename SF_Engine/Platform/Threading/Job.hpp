@@ -1,7 +1,7 @@
 #pragma once
-#include <thread>
-#include <TemplateLibrary/Types.hpp>
+#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <UtilityClasses/NoCopy.hpp>
+#include <thread>
 
 using namespace SFTL;
 namespace SF::Engine
@@ -12,7 +12,8 @@ namespace SF::Engine
         Job(bool isAutoDelete, bool isCompletion = false, uint8 priority = 0);
         enum State
         {
-            STATE_COMPLETE_OR_CANCELLED, // Default to a cancelled state so if something searches for a job, and it returns nothing, it is done or cancelled
+            STATE_COMPLETE_OR_CANCELLED, // Default to a cancelled state so if something searches for a job, and it
+                                         // returns nothing, it is done or cancelled
             STATE_SETUP,
             STATE_STARTED,
             STATE_PENDING,
@@ -52,12 +53,13 @@ namespace SF::Engine
         {
             // flags
             FLAG_AUTO_DELETE = (1 << 31),
-            FLAG_CHILD_JOBS = (1 << 30),
-            FLAG_COMPLETION = (1 << 29), // Completion runs in place when it's dependency count is zero (no need to be scheduled)
-            FLAG_RESERVED = (1 << 28),   // Reserved, can be used in the future if needed
+            FLAG_CHILD_JOBS  = (1 << 30),
+            FLAG_COMPLETION =
+                    (1 << 29), // Completion runs in place when it's dependency count is zero (no need to be scheduled)
+            FLAG_RESERVED = (1 << 28), // Reserved, can be used in the future if needed
 
             // 8 bits for priority
-            FLAG_PRIORITY_MASK = 0x0ff00000,
+            FLAG_PRIORITY_MASK      = 0x0ff00000,
             FLAG_PRIORITY_START_BIT = 20,
 
             // 20 bits for count

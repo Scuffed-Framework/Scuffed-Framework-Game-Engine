@@ -1,14 +1,14 @@
 #pragma once
-#include <Math/Matrix/Matrix4.hpp>
-#include <Math/Vectors/Vector3.hpp>
-#include <Math/Quaternion/Quaternion.hpp>
 #include <LowLevel/Reflection/RTTISingle.hpp>
+#include <Math/Matrix/Matrix4.hpp>
+#include <Math/Quaternion/Quaternion.hpp>
+#include <Math/Vectors/Vector3.hpp>
 
-#include <TemplateLibrary/Types.hpp>
-#include <TemplateLibrary/TypeTraits.hpp>
-#include <TemplateLibrary/DynamicArray.hpp>
+#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
+#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
+#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 
-#include "TemplateLibrary/Containers/String.hpp"
+#include <1stPartyLibs/TemplateLibrary/Containers/String.hpp>
 
 using namespace SFTL;
 namespace SF::Engine
@@ -20,35 +20,40 @@ namespace SF::Engine
             SF_RTTI_BASE(Joint)
         public:
             // give no data cuz
-            explicit Joint(uint32 index = 0, ::SFTL::string name = "", const Mat4 &bindLocalTransform = Mat4(0)) : index(index),
-                                                                                                                   name(::SFTL::move(name)),
-                                                                                                                   localBindTransform(bindLocalTransform)
+            explicit Joint(uint32 index = 0, ::SFTL::string name = "", const Mat4 &bindLocalTransform = Mat4(0)) :
+                index(index), name(::SFTL::move(name)), localBindTransform(bindLocalTransform)
             {
             }
 
             void CalculateInverseBindTransform(const Mat4 &parentBindTransform)
             {
-                auto bindTransform = parentBindTransform * localBindTransform;
+                auto bindTransform   = parentBindTransform * localBindTransform;
                 inverseBindTransform = inverse(bindTransform);
 
-                for (auto &child : children)
+                for (auto &child: children)
                     child.CalculateInverseBindTransform(bindTransform);
             }
 
-            uint32 GetIndex() const { return index; }
+            [[nodiscard]] uint32 GetIndex() const { return index; }
             void SetIndex(uint32 index) { this->index = index; }
 
-            const ::SFTL::string &GetName() const { return name; }
+            [[nodiscard]] const ::SFTL::string &GetName() const { return name; }
             void SetName(const ::SFTL::string &name) { this->name = name; }
 
-            const DynamicArray<Joint> &GetChildren() const { return children; }
+            [[nodiscard]] const DynamicArray<Joint> &GetChildren() const { return children; }
 
             void AddChild(const Joint &child) { children.emplace_back(child); }
 
-            const Mat4 &GetLocalBindTransform() const { return localBindTransform; }
-            void SetLocalBindTransform(const Mat4 &localBindTransform) { this->localBindTransform = localBindTransform; }
-            const Mat4 &GetInverseBindTransform() const { return inverseBindTransform; }
-            void SetInverseBindTransform(const Mat4 &inverseBindTransform) { this->inverseBindTransform = inverseBindTransform; }
+            [[nodiscard]] const Mat4 &GetLocalBindTransform() const { return localBindTransform; }
+            void SetLocalBindTransform(const Mat4 &localBindTransform)
+            {
+                this->localBindTransform = localBindTransform;
+            }
+            [[nodiscard]] const Mat4 &GetInverseBindTransform() const { return inverseBindTransform; }
+            void SetInverseBindTransform(const Mat4 &inverseBindTransform)
+            {
+                this->inverseBindTransform = inverseBindTransform;
+            }
 
         private:
             uint32_t index = 0;
@@ -68,21 +73,22 @@ namespace SF::Engine
 
             explicit JointTransform(const Mat4 &localTransform);
 
-            Mat4 GetLocalTransform() const;
+            [[nodiscard]] Mat4 GetLocalTransform() const;
 
-            static JointTransform Interpolate(const JointTransform &frameA, const JointTransform &frameB, float progression);
+            static JointTransform Interpolate(const JointTransform &frameA, const JointTransform &frameB,
+                                              float progression);
 
             static Vec3 Interpolate(const Vec3 &start, const Vec3 &end, float progression);
 
-            const Vec3 &GetPosition() const { return position; }
+            [[nodiscard]] const Vec3 &GetPosition() const { return position; }
             void SetPosition(const Vec3 &position) { this->position = position; }
 
-            const Quaternion &GetRotation() const { return rotation; }
+            [[nodiscard]] const Quaternion &GetRotation() const { return rotation; }
             void SetRotation(const Quaternion &rotation) { this->rotation = rotation; }
 
         private:
             Vec3 position;
             Quaternion rotation;
         };
-    }
-}
+    } // namespace Animation
+} // namespace SF::Engine

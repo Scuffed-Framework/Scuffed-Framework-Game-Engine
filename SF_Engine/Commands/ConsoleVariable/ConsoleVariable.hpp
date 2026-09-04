@@ -6,10 +6,10 @@
 #include <type_traits>
 #include <unordered_map>
 
-#include <TemplateLibrary/Containers/String.hpp>
+#include <1stPartyLibs/TemplateLibrary/Containers/String.hpp>
 #include <Engine/Module.hpp>
-#include <UtilityClasses/StreamFactory.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
+#include <UtilityClasses/StreamFactory.hpp>
 
 namespace SF::Engine
 {
@@ -22,9 +22,9 @@ namespace SF::Engine
         ~IConsoleVariable() override = default;
 
         [[nodiscard]] virtual ::SFTL::string GetFullName() const = 0;
-        [[nodiscard]] virtual bool DidValueChange() const = 0;
+        [[nodiscard]] virtual bool DidValueChange() const        = 0;
 
-        virtual bool SetValueFromString(::SFTL::string_view str) = 0;
+        virtual bool SetValueFromString(::SFTL::string_view str)   = 0;
         [[nodiscard]] virtual ::SFTL::string ValueToString() const = 0;
     };
 
@@ -42,20 +42,14 @@ namespace SF::Engine
         ConsoleVariable(::SFTL::string mod, ::SFTL::string nm, V defaultValue);
         ~ConsoleVariable() override = default;
 
-        [[nodiscard]] bool DidValueChange() const override
-        {
-            return !(Value == LastValue);
-        }
+        [[nodiscard]] bool DidValueChange() const override { return !(Value == LastValue); }
 
-        [[nodiscard]] ::SFTL::string GetFullName() const override
-        {
-            return module + "." + name;
-        }
+        [[nodiscard]] ::SFTL::string GetFullName() const override { return module + "." + name; }
 
-        void ChangeValue(const V& New)
+        void ChangeValue(const V &New)
         {
             LastValue = Value; // so DidValueChange() means something next frame
-            Value = New;
+            Value     = New;
         }
 
         bool SetValueFromString(::SFTL::string_view str) override
@@ -73,8 +67,7 @@ namespace SF::Engine
                     return true;
                 }
                 return false;
-            }
-            else if constexpr (std::is_arithmetic_v<V>)
+            } else if constexpr (std::is_arithmetic_v<V>)
             {
                 V parsed{};
                 auto [ptr, ec] = std::from_chars(str.Data(), str.Data() + str.Size(), parsed);
@@ -82,16 +75,14 @@ namespace SF::Engine
                     return false;
                 ChangeValue(parsed);
                 return true;
-            }
-            else if constexpr (std::is_constructible_v<::SFTL::string, ::SFTL::string_view>)
+            } else if constexpr (std::is_constructible_v<::SFTL::string, ::SFTL::string_view>)
             {
                 // Assumes V is (or is constructible from) SFTL::string.
                 ChangeValue(::SFTL::string(str.Data()));
                 return true;
-            }
-            else
+            } else
             {
-                static_assert(!sizeof(V*), "SetValueFromString not implemented for this CVar type");
+                static_assert(!sizeof(V *), "SetValueFromString not implemented for this CVar type");
                 return false;
             }
         }
@@ -101,18 +92,16 @@ namespace SF::Engine
             if constexpr (std::is_same_v<V, bool>)
             {
                 return Value ? "true" : "false";
-            }
-            else if constexpr (std::is_arithmetic_v<V>)
+            } else if constexpr (std::is_arithmetic_v<V>)
             {
                 return ::SFTL::string(std::to_string(Value));
-            }
-            else
+            } else
             {
                 return Value; // assumes SFTL::string-compatible
             }
         }
 
-        void Serialize(XMLNode& node) const override
+        void Serialize(XMLNode &node) const override
         {
             XMLNode CVar = node.AddChild("CVar");
             CVar.SetAttribute("Module", module);
@@ -121,7 +110,7 @@ namespace SF::Engine
             CVar.SetAttribute("LastValue", LastValue);
         }
 
-        void Deserialize(const XMLNode& node) override
+        void Deserialize(const XMLNode &node) override
         {
             XMLNode CVar = node.GetChild("CVar");
             CVar.GetAttribute("Module", module);
@@ -136,15 +125,12 @@ namespace SF::Engine
         static inline bool reg = Register(ModuleStage::Always, Requires<>{});
         SF_RTTI(Module, ConsoleVariableRegistry)
 
-        inline static std::unordered_map<::SFTL::string, IConsoleVariable*> s_cvars;
+        inline static std::unordered_map<::SFTL::string, IConsoleVariable *> s_cvars;
 
     public:
-        static void RegisterCVar(const ::SFTL::string& fullName, IConsoleVariable* cvar)
-        {
-            s_cvars[fullName] = cvar;
-        }
+        static void RegisterCVar(const ::SFTL::string &fullName, IConsoleVariable *cvar) { s_cvars[fullName] = cvar; }
 
-        [[nodiscard]] static IConsoleVariable* Find(::SFTL::string_view fullName)
+        [[nodiscard]] static IConsoleVariable *Find(::SFTL::string_view fullName)
         {
             auto it = s_cvars.find(::SFTL::string(fullName)); // :(
             return it != s_cvars.end() ? it->second : nullptr;
@@ -154,17 +140,20 @@ namespace SF::Engine
         void Update() override {}
 
         [[nodiscard]] Stage GetStage() const override { return ModuleStage::Always; }
-        [[nodiscard]] ::std::string_view GetName() const override { return RTTI_GetTypeName(); } // todo: add overload for sftl one
+        [[nodiscard]] ::std::string_view GetName() const override
+        {
+            return RTTI_GetTypeName();
+        } // todo: add overload for sftl one
 
         // NOLINTBEGIN(readability-convert-member-functions-to-static)
-        void Serialize(XMLNode& node) const
+        void Serialize(XMLNode &node) const
         {
             XMLNode registryNode = node.AddChild("ConsoleVariables");
-            for (const auto& [fullName, cvar] : s_cvars)
+            for (const auto &[fullName, cvar]: s_cvars)
                 cvar->Serialize(registryNode);
         }
 
-        void Deserialize(const XMLNode& node)
+        void Deserialize(const XMLNode &node)
         {
             XMLNode registryNode = node.GetChild("ConsoleVariables");
             for (XMLNode child = registryNode.GetFirstChild(); child.IsValid(); child = child.GetNextSibling())
@@ -172,7 +161,7 @@ namespace SF::Engine
                 ::SFTL::string mod, nm;
                 child.GetAttribute("Module", mod);
                 child.GetAttribute("Name", nm);
-                if (IConsoleVariable* cvar = Find(mod + "." + nm))
+                if (IConsoleVariable *cvar = Find(mod + "." + nm))
                     cvar->Deserialize(registryNode); // each cvar re-finds its own <CVar> child
             }
         }

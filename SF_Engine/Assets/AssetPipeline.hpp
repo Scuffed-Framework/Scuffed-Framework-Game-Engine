@@ -1,13 +1,13 @@
 #pragma once
 
+#include <../1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
+#include <Engine/Log/Log.hpp>
+#include <Engine/Module.hpp>
+#include <LowLevel/Reflection/RTTI/RTTICast.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <UtilityClasses/UUID.hpp>
-#include <span>
-#include <TemplateLibrary/DynamicArray.hpp>
 #include <filesystem>
-#include <LowLevel/Reflection/RTTI/RTTICast.hpp>
-#include <Engine/Module.hpp>
-#include <Engine/Log/Log.hpp>
+#include <span>
 
 namespace SF::Engine
 {
@@ -42,7 +42,7 @@ namespace SF::Engine
 
         virtual ~AssetBase() = default;
 
-        virtual void Save() = 0;
+        virtual void Save()                                 = 0;
         virtual bool Load(std::span<const uint8_t> payload) = 0;
 
         void Serialize(XMLNode &node) const override
@@ -84,7 +84,7 @@ namespace SF::Engine
     };
 
     // Typed leaf that only adds the actual payload
-    template <typename T>
+    template<typename T>
     class Asset : public AssetBase
     {
         SF_RTTI(Asset<T>, AssetBase)
@@ -104,6 +104,7 @@ namespace SF::Engine
     {
         friend class ModuleRegistrar<AssetController>;
         REGISTER_MODULE(AssetController, Module::Stage::Normal);
+
     public:
         void Update() {}
         bool Initialize() override;
@@ -113,12 +114,12 @@ namespace SF::Engine
         static void RegisterFactory(AssetType type, const std::string &rttiTypeName, AssetFactoryFn factory);
 
         void SaveAll();
-        void SaveManifest(); 
+        void SaveManifest();
 
         std::shared_ptr<AssetBase> FindByUUID(const UUID &guid) const;
         std::shared_ptr<AssetBase> FindByName(std::string_view name) const;
 
-        template <typename T>
+        template<typename T>
         std::shared_ptr<Asset<T>> GetAsset(const UUID &guid) const
         {
             return ::SF::RTTI::rtti_pointer_cast<Asset<T>>(FindByUUID(guid));
@@ -126,13 +127,12 @@ namespace SF::Engine
 
         SFTL::DynamicArray<std::shared_ptr<AssetBase>> assets_;
 
-        template <typename T, typename... Args>
+        template<typename T, typename... Args>
         std::shared_ptr<T> RegisterAsset(std::string assetName, Args &&...args)
         {
-            static_assert(std::is_base_of_v<AssetBase, T>,
-                          "RegisterAsset<T> requires T to derive from AssetBase");
+            static_assert(std::is_base_of_v<AssetBase, T>, "RegisterAsset<T> requires T to derive from AssetBase");
 
-            auto asset = std::make_shared<T>(std::forward<Args>(args)...);
+            auto asset  = std::make_shared<T>(std::forward<Args>(args)...);
             asset->name = std::move(assetName);
             assets_.push_back(asset);
             return asset;
@@ -142,7 +142,7 @@ namespace SF::Engine
         static std::unordered_map<std::string, AssetFactoryFn> &Factories();
     };
 
-    template <typename T>
+    template<typename T>
     struct AssetRegistrar
     {
         static_assert(std::is_base_of_v<AssetBase, T>,
@@ -151,8 +151,7 @@ namespace SF::Engine
 
         explicit AssetRegistrar(AssetType type)
         {
-            AssetController::RegisterFactory(type, T::RTTI_TypeName(), []
-                                        { return std::make_shared<T>(); });
+            AssetController::RegisterFactory(type, T::RTTI_TypeName(), [] { return std::make_shared<T>(); });
         }
     };
-}
+} // namespace SF::Engine

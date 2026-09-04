@@ -15,64 +15,62 @@
 
 // Undefine problematic macros (microslop)
 #ifdef major
-#undef major
+    #undef major
 #endif
 #ifdef minor
-#undef minor
+    #undef minor
 #endif
 
 #if _PLATFORM_WINDOWS
 
-// Must define NOMINMAX before windows.h to prevent min/max macro pollution
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+    // Must define NOMINMAX before windows.h to prevent min/max macro pollution
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
 
-#define __INTRIN_H_ // Prevent intrinsics header inclusion
-#include <windows.h>
+    #define __INTRIN_H_ // Prevent intrinsics header inclusion
+    #include <windows.h>
 #elif defined(_PLATFORM_MACOS)
-// macOS
-#include <mach-o/dyld.h>
+    // macOS
+    #include <mach-o/dyld.h>
 #elif defined(_PLATFORM_LINUX)
-// Linux
-#include <unistd.h>
-#include <x86intrin.h>
+    // Linux
+    #include <unistd.h>
+    #include <x86intrin.h>
 #endif
 
 #include <Engine/VersionSemantic.hpp>
-#include <UtilityClasses/NoCopy.hpp>
 #include <Platform/PlatformIncludes.hpp>
+#include <UtilityClasses/NoCopy.hpp>
 
-#include <Scene/SceneManager.hpp>
+#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
+#include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
+#include <Engine/InitGame/GameInfo.hpp>
+#include <Engine/Log/Log.hpp>
 #include <Platform/Windows/WindowManager.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <Engine/Log/Log.hpp>
-#include <Engine/InitGame/GameInfo.hpp>
-#include <TemplateLibrary/TypeTraits.hpp>
-#include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
 #include <Rendering/Viewport/Viewport.hpp>
-#include <Rendering/RenderSystem.hpp>
+#include <Scene/SceneManager.hpp>
 
 #ifdef Started
-#undef Started
+    #undef Started
 #endif
 #ifdef Success
-#undef Success
+    #undef Success
 #endif
 
 namespace SF::Engine
 {
     std::filesystem::path GetExecutablePathImpl();
 
-    template <class ApplicationInfo>
+    template<class ApplicationInfo>
     class Application : NoCopy
     {
-        static_assert(std::is_base_of_v<GameInfo, ApplicationInfo>,
-                      "ApplicationInfo must derive from GameInfo");
+        static_assert(std::is_base_of_v<GameInfo, ApplicationInfo>, "ApplicationInfo must derive from GameInfo");
         friend class Engine;
 
     private:
-        WindowManager *wndMgr = WindowManager::Get();
+        WindowManager *wndMgr  = WindowManager::Get();
         RenderSystem *renderer = RenderSystem::Get();
         SceneManager *sceneMgr = SceneManager::Get();
         std::unique_ptr<Engine> engine;
@@ -96,39 +94,42 @@ namespace SF::Engine
 
         auto InfoCheck() -> void
         {
-            if(!Info) return;
+            if (!Info)
+                return;
         }
 
         Window *window;
 
-        explicit Application(ApplicationInfo info, const Version &version = {1, 0, 0})
-            : Info(std::make_unique<ApplicationInfo>(std::move(info)))
+        explicit Application(ApplicationInfo info, const Version &version = {1, 0, 0}) :
+            Info(std::make_unique<ApplicationInfo>(std::move(info)))
         {
             auto exeDir = GetExecutablePath().parent_path();
             std::filesystem::current_path(exeDir);
             engine = std::make_unique<Engine>(exeDir.string());
 
-            wndMgr = SF::Engine::WindowManager::Get();
+            wndMgr   = SF::Engine::WindowManager::Get();
             renderer = SF::Engine::RenderSystem::Get();
             sceneMgr = SF::Engine::SceneManager::Get();
 
             viewports.push_back(std::make_unique<SceneViewport>(UVec2{800, 600}));
 
-            renderer->OnRecordViewports().Add([this](VkCommandBuffer cmd, std::size_t frameIndex)
-            {
-                for (auto &vp : viewports)
-                {
-                    vp->Tick(frameIndex);
-                    vp->PrepareForRender(cmd);
-                    vp->BeginRendering(cmd);
-                    // scene draws for this viewport go here
+            renderer->OnRecordViewports().Add(
+                    [this](VkCommandBuffer cmd, std::size_t frameIndex)
+                    {
+                        for (auto &vp: viewports)
+                        {
+                            vp->Tick(frameIndex);
+                            vp->PrepareForRender(cmd);
+                            vp->BeginRendering(cmd);
+                            // scene draws for this viewport go here
 
-                    vp->EndRendering(cmd);
-                    vp->PrepareForSample(cmd);
-                }
-            });
-            for (auto &vp : viewports)
-                 reg = UIRegistry::Get().Register([this, &vp]{DrawViewport(vp.get());});;
+                            vp->EndRendering(cmd);
+                            vp->PrepareForSample(cmd);
+                        }
+                    });
+            for (auto &vp: viewports)
+                reg = UIRegistry::Get().Register([this, &vp] { DrawViewport(vp.get()); });
+            ;
         }
 
         // call my init first :)
@@ -227,18 +228,15 @@ namespace SF::Engine
          * @brief Checks if the Applicationlication has been started.
          * @return True if Start() has been called, false otherwise.
          */
-        [[nodiscard]] bool IsStarted() const noexcept
-        {
-            return started_;
-        }
+        [[nodiscard]] bool IsStarted() const noexcept { return started_; }
 
         std::vector<File> GetAllModules() const
         {
             std::vector<File> result;
 
             const std::string exeDir = GetExecutablePath().parent_path().string();
-            const char *pattern = "*.module";
-            for (const auto &file : File::GetFiles(exeDir, pattern, false))
+            const char *pattern      = "*.module";
+            for (const auto &file: File::GetFiles(exeDir, pattern, false))
             {
                 result.emplace_back(file);
             }
@@ -246,10 +244,7 @@ namespace SF::Engine
             return result;
         }
 
-        std::filesystem::path GetExecutablePath() const
-        {
-            return GetExecutablePathImpl();
-        }
+        std::filesystem::path GetExecutablePath() const { return GetExecutablePathImpl(); }
 
         enum class ShutdownReturn
         {
@@ -259,9 +254,9 @@ namespace SF::Engine
 
         virtual void Shutdown()
         {
-            OnShutdown();     // let derived game code clean up first, engine still alive
-            engine.reset();   // single, ordered teardown call; same mechanism main.cpp relies on
-            window = nullptr; // just clear the observer pointer, don't manually remove it
+            OnShutdown();       // let derived game code clean up first, engine still alive
+            engine.reset();     // single, ordered teardown call; same mechanism main.cpp relies on
+            window   = nullptr; // just clear the observer pointer, don't manually remove it
             started_ = false;
         }
 

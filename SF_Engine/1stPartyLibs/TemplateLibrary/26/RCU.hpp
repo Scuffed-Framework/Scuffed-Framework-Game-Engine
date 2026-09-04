@@ -1,12 +1,11 @@
 #pragma once
-#include <atomic>
 #include <memory>
-#include <vector>
-#include <thread>
 #include <mutex>
-#include <condition_variable>
-#include <functional>
-#include <cassert>
+#include <thread>
+#include "../DynamicArray.hpp"
+#include "../Functional.hpp"
+#include "../Memory.hpp"
+#include "../Operations.hpp"
 
 namespace SFTL
 {
@@ -14,9 +13,9 @@ namespace SFTL
 
     struct rcu_thread_data
     {
-        std::atomic<size_t> grace_period{0};
-        std::vector<void *> retired_objects;
-        std::vector<std::function<void()>> retired_callbacks;
+        atomic<size_type> grace_period{0};
+        DynamicArray<void *> retired_objects;
+        DynamicArray<function<void()>> retired_callbacks;
         bool registered{false};
     };
 
@@ -47,8 +46,7 @@ namespace SFTL
             if (data.registered)
             {
                 data.registered = false;
-                auto it = std::find(threads_.begin(), threads_.end(),
-                                    std::this_thread::get_id());
+                auto it         = find(threads_.begin(), threads_.end(), std::this_thread::get_id());
                 if (it != threads_.end())
                 {
                     threads_.erase(it);
@@ -61,8 +59,7 @@ namespace SFTL
             auto &data = get_thread_data();
             if (data.registered)
             {
-                data.grace_period.store(current_grace_period_.load(),
-                                        std::memory_order_release);
+                data.grace_period.store(current_grace_period_.load(), std::memory_order_release);
             }
         }
 
@@ -71,7 +68,7 @@ namespace SFTL
             size_t new_period = current_grace_period_.fetch_add(1) + 1;
 
             std::unique_lock<std::mutex> lock(mutex_);
-            for (const auto &thread_id : threads_)
+            for (const auto &thread_id: threads_)
             {
                 // Find thread data for this thread ID
                 // In a real implementation, we'd need a mapping from thread_id to thread_data
@@ -79,8 +76,8 @@ namespace SFTL
                 // This is a simplified version - real RCU would be more sophisticated
             }
 
-            std::vector<void *> to_delete;
-            std::vector<std::function<void()>> callbacks;
+            DynamicArray<void *> to_delete;
+            DynamicArray<function<void()>> callbacks;
 
             {
                 std::lock_guard<std::mutex> retire_lock(retire_mutex_);
@@ -88,25 +85,22 @@ namespace SFTL
                 callbacks.swap(retired_callbacks_);
             }
 
-            for (void *ptr : to_delete)
+            for (void *ptr: to_delete)
             {
                 // The deleter information is stored separately in the object
                 // For simplicity, we assume the object knows how to delete itself
                 // or we store the deleter with the pointer
             }
 
-            for (auto &cb : callbacks)
+            for (auto &cb: callbacks)
             {
                 cb();
             }
         }
 
-        void barrier()
-        {
-            synchronize();
-        }
+        void barrier() { synchronize(); }
 
-        void retire(void *ptr, std::function<void()> deleter)
+        void retire(void *ptr, const function<void()> &deleter)
         {
             auto &data = get_thread_data();
             if (!data.registered)
@@ -125,17 +119,14 @@ namespace SFTL
 
         thread_local static rcu_thread_data thread_data_;
 
-        static rcu_thread_data &get_thread_data()
-        {
-            return thread_data_;
-        }
+        static rcu_thread_data &get_thread_data() { return thread_data_; }
 
-        std::atomic<size_t> current_grace_period_;
+        atomic<size_type> current_grace_period_;
         std::mutex mutex_;
         std::mutex retire_mutex_;
-        std::vector<std::thread::id> threads_;
-        std::vector<void *> retired_objects_;
-        std::vector<std::function<void()>> retired_callbacks_;
+        DynamicArray<std::thread::id> threads_;
+        DynamicArray<void *> retired_objects_;
+        DynamicArray<function<void()>> retired_callbacks_;
     };
 
     thread_local rcu_thread_data rcu_global_state::thread_data_;
@@ -145,13 +136,10 @@ namespace SFTL
     public:
         rcu_domain() : grace_period_(1) {}
 
-        rcu_domain(const rcu_domain &) = delete;
+        rcu_domain(const rcu_domain &)            = delete;
         rcu_domain &operator=(const rcu_domain &) = delete;
 
-        void lock() noexcept
-        {
-            rcu_global_state::instance().register_thread();
-        }
+        void lock() noexcept { rcu_global_state::instance().register_thread(); }
 
         bool try_lock() noexcept
         {
@@ -165,23 +153,14 @@ namespace SFTL
             rcu_global_state::instance().unregister_thread();
         }
 
-        void synchronize()
-        {
-            rcu_global_state::instance().synchronize();
-        }
+        void synchronize() { rcu_global_state::instance().synchronize(); }
 
-        void barrier()
-        {
-            rcu_global_state::instance().barrier();
-        }
+        void barrier() { rcu_global_state::instance().barrier(); }
 
-        void retire(void *ptr, std::function<void()> deleter)
-        {
-            rcu_global_state::instance().retire(ptr, deleter);
-        }
+        void retire(void *ptr, const function<void()> &deleter) { rcu_global_state::instance().retire(ptr, deleter); }
 
     private:
-        std::atomic<size_t> grace_period_;
+        atomic<size_type> grace_period_;
     };
 
     // Default domain
@@ -192,29 +171,22 @@ namespace SFTL
     }
 
     // RCU synchronization functions
-    inline void rcu_synchronize(rcu_domain &dom = rcu_default_domain()) noexcept
-    {
-        dom.synchronize();
-    }
+    inline void rcu_synchronize(rcu_domain &dom = rcu_default_domain()) noexcept { dom.synchronize(); }
 
-    inline void rcu_barrier(rcu_domain &dom = rcu_default_domain()) noexcept
-    {
-        dom.barrier();
-    }
+    inline void rcu_barrier(rcu_domain &dom = rcu_default_domain()) noexcept { dom.barrier(); }
 
     // Retirement functions
-    template <class T, class D = std::default_delete<T>>
+    template<class T, class D = default_delete<T>>
     void rcu_retire(T *p, D d = D(), rcu_domain &dom = rcu_default_domain())
     {
         if (p)
         {
-            dom.retire(p, [p, d]()
-                       { d(p); });
+            dom.retire(p, [p, d]() { d(p); });
         }
     }
 
     // Base class for RCU-protected objects
-    template <class T, class D = std::default_delete<T>>
+    template<class T, class D = default_delete<T>>
     class rcu_obj_base
     {
     public:
@@ -225,12 +197,12 @@ namespace SFTL
         }
 
     protected:
-        rcu_obj_base() = default;
-        rcu_obj_base(const rcu_obj_base &) = default;
-        rcu_obj_base(rcu_obj_base &&) = default;
+        rcu_obj_base()                                = default;
+        rcu_obj_base(const rcu_obj_base &)            = default;
+        rcu_obj_base(rcu_obj_base &&)                 = default;
         rcu_obj_base &operator=(const rcu_obj_base &) = default;
-        rcu_obj_base &operator=(rcu_obj_base &&) = default;
-        ~rcu_obj_base() = default;
+        rcu_obj_base &operator=(rcu_obj_base &&)      = default;
+        ~rcu_obj_base()                               = default;
 
     private:
         D deleter_;
@@ -239,30 +211,20 @@ namespace SFTL
     class rcu_guard
     {
     public:
-        explicit rcu_guard(rcu_domain &domain = rcu_default_domain())
-            : domain_(domain)
-        {
-            domain_.lock();
-        }
+        explicit rcu_guard(rcu_domain &domain = rcu_default_domain()) : domain_(domain) { domain_.lock(); }
 
-        ~rcu_guard()
-        {
-            domain_.unlock();
-        }
+        ~rcu_guard() { domain_.unlock(); }
 
-        void quiescent_state()
-        {
-            rcu_global_state::instance().quiescent_state();
-        }
+        void quiescent_state() { rcu_global_state::instance().quiescent_state(); }
 
     private:
         rcu_domain &domain_;
     };
 
 #define RCU_READ_LOCK(dom) SFTL::rcu_guard rcu_guard_##__LINE__(dom)
-#define RCU_READ_UNLOCK() (void)0
+#define RCU_READ_UNLOCK() (void) 0
 
-    template <typename T>
+    template<typename T>
     class rcu_ptr
     {
     public:
@@ -272,10 +234,7 @@ namespace SFTL
 
         rcu_ptr(const rcu_ptr &other) : ptr_(other.ptr_) {}
 
-        rcu_ptr(rcu_ptr &&other) noexcept : ptr_(other.ptr_)
-        {
-            other.ptr_ = nullptr;
-        }
+        rcu_ptr(rcu_ptr &&other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
 
         ~rcu_ptr()
         {
@@ -298,31 +257,19 @@ namespace SFTL
         {
             if (this != &other)
             {
-                ptr_ = other.ptr_;
+                ptr_       = other.ptr_;
                 other.ptr_ = nullptr;
             }
             return *this;
         }
 
-        T *operator->() const
-        {
-            return ptr_;
-        }
+        T *operator->() const { return ptr_; }
 
-        T &operator*() const
-        {
-            return *ptr_;
-        }
+        T &operator*() const { return *ptr_; }
 
-        explicit operator bool() const
-        {
-            return ptr_ != nullptr;
-        }
+        explicit operator bool() const { return ptr_ != nullptr; }
 
-        T *get() const
-        {
-            return ptr_;
-        }
+        T *get() const { return ptr_; }
 
         void reset(T *new_ptr = nullptr)
         {
@@ -340,14 +287,8 @@ namespace SFTL
     class rcu_thread_register
     {
     public:
-        rcu_thread_register()
-        {
-            rcu_global_state::instance().register_thread();
-        }
+        rcu_thread_register() { rcu_global_state::instance().register_thread(); }
 
-        ~rcu_thread_register()
-        {
-            rcu_global_state::instance().unregister_thread();
-        }
+        ~rcu_thread_register() { rcu_global_state::instance().unregister_thread(); }
     };
-}
+} // namespace SFTL

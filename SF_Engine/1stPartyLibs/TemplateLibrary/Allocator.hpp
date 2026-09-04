@@ -33,58 +33,46 @@
 /******************************************************************************/
 #pragma once
 #include <new>
-#include "Types.hpp"
 #include "TypeTraits.hpp"
+#include "Types.hpp"
 
 namespace SFTL
 {
-    template <class Type>
-    constexpr void destroy_at(Type *const _Location) noexcept
-    {
-        if constexpr (is_array_v<Type>)
-        {
-            _Destroy_range(std::begin(*_Location), end(*_Location));
-        }
-        else
-        {
-            _Location->~Type();
-        }
-    }
-    template <typename T>
+    template<typename T>
     class allocator
     {
         static_assert(!is_const_v<T>, "SFTL::allocator<const T> is ill-formed");
         static_assert(!is_function_v<T>, "SFTL::allocator does not support function types");
 
     public:
-        using value_type = T;
-        using pointer = T *;
-        using const_pointer = const T *;
-        using reference = T &;
+        using value_type      = T;
+        using pointer         = T *;
+        using const_pointer   = const T *;
+        using reference       = T &;
         using const_reference = const T &;
         using difference_type = ::SFTL::ptrdiff_t;
 
         using propagate_on_container_move_assignment = true_type;
         using propagate_on_container_copy_assignment = false_type;
-        using propagate_on_container_swap = false_type;
-        using is_always_equal = true_type;
+        using propagate_on_container_swap            = false_type;
+        using is_always_equal                        = true_type;
 
-        template <typename U>
+        template<typename U>
         struct rebind
         {
             using other = allocator<U>;
         };
 
-        constexpr allocator() noexcept = default;
+        constexpr allocator() noexcept                  = default;
         constexpr allocator(const allocator &) noexcept = default;
 
-        template <typename U>
+        template<typename U>
         constexpr allocator(const allocator<U> &) noexcept
         {
         }
 
         allocator &operator=(const allocator &) = default;
-        ~allocator() = default;
+        ~allocator()                            = default;
 
         // Returns nullptr on failure  never throws, regardless of n.
         [[nodiscard]] T *allocate(size_type n) noexcept
@@ -95,8 +83,7 @@ namespace SFTL
             if (is_constant_evaluated())
                 return static_cast<T *>(::operator new(n * sizeof(T)));
 
-            return static_cast<T *>(
-                ::operator new(n * sizeof(T), ::std::align_val_t(alignof(T)), ::std::nothrow));
+            return static_cast<T *>(::operator new(n * sizeof(T), ::std::align_val_t(alignof(T)), ::std::nothrow));
         }
 
         constexpr void deallocate(T *p, size_type) noexcept
@@ -106,34 +93,31 @@ namespace SFTL
             ::operator delete(p, ::std::align_val_t(alignof(T)));
         }
 
-        template <typename U, typename... Args>
+        template<typename U, typename... Args>
         constexpr void construct(U *p, Args &&...args) noexcept(is_nothrow_constructible_v<U, Args...>)
         {
             ::new (static_cast<void *>(p)) U(::SFTL::forward<Args>(args)...);
         }
 
-        template <typename U>
+        template<typename U>
         constexpr void destroy(U *p) noexcept
         {
             p->~U();
         }
 
-        constexpr size_type max_size() const noexcept
-        {
-            return static_cast<size_type>(-1) / sizeof(T);
-        }
+        constexpr size_type max_size() const noexcept { return static_cast<size_type>(-1) / sizeof(T); }
 
-        template <typename U>
+        template<typename U>
         friend class allocator;
     };
 
-    template <typename T, typename U>
+    template<typename T, typename U>
     constexpr bool operator==(const allocator<T> &, const allocator<U> &) noexcept
     {
         return true;
     }
 
-    template <typename T, typename U>
+    template<typename T, typename U>
     constexpr bool operator!=(const allocator<T> &, const allocator<U> &) noexcept
     {
         return false;
@@ -141,198 +125,200 @@ namespace SFTL
 
     namespace Detail
     {
-        template <typename T>
+        template<typename T>
         T &&DeclVal() noexcept;
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocPointer
         {
             using type = typename Alloc::value_type *;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocPointer<Alloc, void_t<typename Alloc::pointer>>
         {
             using type = typename Alloc::pointer;
         };
 
-        template <typename Alloc, typename Pointer, typename = void>
+        template<typename Alloc, typename Pointer, typename = void>
         struct AllocConstPointer
         {
             using type = const typename Alloc::value_type *;
         };
-        template <typename Alloc, typename Pointer>
+        template<typename Alloc, typename Pointer>
         struct AllocConstPointer<Alloc, Pointer, void_t<typename Alloc::const_pointer>>
         {
             using type = typename Alloc::const_pointer;
         };
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocVoidPointer
         {
             using type = void *;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocVoidPointer<Alloc, void_t<typename Alloc::void_pointer>>
         {
             using type = typename Alloc::void_pointer;
         };
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocConstVoidPointer
         {
             using type = const void *;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocConstVoidPointer<Alloc, void_t<typename Alloc::const_void_pointer>>
         {
             using type = typename Alloc::const_void_pointer;
         };
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocDifferenceType
         {
             using type = ::SFTL::ptrdiff_t;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocDifferenceType<Alloc, void_t<typename Alloc::difference_type>>
         {
             using type = typename Alloc::difference_type;
         };
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocSizeType
         {
             using type = ::SFTL::size_type;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocSizeType<Alloc, void_t<typename Alloc::size_type>>
         {
             using type = typename Alloc::size_type;
         };
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocPOCCA
         {
             using type = false_type;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocPOCCA<Alloc, void_t<typename Alloc::propagate_on_container_copy_assignment>>
         {
             using type = typename Alloc::propagate_on_container_copy_assignment;
         };
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocPOCMA
         {
             using type = false_type;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocPOCMA<Alloc, void_t<typename Alloc::propagate_on_container_move_assignment>>
         {
             using type = typename Alloc::propagate_on_container_move_assignment;
         };
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocPOCS
         {
             using type = false_type;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocPOCS<Alloc, void_t<typename Alloc::propagate_on_container_swap>>
         {
             using type = typename Alloc::propagate_on_container_swap;
         };
 
-        template <typename Alloc, typename = void>
+        template<typename Alloc, typename = void>
         struct AllocIsAlwaysEqual
         {
             using type = std::conditional_t<std::is_empty_v<Alloc>, true_type, false_type>;
         };
-        template <typename Alloc>
+        template<typename Alloc>
         struct AllocIsAlwaysEqual<Alloc, void_t<typename Alloc::is_always_equal>>
         {
             using type = typename Alloc::is_always_equal;
         };
 
-        template <typename Alloc, typename Pointer, typename... Args>
+        template<typename Alloc, typename Pointer, typename... Args>
         class HasConstruct
         {
-            template <typename A2, typename = decltype(DeclVal<A2 &>().construct(DeclVal<Pointer>(), DeclVal<Args>()...))>
+            template<typename A2,
+                     typename = decltype(DeclVal<A2 &>().construct(DeclVal<Pointer>(), DeclVal<Args>()...))>
             static true_type Test(int);
-            template <typename>
+            template<typename>
             static false_type Test(...);
 
         public:
             static constexpr bool value = decltype(Test<Alloc>(0))::value;
         };
 
-        template <typename Alloc, typename Pointer>
+        template<typename Alloc, typename Pointer>
         class HasDestroy
         {
-            template <typename A2, typename = decltype(DeclVal<A2 &>().destroy(DeclVal<Pointer>()))>
+            template<typename A2, typename = decltype(DeclVal<A2 &>().destroy(DeclVal<Pointer>()))>
             static true_type Test(int);
-            template <typename>
+            template<typename>
             static false_type Test(...);
 
         public:
             static constexpr bool value = decltype(Test<Alloc>(0))::value;
         };
 
-        template <typename Alloc>
+        template<typename Alloc>
         class HasMaxSize
         {
-            template <typename A2, typename = decltype(DeclVal<const A2 &>().max_size())>
+            template<typename A2, typename = decltype(DeclVal<const A2 &>().max_size())>
             static true_type Test(int);
-            template <typename>
+            template<typename>
             static false_type Test(...);
 
         public:
             static constexpr bool value = decltype(Test<Alloc>(0))::value;
         };
 
-        template <typename Alloc>
+        template<typename Alloc>
         class HasSelectOnCopy
         {
-            template <typename A2, typename = decltype(DeclVal<const A2 &>().select_on_container_copy_construction())>
+            template<typename A2, typename = decltype(DeclVal<const A2 &>().select_on_container_copy_construction())>
             static true_type Test(int);
-            template <typename>
+            template<typename>
             static false_type Test(...);
 
         public:
             static constexpr bool value = decltype(Test<Alloc>(0))::value;
         };
 
-        template <typename Alloc, typename SizeType, typename ConstVoidPointer>
+        template<typename Alloc, typename SizeType, typename ConstVoidPointer>
         class HasAllocateHint
         {
-            template <typename A2, typename = decltype(DeclVal<A2 &>().allocate(DeclVal<SizeType>(), DeclVal<ConstVoidPointer>()))>
+            template<typename A2,
+                     typename = decltype(DeclVal<A2 &>().allocate(DeclVal<SizeType>(), DeclVal<ConstVoidPointer>()))>
             static true_type Test(int);
-            template <typename>
+            template<typename>
             static false_type Test(...);
 
         public:
             static constexpr bool value = decltype(Test<Alloc>(0))::value;
         };
-        template <typename Alloc, typename U, typename = void>
+        template<typename Alloc, typename U, typename = void>
         struct AllocRebind
         {
         }; // intentionally empty: no ::type when Alloc has no rebind<U>::other
-        template <typename Alloc, typename U>
+        template<typename Alloc, typename U>
         struct AllocRebind<Alloc, U, void_t<typename Alloc::template rebind<U>::other>>
         {
             using type = typename Alloc::template rebind<U>::other;
         };
     } // namespace Detail
 
-    template <typename Alloc>
+    template<typename Alloc>
     struct allocator_traits
     {
         using allocator_type = Alloc;
-        using value_type = typename Alloc::value_type;
+        using value_type     = typename Alloc::value_type;
 
-        using pointer = typename Detail::AllocPointer<Alloc>::type;
-        using const_pointer = typename Detail::AllocConstPointer<Alloc, pointer>::type;
-        using void_pointer = typename Detail::AllocVoidPointer<Alloc>::type;
+        using pointer            = typename Detail::AllocPointer<Alloc>::type;
+        using const_pointer      = typename Detail::AllocConstPointer<Alloc, pointer>::type;
+        using void_pointer       = typename Detail::AllocVoidPointer<Alloc>::type;
         using const_void_pointer = typename Detail::AllocConstVoidPointer<Alloc>::type;
 
         using difference_type = typename Detail::AllocDifferenceType<Alloc>::type;
@@ -340,19 +326,16 @@ namespace SFTL
 
         using propagate_on_container_copy_assignment = typename Detail::AllocPOCCA<Alloc>::type;
         using propagate_on_container_move_assignment = typename Detail::AllocPOCMA<Alloc>::type;
-        using propagate_on_container_swap = typename Detail::AllocPOCS<Alloc>::type;
-        using is_always_equal = typename Detail::AllocIsAlwaysEqual<Alloc>::type;
+        using propagate_on_container_swap            = typename Detail::AllocPOCS<Alloc>::type;
+        using is_always_equal                        = typename Detail::AllocIsAlwaysEqual<Alloc>::type;
 
-        template <typename U>
+        template<typename U>
         using rebind_alloc = typename Detail::AllocRebind<Alloc, U>::type;
 
-        template <typename U>
+        template<typename U>
         using rebind_traits = allocator_traits<rebind_alloc<U>>;
 
-        [[nodiscard]] static pointer allocate(Alloc &a, alloc_size_type n)
-        {
-            return a.allocate(n);
-        }
+        [[nodiscard]] static pointer allocate(Alloc &a, alloc_size_type n) { return a.allocate(n); }
 
         [[nodiscard]] static pointer allocate(Alloc &a, alloc_size_type n, const_void_pointer hint)
         {
@@ -362,12 +345,9 @@ namespace SFTL
                 return a.allocate(n);
         }
 
-        static void deallocate(Alloc &a, pointer p, alloc_size_type n)
-        {
-            a.deallocate(p, n);
-        }
+        static void deallocate(Alloc &a, pointer p, alloc_size_type n) { a.deallocate(p, n); }
 
-        template <typename T, typename... Args>
+        template<typename T, typename... Args>
         static void construct(Alloc &a, T *p, Args &&...args)
         {
             if constexpr (Detail::HasConstruct<Alloc, T *, Args...>::value)
@@ -376,7 +356,7 @@ namespace SFTL
                 ::new (static_cast<void *>(p)) T(::SFTL::forward<Args>(args)...);
         }
 
-        template <typename T>
+        template<typename T>
         static void destroy(Alloc &a, T *p)
         {
             if constexpr (Detail::HasDestroy<Alloc, T *>::value)

@@ -1,11 +1,11 @@
 #pragma once
+#include <1stPartyLibs/TemplateLibrary/Types.hpp>
+#include <Assets/Video/Video.hpp>
 #include <Platform/Windows/WindowManager.hpp>
 #include <Rendering/Images/Imaged2d>
-#include <Assets/Video/Video.hpp>
 #include <unordered_map>
-#include "SplashScreenQuotes.hpp"
-#include <TemplateLibrary/Types.hpp>
 #include "EngineSplashScreen.hpp"
+#include "SplashScreenQuotes.hpp"
 
 namespace SF::Engine
 {
@@ -17,7 +17,7 @@ namespace SF::Engine
 
         embed image data from SF::Engine::Internal::MagickImage (uint8[])
         */
-       
+
     }
     // Editor & Engine have their splashscreens, Editor is outside of a window as a floating image, like Unreal or Unity
     // Engine is in the window, a video/gif, and more images, credits
@@ -30,7 +30,7 @@ namespace SF::Engine
         void Stop();
         void AddImage(Image2d, float);
 
-        std::unordered_map<Image2d /*img*/, float/*time*/> Images_;
+        std::unordered_map<Image2d /*img*/, float /*time*/> Images_;
         Window SplashScreenWindow_;
     };
 }

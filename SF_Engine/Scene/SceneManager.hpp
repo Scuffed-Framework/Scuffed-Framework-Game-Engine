@@ -1,8 +1,8 @@
 #pragma once
 
+#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
 #include <Engine/Engine.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <TemplateLibrary/DynamicArray.hpp>
 #include "Scene.hpp"
 
 namespace SF::Engine
@@ -22,10 +22,7 @@ namespace SF::Engine
          * Gets the current scene.
          * @return The current scene.
          */
-        Scene *GetScene() const
-        {
-            return scene.get();
-        }
+        Scene *GetScene() const { return scene.get(); }
 
         /**
          * Sets the current scene to a new scene.
@@ -44,4 +41,4 @@ namespace SF::Engine
         std::unique_ptr<Scene> pendingScene;
         bool sceneStarted = false;
     };
-}
+} // namespace SF::Engine

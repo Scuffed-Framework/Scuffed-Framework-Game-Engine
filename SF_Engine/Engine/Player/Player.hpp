@@ -1,8 +1,8 @@
 #pragma once
-#include <string>
+#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
+#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <UtilityClasses/UUID.hpp>
-#include <TemplateLibrary/TypeTraits.hpp>
-#include <TemplateLibrary/Types.hpp>
+#include <string>
 
 using namespace SFTL;
 namespace SF::Engine
@@ -22,6 +22,6 @@ namespace SF::Engine
         virtual void SwitchPlayerController();
     };
 
-    template <typename Player>
+    template<typename Player>
     constexpr bool IsDerivedOfPlayerBase = is_base_of_v<PlayerBase, Player> && is_same_v<Player, PlayerBase>;
 }

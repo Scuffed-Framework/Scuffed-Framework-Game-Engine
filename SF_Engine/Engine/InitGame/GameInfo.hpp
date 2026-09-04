@@ -1,6 +1,6 @@
 #pragma once
+#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <string>
-#include <TemplateLibrary/Types.hpp>
 
 #include <Engine/VersionSemantic.hpp>
 

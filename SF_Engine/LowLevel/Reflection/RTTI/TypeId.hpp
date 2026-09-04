@@ -1,16 +1,16 @@
 #pragma once
-#include <cstdint>
+#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
+#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
-#include <TemplateLibrary/TypeTraits.hpp>
-#include <TemplateLibrary/Types.hpp>
 
 #if defined(_MSC_VER)
-#define SF_RTTI_FUNC_SIG __FUNCSIG__
+    #define SF_RTTI_FUNC_SIG __FUNCSIG__
 #elif defined(__clang__) || defined(__GNUC__)
-#define SF_RTTI_FUNC_SIG __PRETTY_FUNCTION__
+    #define SF_RTTI_FUNC_SIG __PRETTY_FUNCTION__
 #else
-#error "SF Engine RTTI requires MSVC, Clang or GCC (needs a compiler-signature macro)."
+    #error "SF Engine RTTI requires MSVC, Clang or GCC (needs a compiler-signature macro)."
 #endif
 
 namespace SF::RTTI
@@ -20,7 +20,7 @@ namespace SF::RTTI
     namespace Detail
     {
         inline constexpr uint64 FnvOffset = 14695981039346656037ull;
-        inline constexpr uint64 FnvPrime = 1099511628211ull;
+        inline constexpr uint64 FnvPrime  = 1099511628211ull;
 
         // Iterative (not recursive) so it doesn't hit MSVC's constexpr
         // recursion-depth limit on long, heavily-templated signatures.
@@ -35,12 +35,12 @@ namespace SF::RTTI
             return hash;
         }
 
-        template <typename T>
+        template<typename T>
         constexpr uint64 TypeIdOf()
         {
             return Fnv1aHash(SF_RTTI_FUNC_SIG);
         }
-    }
+    } // namespace Detail
 
     struct TypeId
     {
@@ -57,7 +57,7 @@ namespace SF::RTTI
         static constexpr TypeId Null() { return TypeId(0); }
     };
 
-    template <typename T>
+    template<typename T>
     constexpr TypeId GetTypeId()
     {
         return TypeId(Detail::TypeIdOf<decay_t<T>>());
@@ -65,29 +65,26 @@ namespace SF::RTTI
 
     namespace Detail
     {
-        template <typename T, typename = void>
+        template<typename T, typename = void>
         struct HasRttiImpl : false_type
         {
         };
 
-        template <typename T>
+        template<typename T>
         struct HasRttiImpl<T, void_t<decltype(T::RTTI_Type())>> : true_type
         {
         };
-    }
+    } // namespace Detail
 
-    template <typename T>
+    template<typename T>
     inline constexpr bool HasRtti = Detail::HasRttiImpl<T>::value;
-}
+} // namespace SF::RTTI
 
 namespace std
 {
-    template <>
+    template<>
     struct hash<SF::RTTI::TypeId>
     {
-        std::size_t operator()(const SF::RTTI::TypeId &id) const noexcept
-        {
-            return static_cast<std::size_t>(id.value);
-        }
+        std::size_t operator()(const SF::RTTI::TypeId &id) const noexcept { return static_cast<std::size_t>(id.value); }
     };
 }

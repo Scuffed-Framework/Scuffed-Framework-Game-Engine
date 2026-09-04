@@ -37,3 +37,5 @@ amazon lumberyard cafe
 
 API Notes:
 Render() called on already active renderpass, PreRender() before active.
+
+todo: rename every SF:: to ScuffedFramework:: and SFTL to ScuffedFramework::TemplateLibrary because your screen isnt 64x64 lol

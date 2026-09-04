@@ -32,28 +32,22 @@
 /* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                              */
 /******************************************************************************/
 #pragma once
-#include <memory>
-#include <utility>
 #include <cassert>
-#include "Operations.hpp"
 #include "Allocator.hpp"
-#include <memory_resource> // polymorphic_allocator
+#include "TypeTraits.hpp"
 
 namespace SFTL
 {
-    template <typename T, class Allocator = allocator<T>>
+    template<typename T, class Allocator = allocator<T>>
     class DynamicArray
     {
     public:
-        using value_type = T;
+        using value_type     = T;
         using allocator_type = Allocator;
 
         DynamicArray() = default;
 
-        explicit DynamicArray(const Allocator &alloc)
-            : allocator_(alloc)
-        {
-        }
+        explicit DynamicArray(const Allocator &alloc) : allocator_(alloc) {}
 
         ~DynamicArray()
         {
@@ -63,10 +57,7 @@ namespace SFTL
         }
 
         // move is cheap and sane
-        DynamicArray(DynamicArray &&other) noexcept
-        {
-            steal(other);
-        }
+        DynamicArray(DynamicArray &&other) noexcept { steal(other); }
 
         DynamicArray &operator=(DynamicArray &&other) noexcept
         {
@@ -90,8 +81,9 @@ namespace SFTL
             return data_[index];
         }
 
-        size_type size() const noexcept { return size_; }
-        size_type capacity() const noexcept { return capacity_; }
+        [[nodiscard]] size_type size() const noexcept { return size_; }
+        [[nodiscard]] size_type capacity() const noexcept { return capacity_; }
+
 
         void clear()
         {
@@ -99,6 +91,20 @@ namespace SFTL
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i);
 
             size_ = 0;
+        }
+
+        constexpr void swap(DynamicArray &right) noexcept(noexcept(::SFTL::swap(data_, right.data_)) &&
+                                                          noexcept(::SFTL::swap(size_, right.size_)) &&
+                                                          noexcept(::SFTL::swap(capacity_, right.capacity_)) &&
+                                                          noexcept(::SFTL::swap(allocator_, right.allocator_)))
+        {
+            if (this != ::SFTL::addressof(right))
+            {
+                ::SFTL::swap(data_, right.data_);
+                ::SFTL::swap(size_, right.size_);
+                ::SFTL::swap(capacity_, right.capacity_);
+                ::SFTL::swap(allocator_, right.allocator_);
+            }
         }
 
         friend bool operator==(const DynamicArray &a, const DynamicArray &b)
@@ -115,39 +121,38 @@ namespace SFTL
         }
 
     private:
-        T *data_ = nullptr;
-        size_type size_ = 0;
+        T *data_            = nullptr;
+        size_type size_     = 0;
         size_type capacity_ = 0;
         Allocator allocator_;
 
         void grow()
         {
             size_type newCapacity = capacity_ == 0 ? 4 : capacity_ * 2;
-            T *newData = allocator_.allocate(newCapacity);
+            T *newData            = allocator_.allocate(newCapacity);
 
             for (size_type i = 0; i < size_; ++i)
             {
-                allocator_traits<Allocator>::construct(
-                    allocator_, newData + i, ::SFTL::move_if_noexcept(data_[i]));
+                allocator_traits<Allocator>::construct(allocator_, newData + i, ::SFTL::move_if_noexcept(data_[i]));
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i);
             }
 
             if (data_)
                 allocator_.deallocate(data_, capacity_);
 
-            data_ = newData;
+            data_     = newData;
             capacity_ = newCapacity;
         }
 
         void steal(DynamicArray &other) noexcept
         {
-            data_ = other.data_;
-            size_ = other.size_;
-            capacity_ = other.capacity_;
+            data_      = other.data_;
+            size_      = other.size_;
+            capacity_  = other.capacity_;
             allocator_ = ::SFTL::move(other.allocator_);
 
-            other.data_ = nullptr;
-            other.size_ = 0;
+            other.data_     = nullptr;
+            other.size_     = 0;
             other.capacity_ = 0;
         }
 
@@ -161,16 +166,14 @@ namespace SFTL
 
             for (size_type i = 0; i < size_; ++i)
             {
-                allocator_traits<Allocator>::construct(
-                    allocator_, newData + i, ::SFTL::move(data_[i]));
-                allocator_traits<Allocator>::destroy(
-                    allocator_, data_ + i);
+                allocator_traits<Allocator>::construct(allocator_, newData + i, ::SFTL::move(data_[i]));
+                allocator_traits<Allocator>::destroy(allocator_, data_ + i);
             }
 
             if (data_)
                 allocator_.deallocate(data_, capacity_);
 
-            data_ = newData;
+            data_     = newData;
             capacity_ = newCapacity;
         }
         void pop_back()
@@ -178,8 +181,7 @@ namespace SFTL
             assert(size_ > 0);
 
             --size_;
-            allocator_traits<Allocator>::destroy(
-                allocator_, data_ + size_);
+            allocator_traits<Allocator>::destroy(allocator_, data_ + size_);
         }
         T *data() noexcept { return data_; }
         const T *data() const noexcept { return data_; }
@@ -188,9 +190,8 @@ namespace SFTL
 
         const T *begin() const noexcept { return data_; }
         const T *end() const noexcept { return data_ + size_; }
-        DynamicArray(const DynamicArray &other)
-            : allocator_(allocator_traits<Allocator>::
-                             select_on_container_copy_construction(other.allocator_))
+        DynamicArray(const DynamicArray &other) :
+            allocator_(allocator_traits<Allocator>::select_on_container_copy_construction(other.allocator_))
         {
             reserve(other.size_);
 
@@ -212,8 +213,7 @@ namespace SFTL
             if (size_ == capacity_)
                 reserve(capacity_ == 0 ? 4 : capacity_ * 2);
 
-            allocator_traits<Allocator>::construct(
-                allocator_, data_ + size_, value); // copy, not move
+            allocator_traits<Allocator>::construct(allocator_, data_ + size_, value); // copy, not move
             ++size_;
         }
 
@@ -222,19 +222,17 @@ namespace SFTL
             if (size_ == capacity_)
                 reserve(capacity_ == 0 ? 4 : capacity_ * 2);
 
-            allocator_traits<Allocator>::construct(
-                allocator_, data_ + size_, ::SFTL::move(value));
+            allocator_traits<Allocator>::construct(allocator_, data_ + size_, ::SFTL::move(value));
             ++size_;
         }
 
-        template <typename... Args>
+        template<typename... Args>
         void emplace_back(Args &&...args)
         {
             if (size_ == capacity_)
                 reserve(capacity_ == 0 ? 4 : capacity_ * 2);
 
-            allocator_traits<Allocator>::construct(
-                allocator_, data_ + size_, ::SFTL::forward<Args>(args)...);
+            allocator_traits<Allocator>::construct(allocator_, data_ + size_, ::SFTL::forward<Args>(args)...);
             ++size_;
         }
 
@@ -246,14 +244,11 @@ namespace SFTL
             if (newSize > size_)
             {
                 for (size_type i = size_; i < newSize; ++i)
-                    allocator_traits<Allocator>::construct(
-                        allocator_, data_ + i);
-            }
-            else if (newSize < size_)
+                    allocator_traits<Allocator>::construct(allocator_, data_ + i);
+            } else if (newSize < size_)
             {
                 for (size_type i = newSize; i < size_; ++i)
-                    allocator_traits<Allocator>::destroy(
-                        allocator_, data_ + i);
+                    allocator_traits<Allocator>::destroy(allocator_, data_ + i);
             }
 
             size_ = newSize;
@@ -267,23 +262,17 @@ namespace SFTL
             if (newSize > size_)
             {
                 for (size_type i = size_; i < newSize; ++i)
-                    allocator_traits<Allocator>::construct(
-                        allocator_, data_ + i, value);
-            }
-            else if (newSize < size_)
+                    allocator_traits<Allocator>::construct(allocator_, data_ + i, value);
+            } else if (newSize < size_)
             {
                 for (size_type i = newSize; i < size_; ++i)
-                    allocator_traits<Allocator>::destroy(
-                        allocator_, data_ + i);
+                    allocator_traits<Allocator>::destroy(allocator_, data_ + i);
             }
 
             size_ = newSize;
         }
 
-        bool empty() const noexcept
-        {
-            return size_ == 0;
-        }
+        bool empty() const noexcept { return size_ == 0; }
 
         T &front()
         {
@@ -318,7 +307,7 @@ namespace SFTL
             {
                 if (data_)
                     allocator_.deallocate(data_, capacity_);
-                data_ = nullptr;
+                data_     = nullptr;
                 capacity_ = 0;
                 return;
             }
@@ -327,13 +316,12 @@ namespace SFTL
 
             for (size_type i = 0; i < size_; ++i)
             {
-                allocator_traits<Allocator>::construct(
-                    allocator_, newData + i, ::SFTL::move_if_noexcept(data_[i]));
+                allocator_traits<Allocator>::construct(allocator_, newData + i, ::SFTL::move_if_noexcept(data_[i]));
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i);
             }
 
             allocator_.deallocate(data_, capacity_);
-            data_ = newData;
+            data_     = newData;
             capacity_ = size_;
         }
 
@@ -349,13 +337,11 @@ namespace SFTL
 
             for (size_type i = size_; i > index; --i)
             {
-                allocator_traits<Allocator>::construct(
-                    allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i - 1]));
+                allocator_traits<Allocator>::construct(allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i - 1]));
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i - 1);
             }
 
-            allocator_traits<Allocator>::construct(
-                allocator_, data_ + index, value);
+            allocator_traits<Allocator>::construct(allocator_, data_ + index, value);
             ++size_;
 
             return data_ + index;
@@ -373,13 +359,11 @@ namespace SFTL
 
             for (size_type i = size_; i > index; --i)
             {
-                allocator_traits<Allocator>::construct(
-                    allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i - 1]));
+                allocator_traits<Allocator>::construct(allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i - 1]));
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i - 1);
             }
 
-            allocator_traits<Allocator>::construct(
-                allocator_, data_ + index, ::SFTL::move(value));
+            allocator_traits<Allocator>::construct(allocator_, data_ + index, ::SFTL::move(value));
             ++size_;
 
             return data_ + index;
@@ -394,8 +378,7 @@ namespace SFTL
 
             for (size_type i = index; i < size_ - 1; ++i)
             {
-                allocator_traits<Allocator>::construct(
-                    allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i + 1]));
+                allocator_traits<Allocator>::construct(allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i + 1]));
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i + 1);
             }
 
@@ -412,15 +395,15 @@ namespace SFTL
                 return first;
 
             size_type startIndex = first - data_;
-            size_type count = last - first;
+            size_type count      = last - first;
 
             for (size_type i = startIndex; i < startIndex + count; ++i)
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i);
 
             for (size_type i = startIndex; i < size_ - count; ++i)
             {
-                allocator_traits<Allocator>::construct(
-                    allocator_, data_ + i, ::SFTL::move_if_noexcept(data_[i + count]));
+                allocator_traits<Allocator>::construct(allocator_, data_ + i,
+                                                       ::SFTL::move_if_noexcept(data_[i + count]));
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i + count);
             }
 
@@ -436,14 +419,11 @@ namespace SFTL
             ::SFTL::swap(a.allocator_, b.allocator_);
         }
 
-        friend bool operator!=(const DynamicArray &a, const DynamicArray &b)
-        {
-            return !(a == b);
-        }
+        friend bool operator!=(const DynamicArray &a, const DynamicArray &b) { return !(a == b); }
         // Remove all elements matching a value (maintains order)
         size_type remove(const T &value)
         {
-            T *writePos = data_;
+            T *writePos       = data_;
             size_type removed = 0;
 
             for (size_type i = 0; i < size_; ++i)
@@ -452,13 +432,12 @@ namespace SFTL
                 {
                     allocator_traits<Allocator>::destroy(allocator_, data_ + i);
                     ++removed;
-                }
-                else
+                } else
                 {
                     if (writePos != data_ + i)
                     {
-                        allocator_traits<Allocator>::construct(
-                            allocator_, writePos, ::SFTL::move_if_noexcept(data_[i]));
+                        allocator_traits<Allocator>::construct(allocator_, writePos,
+                                                               ::SFTL::move_if_noexcept(data_[i]));
                         allocator_traits<Allocator>::destroy(allocator_, data_ + i);
                     }
                     ++writePos;
@@ -477,11 +456,10 @@ namespace SFTL
             if (index != size_ - 1)
             {
                 allocator_traits<Allocator>::destroy(allocator_, data_ + index);
-                allocator_traits<Allocator>::construct(
-                    allocator_, data_ + index, ::SFTL::move_if_noexcept(data_[size_ - 1]));
+                allocator_traits<Allocator>::construct(allocator_, data_ + index,
+                                                       ::SFTL::move_if_noexcept(data_[size_ - 1]));
                 allocator_traits<Allocator>::destroy(allocator_, data_ + size_ - 1);
-            }
-            else
+            } else
             {
                 allocator_traits<Allocator>::destroy(allocator_, data_ + index);
             }
@@ -498,9 +476,9 @@ namespace SFTL
         }
     };
 
-    namespace Polymorphic
-    {
-        template <class T>
-        using DynamicArray = ::SFTL::DynamicArray<T, std::pmr::polymorphic_allocator<T>>;
-    }
-}
+    //    namespace Polymorphic
+    //  {
+    //    template<class T>
+    //  using DynamicArray = ::SFTL::DynamicArray<T, polymorphic_allocator<T>>;
+    //}
+} // namespace SFTL
