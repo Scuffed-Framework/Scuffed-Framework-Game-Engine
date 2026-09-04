@@ -50,6 +50,7 @@ namespace SFTL
     typedef int int32;
     typedef short int16;
     typedef char int8;
+    typedef short int int4;
 
     typedef uint64 size_type;
 
@@ -59,6 +60,10 @@ namespace SFTL
 
     using ptrdiff_t = decltype(static_cast<int *>(nullptr) - static_cast<int *>(nullptr)); // https://en.cppreference.com/cpp/types/ptrdiff_t
 
+    typedef float floating32;
+    typedef double floating64;
+    typedef long double floating128;
+
     namespace Detail
     {
         struct mbstate_impl
@@ -66,8 +71,8 @@ namespace SFTL
             int count;
             union
             {
-                unsigned int wch;
-                char wchb[4];
+                unsigned int WChar;
+                char WCharBytes[4];
             } value;
         };
     }
