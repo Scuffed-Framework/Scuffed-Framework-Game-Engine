@@ -3,11 +3,22 @@
 #include <Gui/GuiMembers.hpp>
 #include "../Wizzards/Shaders.hpp"
 #include "Panels.hpp"
+#include "Gui/ocornut/imgui_impl_vulkan.h"
 
 namespace SF::Engine
 {
     void AssetBrowser::Draw()
     {
+
+        if (!SaveLogo) SaveLogo = GetSaveLogo();
+        if (!NewLogo) NewLogo = GetNewLogo();
+        if (!HppLogo) HppLogo = GetHppLogo();
+        if (!HLogo) HLogo = GetHlogo();
+        if (!FolderLogo) FolderLogo = GetFolderLogo();
+        if (!FileLogo) FileLogo = GetFileLogo();
+        if (!CLogo) CLogo = GetCLogo();
+        if (!CppLogo) CppLogo = GetCppLogo();
+
         if (ProjectManager::Get()->IsAProjectLoaded() == false)
         {
             return;
@@ -964,26 +975,28 @@ namespace SF::Engine
         else if (ImGui::IsItemDeactivated()) // clicked away without pressing Enter -> commit, like Unity
             CommitInlineFolderRename();
     }
+
     void AssetBrowser::DrawFolderTile(const std::filesystem::path &folderPath, int index)
     {
         std::string name = folderPath.filename().string();
         bool isEditingThis = (m_inlineEditMode == InlineEditMode::RenameFolder && m_inlineEditPath == folderPath);
 
         ImGui::PushID(("folder_" + std::to_string(index)).c_str());
-        ImGui::BeginGroup();
 
         ImVec2 thumbnailSize(m_thumbnailSize, m_thumbnailSize);
+        ImVec2 tileSize(thumbnailSize.x, thumbnailSize.y + ImGui::GetTextLineHeight() + 4);
 
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.3f, 0.15f, 1.0f));
-        ImGui::Button("##folderbtn", thumbnailSize);
-        ImGui::PopStyleColor();
+        ImVec2 origin = ImGui::GetCursorPos();
 
-        ImVec2 cursorPos = ImGui::GetCursorPos();
-        ImGui::SetCursorPos(ImVec2(
-            cursorPos.x + thumbnailSize.x / 2 - 16,
-            cursorPos.y - thumbnailSize.y / 2 - 16));
-        ImGui::TextUnformatted(ICON_MD_FOLDER);
-        ImGui::SetCursorPos(cursorPos);
+        // Real interactive item covering the whole tile
+        ImGui::InvisibleButton("##tile", tileSize);
+        bool hovered = ImGui::IsItemHovered();
+
+        ImGui::SetCursorPos(origin);
+        ImGui::BeginGroup();
+
+        auto textureID = FolderLogo->GetTexID();
+        ImGui::Image(textureID, thumbnailSize);
 
         if (isEditingThis)
         {
@@ -998,7 +1011,7 @@ namespace SF::Engine
 
         ImGui::EndGroup();
 
-        if (!isEditingThis && ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
+        if (!isEditingThis && hovered && ImGui::IsMouseDoubleClicked(0))
             m_currentPath = folderPath;
 
         if (!isEditingThis && ImGui::BeginPopupContextItem("FolderContext"))

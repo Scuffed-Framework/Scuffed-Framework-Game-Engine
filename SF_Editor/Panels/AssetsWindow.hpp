@@ -1,5 +1,6 @@
 #pragma once
 #include <Rendering/Images/ImageAsset.hpp>
+#include <Assets/AssetTextures.hpp>
 #include <Gui/UIRegistry.hpp>
 #include <Gui/ocornut/imgui.h>
 #include <Gui/ocornut/imgui_internal.h>
@@ -99,6 +100,16 @@ namespace SF::Engine
 
         bool m_showDeleteConfirmPopup = false;
         std::filesystem::path m_deleteTargetPath;
+
+        // TODO: Replace with Assets/Bitmaps/SVG
+        std::shared_ptr<Image2d> SaveLogo;
+        std::shared_ptr<Image2d> NewLogo;
+        std::shared_ptr<Image2d> HppLogo;
+        std::shared_ptr<Image2d> HLogo;
+        std::shared_ptr<Image2d> FolderLogo;
+        std::shared_ptr<Image2d> FileLogo;
+        std::shared_ptr<Image2d> CLogo;
+        std::shared_ptr<Image2d> CppLogo;
 
         void DrawFolderTile(const std::filesystem::path &folderPath, int index);
         void DrawFolderNameField(const std::filesystem::path &folderPath, float width);
