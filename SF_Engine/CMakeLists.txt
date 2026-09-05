@@ -121,18 +121,6 @@ FetchContent_Declare(box3d
         GIT_TAG v0.1.0)
 FetchContent_MakeAvailable(box3d)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(SF_Engine PUBLIC
-            -fsanitize=address
-            -fno-omit-frame-pointer
-    )
-
-    target_link_options(SF_Engine INTERFACE
-            -fsanitize=address
-    )
-endif ()
-
-
 # --- detect architecture ---
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
     set(SLANG_ARCH "aarch64")

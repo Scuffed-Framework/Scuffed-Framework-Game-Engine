@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <new>
 #include <utility>
+#include <variant>
 #include "TypeTraits.hpp"
 
 namespace SFTL
@@ -142,7 +143,7 @@ namespace SFTL
             using IndexType = index_type_for<sizeof...(Types)>;
             using Traits_   = Traits<Types...>;
 
-            template<size_type I>
+            template<::SFTL::size_type I>
             using AltT = typename NthType<I, Types...>::type;
 
             StorageT _storage;
@@ -153,25 +154,25 @@ namespace SFTL
             {
             }
 
-            template<size_type I, typename... Args>
+            template<::SFTL::size_type I, typename... Args>
             constexpr explicit Base(in_place_index_t<I>, Args &&...args) :
                 _storage(in_place_index<I>, forward<Args>(args)...), _index(static_cast<IndexType>(I))
             {
             }
 
             // ---- destroy ----
-            template<size_type I>
+            template<::SFTL::size_type I>
             static void destroy_one(StorageT &s) noexcept
             {
                 using T = AltT<I>;
                 VariantImpl::get<I>(s).~T();
             }
 
-            template<size_type... Is>
+            template<::SFTL::size_type... Is>
             static constexpr auto destroy_table(index_sequence<Is...>)
             {
                 using Fn = void (*)(StorageT &) noexcept;
-                return std::array<Fn, sizeof...(Is)>{&Base::destroy_one<Is>...};
+                return std::array<Fn, sizeof...(Is)>{&Base::template destroy_one<Is>...};
             }
 
             void destroy() noexcept
@@ -181,14 +182,14 @@ namespace SFTL
             }
 
             // ---- copy-construct this->_storage from other (other's alt is active) ----
-            template<size_type I>
+            template<::SFTL::size_type I>
             static void copy_ctor_one(StorageT &dst, const StorageT &src)
             {
                 using T = AltT<I>;
                 ::new (static_cast<void *>(addressof(VariantImpl::get<I>(dst)))) T(VariantImpl::get<I>(src));
             }
 
-            template<size_type... Is>
+            template<::SFTL::size_type... Is>
             static constexpr auto copy_ctor_table(index_sequence<Is...>)
             {
                 using Fn = void (*)(StorageT &, const StorageT &);
@@ -203,14 +204,14 @@ namespace SFTL
             }
 
             // ---- move-construct ----
-            template<size_type I>
+            template<::SFTL::size_type I>
             static void move_ctor_one(StorageT &dst, StorageT &src)
             {
                 using T = AltT<I>;
                 ::new (static_cast<void *>(addressof(VariantImpl::get<I>(dst)))) T(move(VariantImpl::get<I>(src)));
             }
 
-            template<size_type... Is>
+            template<::SFTL::size_type... Is>
             static constexpr auto move_ctor_table(index_sequence<Is...>)
             {
                 using Fn = void (*)(StorageT &, StorageT &);
@@ -225,7 +226,7 @@ namespace SFTL
             }
 
             // ---- copy-assign: same index -> assign in place, else destroy+construct ----
-            template<size_type I>
+            template<::SFTL::size_type I>
             static void copy_assign_one(Base &self, const Base &other)
             {
                 using T = AltT<I>;
@@ -241,7 +242,7 @@ namespace SFTL
                 }
             }
 
-            template<size_type... Is>
+            template<::SFTL::size_type... Is>
             static constexpr auto copy_assign_table(index_sequence<Is...>)
             {
                 using Fn = void (*)(Base &, const Base &);
@@ -255,7 +256,7 @@ namespace SFTL
             }
 
             // ---- move-assign ----
-            template<size_type I>
+            template<::SFTL::size_type I>
             static void move_assign_one(Base &self, Base &other)
             {
                 using T = AltT<I>;
@@ -271,7 +272,7 @@ namespace SFTL
                 }
             }
 
-            template<size_type... Is>
+            template<::SFTL::size_type... Is>
             static constexpr auto move_assign_table(index_sequence<Is...>)
             {
                 using Fn = void (*)(Base &, Base &);
@@ -514,7 +515,7 @@ namespace SFTL
     {
         using Ret                   = decltype(forward<Visitor>(vis)(v.template get<0>()));
         using Fn                    = Ret (*)(Visitor &&, variant<Types...> &);
-        static constexpr auto table = []<size_type... Is>(index_sequence<Is...>)
+        static constexpr auto table = []<::SFTL::size_type... Is>(index_sequence<Is...>)
         {
             return std::array<Fn, sizeof...(Types)>{
                     &Detail::VariantImpl::visit_trampoline<Ret, Visitor, variant<Types...> &, Is>...};
@@ -527,7 +528,7 @@ namespace SFTL
     {
         using Ret                   = decltype(forward<Visitor>(vis)(v.template get<0>()));
         using Fn                    = Ret (*)(Visitor &&, const variant<Types...> &);
-        static constexpr auto table = []<size_type... Is>(index_sequence<Is...>)
+        static constexpr auto table = []<::SFTL::size_type... Is>(index_sequence<Is...>)
         {
             return std::array<Fn, sizeof...(Types)>{
                     &Detail::VariantImpl::visit_trampoline<Ret, Visitor, const variant<Types...> &, Is>...};

@@ -118,8 +118,7 @@ namespace SFTL
         constexpr void swap(unexpected &other) noexcept(is_nothrow_swappable_v<Error>)
             requires is_swappable_v<Error>
         {
-            using swap;
-            swap(ERR_Unexpected, other.ERR_Unexpected);
+            ::SFTL::swap(ERR_Unexpected, other.ERR_Unexpected);
         }
 
         template<typename error>

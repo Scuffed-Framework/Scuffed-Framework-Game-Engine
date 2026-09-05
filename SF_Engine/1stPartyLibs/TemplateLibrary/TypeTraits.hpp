@@ -1200,12 +1200,6 @@ namespace SFTL
         constexpr bool operator()(const Type &a, const Type &b) const { return a != b; }
     };
 
-    template<size_type st, typename... Types>
-    struct NthType
-    {
-        using type = __type_pack_element<st, Types...>;
-    };
-
     template<size_type index>
     struct in_place_index_t
     {
@@ -1289,7 +1283,36 @@ namespace SFTL
     using std::is_trivially_destructible;
     using std::is_trivially_destructible_v;
 
-    using std::index_sequence;
+    template<typename Type, Type... Index>
+    struct integer_sequence
+    {
+        static_assert(is_integral_v<Type>);
+        typedef Type value_type;
+        static constexpr size_t size() noexcept { return sizeof...(Index); }
+    };
+
+    namespace detail
+    {
+        template<typename Type, size_type N, Type... Is>
+        struct make_integer_sequence_impl : make_integer_sequence_impl<Type, N - 1, static_cast<Type>(N - 1), Is...>
+        {
+        };
+
+        template<typename Type, Type... Is>
+        struct make_integer_sequence_impl<Type, 0, Is...>
+        {
+            using type = integer_sequence<Type, Is...>;
+        };
+    } // namespace detail
+
+    template<typename Type, Type N>
+    using make_integer_sequence = typename detail::make_integer_sequence_impl<Type, static_cast<size_type>(N)>::type;
+
+    template<size_type N>
+    using make_index_sequence = make_integer_sequence<size_type, N>;
+
+    template<size_t... Index>
+    using index_sequence = integer_sequence<size_type, Index...>;
 
     using std::is_nothrow_swappable;
     using std::is_nothrow_swappable_v;
@@ -1297,8 +1320,6 @@ namespace SFTL
     using std::is_swappable_v;
     using std::is_unbounded_array;
     using std::is_unbounded_array_v;
-    using std::make_index_sequence;
-    using std::nth_element;
 
     using std::add_pointer_t;
     using std::addressof;
