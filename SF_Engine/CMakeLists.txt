@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 4.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 get_directory_property(_parent_prefix PARENT_DIRECTORY CMAKE_PREFIX_PATH)
-if(_parent_prefix)
+if (_parent_prefix)
     list(APPEND CMAKE_PREFIX_PATH ${_parent_prefix})
-endif()
+endif ()
 
-if(MSVC)
+if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "MSVC runtime library")
     cmake_policy(SET CMP0091 NEW)
-endif()
+endif ()
 
 project(SF_Engine LANGUAGES CXX C)
 
@@ -47,213 +47,220 @@ find_package(ZLIB REQUIRED)                         # ZLIBConfig.cmake
 find_package(spdlog CONFIG REQUIRED)                # spdlog-config.cmake
 find_package(spirv-reflect-static CONFIG REQUIRED)
 find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
-find_package(sol2 REQUIRED)
 find_package(libraw CONFIG REQUIRED)
 
-if(UNIX)
+if (UNIX)
     find_package(udev)
     find_package(evdev)
-endif()
+endif ()
 
-find_package(openfbx REQUIRED)        
-find_package(TinyOBJLoader REQUIRED)  
+find_package(openfbx REQUIRED)
+find_package(TinyOBJLoader REQUIRED)
 
 
 file(GLOB_RECURSE ENGINE_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cxx"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.hxx"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.cxx"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.hxx"
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
 )
 list(FILTER ENGINE_SOURCES EXCLUDE REGEX "CMakeLists\\.txt")
 
 add_library(SF_Engine STATIC ${ENGINE_SOURCES})
 
 set_target_properties(SF_Engine PROPERTIES
-    OUTPUT_NAME "SF_Engine"
-    WINDOWS_EXPORT_ALL_SYMBOLS ON
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON
-    LINKER_LANGUAGE CXX
+        OUTPUT_NAME "SF_Engine"
+        WINDOWS_EXPORT_ALL_SYMBOLS ON
+        CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN ON
+        LINKER_LANGUAGE CXX
 )
 
 target_compile_features(SF_Engine PUBLIC cxx_std_20)
 
 target_compile_definitions(SF_Engine PUBLIC
-    SF_Engine_EXPORTS
-    GLM_FORCE_RADIANS
-    GLM_FORCE_DEPTH_ZERO_TO_ONE
-    GLM_ENABLE_EXPERIMENTAL
-    SPDLOG_COMPILED_LIB
-    VK_NO_PROTOTYPES
+        SF_Engine_EXPORTS
+        GLM_FORCE_RADIANS
+        GLM_FORCE_DEPTH_ZERO_TO_ONE
+        GLM_ENABLE_EXPERIMENTAL
+        SPDLOG_COMPILED_LIB
+        VK_NO_PROTOTYPES
 )
 
-if(WIN32)
+if (WIN32)
     target_compile_definitions(SF_Engine PUBLIC
-        _PLATFORM_WINDOWS
-        VK_USE_PLATFORM_WIN32_KHR
-        NOMINMAX
-        _CRT_SECURE_NO_WARNINGS
+            _PLATFORM_WINDOWS
+            VK_USE_PLATFORM_WIN32_KHR
+            NOMINMAX
+            _CRT_SECURE_NO_WARNINGS
     )
-    if(MSVC)
+    if (MSVC)
         target_compile_options(SF_Engine PRIVATE /utf-8)
-    endif()
+    endif ()
     target_link_libraries(SF_Engine PUBLIC
-        kernel32 user32 gdi32 winspool shell32 ole32 oleaut32
-        uuid comdlg32 advapi32
+            kernel32 user32 gdi32 winspool shell32 ole32 oleaut32
+            uuid comdlg32 advapi32
     )
-elseif(APPLE)
+elseif (APPLE)
     target_compile_definitions(SF_Engine PUBLIC
-        _PLATFORM_MACOS
-        VK_USE_PLATFORM_MACOS_MVK
+            _PLATFORM_MACOS
+            VK_USE_PLATFORM_MACOS_MVK
     )
-elseif(UNIX)
+elseif (UNIX)
     target_compile_definitions(SF_Engine PUBLIC
-        _PLATFORM_LINUX
-        VK_USE_PLATFORM_XLIB_KHR
+            _PLATFORM_LINUX
+            VK_USE_PLATFORM_XLIB_KHR
     )
     target_link_libraries(SF_Engine PUBLIC X11 pthread dl)
-endif()
+endif ()
 
 
 FetchContent_Declare(box3d
-  GIT_REPOSITORY https://github.com/erincatto/box3d.git
-  GIT_TAG v0.1.0)
+        GIT_REPOSITORY https://github.com/erincatto/box3d.git
+        GIT_TAG v0.1.0)
 FetchContent_MakeAvailable(box3d)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(SF_Engine PUBLIC
+            -fsanitize=address
+            -fno-omit-frame-pointer
+    )
 
+    target_link_options(SF_Engine INTERFACE
+            -fsanitize=address
+    )
+endif ()
 
 
 # --- detect architecture ---
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
     set(SLANG_ARCH "aarch64")
-else()
+else ()
     set(SLANG_ARCH "x86_64")
-endif()
+endif ()
 
 # --- detect platform + pick matching archive/hash ---
-if(WIN32)
-    if(SLANG_ARCH STREQUAL "aarch64")
+if (WIN32)
+    if (SLANG_ARCH STREQUAL "aarch64")
         set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-windows-aarch64.zip")
         set(SLANG_ARCHIVE_HASH "SHA256=5067047bb35ae5675b06a3467d0b302d9816727450a803cb3770660bef684f37")
-    else()
+    else ()
         set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-windows-x86_64.zip")
         set(SLANG_ARCHIVE_HASH "SHA256=5ed0a59d650a0af0aca45d5db4e083b3d8fb5cea05748747dd95dfbe9c580658")
-    endif()
-elseif(APPLE)
-    if(SLANG_ARCH STREQUAL "aarch64")
+    endif ()
+elseif (APPLE)
+    if (SLANG_ARCH STREQUAL "aarch64")
         set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-macos-aarch64.zip")
         set(SLANG_ARCHIVE_HASH "SHA256=2976c3a9a6f4d77b5734d00b5d841d1ff087d9965d9006b9b4d73edd0062cb7d")
-    else()
+    else ()
         set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-macos-x86_64.zip")
         set(SLANG_ARCHIVE_HASH "SHA256=a3da109bfb732ab3f09beb6999f9831d9be440fa9a1843006b7ea56498f545d6")
-    endif()
-elseif(UNIX)
-    if(SLANG_ARCH STREQUAL "aarch64")
+    endif ()
+elseif (UNIX)
+    if (SLANG_ARCH STREQUAL "aarch64")
         set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-linux-aarch64.tar.gz")
         set(SLANG_ARCHIVE_HASH "SHA256=438325c6529ba658f571614d9d551cdff09e730836d29c26c290afc8ed996985")
-    else()
+    else ()
         set(SLANG_ARCHIVE_NAME "slang-${SLANG_VERSION}-linux-x86_64.tar.gz")
         set(SLANG_ARCHIVE_HASH "SHA256=21f2d7847385a770e569fb61b1507a7794d742d97850bce0432bff0032ca005f")
-    endif()
-endif()
+    endif ()
+endif ()
 
 message(STATUS "Slang: fetching ${SLANG_ARCHIVE_NAME}")
 
 FetchContent_Declare(slang_prebuilt
-  URL "https://github.com/shader-slang/slang/releases/download/v${SLANG_VERSION}/${SLANG_ARCHIVE_NAME}"
-  URL_HASH ${SLANG_ARCHIVE_HASH}
+        URL "https://github.com/shader-slang/slang/releases/download/v${SLANG_VERSION}/${SLANG_ARCHIVE_NAME}"
+        URL_HASH ${SLANG_ARCHIVE_HASH}
 )
 FetchContent_MakeAvailable(slang_prebuilt)
 
 add_library(slang::slang SHARED IMPORTED GLOBAL)
 
-if(WIN32)
+if (WIN32)
     set_target_properties(slang::slang PROPERTIES
-        IMPORTED_IMPLIB   "${slang_prebuilt_SOURCE_DIR}/lib/slang.lib"
-        IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/bin/slang.dll"
-        INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
+            IMPORTED_IMPLIB "${slang_prebuilt_SOURCE_DIR}/lib/slang.lib"
+            IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/bin/slang.dll"
+            INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
     )
-elseif(APPLE)
+elseif (APPLE)
     set_target_properties(slang::slang PROPERTIES
-        IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/lib/libslang.dylib"
-        INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
+            IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/lib/libslang.dylib"
+            INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
     )
-elseif(UNIX)
+elseif (UNIX)
     set_target_properties(slang::slang PROPERTIES
-        IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/lib/libslang.so"
-        INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
+            IMPORTED_LOCATION "${slang_prebuilt_SOURCE_DIR}/lib/libslang.so"
+            INTERFACE_INCLUDE_DIRECTORIES "${slang_prebuilt_SOURCE_DIR}/include"
     )
-endif()
+endif ()
 
 target_link_libraries(SF_Engine PUBLIC
-    OpenAL::OpenAL
-    assimp::assimp
-    OpenCL::Headers
-    OpenCL::HeadersCpp
-    OpenCL::OpenCL
-    Freetype::Freetype
-    glfw
-    glm::glm
-    imgui::imgui
-    implot::implot
-    LibXml2::LibXml2
-    libsodium::libsodium
-    spirv-cross::spirv-cross
-    SPIRV-Tools
-    volk::volk
-    Vulkan::Loader
-    GPUOpen::VulkanMemoryAllocator
-    fmt::fmt
-    PNG::PNG
-    ZLIB::ZLIB
-    spdlog::spdlog
-    spirv-reflect-static
-    sol2::sol2
-    box3d::box3d
-    libraw::libraw
-    slang::slang
-    openfbx::openfbx          
-    tinyobjloader::tinyobjloader
+        OpenAL::OpenAL
+        assimp::assimp
+        OpenCL::Headers
+        OpenCL::HeadersCpp
+        OpenCL::OpenCL
+        Freetype::Freetype
+        glfw
+        glm::glm
+        imgui::imgui
+        implot::implot
+        LibXml2::LibXml2
+        libsodium::libsodium
+        spirv-cross::spirv-cross
+        SPIRV-Tools
+        volk::volk
+        Vulkan::Loader
+        GPUOpen::VulkanMemoryAllocator
+        fmt::fmt
+        PNG::PNG
+        ZLIB::ZLIB
+        spdlog::spdlog
+        spirv-reflect-static
+        box3d::box3d
+        libraw::libraw
+        slang::slang
+        openfbx::openfbx
+        tinyobjloader::tinyobjloader
 )
-if(UNIX)
+if (UNIX)
     target_link_libraries(SF_Engine PRIVATE
-        evdev
-        udev
+            evdev
+            udev
     )
-endif()
+endif ()
 
 target_include_directories(SF_Engine PUBLIC
-    $<TARGET_PROPERTY:volk::volk,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:Vulkan::Headers,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:spirv-cross::spirv-cross,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:SPIRV-Tools,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:spirv-reflect-static,INTERFACE_INCLUDE_DIRECTORIES>
-    # hopefully this works
-    $<TARGET_PROPERTY:box3d::box3d,INTERFACE_INCLUDE_DIRECTORIES>
-    "../SF_Engine"
+        $<TARGET_PROPERTY:volk::volk,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:Vulkan::Headers,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:spirv-cross::spirv-cross,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:SPIRV-Tools,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:spirv-reflect-static,INTERFACE_INCLUDE_DIRECTORIES>
+        # hopefully this works
+        $<TARGET_PROPERTY:box3d::box3d,INTERFACE_INCLUDE_DIRECTORIES>
+        "../SF_Engine"
 )
 
-if(MSVC)
+if (MSVC)
     target_link_libraries(SF_Engine PRIVATE kernel32)
-endif()
+endif ()
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(ARCH_SUFFIX "x64")
-else()
+else ()
     set(ARCH_SUFFIX "x86")
-endif()
+endif ()
 
-if(NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
-endif()
+endif ()
 
 set(SF_ENGINE_SHADER_OUT_DIR "../Shaders")
 
 add_custom_target(SF_CopyShaders ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/Shaders"
         "${SF_ENGINE_SHADER_OUT_DIR}"
-    COMMENT "[SF] Copying engine shaders"
+        COMMENT "[SF] Copying engine shaders"
 )
