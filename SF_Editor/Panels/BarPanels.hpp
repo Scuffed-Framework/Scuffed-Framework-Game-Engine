@@ -1,18 +1,18 @@
 #pragma once
 #include <Gui/ocornut/imgui.h>
-#include <string>
-#include <vector>
 #include <Rendering/Camera/EditorCamera.hpp>
 #include <cstdio>
+#include <string>
+#include <vector>
 
-#include <Scene/Types.hpp>
 #include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
+#include <Scene/Types.hpp>
 
 #include <Commands/CommandsWindow.hpp>
 
-#include <Gui/ocornut/imgui_stdlib.h>
-#include <TemplateLibrary/Types.hpp>
+#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <Gui/StaticPanel.hpp>
+#include <Gui/ocornut/imgui_stdlib.h>
 
 namespace SF::Engine
 {
@@ -21,8 +21,11 @@ namespace SF::Engine
     class BarPanels : public StaticSingleInstancePanel<BarPanels>
     {
     public:
-        BarPanels(){ reg = UIRegistry::Get().Register([this]{Draw();});};
-        ~BarPanels() {UIRegistry::Get().Unregister(reg);};
+        BarPanels()
+        {
+            reg = UIRegistry::Get().Register([this] { Draw(); });
+        };
+        ~BarPanels() { UIRegistry::Get().Unregister(reg); };
 
         void Draw();
 
@@ -38,4 +41,4 @@ namespace SF::Engine
         void DrawEngineStatusBar();
         void DrawExecutingPasses();
     };
-}
+} // namespace SF::Engine
