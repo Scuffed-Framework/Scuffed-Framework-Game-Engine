@@ -1,6 +1,7 @@
 #pragma once
 
-#include <../1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
+#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
+#include <1stPartyLibs/TemplateLibrary/Operations.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Engine/Module.hpp>
 #include <LowLevel/Reflection/RTTI/RTTICast.hpp>
@@ -106,18 +107,18 @@ namespace SF::Engine
         REGISTER_MODULE(AssetController, Module::Stage::Normal);
 
     public:
-        void Update() {}
+        void Update() override {}
         bool Initialize() override;
         void ProjectLoaded();
-        void Shutdown() { assets_.clear(); }
+        void Shutdown() override { assets_.clear(); }
 
         static void RegisterFactory(AssetType type, const std::string &rttiTypeName, AssetFactoryFn factory);
 
         void SaveAll();
         void SaveManifest();
 
-        std::shared_ptr<AssetBase> FindByUUID(const UUID &guid) const;
-        std::shared_ptr<AssetBase> FindByName(std::string_view name) const;
+        [[nodiscard]] std::shared_ptr<AssetBase> FindByUUID(const UUID &guid) const;
+        [[nodiscard]] std::shared_ptr<AssetBase> FindByName(std::string_view name) const;
 
         template<typename T>
         std::shared_ptr<Asset<T>> GetAsset(const UUID &guid) const
