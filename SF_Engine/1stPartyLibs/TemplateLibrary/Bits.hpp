@@ -31,13 +31,13 @@ namespace SFTL
     }
 
     template <typename T, ::SFTL::size_type num>
-    NO_DISCARD inline _GLIBCXX14_CONSTEXPR T *begin(T (&arr)[num]) noexcept
+    NO_DISCARD inline constexpr T *begin(T (&arr)[num]) noexcept
     {
         return arr;
     }
 
     template <typename T, ::SFTL::size_type num>
-    NO_DISCARD inline _GLIBCXX14_CONSTEXPR T *
+    NO_DISCARD inline constexpr T *
     end(T (&arr)[num]) noexcept
     {
         return arr + num;
