@@ -16,15 +16,8 @@
 
 namespace SF::Engine
 {
-    // Matches SSR_CAMERA_BIND in Shaders/SSR/SSRCommon.si, and the literal
-    // binding (31) CloudPipelinePass already uses for the same shared
-    // Camera UBO — kept as a named constant here instead of a repeated
-    // magic number in SSRPipelinePass.cpp.
     static constexpr uint32_t kSSRCameraBind = 31;
 
-    // Mirrors Shaders/SSR/SSRCommon.si's SSRParams exactly — 7 x 16-byte rows,
-    // std140 layout. Keep the two definitions in lockstep; the static_assert
-    // below only catches size drift, not field-order drift.
     struct alignas(16) SSRParams
     {
         Vec2 screenSize;
@@ -60,7 +53,7 @@ namespace SF::Engine
     static_assert(sizeof(SSRParams) == 112, "SSRParams size mismatch - check cpu/gpu side");
     static_assert(sizeof(SSRParams) % 16 == 0, "SSRParams must satisfy std140 alignment");
 
-    // Debug view modes — must match SSR_DEBUG_* in Shaders/SSR/SSRCommon.si.
+    // Debug view modes; must match SSR_DEBUG_* in Shaders/SSR/SSRCommon.si.
     enum class SSRDebugView : int32_t
     {
         None = 0,
@@ -82,16 +75,16 @@ namespace SF::Engine
      * loadOp=VK_ATTACHMENT_LOAD_OP_CLEAR (RenderPass.cpp), and PreRender for
      * every subpass in a render stage runs before that render stage's
      * renderpass begins. A compute dispatch that read-modify-writes "hdr"
-     * from PreRender — the way CloudPipelinePass's Composite step does —
+     * from PreRender; the way CloudPipelinePass's Composite step does;
      * gets unconditionally clobbered by that clear the instant the
      * renderpass starts, before anything downstream ever sees it.
      *
      * So:
-     *   - PreRender() runs RayGen/Trace/TemporalAccumulate/SpatialFilter —
+     *   - PreRender() runs RayGen/Trace/TemporalAccumulate/SpatialFilter;
      *     pure compute, touching only SSR's own private images (never
      *     "hdr"), writing the final result into filteredRT_.
      *   - Render() is a normal graphics draw (fullscreen triangle, additive
-     *     blend) into "hdr", executed as SSR's own dedicated subpass —
+     *     blend) into "hdr", executed as SSR's own dedicated subpass;
      *     see SceneRenderer.hpp, where it sits between the deferred-light
      *     subpass and the forward-transparent subpass. Because it's a real
      *     subpass draw rather than a pre-renderpass compute write, it reads
@@ -102,7 +95,7 @@ namespace SF::Engine
      *
      * Trace.shader's read of "hdr" (for the reflected scene colour at a
      * screen-space hit) still happens in PreRender, before this frame's
-     * deferred-light subpass has run — so that one read is one frame stale
+     * deferred-light subpass has run; so that one read is one frame stale
      * (sees last frame's fully composited "hdr", which is a valid, fully
      * resolved image sitting in SHADER_READ_ONLY_OPTIMAL at that point).
      * Only the *write* side needed to move.
@@ -161,7 +154,7 @@ namespace SF::Engine
         std::unique_ptr<ComputePipeline> temporalPipeline_;
         std::unique_ptr<ComputePipeline> spatialPipeline_;
 
-        // Graphics : the only stage that touches "hdr" — see class comment.
+        // Graphics : the only stage that touches "hdr"; see class comment.
         std::unique_ptr<RenderPipeline> compositePipeline_;
         std::unique_ptr<DescriptorSet> compositeSet_;
         const ImageDepth *compositeLastDepth_ = nullptr;
@@ -172,15 +165,15 @@ namespace SF::Engine
         static constexpr uint32_t kFramesInFlight = 3;
 
         // Intra-frame scratch : written and consumed within the same
-        // PreRender() call, so — like CloudPipelinePass's cloudRenderRT_/
-        // cloudDepthRT_/cloudFogRT_ — these do NOT need per-frame-in-flight
+        // PreRender() call, so; like CloudPipelinePass's cloudRenderRT_/
+        // cloudDepthRT_/cloudFogRT_; these do NOT need per-frame-in-flight
         // ping-ponging; the pipeline barriers inserted between dispatches
         // already provide correct ordering across frames on a single queue.
         std::unique_ptr<Image2d> rayDirRT_;    // rgb=dir WS, a=NdotH
         std::unique_ptr<Image2d> rayDataRT_;   // r=roughnessA g=metallic b=skyMask a=pdf
         std::unique_ptr<Image2d> traceColorRT_;// rgb=radiance, a=confidence
         std::unique_ptr<Image2d> traceHitRT_;  // r=hitMask g=hitT b=pdf
-        std::unique_ptr<Image2d> filteredRT_;  // rgb=denoised, a=confidence — read by Render()
+        std::unique_ptr<Image2d> filteredRT_;  // rgb=denoised, a=confidence; read by Render()
 
         // Carries state across frames -> must be ping-ponged (same
         // reasoning as CloudPipelinePass's reconColor_/reconDepth_/reconFog_).

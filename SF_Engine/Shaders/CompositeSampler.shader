@@ -20,8 +20,5 @@ Sampler2D<float4> colorSampler;
 [shader("fragment")]
 float4 fsMain(VSOutput input) : SV_Target
 {
-    // TEMP DIAGNOSTIC (round 2, testing the RenderPass.cpp dependency fix
-    // in isolation) — bypass the hdr sample entirely. Revert once confirmed.
-    return float4(1.0, 0.0, 1.0, 1.0);
-    // return colorSampler.SampleLevel(input.uv0, 0.0);
+    return colorSampler.SampleLevel(input.uv0, 0.0);
 }

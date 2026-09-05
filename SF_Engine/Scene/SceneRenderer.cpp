@@ -1,6 +1,6 @@
 #include "SceneRenderer.hpp"
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Windows/WindowManager.hpp>
+#include <Platform/Windows/WindowManager.hpp>
 #include <Gui/ImGuiPipelinePass.hpp>
 #include <Rendering/PipelinePassManager.hpp>
 #include <Gui/UIRegistry.hpp>
@@ -27,12 +27,13 @@ namespace SF::Engine
         {
             uiCallbackSet_ = true;
 
-            if (GetPipelinePassManager()->Get<ImGuiPipelinePass>()) // if imgui exists
-                GetPipelinePassManager()->Get<ImGuiPipelinePass>()->SetDrawCallback(
-                    [this, scene]()
-                    {
-                        UIRegistry::Get().DrawAll();
-                    });
+            if (auto *imgui = GetPipelinePassManager()->Get<ImGuiPipelinePass>())
+            {
+                imgui->SetDrawCallback([this, scene]()
+                {
+                    UIRegistry::Get().DrawAll();
+                });
+            }
         }
 
         auto now = std::chrono::steady_clock::now();

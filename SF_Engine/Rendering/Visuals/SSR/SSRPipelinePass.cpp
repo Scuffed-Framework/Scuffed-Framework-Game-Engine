@@ -80,12 +80,7 @@ namespace SF::Engine
             cmd.SubmitIdle();
         }
         dummyTexture_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-        // All scratch/history targets are created in GENERAL (constructor
-        // already transitions UNDEFINED -> GENERAL); flip them to
-        // SHADER_READ_ONLY_OPTIMAL up front so the very first BindStaticDescriptors()
-        // call can wire them as sampled inputs without a layout mismatch —
-        // PreRender() flips each back to GENERAL right before it's written.
+        
         CommandBuffer cmd(true);
         auto toReadOnly = [&](Image2d *img)
         {
@@ -126,12 +121,12 @@ namespace SF::Engine
         temporalPipeline_ = std::make_unique<ComputePipeline>("Shaders/SSR/TemporalAccumulate.shader");
         spatialPipeline_ = std::make_unique<ComputePipeline>("Shaders/SSR/SpatialFilter.shader");
 
-        // Graphics : fullscreen triangle, additive blend into "hdr" — see
+        // Graphics : fullscreen triangle, additive blend into "hdr"; see
         // class comment in the header for why this can't be compute.
         compositePipeline_ = std::make_unique<RenderPipeline>(
             stage,
             "Shaders/SSR/Composite.shader",
-            std::vector<Shader::VertexInput>{}, // no VBO
+            std::vector<Shader::VertexInput>{},
             std::vector<Shader::Define>{},
             RenderPipeline::Mode::Polygon,
             RenderPipeline::Depth::None,
@@ -280,7 +275,7 @@ namespace SF::Engine
         // gbuf_depth's *actual* Vulkan-tracked layout after stage 0's
         // renderpass ends is DEPTH_STENCIL_READ_ONLY_OPTIMAL (RenderPass.cpp
         // : Attachment::Type::Depth -> that finalLayout), not
-        // SHADER_READ_ONLY_OPTIMAL — every gbuf_depth binding below uses the
+        // SHADER_READ_ONLY_OPTIMAL; every gbuf_depth binding below uses the
         // correct one.
         // ===================================================================
         {
@@ -331,7 +326,7 @@ namespace SF::Engine
 
         // ===================================================================
         // Trace (+ probe fallback on miss). Reads "hdr" as a plain sampled
-        // texture — it is genuinely in SHADER_READ_ONLY_OPTIMAL right now
+        // texture; it is genuinely in SHADER_READ_ONLY_OPTIMAL right now
         // (this PreRender runs before this frame's stage-1 renderpass has
         // begun, so "hdr" still holds last frame's fully resolved,
         // finalLayout-transitioned content). No transition needed, and none
