@@ -10,4 +10,4 @@ namespace SFTL
     using u8string  = AdvancedString<char8_t>;
     using u16string = AdvancedString<char16_t>;
     using u32string = AdvancedString<char32_t>;
-}
+} // namespace SFTL
