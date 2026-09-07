@@ -1327,6 +1327,8 @@ namespace SFTL
     using std::is_member_object_pointer_v;
     using std::is_member_pointer_v;
 
+    using std::is_standard_layout_v;
+
     template<typename... Val>
     struct Or : decltype(Detail::OrFunction<Val...>(0))
     {

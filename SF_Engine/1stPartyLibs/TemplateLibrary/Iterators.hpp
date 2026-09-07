@@ -2,7 +2,7 @@
 #include "Types.hpp"
 namespace SFTL
 {
-    template <class Iterator>
+    template<class Iterator>
     class reverse_iterator
     {
     public:
@@ -10,23 +10,16 @@ namespace SFTL
 
         constexpr reverse_iterator() = default;
 
-        constexpr explicit reverse_iterator(Iterator it)
-            : current_(it)
-        {
-        }
+        constexpr explicit reverse_iterator(Iterator it) : current_(it) {}
 
         // Allows converting a reverse_iterator over a convertible base iterator
         // (e.g. reverse_iterator<T*> -> reverse_iterator<const T*>).
-        template <class Other>
-        constexpr reverse_iterator(const reverse_iterator<Other> &other)
-            : current_(other.base())
+        template<class Other>
+        constexpr reverse_iterator(const reverse_iterator<Other> &other) : current_(other.base())
         {
         }
 
-        [[nodiscard]] constexpr Iterator base() const
-        {
-            return current_;
-        }
+        [[nodiscard]] constexpr Iterator base() const { return current_; }
 
         [[nodiscard]] constexpr decltype(auto) operator*() const
         {
@@ -90,20 +83,14 @@ namespace SFTL
             return reverse_iterator(current_ + offset);
         }
 
-        [[nodiscard]] constexpr decltype(auto) operator[](ptrdiff_t offset) const
-        {
-            return *(*this + offset);
-        }
+        [[nodiscard]] constexpr decltype(auto) operator[](ptrdiff_t offset) const { return *(*this + offset); }
 
         [[nodiscard]] constexpr bool operator==(const reverse_iterator &other) const
         {
             return current_ == other.current_;
         }
 
-        [[nodiscard]] constexpr bool operator!=(const reverse_iterator &other) const
-        {
-            return !(*this == other);
-        }
+        [[nodiscard]] constexpr bool operator!=(const reverse_iterator &other) const { return !(*this == other); }
 
         [[nodiscard]] constexpr bool operator<(const reverse_iterator &other) const
         {
@@ -111,26 +98,17 @@ namespace SFTL
             return other.current_ < current_;
         }
 
-        [[nodiscard]] constexpr bool operator>(const reverse_iterator &other) const
-        {
-            return other < *this;
-        }
+        [[nodiscard]] constexpr bool operator>(const reverse_iterator &other) const { return other < *this; }
 
-        [[nodiscard]] constexpr bool operator<=(const reverse_iterator &other) const
-        {
-            return !(other < *this);
-        }
+        [[nodiscard]] constexpr bool operator<=(const reverse_iterator &other) const { return !(other < *this); }
 
-        [[nodiscard]] constexpr bool operator>=(const reverse_iterator &other) const
-        {
-            return !(*this < other);
-        }
+        [[nodiscard]] constexpr bool operator>=(const reverse_iterator &other) const { return !(*this < other); }
 
     private:
         Iterator current_{};
     };
 
-    template <class Iterator>
+    template<class Iterator>
     [[nodiscard]] constexpr ptrdiff_t operator-(const reverse_iterator<Iterator> &lhs,
                                                 const reverse_iterator<Iterator> &rhs)
     {
@@ -138,16 +116,16 @@ namespace SFTL
         return rhs.base() - lhs.base();
     }
 
-    template <class Iterator>
-    [[nodiscard]] constexpr reverse_iterator<Iterator> operator+(ptrdiff_t offset,
-                                                                const reverse_iterator<Iterator> &it)
+    template<class Iterator>
+    [[nodiscard]] constexpr reverse_iterator<Iterator> operator+(ptrdiff_t offset, const reverse_iterator<Iterator> &it)
     {
         return it + offset;
     }
 
-    template <class Iterator>
+    template<class Iterator>
     [[nodiscard]] constexpr reverse_iterator<Iterator> make_reverse_iterator(Iterator it)
     {
         return reverse_iterator<Iterator>(it);
     }
-}
+
+} // namespace SFTL

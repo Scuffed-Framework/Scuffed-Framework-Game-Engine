@@ -232,9 +232,9 @@ namespace SFTL
     }
 
     template<typename InputIterator, typename Type>
-    InputIterator find(InputIterator first, InputIterator last, const Type &value)
+    constexpr InputIterator find(InputIterator first, InputIterator last, const Type &value)
     {
-        return find_if(first, last, equal_to<Type>(value));
+        return find_if(first, last, [&value](const auto &element) { return element == value; });
     }
 
     namespace detail

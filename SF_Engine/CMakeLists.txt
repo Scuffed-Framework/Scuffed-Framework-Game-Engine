@@ -49,6 +49,10 @@ find_package(spirv-reflect-static CONFIG REQUIRED)
 find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
 find_package(libraw CONFIG REQUIRED)
 
+#d3d12
+find_package(DirectX-Headers REQUIRED)
+
+
 if (UNIX)
     find_package(udev)
     find_package(evdev)
@@ -211,6 +215,9 @@ target_link_libraries(SF_Engine PUBLIC
         slang::slang
         openfbx::openfbx
         tinyobjloader::tinyobjloader
+
+        #d3d
+        Microsoft::DirectX-Headers
 )
 if (UNIX)
     target_link_libraries(SF_Engine PRIVATE

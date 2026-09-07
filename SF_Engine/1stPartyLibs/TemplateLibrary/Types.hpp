@@ -61,10 +61,12 @@ namespace SFTL
     using ptrdiff_t = decltype(static_cast<int *>(nullptr) -
                                static_cast<int *>(nullptr)); // https://en.cppreference.com/cpp/types/ptrdiff_t
     typedef long int intptr_type;
+    typedef unsigned long int uintptr_type;
 
     typedef float floating32;
     typedef double floating64;
     typedef long double floating128;
+    typedef decltype(nullptr) nullptr_type;
 
     namespace Detail
     {
