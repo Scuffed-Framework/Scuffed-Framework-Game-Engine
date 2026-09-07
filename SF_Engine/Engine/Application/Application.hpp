@@ -47,7 +47,7 @@
 #include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
 #include <Engine/InitGame/GameInfo.hpp>
 #include <Engine/Log/Log.hpp>
-#include <Platform/Windows/WindowManager.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/Viewport/Viewport.hpp>
 #include <Scene/SceneManager.hpp>
@@ -106,6 +106,7 @@ namespace SF::Engine
             auto exeDir = GetExecutablePath().parent_path();
             std::filesystem::current_path(exeDir);
             engine = std::make_unique<Engine>(exeDir.string());
+            engine->SetGameInfo(info);
 
             wndMgr   = SF::Engine::WindowManager::Get();
             renderer = SF::Engine::RenderSystem::Get();
@@ -267,4 +268,4 @@ namespace SF::Engine
         }
     };
 
-}
+} // namespace SF::Engine
