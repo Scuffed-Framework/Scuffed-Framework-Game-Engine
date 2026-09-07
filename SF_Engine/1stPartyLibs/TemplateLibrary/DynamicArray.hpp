@@ -49,7 +49,7 @@ namespace SFTL
 
         explicit DynamicArray(const Allocator &alloc) : allocator_(alloc) {}
 
-        ~DynamicArray()
+        constexpr ~DynamicArray()
         {
             clear();
             if (data_)
@@ -85,7 +85,7 @@ namespace SFTL
         [[nodiscard]] size_type capacity() const noexcept { return capacity_; }
 
 
-        void clear()
+        constexpr void clear()
         {
             for (size_type i = 0; i < size_; ++i)
                 allocator_traits<Allocator>::destroy(allocator_, data_ + i);
@@ -272,7 +272,7 @@ namespace SFTL
             size_ = newSize;
         }
 
-        bool empty() const noexcept { return size_ == 0; }
+        [[nodiscard]] bool empty() const noexcept { return size_ == 0; }
 
         T &front()
         {
