@@ -1,7 +1,7 @@
 #pragma once
 #include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <Assets/Video/Video.hpp>
-#include <Platform/Windows/WindowManager.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/Images/Imaged2d>
 #include <unordered_map>
 #include "EngineSplashScreen.hpp"

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Platform/Windows/Window.hpp>
 #include <Math/BasicMath.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <Platform/Windowing/Window.hpp>
+#include <Rendering/Camera/Camera.hpp>
 #include <algorithm>
 #include <cmath>
-#include <Rendering/Camera/Camera.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace SF::Engine
 {
@@ -26,22 +26,19 @@ namespace SF::Engine
     class EditorCamera : public Camera
     {
     public:
-        float moveSpeed = 5.0f;
+        float moveSpeed       = 5.0f;
         float lookSensitivity = 0.12f; // degrees per raw pixel
 
         EditorCamera()
         {
-            position = {0.0f, 0.0f, 0.0f};
+            position  = {0.0f, 0.0f, 0.0f};
             moveSpeed = 100.0f;
             UpdateVectors();
             SetInverseZ(true);
             SetFarPlaneInfinite(true); // oopsies
         }
 
-        TypeId GetTypeId() const override
-        {
-            return TypeInformation<Component>::GetTypeId<EditorCamera>();
-        }
+        TypeId GetTypeId() const override { return TypeInformation<Component>::GetTypeId<EditorCamera>(); }
 
         std::string_view GetTypeName() const override
         {
@@ -49,7 +46,7 @@ namespace SF::Engine
         }
 
         void Update(Window *window, float dt, bool imguiWantsMouse, bool imguiWantsKeyboard) override
-        {   
+        {
             Camera::Update(window, dt, imguiWantsMouse, imguiWantsKeyboard);
 
             bool rmb = window->GetMouseButton(MouseButton::Right) != InputAction::Release;
@@ -68,8 +65,7 @@ namespace SF::Engine
                 }
                 if (!window->IsCursorHidden())
                     window->SetCursorHidden(true);
-            }
-            else
+            } else
             {
                 if (window->IsCursorHidden())
                     window->SetCursorHidden(false);
@@ -82,9 +78,8 @@ namespace SF::Engine
                 float speed = moveSpeed * dt;
 
                 // Shift boost : use the correct enum names from ButtonCodes.hpp
-                bool shift =
-                    window->GetKey(Key::ShiftLeft) != InputAction::Release ||
-                    window->GetKey(Key::ShiftRight) != InputAction::Release;
+                bool shift = window->GetKey(Key::ShiftLeft) != InputAction::Release ||
+                             window->GetKey(Key::ShiftRight) != InputAction::Release;
                 if (shift)
                     speed *= 3.0f;
 
@@ -115,4 +110,4 @@ namespace SF::Engine
             }
         }
     };
-}
+} // namespace SF::Engine

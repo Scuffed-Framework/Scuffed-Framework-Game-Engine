@@ -6,31 +6,31 @@
 
 #if defined(_WIN32)
 
-#define NOMINMAX
-#include <Windows.h>
+    #define NOMINMAX
+    #include <Windows.h>
 
 namespace SF::Engine::Platform
 {
-    using NativePID = DWORD;
-    using NativeProcessHandle = HANDLE;
-    constexpr NativePID InvalidPID = 0;
+    using NativePID                                    = DWORD;
+    using NativeProcessHandle                          = HANDLE;
+    constexpr NativePID InvalidPID                     = 0;
     constexpr NativeProcessHandle InvalidProcessHandle = nullptr;
-}
+} // namespace SF::Engine::Platform
 
 #elif defined(__linux__) || defined(__APPLE__)
 
-#include <sys/types.h>
+    #include <sys/types.h>
 
 namespace SF::Engine::Platform
 {
-    using NativePID = pid_t;
-    using NativeProcessHandle = pid_t; // Processes are identified by PID.
-    constexpr NativePID InvalidPID = -1;
+    using NativePID                                    = pid_t;
+    using NativeProcessHandle                          = pid_t; // Processes are identified by PID.
+    constexpr NativePID InvalidPID                     = -1;
     constexpr NativeProcessHandle InvalidProcessHandle = -1;
-}
+} // namespace SF::Engine::Platform
 
 #else
-#error Unsupported platform.
+    #error Unsupported platform.
 #endif
 
 #if defined(_WIN32)
@@ -43,8 +43,7 @@ namespace SF::Engine
 
         while (true)
         {
-            DWORD len = GetModuleFileNameW(nullptr, buffer.data(),
-                                           static_cast<DWORD>(buffer.size()));
+            DWORD len = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
 
             if (len == 0)
                 throw std::runtime_error("GetModuleFileNameW failed");
@@ -55,11 +54,11 @@ namespace SF::Engine
             buffer.resize(buffer.size() * 2);
         }
     }
-}
+} // namespace SF::Engine
 
 #elif defined(__linux__)
 
-#include <unistd.h>
+    #include <unistd.h>
 
 namespace SF::Engine
 {
@@ -74,11 +73,11 @@ namespace SF::Engine
 
         return std::filesystem::path(std::string(buffer.data(), static_cast<size_t>(len))).parent_path();
     }
-}
+} // namespace SF::Engine
 
 #elif defined(__APPLE__)
 
-#include <mach-o/dyld.h>
+    #include <mach-o/dyld.h>
 
 namespace SF::Engine
 {
@@ -94,10 +93,10 @@ namespace SF::Engine
 
         return std::filesystem::weakly_canonical(buffer.data());
     }
-}
+} // namespace SF::Engine
 
 #else
-#error Unsupported platform.
+    #error Unsupported platform.
 #endif
 
 namespace SF::Engine
@@ -116,6 +115,7 @@ namespace SF::Engine
         DirectX12, // Windows, Xbox
         MoltenVk,  // macOS, iOS
         Vulkan,    // Windows, Linux
+        GNM
     };
 
     struct EngineCompilationInfo
@@ -129,16 +129,17 @@ namespace SF::Engine
 #elif defined(_PLATFORM_LINUX) || defined(__linux__)
         static constexpr SupportedPlatform CompilationPlatform = SupportedPlatform::Linux;
 #else
-#error Unsupported platform.
+    #error Unsupported platform.
 #endif
     };
 
     enum OperatingSystem
     {
-        Windows_Or_Xbox,
+        WindowsPlatform, // includes xbox
         Linux,
-        MacOs,
-        IOS,
+        MacIpadIPhoneOs,
+        Horizon,        // nintendo swich
         Android,
+        Orbis // ps
     };
-}
+} // namespace SF::Engine

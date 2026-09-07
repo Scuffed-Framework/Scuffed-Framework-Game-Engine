@@ -1,7 +1,7 @@
 #include "Stage.hpp"
 #include "Images/ImageDepth.hpp"
 #include "RenderSystem.hpp"
-#include <Platform/Windows/WindowManager.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
 
 namespace SF::Engine
 {

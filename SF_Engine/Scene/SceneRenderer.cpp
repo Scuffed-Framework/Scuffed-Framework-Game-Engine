@@ -1,6 +1,6 @@
 #include "SceneRenderer.hpp"
 #include <Rendering/RenderSystem.hpp>
-#include <Platform/Windows/WindowManager.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
 #include <Gui/ImGuiPipelinePass.hpp>
 #include <Rendering/PipelinePassManager.hpp>
 #include <Gui/UIRegistry.hpp>

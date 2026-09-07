@@ -1,7 +1,7 @@
 #pragma once
 
-#include <UtilityClasses/StreamFactory.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
+#include <UtilityClasses/StreamFactory.hpp>
 
 namespace SF::Engine
 {
@@ -17,44 +17,25 @@ namespace SF::Engine
         virtual void Start() {}
         virtual void Update() {}
         virtual void Reset() {}
-        virtual TypeId GetTypeId() const = 0;
-        virtual std::string_view GetTypeName() const = 0;
+        [[nodiscard]] virtual TypeId GetTypeId() const             = 0;
+        [[nodiscard]] virtual std::string_view GetTypeName() const = 0;
 
-        bool IsEnabled() const
-        {
-            return enabled;
-        }
-        void SetEnabled(bool enable)
-        {
-            this->enabled = enable;
-        }
+        [[nodiscard]] bool IsEnabled() const { return enabled; }
+        void SetEnabled(bool enable) { this->enabled = enable; }
 
-        bool IsRemoved() const
-        {
-            return removed;
-        }
-        void SetRemoved(bool removed)
-        {
-            this->removed = removed;
-        }
+        [[nodiscard]] bool IsRemoved() const { return removed; }
+        void SetRemoved(bool removed) { this->removed = removed; }
 
-        Entity* GetOwner() const
-        {
-            return owner;
-        }
-        void SetOwner(Entity* entity)
-        {
-            this->owner = entity;
-        }
+        [[nodiscard]] Entity *GetOwner() const { return owner; }
+        void SetOwner(Entity *entity) { this->owner = entity; }
 
     private:
-        bool started = false;
-        bool enabled = true;
-        bool removed = false;
-        Entity* owner = nullptr;
+        bool started  = false;
+        bool enabled  = true;
+        bool removed  = false;
+        Entity *owner = nullptr;
 
     public:
-        
         void Serialize(XMLNode &node) const override
         {
             XMLNode component = node.AddChild("Component");
@@ -72,4 +53,4 @@ namespace SF::Engine
             component.GetAttribute("removed", removed);
         }
     };
-}
+} // namespace SF::Engine
