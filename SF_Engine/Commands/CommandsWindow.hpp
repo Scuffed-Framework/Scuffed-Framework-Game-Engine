@@ -1,9 +1,7 @@
 #pragma once
-#include "Commands.hpp"
+#include <1stPartyLibs/TemplateLibrary/Containers/Deque.hpp>
 #include <Gui/UIRegistry.hpp>
-#include <string>
-#include <vector>
-#include <deque>
+#include "Commands.hpp"
 
 namespace SF::Engine
 {
@@ -12,41 +10,37 @@ namespace SF::Engine
     public:
         CommandWindow()
         {
-            m_uiHandle = UIRegistry::Get().Register([this]
-                                                    { DrawCommandConsole(); });
+            m_uiHandle = UIRegistry::Get().Register([this] { DrawCommandConsole(); });
             RegisterBuiltins();
         }
 
-        ~CommandWindow()
-        {
-            UIRegistry::Get().Unregister(m_uiHandle);
-        }
+        ~CommandWindow() { UIRegistry::Get().Unregister(m_uiHandle); }
 
         void DrawCommandConsole();
 
         // Returns nullptr if input is invalid / not found
-        std::shared_ptr<Commandlet> Execute(const std::string &input);
+        std::shared_ptr<Commandlet> Execute(const SFTL::string &input);
 
         void StopAllExecution();
 
-        bool IsInputCmdInRegistry(const std::string &in) const;
+        bool IsInputCmdInRegistry(const SFTL::string &in) const;
 
     private:
         void RegisterBuiltins();
-        void ParseAndExecute(const std::string &raw);
+        void ParseAndExecute(const ::SFTL::string &raw);
 
         // Parsed input: "scene.open levels/test.scene" → {"scene.open", {"levels/test.scene"}}
         struct ParsedCmd
         {
-            std::string name;
-            std::vector<std::string> args;
+            ::SFTL::string name;
+            ::SFTL::DynamicArray<::SFTL::string> args;
         };
-        static ParsedCmd Parse(const std::string &raw);
+        static ParsedCmd Parse(const ::SFTL::string &raw);
 
-        std::size_t m_uiHandle;            // whatever UIRegistry::Register returns
-        std::deque<std::string> m_history; // arrow-key recall
-        std::string m_inputBuf;            // ImGui InputText buffer
-        std::string m_pendingExec;         // set when user hits Enter, consumed next frame
+        ::SFTL::size_type m_uiHandle;            // whatever UIRegistry::Register returns
+        ::SFTL::deque<::SFTL::string> m_history; // arrow-key recall
+        ::SFTL::string m_inputBuf;               // ImGui InputText buffer
+        ::SFTL::string m_pendingExec;            // set when user hits Enter, consumed next frame
         bool m_scrollToBottom = false;
 
         struct LogEntry
@@ -58,10 +52,10 @@ namespace SF::Engine
                 Warning,
                 Error
             } level;
-            std::string text;
+            SFTL::string text;
         };
-        std::vector<LogEntry> m_log;
+        ::SFTL::DynamicArray<LogEntry> m_log;
 
         static constexpr size_t k_maxHistory = 64;
     };
-}
+} // namespace SF::Engine

@@ -1,20 +1,24 @@
 #pragma once
+#include <1stPartyLibs/TemplateLibrary/Containers/String.hpp>
 #include <UtilityClasses/RegistryBase.hpp>
-#include <string>
+#include <concepts>
 #include <memory>
+#include <ranges>
+#include <string>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
-#include <concepts>
+
+#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
 
 namespace SF::Engine
 {
     struct Commandlet
     {
-        std::string name;
-        std::vector<std::string> args;
+        ::SFTL::string name;
+        ::SFTL::DynamicArray<::SFTL::string> args;
         virtual void Execute() = 0;
-        virtual ~Commandlet() = default;
+        virtual ~Commandlet()  = default;
     };
 
     class CommandletRegistry : public Registry<CommandletRegistry>
@@ -22,10 +26,10 @@ namespace SF::Engine
         friend class Registry<CommandletRegistry>;
 
     public:
-        template <typename T>
+        template<typename T>
         std::shared_ptr<Commandlet> Register()
         {
-            static_assert(std::derived_from<T, Commandlet>, "T must derive from Commandlet");
+            static_assert(::SFTL::derived_from<T, Commandlet>, "T must derive from Commandlet");
 
             auto id = std::type_index(typeid(T));
             if (auto it = commandlets_.find(id); it != commandlets_.end())
@@ -42,9 +46,9 @@ namespace SF::Engine
                           { return entry.second == cmd; });
         }
 
-        std::shared_ptr<Commandlet> FindByName(const std::string &name) const
+        std::shared_ptr<Commandlet> FindByName(const ::SFTL::string &name) const
         {
-            for (auto &[id, cmd] : commandlets_)
+            for (const auto &cmd: commandlets_ | std::views::values)
                 if (cmd->name == name)
                     return cmd;
             return nullptr;
@@ -53,4 +57,4 @@ namespace SF::Engine
     private:
         std::unordered_map<std::type_index, std::shared_ptr<Commandlet>> commandlets_;
     };
-}
+} // namespace SF::Engine

@@ -4,16 +4,18 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <unordered_map>
 
 #include <1stPartyLibs/TemplateLibrary/Containers/String.hpp>
+#include <1stPartyLibs/TemplateLibrary/Containers/UnorderedMap.hpp>
 #include <Engine/Module.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <UtilityClasses/StreamFactory.hpp>
 
 namespace SF::Engine
 {
-    inline constexpr auto CommandWindowConsoleVariablePrefix = "CVar::";
+    // Explicit string_view (not `auto` off the literal, which just decays to const char*)
+    // so callers get `.Data()`/`.Size()` and `starts_with()` without an implicit-ctor guess.
+    inline constexpr ::SFTL::string_view CommandWindowConsoleVariablePrefix{"CVar::", 6};
 
     class ConsoleVariableRegistry;
     struct IConsoleVariable : public Serializable
@@ -54,7 +56,7 @@ namespace SF::Engine
 
         bool SetValueFromString(::SFTL::string_view str) override
         {
-            if constexpr (std::is_same_v<V, bool>)
+            if constexpr (::SFTL::is_same_v<V, bool>)
             {
                 if (str == "true" || str == "1")
                 {
@@ -67,7 +69,7 @@ namespace SF::Engine
                     return true;
                 }
                 return false;
-            } else if constexpr (std::is_arithmetic_v<V>)
+            } else if constexpr (::SFTL::is_arithmetic_v<V>)
             {
                 V parsed{};
                 auto [ptr, ec] = std::from_chars(str.Data(), str.Data() + str.Size(), parsed);
@@ -75,7 +77,7 @@ namespace SF::Engine
                     return false;
                 ChangeValue(parsed);
                 return true;
-            } else if constexpr (std::is_constructible_v<::SFTL::string, ::SFTL::string_view>)
+            } else if constexpr (::SFTL::is_constructible_v<::SFTL::string, ::SFTL::string_view>)
             {
                 // Assumes V is (or is constructible from) SFTL::string.
                 ChangeValue(::SFTL::string(str.Data()));
@@ -89,10 +91,10 @@ namespace SF::Engine
 
         [[nodiscard]] ::SFTL::string ValueToString() const override
         {
-            if constexpr (std::is_same_v<V, bool>)
+            if constexpr (::SFTL::is_same_v<V, bool>)
             {
                 return Value ? "true" : "false";
-            } else if constexpr (std::is_arithmetic_v<V>)
+            } else if constexpr (::SFTL::is_arithmetic_v<V>)
             {
                 return ::SFTL::string(std::to_string(Value));
             } else
@@ -125,14 +127,17 @@ namespace SF::Engine
         static inline bool reg = Register(ModuleStage::Always, Requires<>{});
         SF_RTTI(Module, ConsoleVariableRegistry)
 
-        inline static std::unordered_map<::SFTL::string, IConsoleVariable *> s_cvars;
+        inline static ::SFTL::unordered_map<::SFTL::string, IConsoleVariable *> s_cvars;
 
     public:
         static void RegisterCVar(const ::SFTL::string &fullName, IConsoleVariable *cvar) { s_cvars[fullName] = cvar; }
 
+        // Heterogeneous lookup: `fullName` can be a view onto someone else's buffer
+        // (e.g. the command console's parsed input) with no owned SFTL::string built
+        // just to do the lookup - see UnorderedMap.hpp's find<K>() overload.
         [[nodiscard]] static IConsoleVariable *Find(::SFTL::string_view fullName)
         {
-            auto it = s_cvars.find(::SFTL::string(fullName)); // :(
+            auto it = s_cvars.find(fullName);
             return it != s_cvars.end() ? it->second : nullptr;
         }
 
@@ -161,7 +166,7 @@ namespace SF::Engine
                 ::SFTL::string mod, nm;
                 child.GetAttribute("Module", mod);
                 child.GetAttribute("Name", nm);
-                if (IConsoleVariable *cvar = Find(mod + "." + nm))
+                if (IConsoleVariable *cvar = Find(::SFTL::string_view(mod + "." + nm)))
                     cvar->Deserialize(registryNode); // each cvar re-finds its own <CVar> child
             }
         }
@@ -169,4 +174,4 @@ namespace SF::Engine
 
         Define_TypeId_Function(Module, ConsoleVariableRegistry)
     };
-}
+} // namespace SF::Engine

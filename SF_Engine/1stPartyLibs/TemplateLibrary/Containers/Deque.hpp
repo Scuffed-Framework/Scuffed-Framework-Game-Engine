@@ -388,10 +388,12 @@ namespace SFTL
 
     public:
         typedef Type value_type;
+
         typedef typename AllocTraits::pointer pointer;
         typedef typename AllocTraits::const_pointer const_pointer;
-        typedef typename AllocTraits::reference reference;
-        typedef typename AllocTraits::const_reference const_reference;
+        typedef value_type &reference;
+        typedef const value_type &const_reference;
+
         typedef typename Base::iterator iterator;
         typedef typename Base::const_iterator const_iterator;
         typedef reverse_iterator<const_iterator> const_reverse_iterator;
@@ -926,7 +928,7 @@ namespace SFTL
     }
 
     template<typename Type, typename Alloc>
-    void swap(deque<Type, Alloc> &x, deque<Type, Alloc> &y) noexcept(x.swap(y))
+    void swap(deque<Type, Alloc> &x, deque<Type, Alloc> &y) noexcept
     {
         x.swap(y);
     }
