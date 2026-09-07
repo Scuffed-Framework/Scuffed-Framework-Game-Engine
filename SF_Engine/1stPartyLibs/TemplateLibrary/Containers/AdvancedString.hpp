@@ -435,6 +435,11 @@ namespace SFTL
             AssignRaw(&ch, 1);
             return *this;
         }
+        constexpr AdvancedString &operator+=(T *cstr)
+        {
+            Append(cstr);
+            return *this;
+        }
 
         constexpr ~AdvancedString() { DestroyHeap(); }
 

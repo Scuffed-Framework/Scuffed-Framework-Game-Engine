@@ -96,8 +96,8 @@ namespace sf_contracts
     // non-template entities into namespace std.
     enum class assertion_kind
     {
-        pre = 1,
-        post = 2,
+        pre    = 1,
+        post   = 2,
         assert = 3,
     };
 
@@ -108,7 +108,7 @@ namespace sf_contracts
         std::source_location location;
     };
 
-    namespace detail
+    namespace Detail
     {
         // Default reaction to a violation: report to stderr and terminate.
         // This deliberately does NOT throw -- contract violations are bugs,
@@ -119,11 +119,8 @@ namespace sf_contracts
             const char *kind_str = v.kind == assertion_kind::pre    ? "pre"
                                    : v.kind == assertion_kind::post ? "post"
                                                                     : "assert";
-            std::fprintf(stderr,
-                         "contract violation (%s): %s\n  at %s:%u in %s\n",
-                         kind_str, v.comment,
-                         v.location.file_name(), v.location.line(),
-                         v.location.function_name());
+            std::fprintf(stderr, "contract violation (%s): %s\n  at %s:%u in %s\n", kind_str, v.comment,
+                         v.location.file_name(), v.location.line(), v.location.function_name());
             std::fflush(stderr);
             std::terminate();
         }
@@ -155,12 +152,12 @@ namespace sf_contracts
         class post_guard
         {
         public:
-            post_guard(std::function<bool()> pred, const char *comment, std::source_location loc)
-                : _pred(std::move(pred)), _comment(comment), _loc(loc), _uncaught_on_entry(std::uncaught_exceptions())
+            post_guard(std::function<bool()> pred, const char *comment, std::source_location loc) :
+                _pred(std::move(pred)), _comment(comment), _loc(loc), _uncaught_on_entry(std::uncaught_exceptions())
             {
             }
 
-            post_guard(const post_guard &) = delete;
+            post_guard(const post_guard &)            = delete;
             post_guard &operator=(const post_guard &) = delete;
 
             // Destructors are implicitly noexcept(true) unless declared
@@ -180,7 +177,7 @@ namespace sf_contracts
             std::source_location _loc;
             int _uncaught_on_entry;
         };
-    } // namespace detail
+    } // namespace Detail
 } // namespace sf_contracts
 
 #define SF_CONTRACTS_CONCAT_(a, b) a##b
@@ -188,24 +185,23 @@ namespace sf_contracts
 
 #if defined(__cpp_contracts)
 
-// Native support is available -- use real pre/post/contract_assert directly
-// in your source instead of these macros. Defined as no-ops so headers that
-// unconditionally use SF_CONTRACT_ASSERT for body-only invariants still
-// compile, but you should prefer the real `contract_assert(...)` here.
-#define SF_PRE(cond) static_assert(true)
-#define SF_POST(name, cond) static_assert(true)
-#define SF_CONTRACT_ASSERT(cond) static_assert(true)
+    // Native support is available -- use real pre/post/contract_assert directly
+    // in your source instead of these macros. Defined as no-ops so headers that
+    // unconditionally use SF_CONTRACT_ASSERT for body-only invariants still
+    // compile, but you should prefer the real `contract_assert(...)` here.
+    #define SF_PRE(cond) static_assert(true)
+    #define SF_POST(name, cond) static_assert(true)
+    #define SF_CONTRACT_ASSERT(cond) static_assert(true)
 
 #else
 
-#define SF_PRE(cond) \
-    ::sf_contracts::detail::check((cond), ::sf_contracts::assertion_kind::pre, #cond)
+    #define SF_PRE(cond) ::sf_contracts::Detail::check((cond), ::sf_contracts::assertion_kind::pre, #cond)
 
-#define SF_CONTRACT_ASSERT(cond) \
-    ::sf_contracts::detail::check((cond), ::sf_contracts::assertion_kind::assert, #cond)
+    #define SF_CONTRACT_ASSERT(cond)                                                                                   \
+        ::sf_contracts::Detail::check((cond), ::sf_contracts::assertion_kind::assert, #cond)
 
-#define SF_POST(name, cond)                                                            \
-    ::sf_contracts::detail::post_guard SF_CONTRACTS_CONCAT(_sf_post_guard_, __LINE__)( \
-        [&]() -> bool { return (cond); }, #cond, std::source_location::current())
+    #define SF_POST(name, cond)                                                                                        \
+        ::sf_contracts::Detail::post_guard SF_CONTRACTS_CONCAT(_sf_post_guard_, __LINE__)(                             \
+                [&]() -> bool { return (cond); }, #cond, std::source_location::current())
 
 #endif

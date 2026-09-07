@@ -335,10 +335,13 @@ namespace SFTL
         using is_always_equal                        = typename Detail::AllocIsAlwaysEqual<Alloc>::type;
 
         template<typename U>
-        using rebind_alloc = typename Detail::AllocRebind<Alloc, U>::type;
+        using rebindAlloc = typename Detail::AllocRebind<Alloc, U>::type;
 
         template<typename U>
-        using rebind_traits = allocator_traits<rebind_alloc<U>>;
+        using rebind = typename Alloc::template rebind<U>;
+
+        template<typename U>
+        using rebind_traits = allocator_traits<rebindAlloc<U>>;
 
         [[nodiscard]] static pointer allocate(Alloc &a, alloc_size_type n) { return a.allocate(n); }
 
@@ -386,4 +389,22 @@ namespace SFTL
                 return a;
         }
     };
+
+    template<typename Alloc, typename = void>
+    struct is_allocator : false_type
+    {
+    };
+
+    template<typename Alloc>
+    struct is_allocator<Alloc, void_t<typename Alloc::value_type, decltype(declval<Alloc &>().allocate(size_t{}))>>
+        : true_type
+    {
+    };
+
+    template<typename Alloc>
+    using require_allocator = typename enable_if<is_allocator<Alloc>::value, Alloc>::type;
+
+    template<typename Alloc>
+    using require_not_allocator = typename enable_if<!is_allocator<Alloc>::value, Alloc>::type;
+
 } // namespace SFTL

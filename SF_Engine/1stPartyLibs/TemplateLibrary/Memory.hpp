@@ -36,8 +36,7 @@
 
 namespace SFTL
 {
-    // just the worst implementation of <memory> ever
-
+ 
     template<class Type>
     struct default_delete
     {
@@ -73,7 +72,7 @@ namespace SFTL
         }
     };
 
-    namespace detail
+    namespace Detail
     {
         template<class DelType, class Type, typename = void>
         struct _unique_pointer_pointer
@@ -85,7 +84,7 @@ namespace SFTL
         {
             using type = typename remove_reference_t<DelType>::pointer;
         };
-    } // namespace detail
+    } // namespace Detail
 
     template<class Type, class DelType = default_delete<Type>>
     class unique_pointer
@@ -95,7 +94,7 @@ namespace SFTL
     public:
         using element_type = Type;
         using deleter_type = DelType;
-        using pointer      = typename detail::_unique_pointer_pointer<DelType, Type>::type;
+        using pointer      = typename Detail::_unique_pointer_pointer<DelType, Type>::type;
 
         constexpr unique_pointer() noexcept : Pointer(nullptr), _deleter() {}
         constexpr unique_pointer(decltype(nullptr)) noexcept : Pointer(nullptr), _deleter() {}
@@ -190,7 +189,7 @@ namespace SFTL
     public:
         using element_type = Type;
         using deleter_type = DelType;
-        using pointer      = typename detail::_unique_pointer_pointer<DelType, Type>::type;
+        using pointer      = typename Detail::_unique_pointer_pointer<DelType, Type>::type;
 
         constexpr unique_pointer() noexcept : Pointer(nullptr), _deleter() {}
         constexpr unique_pointer(decltype(nullptr)) noexcept : Pointer(nullptr), _deleter() {}
@@ -317,7 +316,7 @@ namespace SFTL
         return static_cast<bool>(a);
     }
 
-    namespace detail
+    namespace Detail
     {
         template<class Type>
         struct _unique_if
@@ -334,43 +333,43 @@ namespace SFTL
         {
             using BoundedArray = void;
         };
-    } // namespace detail
+    } // namespace Detail
 
     template<class Type, class... Arguments>
-    typename detail::_unique_if<Type>::Single make_unique(Arguments &&...args)
+    typename Detail::_unique_if<Type>::Single make_unique(Arguments &&...args)
     {
         return unique_pointer<Type>(new Type(::SFTL::forward<Arguments>(args)...));
     }
 
     template<class Type>
-    typename detail::_unique_if<Type>::UnboundedArray make_unique(size_type n)
+    typename Detail::_unique_if<Type>::UnboundedArray make_unique(size_type n)
     {
         using Element = remove_extent_t<Type>;
         return unique_pointer<Type>(new Element[n]());
     }
 
     template<class Type, class... Arguments>
-    typename detail::_unique_if<Type>::BoundedArray make_unique(Arguments &&...) = delete;
+    typename Detail::_unique_if<Type>::BoundedArray make_unique(Arguments &&...) = delete;
 
     template<class Type>
-    typename detail::_unique_if<Type>::Single make_unique_for_overwrite()
+    typename Detail::_unique_if<Type>::Single make_unique_for_overwrite()
     {
         return unique_pointer<Type>(new Type);
     }
 
     template<class Type>
-    typename detail::_unique_if<Type>::UnboundedArray make_unique_for_overwrite(size_type n)
+    typename Detail::_unique_if<Type>::UnboundedArray make_unique_for_overwrite(size_type n)
     {
         using Element = remove_extent_t<Type>;
         return unique_pointer<Type>(new Element[n]);
     }
 
     template<class Type>
-    class sharedPointer;
+    class shared_pointer;
     template<class Type>
-    class weakPointer;
+    class weak_pointer;
 
-    namespace detail
+    namespace Detail
     {
         class _sp_control_block_base
         {
@@ -457,58 +456,58 @@ namespace SFTL
         private:
             alignas(Type) unsigned char _storage[sizeof(Type)];
         };
-    } // namespace detail
+    } // namespace Detail
 
     template<class Type>
-    class sharedPointer
+    class shared_pointer
     {
     public:
         using element_type = Type;
 
-        constexpr sharedPointer() noexcept : Pointer(nullptr), _ctrl(nullptr) {}
-        constexpr sharedPointer(decltype(nullptr)) noexcept : Pointer(nullptr), _ctrl(nullptr) {}
+        constexpr shared_pointer() noexcept : Pointer(nullptr), _ctrl(nullptr) {}
+        constexpr shared_pointer(decltype(nullptr)) noexcept : Pointer(nullptr), _ctrl(nullptr) {}
 
         template<class UniqueType, enable_if_t<is_convertible_v<UniqueType *, Type *>, int> = 0>
-        explicit sharedPointer(UniqueType *p) :
-            Pointer(p), _ctrl(new detail::_sp_control_blockPointer<UniqueType, default_delete<UniqueType>>(
+        explicit shared_pointer(UniqueType *p) :
+            Pointer(p), _ctrl(new Detail::_sp_control_blockPointer<UniqueType, default_delete<UniqueType>>(
                                 p, default_delete<UniqueType>()))
         {
         }
 
         template<class UniqueType, class DelType, enable_if_t<is_convertible_v<UniqueType *, Type *>, int> = 0>
-        sharedPointer(UniqueType *p, DelType d) :
-            Pointer(p), _ctrl(new detail::_sp_control_blockPointer<UniqueType, DelType>(p, ::SFTL::move(d)))
+        shared_pointer(UniqueType *p, DelType d) :
+            Pointer(p), _ctrl(new Detail::_sp_control_blockPointer<UniqueType, DelType>(p, ::SFTL::move(d)))
         {
         }
 
-        sharedPointer(const sharedPointer &other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
+        shared_pointer(const shared_pointer &other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
         {
             if (_ctrl)
                 _ctrl->add_shared_ref();
         }
 
         template<class UniqueType, enable_if_t<is_convertible_v<UniqueType *, Type *>, int> = 0>
-        sharedPointer(const sharedPointer<UniqueType> &other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
+        shared_pointer(const shared_pointer<UniqueType> &other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
         {
             if (_ctrl)
                 _ctrl->add_shared_ref();
         }
 
-        sharedPointer(sharedPointer &&other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
+        shared_pointer(shared_pointer &&other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
         {
             other.Pointer = nullptr;
             other._ctrl   = nullptr;
         }
 
         template<class UniqueType, enable_if_t<is_convertible_v<UniqueType *, Type *>, int> = 0>
-        sharedPointer(sharedPointer<UniqueType> &&other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
+        shared_pointer(shared_pointer<UniqueType> &&other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
         {
             other.Pointer = nullptr;
             other._ctrl   = nullptr;
         }
 
         template<class UniqueType>
-        sharedPointer(const sharedPointer<UniqueType> &other, Type *aliased) noexcept :
+        shared_pointer(const shared_pointer<UniqueType> &other, Type *aliased) noexcept :
             Pointer(aliased), _ctrl(other._ctrl)
         {
             if (_ctrl)
@@ -516,55 +515,55 @@ namespace SFTL
         }
 
         template<class UniqueType, class DelType, enable_if_t<is_convertible_v<UniqueType *, Type *>, int> = 0>
-        explicit sharedPointer(unique_pointer<UniqueType, DelType> &&up) :
-            Pointer(up.get()), _ctrl(up.get() ? new detail::_sp_control_blockPointer<UniqueType, DelType>(
+        explicit shared_pointer(unique_pointer<UniqueType, DelType> &&up) :
+            Pointer(up.get()), _ctrl(up.get() ? new Detail::_sp_control_blockPointer<UniqueType, DelType>(
                                                         up.get(), ::SFTL::move(up.get_deleter()))
                                               : nullptr)
         {
             up.release();
         }
 
-        ~sharedPointer() { _release(); }
+        ~shared_pointer() { _release(); }
 
-        sharedPointer &operator=(const sharedPointer &other) noexcept
+        shared_pointer &operator=(const shared_pointer &other) noexcept
         {
-            sharedPointer(other).swap(*this);
+            shared_pointer(other).swap(*this);
             return *this;
         }
 
-        sharedPointer &operator=(sharedPointer &&other) noexcept
+        shared_pointer &operator=(shared_pointer &&other) noexcept
         {
-            sharedPointer(::SFTL::move(other)).swap(*this);
+            shared_pointer(::SFTL::move(other)).swap(*this);
             return *this;
         }
 
-        sharedPointer &operator=(decltype(nullptr)) noexcept
+        shared_pointer &operator=(decltype(nullptr)) noexcept
         {
-            sharedPointer().swap(*this);
+            shared_pointer().swap(*this);
             return *this;
         }
 
-        void reset() noexcept { sharedPointer().swap(*this); }
+        void reset() noexcept { shared_pointer().swap(*this); }
 
         template<class UniqueType>
         void reset(UniqueType *p)
         {
-            sharedPointer(p).swap(*this);
+            shared_pointer(p).swap(*this);
         }
 
         template<class UniqueType, class DelType>
         void reset(UniqueType *p, DelType d)
         {
-            sharedPointer(p, ::SFTL::move(d)).swap(*this);
+            shared_pointer(p, ::SFTL::move(d)).swap(*this);
         }
 
-        void swap(sharedPointer &other) noexcept
+        void swap(shared_pointer &other) noexcept
         {
             Type *tmp_p   = Pointer;
             Pointer       = other.Pointer;
             other.Pointer = tmp_p;
 
-            detail::_sp_control_block_base *tmp_c = _ctrl;
+            Detail::_sp_control_block_base *tmp_c = _ctrl;
             _ctrl                                 = other._ctrl;
             other._ctrl                           = tmp_c;
         }
@@ -585,78 +584,78 @@ namespace SFTL
         }
 
         template<class UniqueType>
-        friend class sharedPointer;
+        friend class shared_pointer;
         template<class UniqueType>
-        friend class weakPointer;
+        friend class weak_pointer;
 
         template<class UniqueType, class... Arguments>
-        friend sharedPointer<UniqueType> make_shared(Arguments &&...);
+        friend shared_pointer<UniqueType> make_shared(Arguments &&...);
 
         Type *Pointer;
-        detail::_sp_control_block_base *_ctrl;
+        Detail::_sp_control_block_base *_ctrl;
     };
 
     template<class Type>
-    class weakPointer
+    class weak_pointer
     {
     public:
-        constexpr weakPointer() noexcept : Pointer(nullptr), _ctrl(nullptr) {}
+        constexpr weak_pointer() noexcept : Pointer(nullptr), _ctrl(nullptr) {}
 
-        weakPointer(const weakPointer &other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
+        weak_pointer(const weak_pointer &other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
         {
             if (_ctrl)
                 _ctrl->add_weak_ref();
         }
 
         template<class UniqueType, enable_if_t<is_convertible_v<UniqueType *, Type *>, int> = 0>
-        weakPointer(const weakPointer<UniqueType> &other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
+        weak_pointer(const weak_pointer<UniqueType> &other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
         {
             if (_ctrl)
                 _ctrl->add_weak_ref();
         }
 
         template<class UniqueType, enable_if_t<is_convertible_v<UniqueType *, Type *>, int> = 0>
-        weakPointer(const sharedPointer<UniqueType> &sp) noexcept : Pointer(sp.Pointer), _ctrl(sp._ctrl)
+        weak_pointer(const shared_pointer<UniqueType> &sp) noexcept : Pointer(sp.Pointer), _ctrl(sp._ctrl)
         {
             if (_ctrl)
                 _ctrl->add_weak_ref();
         }
 
-        weakPointer(weakPointer &&other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
+        weak_pointer(weak_pointer &&other) noexcept : Pointer(other.Pointer), _ctrl(other._ctrl)
         {
             other.Pointer = nullptr;
             other._ctrl   = nullptr;
         }
 
-        ~weakPointer() { _release(); }
+        ~weak_pointer() { _release(); }
 
-        weakPointer &operator=(const weakPointer &other) noexcept
+        weak_pointer &operator=(const weak_pointer &other) noexcept
         {
-            weakPointer(other).swap(*this);
+            weak_pointer(other).swap(*this);
             return *this;
         }
 
-        weakPointer &operator=(weakPointer &&other) noexcept
+        weak_pointer &operator=(weak_pointer &&other) noexcept
         {
-            weakPointer(::SFTL::move(other)).swap(*this);
+            weak_pointer(::SFTL::move(other)).swap(*this);
             return *this;
         }
 
         template<class UniqueType>
-        weakPointer &operator=(const sharedPointer<UniqueType> &sp) noexcept
+        weak_pointer &operator=(const shared_pointer<UniqueType> &sp) noexcept
         {
-            weakPointer(sp).swap(*this);
+            weak_pointer(sp).swap(*this);
             return *this;
         }
 
-        void reset() noexcept { weakPointer().swap(*this); }
+        void reset() noexcept { weak_pointer().swap(*this); }
 
-        void swap(weakPointer &other) noexcept
+        void swap(weak_pointer &other) noexcept
         {
             Type *tmp_p                           = Pointer;
             Pointer                               = other.Pointer;
             other.Pointer                         = tmp_p;
-            detail::_sp_control_block_base *tmp_c = _ctrl;
+            Detail::_sp_control_block_base *tmp_c = _ctrl;
             _ctrl                                 = other._ctrl;
             other._ctrl                           = tmp_c;
         }
@@ -664,9 +663,9 @@ namespace SFTL
         [[nodiscard]] long use_count() const noexcept { return _ctrl ? _ctrl->use_count() : 0; }
         [[nodiscard]] bool expired() const noexcept { return use_count() == 0; }
 
-        sharedPointer<Type> lock() const noexcept
+        shared_pointer<Type> lock() const noexcept
         {
-            sharedPointer<Type> result;
+            shared_pointer<Type> result;
             if (_ctrl && _ctrl->try_add_shared_ref())
             {
                 result.Pointer = Pointer;
@@ -683,51 +682,51 @@ namespace SFTL
         }
 
         template<class UniqueType>
-        friend class weakPointer;
+        friend class weak_pointer;
         template<class UniqueType>
-        friend class sharedPointer;
+        friend class shared_pointer;
 
         Type *Pointer;
-        detail::_sp_control_block_base *_ctrl;
+        Detail::_sp_control_block_base *_ctrl;
     };
 
     template<class Type, class... Arguments>
-    sharedPointer<Type> make_shared(Arguments &&...args)
+    shared_pointer<Type> make_shared(Arguments &&...args)
     {
-        auto *ctrl = new detail::_sp_control_block_obj<Type>(::SFTL::forward<Arguments>(args)...);
-        sharedPointer<Type> sp;
+        auto *ctrl = new Detail::_sp_control_block_obj<Type>(::SFTL::forward<Arguments>(args)...);
+        shared_pointer<Type> sp;
         sp.Pointer = ctrl->get();
         sp._ctrl   = ctrl;
         return sp;
     }
 
     template<class T1, class T2>
-    bool operator==(const sharedPointer<T1> &a, const sharedPointer<T2> &b) noexcept
+    bool operator==(const shared_pointer<T1> &a, const shared_pointer<T2> &b) noexcept
     {
         return a.get() == b.get();
     }
     template<class T1, class T2>
-    bool operator!=(const sharedPointer<T1> &a, const sharedPointer<T2> &b) noexcept
+    bool operator!=(const shared_pointer<T1> &a, const shared_pointer<T2> &b) noexcept
     {
         return a.get() != b.get();
     }
     template<class T>
-    bool operator==(const sharedPointer<T> &a, decltype(nullptr)) noexcept
+    bool operator==(const shared_pointer<T> &a, decltype(nullptr)) noexcept
     {
         return !a;
     }
     template<class T>
-    bool operator==(decltype(nullptr), const sharedPointer<T> &a) noexcept
+    bool operator==(decltype(nullptr), const shared_pointer<T> &a) noexcept
     {
         return !a;
     }
     template<class T>
-    bool operator!=(const sharedPointer<T> &a, decltype(nullptr)) noexcept
+    bool operator!=(const shared_pointer<T> &a, decltype(nullptr)) noexcept
     {
         return static_cast<bool>(a);
     }
     template<class T>
-    bool operator!=(decltype(nullptr), const sharedPointer<T> &a) noexcept
+    bool operator!=(decltype(nullptr), const shared_pointer<T> &a) noexcept
     {
         return static_cast<bool>(a);
     }

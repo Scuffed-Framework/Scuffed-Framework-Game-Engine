@@ -100,7 +100,7 @@ namespace SFTL
         static constexpr int size = N;
     };
 
-    namespace detail
+    namespace Detail
     {
         template<typename T>
         constexpr int native_lane_count()
@@ -122,10 +122,10 @@ namespace SFTL
         template<typename T, size_t N>
         using vector_of = typename vector_of_helper<T, N>::type;
 #endif
-    } // namespace detail
+    } // namespace Detail
 
     template<typename T>
-    using native = fixed_size<detail::native_lane_count<T>()>;
+    using native = fixed_size<Detail::native_lane_count<T>()>;
 
     template<Vectorizable T, typename Abi = native<T>>
     class simd
@@ -136,7 +136,7 @@ namespace SFTL
         using abi_type               = Abi;
 
 #if SFTL_SIMD_HAS_VECTOR_EXT
-        using storage_type = detail::vector_of<T, size>;
+        using storage_type = Detail::vector_of<T, size>;
 #else
         using storage_type = std::array<T, size>;
 #endif

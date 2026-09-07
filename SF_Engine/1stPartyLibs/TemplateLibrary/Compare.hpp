@@ -154,238 +154,253 @@ namespace SFTL
 
     } // namespace CompareCategory
 
-    class partialOrdering
+    class partial_ordering
     {
         signed char value;
 
 
         [[nodiscard]] constexpr Detail::comptype reverse() const { return static_cast<Detail::comptype>(-value); }
 
-        constexpr explicit partialOrdering(CompareCategory::Order v) noexcept : value(Detail::comptype(v)) {}
+        constexpr explicit partial_ordering(CompareCategory::Order v) noexcept : value(Detail::comptype(v)) {}
 
-        friend constexpr CompareCategory::Order CompareCategory::ord<partialOrdering>(partialOrdering) noexcept;
-        friend constexpr partialOrdering CompareCategory::make<partialOrdering>(CompareCategory::Order) noexcept;
+        friend constexpr CompareCategory::Order CompareCategory::ord<partial_ordering>(partial_ordering) noexcept;
+        friend constexpr partial_ordering CompareCategory::make<partial_ordering>(CompareCategory::Order) noexcept;
 
     public:
         // valid values
-        static const partialOrdering less;
-        static const partialOrdering equivalent;
-        static const partialOrdering greater;
-        static const partialOrdering unordered;
+        static const partial_ordering less;
+        static const partial_ordering equivalent;
+        static const partial_ordering greater;
+        static const partial_ordering unordered;
 
         // comparisons
-        [[nodiscard]] friend constexpr bool operator==(partialOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator==(partial_ordering val, literal_zero) noexcept
         {
             return val.value == 0;
         }
 
-        [[nodiscard]] friend constexpr bool operator==(partialOrdering, partialOrdering) noexcept = default;
+        [[nodiscard]] friend constexpr bool operator==(partial_ordering, partial_ordering) noexcept = default;
 
-        [[nodiscard]] friend constexpr bool operator<(partialOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator<(partial_ordering val, literal_zero) noexcept
         {
             return val.value == -1;
         }
 
-        [[nodiscard]] friend constexpr bool operator>(partialOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator>(partial_ordering val, literal_zero) noexcept
         {
             return val.value == 1;
         }
 
-        [[nodiscard]] friend constexpr bool operator<=(partialOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator<=(partial_ordering val, literal_zero) noexcept
         {
             return val.reverse() >= 0;
         }
 
-        [[nodiscard]] friend constexpr bool operator>=(partialOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator>=(partial_ordering val, literal_zero) noexcept
         {
             return val.value >= 0;
         }
 
-        [[nodiscard]] friend constexpr bool operator<(literal_zero, partialOrdering val) noexcept
+        [[nodiscard]] friend constexpr bool operator<(literal_zero, partial_ordering val) noexcept
         {
             return val.value == 1;
         }
 
-        [[nodiscard]] friend constexpr bool operator>(literal_zero, partialOrdering val) noexcept
+        [[nodiscard]] friend constexpr bool operator>(literal_zero, partial_ordering val) noexcept
         {
             return val.value == -1;
         }
 
-        [[nodiscard]] friend constexpr bool operator<=(literal_zero, partialOrdering val) noexcept
+        [[nodiscard]] friend constexpr bool operator<=(literal_zero, partial_ordering val) noexcept
         {
             return 0 <= val.value;
         }
 
-        [[nodiscard]] friend constexpr bool operator>=(literal_zero, partialOrdering val) noexcept
+        [[nodiscard]] friend constexpr bool operator>=(literal_zero, partial_ordering val) noexcept
         {
             return 0 <= val.reverse();
         }
 
-        [[nodiscard]] friend constexpr partialOrdering operator<=>(partialOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr partial_ordering operator<=>(partial_ordering val, literal_zero) noexcept
         {
             return val;
         }
 
-        [[nodiscard]] friend constexpr partialOrdering operator<=>(literal_zero, partialOrdering val) noexcept
+        [[nodiscard]] friend constexpr partial_ordering operator<=>(literal_zero, partial_ordering val) noexcept
         {
-            return partialOrdering(CompareCategory::Order(val.reverse()));
+            return partial_ordering(CompareCategory::Order(val.reverse()));
         }
     };
 
-    constexpr partialOrdering partialOrdering::less(CompareCategory::Order::less);
-    constexpr partialOrdering partialOrdering::equivalent(CompareCategory::Order::equivalent);
-    constexpr partialOrdering partialOrdering::greater(CompareCategory::Order::greater);
-    constexpr partialOrdering partialOrdering::unordered(CompareCategory::Order::unordered);
+    constexpr partial_ordering partial_ordering::less(CompareCategory::Order::less);
+    constexpr partial_ordering partial_ordering::equivalent(CompareCategory::Order::equivalent);
+    constexpr partial_ordering partial_ordering::greater(CompareCategory::Order::greater);
+    constexpr partial_ordering partial_ordering::unordered(CompareCategory::Order::unordered);
 
-    class weakOrdering
+    class weak_ordering
     {
         signed char value;
 
-        constexpr explicit weakOrdering(CompareCategory::Order val) noexcept : value(Detail::comptype(val)) {}
+        constexpr explicit weak_ordering(CompareCategory::Order val) noexcept : value(Detail::comptype(val)) {}
 
-        friend constexpr CompareCategory::Order CompareCategory::ord<weakOrdering>(weakOrdering) noexcept;
-        friend constexpr weakOrdering CompareCategory::make<weakOrdering>(CompareCategory::Order) noexcept;
+        friend constexpr CompareCategory::Order CompareCategory::ord<weak_ordering>(weak_ordering) noexcept;
+        friend constexpr weak_ordering CompareCategory::make<weak_ordering>(CompareCategory::Order) noexcept;
 
     public:
-        static const weakOrdering less;
-        static const weakOrdering equivalent;
-        static const weakOrdering greater;
+        static const weak_ordering less;
+        static const weak_ordering equivalent;
+        static const weak_ordering greater;
 
-        [[nodiscard]] constexpr operator partialOrdering() const noexcept
+        [[nodiscard]] constexpr operator partial_ordering() const noexcept
         {
-            return CompareCategory::make<partialOrdering>(CompareCategory::Order(value));
+            return CompareCategory::make<partial_ordering>(CompareCategory::Order(value));
         }
 
         // comparisons
-        [[nodiscard]] friend constexpr bool operator==(weakOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator==(weak_ordering val, literal_zero) noexcept
         {
             return val.value == 0;
         }
 
-        [[nodiscard]] friend constexpr bool operator==(weakOrdering, weakOrdering) noexcept = default;
+        [[nodiscard]] friend constexpr bool operator==(weak_ordering, weak_ordering) noexcept = default;
 
-        [[nodiscard]] friend constexpr bool operator<(weakOrdering val, literal_zero) noexcept { return val.value < 0; }
-
-        [[nodiscard]] friend constexpr bool operator>(weakOrdering val, literal_zero) noexcept { return val.value > 0; }
-
-        [[nodiscard]] friend constexpr bool operator<=(weakOrdering val, literal_zero) noexcept
-        {
-            return val.value <= 0;
-        }
-
-        [[nodiscard]] friend constexpr bool operator>=(weakOrdering val, literal_zero) noexcept
-        {
-            return val.value >= 0;
-        }
-
-        [[nodiscard]] friend constexpr bool operator<(literal_zero, weakOrdering val) noexcept { return 0 < val.value; }
-
-        [[nodiscard]] friend constexpr bool operator>(literal_zero, weakOrdering val) noexcept { return 0 > val.value; }
-
-        [[nodiscard]] friend constexpr bool operator<=(literal_zero, weakOrdering val) noexcept
-        {
-            return 0 <= val.value;
-        }
-
-        [[nodiscard]] friend constexpr bool operator>=(literal_zero, weakOrdering val) noexcept
-        {
-            return 0 >= val.value;
-        }
-
-        [[nodiscard]] friend constexpr weakOrdering operator<=>(weakOrdering val, literal_zero) noexcept { return val; }
-
-        [[nodiscard]] friend constexpr weakOrdering operator<=>(literal_zero, weakOrdering val) noexcept
-        {
-            return weakOrdering(CompareCategory::Order(-val.value));
-        }
-    };
-
-    constexpr weakOrdering weakOrdering::less(CompareCategory::Order::less);
-    constexpr weakOrdering weakOrdering::equivalent(CompareCategory::Order::equivalent);
-    constexpr weakOrdering weakOrdering::greater(CompareCategory::Order::greater);
-
-    class strongOrdering
-    {
-        signed char value;
-
-        constexpr explicit strongOrdering(CompareCategory::Order val) noexcept : value(Detail::comptype(val)) {}
-
-        friend constexpr CompareCategory::Order CompareCategory::ord<strongOrdering>(strongOrdering) noexcept;
-        friend constexpr strongOrdering CompareCategory::make<strongOrdering>(CompareCategory::Order) noexcept;
-
-    public:
-        // valid values
-        static const strongOrdering less;
-        static const strongOrdering equal;
-        static const strongOrdering equivalent;
-        static const strongOrdering greater;
-
-        [[nodiscard]] constexpr operator partialOrdering() const noexcept
-        {
-            return CompareCategory::make<partialOrdering>(CompareCategory::Order(value));
-        }
-
-        [[nodiscard]] constexpr operator weakOrdering() const noexcept
-        {
-            return CompareCategory::make<weakOrdering>(CompareCategory::Order(value));
-        }
-
-        // comparisons
-        [[nodiscard]] friend constexpr bool operator==(strongOrdering val, literal_zero) noexcept
-        {
-            return val.value == 0;
-        }
-
-        [[nodiscard]] friend constexpr bool operator==(strongOrdering, strongOrdering) noexcept = default;
-
-        [[nodiscard]] friend constexpr bool operator<(strongOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator<(weak_ordering val, literal_zero) noexcept
         {
             return val.value < 0;
         }
 
-        [[nodiscard]] friend constexpr bool operator>(strongOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator>(weak_ordering val, literal_zero) noexcept
         {
             return val.value > 0;
         }
 
-        [[nodiscard]] friend constexpr bool operator<=(strongOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator<=(weak_ordering val, literal_zero) noexcept
         {
             return val.value <= 0;
         }
 
-        [[nodiscard]] friend constexpr bool operator>=(strongOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr bool operator>=(weak_ordering val, literal_zero) noexcept
         {
             return val.value >= 0;
         }
 
-        [[nodiscard]] friend constexpr bool operator<(literal_zero, strongOrdering val) noexcept
+        [[nodiscard]] friend constexpr bool operator<(literal_zero, weak_ordering val) noexcept
         {
             return 0 < val.value;
         }
 
-        [[nodiscard]] friend constexpr bool operator>(literal_zero, strongOrdering val) noexcept
+        [[nodiscard]] friend constexpr bool operator>(literal_zero, weak_ordering val) noexcept
         {
             return 0 > val.value;
         }
 
-        [[nodiscard]] friend constexpr bool operator<=(literal_zero, strongOrdering val) noexcept
+        [[nodiscard]] friend constexpr bool operator<=(literal_zero, weak_ordering val) noexcept
         {
             return 0 <= val.value;
         }
 
-        [[nodiscard]] friend constexpr bool operator>=(literal_zero, strongOrdering val) noexcept
+        [[nodiscard]] friend constexpr bool operator>=(literal_zero, weak_ordering val) noexcept
         {
             return 0 >= val.value;
         }
 
-        [[nodiscard]] friend constexpr strongOrdering operator<=>(strongOrdering val, literal_zero) noexcept
+        [[nodiscard]] friend constexpr weak_ordering operator<=>(weak_ordering val, literal_zero) noexcept
         {
             return val;
         }
 
-        [[nodiscard]] friend constexpr strongOrdering operator<=>(literal_zero, strongOrdering val) noexcept
+        [[nodiscard]] friend constexpr weak_ordering operator<=>(literal_zero, weak_ordering val) noexcept
         {
-            return strongOrdering(CompareCategory::Order(-val.value));
+            return weak_ordering(CompareCategory::Order(-val.value));
+        }
+    };
+
+    constexpr weak_ordering weak_ordering::less(CompareCategory::Order::less);
+    constexpr weak_ordering weak_ordering::equivalent(CompareCategory::Order::equivalent);
+    constexpr weak_ordering weak_ordering::greater(CompareCategory::Order::greater);
+
+    class strong_ordering
+    {
+        signed char value;
+
+        constexpr explicit strong_ordering(CompareCategory::Order val) noexcept : value(Detail::comptype(val)) {}
+
+        friend constexpr CompareCategory::Order CompareCategory::ord<strong_ordering>(strong_ordering) noexcept;
+        friend constexpr strong_ordering CompareCategory::make<strong_ordering>(CompareCategory::Order) noexcept;
+
+    public:
+        // valid values
+        static const strong_ordering less;
+        static const strong_ordering equal;
+        static const strong_ordering equivalent;
+        static const strong_ordering greater;
+
+        [[nodiscard]] constexpr operator partial_ordering() const noexcept
+        {
+            return CompareCategory::make<partial_ordering>(CompareCategory::Order(value));
+        }
+
+        [[nodiscard]] constexpr operator weak_ordering() const noexcept
+        {
+            return CompareCategory::make<weak_ordering>(CompareCategory::Order(value));
+        }
+
+        // comparisons
+        [[nodiscard]] friend constexpr bool operator==(strong_ordering val, literal_zero) noexcept
+        {
+            return val.value == 0;
+        }
+
+        [[nodiscard]] friend constexpr bool operator==(strong_ordering, strong_ordering) noexcept = default;
+
+        [[nodiscard]] friend constexpr bool operator<(strong_ordering val, literal_zero) noexcept
+        {
+            return val.value < 0;
+        }
+
+        [[nodiscard]] friend constexpr bool operator>(strong_ordering val, literal_zero) noexcept
+        {
+            return val.value > 0;
+        }
+
+        [[nodiscard]] friend constexpr bool operator<=(strong_ordering val, literal_zero) noexcept
+        {
+            return val.value <= 0;
+        }
+
+        [[nodiscard]] friend constexpr bool operator>=(strong_ordering val, literal_zero) noexcept
+        {
+            return val.value >= 0;
+        }
+
+        [[nodiscard]] friend constexpr bool operator<(literal_zero, strong_ordering val) noexcept
+        {
+            return 0 < val.value;
+        }
+
+        [[nodiscard]] friend constexpr bool operator>(literal_zero, strong_ordering val) noexcept
+        {
+            return 0 > val.value;
+        }
+
+        [[nodiscard]] friend constexpr bool operator<=(literal_zero, strong_ordering val) noexcept
+        {
+            return 0 <= val.value;
+        }
+
+        [[nodiscard]] friend constexpr bool operator>=(literal_zero, strong_ordering val) noexcept
+        {
+            return 0 >= val.value;
+        }
+
+        [[nodiscard]] friend constexpr strong_ordering operator<=>(strong_ordering val, literal_zero) noexcept
+        {
+            return val;
+        }
+
+        [[nodiscard]] friend constexpr strong_ordering operator<=>(literal_zero, strong_ordering val) noexcept
+        {
+            return strong_ordering(CompareCategory::Order(-val.value));
         }
     };
 
@@ -403,23 +418,23 @@ namespace SFTL
         template<typename Type>
         inline constexpr unsigned CompareCategoryId = 1;
         template<>
-        inline constexpr unsigned CompareCategoryId<partialOrdering> = 2;
+        inline constexpr unsigned CompareCategoryId<partial_ordering> = 2;
         template<>
-        inline constexpr unsigned CompareCategoryId<weakOrdering> = 4;
+        inline constexpr unsigned CompareCategoryId<weak_ordering> = 4;
         template<>
-        inline constexpr unsigned CompareCategoryId<strongOrdering> = 8;
+        inline constexpr unsigned CompareCategoryId<strong_ordering> = 8;
 
         template<typename... T>
         constexpr auto common_compare_category()
         {
             if constexpr (constexpr unsigned category = (CompareCategoryId<T> | ...); category & 1)
                 return;
-            else if constexpr (bool(category & CompareCategoryId<partialOrdering>))
-                return partialOrdering::equivalent;
-            else if constexpr (bool(category & CompareCategoryId<weakOrdering>))
-                return weakOrdering::equivalent;
+            else if constexpr (bool(category & CompareCategoryId<partial_ordering>))
+                return partial_ordering::equivalent;
+            else if constexpr (bool(category & CompareCategoryId<weak_ordering>))
+                return weak_ordering::equivalent;
             else
-                return strongOrdering::equivalent;
+                return strong_ordering::equivalent;
         }
     } // namespace Detail
 
@@ -435,27 +450,27 @@ namespace SFTL
     };
 
     template<>
-    struct common_comparison_category<partialOrdering>
+    struct common_comparison_category<partial_ordering>
     {
-        using type = partialOrdering;
+        using type = partial_ordering;
     };
 
     template<>
-    struct common_comparison_category<weakOrdering>
+    struct common_comparison_category<weak_ordering>
     {
-        using type = weakOrdering;
+        using type = weak_ordering;
     };
 
     template<>
-    struct common_comparison_category<strongOrdering>
+    struct common_comparison_category<strong_ordering>
     {
-        using type = strongOrdering;
+        using type = strong_ordering;
     };
 
     template<>
     struct common_comparison_category<>
     {
-        using type = strongOrdering;
+        using type = strong_ordering;
     };
 
     template<typename... T>
@@ -499,27 +514,27 @@ namespace SFTL
         concept comparison_common_type_with = comparison_common_type_with_impl<remove_cvref_t<T>, remove_cvref_t<U>>;
     } // namespace Detail
 
-    constexpr strongOrdering strongOrdering::less(CompareCategory::Order::less);
-    constexpr strongOrdering strongOrdering::equal(CompareCategory::Order::equivalent);
-    constexpr strongOrdering strongOrdering::equivalent(CompareCategory::Order::equivalent);
-    constexpr strongOrdering strongOrdering::greater(CompareCategory::Order::greater);
+    constexpr strong_ordering strong_ordering::less(CompareCategory::Order::less);
+    constexpr strong_ordering strong_ordering::equal(CompareCategory::Order::equivalent);
+    constexpr strong_ordering strong_ordering::equivalent(CompareCategory::Order::equivalent);
+    constexpr strong_ordering strong_ordering::greater(CompareCategory::Order::greater);
 
 
-    [[nodiscard]] constexpr bool is_eq(partialOrdering cmp) noexcept { return cmp == nullptr; }
-    [[nodiscard]] constexpr bool is_neq(partialOrdering cmp) noexcept { return cmp != nullptr; }
-    [[nodiscard]] constexpr bool is_lt(partialOrdering cmp) noexcept { return cmp < nullptr; }
-    [[nodiscard]] constexpr bool is_lteq(partialOrdering cmp) noexcept { return cmp <= nullptr; }
-    [[nodiscard]] constexpr bool is_gt(partialOrdering cmp) noexcept { return cmp > nullptr; }
-    [[nodiscard]] constexpr bool is_gteq(partialOrdering cmp) noexcept { return cmp >= nullptr; }
+    [[nodiscard]] constexpr bool is_eq(partial_ordering cmp) noexcept { return cmp == nullptr; }
+    [[nodiscard]] constexpr bool is_neq(partial_ordering cmp) noexcept { return cmp != nullptr; }
+    [[nodiscard]] constexpr bool is_lt(partial_ordering cmp) noexcept { return cmp < nullptr; }
+    [[nodiscard]] constexpr bool is_lteq(partial_ordering cmp) noexcept { return cmp <= nullptr; }
+    [[nodiscard]] constexpr bool is_gt(partial_ordering cmp) noexcept { return cmp > nullptr; }
+    [[nodiscard]] constexpr bool is_gteq(partial_ordering cmp) noexcept { return cmp >= nullptr; }
 
-    template<typename Type, typename Category = partialOrdering>
+    template<typename Type, typename Category = partial_ordering>
     concept three_way_comparable =
             Detail::weakly_eq_compare_with<Type, Type> && Detail::partially_ordered_with<Type, Type> &&
             requires(const remove_reference_t<Type> &A, const remove_reference_t<Type> &B) {
                 { A <=> B } -> Detail::compares_as<Category>;
             };
 
-    template<typename Type, typename U, typename Category = partialOrdering>
+    template<typename Type, typename U, typename Category = partial_ordering>
     concept three_way_comparable_with =
             three_way_comparable<Type, Category> && three_way_comparable<U, Category> &&
             Detail::comparison_common_type_with<Type, U> &&
@@ -579,10 +594,10 @@ namespace SFTL
                 else
                 {
                     if (t < u)
-                        return weakOrdering::less;
+                        return weak_ordering::less;
                     if (u < t)
-                        return weakOrdering::greater;
-                    return weakOrdering::equivalent;
+                        return weak_ordering::greater;
+                    return weak_ordering::equivalent;
                 }
             }
         } synth3way = {};
@@ -590,7 +605,7 @@ namespace SFTL
     } // namespace Detail
 
     template<typename Type, typename Arb = Type>
-    using synth3way_t = decltype(Detail::synth3way(declval<Type &>(), declval<Arb &>()));
+    using synthesize3way_type = decltype(Detail::synth3way(declval<Type &>(), declval<Arb &>()));
 
     struct compare_three_way
     {
@@ -603,10 +618,22 @@ namespace SFTL
                 auto pt = static_cast<const volatile void *>(t);
                 auto pu = static_cast<const volatile void *>(u);
                 if (is_constant_evaluated())
-                    return pt <=> pu;
+                {
+                    if (pt < pu)
+                        return strong_ordering::less;
+                    if (pt > pu)
+                        return strong_ordering::greater;
+                    return strong_ordering::equal;
+                }
+
                 const auto it = reinterpret_cast<uintptr_type>(pt);
                 const auto iu = reinterpret_cast<uintptr_type>(pu);
-                return it <=> iu;
+
+                if (it < iu)
+                    return strong_ordering::less;
+                if (it > iu)
+                    return strong_ordering::greater;
+                return strong_ordering::equal;
             } else
                 return static_cast<Type &&>(t) <=> static_cast<Arb &&>(u);
         }
@@ -629,16 +656,16 @@ namespace SFTL
         struct MinCmpResult
         {
             ptrdiff_t len;
-            strongOrdering cmp;
+            strong_ordering cmp;
         };
 
         constexpr MinCmpResult min_cmp(ptrdiff_t d1, ptrdiff_t d2) noexcept
         {
             if (d1 < d2)
-                return {d1, strongOrdering::less};
+                return {d1, strong_ordering::less};
             if (d1 > d2)
-                return {d2, strongOrdering::greater};
-            return {d1, strongOrdering::equal};
+                return {d2, strong_ordering::greater};
+            return {d1, strong_ordering::equal};
         }
     } // namespace Detail
 
@@ -691,7 +718,7 @@ namespace SFTL
                         const auto blen = static_cast<size_type>(len) * sizeof(*first1);
                         const int c     = ::SFTL::memcmp(&*first1, &*first2, blen);
                         if (c != 0)
-                            return c < 0 ? strongOrdering::less : strongOrdering::greater;
+                            return c < 0 ? strong_ordering::less : strong_ordering::greater;
                     }
                     return lencmp;
                 }
@@ -701,13 +728,13 @@ namespace SFTL
         while (first1 != last1)
         {
             if (first2 == last2)
-                return strongOrdering::greater;
+                return strong_ordering::greater;
             if (auto cmp = comp(*first1, *first2); cmp != 0)
                 return cmp;
             ++first1;
             ++first2;
         }
-        return (first2 == last2) ? strongOrdering::equal : strongOrdering::less;
+        return (first2 == last2) ? strong_ordering::equal : strong_ordering::less;
     }
 
     template<typename InputIterator1, typename InputIterator2>

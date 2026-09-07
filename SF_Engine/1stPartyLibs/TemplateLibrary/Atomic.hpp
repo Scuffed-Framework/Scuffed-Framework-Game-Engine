@@ -32,14 +32,14 @@
 /* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                              */
 /******************************************************************************/
 #pragma once
-#include "Types.hpp"
 #include "TypeTraits.hpp"
+#include "Types.hpp"
 
 #if defined(_MSC_VER) && !defined(__clang__)
-#define SFTL_ATOMIC_MSVC 1
-#include <intrin.h>
+    #define SFTL_ATOMIC_MSVC 1
+    #include <intrin.h>
 #else
-#define SFTL_ATOMIC_GNU 1
+    #define SFTL_ATOMIC_GNU 1
 #endif
 
 namespace SFTL
@@ -62,31 +62,31 @@ namespace SFTL
     inline constexpr memory_order memory_order_seq_cst = memory_order::seq_cst;
 
 #if defined(SFTL_ATOMIC_GNU)
-    namespace detail
+    namespace Detail
     {
         constexpr int _to_gnu_order(memory_order order) noexcept
         {
             switch (order)
             {
-            case memory_order::relaxed:
-                return __ATOMIC_RELAXED;
-            case memory_order::consume:
-                return __ATOMIC_CONSUME;
-            case memory_order::acquire:
-                return __ATOMIC_ACQUIRE;
-            case memory_order::release:
-                return __ATOMIC_RELEASE;
-            case memory_order::acq_rel:
-                return __ATOMIC_ACQ_REL;
-            case memory_order::seq_cst:
-            default:
-                return __ATOMIC_SEQ_CST;
+                case memory_order::relaxed:
+                    return __ATOMIC_RELAXED;
+                case memory_order::consume:
+                    return __ATOMIC_CONSUME;
+                case memory_order::acquire:
+                    return __ATOMIC_ACQUIRE;
+                case memory_order::release:
+                    return __ATOMIC_RELEASE;
+                case memory_order::acq_rel:
+                    return __ATOMIC_ACQ_REL;
+                case memory_order::seq_cst:
+                default:
+                    return __ATOMIC_SEQ_CST;
             }
         }
-    } // namespace detail
+    } // namespace Detail
 #endif
 
-    template <typename T>
+    template<typename T>
     class atomic
     {
         static_assert(is_integral_v<T> || is_pointer_v<T>,
@@ -98,16 +98,16 @@ namespace SFTL
         atomic() noexcept = default;
         constexpr atomic(T desired) noexcept : _value(desired) {}
 
-        atomic(const atomic &) = delete;
-        atomic &operator=(const atomic &) = delete;
+        atomic(const atomic &)                     = delete;
+        atomic &operator=(const atomic &)          = delete;
         atomic &operator=(const atomic &) volatile = delete;
 
         T load(memory_order order = memory_order::seq_cst) const noexcept
         {
 #if defined(SFTL_ATOMIC_GNU)
-            return __atomic_load_n(&_value, detail::_to_gnu_order(order));
+            return __atomic_load_n(&_value, Detail::_to_gnu_order(order));
 #else
-            (void)order;
+            (void) order;
             ::_ReadWriteBarrier();
             T result = _value;
             ::_ReadWriteBarrier();
@@ -118,9 +118,9 @@ namespace SFTL
         void store(T desired, memory_order order = memory_order::seq_cst) noexcept
         {
 #if defined(SFTL_ATOMIC_GNU)
-            __atomic_store_n(&_value, desired, detail::_to_gnu_order(order));
+            __atomic_store_n(&_value, desired, Detail::_to_gnu_order(order));
 #else
-            (void)order;
+            (void) order;
             ::_ReadWriteBarrier();
             _value = desired;
             ::_ReadWriteBarrier();
@@ -130,9 +130,9 @@ namespace SFTL
         T exchange(T desired, memory_order order = memory_order::seq_cst) noexcept
         {
 #if defined(SFTL_ATOMIC_GNU)
-            return __atomic_exchange_n(&_value, desired, detail::_to_gnu_order(order));
+            return __atomic_exchange_n(&_value, desired, Detail::_to_gnu_order(order));
 #else
-            (void)order;
+            (void) order;
             return static_cast<T>(_msvc_exchange(desired));
 #endif
         }
@@ -140,9 +140,9 @@ namespace SFTL
         T fetch_add(T arg, memory_order order = memory_order::seq_cst) noexcept
         {
 #if defined(SFTL_ATOMIC_GNU)
-            return __atomic_fetch_add(&_value, arg, detail::_to_gnu_order(order));
+            return __atomic_fetch_add(&_value, arg, Detail::_to_gnu_order(order));
 #else
-            (void)order;
+            (void) order;
             return static_cast<T>(_msvc_fetch_add(arg));
 #endif
         }
@@ -150,33 +150,29 @@ namespace SFTL
         T fetch_sub(T arg, memory_order order = memory_order::seq_cst) noexcept
         {
 #if defined(SFTL_ATOMIC_GNU)
-            return __atomic_fetch_sub(&_value, arg, detail::_to_gnu_order(order));
+            return __atomic_fetch_sub(&_value, arg, Detail::_to_gnu_order(order));
 #else
-            (void)order;
+            (void) order;
             return static_cast<T>(_msvc_fetch_add(static_cast<T>(0 - arg)));
 #endif
         }
 
-        bool compare_exchange_weak(T &expected, T desired,
-                                   memory_order success = memory_order::seq_cst,
+        bool compare_exchange_weak(T &expected, T desired, memory_order success = memory_order::seq_cst,
                                    memory_order failure = memory_order::seq_cst) noexcept
         {
             return compare_exchange_strong(expected, desired, success, failure);
         }
 
-        bool compare_exchange_strong(T &expected, T desired,
-                                     memory_order success = memory_order::seq_cst,
+        bool compare_exchange_strong(T &expected, T desired, memory_order success = memory_order::seq_cst,
                                      memory_order failure = memory_order::seq_cst) noexcept
         {
 #if defined(SFTL_ATOMIC_GNU)
-            return __atomic_compare_exchange_n(
-                &_value, &expected, desired,
-                /*weak=*/false,
-                detail::_to_gnu_order(success),
-                detail::_to_gnu_order(failure));
+            return __atomic_compare_exchange_n(&_value, &expected, desired,
+                                               /*weak=*/false, Detail::_to_gnu_order(success),
+                                               Detail::_to_gnu_order(failure));
 #else
-            (void)success;
-            (void)failure;
+            (void) success;
+            (void) failure;
             T prev = static_cast<T>(_msvc_cas(expected, desired));
             if (prev == expected)
                 return true;
@@ -202,8 +198,7 @@ namespace SFTL
         long long _msvc_exchange(T desired) noexcept
         {
             if constexpr (sizeof(T) == 4)
-                return ::_InterlockedExchange(reinterpret_cast<long *>(&_value),
-                                              static_cast<long>(desired));
+                return ::_InterlockedExchange(reinterpret_cast<long *>(&_value), static_cast<long>(desired));
             else
                 return ::_InterlockedExchange64(reinterpret_cast<long long *>(&_value),
                                                 static_cast<long long>(desired));
@@ -212,18 +207,15 @@ namespace SFTL
         long long _msvc_fetch_add(T arg) noexcept
         {
             if constexpr (sizeof(T) == 4)
-                return ::_InterlockedExchangeAdd(reinterpret_cast<long *>(&_value),
-                                                 static_cast<long>(arg));
+                return ::_InterlockedExchangeAdd(reinterpret_cast<long *>(&_value), static_cast<long>(arg));
             else
-                return ::_InterlockedExchangeAdd64(reinterpret_cast<long long *>(&_value),
-                                                   static_cast<long long>(arg));
+                return ::_InterlockedExchangeAdd64(reinterpret_cast<long long *>(&_value), static_cast<long long>(arg));
         }
 
         long long _msvc_cas(T expected, T desired) noexcept
         {
             if constexpr (sizeof(T) == 4)
-                return ::_InterlockedCompareExchange(reinterpret_cast<long *>(&_value),
-                                                     static_cast<long>(desired),
+                return ::_InterlockedCompareExchange(reinterpret_cast<long *>(&_value), static_cast<long>(desired),
                                                      static_cast<long>(expected));
             else
                 return ::_InterlockedCompareExchange64(reinterpret_cast<long long *>(&_value),

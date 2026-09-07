@@ -140,7 +140,7 @@ namespace SFTL
 
     namespace ranges
     {
-        namespace swap_detail
+        namespace swap_Detail
         {
             template<class Type>
             void swap(Type &, Type &) noexcept = delete;
@@ -182,11 +182,11 @@ namespace SFTL
                     }
                 }
             };
-        } // namespace swap_detail
+        } // namespace swap_Detail
 
         inline namespace in
         {
-            inline constexpr swap_detail::SwapFunction swap;
+            inline constexpr swap_Detail::SwapFunction swap;
         }
     } // namespace ranges
 
@@ -237,7 +237,7 @@ namespace SFTL
         return find_if(first, last, [&value](const auto &element) { return element == value; });
     }
 
-    namespace detail
+    namespace Detail
     {
         template<class In, class Out>
         inline constexpr bool copy_can_memmove_v =
@@ -286,9 +286,9 @@ namespace SFTL
     template<class In, class Out>
     constexpr Out copy(In first, In last, Out dest)
     {
-        if constexpr (detail::copy_can_memmove_v<In, Out>)
+        if constexpr (Detail::copy_can_memmove_v<In, Out>)
         {
-            if (!std::is_constant_evaluated())
+            if (!is_constant_evaluated())
             {
                 const auto count = static_cast<size_type>(last - first);
                 if (count != 0)
@@ -299,7 +299,7 @@ namespace SFTL
         return copy_unchecked(first, last, dest);
     }
 
-    using std::addressof;
+    using ::SFTL::addressof;
 
     template<typename Type>
     constexpr inline void destroy_at(Type *Location)
@@ -316,7 +316,7 @@ namespace SFTL
         requires(!is_unbounded_array_v<Type>) && requires { ::new ((void *) nullptr) Type(declval<Arguments>()...); }
     constexpr Type *construct_at(Type *Location,
                                  Arguments &&...args) noexcept(noexcept(::new ((void *) nullptr)
-                                                                                Type(std::declval<Arguments>()...)))
+                                                                                Type(declval<Arguments>()...)))
     {
         void *loc = Location;
         if constexpr (is_array_v<Type>)

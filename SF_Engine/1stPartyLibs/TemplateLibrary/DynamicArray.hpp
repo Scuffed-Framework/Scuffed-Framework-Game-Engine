@@ -56,6 +56,17 @@ namespace SFTL
                 allocator_.deallocate(data_, capacity_);
         }
 
+        template<class InputIt>
+        DynamicArray(InputIt first, InputIt last)
+        {
+            reserve(last - first);
+
+            for (auto it = first; it != last; ++it)
+            {
+                push_back(*it);
+            }
+        }
+
         // move is cheap and sane
         DynamicArray(DynamicArray &&other) noexcept { steal(other); }
 
