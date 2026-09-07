@@ -1329,6 +1329,9 @@ namespace SFTL
 
     using std::is_standard_layout_v;
 
+    using std::is_empty;
+    using std::is_empty_v;
+
     template<typename... Val>
     struct Or : decltype(Detail::OrFunction<Val...>(0))
     {

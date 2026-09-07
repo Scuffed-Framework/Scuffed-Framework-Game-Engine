@@ -32,7 +32,7 @@
 /* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                              */
 /******************************************************************************/
 #pragma once
-#include <new>
+#include "New.hpp"
 #include "TypeTraits.hpp"
 #include "Types.hpp"
 
@@ -81,16 +81,21 @@ namespace SFTL
                 return nullptr;
 
             if (is_constant_evaluated())
-                return static_cast<T *>(::operator new(n * sizeof(T)));
+                return static_cast<T *>(::operator new(n * sizeof(T))); // real ::operator new, compile-time safe
 
-            return static_cast<T *>(::operator new(n * sizeof(T), ::std::align_val_t(alignof(T)), ::std::nothrow));
+            return static_cast<T *>(operator new(n * sizeof(T), align_value_type(alignof(T)),
+                                                 nothrow)); // unqualified → ADL finds SFTL's own
         }
 
         constexpr void deallocate(T *p, size_type) noexcept
         {
             if (!p)
                 return;
-            ::operator delete(p, ::std::align_val_t(alignof(T)));
+
+            if (is_constant_evaluated())
+                ::operator delete(p);
+            else
+                operator delete(p, align_value_type(alignof(T))); // ADL again
         }
 
         template<typename U, typename... Args>
@@ -230,7 +235,7 @@ namespace SFTL
         template<typename Alloc, typename = void>
         struct AllocIsAlwaysEqual
         {
-            using type = std::conditional_t<std::is_empty_v<Alloc>, true_type, false_type>;
+            using type = conditional_t<is_empty_v<Alloc>, true_type, false_type>;
         };
         template<typename Alloc>
         struct AllocIsAlwaysEqual<Alloc, void_t<typename Alloc::is_always_equal>>

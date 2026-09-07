@@ -66,8 +66,19 @@ namespace SFTL
     typedef float floating32;
     typedef double floating64;
     typedef long double floating128;
+
     typedef decltype(nullptr) nullptr_type;
 
+    enum class align_value_type : size_type
+    {
+    };
+
+    struct nothrow_type
+    {
+        explicit nothrow_type() = default;
+    };
+
+    extern const nothrow_type nothrow;
     namespace Detail
     {
         struct mbstate_impl
