@@ -78,7 +78,7 @@ class SfEngineConan(ConanFile):
         self.requires("openfbx/cci.20210426")
         self.requires("tinyobjloader/2.0.0-rc10")
 
-        # d3d12
+        # microslop
         self.requires("directx-headers/1.619.1")
 
     def layout(self):

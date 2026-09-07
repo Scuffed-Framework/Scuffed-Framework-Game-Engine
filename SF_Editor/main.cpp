@@ -1,6 +1,6 @@
 #include <Engine/Engine.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <Platform/Windows/WindowManager.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
 #include <Gui/ImGuiPipelinePass.hpp>
 #include <Scene/SceneManager.hpp>
 
