@@ -1,20 +1,8 @@
 #pragma once
-#include <algorithm>
-#include <cctype>
-#include <cstdarg>
-#include <cstdio>
-#include <cwctype>
-#include <memory>
-#include <ostream>
-#include <span>
-#include <stdexcept>
-#include <string_view>
 #include "../Allocator.hpp"
-#include "../Char.hpp"
+#include "../Compare.hpp"
 #include "../DynamicArray.hpp"
 #include "../Iterators.hpp"
-#include "../Operations.hpp"
-#include "InitializerList.hpp"
 
 namespace SFTL
 {
@@ -37,13 +25,13 @@ namespace SFTL
         template<typename T>
         constexpr size_type HashSpan(const T *data, size_type count)
         {
-            size_type hash            = 14695981039346656037ull;
-            constexpr size_type prime = 1099511628211ull;
+            size_type hash = 14695981039346656037ull;
             for (size_type i = 0; i < count; ++i)
             {
                 const auto *bytes = reinterpret_cast<const unsigned char *>(data + i);
                 for (size_type b = 0; b < sizeof(T); ++b)
                 {
+                    constexpr size_type prime = 1099511628211ull;
                     hash ^= bytes[b];
                     hash *= prime;
                 }
@@ -85,7 +73,7 @@ namespace SFTL
 
         constexpr auto operator<=>(const AdvancedStringView &rhs) const
         {
-            return std::lexicographical_compare_three_way(begin(), end(), rhs.begin(), rhs.end());
+            return ::SFTL::lexicographical_compare_three_way(begin(), end(), rhs.begin(), rhs.end());
         }
     };
 
@@ -112,7 +100,7 @@ namespace SFTL
         size_type capacity_ = kInlineCapacity;
         Allocator alloc_;
 
-        bool IsHeap() const { return capacity_ > kInlineCapacity; }
+        [[nodiscard]] bool IsHeap() const { return capacity_ > kInlineCapacity; }
         T *Ptr() { return IsHeap() ? storage_.heapBuf : storage_.inlineBuf; }
         const T *Ptr() const { return IsHeap() ? storage_.heapBuf : storage_.inlineBuf; }
 
@@ -456,7 +444,7 @@ namespace SFTL
             T *p       = Ptr();
             auto start = static_cast<size_type>(first - begin());
             auto count = static_cast<size_type>(last - first);
-            std::move(p + start + count, p + size_, p + start);
+            move(p + start + count, p + size_, p + start);
             size_ -= count;
             p[size_] = T{};
             return p + start;
@@ -563,7 +551,7 @@ namespace SFTL
         bool contains(const AdvancedStringView<T> &sv) const noexcept { return find(sv) != npos; }
         bool contains(T ch) const noexcept { return find(ch) != npos; }
 
-        bool IsSmall() const { return !IsHeap(); }
+        [[nodiscard]] bool IsSmall() const { return !IsHeap(); }
 
         AdvancedString Trim() const
         {
@@ -640,10 +628,12 @@ namespace SFTL
 
         const T *Data() const { return Ptr(); }
         const T *CStr() const { return Ptr(); }
-        size_type Size() const { return size_; }
-        size_type Length() const { return size_; }
-        size_type Capacity() const { return capacity_; }
-        bool Empty() const { return size_ == 0; }
+
+        [[nodiscard]] size_type Size() const { return size_; }
+        [[nodiscard]] size_type Length() const { return size_; }
+        [[nodiscard]] size_type Capacity() const { return capacity_; }
+        [[nodiscard]] bool Empty() const { return size_ == 0; }
+
         void Clear() { clear(); }
         void Reserve(size_type n) { reserve(n); }
         AdvancedString &Append(const T *src, size_type count) { return append(src, count); }

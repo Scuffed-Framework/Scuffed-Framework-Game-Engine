@@ -105,7 +105,7 @@ namespace SFTL
             p->~U();
         }
 
-        constexpr size_type max_size() const noexcept { return static_cast<size_type>(-1) / sizeof(T); }
+        [[nodiscard]] constexpr size_type max_size() const noexcept { return static_cast<size_type>(-1) / sizeof(T); }
 
         template<typename U>
         friend class allocator;
@@ -357,7 +357,7 @@ namespace SFTL
         }
 
         template<typename T>
-        static void destroy(Alloc &a, T *p)
+        static constexpr void destroy(Alloc &a, T *p)
         {
             if constexpr (Detail::HasDestroy<Alloc, T *>::value)
                 a.destroy(p);
