@@ -407,4 +407,13 @@ namespace SFTL
     template<typename Alloc>
     using require_not_allocator = typename enable_if<!is_allocator<Alloc>::value, Alloc>::type;
 
+    template<typename Alloc>
+    concept allocator_like = requires(Alloc &a) {
+        typename Alloc::value_type;
+        a.deallocate(a.allocate(1u), 1u);
+    };
+
+    template<typename Alloc>
+    concept not_allocator_like = !allocator_like<Alloc>;
+
 } // namespace SFTL
