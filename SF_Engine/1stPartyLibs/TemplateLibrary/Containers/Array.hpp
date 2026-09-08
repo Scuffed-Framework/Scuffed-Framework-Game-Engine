@@ -1,7 +1,7 @@
 #pragma once
 #include "../Compare.hpp"
 #include "../Iterators.hpp"
-#include "../Streams/BasicOut.hpp"
+#include "../Streams/InOutStream.hpp"
 #include "../TypeTraits.hpp"
 #include "../Types.hpp"
 
