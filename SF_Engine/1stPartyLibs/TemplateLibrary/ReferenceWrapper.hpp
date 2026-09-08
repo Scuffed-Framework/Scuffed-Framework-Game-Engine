@@ -10,7 +10,7 @@ namespace SFTL
         using type = T;
 
     private:
-        T *_M_ptr;
+        T *Lptr;
 
     public:
         template<typename _Up>
@@ -18,7 +18,7 @@ namespace SFTL
 
         template<typename _Up, typename = enable_if_t<!is_same_v<reference_wrapper, remove_cvref_t<_Up>> &&
                                                       is_convertible_v<remove_reference_t<_Up> *, T *>>>
-        constexpr reference_wrapper(_Up &uref) noexcept : _M_ptr(addressof(uref))
+        constexpr reference_wrapper(_Up &uref) noexcept : Lptr(addressof(uref))
         {
         }
 
@@ -29,9 +29,9 @@ namespace SFTL
         constexpr reference_wrapper &operator=(const reference_wrapper &_In) noexcept = default;
 
         // Accessors & Conversion
-        constexpr operator T &() const noexcept { return *_M_ptr; }
+        constexpr operator T &() const noexcept { return *Lptr; }
 
-        constexpr T &get() const noexcept { return *_M_ptr; }
+        constexpr T &get() const noexcept { return *Lptr; }
 
         template<typename... _Args>
         constexpr auto operator()(_Args &&...args) const noexcept(noexcept(invoke(get(), forward<_Args>(args)...)))
@@ -59,28 +59,28 @@ namespace SFTL
     template<typename T>
     void cref(const T &&) = delete;
 
-    template<typename _Tp>
+    template<typename Type>
     struct unwrap_reference
     {
-        using type = _Tp;
+        using type = Type;
     };
 
-    template<typename _Tp>
-    struct unwrap_reference<reference_wrapper<_Tp>>
+    template<typename Type>
+    struct unwrap_reference<reference_wrapper<Type>>
     {
-        using type = _Tp &;
+        using type = Type &;
     };
 
-    template<typename _Tp>
-    using unwrap_reference_t = unwrap_reference<_Tp>::type;
+    template<typename Type>
+    using unwrap_reference_t = unwrap_reference<Type>::type;
 
-    template<typename _Tp>
+    template<typename Type>
     struct unwrap_ref_decay
     {
-        using type = unwrap_reference_t<decay_t<_Tp>>;
+        using type = unwrap_reference_t<decay_t<Type>>;
     };
 
-    template<typename _Tp>
-    using unwrap_ref_decay_t = unwrap_ref_decay<_Tp>::type;
+    template<typename Type>
+    using unwrap_ref_decay_t = unwrap_ref_decay<Type>::type;
 
 } // namespace SFTL
