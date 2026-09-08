@@ -1,8 +1,8 @@
 /******************************************************************************/
 /* Atomic.hpp                                                                 */
 /******************************************************************************/
-/*                            This file is part of                            */
-/*             Scuffed Framework Standard Template Library                    */
+/*            This file is part of                                            */
+/*            Scuffed Framework Standard Template Library                     */
 /******************************************************************************/
 /* MIT License                                                                */
 /*                                                                            */
@@ -16,7 +16,7 @@
 /* Permission is hereby granted, free of charge, to any person obtaining a    */
 /* copy of this software and associated documentation files (the "Software"), */
 /* to deal in the Software without restriction, including without limitation  */
-/* the rights to use, copy, modify, merge, publish, distribute, sublicense,   */
+/* the rights to use, copy, modify, merge, publish, distribute, sublicense,    */
 /* and/or sell copies of the Software, and to permit persons to whom the      */
 /* Software is furnished to do so, subject to the following conditions:       */
 /*                                                                            */
@@ -38,12 +38,17 @@
 #if defined(_MSC_VER) && !defined(__clang__)
     #define SFTL_ATOMIC_MSVC 1
     #include <intrin.h>
+    #define SFTL_FORCE_INLINE __forceinline
 #else
     #define SFTL_ATOMIC_GNU 1
+    #define SFTL_FORCE_INLINE inline __attribute__((__always_inline__))
 #endif
 
 namespace SFTL
 {
+    typedef int atomic_word;
+    typedef unsigned int uatomic_word;
+
     enum class memory_order
     {
         relaxed,
@@ -186,7 +191,7 @@ namespace SFTL
         T operator--() noexcept { return fetch_sub(T(1)) - T(1); }
         T operator--(int) noexcept { return fetch_sub(T(1)); }
 
-        operator T() const noexcept { return load(); }
+        explicit operator T() const noexcept { return load(); }
         T operator=(T desired) noexcept
         {
             store(desired);
@@ -197,33 +202,64 @@ namespace SFTL
 #if defined(SFTL_ATOMIC_MSVC)
         long long _msvc_exchange(T desired) noexcept
         {
-            if constexpr (sizeof(T) == 4)
-                return ::_InterlockedExchange(reinterpret_cast<long *>(&_value), static_cast<long>(desired));
+            if constexpr (sizeof(T) == 1)
+                return _InterlockedExchange8(reinterpret_cast<char *>(&_value), static_cast<char>(desired));
+            else if constexpr (sizeof(T) == 2)
+                return _InterlockedExchange16(reinterpret_cast<short *>(&_value), static_cast<short>(desired));
+            else if constexpr (sizeof(T) == 4)
+                return _InterlockedExchange(reinterpret_cast<long *>(&_value), static_cast<long>(desired));
             else
-                return ::_InterlockedExchange64(reinterpret_cast<long long *>(&_value),
-                                                static_cast<long long>(desired));
+                return _InterlockedExchange64(reinterpret_cast<long long *>(&_value), static_cast<long long>(desired));
         }
 
         long long _msvc_fetch_add(T arg) noexcept
         {
-            if constexpr (sizeof(T) == 4)
-                return ::_InterlockedExchangeAdd(reinterpret_cast<long *>(&_value), static_cast<long>(arg));
+            if constexpr (sizeof(T) == 1)
+                return _InterlockedExchangeAdd8(reinterpret_cast<char *>(&_value), static_cast<char>(arg));
+            else if constexpr (sizeof(T) == 2)
+                return _InterlockedExchangeAdd16(reinterpret_cast<short *>(&_value), static_cast<short>(arg));
+            else if constexpr (sizeof(T) == 4)
+                return _InterlockedExchangeAdd(reinterpret_cast<long *>(&_value), static_cast<long>(arg));
             else
-                return ::_InterlockedExchangeAdd64(reinterpret_cast<long long *>(&_value), static_cast<long long>(arg));
+                return _InterlockedExchangeAdd64(reinterpret_cast<long long *>(&_value), static_cast<long long>(arg));
         }
 
         long long _msvc_cas(T expected, T desired) noexcept
         {
-            if constexpr (sizeof(T) == 4)
-                return ::_InterlockedCompareExchange(reinterpret_cast<long *>(&_value), static_cast<long>(desired),
-                                                     static_cast<long>(expected));
+            if constexpr (sizeof(T) == 1)
+                return _InterlockedCompareExchange8(reinterpret_cast<char *>(&_value), static_cast<char>(desired),
+                                                    static_cast<char>(expected));
+            else if constexpr (sizeof(T) == 2)
+                return _InterlockedCompareExchange16(reinterpret_cast<short *>(&_value), static_cast<short>(desired),
+                                                     static_cast<short>(expected));
+            else if constexpr (sizeof(T) == 4)
+                return _InterlockedCompareExchange(reinterpret_cast<long *>(&_value), static_cast<long>(desired),
+                                                   static_cast<long>(expected));
             else
-                return ::_InterlockedCompareExchange64(reinterpret_cast<long long *>(&_value),
-                                                       static_cast<long long>(desired),
-                                                       static_cast<long long>(expected));
+                return _InterlockedCompareExchange64(reinterpret_cast<long long *>(&_value),
+                                                     static_cast<long long>(desired), static_cast<long long>(expected));
         }
 #endif
 
         T _value{};
     };
+
+    inline atomic_word exchange_and_add(volatile atomic_word *memory, int value)
+    {
+#if defined(SFTL_ATOMIC_GNU)
+        return __atomic_fetch_add(memory, value, __ATOMIC_ACQ_REL);
+#else
+        return _InterlockedExchangeAdd(const_cast<long *>(reinterpret_cast<volatile long *>(memory)), value);
+#endif
+    }
+
+    inline void atomic_add(volatile atomic_word *memory, int value) { exchange_and_add(memory, value); }
+
+    inline atomic_word exchange_and_add_dispatch(atomic_word *memory, int value)
+    {
+        return exchange_and_add(memory, value);
+    }
+
+    inline void atomic_add_dispatch(atomic_word *memory, int value) { atomic_add(memory, value); }
+
 } // namespace SFTL
