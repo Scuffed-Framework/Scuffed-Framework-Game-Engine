@@ -2,11 +2,8 @@
 #include "../Algorithm.hpp"
 #include "../Allocator.hpp"
 #include "../Compare.hpp"
-#include "../Iterators.hpp"
 #include "../NumericProperties.hpp"
 #include "../PointerTraits.hpp"
-#include "../Streams/BasicOut.hpp"
-#include "../TypeTraits.hpp"
 
 namespace SFTL
 {
@@ -430,16 +427,16 @@ namespace SFTL
             fill_initialize(value);
         }
 
-        deque(const deque &x) : Base(AllocTraits::_S_select_on_copy(x.getTypeAllocator()), x.size())
+        deque(const deque &x) : Base(AllocTraits::sselect_on_copy(x.getTypeAllocator()), x.size())
         {
-            __uninitialized_copy_a(x.begin(), x.end(), this->impl.start, getTypeAllocator());
+            uninitialized_copy(x.begin(), x.end(), this->impl.start, getTypeAllocator());
         }
 
         deque(deque &&) = default;
 
         deque(const deque &x, const type_identity_t<allocator_type> &al) : Base(al, x.size())
         {
-            __uninitialized_copy_a(x.begin(), x.end(), this->impl.start, getTypeAllocator());
+            uninitialized_copy(x.begin(), x.end(), this->impl.start, getTypeAllocator());
         }
 
         deque(deque &&x, type_identity_t<allocator_type> &al) :
@@ -454,7 +451,7 @@ namespace SFTL
         {
             if (x.getAllocator() != al && !x.empty())
             {
-                __uninitialized_move_a(x.begin(), x.end(), this->impl.start, getTypeAllocator());
+                uninitialized_move(x.begin(), x.end(), this->impl.start, getTypeAllocator());
                 x.clear();
             }
         }
@@ -465,7 +462,7 @@ namespace SFTL
             range_initialize(l.begin(), l.end(), random_access_iterator_tag());
         }
 
-        template<typename InputIterator, typename = RequireInputIter<InputIterator>>
+        template<typename InputIterator, typename = ::SFTL::RequireInputIter<InputIterator>>
         deque(InputIterator first, InputIterator last, const allocator_type &al = allocator_type()) : Base(al)
         {
             range_initialize(first, last, typename iterator_traits<InputIterator>::iterator_category());
@@ -473,8 +470,8 @@ namespace SFTL
 
         ~deque() { destroy_data(begin(), end(), getTypeAllocator()); }
 
-        deque &operator=(const deque &x);
-        deque &operator=(deque &&x) noexcept(AllocTraits::_S_always_equal())
+        constexpr deque &operator=(const deque &x);
+        deque &operator=(deque &&x) noexcept(AllocTraits::salways_equal())
         {
             using always_equal = typename AllocTraits::is_always_equal;
             move_assign1(move(x), always_equal{});
@@ -537,7 +534,6 @@ namespace SFTL
             else if (new_size < len)
                 erase_at_end(this->impl.start + difference_type(new_size));
         }
-        void resize(szt new_size, const value_type &x);
         void shrink_to_fit() noexcept { shrink_to_fit_internal(); }
 
         [[nodiscard]] bool empty() const noexcept { return this->impl.finish == this->impl.start; }
@@ -546,11 +542,7 @@ namespace SFTL
         [[nodiscard]] const_reference operator[](szt n) const noexcept { return this->impl.start[difference_type(n)]; }
 
     protected:
-        void range_check(szt n) const
-        {
-            if (n >= this->size())
-                cout << "deque::range_check out of range";
-        }
+        void range_check(szt n) const;
 
     public:
         reference at(szt n)
@@ -595,7 +587,7 @@ namespace SFTL
         void push_front(value_type &&x) { emplace_front(move(x)); }
 
         template<typename... Args>
-        reference emplace_front(Args &&...args);
+        constexpr reference emplace_front(Args &&...args);
 
         void push_back(const value_type &x)
         {
@@ -610,7 +602,7 @@ namespace SFTL
         void push_back(value_type &&x) { emplace_back(move(x)); }
 
         template<typename... Args>
-        reference emplace_back(Args &&...args);
+        constexpr reference emplace_back(Args &&...args);
 
         void pop_front() noexcept
         {
@@ -633,13 +625,13 @@ namespace SFTL
         }
 
         template<typename... Args>
-        iterator emplace(const_iterator position, Args &&...args);
+        constexpr iterator emplace(const_iterator position, Args &&...args);
 
-        iterator insert(const_iterator position, const value_type &x);
+        constexpr iterator insert(const_iterator position, const value_type &x);
 
-        iterator insert(const_iterator position, value_type &&x) { return emplace(position, move(x)); }
+        constexpr iterator insert(const_iterator position, value_type &&x) { return emplace(position, move(x)); }
 
-        iterator insert(const_iterator p, initializer_list<value_type> l)
+        constexpr iterator insert(const_iterator p, initializer_list<value_type> l)
         {
             auto offset = p - cbegin();
             range_insert_aux(p.const_cast_self(), l.begin(), l.end(), random_access_iterator_tag());
@@ -664,29 +656,24 @@ namespace SFTL
 
         iterator erase(const_iterator position) { return erase_aux(position.const_cast_self()); }
 
-        iterator erase(const_iterator first, const_iterator last)
+        constexpr iterator erase(const_iterator first, const_iterator last)
         {
             return erase_aux(first.const_cast_self(), last.const_cast_self());
         }
 
-        void swap(deque &x) noexcept
+        constexpr void swap(deque &x) noexcept
         {
             static_assert(AllocTraits::propagate_on_container_swap::value ||
                           getTypeAllocator() == x.getTypeAllocator());
 
             this->impl.swap_data(x.impl);
-            AllocTraits::_S_on_swap(getTypeAllocator(), x.getTypeAllocator());
+            AllocTraits::son_swap(getTypeAllocator(), x.getTypeAllocator());
         }
 
-        void clear() noexcept { erase_at_end(begin()); }
+        constexpr void clear() noexcept { erase_at_end(begin()); }
 
     protected:
-        static size_type check_init_len(size_type n, const allocator_type &al)
-        {
-            if (n > max_size_internal(al))
-                cout << "cannot create deque larger than max_size()";
-            return n;
-        }
+        static size_type check_init_len(size_type n, const allocator_type &al);
 
         static szt max_size_internal(const TypeAllocator &al) noexcept
         {
@@ -696,20 +683,20 @@ namespace SFTL
         }
 
         template<typename InputIterator>
-        void range_initialize(InputIterator first, InputIterator last, input_iterator_tag);
+        constexpr void range_initialize(InputIterator first, InputIterator last, input_iterator_tag);
 
         template<typename ForwardIterator>
-        void range_initialize(ForwardIterator first, ForwardIterator last, forward_iterator_tag);
+        constexpr void range_initialize(ForwardIterator first, ForwardIterator last, forward_iterator_tag);
 
-        void fill_initialize(const value_type &value);
+        constexpr void fill_initialize(const value_type &value);
 
-        void default_initialize();
+        constexpr void default_initialize();
 
         template<typename InputIterator>
-        void assign_aux(InputIterator first, InputIterator last, input_iterator_tag);
+        constexpr void assign_aux(InputIterator first, InputIterator last, input_iterator_tag);
 
         template<typename ForwardIterator>
-        void assign_aux(ForwardIterator first, ForwardIterator last, forward_iterator_tag)
+        constexpr void assign_aux(ForwardIterator first, ForwardIterator last, forward_iterator_tag)
         {
             const szt len = distance(first, last);
             if (len > size())
@@ -736,28 +723,29 @@ namespace SFTL
         }
 
         template<typename... Args>
-        void push_back_aux(Args &&...args);
+        constexpr void push_back_aux(Args &&...args);
 
         template<typename... Args>
-        void push_front_aux(Args &&...args);
+        constexpr void push_front_aux(Args &&...args);
 
-        void pop_back_aux();
+        constexpr void pop_back_aux();
 
-        void pop_front_aux();
-
-        template<typename InputIterator, typename Sentinel>
-        void range_prepend(InputIterator first, Sentinel last, szt n);
+        constexpr void pop_front_aux();
 
         template<typename InputIterator, typename Sentinel>
-        void range_append(InputIterator first, Sentinel last, szt n);
+        constexpr void range_prepend(InputIterator first, Sentinel last, szt n);
+
+        template<typename InputIterator, typename Sentinel>
+        constexpr void range_append(InputIterator first, Sentinel last, szt n);
 
         template<typename InputIterator>
-        void range_insert_aux(iterator pos, InputIterator first, InputIterator last, input_iterator_tag);
+        constexpr void range_insert_aux(iterator pos, InputIterator first, InputIterator last, input_iterator_tag);
 
         template<typename ForwardIterator>
-        void range_insert_aux(iterator pos, ForwardIterator first, ForwardIterator last, forward_iterator_tag);
+        constexpr void range_insert_aux(iterator pos, ForwardIterator first, ForwardIterator last,
+                                        forward_iterator_tag);
 
-        void fill_insert(iterator pos, szt n, const value_type &x);
+        constexpr void fill_insert(iterator pos, szt n, const value_type &x);
 
         struct TemporaryValue
         {
@@ -772,7 +760,7 @@ namespace SFTL
             constexpr value_type &val() noexcept { return tmp_val; }
 
         private:
-            constexpr Type *get_pointer() noexcept { return alddressof(tmp_val); }
+            constexpr Type *get_pointer() noexcept { return addressof(tmp_val); }
 
             union
             {
@@ -785,14 +773,14 @@ namespace SFTL
         iterator insert_aux_elem(iterator pos, const value_type &x) { return emplace_aux(pos, x); }
 
         template<typename... Args>
-        iterator emplace_aux(iterator pos, Args &&...args);
+        constexpr iterator emplace_aux(iterator pos, Args &&...args);
 
-        void insert_aux_fill(iterator pos, szt n, const value_type &x);
+        constexpr void insert_aux_fill(iterator pos, szt n, const value_type &x);
 
         template<typename ForwardIterator>
-        void insert_aux_range(iterator pos, ForwardIterator first, ForwardIterator last, szt n);
+        constexpr void insert_aux_range(iterator pos, ForwardIterator first, ForwardIterator last, szt n);
 
-        void destroy_data_aux(iterator first, iterator last);
+        constexpr void destroy_data_aux(iterator first, iterator last);
 
         template<typename Alloc1>
         void destroy_data(iterator first, iterator last, const Alloc1 &)
@@ -820,13 +808,13 @@ namespace SFTL
             this->impl.finish = pos;
         }
 
-        iterator erase_aux(iterator pos);
+        constexpr iterator erase_aux(iterator pos);
 
-        iterator erase_aux(iterator first, iterator last);
+        constexpr iterator erase_aux(iterator first, iterator last);
 
-        void default_append(szt n);
+        constexpr void default_append(szt n);
 
-        bool shrink_to_fit_internal();
+        constexpr bool shrink_to_fit_internal();
 
         iterator reserve_elements_at_front(szt n)
         {
@@ -844,9 +832,9 @@ namespace SFTL
             return this->impl.finish + difference_type(n);
         }
 
-        void new_elements_at_front(szt new_elements);
+        constexpr void new_elements_at_front(szt new_elements);
 
-        void new_elements_at_back(szt new_elements);
+        constexpr void new_elements_at_back(szt new_elements);
 
         void reserve_map_at_back(szt nodes_to_add = 1)
         {
@@ -860,7 +848,7 @@ namespace SFTL
                 reallocate_map(nodes_to_add, true);
         }
 
-        void reallocate_map(szt nodes_to_add, bool add_at_front);
+        constexpr void reallocate_map(szt nodes_to_add, bool add_at_front);
 
         void move_assign1(deque &&x, true_type) noexcept
         {
@@ -874,7 +862,7 @@ namespace SFTL
             if (getTypeAllocator() == x.getTypeAllocator())
                 return move_assign1(move(x), true_type());
 
-            constexpr bool move_storage = AllocTraits::_S_propagate_on_move_assign();
+            constexpr bool move_storage = AllocTraits::spropagate_on_move_assign();
             move_assign2(move(x), bool_constant<move_storage>());
         }
 
