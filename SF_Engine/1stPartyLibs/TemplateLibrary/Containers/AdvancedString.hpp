@@ -1,51 +1,13 @@
 #pragma once
+#include "../Algorithm.hpp"
 #include "../Allocator.hpp"
 #include "../Compare.hpp"
-#include "../Iterators.hpp"
 #include "Span.hpp"
 
 namespace SFTL
 {
     namespace Detail
     {
-        template<typename T>
-        constexpr bool IsSpaceChar(T c)
-        {
-            return c == static_cast<T>(' ') || c == static_cast<T>('\t') || c == static_cast<T>('\n') ||
-                   c == static_cast<T>('\v') || c == static_cast<T>('\f') || c == static_cast<T>('\r');
-        }
-
-        template<typename T>
-        constexpr size_type StrLen(const T *s)
-        {
-            size_type n = 0;
-            while (s[n] != T{})
-                ++n;
-            return n;
-        }
-
-        template<typename T>
-        constexpr int Compare(const T *a, const T *b, size_type n)
-        {
-            for (size_type i = 0; i < n; ++i)
-            {
-                if (a[i] < b[i])
-                    return -1;
-                if (b[i] < a[i])
-                    return 1;
-            }
-            return 0;
-        }
-
-        template<typename It1, typename It2>
-        constexpr bool Equal(It1 first1, It1 last1, It2 first2)
-        {
-            for (; first1 != last1; ++first1, ++first2)
-                if (!(*first1 == *first2))
-                    return false;
-            return true;
-        }
-
         template<typename It, typename Val>
         constexpr void FillN(It first, size_type n, const Val &v)
         {
@@ -60,18 +22,12 @@ namespace SFTL
                 *first = v;
         }
 
-        template<typename BidirIt1, typename BidirIt2>
-        constexpr BidirIt2 MoveBackward(BidirIt1 first, BidirIt1 last, BidirIt2 dlast)
+        template<typename A, typename B>
+        constexpr B MoveBackward(A first, A last, B last2)
         {
             while (first != last)
-                *(--dlast) = ::SFTL::move(*(--last));
-            return dlast;
-        }
-
-        template<typename Tp>
-        constexpr const Tp &Min(const Tp &a, const Tp &b)
-        {
-            return (b < a) ? b : a;
+                *(--last2) = ::SFTL::move(*(--last));
+            return last2;
         }
 
         constexpr size_type HashSpan(const void *ptr, size_type byteCount)
@@ -98,24 +54,24 @@ namespace SFTL
         constexpr AdvancedStringView() = default;
         constexpr AdvancedStringView(const T *d, size_type s) : data_(d), size_(s) {}
 
-        constexpr const T *Data() const { return data_; }
+        [[nodiscard]] constexpr const T *Data() const { return data_; }
         [[nodiscard]] constexpr size_type Size() const { return size_; }
         [[nodiscard]] constexpr bool Empty() const { return size_ == 0; }
-        constexpr const T *begin() const { return data_; }
-        constexpr const T *end() const { return data_ + size_; }
+        [[nodiscard]] constexpr const T *begin() const { return data_; }
+        [[nodiscard]] constexpr const T *end() const { return data_ + size_; }
         constexpr const T &operator[](size_type i) const { return data_[i]; }
 
         constexpr operator ::SFTL::span<const T>() const { return span<const T>(data_, size_); }
 
         constexpr bool operator==(const AdvancedStringView &rhs) const
         {
-            return size_ == rhs.size_ && (data_ == rhs.data_ || Detail::Equal(begin(), end(), rhs.begin()));
+            return size_ == rhs.size_ && (data_ == rhs.data_ || equal(begin(), end(), rhs.begin()));
         }
 
         constexpr bool operator==(const T *rhs) const
         {
-            size_type len = Detail::StrLen(rhs);
-            return size_ == len && Detail::Equal(begin(), end(), rhs);
+            size_type len = strlen(rhs);
+            return size_ == len && equal(begin(), end(), rhs);
         }
 
         constexpr auto operator<=>(const AdvancedStringView &rhs) const
@@ -149,7 +105,7 @@ namespace SFTL
 
         [[nodiscard]] constexpr bool IsHeap() const { return capacity_ > kInlineCapacity; }
         constexpr T *Ptr() { return IsHeap() ? storage_.heapBuf : storage_.inlineBuf; }
-        constexpr const T *Ptr() const { return IsHeap() ? storage_.heapBuf : storage_.inlineBuf; }
+        [[nodiscard]] constexpr const T *Ptr() const { return IsHeap() ? storage_.heapBuf : storage_.inlineBuf; }
 
         constexpr void DestroyHeap()
         {
@@ -223,7 +179,7 @@ namespace SFTL
                 AppendFloat(out, static_cast<double>(value));
             } else if constexpr (is_pointer_v<D> && is_same_v<remove_cv_t<remove_pointer_t<D>>, T>)
             {
-                out.append(value, Detail::StrLen(value));
+                out.append(value, strlen(value));
             } else
             {
                 out.append(value);
@@ -367,7 +323,7 @@ namespace SFTL
         }
 
         constexpr AdvancedString(const T *cstr, const Allocator &alloc = Allocator()) :
-            AdvancedString(cstr, Detail::StrLen(cstr), alloc)
+            AdvancedString(cstr, strlen(cstr), alloc)
         {
         }
 
@@ -391,8 +347,8 @@ namespace SFTL
         constexpr AdvancedString(const AdvancedString &other, size_type pos, size_type count = npos,
                                  const Allocator &alloc = Allocator()) : alloc_(alloc)
         {
-            pos   = Detail::Min(pos, other.size_);
-            count = Detail::Min(count, other.size_ - pos);
+            pos   = min(pos, other.size_);
+            count = min(count, other.size_ - pos);
             AssignRaw(other.Ptr() + pos, count);
         }
 
@@ -427,7 +383,7 @@ namespace SFTL
 
         constexpr AdvancedString &operator=(const T *cstr)
         {
-            AssignRaw(cstr, Detail::StrLen(cstr));
+            AssignRaw(cstr, strlen(cstr));
             return *this;
         }
         constexpr AdvancedString &operator=(T ch)
@@ -449,7 +405,7 @@ namespace SFTL
                 return nullptr;
             return Ptr()[i];
         }
-        constexpr const_reference at(size_type i) const
+        [[nodiscard]] constexpr const_reference at(size_type i) const
         {
             if (i >= size_)
                 return nullptr;
@@ -460,32 +416,32 @@ namespace SFTL
         constexpr const_reference operator[](size_type i) const { return Ptr()[i]; }
 
         constexpr reference front() { return Ptr()[0]; }
-        constexpr const_reference front() const { return Ptr()[0]; }
+        [[nodiscard]] constexpr const_reference front() const { return Ptr()[0]; }
         constexpr reference back() { return Ptr()[size_ - 1]; }
-        constexpr const_reference back() const { return Ptr()[size_ - 1]; }
+        [[nodiscard]] constexpr const_reference back() const { return Ptr()[size_ - 1]; }
 
-        constexpr const T *data() const noexcept { return Ptr(); }
+        [[nodiscard]] constexpr const T *data() const noexcept { return Ptr(); }
         constexpr T *data() noexcept { return Ptr(); }
-        constexpr const T *c_str() const noexcept { return Ptr(); }
+        [[nodiscard]] constexpr const T *c_str() const noexcept { return Ptr(); }
 
-        constexpr span<const T> AsSpan() const { return span<const T>(Ptr(), size_); }
-        constexpr AdvancedStringView<T> View() const { return {Ptr(), size_}; }
+        [[nodiscard]] constexpr span<const T> AsSpan() const { return span<const T>(Ptr(), size_); }
+        [[nodiscard]] constexpr AdvancedStringView<T> View() const { return {Ptr(), size_}; }
         constexpr explicit operator AdvancedStringView<T>() const { return View(); }
         constexpr explicit operator span<const T>() const { return AsSpan(); }
 
         constexpr iterator begin() noexcept { return Ptr(); }
         constexpr iterator end() noexcept { return Ptr() + size_; }
-        constexpr const_iterator begin() const noexcept { return Ptr(); }
-        constexpr const_iterator end() const noexcept { return Ptr() + size_; }
-        constexpr const_iterator cbegin() const noexcept { return Ptr(); }
-        constexpr const_iterator cend() const noexcept { return Ptr() + size_; }
+        [[nodiscard]] constexpr const_iterator begin() const noexcept { return Ptr(); }
+        [[nodiscard]] constexpr const_iterator end() const noexcept { return Ptr() + size_; }
+        [[nodiscard]] constexpr const_iterator cbegin() const noexcept { return Ptr(); }
+        [[nodiscard]] constexpr const_iterator cend() const noexcept { return Ptr() + size_; }
 
         constexpr reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
         constexpr reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
-        constexpr const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
-        constexpr const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
-        constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
-        constexpr const_reverse_iterator crend() const noexcept { return rend(); }
+        [[nodiscard]] constexpr const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
+        [[nodiscard]] constexpr const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
+        [[nodiscard]] constexpr const_reverse_iterator crbegin() const noexcept { return rbegin(); }
+        [[nodiscard]] constexpr const_reverse_iterator crend() const noexcept { return rend(); }
 
         [[nodiscard]] constexpr bool empty() const noexcept { return size_ == 0; }
         [[nodiscard]] constexpr size_type size() const noexcept { return size_; }
@@ -580,7 +536,7 @@ namespace SFTL
             push_back(ch);
             return *this;
         }
-        constexpr AdvancedString &operator+=(const T *cstr) { return append(cstr, Detail::StrLen(cstr)); }
+        constexpr AdvancedString &operator+=(const T *cstr) { return append(cstr, strlen(cstr)); }
 
         constexpr iterator insert(const_iterator pos, size_type count, T ch)
         {
@@ -596,7 +552,7 @@ namespace SFTL
 
         constexpr AdvancedString &insert(size_type index, const T *src, size_type count)
         {
-            index = Detail::Min(index, size_);
+            index = min(index, size_);
             GrowPreserving(size_ + count);
             T *p = Ptr();
             Detail::MoveBackward(p + index, p + size_, p + size_ + count);
@@ -623,8 +579,8 @@ namespace SFTL
         constexpr iterator erase(const_iterator pos) { return erase(pos, pos + 1); }
         constexpr AdvancedString &erase(size_type index = 0, size_type count = npos)
         {
-            index = Detail::Min(index, size_);
-            count = Detail::Min(count, size_ - index);
+            index = min(index, size_);
+            count = min(count, size_ - index);
             erase(begin() + index, begin() + index + count);
             return *this;
         }
@@ -636,25 +592,25 @@ namespace SFTL
             *this = move(tmp);
         }
 
-        constexpr AdvancedString substr(size_type pos = 0, size_type count = npos) const
+        [[nodiscard]] constexpr AdvancedString substr(size_type pos = 0, size_type count = npos) const
         {
-            pos   = Detail::Min(pos, size_);
-            count = Detail::Min(count, size_ - pos);
+            pos   = min(pos, size_);
+            count = min(count, size_ - pos);
             return AdvancedString(Ptr() + pos, count, alloc_);
         }
 
         // legacy view-returning accessor, prefer substr() for std::string parity
-        constexpr AdvancedStringView<T> SubstrView(size_type offset, size_type count = npos) const
+        [[nodiscard]] constexpr AdvancedStringView<T> SubstrView(size_type offset, size_type count = npos) const
         {
-            offset = Detail::Min(offset, size_);
-            count  = Detail::Min(count, size_ - offset);
+            offset = min(offset, size_);
+            count  = min(count, size_ - offset);
             return AdvancedStringView<T>(Ptr() + offset, count);
         }
 
-        constexpr int compare(const AdvancedString &rhs) const noexcept
+        [[nodiscard]] constexpr int compare(const AdvancedString &rhs) const noexcept
         {
-            size_type n = Detail::Min(size_, rhs.size_);
-            int r       = n ? Detail::Compare(Ptr(), rhs.Ptr(), n) : 0;
+            size_type n = min(size_, rhs.size_);
+            int r       = n ? compare(Ptr(), rhs.Ptr(), n) : 0;
             if (r != 0)
                 return r;
             if (size_ < rhs.size_)
@@ -663,10 +619,10 @@ namespace SFTL
                 return 1;
             return 0;
         }
-        constexpr int compare(const AdvancedStringView<T> &rhs) const noexcept
+        [[nodiscard]] constexpr int compare(const AdvancedStringView<T> &rhs) const noexcept
         {
-            size_type n = Detail::Min(size_, rhs.Size());
-            int r       = n ? Detail::Compare(Ptr(), rhs.Data(), n) : 0;
+            size_type n = min(size_, rhs.Size());
+            int r       = n ? compare(Ptr(), rhs.Data(), n) : 0;
             if (r != 0)
                 return r;
             if (size_ < rhs.Size())
@@ -676,30 +632,31 @@ namespace SFTL
             return 0;
         }
 
-        constexpr size_type find(T ch, size_type from = 0) const noexcept
+        [[nodiscard]] constexpr size_type find(T ch, size_type from = 0) const noexcept
         {
             for (size_type i = from; i < size_; ++i)
                 if (Ptr()[i] == ch)
                     return i;
             return npos;
         }
-        constexpr size_type find(const AdvancedStringView<T> &needle, size_type from = 0) const noexcept
+
+        [[nodiscard]] constexpr size_type find(const AdvancedStringView<T> &needle, size_type from = 0) const noexcept
         {
             if (needle.Empty())
                 return from <= size_ ? from : npos;
             if (needle.Size() > size_)
                 return npos;
             for (size_type i = from; i + needle.Size() <= size_; ++i)
-                if (Detail::Equal(needle.begin(), needle.end(), Ptr() + i))
+                if (equal(needle.begin(), needle.end(), Ptr() + i))
                     return i;
             return npos;
         }
 
-        constexpr size_type rfind(T ch, size_type from = npos) const noexcept
+        [[nodiscard]] constexpr size_type rfind(T ch, size_type from = npos) const noexcept
         {
             if (size_ == 0)
                 return npos;
-            size_type i = Detail::Min(from, size_ - 1);
+            size_type i = min(from, size_ - 1);
             for (;; --i)
             {
                 if (Ptr()[i] == ch)
@@ -710,8 +667,11 @@ namespace SFTL
             return npos;
         }
 
-        constexpr size_type find_first_of(T ch, size_type from = 0) const noexcept { return find(ch, from); }
-        constexpr size_type find_first_not_of(T ch, size_type from = 0) const noexcept
+        [[nodiscard]] constexpr size_type find_first_of(T ch, size_type from = 0) const noexcept
+        {
+            return find(ch, from);
+        }
+        [[nodiscard]] constexpr size_type find_first_not_of(T ch, size_type from = 0) const noexcept
         {
             for (size_type i = from; i < size_; ++i)
                 if (Ptr()[i] != ch)
@@ -719,28 +679,31 @@ namespace SFTL
             return npos;
         }
 
-        constexpr bool starts_with(const AdvancedStringView<T> &sv) const noexcept
+        [[nodiscard]] constexpr bool starts_with(const AdvancedStringView<T> &sv) const noexcept
         {
-            return sv.Size() <= size_ && Detail::Equal(sv.begin(), sv.end(), Ptr());
+            return sv.Size() <= size_ && equal(sv.begin(), sv.end(), Ptr());
         }
-        constexpr bool ends_with(const AdvancedStringView<T> &sv) const noexcept
+        [[nodiscard]] constexpr bool ends_with(const AdvancedStringView<T> &sv) const noexcept
         {
-            return sv.Size() <= size_ && Detail::Equal(sv.begin(), sv.end(), Ptr() + size_ - sv.Size());
+            return sv.Size() <= size_ && equal(sv.begin(), sv.end(), Ptr() + size_ - sv.Size());
         }
-        constexpr bool contains(const AdvancedStringView<T> &sv) const noexcept { return find(sv) != npos; }
-        constexpr bool contains(T ch) const noexcept { return find(ch) != npos; }
+        [[nodiscard]] constexpr bool contains(const AdvancedStringView<T> &sv) const noexcept
+        {
+            return find(sv) != npos;
+        }
+        [[nodiscard]] constexpr bool contains(T ch) const noexcept { return find(ch) != npos; }
 
         [[nodiscard]] constexpr bool IsSmall() const { return !IsHeap(); }
 
-        constexpr AdvancedString Trim() const
+        [[nodiscard]] constexpr AdvancedString Trim() const
         {
             size_type start = 0;
             size_type end_  = size_;
             const T *p      = Ptr();
 
-            while (start < end_ && Detail::IsSpaceChar(p[start]))
+            while (start < end_ && is_space(p[start]))
                 ++start;
-            while (end_ > start && Detail::IsSpaceChar(p[end_ - 1]))
+            while (end_ > start && is_space(p[end_ - 1]))
                 --end_;
 
             return AdvancedString(p + start, end_ - start, alloc_);
@@ -776,19 +739,45 @@ namespace SFTL
             return move(lhs);
         }
 
-        // Duck-typed: works with std::ostream (or anything else exposing
-        // .write(const char*, N)) without this header needing <ostream>.
-        template<typename Stream>
-        friend Stream &operator<<(Stream &os, const AdvancedString &s)
+        constexpr AdvancedString &operator<<(const AdvancedString &s)
         {
-            if constexpr (is_same_v<T, char>)
-                os.write(s.Ptr(), static_cast<long long>(s.size_));
-            return os;
+            append(s);
+            return *this;
         }
 
-        constexpr const T *Data() const { return Ptr(); }
-        constexpr const T *CStr() const { return Ptr(); }
+        constexpr AdvancedString &operator>>(AdvancedString &target) noexcept
+        {
+            auto view       = this->View();
+            size_type start = 0;
+            while (start < view.size() && is_space(static_cast<unsigned char>(view[start])))
+            {
+                start++;
+            }
+            size_type end = start;
+            while (end < view.size() && !is_space(static_cast<unsigned char>(view[end])))
+            {
+                end++;
+            }
 
+            if (start < view.size())
+            {
+                target = AdvancedString(view.substr(start, end - start));
+                *this  = AdvancedString(view.substr(end));
+            } else
+            {
+                target.clear(); // Nothing left to extract
+            }
+
+            return *this;
+        }
+
+        constexpr AdvancedString *IfContains(const AdvancedString &s) noexcept
+        {
+            return contains(s.View()) ? this : nullptr;
+        }
+
+        [[nodiscard]] constexpr const T *Data() const { return Ptr(); }
+        [[nodiscard]] constexpr const T *CStr() const { return Ptr(); }
         [[nodiscard]] constexpr size_type Size() const { return size_; }
         [[nodiscard]] constexpr size_type Length() const { return size_; }
         [[nodiscard]] constexpr size_type Capacity() const { return capacity_; }
@@ -799,12 +788,20 @@ namespace SFTL
         constexpr AdvancedString &Append(const T *src, size_type count) { return append(src, count); }
         constexpr AdvancedString &Append(const AdvancedStringView<T> &sv) { return append(sv); }
         constexpr AdvancedString &Append(const AdvancedString &other) { return append(other); }
-        constexpr AdvancedStringView<T> Substr(size_type offset, size_type count = npos) const
+        [[nodiscard]] constexpr AdvancedStringView<T> Substr(size_type offset, size_type count = npos) const
         {
             return SubstrView(offset, count);
         }
-        constexpr size_type Find(const T &c, size_type from = 0) const { return find(c, from); }
+        [[nodiscard]] constexpr size_type Find(const T &c, size_type from = 0) const { return find(c, from); }
     };
+
+
+#define DEFINE_STRING_LITERAL_OPERATOR(StringType, Suffix)                                                             \
+    constexpr StringType operator""##Suffix(const char *str, decltype(sizeof(0)) len) noexcept                         \
+    {                                                                                                                  \
+        return StringType(AdvancedStringView<char>(str, len));                                                         \
+    }
+
 
     template<typename T, typename Allocator = allocator<T>>
     AdvancedString<T, Allocator> MakeAdvancedString(span<const T> data)

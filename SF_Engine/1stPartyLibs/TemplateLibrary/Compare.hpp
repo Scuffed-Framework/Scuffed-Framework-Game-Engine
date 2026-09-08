@@ -765,4 +765,5 @@ namespace SFTL
 
     template<typename Type, typename Arb = Type>
     using compare_three_way_result_t = typename compare_three_way_result<Type, Arb>::type;
+    
 } // namespace SFTL
