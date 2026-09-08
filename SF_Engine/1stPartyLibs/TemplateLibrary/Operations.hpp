@@ -32,7 +32,7 @@
 /* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                              */
 /******************************************************************************/
 #pragma once
-#include "TypeTraits.hpp"
+#include "Allocator.hpp"
 #define SFTL_VERIFY(cond, message) ((void) ((cond) || (printf(message), 0)))
 
 namespace SFTL
@@ -304,12 +304,8 @@ namespace SFTL
     template<typename Type>
     constexpr inline void destroy_at(Type *Location)
     {
-        if constexpr (__cplusplus > 201703L && is_array_v<Type>)
-        {
-            for (auto &x: *Location)
-                destroy_at(addressof(x));
-        } else
-            Location->~Type();
+        for (auto &x: *Location)
+            destroy_at(addressof(x));
     }
 
     template<typename Type, typename... Arguments>
@@ -338,5 +334,66 @@ namespace SFTL
             return;
         }
         ::new (static_cast<void *>(type)) Type(forward<Argument>(arguments)...);
+    }
+
+    template<typename ForwardIterator, typename Allocator>
+    void uninitialized_default(ForwardIterator first, ForwardIterator last, Allocator &alloc)
+    {
+        ForwardIterator cur = first;
+        try
+        {
+            typedef allocator_traits<Allocator> traits;
+            for (; cur != last; ++cur)
+                traits::construct(alloc, addressof(*cur));
+        } catch (...)
+        {
+            search_and_destroy_allocator(first, cur, alloc);
+            throw;
+        }
+    }
+
+    template<typename In, typename Fwd, typename Allocator>
+    Fwd uninitialized_copy(In first, In last, Fwd result, Allocator &alloc)
+    {
+        typedef allocator_traits<Allocator> traits;
+        Fwd cur = result;
+        try
+        {
+            for (; first != last; ++first, (void) ++cur)
+            {
+                traits::construct(alloc, addressof(*cur));
+            }
+            return cur;
+        } catch (...)
+        {
+            for (; result != cur; ++result)
+            {
+                search_and_destroy_allocator(first, cur, alloc);
+            }
+            throw; // Rethrow exception
+        }
+    }
+
+    template<typename In, typename Fwd, typename Allocator>
+    Fwd uninitialized_move(In first, In last, Fwd result, Allocator &alloc)
+    {
+
+        typedef allocator_traits<Allocator> traits;
+        Fwd cur = result;
+        try
+        {
+            for (; first != last; ++first, (void) ++cur)
+            {
+                traits::construct(alloc, addressof(*cur));
+            }
+            return cur;
+        } catch (...)
+        {
+            for (; result != cur; ++result)
+            {
+                search_and_destroy_allocator(first, cur, alloc);
+            }
+            throw;
+        }
     }
 } // namespace SFTL
