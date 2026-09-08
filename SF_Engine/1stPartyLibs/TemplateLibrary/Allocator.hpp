@@ -32,9 +32,8 @@
 /* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                              */
 /******************************************************************************/
 #pragma once
+#include "Iterators.hpp"
 #include "New.hpp"
-#include "TypeTraits.hpp"
-#include "Types.hpp"
 
 namespace SFTL
 {
@@ -391,21 +390,21 @@ namespace SFTL
     };
 
     template<typename Alloc, typename = void>
-    struct is_allocator : false_type
+    struct isAllocator : false_type
     {
     };
 
     template<typename Alloc>
-    struct is_allocator<Alloc, void_t<typename Alloc::value_type, decltype(declval<Alloc &>().allocate(size_t{}))>>
+    struct isAllocator<Alloc, void_t<typename Alloc::value_type, decltype(declval<Alloc &>().allocate(size_t{}))>>
         : true_type
     {
     };
 
     template<typename Alloc>
-    using require_allocator = typename enable_if<is_allocator<Alloc>::value, Alloc>::type;
+    using require_allocator = typename enable_if<isAllocator<Alloc>::value, Alloc>::type;
 
     template<typename Alloc>
-    using require_not_allocator = typename enable_if<!is_allocator<Alloc>::value, Alloc>::type;
+    using require_notAllocator = typename enable_if<!isAllocator<Alloc>::value, Alloc>::type;
 
     template<typename Alloc>
     concept allocator_like = requires(Alloc &a) {
@@ -414,6 +413,40 @@ namespace SFTL
     };
 
     template<typename Alloc>
-    concept not_allocator_like = !allocator_like<Alloc>;
+    concept notAllocator_like = !allocator_like<Alloc>;
+
+
+    template<typename T, bool = Or<typename is_copy_constructible<typename T::value_type>::value,
+                                   typename is_nothrow_move_constructible<typename T::value_type>::value>::value>
+    struct shrink_to_fit_auxiliary
+    {
+        static bool just_do_it(T &) noexcept { return false; }
+    };
+
+
+    template<typename T>
+    struct shrink_to_fit_auxiliary<T, true>
+    {
+        static bool just_do_it(T &type) noexcept
+        {
+            try
+            {
+                T(make_move_if_noexcept_iterator<typename T::iterator>(type.begin()),
+                  make_move_if_noexcept_iterator<typename T::iterator>(type.end()), type.getAllocator())
+                        .swap(type);
+
+                return true;
+            } catch (...)
+            {
+                return false;
+            }
+        }
+    };
+    template<typename Fwd, typename Allocator>
+    constexpr void search_and_destroy_allocator(Fwd first, Fwd last, Allocator &alloc)
+    {
+        for (; first != last; ++first)
+            alloc.destroy(addressof(*first));
+    }
 
 } // namespace SFTL
