@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.hpp"
+#include "TypeTraits.hpp"
 namespace SFTL
 {
     struct input_iterator_tag
@@ -457,5 +457,26 @@ namespace SFTL
     {
         return move_iterator<Iterator>(it);
     }
+
+    template<typename Iterator>
+    class make_move_if_noexcept_iterator
+    {
+        Iterator current;
+
+    public:
+        typedef typename Iterator::value_type value_type;
+
+        explicit make_move_if_noexcept_iterator(Iterator it) : current(it) {}
+
+        value_type &&operator*() const noexcept { return static_cast<value_type &&>(*current); }
+
+        make_move_if_noexcept_iterator &operator++() noexcept
+        {
+            ++current;
+            return *this;
+        }
+
+        bool operator!=(const make_move_if_noexcept_iterator &other) const noexcept { return current != other.current; }
+    };
 
 } // namespace SFTL
