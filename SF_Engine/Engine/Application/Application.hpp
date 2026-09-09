@@ -98,7 +98,7 @@ namespace SF::Engine
                 return;
         }
 
-        Window *window;
+        Window *window{};
 
         explicit Application(ApplicationInfo info, const Version &version = {1, 0, 0}) :
             Info(std::make_unique<ApplicationInfo>(std::move(info)))
@@ -106,7 +106,7 @@ namespace SF::Engine
             auto exeDir = GetExecutablePath().parent_path();
             std::filesystem::current_path(exeDir);
             engine = std::make_unique<Engine>(exeDir.string());
-            engine->SetGameInfo(info);
+            engine->SetGameInfo(info.get());
 
             wndMgr   = SF::Engine::WindowManager::Get();
             renderer = SF::Engine::RenderSystem::Get();
@@ -231,7 +231,7 @@ namespace SF::Engine
          */
         [[nodiscard]] bool IsStarted() const noexcept { return started_; }
 
-        std::vector<File> GetAllModules() const
+        [[nodiscard]] std::vector<File> GetAllModules() const
         {
             std::vector<File> result;
 
@@ -245,7 +245,7 @@ namespace SF::Engine
             return result;
         }
 
-        std::filesystem::path GetExecutablePath() const { return GetExecutablePathImpl(); }
+        [[nodiscard]] std::filesystem::path GetExecutablePath() const { return GetExecutablePathImpl(); }
 
         enum class ShutdownReturn
         {

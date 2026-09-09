@@ -28,14 +28,12 @@ namespace SF::Engine
                             std::make_unique<Surface>(*instance, *physicalDevice, *logicalDevice, *window));
                 });
 
-        // Initialize VMA allocator - required by all Image creation/destruction
         VmaAllocatorCreateInfo allocatorCreateInfo = {};
         allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_2;
         allocatorCreateInfo.physicalDevice         = &*physicalDevice->GetPhysicalDevice();
         allocatorCreateInfo.device                 = *logicalDevice;
         allocatorCreateInfo.instance               = *instance;
 
-        // Wire up volk-loaded function pointers into VMA
         VmaVulkanFunctions vmaVulkanFunctions    = {};
         vmaVulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
         vmaVulkanFunctions.vkGetDeviceProcAddr   = vkGetDeviceProcAddr;
