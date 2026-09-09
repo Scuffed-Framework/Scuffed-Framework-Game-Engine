@@ -3,13 +3,11 @@
 #include <Math/KVP.hpp>
 #include "Atmosphere/AtmospherePipelinePass.hpp"
 
-#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
-#include <1stPartyLibs/TemplateLibrary/Operations.hpp>
-#include <Math/BasicMath.hpp>
 #include <functional>
 #include <string>
+#include <utility>
 
-using namespace SFTL;
+using namespace std;
 namespace SF::Engine
 {
     struct AtmosphereEntry
@@ -27,13 +25,13 @@ namespace SF::Engine
         using PassFactory = std::function<AtmospherePipelinePass *(Pipeline::Stage, const AtmosphereParams &)>;
 
         explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory) :
-            stage_(stage), factory_(std::move(factory))
+            stage_(std::move(stage)), factory_(std::move(factory))
         {
         }
 
         explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory,
-                                      const DynamicArray<KeyValuePair<std::string, AtmosphereData>> &params) :
-            stage_(stage), factory_(std::move(factory))
+                                      const vector<KeyValuePair<std::string, AtmosphereData>> &params) :
+            stage_(std::move(stage)), factory_(std::move(factory))
         {
             entries_.reserve(params.size());
             for (const auto &[name, data]: params)
@@ -81,8 +79,8 @@ namespace SF::Engine
 
         void RemoveAtmosphere(const std::string &name)
         {
-            auto newEnd = ::SFTL::remove_if(entries_.begin(), entries_.end(),
-                                            [&name](const AtmosphereEntry &e) { return e.name == name; });
+            auto newEnd = remove_if(entries_.begin(), entries_.end(),
+                                    [&name](const AtmosphereEntry &e) { return e.name == name; });
             entries_.erase(newEnd, entries_.end());
         }
 
@@ -99,6 +97,6 @@ namespace SF::Engine
 
         Pipeline::Stage stage_;
         PassFactory factory_;
-        ::SFTL::DynamicArray<AtmosphereEntry> entries_;
+        vector<AtmosphereEntry> entries_;
     };
 } // namespace SF::Engine

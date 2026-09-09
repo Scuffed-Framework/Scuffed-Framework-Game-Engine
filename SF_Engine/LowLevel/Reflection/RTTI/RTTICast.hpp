@@ -1,6 +1,4 @@
 #pragma once
-#include <1stPartyLibs/TemplateLibrary/Memory.hpp>
-#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
 #include "RTTI.hpp"
 
 namespace SF::RTTI
@@ -61,4 +59,4 @@ namespace SF::RTTI
         }
         return nullptr;
     }
-}
+} // namespace SF::RTTI

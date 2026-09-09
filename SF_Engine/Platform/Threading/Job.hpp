@@ -1,15 +1,14 @@
 #pragma once
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 #include <thread>
 
-using namespace SFTL;
 namespace SF::Engine
 {
+    using namespace std;
     class Job : NoCopy
     {
     public:
-        Job(bool isAutoDelete, bool isCompletion = false, uint8 priority = 0);
+        Job(bool isAutoDelete, bool isCompletion = false, uint8_t priority = 0);
         enum State
         {
             STATE_COMPLETE_OR_CANCELLED, // Default to a cancelled state so if something searches for a job, and it
@@ -34,19 +33,19 @@ namespace SF::Engine
         void StartAsChild(Job *childJob);
 
         void WaitForChildren();
-        bool IsCancelled() const;
-        bool IsCompleted() const;
-        bool ShouldAutoDelete() const;
+        [[nodiscard]] bool IsCancelled() const;
+        [[nodiscard]] bool IsCompleted() const;
+        [[nodiscard]] bool ShouldAutoDelete() const;
 
         void StartAndWaitForCompletion();
 
         Job *GetDependent() const;
 
-        unsigned int GetDependentCount() const;
+        [[nodiscard]] unsigned int GetDependentCount() const;
         void IncrementDependentCount();
         void DecrementDependentCount();
 
-        uint8 GetPriority() const;
+        uint8_t GetPriority() const;
 
     private:
         enum
@@ -63,7 +62,7 @@ namespace SF::Engine
             FLAG_PRIORITY_START_BIT = 20,
 
             // 20 bits for count
-            FLAG_DEPENDENTCOUNT_MASK = 0x000fffff
+            FLAG_DEPENDENT_COUNT_MASK = 0x000fffff
         };
     };
-}
+} // namespace SF::Engine

@@ -1,6 +1,4 @@
 #pragma once
-#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <filesystem>
 #include <string>
 
@@ -8,11 +6,12 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     struct ProcessID
     {
         Platform::NativePID Value = Platform::InvalidPID;
 
-        constexpr bool IsValid() const noexcept { return Value != Platform::InvalidPID; }
+        [[nodiscard]] constexpr bool IsValid() const noexcept { return Value != Platform::InvalidPID; }
 
         constexpr explicit operator bool() const noexcept { return IsValid(); }
 
@@ -35,12 +34,11 @@ namespace SF::Engine
     public:
         Process() = default;
         explicit Process(ProcessID pid);
-        explicit Process(std::filesystem::path program, std::filesystem::path directory) :
+        explicit Process(filesystem::path program, filesystem::path directory) :
             Process(std::move(program), {}, std::move(directory))
         {
         }
-        explicit Process(std::filesystem::path program, ::SFTL::DynamicArray<std::string> args,
-                         std::filesystem::path directory)
+        explicit Process(filesystem::path program, vector<string> args, filesystem::path directory)
         {
             *this = Launch(program, args, directory);
         }
@@ -59,26 +57,25 @@ namespace SF::Engine
         [[nodiscard]] bool IsRunning() const;
         [[nodiscard]] ProcessState GetState() const;
         [[nodiscard]] int GetExitCode() const;
-        [[nodiscard]] std::string GetName() const;
+        [[nodiscard]] string GetName() const;
 
         bool Wait();
         bool Wait(uint32_t timeoutMilliseconds);
 
-        bool Terminate(int exitCode = 0);
+        [[nodiscard]] bool Terminate(int exitCode = 0) const;
 
         static Process Current();
 
-        static Process Launch(const std::filesystem::path &executable,
-                              const ::SFTL::DynamicArray<std::string> &arguments = {},
-                              const std::filesystem::path &workingDirectory      = {});
+        static Process Launch(const filesystem::path &executable, const vector<string> &arguments = {},
+                              const filesystem::path &workingDirectory = {});
 
     private:
         ProcessID m_PID{};
         int m_ExitStatus = 0;
 
     public:
-        static std::optional<Process> GetProcessById(ProcessID pid);
-        static ::SFTL::DynamicArray<Process> GetProcessesByName(std::string_view name);
-        static ::SFTL::DynamicArray<Process> GetProcesses();
+        static optional<Process> GetProcessById(ProcessID pid);
+        static vector<Process> GetProcessesByName(string_view name);
+        static vector<Process> GetProcesses();
     };
-}
+} // namespace SF::Engine

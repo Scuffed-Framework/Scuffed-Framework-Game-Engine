@@ -1,6 +1,4 @@
 #pragma once
-#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -15,28 +13,28 @@
 
 namespace SF::RTTI
 {
-    using namespace ::SFTL;
+    using namespace std;
 
     namespace Detail
     {
-        inline constexpr uint64 FnvOffset = 14695981039346656037ull;
-        inline constexpr uint64 FnvPrime  = 1099511628211ull;
+        inline constexpr uint64_t FnvOffset = 14695981039346656037ull;
+        inline constexpr uint64_t FnvPrime  = 1099511628211ull;
 
         // Iterative (not recursive) so it doesn't hit MSVC's constexpr
         // recursion-depth limit on long, heavily-templated signatures.
-        constexpr uint64 Fnv1aHash(const char *str)
+        constexpr uint64_t Fnv1aHash(const char *str)
         {
-            uint64 hash = FnvOffset;
+            uint64_t hash = FnvOffset;
             while (*str != '\0')
             {
-                hash = (hash ^ static_cast<uint64>(*str)) * FnvPrime;
+                hash = (hash ^ static_cast<uint64_t>(*str)) * FnvPrime;
                 ++str;
             }
             return hash;
         }
 
         template<typename T>
-        constexpr uint64 TypeIdOf()
+        constexpr uint64_t TypeIdOf()
         {
             return Fnv1aHash(SF_RTTI_FUNC_SIG);
         }
@@ -44,16 +42,16 @@ namespace SF::RTTI
 
     struct TypeId
     {
-        uint64 value = 0;
+        uint64_t value = 0;
 
         constexpr TypeId() = default;
-        constexpr explicit TypeId(uint64 v) : value(v) {}
+        constexpr explicit TypeId(uint64_t v) : value(v) {}
 
         constexpr bool operator==(const TypeId &rhs) const { return value == rhs.value; }
         constexpr bool operator!=(const TypeId &rhs) const { return value != rhs.value; }
         constexpr bool operator<(const TypeId &rhs) const { return value < rhs.value; }
 
-        constexpr bool IsValid() const { return value != 0; }
+        [[nodiscard]] constexpr bool IsValid() const { return value != 0; }
         static constexpr TypeId Null() { return TypeId(0); }
     };
 
@@ -87,4 +85,4 @@ namespace std
     {
         std::size_t operator()(const SF::RTTI::TypeId &id) const noexcept { return static_cast<std::size_t>(id.value); }
     };
-}
+} // namespace std

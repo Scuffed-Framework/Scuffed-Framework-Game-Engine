@@ -4,15 +4,10 @@
 #include <Math/Quaternion/Quaternion.hpp>
 #include <Math/Vectors/Vector3.hpp>
 
-#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
-#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 
-#include <1stPartyLibs/TemplateLibrary/Containers/String.hpp>
-
-using namespace SFTL;
 namespace SF::Engine
 {
+    using namespace std;
     namespace Animation
     {
         class Joint
@@ -20,8 +15,8 @@ namespace SF::Engine
             SF_RTTI_BASE(Joint)
         public:
             // give no data cuz
-            explicit Joint(uint32 index = 0, ::SFTL::string name = "", const Mat4 &bindLocalTransform = Mat4(0)) :
-                index(index), name(::SFTL::move(name)), localBindTransform(bindLocalTransform)
+            explicit Joint(uint32_t index = 0, string name = "", const Mat4 &bindLocalTransform = Mat4(0)) :
+                index(index), name(std::move(name)), localBindTransform(bindLocalTransform)
             {
             }
 
@@ -34,13 +29,13 @@ namespace SF::Engine
                     child.CalculateInverseBindTransform(bindTransform);
             }
 
-            [[nodiscard]] uint32 GetIndex() const { return index; }
-            void SetIndex(uint32 index) { this->index = index; }
+            [[nodiscard]] uint32_t GetIndex() const { return index; }
+            void SetIndex(uint32_t index) { this->index = index; }
 
-            [[nodiscard]] const ::SFTL::string &GetName() const { return name; }
-            void SetName(const ::SFTL::string &name) { this->name = name; }
+            [[nodiscard]] const string &GetName() const { return name; }
+            void SetName(const string &name) { this->name = name; }
 
-            [[nodiscard]] const DynamicArray<Joint> &GetChildren() const { return children; }
+            [[nodiscard]] const glm::vec<Joint> &GetChildren() const { return children; }
 
             void AddChild(const Joint &child) { children.emplace_back(child); }
 
@@ -57,8 +52,8 @@ namespace SF::Engine
 
         private:
             uint32_t index = 0;
-            ::SFTL::string name;
-            DynamicArray<Joint> children;
+            string name;
+            vector<Joint> children;
 
             Mat4 localBindTransform;
             Mat4 inverseBindTransform;

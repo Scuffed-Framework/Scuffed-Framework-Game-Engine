@@ -9,11 +9,9 @@
 
 #include <UtilityClasses/NoCopy.hpp>
 
-#include <1stPartyLibs/TemplateLibrary/Operations.hpp>
-
-using namespace ::SFTL;
 namespace SF::Engine
 {
+    using namespace std;
     struct Event
     {
         virtual ~Event() = default;
@@ -32,7 +30,7 @@ namespace SF::Engine
     public:
         EventHandle() : _type(typeid(void)), _id(0) {}
 
-        bool IsValid() const { return _id != 0; }
+        [[nodiscard]] bool IsValid() const { return _id != 0; }
     };
 
     class EventDispatcher
@@ -69,7 +67,7 @@ namespace SF::Engine
 
             listeners.push_back(std::make_unique<Listener<EventType>>(id, std::move(callback)));
 
-            return EventHandle(typeid(EventType), id);
+            return {typeid(EventType), id};
         }
 
         template<typename EventType, typename T>

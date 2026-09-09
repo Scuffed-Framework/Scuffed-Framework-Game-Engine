@@ -1,9 +1,7 @@
 #pragma once
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <Assets/Video/Video.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
-#include <Rendering/Images/Imaged2d>
-#include <unordered_map>
+#include <Rendering/Images/Image2d.hpp>
 #include "EngineSplashScreen.hpp"
 #include "SplashScreenQuotes.hpp"
 
@@ -30,7 +28,7 @@ namespace SF::Engine
         void Stop();
         void AddImage(Image2d, float);
 
-        std::unordered_map<Image2d /*img*/, float /*time*/> Images_;
+        vector<pair<Image2d /*img*/, float /*time*/>> Images_;
         Window SplashScreenWindow_;
     };
-}
+} // namespace SF::Engine

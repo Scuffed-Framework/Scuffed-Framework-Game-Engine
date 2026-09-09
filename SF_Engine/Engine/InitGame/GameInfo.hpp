@@ -1,15 +1,15 @@
 #pragma once
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <string>
 
 #include <Engine/VersionSemantic.hpp>
 
 namespace SF::Engine
 {
+    using namespace std;
     struct GameInfo
     {
     public:
-        const std::string name;
+        const string name;
         Version version;
     };
-}
+} // namespace SF::Engine

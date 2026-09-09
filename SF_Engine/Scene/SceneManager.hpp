@@ -1,6 +1,5 @@
 #pragma once
 
-#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
 #include <Engine/Engine.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include "Scene.hpp"

@@ -3,18 +3,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
-
-#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <string>
 
 namespace SF::Engine
 {
-    using namespace SFTL;
+    using namespace std;
 
-    constexpr uint32 MatrixTimes(const uint32 *mat, uint32 vec)
+    constexpr uint32_t MatrixTimes(const uint32_t *mat, uint32_t vec)
     {
-        uint32 sum = 0;
+        uint32_t sum = 0;
         while (vec)
         {
             if (vec & 1)
@@ -29,9 +26,9 @@ namespace SF::Engine
 
     namespace Internal
     {
-        consteval std::array<uint32, 256> GetCrcTable()
+        consteval array<uint32_t, 256> GetCrcTable()
         {
-            return std::array<uint32, 256>{
+            return array<uint32_t, 256>{
                     0x00000000u, 0x77073096u, 0xee0e612cu, 0x990951bau, 0x076dc419u, 0x706af48fu, 0xe963a535u,
                     0x9e6495a3u, 0x0edb8832u, 0x79dcb8a4u, 0xe0d5e91eu, 0x97d2d988u, 0x09b64c2bu, 0x7eb17cbdu,
                     0xe7b82d07u, 0x90bf1d91u, 0x1db71064u, 0x6ab020f2u, 0xf3b97148u, 0x84be41deu, 0x1adad47du,
@@ -73,15 +70,15 @@ namespace SF::Engine
 
         // Computed exactly once at compile time; every runtime lookup below is
         // therefore a single array index, not a table rebuild.
-        inline constexpr std::array<uint32, 256> CrcTable = GetCrcTable();
+        inline constexpr array<uint32_t, 256> CrcTable = GetCrcTable();
 
-        constexpr uint32 ComputeCrc32Octet(uint32 currentCrc, uint8_t dataOctet)
+        constexpr uint32_t ComputeCrc32Octet(uint32_t currentCrc, uint8_t dataOctet)
         {
-            return CrcTable[(currentCrc ^ static_cast<uint32>(dataOctet)) & 0xffu] ^ (currentCrc >> 8);
+            return CrcTable[(currentCrc ^ static_cast<uint32_t>(dataOctet)) & 0xffu] ^ (currentCrc >> 8);
         }
 
         template<typename CharType>
-        constexpr void Crc32Set(const CharType *data, size_t size, bool forceLowerCase, uint32 &value)
+        constexpr void Crc32Set(const CharType *data, size_t size, bool forceLowerCase, uint32_t &value)
         {
             const CharType *buf = data;
             if (!buf)
@@ -90,7 +87,7 @@ namespace SF::Engine
                 return;
             }
 
-            uint32 crc = 0xffffffffu;
+            uint32_t crc = 0xffffffffu;
             if (size)
             {
                 if (forceLowerCase)
@@ -100,7 +97,7 @@ namespace SF::Engine
                         if ((static_cast<uint8_t>(*buf) >= 'A') && (static_cast<uint8_t>(*buf) <= 'Z'))
                         {
                             crc = ComputeCrc32Octet(crc, static_cast<uint8_t>(*buf) + 'a' - 'A');
-                            buf++;
+                            ++buf;
                         } else
                         {
                             crc = ComputeCrc32Octet(crc, static_cast<uint8_t>(*buf++));
@@ -123,10 +120,10 @@ namespace SF::Engine
     public:
         constexpr Crc32() : crc(0xFFFFFFFF) {}
 
-        explicit constexpr Crc32(uint32 initial) : crc(initial) {}
+        explicit constexpr Crc32(uint32_t initial) : crc(initial) {}
 
         template<typename T>
-        explicit constexpr Crc32(AdvancedStringView<T> view)
+        explicit constexpr Crc32(basic_string_view<T> view)
         {
             if (!view.empty())
             {
@@ -135,7 +132,7 @@ namespace SF::Engine
         }
 
         explicit Crc32(const void *data, size_t size, bool forceLowerCase = false) :
-            Crc32(reinterpret_cast<const uint8 *>(data), size, forceLowerCase)
+            Crc32(reinterpret_cast<const uint8_t *>(data), size, forceLowerCase)
         {
         }
 
@@ -145,38 +142,38 @@ namespace SF::Engine
             Set(data, size, forceLowerCase);
         }
 
-        explicit constexpr Crc32(std::span<const byte> inputSpan) { Set(inputSpan.data(), inputSpan.size(), false); }
+        explicit constexpr Crc32(span<const byte> inputSpan) { Set(inputSpan.data(), inputSpan.size(), false); }
 
         template<typename T>
-        constexpr void Add(AdvancedStringView<T> view)
+        constexpr void Add(basic_string_view<T> view)
         {
             if (!view.empty())
             {
-                size_t len      = view.size();
-                uint32 otherCrc = static_cast<uint32>(Crc32(view));
+                size_t len        = view.size();
+                uint32_t otherCrc = static_cast<uint32_t>(Crc32(view));
                 Combine(otherCrc, len);
             }
         }
 
         void Add(const void *data, size_t size, bool forceLowerCase = false)
         {
-            Combine(static_cast<uint32>(Crc32(data, size, forceLowerCase)), size);
+            Combine(static_cast<uint32_t>(Crc32(data, size, forceLowerCase)), size);
         }
 
         template<class ByteType, class = enable_if_t<sizeof(ByteType) == 1>>
         constexpr void Add(const ByteType *data, size_t size, bool forceLowerCase = false)
         {
-            Combine(static_cast<uint32>(Crc32(data, size, forceLowerCase)), size);
+            Combine(static_cast<uint32_t>(Crc32(data, size, forceLowerCase)), size);
         }
 
-        constexpr void Add(std::span<const byte> inputSpan)
+        constexpr void Add(span<const byte> inputSpan)
         {
-            Combine(static_cast<uint32>(Crc32(inputSpan)), inputSpan.size());
+            Combine(static_cast<uint32_t>(Crc32(inputSpan)), inputSpan.size());
         }
 
-        constexpr operator uint32() const { return GetValue(); }
+        constexpr operator uint32_t() const { return GetValue(); }
 
-        [[nodiscard]] constexpr uint32 GetValue() const { return ~crc; }
+        [[nodiscard]] constexpr uint32_t GetValue() const { return ~crc; }
 
         [[nodiscard]] constexpr bool operator==(Crc32 rhs) const noexcept { return (crc == rhs.crc); }
         [[nodiscard]] constexpr bool operator!=(Crc32 rhs) const noexcept { return (crc != rhs.crc); }
@@ -199,7 +196,7 @@ namespace SF::Engine
             Internal::Crc32Set(data, size, isForcedLC, crc);
         }
 
-        constexpr void Combine(uint32 otherCrc, size_t size)
+        constexpr void Combine(uint32_t otherCrc, size_t size)
         {
             constexpr size_t GF2_DIM = 32; // dimension of GF(2) vectors (length of CRC)
 
@@ -208,12 +205,12 @@ namespace SF::Engine
                 return;
             }
 
-            uint32 even[GF2_DIM]{}; // even-power-of-two zeros operator
-            uint32 odd[GF2_DIM]{};  // odd-power-of-two zeros operator
+            uint32_t even[GF2_DIM]{}; // even-power-of-two zeros operator
+            uint32_t odd[GF2_DIM]{};  // odd-power-of-two zeros operator
 
             // Operator for one zero bit.
-            odd[0]     = 0xedb88320u; // CRC-32 polynomial
-            uint32 row = 1;
+            odd[0]       = 0xedb88320u; // CRC-32 polynomial
+            uint32_t row = 1;
             for (size_t n = 1; n < GF2_DIM; ++n)
             {
                 odd[n] = row;
@@ -236,7 +233,7 @@ namespace SF::Engine
             // (still-inverted) running accumulator - the GF(2) shift math below
             // only holds for values in the finalized/complemented domain, which
             // is also the domain `otherCrc` is already in.
-            uint32 value = GetValue();
+            uint32_t value = GetValue();
 
             do
             {
@@ -274,6 +271,6 @@ namespace SF::Engine
             crc = ~(value ^ otherCrc);
         }
 
-        uint32 crc = 0xFFFFFFFF;
+        uint32_t crc = 0xFFFFFFFF;
     };
-}
+} // namespace SF::Engine

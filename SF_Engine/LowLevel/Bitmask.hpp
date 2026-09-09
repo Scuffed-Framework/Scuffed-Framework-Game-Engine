@@ -1,15 +1,15 @@
 #pragma once
 
-#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
 
 namespace SF::Engine::Bitmask
 {
+    using namespace std;
     // Wrapper type for enum Bitmasks
-    template<typename Enum, typename = ::SFTL::enable_if_t<::SFTL::is_enum_v<Enum>>>
+    template<typename Enum, typename = enable_if_t<is_enum_v<Enum>>>
     class Bitmask
     {
     public:
-        using underlying_type = ::SFTL::underlying_type_t<Enum>;
+        using underlying_type = underlying_type_t<Enum>;
 
         constexpr Bitmask() noexcept : value(0) {}
         constexpr Bitmask(Enum e) noexcept : value(static_cast<underlying_type>(e)) {}
@@ -139,13 +139,13 @@ namespace SF::Engine::Bitmask
     template<typename Enum>
     constexpr bool operator==(const Bitmask<Enum> &lhs, Enum rhs) noexcept
     {
-        return lhs.get() == static_cast<typename Bitmask<Enum>::underlying_type>(rhs);
+        return lhs.get() == static_cast<Bitmask<Enum>::underlying_type>(rhs);
     }
 
     template<typename Enum>
     constexpr bool operator!=(const Bitmask<Enum> &lhs, Enum rhs) noexcept
     {
-        return lhs.get() != static_cast<typename Bitmask<Enum>::underlying_type>(rhs);
+        return lhs.get() != static_cast<Bitmask<Enum>::underlying_type>(rhs);
     }
 
     template<typename Enum>
@@ -164,7 +164,7 @@ namespace SF::Engine::Bitmask
     template<typename Enum>
     constexpr bool is_set(const Bitmask<Enum> &mask, Enum flag) noexcept
     {
-        return (mask.get() & static_cast<typename Bitmask<Enum>::underlying_type>(flag)) != 0;
+        return (mask.get() & static_cast<Bitmask<Enum>::underlying_type>(flag)) != 0;
     }
 
     // Set a flag
@@ -178,7 +178,7 @@ namespace SF::Engine::Bitmask
     template<typename Enum>
     constexpr Bitmask<Enum> clear(Bitmask<Enum> mask, Enum flag) noexcept
     {
-        return Bitmask<Enum>(mask.get() & ~static_cast<typename Bitmask<Enum>::underlying_type>(flag));
+        return Bitmask<Enum>(mask.get() & ~static_cast<Bitmask<Enum>::underlying_type>(flag));
     }
 
     // Toggle a flag
@@ -192,8 +192,8 @@ namespace SF::Engine::Bitmask
     template<typename Enum, typename... Enums>
     constexpr Bitmask<Enum> make_mask(Enum first, Enums... rest) noexcept
     {
-        using underlying_type  = typename Bitmask<Enum>::underlying_type;
-        underlying_type result = static_cast<underlying_type>(first);
+        using underlying_type = Bitmask<Enum>::underlying_type;
+        auto result           = static_cast<underlying_type>(first);
         ((result |= static_cast<underlying_type>(rest)), ...);
         return Bitmask<Enum>(result);
     }

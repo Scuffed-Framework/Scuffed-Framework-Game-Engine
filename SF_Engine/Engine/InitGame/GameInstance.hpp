@@ -1,12 +1,12 @@
 #pragma once
-#include <Scene/Scene.hpp>
 #include <Configuration/PlayInLevelEditorSettings.hpp> // enum PlayInEditorType
+#include <Scene/Scene.hpp>
 
 #ifdef Success
-#undef Success
+    #undef Success
 #endif
 
-//TODO: when build system is done, implement this.
+// TODO: when build system is done, implement this.
 namespace SF::Engine
 {
     struct PlayInEditorResult
@@ -17,11 +17,10 @@ namespace SF::Engine
     public:
         static PlayInEditorResult Success() { return {true, ""}; }
         static PlayInEditorResult Failure(std::string error) { return {false, std::move(error)}; }
-        bool IsSuccess() const { return success; }
+        [[nodiscard]] bool IsSuccess() const { return success; }
 
     private:
-        PlayInEditorResult(bool success, std::string error)
-            : success(success), error(std::move(error)) {}
+        PlayInEditorResult(bool success, std::string error) : success(success), error(std::move(error)) {}
     };
 
     class GameInstance
@@ -32,4 +31,4 @@ namespace SF::Engine
         virtual void OnSceneLoad(Scene *) {}   // hook per load
         virtual void OnSceneUnload(Scene *) {} // hook per unload
     };
-}
+} // namespace SF::Engine

@@ -1,15 +1,15 @@
 #include "Process.hpp"
 
-#ifdef _WIN32
+#ifdef _PLATFORM_WINDOWS
 
-#define NOMINMAX
-#include <Windows.h>
-#include <tlhelp32.h>
-#include <Psapi.h>
+    #define NOMINMAX
+    #include <Psapi.h>
+    #include <Windows.h>
+    #include <tlhelp32.h>
 
 namespace SF::Engine
 {
-    std::string Process::GetName() const
+    string Process::GetName() const
     {
         if (!IsValid())
             return {};
@@ -17,23 +17,23 @@ namespace SF::Engine
         DWORD size = MAX_PATH;
         if (QueryFullProcessImageNameW(Handle, 0, buf, &size))
         {
-            std::filesystem::path p(buf);
+            filesystem::path p(buf);
             return p.filename().string();
         }
         return {};
     }
 
-    std::optional<Process> Process::GetProcessById(ProcessID pid)
+    optional<Process> Process::GetProcessById(ProcessID pid)
     {
         Process p(pid);
         if (!p.IsValid())
-            return std::nullopt;
+            return nullopt;
         return p;
     }
 
-    ::SFTL::DynamicArray<Process> Process::GetProcessesByName(std::string_view name)
+    vector<Process> Process::GetProcessesByName(string_view name)
     {
-        ::SFTL::DynamicArray<Process> result;
+        vector<Process> result;
 
         HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if (snapshot == INVALID_HANDLE_VALUE)
@@ -46,7 +46,7 @@ namespace SF::Engine
         {
             do
             {
-                std::filesystem::path exeName(entry.szExeFile);
+                filesystem::path exeName(entry.szExeFile);
                 if (exeName.string() == name)
                 {
                     Process p(ProcessID{entry.th32ProcessID});
@@ -60,9 +60,9 @@ namespace SF::Engine
         return result;
     }
 
-    ::SFTL::DynamicArray<Process> Process::GetProcesses()
+    vector<Process> Process::GetProcesses()
     {
-        ::SFTL::DynamicArray<Process> result;
+        vector<Process> result;
 
         HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if (snapshot == INVALID_HANDLE_VALUE)
@@ -90,11 +90,10 @@ namespace SF::Engine
             CloseHandle(Handle);
     }
 
-    Process::Process(Process &&other) noexcept
-        : Handle(other.Handle), m_PID(other.m_PID)
+    Process::Process(Process &&other) noexcept : Handle(other.Handle), m_PID(other.m_PID)
     {
         other.Handle = nullptr;
-        other.m_PID = ProcessID{};
+        other.m_PID  = ProcessID{};
     }
 
     Process &Process::operator=(Process &&other) noexcept
@@ -103,37 +102,26 @@ namespace SF::Engine
         {
             if (Handle && Handle != GetCurrentProcess())
                 CloseHandle(Handle);
-            Handle = other.Handle;
-            m_PID = other.m_PID;
+            Handle       = other.Handle;
+            m_PID        = other.m_PID;
             other.Handle = nullptr;
-            other.m_PID = ProcessID{};
+            other.m_PID  = ProcessID{};
         }
         return *this;
     }
 
-    Process::Process(ProcessID pid)
-        : m_PID(pid)
+    Process::Process(ProcessID pid) : m_PID(pid)
     {
         if (pid)
         {
-            Handle = ::OpenProcess(
-                PROCESS_QUERY_LIMITED_INFORMATION |
-                    SYNCHRONIZE |
-                    PROCESS_TERMINATE,
-                FALSE,
-                pid.Value);
+            Handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE | PROCESS_TERMINATE, FALSE,
+                                   pid.Value);
         }
     }
 
-    ProcessID Process::GetPID() const noexcept
-    {
-        return m_PID;
-    }
+    ProcessID Process::GetPID() const noexcept { return m_PID; }
 
-    bool Process::IsValid() const noexcept
-    {
-        return Handle != nullptr;
-    }
+    bool Process::IsValid() const noexcept { return Handle != nullptr; }
 
     bool Process::IsRunning() const
     {
@@ -147,10 +135,7 @@ namespace SF::Engine
         return code == STILL_ACTIVE;
     }
 
-    ProcessState Process::GetState() const
-    {
-        return IsRunning() ? ProcessState::Running : ProcessState::Exited;
-    }
+    ProcessState Process::GetState() const { return IsRunning() ? ProcessState::Running : ProcessState::Exited; }
 
     bool Process::Wait()
     {
@@ -166,23 +151,17 @@ namespace SF::Engine
         return WaitForSingleObject(Handle, timeout) == WAIT_OBJECT_0;
     }
 
-    bool Process::Terminate(int exitCode)
-    {
-        return TerminateProcess(Handle, static_cast<UINT>(exitCode));
-    }
+    bool Process::Terminate(int exitCode) { return TerminateProcess(Handle, static_cast<UINT>(exitCode)); }
 
     Process Process::Current()
     {
         Process p;
-        p.m_PID = ProcessID{GetCurrentProcessId()};
+        p.m_PID  = ProcessID{GetCurrentProcessId()};
         p.Handle = GetCurrentProcess();
         return p;
     }
 
-    Process Process::Launch(
-        const std::filesystem::path &exe,
-        const SFTL::DynamicArray<std::string> &,
-        const std::filesystem::path &)
+    Process Process::Launch(const filesystem::path &exe, const vector<string> &, const filesystem::path &)
     {
         Process result;
 
@@ -190,21 +169,11 @@ namespace SF::Engine
         PROCESS_INFORMATION pi{};
         si.cb = sizeof(si);
 
-        std::wstring cmd = exe.wstring();
+        wstring cmd = exe.wstring();
 
-        if (::CreateProcessW(
-                nullptr,
-                cmd.data(),
-                nullptr,
-                nullptr,
-                FALSE,
-                0,
-                nullptr,
-                nullptr,
-                &si,
-                &pi))
+        if (::CreateProcessW(nullptr, cmd.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi))
         {
-            result.m_PID = ProcessID{pi.dwProcessId};
+            result.m_PID  = ProcessID{pi.dwProcessId};
             result.Handle = pi.hProcess;
             CloseHandle(pi.hThread);
         }
@@ -219,43 +188,43 @@ namespace SF::Engine
             return -1;
         return static_cast<int>(code);
     }
-}
+} // namespace SF::Engine
 
 #else
 
-#include <spawn.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <fstream>
-#include <sstream>
+    #include <dirent.h>
+    #include <fstream>
+    #include <signal.h>
+    #include <spawn.h>
+    #include <sstream>
+    #include <sys/wait.h>
+    #include <unistd.h>
 
 extern char **environ;
 
 namespace SF::Engine
 {
-    std::string Process::GetName() const
+    string Process::GetName() const
     {
         if (!IsValid())
             return {};
-        std::ifstream comm("/proc/" + std::to_string(m_PID.Value) + "/comm");
-        std::string name;
-        std::getline(comm, name);
+        ifstream comm("/proc/" + to_string(m_PID.Value) + "/comm");
+        string name;
+        getline(comm, name);
         return name;
     }
 
-    std::optional<Process> Process::GetProcessById(ProcessID pid)
+    optional<Process> Process::GetProcessById(ProcessID pid)
     {
         Process p(pid);
         if (!p.IsValid())
-            return std::nullopt;
+            return nullopt;
         return p;
     }
 
-    ::SFTL::DynamicArray<Process> Process::GetProcessesByName(std::string_view name)
+    vector<Process> Process::GetProcessesByName(string_view name)
     {
-        ::SFTL::DynamicArray<Process> result;
+        vector<Process> result;
 
         DIR *proc = opendir("/proc");
         if (!proc)
@@ -264,13 +233,13 @@ namespace SF::Engine
         dirent *entry;
         while ((entry = readdir(proc)) != nullptr)
         {
-            if (!std::isdigit(static_cast<unsigned char>(entry->d_name[0])))
+            if (!isdigit(static_cast<unsigned char>(entry->d_name[0])))
                 continue;
 
-            pid_t pid = std::atoi(entry->d_name);
-            std::ifstream comm("/proc/" + std::string(entry->d_name) + "/comm");
-            std::string procName;
-            std::getline(comm, procName);
+            pid_t pid = atoi(entry->d_name);
+            ifstream comm("/proc/" + string(entry->d_name) + "/comm");
+            string procName;
+            getline(comm, procName);
 
             if (procName == name)
             {
@@ -284,9 +253,9 @@ namespace SF::Engine
         return result;
     }
 
-    ::SFTL::DynamicArray<Process> Process::GetProcesses()
+    vector<Process> Process::GetProcesses()
     {
-        ::SFTL::DynamicArray<Process> result;
+        vector<Process> result;
 
         DIR *proc = opendir("/proc");
         if (!proc)
@@ -295,10 +264,10 @@ namespace SF::Engine
         dirent *entry;
         while ((entry = readdir(proc)) != nullptr)
         {
-            if (!std::isdigit(static_cast<unsigned char>(entry->d_name[0])))
+            if (!isdigit(static_cast<unsigned char>(entry->d_name[0])))
                 continue;
 
-            pid_t pid = std::atoi(entry->d_name);
+            pid_t pid = atoi(entry->d_name);
             Process p(ProcessID{pid});
             if (p.IsValid())
                 result.push_back(std::move(p));
@@ -308,20 +277,11 @@ namespace SF::Engine
         return result;
     }
 
-    Process::Process(ProcessID pid)
-        : m_PID(pid), Handle(pid.Value)
-    {
-    }
+    Process::Process(ProcessID pid) : m_PID(pid), Handle(pid.Value) {}
 
-    ProcessID Process::GetPID() const noexcept
-    {
-        return m_PID;
-    }
+    ProcessID Process::GetPID() const noexcept { return m_PID; }
 
-    bool Process::IsValid() const noexcept
-    {
-        return m_PID.IsValid();
-    }
+    bool Process::IsValid() const noexcept { return m_PID.IsValid(); }
 
     bool Process::IsRunning() const
     {
@@ -331,56 +291,35 @@ namespace SF::Engine
         return kill(m_PID.Value, 0) == 0;
     }
 
-    ProcessState Process::GetState() const
-    {
-        return IsRunning() ? ProcessState::Running : ProcessState::Exited;
-    }
+    ProcessState Process::GetState() const { return IsRunning() ? ProcessState::Running : ProcessState::Exited; }
 
-    bool Process::Wait()
-    {
-        return waitpid(m_PID.Value, &m_ExitStatus, 0) == m_PID.Value;
-    }
+    bool Process::Wait() { return waitpid(m_PID.Value, &m_ExitStatus, 0) == m_PID.Value; }
 
     bool Process::Wait(uint32_t)
     {
         return Wait(); // timeout implementation omitted
     }
 
-    bool Process::Terminate(int)
-    {
-        return kill(m_PID.Value, SIGTERM) == 0;
-    }
+    bool Process::Terminate(int) const { return kill(m_PID.Value, SIGTERM) == 0; }
 
     Process Process::Current()
     {
         Process p;
-        p.m_PID = ProcessID{getpid()};
+        p.m_PID  = ProcessID{getpid()};
         p.Handle = p.m_PID.Value;
         return p;
     }
 
-    Process Process::Launch(
-        const std::filesystem::path &exe,
-        const SFTL::DynamicArray<std::string> &,
-        const std::filesystem::path &)
+    Process Process::Launch(const filesystem::path &exe, const vector<string> &, const filesystem::path &)
     {
         Process result;
 
         pid_t pid;
-        char *argv[] =
-            {
-                const_cast<char *>(exe.c_str()),
-                nullptr};
+        char *argv[] = {const_cast<char *>(exe.c_str()), nullptr};
 
-        if (posix_spawn(
-                &pid,
-                exe.c_str(),
-                nullptr,
-                nullptr,
-                argv,
-                environ) == 0)
+        if (posix_spawn(&pid, exe.c_str(), nullptr, nullptr, argv, environ) == 0)
         {
-            result.m_PID = ProcessID{pid};
+            result.m_PID  = ProcessID{pid};
             result.Handle = pid;
         }
 
@@ -391,8 +330,8 @@ namespace SF::Engine
         // POSIX: Handle is just the pid_t itself, nothing to release.
     }
 
-    Process::Process(Process &&other) noexcept
-        : Handle(other.Handle), m_PID(other.m_PID), m_ExitStatus(other.m_ExitStatus)
+    Process::Process(Process &&other) noexcept :
+        Handle(other.Handle), m_PID(other.m_PID), m_ExitStatus(other.m_ExitStatus)
     {
         other.m_PID = ProcessID{};
     }
@@ -401,10 +340,10 @@ namespace SF::Engine
     {
         if (this != &other)
         {
-            Handle = other.Handle;
-            m_PID = other.m_PID;
+            Handle       = other.Handle;
+            m_PID        = other.m_PID;
             m_ExitStatus = other.m_ExitStatus;
-            other.m_PID = ProcessID{};
+            other.m_PID  = ProcessID{};
         }
         return *this;
     }
@@ -415,5 +354,5 @@ namespace SF::Engine
             return WEXITSTATUS(m_ExitStatus);
         return -1;
     }
-}
+} // namespace SF::Engine
 #endif

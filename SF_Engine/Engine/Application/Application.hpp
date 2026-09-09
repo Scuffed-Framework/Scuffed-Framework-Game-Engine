@@ -43,7 +43,6 @@
 #include <Platform/PlatformIncludes.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 
-#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
 #include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
 #include <Engine/InitGame/GameInfo.hpp>
 #include <Engine/Log/Log.hpp>

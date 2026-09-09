@@ -1,6 +1,4 @@
 #pragma once
-#include <1stPartyLibs/TemplateLibrary/Any.hpp>
-#include <memory>
 
 namespace SF::Engine
 {
@@ -27,4 +25,4 @@ namespace SF::Engine
     private:
         inline static T *s_instance = nullptr;
     };
-}
+} // namespace SF::Engine

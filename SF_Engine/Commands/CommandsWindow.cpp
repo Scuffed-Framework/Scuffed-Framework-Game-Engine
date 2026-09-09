@@ -1,5 +1,4 @@
 #include "CommandsWindow.hpp"
-#include <1stPartyLibs/TemplateLibrary/Algorithm.hpp>
 #include <Gui/ocornut/imgui.h>
 #include <algorithm>
 #include <cctype>
@@ -7,23 +6,23 @@
 
 namespace SF::Engine
 {
-    CommandWindow::ParsedCmd CommandWindow::Parse(const SFTL::string &raw)
+    CommandWindow::ParsedCmd CommandWindow::Parse(const string &raw)
     {
         ParsedCmd result;
-        const char *p   = raw.CStr();
-        const char *end = p + raw.Size();
+        const char *p   = raw.c_str();
+        const char *end = p + raw.size();
 
         auto skipSpace = [&]
         {
-            while (p < end && ::SFTL::is_space(*p))
+            while (p < end && isspace(*p))
                 ++p;
         };
         auto readToken = [&]
         {
             const char *start = p;
-            while (p < end && !::SFTL::is_space(*p))
+            while (p < end && isspace(*p))
                 ++p;
-            return ::SFTL::string(start, static_cast<SFTL::size_type>(p - start));
+            return string(start, static_cast<size_t>(p - start));
         };
 
         skipSpace();
@@ -46,10 +45,10 @@ namespace SF::Engine
         // "print <msg...>" echos to log
         struct PrintCmd : Commandlet
         {
-            ::SFTL::DynamicArray<LogEntry> *log{};
+            vector<LogEntry> *log{};
             void Execute() override
             {
-                SFTL::string msg;
+                string msg;
                 for (const auto &a: args)
                 {
                     msg += a;
@@ -60,11 +59,11 @@ namespace SF::Engine
         };
         struct HelpCmd : Commandlet
         {
-            ::SFTL::DynamicArray<LogEntry> *log{};
+            vector<LogEntry> *log{};
             void Execute() override
             {
-                SFTL::string msg;
-                for (const auto &cmd: CommandletRegistry::Get().commandlets_ | std::views::values)
+                string msg;
+                for (const auto &cmd: CommandletRegistry::Get().commandlets_ | views::values)
                 {
                     msg += cmd->name + "\n";
                     msg += ' ';
@@ -77,7 +76,7 @@ namespace SF::Engine
         dynamic_cast<PrintCmd *>(printCmd.get())->log = &m_log;
     }
 
-    std::shared_ptr<Commandlet> CommandWindow::Execute(const SFTL::string &input)
+    shared_ptr<Commandlet> CommandWindow::Execute(const string &input)
     {
         auto [name, args] = Parse(input);
 
@@ -90,9 +89,9 @@ namespace SF::Engine
 
         if (name.starts_with(CommandWindowConsoleVariablePrefix))
         {
-            const SFTL::string fullName = name.substr(CommandWindowConsoleVariablePrefix.Size());
+            const string fullName = name.substr(CommandWindowConsoleVariablePrefix.size());
 
-            IConsoleVariable *cvar = ConsoleVariableRegistry::Find(SFTL::string_view(fullName));
+            IConsoleVariable *cvar = ConsoleVariableRegistry::Find(string_view(fullName));
             if (!cvar)
             {
                 m_log.push_back({LogEntry::Level::Error, "CVar '" + fullName + "' not found."});
@@ -106,7 +105,7 @@ namespace SF::Engine
                 return nullptr;
             }
 
-            if (!cvar->SetValueFromString(SFTL::string_view(args[0])))
+            if (!cvar->SetValueFromString(string_view(args[0])))
             {
                 m_log.push_back(
                         {LogEntry::Level::Error, "Failed to parse '" + args[0] + "' for CVar '" + fullName + "'."});
@@ -128,7 +127,7 @@ namespace SF::Engine
             return nullptr;
         }
 
-        cmd->args = ::SFTL::move(args);
+        cmd->args = std::move(args);
         cmd->Execute();
         m_history.push_front(input);
         if (m_history.size() > k_maxHistory)
@@ -136,7 +135,7 @@ namespace SF::Engine
         return cmd;
     }
 
-    bool CommandWindow::IsInputCmdInRegistry(const SFTL::string &in) const
+    bool CommandWindow::IsInputCmdInRegistry(const string &in) const
     {
         return CommandletRegistry::Get().FindByName(Parse(in).name) != nullptr;
     }
@@ -184,8 +183,8 @@ namespace SF::Engine
 
         // Input row
         char buf[512]      = {};
-        const auto copyLen = ::SFTL::min<::SFTL::size_type>(m_inputBuf.Size(), sizeof(buf) - 1);
-        std::copy_n(m_inputBuf.begin(), copyLen, buf);
+        const auto copyLen = min<size_t>(m_inputBuf.size(), sizeof(buf) - 1);
+        copy_n(m_inputBuf.begin(), copyLen, buf);
 
         ImGui::PushItemWidth(-60.f);
         bool reclaim = false;

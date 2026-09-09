@@ -1,19 +1,17 @@
 #pragma once
 #include <charconv>
+#include <ranges>
 #include <string>
 #include <string_view>
 
-#include <1stPartyLibs/TemplateLibrary/Containers/String.hpp>
-#include <1stPartyLibs/TemplateLibrary/Containers/UnorderedMap.hpp>
 #include <Engine/Module.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <UtilityClasses/StreamFactory.hpp>
 
 namespace SF::Engine
 {
-    // Explicit string_view (not `auto` off the literal, which just decays to const char*)
-    // so callers get `.Data()`/`.Size()` and `starts_with()` without an implicit-ctor guess.
-    inline constexpr ::SFTL::string_view CommandWindowConsoleVariablePrefix{"CVar::", 6};
+    using namespace std;
+    inline constexpr string_view CommandWindowConsoleVariablePrefix{"CVar::", 6};
 
     class ConsoleVariableRegistry;
     struct IConsoleVariable : public Serializable
@@ -21,11 +19,11 @@ namespace SF::Engine
     public:
         ~IConsoleVariable() override = default;
 
-        [[nodiscard]] virtual ::SFTL::string GetFullName() const = 0;
-        [[nodiscard]] virtual bool DidValueChange() const        = 0;
+        [[nodiscard]] virtual string GetFullName() const  = 0;
+        [[nodiscard]] virtual bool DidValueChange() const = 0;
 
-        virtual bool SetValueFromString(::SFTL::string_view str)   = 0;
-        [[nodiscard]] virtual ::SFTL::string ValueToString() const = 0;
+        virtual bool SetValueFromString(string_view str)   = 0;
+        [[nodiscard]] virtual string ValueToString() const = 0;
     };
 
     template<typename V>
@@ -34,17 +32,17 @@ namespace SF::Engine
         SF_RTTI(IConsoleVariable, ConsoleVariable)
 
     public:
-        ::SFTL::string module;
-        ::SFTL::string name;
+        string module;
+        string name;
         V Value;
         V LastValue;
 
-        ConsoleVariable(::SFTL::string mod, ::SFTL::string nm, V defaultValue);
+        ConsoleVariable(string mod, string nm, V defaultValue);
         ~ConsoleVariable() override = default;
 
         [[nodiscard]] bool DidValueChange() const override { return !(Value == LastValue); }
 
-        [[nodiscard]] ::SFTL::string GetFullName() const override { return module + "." + name; }
+        [[nodiscard]] string GetFullName() const override { return module + "." + name; }
 
         void ChangeValue(const V &New)
         {
@@ -52,9 +50,9 @@ namespace SF::Engine
             Value     = New;
         }
 
-        bool SetValueFromString(::SFTL::string_view str) override
+        bool SetValueFromString(string_view str) override
         {
-            if constexpr (::SFTL::is_same_v<V, bool>)
+            if constexpr (is_same_v<V, bool>)
             {
                 if (str == "true" || str == "1")
                 {
@@ -67,37 +65,32 @@ namespace SF::Engine
                     return true;
                 }
                 return false;
-            } else if constexpr (::SFTL::is_arithmetic_v<V>)
+            } else if constexpr (is_arithmetic_v<V>)
             {
                 V parsed{};
-                auto [ptr, ec] = std::from_chars(str.Data(), str.Data() + str.Size(), parsed);
+                auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), parsed);
                 if (ec != std::errc{})
                     return false;
                 ChangeValue(parsed);
                 return true;
-            } else if constexpr (::SFTL::is_constructible_v<::SFTL::string, ::SFTL::string_view>)
+            } else if constexpr (is_constructible_v<string, string_view>)
             {
-                // Assumes V is (or is constructible from) SFTL::string.
-                ChangeValue(::SFTL::string(str.Data()));
+                ChangeValue(string(str.data()));
                 return true;
-            } else
-            {
-                static_assert(!sizeof(V *), "SetValueFromString not implemented for this CVar type");
-                return false;
             }
         }
 
-        [[nodiscard]] ::SFTL::string ValueToString() const override
+        [[nodiscard]] string ValueToString() const override
         {
-            if constexpr (::SFTL::is_same_v<V, bool>)
+            if constexpr (is_same_v<V, bool>)
             {
                 return Value ? "true" : "false";
-            } else if constexpr (::SFTL::is_arithmetic_v<V>)
+            } else if constexpr (is_arithmetic_v<V>)
             {
-                return ::SFTL::string(std::to_string(Value));
+                return string(std::to_string(Value));
             } else
             {
-                return Value; // assumes SFTL::string-compatible
+                return Value;
             }
         }
 
@@ -125,17 +118,14 @@ namespace SF::Engine
         static inline bool reg = Register(ModuleStage::Always, Requires<>{});
         SF_RTTI(Module, ConsoleVariableRegistry)
 
-        inline static ::SFTL::unordered_map<::SFTL::string, IConsoleVariable *> s_cvars;
+        inline static unordered_map<string, IConsoleVariable *> s_cvars;
 
     public:
-        static void RegisterCVar(const ::SFTL::string &fullName, IConsoleVariable *cvar) { s_cvars[fullName] = cvar; }
+        static void RegisterCVar(const string &fullName, IConsoleVariable *cvar) { s_cvars[fullName] = cvar; }
 
-        // Heterogeneous lookup: `fullName` can be a view onto someone else's buffer
-        // (e.g. the command console's parsed input) with no owned SFTL::string built
-        // just to do the lookup - see UnorderedMap.hpp's find<K>() overload.
-        [[nodiscard]] static IConsoleVariable *Find(::SFTL::string_view fullName)
+        [[nodiscard]] static IConsoleVariable *Find(string_view fullName)
         {
-            auto it = s_cvars.find(fullName);
+            const auto it = s_cvars.find(fullName.data());
             return it != s_cvars.end() ? it->second : nullptr;
         }
 
@@ -143,16 +133,13 @@ namespace SF::Engine
         void Update() override {}
 
         [[nodiscard]] Stage GetStage() const override { return ModuleStage::Always; }
-        [[nodiscard]] ::std::string_view GetName() const override
-        {
-            return RTTI_GetTypeName();
-        } // todo: add overload for sftl one
+        [[nodiscard]] ::std::string_view GetName() const override { return RTTI_GetTypeName(); }
 
         // NOLINTBEGIN(readability-convert-member-functions-to-static)
         void Serialize(XMLNode &node) const
         {
             XMLNode registryNode = node.AddChild("ConsoleVariables");
-            for (const auto &[fullName, cvar]: s_cvars)
+            for (const auto &cvar: s_cvars | views::values)
                 cvar->Serialize(registryNode);
         }
 
@@ -161,10 +148,10 @@ namespace SF::Engine
             XMLNode registryNode = node.GetChild("ConsoleVariables");
             for (XMLNode child = registryNode.GetFirstChild(); child.IsValid(); child = child.GetNextSibling())
             {
-                ::SFTL::string mod, nm;
+                string mod, nm;
                 child.GetAttribute("Module", mod);
                 child.GetAttribute("Name", nm);
-                if (IConsoleVariable *cvar = Find(::SFTL::string_view(mod + "." + nm)))
+                if (IConsoleVariable *cvar = Find(string_view(mod + "." += nm)))
                     cvar->Deserialize(registryNode); // each cvar re-finds its own <CVar> child
             }
         }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <1stPartyLibs/TemplateLibrary/DynamicArray.hpp>
-#include <1stPartyLibs/TemplateLibrary/Operations.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Engine/Module.hpp>
 #include <LowLevel/Reflection/RTTI/RTTICast.hpp>
@@ -12,6 +10,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     enum class AssetType // scoped enum avoids name collisions
     {
         Mesh,
@@ -35,24 +34,24 @@ namespace SF::Engine
     {
         SF_RTTI(AssetBase, Serializable)
     public:
-        std::filesystem::path assetPath;
-        std::string name;
+        filesystem::path assetPath;
+        string name;
         AssetType type;
         UUID uuid = UUID::Generate();
 
 
         virtual ~AssetBase() = default;
 
-        virtual void Save()                                 = 0;
-        virtual bool Load(std::span<const uint8_t> payload) = 0;
+        virtual void Save()                            = 0;
+        virtual bool Load(span<const uint8_t> payload) = 0;
 
         void Serialize(XMLNode &node) const override
         {
             XMLNode asset = node.AddChild("Asset");
             asset.SetAttribute("Name", name);
             asset.SetAttribute("Type", static_cast<int>(type));
-            asset.SetAttribute(std::string("UUID"), uuid.ToString());
-            asset.SetAttribute("ConcreteType", std::string(RTTI_GetTypeName()));
+            asset.SetAttribute(string("UUID"), uuid.ToString());
+            asset.SetAttribute("ConcreteType", string(RTTI_GetTypeName()));
         }
 
         void Deserialize(const XMLNode &node) override
@@ -62,7 +61,7 @@ namespace SF::Engine
             int rawType{};
             asset.GetAttribute("Type", rawType);
             type = static_cast<AssetType>(rawType);
-            uuid = UUID::FromString(asset.GetAttribute(std::string(std::string("UUID"))));
+            uuid = UUID::FromString(asset.GetAttribute(string(string("UUID"))));
         }
 
         void SaveMeta() const
@@ -77,7 +76,7 @@ namespace SF::Engine
             XMLNode root = writer->GetRootNode();
             Serialize(root);
 
-            std::filesystem::path metaPath = assetPath;
+            filesystem::path metaPath = assetPath;
             metaPath += ".meta";
             if (!writer->SaveToFile(metaPath.string()))
                 Log::Error("AssetBase::SaveMeta: failed to write '{}'", metaPath.string());
@@ -99,7 +98,7 @@ namespace SF::Engine
         }
     };
 
-    using AssetFactoryFn = std::function<std::shared_ptr<AssetBase>()>;
+    using AssetFactoryFn = function<shared_ptr<AssetBase>()>;
 
     class AssetController : public ModuleRegistrar<AssetController>
     {
@@ -112,47 +111,46 @@ namespace SF::Engine
         void ProjectLoaded();
         void Shutdown() override { assets_.clear(); }
 
-        static void RegisterFactory(AssetType type, const std::string &rttiTypeName, AssetFactoryFn factory);
+        static void RegisterFactory(AssetType type, const string &rttiTypeName, AssetFactoryFn factory);
 
         void SaveAll();
         void SaveManifest();
 
-        [[nodiscard]] std::shared_ptr<AssetBase> FindByUUID(const UUID &guid) const;
-        [[nodiscard]] std::shared_ptr<AssetBase> FindByName(std::string_view name) const;
+        [[nodiscard]] shared_ptr<AssetBase> FindByUUID(const UUID &guid) const;
+        [[nodiscard]] shared_ptr<AssetBase> FindByName(string_view name) const;
 
         template<typename T>
-        std::shared_ptr<Asset<T>> GetAsset(const UUID &guid) const
+        shared_ptr<Asset<T>> GetAsset(const UUID &guid) const
         {
             return ::SF::RTTI::rtti_pointer_cast<Asset<T>>(FindByUUID(guid));
         }
 
-        SFTL::DynamicArray<std::shared_ptr<AssetBase>> assets_;
+        vector<shared_ptr<AssetBase>> assets_;
 
         template<typename T, typename... Args>
-        std::shared_ptr<T> RegisterAsset(std::string assetName, Args &&...args)
+        shared_ptr<T> RegisterAsset(string assetName, Args &&...args)
         {
-            static_assert(std::is_base_of_v<AssetBase, T>, "RegisterAsset<T> requires T to derive from AssetBase");
+            static_assert(is_base_of_v<AssetBase, T>, "RegisterAsset<T> requires T to derive from AssetBase");
 
-            auto asset  = std::make_shared<T>(std::forward<Args>(args)...);
+            auto asset  = make_shared<T>(forward<Args>(args)...);
             asset->name = std::move(assetName);
             assets_.push_back(asset);
             return asset;
         }
 
     private:
-        static std::unordered_map<std::string, AssetFactoryFn> &Factories();
+        static unordered_map<string, AssetFactoryFn> &Factories();
     };
 
     template<typename T>
     struct AssetRegistrar
     {
-        static_assert(std::is_base_of_v<AssetBase, T>,
-                      "AssetRegistrar<T> requires T to derive from AssetBase "
-                      "(this includes Asset<Payload> and ImageAssetBase<TImage> leaves)");
+        static_assert(is_base_of_v<AssetBase, T>, "AssetRegistrar<T> requires T to derive from AssetBase "
+                                                  "(this includes Asset<Payload> and ImageAssetBase<TImage> leaves)");
 
         explicit AssetRegistrar(AssetType type)
         {
-            AssetController::RegisterFactory(type, T::RTTI_TypeName(), [] { return std::make_shared<T>(); });
+            AssetController::RegisterFactory(type, T::RTTI_TypeName(), [] { return make_shared<T>(); });
         }
     };
 } // namespace SF::Engine

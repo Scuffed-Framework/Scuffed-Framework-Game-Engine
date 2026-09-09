@@ -1,6 +1,5 @@
 #pragma once
 
-#include <1stPartyLibs/TemplateLibrary/TypeTraits.hpp>
 #include "Matrix/Matrix2.hpp"
 #include "Matrix/Matrix3.hpp"
 #include "Matrix/Matrix4.hpp"
@@ -18,4 +17,4 @@ namespace SF::Engine
     using glm::max;
     using glm::min;
 
-}
+} // namespace SF::Engine
