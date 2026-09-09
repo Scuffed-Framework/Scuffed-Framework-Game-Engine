@@ -82,7 +82,7 @@ namespace SFTL
         explicit nothrow_type() = default;
     };
 
-    extern const nothrow_type nothrow;
+    constexpr nothrow_type nothrow;
     namespace Detail
     {
         struct mbstate_impl
