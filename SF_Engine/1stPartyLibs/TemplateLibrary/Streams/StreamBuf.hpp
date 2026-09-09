@@ -93,7 +93,7 @@ namespace SFTL
         int_type snextc()
         {
             int_type ret = traits_type::eof();
-            if (!traits_type::eq_int_type(this->sbumpc(), ret), true) [[likely]]
+            if (!traits_type::eq_int_type(this->sbumpc(), ret) && true) [[likely]] // or just drop `&& true`
                 ret = this->sgetc();
             return ret;
         }
@@ -101,7 +101,7 @@ namespace SFTL
         int_type sbumpc()
         {
             int_type ret;
-            if (this->gptr() < this->egptr(), true) [[likely]]
+            if (this->gptr() < this->egptr()) [[likely]]
             {
                 ret = traits_type::to_int_type(*this->gptr());
                 this->gbump(1);
@@ -113,20 +113,18 @@ namespace SFTL
         int_type sgetc()
         {
             int_type ret;
-            if (this->gptr() < this->egptr(), true) [[likely]]
+            if (this->gptr() < this->egptr()) [[likely]]
                 ret = traits_type::to_int_type(*this->gptr());
             else
                 ret = this->underflow();
             return ret;
         }
 
-        streamsize sgetn(char_type *ct, streamsize n) { return this->xsgetn(ct, n); }
-
         int_type sputbackc(char_type c)
         {
             int_type ret;
             const bool testpos = this->eback() < this->gptr();
-            if (!testpos || !traits_type::eq(c, this->gptr()[-1]), false) [[likely]]
+            if (!testpos || !traits_type::eq(c, this->gptr()[-1])) [[likely]] // was: `, false`
                 ret = this->pbackfail(traits_type::to_int_type(c));
             else
             {
@@ -135,10 +133,11 @@ namespace SFTL
             }
             return ret;
         }
+
         int_type sungetc()
         {
             int_type ret;
-            if (this->eback() < this->gptr(), true) [[likely]]
+            if (this->eback() < this->gptr()) [[likely]]
             {
                 this->gbump(-1);
                 ret = traits_type::to_int_type(*this->gptr());
@@ -147,11 +146,10 @@ namespace SFTL
             return ret;
         }
 
-
         int_type sputc(char_type c)
         {
             int_type ret;
-            if (this->pptr() < this->epptr(), true) [[likely]]
+            if (this->pptr() < this->epptr()) [[likely]]
             {
                 *this->pptr() = c;
                 this->pbump(1);
@@ -260,6 +258,86 @@ namespace SFTL
     template<>
     streamsize copy_streambufs_eof(basic_streambuf<wchar_t> *ctbin, basic_streambuf<wchar_t> *ctbout, bool &eof);
 
+    template<typename CharType, typename Traits>
+    streamsize basic_streambuf<CharType, Traits>::xsgetn(char_type *ct, streamsize n)
+    {
+        streamsize ret = 0;
+        while (ret < n)
+        {
+            if (const streamsize buf_len = this->egptr() - this->gptr())
+            {
+                const streamsize remaining = n - ret;
+                const streamsize len       = min(buf_len, remaining);
+                traits_type::copy(ct, this->gptr(), len);
+                ret += len;
+                ct += len;
+                this->safe_gbump(len);
+            }
+
+            if (ret < n)
+            {
+                const int_type c = this->uflow();
+                if (!traits_type::eq_int_type(c, traits_type::eof()))
+                {
+                    traits_type::assign(*ct++, traits_type::to_char_type(c));
+                    ++ret;
+                } else
+                    break;
+            }
+        }
+        return ret;
+    }
+
+    template<typename CharType, typename Traits>
+    streamsize basic_streambuf<CharType, Traits>::xsputn(const char_type *ct, streamsize n)
+    {
+        streamsize ret = 0;
+        while (ret < n)
+        {
+            if (const streamsize buf_len = this->epptr() - this->pptr())
+            {
+                const streamsize remaining = n - ret;
+                const streamsize len       = min(buf_len, remaining);
+                traits_type::copy(this->pptr(), ct, len);
+                ret += len;
+                ct += len;
+                this->safe_pbump(len);
+            }
+
+            if (ret < n)
+            {
+                int_type c = this->overflow(traits_type::to_int_type(*ct));
+                if (!traits_type::eq_int_type(c, traits_type::eof()))
+                {
+                    ++ret;
+                    ++ct;
+                } else
+                    break;
+            }
+        }
+        return ret;
+    }
+
+    template<typename CharType, typename Traits>
+    streamsize copy_streambufs_eof(basic_streambuf<CharType, Traits> *sbin, basic_streambuf<CharType, Traits> *ctbout,
+                                   bool &eof)
+    {
+        streamsize ret              = 0;
+        eof                         = true;
+        typename Traits::int_type a = sbin->sgetc();
+        while (!Traits::eq_int_type(a, Traits::eof()))
+        {
+            a = ctbout->sputc(Traits::to_char_type(a));
+            if (Traits::eq_int_type(a, Traits::eof()))
+            {
+                eof = false;
+                break;
+            }
+            ++ret;
+            a = sbin->snextc();
+        }
+        return ret;
+    }
 #undef IsUnused
 
 } // namespace SFTL

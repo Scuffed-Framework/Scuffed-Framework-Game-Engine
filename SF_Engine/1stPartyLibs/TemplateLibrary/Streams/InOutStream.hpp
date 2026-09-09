@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../CType.hpp"
 #include "IOS.hpp"
 #include "InStream.hpp"
 #include "OutStream.hpp"
@@ -47,38 +46,42 @@ namespace SFTL
     using iostream  = basic_iostream<char, char_traits<char>>;
     using wiostream = basic_iostream<wchar_t, char_traits<wchar_t>>;
 
-    /**
-     * @breif << character to standard out
-     */
-    extern ostream cout;
-    /**
-     * @breif << character to buffered standard error
-     */
-    extern ostream cerr;
-    /**
-     * @breif << character to standard error
-     */
-    extern ostream clog;
-    /**
-     * @breif >> character from standard in
-     */
-    extern istream cin;
 
     /**
      * @breif << character to standard out
      */
-    extern wostream wcout;
+    //  extern ostream cout;
     /**
      * @breif << character to buffered standard error
      */
-    extern wostream wcerr;
+    // extern ostream cerr;
     /**
      * @breif << character to standard error
      */
-    extern wostream wclog;
+    // extern ostream clog;
     /**
      * @breif >> character from standard in
      */
-    extern wistream wcin;
+    // extern istream cin;
+
+    /**
+     * @breif << character to standard out
+     */
+    // extern wostream wcout;
+    /**
+     * @breif << character to buffered standard error
+     */
+    // extern wostream wcerr;
+    /**
+     * @breif << character to standard error
+     */
+    // extern wostream wclog;
+    /**
+     * @breif >> character from standard in
+     */
+    // extern wistream wcin;
+
+    // static ios_base::Init s_ios_base_init;
+
 
 } // namespace SFTL

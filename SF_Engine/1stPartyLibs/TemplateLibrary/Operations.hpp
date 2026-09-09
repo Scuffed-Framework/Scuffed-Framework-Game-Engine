@@ -396,4 +396,23 @@ namespace SFTL
             throw;
         }
     }
+    template<typename ForwardIterator, typename Size, typename T, typename Allocator>
+    void uninitialized_fill(ForwardIterator first, ForwardIterator last, const T &value, Allocator &alloc)
+    {
+        typedef allocator_traits<Allocator> traits;
+
+        ForwardIterator cur = first;
+
+        try
+        {
+            for (; cur != last; ++cur)
+            {
+                traits::construct(alloc, addressof(*cur), value);
+            }
+        } catch (...)
+        {
+            search_and_destroy_allocator(first, cur, alloc);
+            throw;
+        }
+    }
 } // namespace SFTL

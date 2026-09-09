@@ -40,4 +40,14 @@ namespace SFTL
         }
         return true;
     }
+
+    template<typename BidirIt1, typename BidirIt2>
+    constexpr BidirIt2 copy_backward(BidirIt1 first, BidirIt1 last, BidirIt2 d_last)
+    {
+        while (first != last)
+        {
+            *(--d_last) = *(--last);
+        }
+        return d_last;
+    }
 } // namespace SFTL
