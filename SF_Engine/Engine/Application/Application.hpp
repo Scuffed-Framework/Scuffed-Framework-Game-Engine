@@ -106,7 +106,7 @@ namespace SF::Engine
             auto exeDir = GetExecutablePath().parent_path();
             std::filesystem::current_path(exeDir);
             engine = std::make_unique<Engine>(exeDir.string());
-            engine->SetGameInfo(info.get());
+            engine->SetGameInfo(Info.get());
 
             wndMgr   = SF::Engine::WindowManager::Get();
             renderer = SF::Engine::RenderSystem::Get();
