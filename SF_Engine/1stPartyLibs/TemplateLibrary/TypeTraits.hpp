@@ -944,9 +944,6 @@ namespace SFTL
         };
     } // namespace Detail
 
-    template<class Type>
-    using _Remove_cvref_t = remove_cv_t<remove_reference_t<Type>>;
-
     template<typename T>
     struct is_destructible : Detail::_is_destructible_cat<T>
     {
@@ -1253,7 +1250,7 @@ namespace SFTL
     {
         static_assert(is_integral_v<Type>);
         typedef Type value_type;
-        static constexpr size_t size() noexcept { return sizeof...(Index); }
+        static constexpr size_type size() noexcept { return sizeof...(Index); }
     };
 
     namespace Detail
@@ -1276,7 +1273,7 @@ namespace SFTL
     template<size_type N>
     using make_index_sequence = make_integer_sequence<size_type, N>;
 
-    template<size_t... Index>
+    template<size_type... Index>
     using index_sequence = integer_sequence<size_type, Index...>;
     template<typename... Val>
     struct Or : decltype(Detail::OrFunction<Val...>(0))
@@ -1549,5 +1546,308 @@ namespace SFTL
 
     template<typename T>
     inline constexpr bool is_nothrow_swappable_v = is_nothrow_swappable<T>::value;
+
+
+    template<typename Type>
+    struct is_char
+    {
+        enum
+        {
+            value = 0
+        };
+        typedef false_type type;
+    };
+
+    template<>
+    struct is_char<char>
+    {
+        enum
+        {
+            value = 1
+        };
+        typedef true_type type;
+    };
+
+    template<>
+    struct is_char<wchar_t>
+    {
+        enum
+        {
+            value = 1
+        };
+        typedef true_type type;
+    };
+
+    template<typename Type>
+    struct is_byte
+    {
+        enum
+        {
+            value = 0
+        };
+        typedef false_type type;
+    };
+
+    template<>
+    struct is_byte<char>
+    {
+        enum
+        {
+            value = 1
+        };
+        typedef true_type type;
+    };
+
+    template<>
+    struct is_byte<signed char>
+    {
+        enum
+        {
+            value = 1
+        };
+        typedef true_type type;
+    };
+
+    template<>
+    struct is_byte<unsigned char>
+    {
+        enum
+        {
+            value = 1
+        };
+        typedef true_type type;
+    };
+    template<>
+    struct is_byte<char8_t>
+    {
+        enum
+        {
+            value = 1
+        };
+        typedef true_type type;
+    };
+    template<typename T>
+    concept integral = is_integral_v<T>;
+
+    template<typename T>
+    concept signed_integral = integral<T> && is_signed_v<T>;
+
+    template<typename T>
+    concept unsigned_integral = integral<T> && !signed_integral<T>;
+
+    template<typename T>
+    concept floating_point = is_floating_point_v<T>;
+
+
+    struct s_uint128;
+
+    // Primary template
+    template<typename T>
+    struct make_signed;
+
+    // Specializations for standard unsigned types
+    template<>
+    struct make_signed<unsigned char>
+    {
+        using type = signed char;
+    };
+    template<>
+    struct make_signed<signed char>
+    {
+        using type = signed char;
+    };
+    template<>
+    struct make_signed<char>
+    {
+        using type = signed char;
+    }; // Or conditional based on char signedness
+
+    template<>
+    struct make_signed<unsigned short>
+    {
+        using type = short;
+    };
+    template<>
+    struct make_signed<short>
+    {
+        using type = short;
+    };
+
+    template<>
+    struct make_signed<unsigned int>
+    {
+        using type = int;
+    };
+    template<>
+    struct make_signed<int>
+    {
+        using type = int;
+    };
+
+    template<>
+    struct make_signed<unsigned long>
+    {
+        using type = long;
+    };
+    template<>
+    struct make_signed<long>
+    {
+        using type = long;
+    };
+
+    template<>
+    struct make_signed<unsigned long long>
+    {
+        using type = long long;
+    };
+    template<>
+    struct make_signed<long long>
+    {
+        using type = long long;
+    };
+
+
+    // Helper alias template (C++14 and later)
+    template<typename T>
+    using make_signed_t = typename make_signed<T>::type;
+
+    // Primary template
+    template<typename T>
+    struct make_unsigned;
+
+    // Specializations for standard types
+    template<>
+    struct make_unsigned<unsigned char>
+    {
+        using type = unsigned char;
+    };
+    template<>
+    struct make_unsigned<signed char>
+    {
+        using type = unsigned char;
+    };
+    template<>
+    struct make_unsigned<char>
+    {
+        using type = unsigned char;
+    }; // Adjust if char is unsigned by default on your target
+
+    template<>
+    struct make_unsigned<unsigned short>
+    {
+        using type = unsigned short;
+    };
+    template<>
+    struct make_unsigned<short>
+    {
+        using type = unsigned short;
+    };
+
+    template<>
+    struct make_unsigned<unsigned int>
+    {
+        using type = unsigned int;
+    };
+    template<>
+    struct make_unsigned<int>
+    {
+        using type = unsigned int;
+    };
+
+    template<>
+    struct make_unsigned<unsigned long>
+    {
+        using type = unsigned long;
+    };
+    template<>
+    struct make_unsigned<long>
+    {
+        using type = unsigned long;
+    };
+
+    template<>
+    struct make_unsigned<unsigned long long>
+    {
+        using type = unsigned long long;
+    };
+    template<>
+    struct make_unsigned<long long>
+    {
+        using type = unsigned long long;
+    };
+
+    // Helper alias template
+    template<typename T>
+    using make_unsigned_t = typename make_unsigned<T>::type;
+
+    template<typename T>
+    inline constexpr bool is_bounded_array_v = false;
+
+    template<typename T, size_type s>
+    inline constexpr bool is_bounded_array_v<T[s]> = true;
+
+
+    template<typename T, unsigned index = 0>
+    inline constexpr size_type extent_v = 0;
+    template<typename T, size_type Size>
+    inline constexpr size_type extent_v<T[Size], 0> = Size;
+    template<typename T, unsigned index, size_type Size>
+    inline constexpr size_type extent_v<T[Size], index> = extent_v<T, index - 1>;
+    template<typename T>
+    inline constexpr size_type extent_v<T[], 0> = 0;
+    template<typename T, unsigned index>
+    inline constexpr size_type extent_v<T[], index> = extent_v<T, index - 1>;
+
+    namespace Detail
+    {
+        template<typename /* = void */, typename B1, typename... B>
+        struct disjunction_impl
+        {
+            using type = B1;
+        };
+
+        template<typename B1, typename B2, typename... B>
+        struct disjunction_impl<enable_if_t<!bool(B1::value)>, B1, B2, B...>
+        {
+            using type = typename disjunction_impl<void, B2, B...>::type;
+        };
+
+        template<typename /* = void */, typename B1, typename... B>
+        struct conjunction_impl
+        {
+            using type = B1;
+        };
+
+        template<typename B1, typename B2, typename... B>
+        struct conjunction_impl<enable_if_t<bool(B1::value)>, B1, B2, B...>
+        {
+            using type = typename conjunction_impl<void, B2, B...>::type;
+        };
+    } // namespace Detail
+
+    template<typename... B>
+    struct conjunction : Detail::conjunction_impl<void, B...>::type
+    {
+    };
+
+    template<>
+    struct conjunction<> : true_type
+    {
+    };
+
+    template<typename... B>
+    struct disjunction : Detail::disjunction_impl<void, B...>::type
+    {
+    };
+
+    template<>
+    struct disjunction<> : false_type
+    {
+    };
+
+    template<typename... B>
+    inline constexpr bool disjunction_v = disjunction<B...>::value;
+    template<typename... B>
+    inline constexpr bool conjunction_v = conjunction<B...>::value;
 
 } // namespace SFTL
