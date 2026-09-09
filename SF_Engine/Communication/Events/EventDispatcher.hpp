@@ -86,9 +86,7 @@ namespace SF::Engine
                 return;
 
             auto &listeners = it->second;
-            listeners.erase(::SFTL::remove_if(listeners.begin(), listeners.end(),
-                                              [id = handle._id](const auto &listener) { return listener->id == id; }),
-                            listeners.end());
+            erase_if(listeners, [id = handle._id](const auto &listener) { return listener->id == id; });
         }
 
         template<typename EventType>

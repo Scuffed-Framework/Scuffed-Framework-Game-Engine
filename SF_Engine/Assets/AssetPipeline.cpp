@@ -1,10 +1,10 @@
 #include "AssetPipeline.hpp"
 
-#include <LowLevel/FileSystem/File.hpp>
 #include <Engine/Log/Log.hpp>
+#include <Engine/Project/Project.hpp>
+#include <LowLevel/FileSystem/File.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <assimp/Importer.hpp>
-#include <Engine/Project/Project.hpp>
 
 namespace SF::Engine
 {
@@ -19,7 +19,8 @@ namespace SF::Engine
         auto &factories = Factories();
         if (factories.contains(rttiTypeName))
         {
-            Log::Error("AssetController: factory for '{}' registered more than once; ignoring duplicate.", rttiTypeName);
+            Log::Error("AssetController: factory for '{}' registered more than once; ignoring duplicate.",
+                       rttiTypeName);
             return;
         }
         factories.emplace(rttiTypeName, std::move(factory));
@@ -27,13 +28,13 @@ namespace SF::Engine
 
     bool AssetController::Initialize()
     {
-        assets_ = SFTL::DynamicArray<std::shared_ptr<AssetBase>>();
+        assets_ = vector<shared_ptr<AssetBase>>();
         return true;
     }
 
     void AssetController::ProjectLoaded()
     {
-        if(assets_.size() == 0)
+        if (assets_.size() == 0)
             assets_.clear();
 
         const std::filesystem::path assetsRoot = ProjectManager::Get()->GetProjectAssetPath();
@@ -47,8 +48,7 @@ namespace SF::Engine
         std::error_code ec;
 
         for (auto it = std::filesystem::recursive_directory_iterator(assetsRoot, ec);
-             it != std::filesystem::recursive_directory_iterator();
-             it.increment(ec))
+             it != std::filesystem::recursive_directory_iterator(); it.increment(ec))
         {
             if (ec)
             {
@@ -67,7 +67,7 @@ namespace SF::Engine
                 continue;
             }
 
-            XMLNode metaRoot = reader->GetRootNode();
+            XMLNode metaRoot  = reader->GetRootNode();
             XMLNode assetNode = metaRoot.GetChild("Asset");
             if (!assetNode.IsValid())
             {
@@ -87,8 +87,7 @@ namespace SF::Engine
             {
                 std::string name;
                 assetNode.GetAttribute("Name", name);
-                Log::Error("AssetController: no factory for type '{}' (asset '{}'); skipping.",
-                        concreteType, name);
+                Log::Error("AssetController: no factory for type '{}' (asset '{}'); skipping.", concreteType, name);
                 continue;
             }
 
@@ -109,7 +108,7 @@ namespace SF::Engine
 
     void AssetController::SaveAll()
     {
-        for (auto &asset : assets_)
+        for (auto &asset: assets_)
         {
             if (!asset)
                 continue;
@@ -120,7 +119,7 @@ namespace SF::Engine
 
     std::shared_ptr<AssetBase> AssetController::FindByUUID(const UUID &guid) const
     {
-        for (const auto &asset : assets_)
+        for (const auto &asset: assets_)
         {
             if (asset && asset->uuid == guid)
             {
@@ -133,7 +132,7 @@ namespace SF::Engine
 
     std::shared_ptr<AssetBase> AssetController::FindByName(std::string_view name) const
     {
-        for (const auto &asset : assets_)
+        for (const auto &asset: assets_)
         {
             if (asset && asset->name == name)
             {
@@ -152,14 +151,13 @@ namespace SF::Engine
             return;
         }
 
-        const std::filesystem::path manifestPath =
-            ProjectManager::Get()->GetProjectAssetPath() / "AssetManifest.xml";
+        const std::filesystem::path manifestPath = ProjectManager::Get()->GetProjectAssetPath() / "AssetManifest.xml";
 
         XMLModule *writer = XMLModule::Get();
         writer->SetRootNode("AssetManifest");
         XMLNode root = writer->GetRootNode();
 
-        for (const auto &asset : assets_)
+        for (const auto &asset: assets_)
         {
             if (asset)
                 asset->Serialize(root);
@@ -170,4 +168,4 @@ namespace SF::Engine
             Log::Error("AssetController: failed to save asset manifest to '{}'", manifestPath.string());
         }
     }
-}
+} // namespace SF::Engine
