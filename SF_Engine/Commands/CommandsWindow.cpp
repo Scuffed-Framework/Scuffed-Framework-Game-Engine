@@ -15,13 +15,13 @@ namespace SF::Engine
 
         auto skipSpace = [&]
         {
-            while (p < end && ::SFTL::Detail::IsSpaceChar(static_cast<unsigned char>(*p)))
+            while (p < end && ::SFTL::is_space(*p))
                 ++p;
         };
         auto readToken = [&]
         {
             const char *start = p;
-            while (p < end && !::SFTL::Detail::IsSpaceChar(static_cast<unsigned char>(*p)))
+            while (p < end && !::SFTL::is_space(*p))
                 ++p;
             return ::SFTL::string(start, static_cast<SFTL::size_type>(p - start));
         };
