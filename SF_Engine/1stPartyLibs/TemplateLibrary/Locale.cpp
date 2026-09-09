@@ -2,7 +2,7 @@
 
 namespace SFTL
 {
-    size_t locale::id::refcount         = 0;
+    size_type locale::id::refcount      = 0;
     const char locale::facet::c_name[2] = "C";
     template<typename Facet>
     locale::locale(const locale &other, Facet *fac)
