@@ -1,16 +1,16 @@
 #pragma once
 
-#include <Rendering/Renderer.hpp>
-#include <Rendering/Stage.hpp>
-#include <Rendering/RenderPass/FullscreenPass.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
+#include <Rendering/RenderPass/FullscreenPass.hpp>
+#include <Rendering/Renderer.hpp>
+#include <Rendering/Stage.hpp>
 #include <Rendering/Visuals/SSR/SSRPipelinePass.hpp>
-#include <Platform/Windows/WindowManager.hpp>
 
 #include <Math/BasicMath.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace SF::Engine
 {
@@ -21,13 +21,13 @@ namespace SF::Engine
         {
             using namespace SF::Engine;
             AddRenderStage(std::make_unique<RenderStage>(
-                std::vector<Attachment>{
-                    Attachment{0, "depth", Attachment::Type::Depth},
-                    Attachment{1, "swapchain", Attachment::Type::Swapchain},
-                },
-                std::vector<SubpassType>{
-                    SubpassType{0, {0, 1}},
-                }));
+                    std::vector<Attachment>{
+                            Attachment{0, "depth", Attachment::Type::Depth},
+                            Attachment{1, "swapchain", Attachment::Type::Swapchain},
+                    },
+                    std::vector<SubpassType>{
+                            SubpassType{0, {0, 1}},
+                    }));
         }
 
         void Start() override
@@ -35,35 +35,33 @@ namespace SF::Engine
             lightManager_ = std::make_unique<LightManager>();
 
             // Compute cluster cull runs in PreRender (before renderpass)
-            clusterCull_ = AddPipelinePass<ClusterCullPipelinePass>(
-                Pipeline::Stage{0, 0}, *lightManager_);
+            clusterCull_ = AddPipelinePass<ClusterCullPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
 
             // Forward lit pass
-            litPass_ = AddPipelinePass<LitMeshPipelinePass>(
-                Pipeline::Stage{0, 0}, *lightManager_);
+            litPass_ = AddPipelinePass<LitMeshPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
 
             // Default lights
             Light sun{};
-            sun.type = Lighting::LightType::Directional;
+            sun.type      = Lighting::LightType::Directional;
             sun.direction = normalize(Vec3(-0.5f, -1.0f, -0.3f));
-            sun.color = {1.0f, 0.95f, 0.85f};
+            sun.color     = {1.0f, 0.95f, 0.85f};
             sun.intensity = 3.0f;
             lightManager_->AddLight(sun);
 
             Light blue{};
-            blue.type = Lighting::LightType::Point;
-            blue.position = {4.0f, 3.0f, 4.0f};
-            blue.color = {0.3f, 0.6f, 1.0f};
+            blue.type      = Lighting::LightType::Point;
+            blue.position  = {4.0f, 3.0f, 4.0f};
+            blue.color     = {0.3f, 0.6f, 1.0f};
             blue.intensity = 20.0f;
-            blue.radius = 15.0f;
+            blue.radius    = 15.0f;
             lightManager_->AddLight(blue);
 
             Light orange{};
-            orange.type = Lighting::LightType::Point;
-            orange.position = {-4.0f, 2.0f, -2.0f};
-            orange.color = {1.0f, 0.4f, 0.2f};
+            orange.type      = Lighting::LightType::Point;
+            orange.position  = {-4.0f, 2.0f, -2.0f};
+            orange.color     = {1.0f, 0.4f, 0.2f};
             orange.intensity = 15.0f;
-            orange.radius = 12.0f;
+            orange.radius    = 12.0f;
             lightManager_->AddLight(orange);
 
             // Demo mesh
@@ -81,7 +79,7 @@ namespace SF::Engine
     private:
         std::unique_ptr<SF::Engine::LightManager> lightManager_;
         SF::Engine::ClusterCullPipelinePass *clusterCull_ = nullptr;
-        SF::Engine::LitMeshPipelinePass *litPass_ = nullptr;
+        SF::Engine::LitMeshPipelinePass *litPass_         = nullptr;
         std::unique_ptr<SF::Engine::Mesh> demoMesh_;
     };
 
@@ -94,32 +92,28 @@ namespace SF::Engine
 
             // Stage 0: GBuffer (off-screen MRT, no swapchain)
             AddRenderStage(std::make_unique<RenderStage>(
-                std::vector<Attachment>{
-                    Attachment{0, "gbuf_depth", Attachment::Type::Depth},
-                    Attachment{1, "gbuf_albedo", Attachment::Type::Image,
-                               false, VK_FORMAT_R8G8B8A8_UNORM},
-                    Attachment{2, "gbuf_normal", Attachment::Type::Image,
-                               false, VK_FORMAT_R16G16_SNORM},
-                    Attachment{3, "gbuf_pbr", Attachment::Type::Image,
-                               false, VK_FORMAT_R8G8B8A8_UNORM},
-                },
-                std::vector<SubpassType>{
-                    SubpassType{0, {0, 1, 2, 3}},
-                }));
+                    std::vector<Attachment>{
+                            Attachment{0, "gbuf_depth", Attachment::Type::Depth},
+                            Attachment{1, "gbuf_albedo", Attachment::Type::Image, false, VK_FORMAT_R8G8B8A8_UNORM},
+                            Attachment{2, "gbuf_normal", Attachment::Type::Image, false, VK_FORMAT_R16G16_SNORM},
+                            Attachment{3, "gbuf_pbr", Attachment::Type::Image, false, VK_FORMAT_R8G8B8A8_UNORM},
+                    },
+                    std::vector<SubpassType>{
+                            SubpassType{0, {0, 1, 2, 3}},
+                    }));
 
             // Stage 1: Lighting + Transparent + Tonemap
             AddRenderStage(std::make_unique<RenderStage>(
-                std::vector<Attachment>{
-                    Attachment{0, "hdr", Attachment::Type::Image,
-                               false, VK_FORMAT_R16G16B16A16_SFLOAT,
-                               Color{0.0f, 0.0f, 0.0f, 1.0f}},
-                    Attachment{1, "swapchain", Attachment::Type::Swapchain},
-                },
-                std::vector<SubpassType>{
-                    SubpassType{0, {0}}, // deferred lighting → hdr
-                    SubpassType{1, {0}}, // forward transparent → hdr
-                    SubpassType{2, {1}}, // tonemap → swapchain
-                }));
+                    std::vector<Attachment>{
+                            Attachment{0, "hdr", Attachment::Type::Image, false, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                       Color{0.0f, 0.0f, 0.0f, 1.0f}},
+                            Attachment{1, "swapchain", Attachment::Type::Swapchain},
+                    },
+                    std::vector<SubpassType>{
+                            SubpassType{0, {0}}, // deferred lighting → hdr
+                            SubpassType{1, {0}}, // forward transparent → hdr
+                            SubpassType{2, {1}}, // tonemap → swapchain
+                    }));
         }
 
         void Start() override
@@ -137,29 +131,26 @@ namespace SF::Engine
             AddPipelinePass<ForwardTransparentPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
 
             // Stage 1, subpass 2 : Tonemap hdr → swapchain
-            AddPipelinePass<FullscreenPass>(
-                Pipeline::Stage{1, 2}, "hdr", "Shaders/CompositeSampler.shader");
+            AddPipelinePass<FullscreenPass>(Pipeline::Stage{1, 2}, "hdr", "Shaders/CompositeSampler.shader");
 
             // Default lights
             Light sun{};
-            sun.type = Lighting::LightType::Directional;
+            sun.type      = Lighting::LightType::Directional;
             sun.direction = normalize(Vec3(-0.5f, -1.0f, -0.3f));
-            sun.color = {1.0f, 0.95f, 0.85f};
+            sun.color     = {1.0f, 0.95f, 0.85f};
             sun.intensity = 3.0f;
             lightManager_->AddLight(sun);
 
             Light fill{};
-            fill.type = Lighting::LightType::Point;
-            fill.position = {4.0f, 3.0f, 4.0f};
-            fill.color = {0.3f, 0.6f, 1.0f};
+            fill.type      = Lighting::LightType::Point;
+            fill.position  = {4.0f, 3.0f, 4.0f};
+            fill.color     = {0.3f, 0.6f, 1.0f};
             fill.intensity = 20.0f;
-            fill.radius = 15.0f;
+            fill.radius    = 15.0f;
             lightManager_->AddLight(fill);
         }
 
-        void Update() override
-        {
-        }
+        void Update() override {}
 
         static Image2d *GetHdrColorTarget();
 
@@ -172,4 +163,4 @@ namespace SF::Engine
         SF::Engine::GBufferPass *gbuffer_ = nullptr;
         SF::Engine::SSRPipelinePass *ssr_ = nullptr;
     };
-}
+} // namespace SF::Engine

@@ -7,11 +7,10 @@
 
 namespace SF::Engine
 {
-    const std::vector<const char *> LogicalDevice::DeviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    const std::vector<const char *> LogicalDevice::DeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-    LogicalDevice::LogicalDevice(const Instance &instance, const PhysicalDevice &physicalDevice)
-        : instance(instance), physicalDevice(physicalDevice)
+    LogicalDevice::LogicalDevice(const Instance &instance, const PhysicalDevice &physicalDevice) :
+        instance(instance), physicalDevice(physicalDevice)
     {
         CreateQueueIndices();
         CreateLogicalDevice();
@@ -29,11 +28,10 @@ namespace SF::Engine
     void LogicalDevice::CreateQueueIndices()
     {
         uint32_t deviceQueueFamilyPropertyCount;
-        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &deviceQueueFamilyPropertyCount,
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice.GetPhysicalDevice(), &deviceQueueFamilyPropertyCount,
                                                  nullptr);
-        std::vector<VkQueueFamilyProperties> deviceQueueFamilyProperties(
-            deviceQueueFamilyPropertyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &deviceQueueFamilyPropertyCount,
+        std::vector<VkQueueFamilyProperties> deviceQueueFamilyProperties(deviceQueueFamilyPropertyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice.GetPhysicalDevice(), &deviceQueueFamilyPropertyCount,
                                                  deviceQueueFamilyProperties.data());
 
         std::optional<uint32_t> GraphicsFamily, presentFamily, computeFamily, transferFamily;
@@ -47,7 +45,7 @@ namespace SF::Engine
             {
                 if (!GraphicsFamily)
                 {
-                    GraphicsFamily = i;
+                    GraphicsFamily       = i;
                     this->GraphicsFamily = i;
                     supportedQueues |= VK_QUEUE_GRAPHICS_BIT;
                 }
@@ -57,7 +55,7 @@ namespace SF::Engine
             {
                 if (!presentFamily)
                 {
-                    presentFamily = i;
+                    presentFamily       = i;
                     this->presentFamily = i;
                 }
             }
@@ -66,7 +64,7 @@ namespace SF::Engine
             {
                 if (!computeFamily)
                 {
-                    computeFamily = i;
+                    computeFamily       = i;
                     this->computeFamily = i;
                     supportedQueues |= VK_QUEUE_COMPUTE_BIT;
                 }
@@ -78,7 +76,7 @@ namespace SF::Engine
             {
                 if (!transferFamily)
                 {
-                    transferFamily = i;
+                    transferFamily       = i;
                     this->transferFamily = i;
                     supportedQueues |= VK_QUEUE_TRANSFER_BIT;
                 }
@@ -110,37 +108,37 @@ namespace SF::Engine
 
     void LogicalDevice::CreateLogicalDevice()
     {
-        std::unordered_set<uint32_t> uniqueQueueFamilies = {GraphicsFamily, presentFamily,
-                                                            computeFamily, transferFamily};
+        std::unordered_set<uint32_t> uniqueQueueFamilies = {GraphicsFamily, presentFamily, computeFamily,
+                                                            transferFamily};
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         float queuePriority = 1.0f;
 
-        for (uint32_t qf : uniqueQueueFamilies)
+        for (uint32_t qf: uniqueQueueFamilies)
         {
             VkDeviceQueueCreateInfo info = {};
-            info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            info.queueFamilyIndex = qf;
-            info.queueCount = 1;
-            info.pQueuePriorities = &queuePriority;
+            info.sType                   = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            info.queueFamilyIndex        = qf;
+            info.queueCount              = 1;
+            info.pQueuePriorities        = &queuePriority;
             queueCreateInfos.push_back(info);
         }
 
         //  Query available features via Vulkan 1.1+ feature chain
         VkPhysicalDeviceVulkan13Features avail13 = {};
-        avail13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+        avail13.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 
         VkPhysicalDeviceVulkan12Features avail12 = {};
-        avail12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-        avail12.pNext = &avail13;
+        avail12.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        avail12.pNext                            = &avail13;
 
         VkPhysicalDeviceVulkan11Features avail11 = {};
-        avail11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-        avail11.pNext = &avail12;
+        avail11.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+        avail11.pNext                            = &avail12;
 
         VkPhysicalDeviceFeatures2 avail = {};
-        avail.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        avail.pNext = &avail11;
-        vkGetPhysicalDeviceFeatures2(physicalDevice, &avail);
+        avail.sType                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        avail.pNext                     = &avail11;
+        vkGetPhysicalDeviceFeatures2(physicalDevice.GetPhysicalDevice(), &avail);
 
         auto &af = avail.features;
 
@@ -178,14 +176,14 @@ namespace SF::Engine
 
         //  Vulkan 1.1
         VkPhysicalDeviceVulkan11Features req11 = {};
-        req11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+        req11.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
         if (avail11.shaderDrawParameters)
             req11.shaderDrawParameters = VK_TRUE;
 
         //  Vulkan 1.2
         VkPhysicalDeviceVulkan12Features req12 = {};
-        req12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-        req12.pNext = &req11;
+        req12.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        req12.pNext                            = &req11;
 
         if (avail12.timelineSemaphore)
         {
@@ -231,8 +229,8 @@ namespace SF::Engine
 
         //  Vulkan 1.3
         VkPhysicalDeviceVulkan13Features req13 = {};
-        req13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-        req13.pNext = &req12;
+        req13.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+        req13.pNext                            = &req12;
 
         if (avail13.dynamicRendering)
         {
@@ -247,22 +245,22 @@ namespace SF::Engine
 
         // Core 1.0 features go at the tail of the pNext chain via Features2
         VkPhysicalDeviceFeatures2 req2 = {};
-        req2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        req2.features = req;
-        req11.pNext = &req2; // tail of chain
+        req2.sType                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        req2.features                  = req;
+        req11.pNext                    = &req2; // tail of chain
 
-        VkDeviceCreateInfo deviceCreateInfo = {};
-        deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        deviceCreateInfo.pNext = &req13;
-        deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-        deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-        deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DeviceExtensions.size());
+        VkDeviceCreateInfo deviceCreateInfo      = {};
+        deviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        deviceCreateInfo.pNext                   = &req13;
+        deviceCreateInfo.queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size());
+        deviceCreateInfo.pQueueCreateInfos       = queueCreateInfos.data();
+        deviceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>(DeviceExtensions.size());
         deviceCreateInfo.ppEnabledExtensionNames = DeviceExtensions.data();
-        deviceCreateInfo.pEnabledFeatures = nullptr; // using pNext chain instead
+        deviceCreateInfo.pEnabledFeatures        = nullptr; // using pNext chain instead
 
         Log::Info("Calling vkCreateDevice");
         RenderSystem::CheckVkResult(
-            vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &logicalDevice));
+                vkCreateDevice(physicalDevice.GetPhysicalDevice(), &deviceCreateInfo, nullptr, &logicalDevice));
         Log::Info("vkCreateDevice succeeded");
 
         volkLoadDevice(logicalDevice);
@@ -272,4 +270,4 @@ namespace SF::Engine
         vkGetDeviceQueue(logicalDevice, computeFamily, 0, &computeQueue);
         vkGetDeviceQueue(logicalDevice, transferFamily, 0, &transferQueue);
     }
-}
+} // namespace SF::Engine
