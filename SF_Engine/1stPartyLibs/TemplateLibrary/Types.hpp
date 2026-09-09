@@ -41,11 +41,13 @@ namespace SFTL
     typedef unsigned long long ulonglong;
     typedef long long longlong;
 
+    typedef __int128 int128;
     typedef unsigned long long uint64;
     typedef unsigned int uint32;
     typedef unsigned short uint16;
     typedef unsigned char uint8;
 
+    typedef __uint128_t uint128;
     typedef long long int64;
     typedef int int32;
     typedef short int16;
@@ -58,8 +60,10 @@ namespace SFTL
     using dword = uint32;
     using qword = uint64;
 
-    using ptrdiff_t = decltype(static_cast<int *>(nullptr) -
+    using ptrdiff_t  = decltype(static_cast<int *>(nullptr) -
                                static_cast<int *>(nullptr)); // https://en.cppreference.com/cpp/types/ptrdiff_t
+    using streamsize = ptrdiff_t;
+
     typedef long int intptr_type;
     typedef unsigned long int uintptr_type;
 
