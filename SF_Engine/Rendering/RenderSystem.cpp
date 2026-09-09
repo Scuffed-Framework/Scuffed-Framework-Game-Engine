@@ -31,7 +31,7 @@ namespace SF::Engine
         // Initialize VMA allocator - required by all Image creation/destruction
         VmaAllocatorCreateInfo allocatorCreateInfo = {};
         allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_2;
-        allocatorCreateInfo.physicalDevice         = *physicalDevice;
+        allocatorCreateInfo.physicalDevice         = &*physicalDevice->GetPhysicalDevice();
         allocatorCreateInfo.device                 = *logicalDevice;
         allocatorCreateInfo.instance               = *instance;
 
