@@ -54,7 +54,6 @@ namespace SF::Engine
             return nullptr;
         }
 
-    private:
         std::unordered_map<std::type_index, std::shared_ptr<Commandlet>> commandlets_;
     };
 } // namespace SF::Engine

@@ -58,12 +58,23 @@ namespace SF::Engine
                 log->push_back({LogEntry::Level::Info, "[PRINT] " + msg});
             }
         };
+        struct HelpCmd : Commandlet
+        {
+            ::SFTL::DynamicArray<LogEntry> *log{};
+            void Execute() override
+            {
+                SFTL::string msg;
+                for (const auto &cmd: CommandletRegistry::Get().commandlets_ | std::views::values)
+                {
+                    msg += cmd->name + "\n";
+                    msg += ' ';
+                }
+                log->push_back({LogEntry::Level::Info, "[HELP] " + msg});
+            }
+        };
         const auto printCmd = reg.Register<PrintCmd>();
         // Inject log pointer (you could also use a callback or event bus)
         dynamic_cast<PrintCmd *>(printCmd.get())->log = &m_log;
-
-        // "help" lists all registered commandlet names
-        // todo: implement, iterate registry, push to log
     }
 
     std::shared_ptr<Commandlet> CommandWindow::Execute(const SFTL::string &input)
