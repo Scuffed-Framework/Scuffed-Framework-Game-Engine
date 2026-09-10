@@ -1,8 +1,8 @@
 #pragma once
 #include <Engine/Module.hpp>
-#include <volk.h>
-#include <vulkan/vulkan_video.hpp
 #include <Rendering/RenderSystem.hpp>
+#include <volk.h>
+#include <vulkan/vulkan_video.hpp>
 
 namespace SF::Engine
 {
@@ -19,9 +19,11 @@ namespace SF::Engine
             // vkGetPhysicalDeviceVideoCapabilitiesKHR(RenderSystem::Get()->GetPhysicalDevice()->GetPhysicalDevice(), );
         }
 
-        VkResult QuerryHardwareVideoCapabilities(const VkVideoProfileInfoKHR *VideoProfile, VkVideoCapabilitiesKHR *VideoCapabilities)
+        VkResult QuerryHardwareVideoCapabilities(const VkVideoProfileInfoKHR *VideoProfile,
+                                                 VkVideoCapabilitiesKHR *VideoCapabilities)
         {
-            return vkGetPhysicalDeviceVideoCapabilitiesKHR(RenderSystem::Get()->GetPhysicalDevice()->GetPhysicalDevice(), VideoProfile, VideoCapabilities);
+            return vkGetPhysicalDeviceVideoCapabilitiesKHR(
+                    RenderSystem::Get()->GetPhysicalDevice()->GetPhysicalDevice(), VideoProfile, VideoCapabilities);
         }
     };
-}
+} // namespace SF::Engine
