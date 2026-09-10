@@ -1,57 +1,57 @@
 cmake_minimum_required(VERSION 4.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} CACHE STRING "" FORCE)
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} CACHE STRING "" FORCE)
 
-if(MSVC)
+if (MSVC)
     # Copy compile_commands to source root so VS/IntelliSense can find it
     add_custom_target(compile_commands ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_BINARY_DIR}/compile_commands.json"
             "${CMAKE_SOURCE_DIR}/compile_commands.json"
-        COMMENT "Copying compile_commands.json to source root"
+            COMMENT "Copying compile_commands.json to source root"
     )
-endif()
+endif ()
 
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(_CONAN_TOOLCHAIN "${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE}/generators/conan_toolchain.cmake")
-    if(EXISTS "${_CONAN_TOOLCHAIN}")
+    if (EXISTS "${_CONAN_TOOLCHAIN}")
         set(CMAKE_TOOLCHAIN_FILE "${_CONAN_TOOLCHAIN}" CACHE STRING "Conan toolchain file")
-    else()
+    else ()
         message(FATAL_ERROR "conan_toolchain.cmake not found at: ${_CONAN_TOOLCHAIN}\nRun: conan install . --profile=./profiles/windows-x64-debug.txt --build=missing")
-    endif()
-endif()
+    endif ()
+endif ()
 
-if(MSVC)
+if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL") # got the sars-copilot-2 virus while reading this
     cmake_policy(SET CMP0091 NEW)
-endif()
+endif ()
 
 project("SF"
-    VERSION 1.0.0
-    DESCRIPTION "Games? (AI hallucination goes here)"
-    LANGUAGES C CXX
+        VERSION 1.0.0
+        DESCRIPTION "Games? (AI hallucination goes here)"
+        LANGUAGES C CXX
 )
 
-if(CMAKE_EXPORT_COMPILE_COMMANDS)
+if (CMAKE_EXPORT_COMPILE_COMMANDS)
     set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_INCLUDES OFF)
     set(CMAKE_C_USE_RESPONSE_FILE_FOR_INCLUDES OFF)
-endif()
+endif ()
 
-set(CMAKE_C_STANDARD 17)
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(ARCH_SUFFIX "x64")
-else()
+else ()
     set(ARCH_SUFFIX "x86")
-endif()
+endif ()
 
-if(NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
-endif()
+endif ()
 
 set(BASE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/000-Build-${CMAKE_BUILD_TYPE}-${ARCH_SUFFIX}")
 
@@ -61,60 +61,60 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BASE_OUTPUT_DIR}")
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${BASE_OUTPUT_DIR}")
 
 # Multi-config generators (Visual Studio)
-if(CMAKE_CONFIGURATION_TYPES)
-    foreach(CONFIG ${CMAKE_CONFIGURATION_TYPES})
+if (CMAKE_CONFIGURATION_TYPES)
+    foreach (CONFIG ${CMAKE_CONFIGURATION_TYPES})
         string(TOUPPER ${CONFIG} CONFIG_UPPER)
         set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${BASE_OUTPUT_DIR}")
         set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${BASE_OUTPUT_DIR}")
         set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${BASE_OUTPUT_DIR}")
         set(CMAKE_PDB_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${BASE_OUTPUT_DIR}")
-    endforeach()
-endif()
+    endforeach ()
+endif ()
 
 if (MSVC)
     add_compile_options(
-        /Zc:__cplusplus
-        /EHsc
-        /utf-8
-        /wd4005
-        /wd4224
-        /wd4267
-        /wd4244
-        /wd4002
-        $<$<CONFIG:Debug>:/Zi>
-        $<$<CONFIG:Release>:/O2>
+            /Zc:__cplusplus
+            /EHsc
+            /utf-8
+            /wd4005
+            /wd4224
+            /wd4267
+            /wd4244
+            /wd4002
+            $<$<CONFIG:Debug>:/Zi>
+            $<$<CONFIG:Release>:/O2>
     )
 
     add_link_options(
-        /ignore:4099
-        /ignore:4098
-        /ignore:4217
-        /ignore:4286
+            /ignore:4099
+            /ignore:4098
+            /ignore:4217
+            /ignore:4286
     )
 
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(
-        -Wall
-        -Wextra
-        -Wpedantic
-        -Wmissing-field-initializers
-        -Wreorder
-        -Wdeprecated-literal-operator
-        -Wunused-variable
-        -Wunused-parameter
+            -Wall
+            -Wextra
+            -Wpedantic
+            -Wmissing-field-initializers
+            -Wreorder
+            -Wdeprecated-literal-operator
+            -Wunused-variable
+            -Wunused-parameter
     )
-endif()
+endif ()
 # Ensure Conan generators path is available to all subdirectories
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE}/generators")
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} CACHE STRING "" FORCE)
 
 add_subdirectory(
-    "${CMAKE_SOURCE_DIR}/SF_Engine"                    # SF_Engine source folder
-    "${BASE_OUTPUT_DIR}/SF_Engine_Build"               # SF_Engine build folder (outside source!)
+        "${CMAKE_SOURCE_DIR}/SF_Engine"                    # SF_Engine source folder
+        "${BASE_OUTPUT_DIR}/SF_Engine_Build"               # SF_Engine build folder (outside source!)
 )
 
 add_subdirectory(
-    "${CMAKE_SOURCE_DIR}/SF_Editor"                
-    "${BASE_OUTPUT_DIR}/SF_Editor_Build"           
+        "${CMAKE_SOURCE_DIR}/SF_Editor"
+        "${BASE_OUTPUT_DIR}/SF_Editor_Build"
 )
 # Version moved to ./scripts/build

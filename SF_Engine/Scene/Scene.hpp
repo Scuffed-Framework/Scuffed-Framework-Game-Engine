@@ -1,22 +1,22 @@
 #pragma once
 
-#include <Rendering/Camera/Camera.hpp>
-#include <LowLevel/Rocket.hpp>
 #include <Entity/EntityHolder.hpp>
+#include <LowLevel/Rocket.hpp>
+#include <Rendering/Camera/Camera.hpp>
 #include "SystemHolder.hpp"
 
-#include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/Lighting/LitMeshPipelinePass.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 
 #include <LowLevel/XML/XMLModule.hpp>
-#include "SceneSerialization.hpp"
-#include <Scene/Types.hpp>
-#include <Scene/SceneRenderer.hpp>
 #include <Rendering/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
+#include <Scene/SceneRenderer.hpp>
+#include <Scene/Types.hpp>
+#include "SceneSerialization.hpp"
 
-#include <Rendering/Images/Image2d.hpp>
 #include <Controllers/CameraController.hpp>
+#include <Rendering/Images/Image2d.hpp>
 
 namespace SF::Engine
 {
@@ -26,24 +26,34 @@ namespace SF::Engine
         friend class SceneRenderer;
 
     public:
-        explicit Scene(::std::unique_ptr<CameraController> &&cameraController, std::string name, SceneRendererConfig cfg = {});
+        explicit Scene(::std::unique_ptr<CameraController> &&cameraController, std::string name,
+                       SceneRendererConfig cfg = {});
         virtual ~Scene();
 
         virtual void Start() = 0;
         virtual void Update();
         virtual void Render();
 
-        template <typename T>
-        bool HasSystem() const { return systems.Has<T>(); }
-        template <typename T>
-        T *GetSystem() const { return systems.Get<T>(); }
-        template <typename T, typename... Args>
+        template<typename T>
+        bool HasSystem() const
+        {
+            return systems.Has<T>();
+        }
+        template<typename T>
+        T *GetSystem() const
+        {
+            return systems.Get<T>();
+        }
+        template<typename T, typename... Args>
         void AddSystem(Args &&...args)
         {
             systems.Add<T>(std::make_unique<T>(std::forward<Args>(args)...));
         }
-        template <typename T>
-        void RemoveSystem() { systems.Remove<T>(); }
+        template<typename T>
+        void RemoveSystem()
+        {
+            systems.Remove<T>();
+        }
         void ClearSystems();
 
         Entity *GetEntity(const std::string &name) const;
@@ -62,20 +72,20 @@ namespace SF::Engine
         }
         void ReparentEntity(EntityId childId, EntityId newParentId)
         {
-            auto *child = entities.FindById(childId);
+            auto *child     = entities.FindById(childId);
             auto *newParent = entities.FindById(newParentId);
             if (!child || !newParent || child == newParent)
                 return;
             entities.Reparent(child, newParent);
         }
 
-        template <typename T>
+        template<typename T>
         T *GetComponent(bool allowDisabled = false)
         {
             return entities.GetComponent<T>(allowDisabled);
         }
 
-        template <typename T>
+        template<typename T>
         std::vector<T *> QueryComponents(bool allowDisabled = false)
         {
             return entities.QueryComponents<T>(allowDisabled);
@@ -91,14 +101,14 @@ namespace SF::Engine
         LightManager *GetLightManager() { return sceneRenderer_ ? sceneRenderer_->GetLightManager() : nullptr; }
         SceneRenderer *GetRenderer() const { return sceneRenderer_; }
 
-        template <typename T, typename... Args>
+        template<typename T, typename... Args>
         T *InjectPipelinePass(const Pipeline::Stage &stage, Args &&...args)
         {
             assert(sceneRenderer_ && "InjectPipelinePass called before renderer is ready");
             return sceneRenderer_->AddPipelinePass<T>(stage, std::forward<Args>(args)...);
         }
 
-        template <typename T>
+        template<typename T>
         T *GetPipelinePass() const
         {
             if (!sceneRenderer_)
@@ -116,7 +126,7 @@ namespace SF::Engine
 
         void Stop()
         {
-            started_ = false;
+            started_     = false;
             initialized_ = false;
             ClearSystems();
             ClearEntities();
@@ -126,11 +136,11 @@ namespace SF::Engine
 
     protected:
         // Subclasses can set these before Initialize() to opt into features.
-        bool sunEnabled = false;
+        bool sunEnabled        = false;
         bool atmosphereEnabled = false;
 
     private:
-        bool started_ = false;
+        bool started_     = false;
         bool initialized_ = false;
 
         SceneRendererConfig rendererCfg_;
@@ -141,11 +151,11 @@ namespace SF::Engine
 
         std::unique_ptr<CameraController> cameraController_;
 
-        LitMeshPipelinePass *litPass_ = nullptr;
+        LitMeshPipelinePass *litPass_     = nullptr;
         AtmospherePipelinePass *atmoPass_ = nullptr;
-        CloudPipelinePass *cloudPass_ = nullptr;
+        CloudPipelinePass *cloudPass_     = nullptr;
 
-        float elapsed_ = 0.0f;
+        float elapsed_       = 0.0f;
         uint32_t frameIndex_ = 0;
 
         Mat4 prevViewProj_ = Mat4(1.0f);
@@ -155,20 +165,20 @@ namespace SF::Engine
 
         std::chrono::steady_clock::time_point lastFrameTime_;
 
-        int selectedObj_ = -1;
+        int selectedObj_   = -1;
         int selectedLight_ = -1;
 
         void SyncLightTransforms()
         {
-            for (auto &sl : lights_)
+            for (auto &sl: lights_)
             {
                 sl->GetComponent<Light>()->position = sl->GetComponent<Transform>()->position;
                 if (sl->GetComponent<Light>()->type == Lighting::LightType::Directional)
                 {
-                    Vec3 rot = glm::radians(sl->GetComponent<Transform>()->rotation);
-                    Mat4 m = glm::rotate(Mat4(1.0f), rot.y, {0, 1, 0});
-                    m = glm::rotate(m, rot.x, {1, 0, 0});
-                    m = glm::rotate(m, rot.z, {0, 0, 1});
+                    Vec3 rot                             = glm::radians(sl->GetComponent<Transform>()->rotation);
+                    Mat4 m                               = glm::rotate(Mat4(1.0f), rot.y, {0, 1, 0});
+                    m                                    = glm::rotate(m, rot.x, {1, 0, 0});
+                    m                                    = glm::rotate(m, rot.z, {0, 0, 1});
                     sl->GetComponent<Light>()->direction = normalize(Vec3(m * Vec4(0, -1, 0, 0)));
                 }
             }
@@ -179,27 +189,23 @@ namespace SF::Engine
             if (!GetLightManager())
                 return;
             GetLightManager()->ClearLights();
-            for (auto &sl : lights_)
+            for (auto &sl: lights_)
                 GetLightManager()->AddLight(*sl->GetComponent<Light>());
         }
 
         std::string name;
 
     public:
-        const std::string GetName() { return name; }
+        std::string GetName() { return name; }
         static const ImageDepth *GetDepthTexture();
 
         SceneObject *AddObject(const std::string &name, Entity *parent = nullptr);
         SceneObject *AddObject(const std::string &name, Transform &transform, Entity *parent = nullptr);
-        SceneLight *AddLight(const std::string &name, Lighting::LightType type,
-                             const Vec3 &color, float intensity,
-                             const Vec3 &position, const Vec3 &rotation,
-                             Entity *parent = nullptr);
+        SceneLight *AddLight(const std::string &name, Lighting::LightType type, const Vec3 &color, float intensity,
+                             const Vec3 &position, const Vec3 &rotation, Entity *parent = nullptr);
 
-        SceneLight *AddLight(const std::string &name, Lighting::LightType type,
-                             const Vec3 &color, float intensity,
-                             Transform &transform,
-                             Entity *parent = nullptr);
+        SceneLight *AddLight(const std::string &name, Lighting::LightType type, const Vec3 &color, float intensity,
+                             Transform &transform, Entity *parent = nullptr);
 
         void RemoveObject(SceneObject *obj);
         void RemoveLight(SceneLight *light);
@@ -220,4 +226,4 @@ namespace SF::Engine
         std::pair<int, int> FindParentRef(Entity *e) const;
         void RemoveEntitySubtree(Entity *rootEntity);
     };
-}
+} // namespace SF::Engine
