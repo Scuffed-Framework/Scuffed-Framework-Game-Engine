@@ -1,6 +1,5 @@
 #pragma once
 
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <Entity/Entity.hpp>
 #include <Gui/StaticPanel.hpp>
 #include <Gui/UIRegistry.hpp>

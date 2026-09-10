@@ -10,7 +10,6 @@
 
 #include <Commands/CommandsWindow.hpp>
 
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <Gui/StaticPanel.hpp>
 #include <Gui/ocornut/imgui_stdlib.h>
 
