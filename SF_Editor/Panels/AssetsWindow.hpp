@@ -1,15 +1,15 @@
 #pragma once
-#include <Rendering/Images/ImageAsset.hpp>
+#include <Assets/AssetPipeline.hpp>
 #include <Assets/AssetTextures.hpp>
+#include <Gui/IconHeaders/IconMaterialDesign.hpp>
 #include <Gui/UIRegistry.hpp>
 #include <Gui/ocornut/imgui.h>
 #include <Gui/ocornut/imgui_internal.h>
-#include <Gui/IconHeaders/IconMaterialDesign.hpp>
+#include <LowLevel/Reflection/RTTI/RTTICast.hpp>
+#include <Rendering/Images/ImageAsset.hpp>
 #include <algorithm>
 #include <cctype>
 #include <unordered_map>
-#include <Assets/AssetPipeline.hpp>
-#include <LowLevel/Reflection/RTTI/RTTICast.hpp>
 
 namespace SF::Engine
 {
@@ -26,8 +26,7 @@ namespace SF::Engine
 
         AssetBrowser()
         {
-            m_uiHandle = UIRegistry::Get().Register([this]
-                                                    { Draw(); });
+            m_uiHandle = UIRegistry::Get().Register([this] { Draw(); });
         }
 
         void Draw();
@@ -50,7 +49,7 @@ namespace SF::Engine
             bool isValid = false;
         };
         std::unordered_map<UUID, TexturePreview> m_previewCache;
-        template <typename Func>
+        template<typename Func>
         bool TryWithImageTexture(const std::shared_ptr<AssetBase> &asset, Func &&fn);
 
         void DrawMenuBar();
@@ -58,18 +57,18 @@ namespace SF::Engine
         void DrawPathNavigation();
         void DrawFilterControls();
         void DrawAssetGrid();
-        void DrawGridView(const SFTL::DynamicArray<std::shared_ptr<AssetBase>> &assets);
+        void DrawGridView(const vector<std::shared_ptr<AssetBase>> &assets);
         void DrawAssetTile(const std::shared_ptr<AssetBase> &asset, int index);
-        void DrawListView(const SFTL::DynamicArray<std::shared_ptr<AssetBase>> &assets);
+        void DrawListView(const vector<std::shared_ptr<AssetBase>> &assets);
         void DrawSmallPreview(const std::shared_ptr<AssetBase> &asset);
         void DrawDetailsPanel();
         void DrawGenericAssetDetails(const std::shared_ptr<AssetBase> &asset);
         void AddPropertyRow(const std::string &label, const std::string &value);
 
-        template <typename TImage>
+        template<typename TImage>
         void DrawImageDetails(const std::shared_ptr<ImageAsset<TImage>> &asset);
 
-        template <typename T>
+        template<typename T>
         void DrawActionButtons(const std::shared_ptr<T> &asset);
         void DrawAssetIcon(const std::shared_ptr<AssetBase> &asset);
         const char *GetAssetTypeName(AssetType type);
@@ -78,14 +77,14 @@ namespace SF::Engine
         const char *GetAddressModeName(VkSamplerAddressMode mode);
         bool ShouldShowAsset(const std::shared_ptr<AssetBase> &asset);
 
-        template <typename TImage>
+        template<typename TImage>
         void CreateImageAsset();
         void RefreshAssets();
 
         void DrawContextMenu();
 
         // Helper to get or create texture preview
-        template <typename TImage>
+        template<typename TImage>
         TexturePreview GetOrCreatePreview(const UUID &guid, const std::shared_ptr<TImage> &texture);
 
         enum class InlineEditMode
@@ -95,7 +94,7 @@ namespace SF::Engine
         };
         InlineEditMode m_inlineEditMode = InlineEditMode::None;
         std::filesystem::path m_inlineEditPath;
-        char m_inlineEditBuffer[256] = {};
+        char m_inlineEditBuffer[256]  = {};
         bool m_inlineEditFocusPending = false;
 
         bool m_showDeleteConfirmPopup = false;
@@ -121,4 +120,4 @@ namespace SF::Engine
         void CancelInlineFolderEdit();
         void RequestDeleteFolder(const std::filesystem::path &path);
     };
-}
+} // namespace SF::Engine

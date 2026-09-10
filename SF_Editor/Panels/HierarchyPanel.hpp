@@ -40,6 +40,6 @@ namespace SF::Engine
         EntityId m_selectedId                = 0;
         std::function<void(SF::Engine::Entity *)> m_onEntitySelected;
         bool m_needsRefresh = true;
-        ::SFTL::size_type reg;
+        size_t reg;
     };
 } // namespace SF::Engine
