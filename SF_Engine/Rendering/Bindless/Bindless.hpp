@@ -1,12 +1,12 @@
 #pragma once
-#include <UtilityClasses/NoCopy.hpp>
-#include <Rendering/RenderSystem.hpp>
 #include <Math/KVP.hpp>
+#include <Rendering/RenderSystem.hpp>
+#include <UtilityClasses/NoCopy.hpp>
 #ifdef Bool
-#undef Bool
+    #undef Bool
 #endif
-#include <slang.h>
 #include <slang-com-ptr.h>
+#include <slang.h>
 namespace SF::Engine
 {
     enum class EBindingType
@@ -24,11 +24,11 @@ namespace SF::Engine
     struct BindlessReflectionData
     {
         std::string name;
-        uint32 set;
-        uint32 binding;
+        uint32_t set;
+        uint32_t binding;
     };
 
-    using BindlessIndex = KeyValuePair<uint32, uint32>;
+    using BindlessIndex = KeyValuePair<uint32_t, uint32_t>;
 
     class BindlessManager : NoCopy
     {
@@ -58,39 +58,40 @@ namespace SF::Engine
         void FlushAllPendingFrees();
 
     private:
-        uint32 RequireIndex(EBindingType type);
-        void FreeIndexImmediate(EBindingType type, uint32 index);
+        uint32_t RequireIndex(EBindingType type);
+        void FreeIndexImmediate(EBindingType type, uint32_t index);
 
-        static constexpr uint32 kFramesInFlight = 3;
+        static constexpr uint32_t kFramesInFlight = 3;
 
         struct PendingFree
         {
             EBindingType type;
-            uint32 index;
+            uint32_t index;
             uint64_t freedOnFrame;
         };
 
     private:
-        static constexpr auto kBindingCount = static_cast<uint32>(EBindingType::MAX);
-        VkDescriptorPool m_pool = VK_NULL_HANDLE;
-        VkDescriptorSet m_set = VK_NULL_HANDLE;
-        VkDescriptorSetLayout m_setLayout = VK_NULL_HANDLE;
+        static constexpr auto kBindingCount = static_cast<uint32_t>(EBindingType::MAX);
+        VkDescriptorPool m_pool             = VK_NULL_HANDLE;
+        VkDescriptorSet m_set               = VK_NULL_HANDLE;
+        VkDescriptorSetLayout m_setLayout   = VK_NULL_HANDLE;
         struct BindingConfig
         {
             VkDescriptorType type;
-            uint32 count;
-            uint32 limit;
+            uint32_t count;
+            uint32_t limit;
         };
         BindingConfig m_bindingConfigs[kBindingCount];
         std::mutex m_lockCount;
-        std::queue<uint32> m_freeCount[kBindingCount];
-        uint32 m_usedCount[kBindingCount];
+        std::queue<uint32_t> m_freeCount[kBindingCount];
+        uint32_t m_usedCount[kBindingCount];
 
         std::vector<PendingFree> m_pendingFrees;
         uint64_t m_currentFrame = 0;
     };
 
-    inline std::vector<SF::Engine::BindlessReflectionData> ReflectBindlessLayout(Slang::ComPtr<slang::IComponentType> linkedProgram)
+    inline std::vector<SF::Engine::BindlessReflectionData>
+    ReflectBindlessLayout(Slang::ComPtr<slang::IComponentType> linkedProgram)
     {
         std::vector<SF::Engine::BindlessReflectionData> reflectedBindings;
         slang::ProgramLayout *layout = linkedProgram->getLayout();
@@ -101,11 +102,11 @@ namespace SF::Engine
         {
             slang::VariableLayoutReflection *param = layout->getParameterByIndex(i);
             SF::Engine::BindlessReflectionData data;
-            data.name = param->getName();
+            data.name    = param->getName();
             data.binding = param->getBindingIndex();
-            data.set = param->getBindingSpace();
+            data.set     = param->getBindingSpace();
             reflectedBindings.push_back(data);
         }
         return reflectedBindings;
     }
-}
+} // namespace SF::Engine

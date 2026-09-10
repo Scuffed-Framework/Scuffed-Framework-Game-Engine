@@ -1,27 +1,38 @@
 #include "Bindless.hpp"
-#include <Math/Math.hpp>
-#include <Rendering/RenderSystem.hpp>
 #include <Engine/Log/Log.hpp>
+#include <Math/Math.hpp>
 #include <Rendering/Common.hpp>
+#include <Rendering/RenderSystem.hpp>
 
 namespace SF::Engine
 {
     BindlessManager::BindlessManager()
     {
         const auto &indexingProps = RenderSystem::Get()->GetPhysicalDevice()->GetDescriptorIndexingProperties();
-        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageBuffer)] = {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindStorageBuffers};
-        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessUniformBuffer)] = {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindUniformBuffers};
-        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessSampledImage)] = {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindSampledImages};
-        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageImage)] = {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindStorageImages};
-        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessSampler)] = {VK_DESCRIPTOR_TYPE_SAMPLER, 100000u, indexingProps.maxDescriptorSetUpdateAfterBindSamplers};
-        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessUniformTexelBuffer)] = {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 100000u, indexingProps.maxDescriptorSetUpdateAfterBindUniformBuffers};
-        m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageTexelBuffer)] = {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 100000u, indexingProps.maxDescriptorSetUpdateAfterBindStorageBuffers};
-        for (auto &config : m_bindingConfigs)
+        m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessStorageBuffer)] = {
+                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500000u,
+                indexingProps.maxDescriptorSetUpdateAfterBindStorageBuffers};
+        m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessUniformBuffer)] = {
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500000u,
+                indexingProps.maxDescriptorSetUpdateAfterBindUniformBuffers};
+        m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessSampledImage)] = {
+                VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindSampledImages};
+        m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessStorageImage)] = {
+                VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500000u, indexingProps.maxDescriptorSetUpdateAfterBindStorageImages};
+        m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessSampler)] = {
+                VK_DESCRIPTOR_TYPE_SAMPLER, 100000u, indexingProps.maxDescriptorSetUpdateAfterBindSamplers};
+        m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessUniformTexelBuffer)] = {
+                VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 100000u,
+                indexingProps.maxDescriptorSetUpdateAfterBindUniformBuffers};
+        m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessStorageTexelBuffer)] = {
+                VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 100000u,
+                indexingProps.maxDescriptorSetUpdateAfterBindStorageBuffers};
+        for (auto &config: m_bindingConfigs)
         {
-            constexpr uint32 kUsedCountPercentage = 2;
+            constexpr uint32_t kUsedCountPercentage = 2;
             config.count = Mathematics::Clamp(config.count, 1u, config.limit / kUsedCountPercentage);
         }
-        for (auto &count : m_usedCount)
+        for (auto &count: m_usedCount)
         {
             count = 0;
         }
@@ -31,54 +42,53 @@ namespace SF::Engine
 
             for (uint32_t i = 0; i < kBindingCount; ++i)
             {
-                bindings[i].binding = i;
-                bindings[i].descriptorType = m_bindingConfigs[i].type;
+                bindings[i].binding         = i;
+                bindings[i].descriptorType  = m_bindingConfigs[i].type;
                 bindings[i].descriptorCount = m_bindingConfigs[i].count;
-                bindings[i].stageFlags = VK_SHADER_STAGE_ALL;
+                bindings[i].stageFlags      = VK_SHADER_STAGE_ALL;
 
-                flags[i] =
-                    VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
-                    VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT;
+                flags[i] = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT;
             }
 
             VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{};
-            bindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
-            bindingFlags.pNext = nullptr;
+            bindingFlags.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+            bindingFlags.pNext         = nullptr;
             bindingFlags.pBindingFlags = flags.data();
-            bindingFlags.bindingCount = kBindingCount;
+            bindingFlags.bindingCount  = kBindingCount;
             VkDescriptorSetLayoutCreateInfo createInfo{};
-            createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            createInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             createInfo.bindingCount = kBindingCount;
-            createInfo.pBindings = bindings.data();
-            createInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
-            createInfo.pNext = &bindingFlags;
-            m_setLayout = CreateDescriptorSetLayout(createInfo);
+            createInfo.pBindings    = bindings.data();
+            createInfo.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+            createInfo.pNext        = &bindingFlags;
+            m_setLayout             = CreateDescriptorSetLayout(createInfo);
         }
         {
             std::array<VkDescriptorPoolSize, kBindingCount> poolSize{};
             for (uint32_t i = 0; i < kBindingCount; ++i)
             {
-                poolSize[i].type = m_bindingConfigs[i].type;
+                poolSize[i].type            = m_bindingConfigs[i].type;
                 poolSize[i].descriptorCount = m_bindingConfigs[i].count;
             }
 
             VkDescriptorPoolCreateInfo poolCreateInfo{};
-            poolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            poolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
             poolCreateInfo.poolSizeCount = kBindingCount;
-            poolCreateInfo.pPoolSizes = poolSize.data();
-            poolCreateInfo.maxSets = 1;
-            poolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
-            m_pool = CreateDescriptorPool(poolCreateInfo);
+            poolCreateInfo.pPoolSizes    = poolSize.data();
+            poolCreateInfo.maxSets       = 1;
+            poolCreateInfo.flags         = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+            m_pool                       = CreateDescriptorPool(poolCreateInfo);
         }
         {
             VkDescriptorSetAllocateInfo allocateInfo{};
-            allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            allocateInfo.pNext = nullptr;
-            allocateInfo.descriptorPool = m_pool;
-            allocateInfo.pSetLayouts = &m_setLayout;
+            allocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocateInfo.pNext              = nullptr;
+            allocateInfo.descriptorPool     = m_pool;
+            allocateInfo.pSetLayouts        = &m_setLayout;
             allocateInfo.descriptorSetCount = 1;
 
-            RenderSystem::CheckVkResult(vkAllocateDescriptorSets(RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(), &allocateInfo, &m_set));
+            RenderSystem::CheckVkResult(vkAllocateDescriptorSets(
+                    RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice(), &allocateInfo, &m_set));
         }
     }
 
@@ -95,16 +105,16 @@ namespace SF::Engine
     BindlessIndex BindlessManager::RegisterSampler(VkSampler sampler)
     {
         VkDescriptorImageInfo imageInfo{};
-        imageInfo.sampler = sampler;
-        imageInfo.imageView = VK_NULL_HANDLE;
+        imageInfo.sampler     = sampler;
+        imageInfo.imageView   = VK_NULL_HANDLE;
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
         VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet = m_set;
-        write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessSampler)].type;
-        write.dstBinding = static_cast<uint32>(EBindingType::BindlessSampler);
-        write.pImageInfo = &imageInfo;
+        write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet          = m_set;
+        write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessSampler)].type;
+        write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessSampler);
+        write.pImageInfo      = &imageInfo;
         write.descriptorCount = 1;
         write.dstArrayElement = RequireIndex(EBindingType::BindlessSampler);
 
@@ -116,16 +126,16 @@ namespace SF::Engine
     BindlessIndex BindlessManager::RegisterSRV(VkImageView view)
     {
         VkDescriptorImageInfo imageInfo{};
-        imageInfo.sampler = VK_NULL_HANDLE;
-        imageInfo.imageView = view;
+        imageInfo.sampler     = VK_NULL_HANDLE;
+        imageInfo.imageView   = view;
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
         VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet = m_set;
-        write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessSampledImage)].type;
-        write.dstBinding = static_cast<uint32>(EBindingType::BindlessSampledImage);
-        write.pImageInfo = &imageInfo;
+        write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet          = m_set;
+        write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessSampledImage)].type;
+        write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessSampledImage);
+        write.pImageInfo      = &imageInfo;
         write.descriptorCount = 1;
         write.dstArrayElement = RequireIndex(EBindingType::BindlessSampledImage);
 
@@ -146,15 +156,15 @@ namespace SF::Engine
         if (fallback.GetImage())
         {
             VkDescriptorImageInfo imageInfo{};
-            imageInfo.sampler = VK_NULL_HANDLE;
-            imageInfo.imageView = fallback.GetView();
+            imageInfo.sampler     = VK_NULL_HANDLE;
+            imageInfo.imageView   = fallback.GetView();
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             VkWriteDescriptorSet write{};
-            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write.dstSet = m_set;
-            write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessSampledImage)].type;
-            write.dstBinding = static_cast<uint32>(EBindingType::BindlessSampledImage);
-            write.pImageInfo = &imageInfo;
+            write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write.dstSet          = m_set;
+            write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessSampledImage)].type;
+            write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessSampledImage);
+            write.pImageInfo      = &imageInfo;
             write.descriptorCount = 1;
             write.dstArrayElement = index.key;
 
@@ -169,15 +179,15 @@ namespace SF::Engine
     BindlessIndex BindlessManager::RegisterUAV(VkImageView view)
     {
         VkDescriptorImageInfo imageInfo{};
-        imageInfo.sampler = VK_NULL_HANDLE;
-        imageInfo.imageView = view;
+        imageInfo.sampler     = VK_NULL_HANDLE;
+        imageInfo.imageView   = view;
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
         VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet = m_set;
-        write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageImage)].type;
-        write.dstBinding = static_cast<uint32>(EBindingType::BindlessStorageImage);
-        write.pImageInfo = &imageInfo;
+        write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet          = m_set;
+        write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessStorageImage)].type;
+        write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessStorageImage);
+        write.pImageInfo      = &imageInfo;
         write.descriptorCount = 1;
         write.dstArrayElement = RequireIndex(EBindingType::BindlessStorageImage);
 
@@ -190,15 +200,15 @@ namespace SF::Engine
         if (fallback.GetImage())
         {
             VkDescriptorImageInfo imageInfo{};
-            imageInfo.sampler = VK_NULL_HANDLE;
-            imageInfo.imageView = fallback.GetView();
+            imageInfo.sampler     = VK_NULL_HANDLE;
+            imageInfo.imageView   = fallback.GetView();
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
             VkWriteDescriptorSet write{};
-            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write.dstSet = m_set;
-            write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageImage)].type;
-            write.dstBinding = static_cast<uint32>(EBindingType::BindlessStorageImage);
-            write.pImageInfo = &imageInfo;
+            write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write.dstSet          = m_set;
+            write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessStorageImage)].type;
+            write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessStorageImage);
+            write.pImageInfo      = &imageInfo;
             write.descriptorCount = 1;
             write.dstArrayElement = index.key;
 
@@ -215,13 +225,13 @@ namespace SF::Engine
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = buffer;
         bufferInfo.offset = offset;
-        bufferInfo.range = range;
+        bufferInfo.range  = range;
         VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet = m_set;
-        write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageBuffer)].type;
-        write.dstBinding = static_cast<uint32>(EBindingType::BindlessStorageBuffer);
-        write.pBufferInfo = &bufferInfo;
+        write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet          = m_set;
+        write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessStorageBuffer)].type;
+        write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessStorageBuffer);
+        write.pBufferInfo     = &bufferInfo;
         write.descriptorCount = 1;
         write.dstArrayElement = RequireIndex(EBindingType::BindlessStorageBuffer);
 
@@ -236,13 +246,13 @@ namespace SF::Engine
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.buffer = fallback->GetBuffer();
             bufferInfo.offset = 0;
-            bufferInfo.range = fallback->GetSize();
+            bufferInfo.range  = fallback->GetSize();
             VkWriteDescriptorSet write{};
-            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write.dstSet = m_set;
-            write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessStorageBuffer)].type;
-            write.dstBinding = static_cast<uint32>(EBindingType::BindlessStorageBuffer);
-            write.pBufferInfo = &bufferInfo;
+            write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write.dstSet          = m_set;
+            write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessStorageBuffer)].type;
+            write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessStorageBuffer);
+            write.pBufferInfo     = &bufferInfo;
             write.descriptorCount = 1;
             write.dstArrayElement = index.key;
 
@@ -259,13 +269,13 @@ namespace SF::Engine
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = buffer;
         bufferInfo.offset = offset;
-        bufferInfo.range = range;
+        bufferInfo.range  = range;
         VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet = m_set;
-        write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessUniformBuffer)].type;
-        write.dstBinding = static_cast<uint32>(EBindingType::BindlessUniformBuffer);
-        write.pBufferInfo = &bufferInfo;
+        write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet          = m_set;
+        write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessUniformBuffer)].type;
+        write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessUniformBuffer);
+        write.pBufferInfo     = &bufferInfo;
         write.descriptorCount = 1;
         write.dstArrayElement = RequireIndex(EBindingType::BindlessUniformBuffer);
 
@@ -280,14 +290,14 @@ namespace SF::Engine
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.buffer = fallback->GetBuffer();
             bufferInfo.offset = 0;
-            bufferInfo.range = fallback->GetSize();
+            bufferInfo.range  = fallback->GetSize();
 
             VkWriteDescriptorSet write{};
-            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write.dstSet = m_set;
-            write.descriptorType = m_bindingConfigs[static_cast<uint32>(EBindingType::BindlessUniformBuffer)].type;
-            write.dstBinding = static_cast<uint32>(EBindingType::BindlessUniformBuffer);
-            write.pBufferInfo = &bufferInfo;
+            write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write.dstSet          = m_set;
+            write.descriptorType  = m_bindingConfigs[static_cast<uint32_t>(EBindingType::BindlessUniformBuffer)].type;
+            write.dstBinding      = static_cast<uint32_t>(EBindingType::BindlessUniformBuffer);
+            write.pBufferInfo     = &bufferInfo;
             write.descriptorCount = 1;
             write.dstArrayElement = index.key;
 
@@ -299,34 +309,30 @@ namespace SF::Engine
         index = {};
     }
 
-    uint32 BindlessManager::RequireIndex(EBindingType type)
+    uint32_t BindlessManager::RequireIndex(EBindingType type)
     {
         std::lock_guard<std::mutex> lock(m_lockCount);
 
-        const auto &typeIndex = static_cast<uint32>(type);
-        const auto &config = m_bindingConfigs[typeIndex];
+        const auto &typeIndex = static_cast<uint32_t>(type);
+        const auto &config    = m_bindingConfigs[typeIndex];
 
-        uint32 index = 0;
+        uint32_t index   = 0;
         auto &freeCounts = m_freeCount[typeIndex];
-        auto &usedCount = m_usedCount[typeIndex];
+        auto &usedCount  = m_usedCount[typeIndex];
         if (freeCounts.empty())
         {
             index = usedCount;
             usedCount++;
             if (usedCount >= config.count)
             {
-                Log::Error(
-                    "Too many items used in this set. Current bindless count: {}, "
-                    "configured maximum: {}, device limit: {}.",
-                    usedCount,
-                    config.count,
-                    config.limit);
+                Log::Error("Too many items used in this set. Current bindless count: {}, "
+                           "configured maximum: {}, device limit: {}.",
+                           usedCount, config.count, config.limit);
                 Log::Error("Bindless set count has been reset to 0. This may cause rendering errors.");
 
                 usedCount = 0;
             }
-        }
-        else
+        } else
         {
             index = freeCounts.front();
             freeCounts.pop();
@@ -335,10 +341,10 @@ namespace SF::Engine
         return index;
     }
 
-    void BindlessManager::FreeIndexImmediate(EBindingType type, uint32 index)
+    void BindlessManager::FreeIndexImmediate(EBindingType type, uint32_t index)
     {
         // Caller must already hold m_lockCount.
-        m_freeCount[static_cast<uint32>(type)].push(index);
+        m_freeCount[static_cast<uint32_t>(type)].push(index);
     }
 
     void BindlessManager::Tick()
@@ -352,27 +358,27 @@ namespace SF::Engine
         const uint64_t cutoff = m_currentFrame - kFramesInFlight;
 
         auto it = std::remove_if(m_pendingFrees.begin(), m_pendingFrees.end(),
-            [&](const PendingFree &pf)
-            {
-                if (pf.freedOnFrame > cutoff)
-                    return false;
-                FreeIndexImmediate(pf.type, pf.index);
-                return true;
-            });
+                                 [&](const PendingFree &pf)
+                                 {
+                                     if (pf.freedOnFrame > cutoff)
+                                         return false;
+                                     FreeIndexImmediate(pf.type, pf.index);
+                                     return true;
+                                 });
         m_pendingFrees.erase(it, m_pendingFrees.end());
     }
 
     void BindlessManager::FlushAllPendingFrees()
     {
         std::lock_guard<std::mutex> lock(m_lockCount);
-        for (const auto &pf : m_pendingFrees)
+        for (const auto &pf: m_pendingFrees)
             FreeIndexImmediate(pf.type, pf.index);
         m_pendingFrees.clear();
     }
 
     void BindlessManager::VerifyShaderLayout(const std::vector<BindlessReflectionData> &reflectionData)
     {
-        for (const auto &data : reflectionData)
+        for (const auto &data: reflectionData)
         {
             if (data.set != 100)
                 continue;
@@ -380,4 +386,4 @@ namespace SF::Engine
             Log::Info("BindlessManager verified: {} at Binding {}", data.name, data.binding);
         }
     }
-}
+} // namespace SF::Engine

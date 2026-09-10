@@ -24,7 +24,6 @@
 #include <string_view>
 
 #include <Platform/Threading/ThreadPool.hpp>
-#include <UtilityClasses/Formatter.hpp>
 
 #include <Platform/PlatformIncludes.hpp>
 #include "InitGame/GameInfo.hpp"
