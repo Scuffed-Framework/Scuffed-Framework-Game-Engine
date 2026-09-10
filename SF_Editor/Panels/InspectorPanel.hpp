@@ -1,5 +1,4 @@
 #pragma once
-#include <1stPartyLibs/TemplateLibrary/Types.hpp>
 #include <Entity/Components/Component.hpp>
 #include <Entity/Entity.hpp>
 #include <Gui/StaticPanel.hpp>
@@ -21,20 +20,20 @@ namespace SF::Engine
         ~InspectorPanel() { UIRegistry::Get().Unregister(reg); };
 
         void Draw();
-        void SetEntity(SF::Engine::Entity *entity);
-        SF::Engine::Entity *GetEntity() const { return m_entity; }
+        void SetEntity(Entity *entity);
+        [[nodiscard]] Entity *GetEntity() const { return m_entity; }
         void Refresh();
 
     private:
         void DrawEntityProperties();
         void DrawComponents();
         void DrawAddComponentMenu();
-        bool DrawComponentField(const std::string &label, SF::Engine::Component *component);
+        bool DrawComponentField(const std::string &label, Component *component);
 
-        SF::Engine::Entity *m_entity = nullptr;
-        EntityId m_entityId          = 0;
-        EntityRegistry *m_registry   = nullptr;
-        bool m_needsRefresh          = true;
+        Entity *m_entity           = nullptr;
+        EntityId m_entityId        = 0;
+        EntityRegistry *m_registry = nullptr;
+        bool m_needsRefresh        = true;
         size_t reg;
     };
 } // namespace SF::Engine
