@@ -1,8 +1,8 @@
 #include "ImGuiPipelinePass.hpp"
 
 #include <Platform/Windowing/WindowManager.hpp>
-#include <Rendering/Commands/CommandBuffer.hpp>
-#include <Rendering/RenderPass/RenderPass.hpp>
+#include <Rendering/RHI/Commands/CommandBuffer.hpp>
+#include <Rendering/RHI/Renderpass/RenderPass.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/Stage.hpp>
 

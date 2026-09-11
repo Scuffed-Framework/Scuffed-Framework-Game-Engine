@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Rendering/Commands/CommandBuffer.hpp>
-#include <Rendering/Pipelines/Pipeline.hpp>
+#include <Rendering/RHI/Commands/CommandBuffer.hpp>
+#include <Rendering/RHI/Pipelines/Pipeline.hpp>
+#include "PipelinePassInit.hpp"
 #include "UtilityClasses/NoCopy.hpp"
 #include "UtilityClasses/TypeInformation.hpp"
-#include "PipelinePassInit.hpp"
 
 namespace SF::Engine
 {
@@ -36,19 +36,10 @@ namespace SF::Engine
          */
         virtual void Render(const CommandBuffer &commandBuffer) = 0;
 
-        [[nodiscard]] const Pipeline::Stage &GetStage() const
-        {
-            return stage;
-        }
+        [[nodiscard]] const Pipeline::Stage &GetStage() const { return stage; }
 
-        [[nodiscard]] bool IsEnabled() const
-        {
-            return enabled;
-        }
-        void SetEnabled(bool enable)
-        {
-            this->enabled = enable;
-        }
+        [[nodiscard]] bool IsEnabled() const { return enabled; }
+        void SetEnabled(bool enable) { this->enabled = enable; }
 
         [[nodiscard]] int GetOrder() const { return order; }
         void SetOrder(int o) { order = o; }
@@ -71,14 +62,14 @@ namespace SF::Engine
          * @tparam T The PipelinePass type.
          * @return If the PipelinePass exists.
          */
-        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
         bool Has() const
         {
             const auto it = PipelinePasses.find(TypeInfo<PipelinePass>::template GetTypeId<T>());
             return it != PipelinePasses.end() && it->second;
         }
 
-        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
         T *Get() const
         {
             const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
@@ -89,7 +80,7 @@ namespace SF::Engine
             return nullptr;
         }
 
-        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
         void Remove()
         {
             const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
@@ -105,7 +96,7 @@ namespace SF::Engine
          * @param PipelinePass The PipelinePass.
          * @return The added renderer.
          */
-        template <typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
         T *Add(const Pipeline::Stage &stage, std::unique_ptr<T> &&pass)
         {
             const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
@@ -124,10 +115,7 @@ namespace SF::Engine
         /**
          * Runs things idk
          */
-        void RunInitCallbacks()
-        {
-            PipelinePassInitRegistry::Get().RunAll(*this);
-        }
+        void RunInitCallbacks() { PipelinePassInitRegistry::Get().RunAll(*this); }
 
     private:
         using StageIndex = std::pair<Pipeline::Stage, int>;
@@ -154,4 +142,4 @@ namespace SF::Engine
         /// List of PipelinePass stages.
         std::multimap<StageIndex, TypeId> stages;
     };
-}
+} // namespace SF::Engine

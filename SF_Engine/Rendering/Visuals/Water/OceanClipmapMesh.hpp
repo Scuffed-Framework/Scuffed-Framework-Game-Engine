@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/Buffers/Buffer.hpp>
 #include <Math/BasicMath.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <Rendering/RHI/Buffers/Buffer.hpp>
 #include <memory>
 #include <vector>
 
@@ -29,19 +29,14 @@ namespace SF::Engine
         // ringCount: number of concentric LOD rings (4-6 typical).
         // baseExtent: world-space size of the innermost ring.
         // patchCount: subdivisions per axis, per ring.
-        explicit OceanClipmapMesh(
-            uint32_t ringCount = 5,
-            float baseExtent = 200.0f,
-            uint32_t patchCount = 32);
+        explicit OceanClipmapMesh(uint32_t ringCount = 5, float baseExtent = 200.0f, uint32_t patchCount = 32);
 
         ~OceanClipmapMesh() = default;
 
-        OceanClipmapMesh(const OceanClipmapMesh &) = delete;
+        OceanClipmapMesh(const OceanClipmapMesh &)            = delete;
         OceanClipmapMesh &operator=(const OceanClipmapMesh &) = delete;
 
-        void RegenerateAt(const Vec3 &cameraPos,
-                          const Vec3 &planetCenter,
-                          float planetRadius);
+        void RegenerateAt(const Vec3 &cameraPos, const Vec3 &planetCenter, float planetRadius);
 
         void Draw(const CommandBuffer &cmd) const;
 
@@ -53,18 +48,14 @@ namespace SF::Engine
             std::unique_ptr<Buffer> vertexBuffer;
             std::unique_ptr<Buffer> indexBuffer;
             uint32_t vertexCount = 0;
-            uint32_t indexCount = 0;
-            float extent = 0.0f;    // outer extent of this ring
-            float innerHole = 0.0f; // inner extent excluded (covered by next ring in)
+            uint32_t indexCount  = 0;
+            float extent         = 0.0f; // outer extent of this ring
+            float innerHole      = 0.0f; // inner extent excluded (covered by next ring in)
         };
 
         void buildRingTopology(uint32_t ringIndex);
-        void writeRingVertices(uint32_t ringIndex,
-                               const Vec3 &origin,
-                               const Vec3 &tangentU,
-                               const Vec3 &tangentV,
-                               const Vec3 &planetCenter,
-                               float planetRadius);
+        void writeRingVertices(uint32_t ringIndex, const Vec3 &origin, const Vec3 &tangentU, const Vec3 &tangentV,
+                               const Vec3 &planetCenter, float planetRadius);
 
         uint32_t ringCount_;
         float baseExtent_;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Rendering/Commands/CommandBuffer.hpp>
-#include <Rendering/Pipelines/Pipeline.hpp>
+#include <Rendering/RHI/Commands/CommandBuffer.hpp>
+#include <Rendering/RHI/Pipelines/Pipeline.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 #include <UtilityClasses/TypeInformation.hpp>
 
@@ -17,9 +17,7 @@ namespace SF::Engine
          * Creates a new render pipeline.
          * @param stage The stage this renderer will be used in.
          */
-        explicit PipelineRenderer(Pipeline::Stage stage) : stage(std::move(stage))
-        {
-        }
+        explicit PipelineRenderer(Pipeline::Stage stage) : stage(std::move(stage)) {}
 
         virtual ~PipelineRenderer() = default;
 

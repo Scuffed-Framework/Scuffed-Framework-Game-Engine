@@ -1,7 +1,7 @@
 #pragma once
-#include <Rendering/Pipelines/ComputePipeline.hpp>
-#include <Rendering/Images/Image2d.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <memory>
 
 namespace SF::Engine
@@ -10,9 +10,7 @@ namespace SF::Engine
     {
     public:
         // transmittanceLUT must already be baked and in SHADER_READ_ONLY_OPTIMAL
-        explicit MultiScatterLUT(Image2d *transmittanceLUT,
-                                 uint32_t width = 32,
-                                 uint32_t height = 32);
+        explicit MultiScatterLUT(Image2d *transmittanceLUT, uint32_t width = 32, uint32_t height = 32);
 
         Image2d *GetTexture() const { return texture_.get(); }
         void Bake(const CommandBuffer &cmd);

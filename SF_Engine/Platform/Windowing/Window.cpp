@@ -112,10 +112,14 @@ namespace SF::Engine
             return; // don't attempt swap chain recreation when the window is minimized.
 
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
-        if (window->fullscreen)
-            window->fullscreenSize = {width, height};
-        else
-            window->size = {width, height};
+        // Physical pixels only. On HiDPI displays these differ from the
+        // logical size CallbackWindowSize reports, and every resize fires
+        // both callbacks - writing this into window->size/fullscreenSize
+        // (as before) raced with CallbackWindowSize and could leave
+        // GetScreenSize() holding the logical (smaller) value, silently
+        // under-sizing every screen-space GPU resource (SSR's images/UBO
+        // included) to a fraction of the real framebuffer.
+        window->framebufferSize = {width, height};
 
         RenderSystem::Get()->SetFramebufferResized(window->id);
     }
@@ -240,6 +244,10 @@ namespace SF::Engine
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         size = UVec2(width, height);
+
+        int fbWidth, fbHeight;
+        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+        framebufferSize = UVec2(fbWidth, fbHeight);
 
         // Get window position
         int xpos, ypos;

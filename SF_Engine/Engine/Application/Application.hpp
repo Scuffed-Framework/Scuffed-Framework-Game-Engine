@@ -47,8 +47,8 @@
 #include <Engine/InitGame/GameInfo.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
+#include <Rendering/RHI/Viewport/Viewport.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Viewport/Viewport.hpp>
 #include <Scene/SceneManager.hpp>
 
 #ifdef Started

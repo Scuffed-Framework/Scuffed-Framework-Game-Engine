@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Assets/Models/Model.hpp>
-#include <Rendering/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
 
 namespace SF::Engine
 {
@@ -23,7 +23,8 @@ namespace SF::Engine
         /**
          * Creates a new GLTF model.
          * @param filename The file to load the GLTF model from.
-         * @param load If this resource will be loaded immediately, otherwise {@link ModelGltf#Load} can be called later.
+         * @param load If this resource will be loaded immediately, otherwise {@link ModelGltf#Load} can be called
+         * later.
          */
         explicit GltfModel(std::filesystem::path filename, bool load = true);
 
@@ -32,4 +33,4 @@ namespace SF::Engine
 
         std::filesystem::path filename;
     };
-}
+} // namespace SF::Engine

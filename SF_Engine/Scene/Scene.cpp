@@ -17,7 +17,7 @@
 
 #include <Rendering/RenderSystem.hpp>
 #include <Assets/Bitmaps/Bitmap.hpp>
-#include <Rendering/Images/ImageDepth.hpp>
+#include <Rendering/RHI/Images/ImageDepth.hpp>
 
 #include <Scene/SceneManager.hpp>
 #include <Gui/UIRegistry.hpp>

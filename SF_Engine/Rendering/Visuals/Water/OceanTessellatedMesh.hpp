@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/Buffers/Buffer.hpp>
 #include <Math/BasicMath.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <Rendering/RHI/Buffers/Buffer.hpp>
 #include <memory>
 
 namespace SF::Engine
@@ -42,16 +42,14 @@ namespace SF::Engine
          *                     grid covers out to roughly the horizon distance for
          *                     typical camera altitudes.
          */
-        explicit OceanTessellatedMesh(
-            uint32_t patchCount = 32,
-            const Vec2 &patchExtent = Vec2(4000.f, 4000.f));
+        explicit OceanTessellatedMesh(uint32_t patchCount = 32, const Vec2 &patchExtent = Vec2(4000.f, 4000.f));
 
         ~OceanTessellatedMesh() = default;
 
-        OceanTessellatedMesh(const OceanTessellatedMesh &) = delete;
+        OceanTessellatedMesh(const OceanTessellatedMesh &)            = delete;
         OceanTessellatedMesh &operator=(const OceanTessellatedMesh &) = delete;
-        OceanTessellatedMesh(OceanTessellatedMesh &&) = default;
-        OceanTessellatedMesh &operator=(OceanTessellatedMesh &&) = default;
+        OceanTessellatedMesh(OceanTessellatedMesh &&)                 = default;
+        OceanTessellatedMesh &operator=(OceanTessellatedMesh &&)      = default;
 
         /**
          * Rebuild the grid centered under cameraPos, projected onto the
@@ -63,9 +61,7 @@ namespace SF::Engine
          * @param planetCenter  Planet center in world space.
          * @param planetRadius  Planet (sea-level) radius in world units.
          */
-        void RegenerateAt(const Vec3 &cameraPos,
-                          const Vec3 &planetCenter,
-                          float planetRadius);
+        void RegenerateAt(const Vec3 &cameraPos, const Vec3 &planetCenter, float planetRadius);
 
         /**
          * Bind vertex / index buffers and issue vkCmdDrawIndexed.
@@ -89,10 +85,7 @@ namespace SF::Engine
         // Rebuilds only the vertex buffer contents for the given tangent
         // frame / sphere projection. Shared by the constructor and
         // RegenerateAt().
-        void writeVertices(const Vec3 &origin,
-                           const Vec3 &tangentU,
-                           const Vec3 &tangentV,
-                           const Vec3 &planetCenter,
+        void writeVertices(const Vec3 &origin, const Vec3 &tangentU, const Vec3 &tangentV, const Vec3 &planetCenter,
                            float planetRadius);
 
         uint32_t patchCount_;
@@ -101,7 +94,7 @@ namespace SF::Engine
         std::unique_ptr<Buffer> vertexBuffer_;
         std::unique_ptr<Buffer> indexBuffer_;
         uint32_t vertexCount_ = 0;
-        uint32_t indexCount_ = 0;
+        uint32_t indexCount_  = 0;
     };
 
 } // namespace SF::Engine

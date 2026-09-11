@@ -1,15 +1,15 @@
 #pragma once
 
-#include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Pipelines/RenderPipeline.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/Images/Image2d.hpp>
-#include <Rendering/Images/ImageDepth.hpp>
-#include <Rendering/Mesh/Mesh.hpp>
-#include "LightManager.hpp"
 #include <Math/BasicMath.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/ImageDepth.hpp>
+#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
 #include <memory>
 #include <vector>
+#include "LightManager.hpp"
 
 namespace SF::Engine
 {
@@ -17,10 +17,10 @@ namespace SF::Engine
     struct alignas(4) TransparentPushConstants
     {
         Mat4 model;
-        Vec4 baseColor = {1, 1, 1, 1};
-        float roughness = 0.05f;
-        float metallic = 0.0f;
-        float ior = 1.5f; // glass default
+        Vec4 baseColor           = {1, 1, 1, 1};
+        float roughness          = 0.05f;
+        float metallic           = 0.0f;
+        float ior                = 1.5f; // glass default
         float refractionStrength = 0.02f;
     };
     static_assert(sizeof(TransparentPushConstants) == 96);
@@ -59,7 +59,7 @@ namespace SF::Engine
         std::unique_ptr<RenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
 
-        const Image2d *lastHDR_ = nullptr;
+        const Image2d *lastHDR_      = nullptr;
         const ImageDepth *lastDepth_ = nullptr;
     };
-}
+} // namespace SF::Engine

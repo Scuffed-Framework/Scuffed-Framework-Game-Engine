@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Pipelines/ComputePipeline.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include "LightManager.hpp"
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <memory>
+#include "LightManager.hpp"
 
 namespace SF::Engine
 {
@@ -57,4 +57,4 @@ namespace SF::Engine
 
         bool clustersDirty_ = true;
     };
-}
+} // namespace SF::Engine

@@ -3,13 +3,13 @@
 #include <Engine/Module.hpp>
 #include <Scene/Scene.hpp>
 
-#include <Rendering/Buffers/Buffer.hpp>
-#include <Rendering/Commands/CommandBuffer.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/Pipelines/ComputePipeline.hpp>
+#include <Rendering/RHI/Buffers/Buffer.hpp>
+#include <Rendering/RHI/Commands/CommandBuffer.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 
-#include <Math/Vectors/Vector.hpp>
 #include <Math/BasicMath.hpp>
+#include <Math/Vectors/Vector.hpp>
 
 #include <array>
 #include <cstdint>
@@ -30,11 +30,11 @@ namespace SF::Engine
      */
     struct alignas(16) GpuParticle
     {
-        Vec4 position; // xyz = world pos,  w = lifetime remaining (s)
-        Vec4 velocity; // xyz = velocity,   w = total lifetime (s)
-        Vec4 color;    // rgba, linear
-        Vec2 size;     // x = current size, y = initial size
-        float rotation;     // radians
+        Vec4 position;  // xyz = world pos,  w = lifetime remaining (s)
+        Vec4 velocity;  // xyz = velocity,   w = total lifetime (s)
+        Vec4 color;     // rgba, linear
+        Vec2 size;      // x = current size, y = initial size
+        float rotation; // radians
         float _pad0;
     };
 
@@ -46,13 +46,13 @@ namespace SF::Engine
      */
     struct alignas(16) EmitterParams
     {
-        Vec4 position;   // xyz = world origin, w = unused
-        Vec4 direction;  // xyz = cone axis (normalised), w = half-angle (rad)
-        Vec4 colorStart; // rgba
-        Vec4 colorEnd;   // rgba
-        float emissionRate;   // particles / second
-        float minLifetime;    // seconds
-        float maxLifetime;    // seconds
+        Vec4 position;      // xyz = world origin, w = unused
+        Vec4 direction;     // xyz = cone axis (normalised), w = half-angle (rad)
+        Vec4 colorStart;    // rgba
+        Vec4 colorEnd;      // rgba
+        float emissionRate; // particles / second
+        float minLifetime;  // seconds
+        float maxLifetime;  // seconds
         float minSpeed;
         float maxSpeed;
         float minSize;
@@ -88,7 +88,7 @@ namespace SF::Engine
     {
         EmitterParams params;
 
-        bool active = true;
+        bool active       = true;
         float accumulator = 0.0f; // fractional particle debt (sub-frame emission)
     };
 
@@ -130,9 +130,9 @@ namespace SF::Engine
     public:
         // consts
         static constexpr uint32_t MAX_TOTAL_PARTICLES = 5'000'000; // should be enough
-        static constexpr uint32_t MAX_EMITTERS = 256;
+        static constexpr uint32_t MAX_EMITTERS        = 256;
 
-        using EmitterHandle = uint32_t;
+        using EmitterHandle                            = uint32_t;
         static constexpr EmitterHandle INVALID_EMITTER = ~0u;
 
         ParticleSystem();

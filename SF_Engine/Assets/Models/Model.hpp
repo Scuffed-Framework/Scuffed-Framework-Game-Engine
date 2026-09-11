@@ -5,22 +5,22 @@
 #include <unordered_map>
 
 #include <Math/BasicMath.hpp>
-#include <Rendering/Buffers/Buffer.hpp>
 #include <Rendering/Mesh/Vertex.hpp>
+#include <Rendering/RHI/Buffers/Buffer.hpp>
 
 // Cool feature idea:
 // import whole .blend files and set up meshes, cameras, and lights.
 // to add: usdz and other model types.
 namespace SF::Engine
 {
-    template <typename Base>
+    template<typename Base>
     class ModelFactory
     {
     public:
         using TCreateReturn = std::shared_ptr<Base>;
 
         using TCreateMethodFilename = std::function<TCreateReturn(const std::filesystem::path &)>;
-        using TRegistryMapFilename = std::unordered_map<std::string, TCreateMethodFilename>;
+        using TRegistryMapFilename  = std::unordered_map<std::string, TCreateMethodFilename>;
 
         virtual ~ModelFactory() = default;
 
@@ -32,7 +32,7 @@ namespace SF::Engine
         static TCreateReturn Create(const std::filesystem::path &filename)
         {
             auto fileExt = filename.extension().string();
-            auto it = RegistryFilename().find(fileExt);
+            auto it      = RegistryFilename().find(fileExt);
             return it == RegistryFilename().end() ? nullptr : it->second(filename);
         }
 
@@ -42,17 +42,15 @@ namespace SF::Engine
             return impl;
         }
 
-        template <typename T>
+        template<typename T>
         class Registrar : public Base
         {
         protected:
-            template <int Dummy = 0>
+            template<int Dummy = 0>
             static bool Register(const std::string &typeName, const std::string &extension)
             {
                 ModelFactory::RegistryFilename()[extension] = [](const std::filesystem::path &filename) -> TCreateReturn
-                {
-                    return T::Create(filename);
-                };
+                { return T::Create(filename); };
                 return true;
             }
 
@@ -79,7 +77,7 @@ namespace SF::Engine
          * @param vertices The model vertices.
          * @param indices The model indices.
          */
-        template <typename T>
+        template<typename T>
         explicit Model(const std::vector<T> &vertices, const std::vector<uint32_t> &indices = {});
 
         bool CmdRender(const CommandBuffer &commandBuffer, uint32_t instances = 1) const;
@@ -119,7 +117,7 @@ namespace SF::Engine
         std::unique_ptr<Buffer> vertexBuffer;
         std::unique_ptr<Buffer> indexBuffer;
         uint32_t vertexCount = 0;
-        uint32_t indexCount = 0;
+        uint32_t indexCount  = 0;
 
         Vec3 minExtents;
         Vec3 maxExtents;
@@ -129,7 +127,7 @@ namespace SF::Engine
     // Template constructors must be defined where they're visible for
     // instantiation, so this one stays in the header. Everything it calls
     // into is non-template and defined once, in Model.cpp.
-    template <typename T>
+    template<typename T>
     Model::Model(const std::vector<T> &vertices, const std::vector<uint32_t> &indices) : Model()
     {
         std::vector<Vertex> vertexData(vertices.begin(), vertices.end());

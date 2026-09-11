@@ -1,6 +1,6 @@
 #include "DeferredLightPipelinePass.hpp"
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Images/ImageDepth.hpp>
+#include <Rendering/RHI/Images/ImageDepth.hpp>
 #include <Rendering/SharedSamplers.hpp>
 
 namespace SF::Engine

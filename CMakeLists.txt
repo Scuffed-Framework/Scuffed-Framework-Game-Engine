@@ -102,6 +102,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             -Wdeprecated-literal-operator
             -Wunused-variable
             -Wunused-parameter
+            -ludev
     )
 endif ()
 # Ensure Conan generators path is available to all subdirectories

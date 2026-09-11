@@ -1,11 +1,11 @@
 #pragma once
 
 #define VK_NO_PROTOTYPES
-#define IMGUI_IMPL_VULKAN_NO_PROTOTYPES 
+#define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
 #include <volk.h>
 
 #include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Commands/CommandBuffer.hpp>
+#include <Rendering/RHI/Commands/CommandBuffer.hpp>
 
 // Always use the GLFW backend : it auto-installs all input callbacks and works
 // on every platform (including Windows). The Win32 backend is only needed when
@@ -43,12 +43,8 @@ namespace SF::Engine
         inline static bool s_registered = []()
         {
             PipelinePassInitRegistry::Get().Register(
-                [](PipelinePassManager &mgr)
-                {
-                    mgr.Add<ImGuiPipelinePass>(
-                        s_targetStage,
-                        std::make_unique<ImGuiPipelinePass>(s_targetStage));
-                });
+                    [](PipelinePassManager &mgr)
+                    { mgr.Add<ImGuiPipelinePass>(s_targetStage, std::make_unique<ImGuiPipelinePass>(s_targetStage)); });
             return true;
         }();
 
@@ -58,7 +54,7 @@ namespace SF::Engine
         explicit ImGuiPipelinePass(Pipeline::Stage stage);
         ~ImGuiPipelinePass() override;
 
-        ImGuiPipelinePass(const ImGuiPipelinePass &) = delete;
+        ImGuiPipelinePass(const ImGuiPipelinePass &)            = delete;
         ImGuiPipelinePass &operator=(const ImGuiPipelinePass &) = delete;
 
         void Render(const CommandBuffer &commandBuffer) override;
@@ -77,7 +73,7 @@ namespace SF::Engine
         void CreateDescriptorPool();
 
         VkDescriptorPool imguiPool_ = VK_NULL_HANDLE;
-        bool initialized_ = false;
+        bool initialized_           = false;
         DrawCallback drawCallback_;
     };
-}
+} // namespace SF::Engine

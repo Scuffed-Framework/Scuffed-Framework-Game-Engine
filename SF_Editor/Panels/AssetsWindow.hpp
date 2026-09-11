@@ -6,7 +6,7 @@
 #include <Gui/ocornut/imgui.h>
 #include <Gui/ocornut/imgui_internal.h>
 #include <LowLevel/Reflection/RTTI/RTTICast.hpp>
-#include <Rendering/Images/ImageAsset.hpp>
+#include <Rendering/RHI/Images/ImageAsset.hpp>
 #include <algorithm>
 #include <cctype>
 #include <unordered_map>

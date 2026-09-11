@@ -1,18 +1,18 @@
 #pragma once
 
-#include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Pipelines/ComputePipeline.hpp>
-#include <Rendering/Pipelines/RenderPipeline.hpp>
-#include <Rendering/Buffers/UniformBuffer.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/Images/Image2d.hpp>
-#include <Rendering/Images/ImageDepth.hpp>
-#include <Rendering/Lighting/LightManager.hpp>
 #include <Gui/UIRegistry.hpp>
+#include <Rendering/Lighting/LightManager.hpp>
+#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/ImageDepth.hpp>
+#include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
+#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
 
 #include <Math/BasicMath.hpp>
-#include <memory>
 #include <cstdint>
+#include <memory>
 
 namespace SF::Engine
 {
@@ -56,11 +56,11 @@ namespace SF::Engine
     // Debug view modes; must match SSR_DEBUG_* in Shaders/SSR/SSRCommon.si.
     enum class SSRDebugView : int32_t
     {
-        None = 0,
-        RayDir = 1,
-        TraceRaw = 2,
-        Temporal = 3,
-        Spatial = 4,
+        None       = 0,
+        RayDir     = 1,
+        TraceRaw   = 2,
+        Temporal   = 3,
+        Spatial    = 4,
         Confidence = 5,
     };
 
@@ -115,29 +115,29 @@ namespace SF::Engine
 
         // --- Stage toggles : each corresponds to a box in the architecture
         // diagram and can be flipped independently for debugging. ---
-        bool enabled = true;
-        bool temporalEnabled = true;
-        bool spatialEnabled = true;
+        bool enabled              = true;
+        bool temporalEnabled      = true;
+        bool spatialEnabled       = true;
         bool probeFallbackEnabled = true;
 
         // --- Tunables (mirrors SSRParams; kept here as the ImGui-editable
         // source of truth, written into ssrUBO_ every frame in PreRender). ---
-        int maxSteps = 32;
-        float thickness = 0.35f;       // view-space units
-        float strideScale = 1.0f;
-        float maxRoughness = 0.85f;
-        float intensity = 1.0f;
-        float temporalBlendMin = 0.03f;
-        float temporalBlendMax = 1.0f;
-        float spatialRadiusPx = 8.0f;
-        float varianceClampGamma = 4.0f;
-        int binarySearchSteps = 6;
-        float edgeFadeStart = 0.1f;
+        int maxSteps                   = 32;
+        float thickness                = 0.35f; // view-space units
+        float strideScale              = 1.0f;
+        float maxRoughness             = 0.85f;
+        float intensity                = 1.0f;
+        float temporalBlendMin         = 0.03f;
+        float temporalBlendMax         = 1.0f;
+        float spatialRadiusPx          = 8.0f;
+        float varianceClampGamma       = 4.0f;
+        int binarySearchSteps          = 6;
+        float edgeFadeStart            = 0.1f;
         float depthBufferThicknessBias = 0.02f;
-        Vec3 ambientSkyColor = {0.45f, 0.6f, 0.9f};
-        Vec3 ambientGroundColor = {0.2f, 0.18f, 0.15f};
-        float ambientIntensity = 0.6f;
-        SSRDebugView debugView = SSRDebugView::None;
+        Vec3 ambientSkyColor           = {0.45f, 0.6f, 0.9f};
+        Vec3 ambientGroundColor        = {0.2f, 0.18f, 0.15f};
+        float ambientIntensity         = 0.6f;
+        SSRDebugView debugView         = SSRDebugView::None;
 
     private:
         void CreateResources();
@@ -158,9 +158,9 @@ namespace SF::Engine
         std::unique_ptr<RenderPipeline> compositePipeline_;
         std::unique_ptr<DescriptorSet> compositeSet_;
         const ImageDepth *compositeLastDepth_ = nullptr;
-        const Image2d *compositeLastNormal_ = nullptr;
-        const Image2d *compositeLastAlbedo_ = nullptr;
-        const Image2d *compositeLastPbr_ = nullptr;
+        const Image2d *compositeLastNormal_   = nullptr;
+        const Image2d *compositeLastAlbedo_   = nullptr;
+        const Image2d *compositeLastPbr_      = nullptr;
 
         static constexpr uint32_t kFramesInFlight = 3;
 
@@ -169,11 +169,11 @@ namespace SF::Engine
         // cloudDepthRT_/cloudFogRT_; these do NOT need per-frame-in-flight
         // ping-ponging; the pipeline barriers inserted between dispatches
         // already provide correct ordering across frames on a single queue.
-        std::unique_ptr<Image2d> rayDirRT_;    // rgb=dir WS, a=NdotH
-        std::unique_ptr<Image2d> rayDataRT_;   // r=roughnessA g=metallic b=skyMask a=pdf
-        std::unique_ptr<Image2d> traceColorRT_;// rgb=radiance, a=confidence
-        std::unique_ptr<Image2d> traceHitRT_;  // r=hitMask g=hitT b=pdf
-        std::unique_ptr<Image2d> filteredRT_;  // rgb=denoised, a=confidence; read by Render()
+        std::unique_ptr<Image2d> rayDirRT_;     // rgb=dir WS, a=NdotH
+        std::unique_ptr<Image2d> rayDataRT_;    // r=roughnessA g=metallic b=skyMask a=pdf
+        std::unique_ptr<Image2d> traceColorRT_; // rgb=radiance, a=confidence
+        std::unique_ptr<Image2d> traceHitRT_;   // r=hitMask g=hitT b=pdf
+        std::unique_ptr<Image2d> filteredRT_;   // rgb=denoised, a=confidence; read by Render()
 
         // Carries state across frames -> must be ping-ponged (same
         // reasoning as CloudPipelinePass's reconColor_/reconDepth_/reconFog_).
@@ -187,9 +187,9 @@ namespace SF::Engine
 
         std::unique_ptr<Image2d> dummyTexture_; // frame-0 history fallback (RGBA16F, 1x1)
 
-        uint32_t frameSlot_ = 0;
+        uint32_t frameSlot_        = 0;
         uint32_t framesSinceStart_ = 0;
-        uint32_t frameCounter_ = 0;
+        uint32_t frameCounter_     = 0;
 
         std::size_t uiHandle_ = 0;
     };

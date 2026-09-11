@@ -1,18 +1,18 @@
 #pragma once
 
-#include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Pipelines/RenderPipeline.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/Images/Image2d.hpp>
+#include <Entity/Components/Component.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
+#include <Math/BasicMath.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
-#include "LightManager.hpp"
-#include "LightingTypes.hpp"
-#include <Math/BasicMath.hpp>
+#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
 #include <memory>
 #include <vector>
-#include <LowLevel/XML/XMLModule.hpp>
-#include <Entity/Components/Component.hpp>
+#include "LightManager.hpp"
+#include "LightingTypes.hpp"
 
 namespace SF::Engine
 {
@@ -27,16 +27,14 @@ namespace SF::Engine
     struct alignas(4) LitPushConstants
     {
         Mat4 model;
-        Vec4 baseColor = {1, 1, 1, 1};
+        Vec4 baseColor        = {1, 1, 1, 1};
         float roughnessFactor = 1.0f;
-        float metallicFactor = 0.0f;
-        float aoFactor = 1.0f;
-        float emissiveFactor = 0.0f;
+        float metallicFactor  = 0.0f;
+        float aoFactor        = 1.0f;
+        float emissiveFactor  = 0.0f;
     };
-    static_assert(sizeof(LitPushConstants) == 96,
-                  "LitPushConstants must be 96 bytes");
-    static_assert(sizeof(LitPushConstants) <= 128,
-                  "LitPushConstants exceeds minimum guaranteed push constant size");
+    static_assert(sizeof(LitPushConstants) == 96, "LitPushConstants must be 96 bytes");
+    static_assert(sizeof(LitPushConstants) <= 128, "LitPushConstants exceeds minimum guaranteed push constant size");
 
     //  Per-mesh material textures + constants
     struct MeshMaterial : public Component::Registrar<MeshMaterial>
@@ -46,19 +44,19 @@ namespace SF::Engine
         std::shared_ptr<Image2d> pbr;      // bind=6  (r=rough g=metal b=ao, white if null)
         std::shared_ptr<Image2d> emissive; // bind=7  (black if null)
 
-        Vec4 baseColor = {1, 1, 1, 1};
+        Vec4 baseColor        = {1, 1, 1, 1};
         float roughnessFactor = 1.0f;
-        float metallicFactor = 0.0f;
-        float aoFactor = 1.0f;
-        float emissiveFactor = 0.0f;
+        float metallicFactor  = 0.0f;
+        float aoFactor        = 1.0f;
+        float emissiveFactor  = 0.0f;
 
         void Reset() override
         {
-            baseColor = {1, 1, 1, 1};
+            baseColor       = {1, 1, 1, 1};
             roughnessFactor = 1.0f;
-            metallicFactor = 0.0f;
-            aoFactor = 1.0f;
-            emissiveFactor = 0.0f;
+            metallicFactor  = 0.0f;
+            aoFactor        = 1.0f;
+            emissiveFactor  = 0.0f;
         }
 
         void Serialize(XMLNode &node) const override
@@ -102,26 +100,26 @@ namespace SF::Engine
             // Only deserialize if the child node exists
             if (XMLNode n = node.GetChild("albedo"); n.IsValid())
             {
-                albedo = std::make_shared<Image2d>("", VK_FILTER_LINEAR,
-                                                   VK_SAMPLER_ADDRESS_MODE_REPEAT, true, true, false);
+                albedo = std::make_shared<Image2d>("", VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, true, true,
+                                                   false);
                 albedo->Deserialize(n);
             }
             if (XMLNode n = node.GetChild("normal"); n.IsValid())
             {
-                normal = std::make_shared<Image2d>("", VK_FILTER_LINEAR,
-                                                   VK_SAMPLER_ADDRESS_MODE_REPEAT, true, true, false);
+                normal = std::make_shared<Image2d>("", VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, true, true,
+                                                   false);
                 normal->Deserialize(n);
             }
             if (XMLNode n = node.GetChild("pbr"); n.IsValid())
             {
-                pbr = std::make_shared<Image2d>("", VK_FILTER_LINEAR,
-                                                VK_SAMPLER_ADDRESS_MODE_REPEAT, true, true, false);
+                pbr = std::make_shared<Image2d>("", VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, true, true,
+                                                false);
                 pbr->Deserialize(n);
             }
             if (XMLNode n = node.GetChild("emissive"); n.IsValid())
             {
-                emissive = std::make_shared<Image2d>("", VK_FILTER_LINEAR,
-                                                     VK_SAMPLER_ADDRESS_MODE_REPEAT, true, true, false);
+                emissive = std::make_shared<Image2d>("", VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, true, true,
+                                                     false);
                 emissive->Deserialize(n);
             }
 
@@ -178,9 +176,7 @@ namespace SF::Engine
         ~LitMeshPipelinePass() override = default;
 
         /// Queue a mesh+material+transform for drawing this frame.
-        void Submit(std::shared_ptr<Mesh> mesh,
-                    const MeshMaterial &material,
-                    const Mat4 &transform);
+        void Submit(std::shared_ptr<Mesh> mesh, const MeshMaterial &material, const Mat4 &transform);
 
         void Submit(const MeshInstance &instance);
 
@@ -210,4 +206,4 @@ namespace SF::Engine
 
         bool frameDescriptorsWritten_ = false;
     };
-}
+} // namespace SF::Engine

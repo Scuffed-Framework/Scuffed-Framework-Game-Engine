@@ -1,7 +1,7 @@
 #include "AtmospherePipelinePass.hpp"
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/Descriptors/DescriptorSetBuilder.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSetBuilder.hpp>
 #include <Rendering/SharedFunctions.hpp>
 #include <Rendering/SharedSamplers.hpp>
 

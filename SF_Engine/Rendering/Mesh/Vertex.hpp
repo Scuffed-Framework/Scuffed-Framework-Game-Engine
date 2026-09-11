@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Rendering/Shaders/Shader.hpp>
 #include <Math/BasicMath.hpp>
+#include <Rendering/RHI/Shaders/Shader.hpp>
 #include <volk.h>
 
 namespace SF::Engine
@@ -14,17 +14,17 @@ namespace SF::Engine
     struct Vertex
     {
         Vec3 position = {};
-        Vec3 normal = {};
+        Vec3 normal   = {};
         Vec2 texCoord = {};
-        Vec3 tangent = {};
+        Vec3 tangent  = {};
 
         bool operator==(const Vertex &) const = default;
 
         static Shader::VertexInput GetVertexInput()
         {
             std::vector<VkVertexInputBindingDescription> bindings(1);
-            bindings[0].binding = 0;
-            bindings[0].stride = sizeof(Vertex);
+            bindings[0].binding   = 0;
+            bindings[0].stride    = sizeof(Vertex);
             bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
             std::vector<VkVertexInputAttributeDescription> attrs(4);
@@ -45,8 +45,8 @@ namespace SF::Engine
         static Shader::VertexInput GetVertexInput()
         {
             std::vector<VkVertexInputBindingDescription> bindings(1);
-            bindings[0].binding = 0;
-            bindings[0].stride = sizeof(PatchVertex);
+            bindings[0].binding   = 0;
+            bindings[0].stride    = sizeof(PatchVertex);
             bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
             std::vector<VkVertexInputAttributeDescription> attrs(3);
@@ -57,4 +57,4 @@ namespace SF::Engine
             return Shader::VertexInput(std::move(bindings), std::move(attrs));
         }
     };
-}
+} // namespace SF::Engine

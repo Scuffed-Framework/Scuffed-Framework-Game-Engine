@@ -1,6 +1,6 @@
 #include "SkyViewLUT.hpp"
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 
 namespace SF::Engine
 {

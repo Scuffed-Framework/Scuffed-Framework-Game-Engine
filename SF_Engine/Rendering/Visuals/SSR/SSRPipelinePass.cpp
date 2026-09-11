@@ -2,7 +2,7 @@
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/SharedFunctions.hpp>
 #include <Rendering/SharedSamplers.hpp>
-#include <Rendering/Descriptors/DescriptorSetBuilder.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSetBuilder.hpp>
 #include <Gui/ocornut/imgui.h>
 
 namespace SF::Engine

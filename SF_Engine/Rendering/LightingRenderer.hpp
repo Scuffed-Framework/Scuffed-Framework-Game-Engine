@@ -3,7 +3,7 @@
 #include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
-#include <Rendering/RenderPass/FullscreenPass.hpp>
+#include <Rendering/RHI/Renderpass/FullscreenPass.hpp>
 #include <Rendering/Renderer.hpp>
 #include <Rendering/Stage.hpp>
 #include <Rendering/Visuals/SSR/SSRPipelinePass.hpp>

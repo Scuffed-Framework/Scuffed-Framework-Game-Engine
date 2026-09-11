@@ -3,30 +3,25 @@
 #include <Engine/Module.hpp>
 #include <Platform/Windowing/Surface.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
-#include "Bindless/Bindless.hpp"
-#include "Commands/CommandBuffer.hpp"
-#include "Commands/CommandPool.hpp"
-#include "Devices/Instance.hpp"
-#include "Devices/LogicalDevice.hpp"
-#include "Devices/PhysicalDevice.hpp"
+#include "RHI/Bindless/Bindless.hpp"
+#include "RHI/Commands/CommandBuffer.hpp"
+#include "RHI/Commands/CommandPool.hpp"
+#include "RHI/Devices/Instance.hpp"
+#include "RHI/Devices/LogicalDevice.hpp"
+#include "RHI/Devices/PhysicalDevice.hpp"
+#include "RHI/Renderpass/SwapChain.hpp"
 #include "Renderer.hpp"
 
 #include <Communication/Delegates/MultiCastDelegate.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 
 #include <filesystem>
-#include <mutex>
-#include <optional>
-#include <ranges>
-#include <shared_mutex>
 #include <span>
 #include <thread>
-#include <variant>
-
-// need more vma?
 
 namespace SF::Engine
 {
+    using namespace std;
     /**
      * @brief Module that manages the Vulkan instance, devices, surfaces, and rendering
      * infrastructure.
@@ -50,12 +45,12 @@ namespace SF::Engine
 
         Module::Stage GetStage() const override { return Module::Stage::Render; }
         TypeId GetTypeId() const override { return TypeInfo<Module>::GetTypeId<RenderSystem>(); }
-        std::string_view GetName() const override { return "RenderSystem"; }
+        string_view GetName() const override { return "RenderSystem"; }
 
         /**
          * @brief Convert Vulkan result to string (for debugging)
          */
-        static std::string StrVkResult(VkResult result);
+        static string StrVkResult(VkResult result);
 
         /**
          * @brief Check Vulkan result and throw on error
@@ -65,13 +60,12 @@ namespace SF::Engine
         /**
          * @brief Takes a screenshot of the current swapchain image
          */
-        void CaptureScreenshot(const std::filesystem::path &filename, std::size_t surfaceId = 0) const;
+        void CaptureScreenshot(const filesystem::path &filename, size_t surfaceId = 0) const;
 
         /**
          * @brief Get or create command pool for current thread
          */
-        const std::shared_ptr<CommandPool> &
-        GetCommandPool(const std::thread::id &threadId = std::this_thread::get_id());
+        const shared_ptr<CommandPool> &GetCommandPool(const thread::id &threadId = this_thread::get_id());
 
         /**
          * @brief Get render stage by index
@@ -81,7 +75,7 @@ namespace SF::Engine
         /**
          * @brief Get attachment descriptor by name
          */
-        const Descriptor *GetAttachment(const std::string &name) const;
+        const Descriptor *GetAttachment(const string &name) const;
 
         // Device and resource accessors
         const Instance *GetInstance() const noexcept { return instance.get(); }
@@ -92,7 +86,7 @@ namespace SF::Engine
         /**
          * @brief Get surface by index
          */
-        const Surface *GetSurface(std::size_t id) const noexcept
+        const Surface *GetSurface(size_t id) const noexcept
         {
             return id < surfaces.size() ? surfaces[id].get() : nullptr;
         }
@@ -100,12 +94,12 @@ namespace SF::Engine
         /**
          * @brief Get swapchain by index
          */
-        const Swapchain *GetSwapchain(std::size_t id) const noexcept
+        const Swapchain *GetSwapchain(size_t id) const noexcept
         {
             return id < swapchains.size() ? swapchains[id].get() : nullptr;
         }
 
-        void SetFramebufferResized(std::size_t id) const
+        void SetFramebufferResized(size_t id) const
         {
             if (id < perSurfaceBuffers.size() && perSurfaceBuffers[id])
                 perSurfaceBuffers[id]->framebufferResized = true;
@@ -114,9 +108,9 @@ namespace SF::Engine
         /**
          * @brief Get number of surfaces
          */
-        std::size_t GetSurfaceCount() const noexcept { return surfaces.size(); }
+        size_t GetSurfaceCount() const noexcept { return surfaces.size(); }
 
-        void SetRenderer(std::unique_ptr<Renderer> &&r) { renderer = std::move(r); }
+        void SetRenderer(unique_ptr<Renderer> &&r) { renderer = std::move(r); }
 
         Renderer *GetRenderer() const noexcept { return renderer.get(); }
 
@@ -136,13 +130,13 @@ namespace SF::Engine
          */
         struct PerSurfaceBuffers
         {
-            std::vector<VkSemaphore> presentCompletes;
-            std::vector<VkSemaphore> renderCompletes;
-            std::vector<VkFence> flightFences;
-            std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;
+            vector<VkSemaphore> presentCompletes;
+            vector<VkSemaphore> renderCompletes;
+            vector<VkFence> flightFences;
+            vector<unique_ptr<CommandBuffer>> commandBuffers;
 
-            std::size_t currentFrame = 0;
-            bool framebufferResized  = false;
+            size_t currentFrame     = 0;
+            bool framebufferResized = false;
         };
 
         // Helper to enumerate with index
@@ -151,10 +145,10 @@ namespace SF::Engine
         {
             struct Iterator
             {
-                std::size_t index;
-                typename Container::iterator iter;
+                size_t index;
+                Container::iterator iter;
 
-                auto operator*() { return std::make_pair(index, std::ref(*iter)); }
+                auto operator*() { return make_pair(index, ref(*iter)); }
                 Iterator &operator++()
                 {
                     ++index;
@@ -179,30 +173,30 @@ namespace SF::Engine
 
         // Render loop helpers
         void RecreateSwapchain();
-        void RecreateCommandBuffers(std::size_t surfaceId);
-        void RecreatePass(std::size_t surfaceId, RenderStage &renderStage);
+        void RecreateCommandBuffers(size_t surfaceId);
+        void RecreatePass(size_t surfaceId, RenderStage &renderStage);
         void RecreateAttachmentsMap();
 
-        bool StartRenderpass(std::size_t surfaceId, RenderStage &renderStage);
-        void EndRenderpass(std::size_t surfaceId, RenderStage &renderStage);
+        bool StartRenderpass(size_t surfaceId, RenderStage &renderStage);
+        void EndRenderpass(size_t surfaceId, RenderStage &renderStage);
 
         // Core Vulkan objects
-        std::unique_ptr<Instance> instance;
-        std::unique_ptr<PhysicalDevice> physicalDevice;
-        std::unique_ptr<LogicalDevice> logicalDevice;
+        unique_ptr<Instance> instance;
+        unique_ptr<PhysicalDevice> physicalDevice;
+        unique_ptr<LogicalDevice> logicalDevice;
         VkPipelineCache pipelineCache = VK_NULL_HANDLE;
 
         // Surfaces and swapchains
-        std::vector<std::unique_ptr<Surface>> surfaces;
-        std::vector<std::unique_ptr<Swapchain>> swapchains;
-        std::vector<std::unique_ptr<PerSurfaceBuffers>> perSurfaceBuffers;
+        vector<unique_ptr<Surface>> surfaces;
+        vector<unique_ptr<Swapchain>> swapchains;
+        vector<unique_ptr<PerSurfaceBuffers>> perSurfaceBuffers;
 
         // Rendering
-        std::unique_ptr<Renderer> renderer;
-        std::unordered_map<std::string, const Descriptor *> attachments;
+        unique_ptr<Renderer> renderer;
+        unordered_map<string, const Descriptor *> attachments;
 
         // Command pool management
-        std::unordered_map<std::thread::id, std::shared_ptr<CommandPool>> commandPools;
+        unordered_map<thread::id, shared_ptr<CommandPool>> commandPools;
 
         // Timing for command pool purging
         ElapsedTime elapsedPurge;
@@ -210,15 +204,15 @@ namespace SF::Engine
         VmaAllocator alloc;
 
         // additional stuff
-        std::unique_ptr<BindlessManager> bindlessMgr;
+        unique_ptr<BindlessManager> bindlessMgr;
 
     public:
         VmaAllocator *GetAllocator() { return &alloc; }
 
-        MulticastDelegate<VkCommandBuffer, std::size_t> &OnRecordViewports() { return onRecordViewports; }
+        MulticastDelegate<VkCommandBuffer, size_t> &OnRecordViewports() { return onRecordViewports; }
 
     private:
-        MulticastDelegate<VkCommandBuffer, std::size_t> onRecordViewports;
+        MulticastDelegate<VkCommandBuffer, size_t> onRecordViewports;
     };
 
     /**
@@ -226,8 +220,8 @@ namespace SF::Engine
      */
     template<typename T>
     concept VulkanHandle = requires(T t) {
-        { t } -> std::convertible_to<uint64_t>;
-    } || std::is_pointer_v<T>;
+        { t } -> convertible_to<uint64_t>;
+    } || is_pointer_v<T>;
 
     /**
      * @brief RAII wrapper for Vulkan handles with custom deleters
@@ -251,7 +245,7 @@ namespace SF::Engine
         VulkanResource &operator=(const VulkanResource &) = delete;
 
         // Allow move
-        VulkanResource(VulkanResource &&other) noexcept : m_handle(std::exchange(other.m_handle, T{})) {}
+        VulkanResource(VulkanResource &&other) noexcept : m_handle(exchange(other.m_handle, T{})) {}
 
         VulkanResource &operator=(VulkanResource &&other) noexcept
         {
@@ -259,7 +253,7 @@ namespace SF::Engine
             {
                 if (m_handle)
                     Deleter(m_handle);
-                m_handle = std::exchange(other.m_handle, T{});
+                m_handle = exchange(other.m_handle, T{});
             }
             return *this;
         }
@@ -269,7 +263,7 @@ namespace SF::Engine
         [[nodiscard]] operator T() const noexcept { return m_handle; }
         [[nodiscard]] explicit operator bool() const noexcept { return m_handle != T{}; }
 
-        T release() noexcept { return std::exchange(m_handle, T{}); }
+        T release() noexcept { return exchange(m_handle, T{}); }
 
         void reset(T newHandle = T{}) noexcept
         {
@@ -312,31 +306,30 @@ namespace SF::Engine
         /**
          * @brief Check if extensions are supported
          */
-        inline bool AreExtensionsSupported(std::span<const char *const> required,
-                                           std::span<const VkExtensionProperties> available)
+        inline bool AreExtensionsSupported(span<const char *const> required,
+                                           span<const VkExtensionProperties> available)
         {
-            return std::ranges::all_of(
-                    required,
-                    [&](const char *req)
-                    {
-                        return std::ranges::any_of(
-                                available, [req](const auto &ext)
-                                { return std::string_view(req) == std::string_view(ext.extensionName); });
-                    });
+            return ranges::all_of(required,
+                                  [&](const char *req)
+                                  {
+                                      return ranges::any_of(
+                                              available, [req](const auto &ext)
+                                              { return string_view(req) == string_view(ext.extensionName); });
+                                  });
         }
 
         /**
          * @brief Get missing extensions
          */
-        inline std::vector<std::string_view> GetMissingExtensions(std::span<const char *const> required,
-                                                                  std::span<const VkExtensionProperties> available)
+        inline vector<string_view> GetMissingExtensions(span<const char *const> required,
+                                                        span<const VkExtensionProperties> available)
         {
-            std::vector<std::string_view> missing;
+            vector<string_view> missing;
 
             for (const char *req: required)
             {
-                if (!std::ranges::any_of(available, [req](const auto &ext)
-                                         { return std::string_view(req) == std::string_view(ext.extensionName); }))
+                if (!ranges::any_of(available, [req](const auto &ext)
+                                    { return string_view(req) == string_view(ext.extensionName); }))
                 {
                     missing.emplace_back(req);
                 }
@@ -537,7 +530,7 @@ namespace SF::Engine
      */
     template<typename T>
     concept IndirectRenderingCommand = requires(T t, VkCommandBuffer cmd) {
-        { t.record(cmd) } -> std::same_as<void>;
+        { t.record(cmd) } -> same_as<void>;
     };
 
     /**

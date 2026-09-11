@@ -1,13 +1,13 @@
 #pragma once
 #include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Pipelines/RenderPipeline.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/Buffers/UniformBuffer.hpp>
-#include <Rendering/Images/Cubemap.hpp>
+#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Cubemap.hpp>
+#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
 #include <memory>
 
-#include <Rendering/Visuals/sfSkies/TimeManager.hpp>
 #include <Rendering/PipelinePassInit.hpp>
+#include <Rendering/Visuals/sfSkies/TimeManager.hpp>
 
 namespace SF::Engine
 {
@@ -16,13 +16,11 @@ namespace SF::Engine
         inline static bool s_registered = []()
         {
             PipelinePassInitRegistry::Get().Register(
-                [](PipelinePassManager &mgr)
-                {
-                    mgr.Add<SkyboxPipelinePass>(
-                        Pipeline::Stage{0, 0},
-                        std::make_unique<SkyboxPipelinePass>(
-                            Pipeline::Stage{0, 0}));
-                });
+                    [](PipelinePassManager &mgr)
+                    {
+                        mgr.Add<SkyboxPipelinePass>(Pipeline::Stage{0, 0},
+                                                    std::make_unique<SkyboxPipelinePass>(Pipeline::Stage{0, 0}));
+                    });
             return true;
         }();
 

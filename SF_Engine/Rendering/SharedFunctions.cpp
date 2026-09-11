@@ -4,8 +4,8 @@
 #include <Engine/Engine.hpp>
 
 #include <Platform/Windowing/WindowManager.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
 #include <Rendering/Lighting/LightManager.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 
 #include <Math/BasicMath.hpp>
 #include <Math/Time/Time.hpp>
@@ -43,7 +43,11 @@ namespace SF::Engine
     // TODO: Get current window
     Vec2 GetScreenSize()
     {
-        return Vec2(WindowManager::Get()->GetWindow(0)->GetSize().x, WindowManager::Get()->GetWindow(0)->GetSize().y);
+        // Physical pixels, not logical/OS-scaled ones - GetSize() differs from
+        // this on HiDPI displays, and anything here feeds GPU resource sizing
+        // and per-pixel screen-space math (SSR's images + its screenSize UBO
+        // field) that must match the real swapchain/gbuffer resolution.
+        return Vec2(WindowManager::Get()->GetWindow(0)->GetFramebufferSize().x, WindowManager::Get()->GetWindow(0)->GetFramebufferSize().y);
     }
 
     Mat4 GetView() { return CameraController::Get().GetActive()->GetView(); }

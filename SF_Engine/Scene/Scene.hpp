@@ -16,7 +16,7 @@
 #include "SceneSerialization.hpp"
 
 #include <Controllers/CameraController.hpp>
-#include <Rendering/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
 
 namespace SF::Engine
 {

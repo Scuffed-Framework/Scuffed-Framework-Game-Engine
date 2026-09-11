@@ -1,22 +1,22 @@
 #pragma once
 
-#include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereParams.hpp>
-#include <Rendering/Pipelines/RenderPipeline.hpp>
-#include <Rendering/Buffers/UniformBuffer.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/LUT/BlueNoiseLUT.hpp>
-#include <Rendering/LUT/AlligatorNoiseLUT.hpp>
-#include "../Atmosphere/LUT/TransmittanceLUT.hpp"
-#include "../Atmosphere/LUT/MultiScatterLUT.hpp"
-#include "CloudNoise.hpp"
-#include "../Atmosphere/LUT/AerialPerspectiveLUT.hpp"
-#include <Rendering/Pipelines/ComputePipeline.hpp>
 #include <Gui/UIRegistry.hpp>
+#include <Rendering/LUT/AlligatorNoiseLUT.hpp>
+#include <Rendering/LUT/BlueNoiseLUT.hpp>
+#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
+#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereParams.hpp>
+#include "../Atmosphere/LUT/AerialPerspectiveLUT.hpp"
+#include "../Atmosphere/LUT/MultiScatterLUT.hpp"
+#include "../Atmosphere/LUT/TransmittanceLUT.hpp"
+#include "CloudNoise.hpp"
 
 #include <Math/BasicMath.hpp>
-#include <memory>
 #include <cstdint>
+#include <memory>
 
 namespace SF::Engine
 {
@@ -55,16 +55,11 @@ namespace SF::Engine
     class CloudPipelinePass : public PipelinePass
     {
     public:
-        explicit CloudPipelinePass(Pipeline::Stage stage,
-                                   AtmosphereData &data);
+        explicit CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data);
         ~CloudPipelinePass() override = default;
 
-        void SetFrameData(const Mat4 &invProj,
-                          const Mat4 &invView,
-                          const Vec3 &cameraPos,
-                          const Vec3 &planetPos,
-                          const Vec3 &sunDir,
-                          Vec2 screenSize);
+        void SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos, const Vec3 &planetPos,
+                          const Vec3 &sunDir, Vec2 screenSize);
 
         void PreRender(const CommandBuffer &cmd);
 
@@ -76,23 +71,23 @@ namespace SF::Engine
         float minAlt = 1500.0f; // metres above planet surface
         float maxAlt = 6000.0f;
 
-        int marchSteps = 32;     // primary ray
-        int lightMarchSteps = 8; // secondary (light accum compute)
+        int marchSteps      = 32; // primary ray
+        int lightMarchSteps = 8;  // secondary (light accum compute)
 
-        float densityScale = 1.0f;
-        float coverage = 0.5;
-        float cloudDetailScale = 0.00025f;
+        float densityScale        = 1.0f;
+        float coverage            = 0.5;
+        float cloudDetailScale    = 0.00025f;
         float cloudBaseNoiseScale = 1.0f;
         float cloudCurlNoiseScale = 1.0f;
 
         float cloudWeatherUVScale = 0.500f;
-        float percipitationBias = 1.0f;
-        float FadeDistance2d = 1.0f;
-        float fadeSmoothDist = 1.0f;
+        float percipitationBias   = 1.0f;
+        float FadeDistance2d      = 1.0f;
+        float fadeSmoothDist      = 1.0f;
         float time;
         float sdfRangeMetres;
-        Vec2 Wind = Vec2{0,0};
-        float Speed = 0.0f;
+        Vec2 Wind    = Vec2{0, 0};
+        float Speed  = 0.0f;
         float unused = 0.0f;
 
         static bool isWindowOpen;
@@ -128,11 +123,11 @@ namespace SF::Engine
         Vec3 cachedSunDir_{0.577f, 0.577f, 0.577f};
         float totalTime_{0.0f};
 
-        const Image2d *lastColorImg_ = nullptr;
+        const Image2d *lastColorImg_    = nullptr;
         const ImageDepth *lastDepthImg_ = nullptr;
 
         uint64_t lastAttachmentGeneration_ = 0;
-        uint32_t frameCounter_ = 0;
+        uint32_t frameCounter_             = 0;
 
         std::unique_ptr<Image2d> cloudRenderRT_; // binding 2/3  rgba16f
         std::unique_ptr<Image2d> cloudDepthRT_;  // binding 14/15 r32f
@@ -148,8 +143,8 @@ namespace SF::Engine
         std::unique_ptr<Image2d> reconFog_[kFramesInFlight];   // binding 24(write)/25(read)/26(history)
 
         uint32_t framesSinceStart_ = 0;
-        uint32_t frameSlot_ = 0; // monotonically increasing, index with % kFramesInFlight
-        bool firstFrame_ = true;
+        uint32_t frameSlot_        = 0; // monotonically increasing, index with % kFramesInFlight
+        bool firstFrame_           = true;
         // fahh
         std::unique_ptr<Image2d> dummyTexture_;
         std::size_t uiHandle;

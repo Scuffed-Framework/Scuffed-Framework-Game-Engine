@@ -1,11 +1,11 @@
 #pragma once
 
-#include "LightingTypes.hpp"
-#include "Light.hpp"
-#include <Rendering/Buffers/StorageBuffer.hpp>
-#include <Rendering/Buffers/UniformBuffer.hpp>
-#include <vector>
+#include <Rendering/RHI/Buffers/StorageBuffer.hpp>
+#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <memory>
+#include <vector>
+#include "Light.hpp"
+#include "LightingTypes.hpp"
 
 namespace SF::Engine
 {
@@ -60,4 +60,4 @@ namespace SF::Engine
         std::unique_ptr<StorageBuffer> lightListSSBO_;
         std::unique_ptr<StorageBuffer> lightIndexSSBO_;
     };
-}
+} // namespace SF::Engine

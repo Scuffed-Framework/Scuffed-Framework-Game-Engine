@@ -1,9 +1,9 @@
 #pragma once
-#include <Rendering/Pipelines/ComputePipeline.hpp>
-#include <Rendering/Images/Image2d.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <memory>
-#include <Rendering/Buffers/UniformBuffer.hpp>
 #include "../AtmosphereParams.hpp"
 
 namespace SF::Engine
@@ -20,8 +20,8 @@ namespace SF::Engine
     class SkyViewLUT
     {
     public:
-        explicit SkyViewLUT(Image2d *transmittanceLUT, Image2d *multiScatterLUT,
-                            uint32_t width = 128, uint32_t height = 128);
+        explicit SkyViewLUT(Image2d *transmittanceLUT, Image2d *multiScatterLUT, uint32_t width = 128,
+                            uint32_t height = 128);
         Image2d *GetTexture() const { return texture_.get(); }
         void Bake(const CommandBuffer &cmd);
         void SetParams(const SkyViewPushConstants &p) { push_ = p; }

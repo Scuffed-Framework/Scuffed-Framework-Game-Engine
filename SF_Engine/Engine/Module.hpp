@@ -8,12 +8,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include <LowLevel/Reflection/RTTI/RTTI.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 #include <UtilityClasses/TypeInformation.hpp>
-#include <LowLevel/Reflection/RTTI/RTTI.hpp>
 
 #ifdef Always
-#undef Always
+    #undef Always
 #endif
 
 namespace SF::Engine
@@ -45,13 +45,13 @@ namespace SF::Engine
     /**
      * @brief Concept to ensure a type is derived from Module
      */
-    template <typename T>
+    template<typename T>
     concept ModuleDerived = std::is_base_of_v<Module, T> && !std::is_same_v<Module, T>;
 
     /**
      * @brief Factory for creating and managing module instances
      */
-    template <typename Base>
+    template<typename Base>
     class ModuleFactory
     {
     public:
@@ -82,7 +82,7 @@ namespace SF::Engine
         /**
          * @brief Helper for specifying module dependencies
          */
-        template <ModuleDerived... Args>
+        template<ModuleDerived... Args>
         class Requires // Ensure this is in a public section
         {
         public:
@@ -98,7 +98,7 @@ namespace SF::Engine
         /**
          * @brief Base registrar class for modules
          */
-        template <typename T>
+        template<typename T>
         class Registrar : public Base
         {
         public: // Change this from protected to public
@@ -108,53 +108,44 @@ namespace SF::Engine
                     s_instance = nullptr;
             }
 
-            static T *Get() noexcept
-            {
-                return s_instance;
-            }
-            static bool Exists() noexcept
-            {
-                return s_instance != nullptr;
-            }
+            static T *Get() noexcept { return s_instance; }
+            static bool Exists() noexcept { return s_instance != nullptr; }
 
             // Move Register into the public section so derived classes can call it via the macro
-            template <typename... Args>
+            template<typename... Args>
             static bool Register(ModuleStage stage, Requires<Args...> dependencies = {})
             {
                 s_registeredStage = stage;
-                s_registeredName = typeid(T).name();
+                s_registeredName  = typeid(T).name();
 
                 ModuleFactory::Registry()[TypeInfo<Base>::template GetTypeId<T>()] = {
-                    []() -> std::unique_ptr<Base>
-                    {
-                        s_instance = new T();
-                        return std::unique_ptr<Base>(s_instance);
-                    },
-                    stage, dependencies.Get(), s_registeredName};
+                        []() -> std::unique_ptr<Base>
+                        {
+                            s_instance = new T();
+                            return std::unique_ptr<Base>(s_instance);
+                        },
+                        stage, dependencies.Get(), s_registeredName};
 
                 return true;
             }
 
-            inline static ModuleStage s_registeredStage = ModuleStage::Never;
+            inline static ModuleStage s_registeredStage     = ModuleStage::Never;
             inline static std::string_view s_registeredName = "";
 
         private:
             inline static T *s_instance = nullptr;
         };
 
-        template <typename T, typename... Args>
+        template<typename T, typename... Args>
         static bool RegisterModule(ModuleStage stage, Requires<Args...> deps = {})
         {
             return Registrar<T>::Register(stage, deps);
         }
 
-        template <typename T, typename... Args>
+        template<typename T, typename... Args>
         struct AutoRegister
         {
-            AutoRegister(ModuleStage stage, Requires<Args...> deps = {})
-            {
-                Registrar<T>::Register(stage, deps);
-            }
+            AutoRegister(ModuleStage stage, Requires<Args...> deps = {}) { Registrar<T>::Register(stage, deps); }
         };
     };
 
@@ -169,6 +160,8 @@ namespace SF::Engine
          * @brief Module update stages (alias to ModuleStage)
          */
         using Stage = ModuleStage;
+
+        using StartupStage = ModuleStartStage;
 
         /**
          * @brief Stage and type identifier pair
@@ -186,10 +179,7 @@ namespace SF::Engine
          * @brief Optional initialization function
          * @return true if initialization succeeded, false otherwise
          */
-        virtual bool Initialize()
-        {
-            return true;
-        }
+        virtual bool Initialize() { return true; }
 
         /**
          * @brief Optional cleanup function
@@ -220,26 +210,17 @@ namespace SF::Engine
      * All modules should inherit from ModuleRegistrar<YourModule> instead of
      * ModuleRegistrar<YourModule>
      */
-    template <typename T>
+    template<typename T>
     class ModuleRegistrar : public Module::Registrar<T>
     {
     public:
         // Implement the pure virtual methods from Module
         // FIX: Changed 'Stage' to 'ModuleStage' (or you could use 'Module::Stage')
-        [[nodiscard]] ModuleStage GetStage() const override
-        {
-            return ModuleRegistrar<T>::s_registeredStage;
-        }
+        [[nodiscard]] ModuleStage GetStage() const override { return ModuleRegistrar<T>::s_registeredStage; }
 
-        [[nodiscard]] TypeId GetTypeId() const override
-        {
-            return TypeInfo<Module>::template GetTypeId<T>();
-        }
+        [[nodiscard]] TypeId GetTypeId() const override { return TypeInfo<Module>::template GetTypeId<T>(); }
 
-        [[nodiscard]] std::string_view GetName() const override
-        {
-            return ModuleRegistrar<T>::s_registeredName;
-        }
+        [[nodiscard]] std::string_view GetName() const override { return ModuleRegistrar<T>::s_registeredName; }
     };
 
     /**
@@ -250,24 +231,18 @@ namespace SF::Engine
     public:
         static constexpr size_t MaxModules = 128;
 
-        ModuleFilter()
-        {
-            IncludeAll();
-        }
+        ModuleFilter() { IncludeAll(); }
 
-        template <ModuleDerived T>
+        template<ModuleDerived T>
         [[nodiscard]] bool Check() const noexcept
         {
             const auto id = TypeInfo<Module>::GetTypeId<T>();
             return id < MaxModules && m_include.test(id);
         }
 
-        [[nodiscard]] bool Check(TypeId typeId) const noexcept
-        {
-            return typeId < MaxModules && m_include.test(typeId);
-        }
+        [[nodiscard]] bool Check(TypeId typeId) const noexcept { return typeId < MaxModules && m_include.test(typeId); }
 
-        template <ModuleDerived T>
+        template<ModuleDerived T>
         ModuleFilter &Exclude() noexcept
         {
             const auto id = TypeInfo<Module>::GetTypeId<T>();
@@ -276,7 +251,7 @@ namespace SF::Engine
             return *this;
         }
 
-        template <ModuleDerived T>
+        template<ModuleDerived T>
         ModuleFilter &Include() noexcept
         {
             const auto id = TypeInfo<Module>::GetTypeId<T>();
@@ -285,14 +260,14 @@ namespace SF::Engine
             return *this;
         }
 
-        template <ModuleDerived... Args>
+        template<ModuleDerived... Args>
         ModuleFilter &Exclude() noexcept
         {
             (Exclude<Args>(), ...);
             return *this;
         }
 
-        template <ModuleDerived... Args>
+        template<ModuleDerived... Args>
         ModuleFilter &Include() noexcept
         {
             (Include<Args>(), ...);
@@ -311,20 +286,11 @@ namespace SF::Engine
             return *this;
         }
 
-        [[nodiscard]] size_t Count() const noexcept
-        {
-            return m_include.count();
-        }
+        [[nodiscard]] size_t Count() const noexcept { return m_include.count(); }
 
-        [[nodiscard]] bool Any() const noexcept
-        {
-            return m_include.any();
-        }
+        [[nodiscard]] bool Any() const noexcept { return m_include.any(); }
 
-        [[nodiscard]] bool All() const noexcept
-        {
-            return m_include.all();
-        }
+        [[nodiscard]] bool All() const noexcept { return m_include.all(); }
 
     private:
         std::bitset<MaxModules> m_include;
@@ -334,7 +300,7 @@ namespace SF::Engine
  * @brief Helper macro for registering modules
  * Usage: REGISTER_MODULE(MyModule, ModuleStage::Normal, Module::Requires<Dep1, Dep2>{})
  */
-#define REGISTER_MODULE(ModuleClass, UpdateStage, ...) \
+#define REGISTER_MODULE(ModuleClass, UpdateStage, ...)                                                                 \
     inline static bool ModuleClass##_registered = ModuleClass::Register(UpdateStage, ##__VA_ARGS__)
 
 } // namespace SF::Engine

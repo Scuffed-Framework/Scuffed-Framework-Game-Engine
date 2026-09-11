@@ -2,8 +2,8 @@
 #include "Shaders.hpp"
 #include <Gui/GuiMembers.hpp>
 #include <LowLevel/FileSystem/File.hpp>
+#include <Rendering/RHI/Shaders/ShaderAsset.hpp>
 #include "../Panels/AssetsWindow.hpp"
-#include <Rendering/Shaders/ShaderAsset.hpp>
 #include "../Panels/Panels.hpp"
 
 namespace SF::Engine
@@ -17,7 +17,7 @@ namespace SF::Engine
         writer << "// Define bindings like: Input(num,set) Sampler2D...\n";
         writer << "// Ex: Input(1,0) Sampler2D<float4> inMyTex;\n";
         // make file and insert default slang stuff
-        for (auto stage : stages)
+        for (auto stage: stages)
         {
             if (stage.c_str() == "Vertex")
             {
@@ -30,8 +30,7 @@ namespace SF::Engine
                 writer << "    return output;\n";
                 writer << "}\n";
                 writer << "\n";
-            }
-            else if (stage.c_str() == "Fragment")
+            } else if (stage.c_str() == "Fragment")
             {
                 writer << "[shader(\"fragment)\")]\n";
                 writer << "FSOutput FragmentShader(VSOutput in)\n";
@@ -41,8 +40,7 @@ namespace SF::Engine
                 writer << "    return out\n;";
                 writer << "}\n";
                 writer << "\n";
-            }
-            else if (stage.c_str() == "Compute")
+            } else if (stage.c_str() == "Compute")
             {
                 writer << "[numthreads(8,8,1)] // Replace with your thread group counts\n";
                 writer << "[shader(\"compute)\")]\n";
@@ -56,8 +54,8 @@ namespace SF::Engine
         }
         shader.Close();
 
-        auto shaderAsset = AssetController::Get()->RegisterAsset<ShaderAsset>(name);
-        shaderAsset->type = AssetType::Shader;
+        auto shaderAsset       = AssetController::Get()->RegisterAsset<ShaderAsset>(name);
+        shaderAsset->type      = AssetType::Shader;
         shaderAsset->assetPath = path;
         shaderAsset->SaveMeta(); // writes <path>.meta only — no full-manifest rewrite
 
@@ -105,8 +103,8 @@ namespace SF::Engine
         if (ImGui::Button("Remove Compute Shader"))
         {
             // FIXME:
-            // auto remove = std::find_first_of(stages.begin(), stages.end(), std::string("Compute").begin(), std::string("Compute").end());
-            // stages.erase(remove);
+            // auto remove = std::find_first_of(stages.begin(), stages.end(), std::string("Compute").begin(),
+            // std::string("Compute").end()); stages.erase(remove);
         }
 
         if (ImGui::Button("Create"))
@@ -142,4 +140,4 @@ namespace SF::Engine
             CreateShaderInclude(path, name);
         ImGui::EndPopup();
     }
-}
+} // namespace SF::Engine

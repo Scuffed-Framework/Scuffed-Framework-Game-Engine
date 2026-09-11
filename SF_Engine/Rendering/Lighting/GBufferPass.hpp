@@ -1,15 +1,15 @@
 #pragma once
 
-#include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Pipelines/RenderPipeline.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/Images/Image2d.hpp>
-#include <Rendering/Mesh/Mesh.hpp>
-#include "LightManager.hpp"
-#include "LitMeshPipelinePass.hpp" // reuses MeshMaterial and LitPushConstants
 #include <Math/BasicMath.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
 #include <memory>
 #include <vector>
+#include "LightManager.hpp"
+#include "LitMeshPipelinePass.hpp" // reuses MeshMaterial and LitPushConstants
 
 namespace SF::Engine
 {
@@ -42,9 +42,7 @@ namespace SF::Engine
         ~GBufferPass() override = default;
 
         /// Queue a mesh for rendering this frame.
-        void Submit(std::shared_ptr<Mesh> mesh,
-                    const MeshMaterial &material,
-                    const Mat4 &transform);
+        void Submit(std::shared_ptr<Mesh> mesh, const MeshMaterial &material, const Mat4 &transform);
 
         void Render(const CommandBuffer &commandBuffer) override;
 
@@ -70,4 +68,4 @@ namespace SF::Engine
         };
         std::vector<DrawCall> drawList_;
     };
-}
+} // namespace SF::Engine

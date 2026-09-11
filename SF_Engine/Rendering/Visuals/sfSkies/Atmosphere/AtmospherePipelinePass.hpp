@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Rendering/Buffers/UniformBuffer.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
 #include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Pipelines/ComputePipeline.hpp>
+#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include "LUT/MultiScatterLUT.hpp"
 #include "LUT/SkyViewLUT.hpp"
 #include "LUT/TransmittanceLUT.hpp"

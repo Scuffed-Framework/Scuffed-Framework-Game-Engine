@@ -1,14 +1,14 @@
 #pragma once
 
-#include <Rendering/Buffers/Buffer.hpp>
-#include <Rendering/Commands/CommandBuffer.hpp>
-#include <Rendering/Mesh/Vertex.hpp>
-#include <LowLevel/XML/XMLModule.hpp>
 #include <Entity/Components/Component.hpp>
-#include <span>
-#include <vector>
+#include <LowLevel/XML/XMLModule.hpp>
+#include <Rendering/Mesh/Vertex.hpp>
+#include <Rendering/RHI/Buffers/Buffer.hpp>
+#include <Rendering/RHI/Commands/CommandBuffer.hpp>
 #include <Scene/SceneSerialization.hpp>
 #include <UtilityClasses/UUID.hpp>
+#include <span>
+#include <vector>
 
 namespace SF::Engine
 {
@@ -23,15 +23,14 @@ namespace SF::Engine
          * @param vertices  Vertex data.
          * @param indices   Index data (uint32). Empty = non-indexed draw.
          */
-        Mesh(std::span<const Vertex> vertices,
-             std::span<const uint32_t> indices = {});
+        Mesh(std::span<const Vertex> vertices, std::span<const uint32_t> indices = {});
 
         ~Mesh() = default;
 
-        Mesh(const Mesh &) = delete;
+        Mesh(const Mesh &)            = delete;
         Mesh &operator=(const Mesh &) = delete;
-        Mesh(Mesh &&) = default;
-        Mesh &operator=(Mesh &&) = default;
+        Mesh(Mesh &&)                 = default;
+        Mesh &operator=(Mesh &&)      = default;
 
         /**
          * Bind vertex (and optionally index) buffers and issue the draw call.
@@ -47,7 +46,7 @@ namespace SF::Engine
         std::unique_ptr<Buffer> vertexBuffer_;
         std::unique_ptr<Buffer> indexBuffer_;
         uint32_t vertexCount_ = 0;
-        uint32_t indexCount_ = 0;
+        uint32_t indexCount_  = 0;
 
         UUID ID;
 
@@ -63,7 +62,7 @@ namespace SF::Engine
         {
             Component::Deserialize(node);
             XMLNode mesh = node.GetChild("Mesh");
-            ID = UUID::FromString(mesh.GetAttribute(std::string("UUID")));
+            ID           = UUID::FromString(mesh.GetAttribute(std::string("UUID")));
         }
     };
-}
+} // namespace SF::Engine

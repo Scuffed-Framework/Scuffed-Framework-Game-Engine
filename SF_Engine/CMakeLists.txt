@@ -11,6 +11,10 @@ if (MSVC)
     cmake_policy(SET CMP0091 NEW)
 endif ()
 
+option(OrbisOS_build "Playstation" OFF)
+option(HorizonOS_build "Nintendo Switch" OFF)
+
+
 project(SF_Engine LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 26)
@@ -48,15 +52,8 @@ find_package(spdlog CONFIG REQUIRED)                # spdlog-config.cmake
 find_package(spirv-reflect-static CONFIG REQUIRED)
 find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
 find_package(libraw CONFIG REQUIRED)
-
 #microslop
 find_package(DirectX-Headers REQUIRED)
-
-
-if (UNIX)
-    find_package(udev)
-    find_package(evdev)
-endif ()
 
 find_package(openfbx REQUIRED)
 find_package(TinyOBJLoader REQUIRED)
@@ -98,6 +95,7 @@ if (WIN32)
             VK_USE_PLATFORM_WIN32_KHR
             NOMINMAX
             _CRT_SECURE_NO_WARNINGS
+            WIN32_LEAN_AND_MEAN
     )
     if (MSVC)
         target_compile_options(SF_Engine PRIVATE /utf-8)
@@ -117,6 +115,15 @@ elseif (UNIX)
             VK_USE_PLATFORM_XLIB_KHR
     )
     target_link_libraries(SF_Engine PUBLIC X11 pthread dl)
+elseif (OrbisOS_build)
+    target_compile_definitions(
+            _PLATFORM_PLAYSTATION
+    )
+elseif (HorizonOS_build)
+    target_compile_definitions(
+            _PLATFORM_NINTENDO_SWITCH
+    )
+
 endif ()
 
 
@@ -216,13 +223,18 @@ target_link_libraries(SF_Engine PUBLIC
         openfbx::openfbx
         tinyobjloader::tinyobjloader
 
-        #microslop
+        #d3d
         Microsoft::DirectX-Headers
 )
 if (UNIX)
     target_link_libraries(SF_Engine PRIVATE
             evdev
             udev
+    )
+elseif (WINDOWS)
+    find_package(D3D12MemoryAllocator CONFIG REQUIRED)
+    target_link_libraries(SF_Engine PRIVATE
+            GPUOpen::D3D12MemoryAllocator
     )
 endif ()
 

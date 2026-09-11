@@ -1,12 +1,12 @@
 #pragma once
 
 #include <Rendering/PipelinePassManager.hpp>
-#include <Rendering/Pipelines/RenderPipeline.hpp>
-#include <Rendering/Descriptors/DescriptorSet.hpp>
-#include <Rendering/Images/Image2d.hpp>
-#include <Rendering/Images/ImageDepth.hpp>
-#include "LightManager.hpp"
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/ImageDepth.hpp>
+#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
 #include <memory>
+#include "LightManager.hpp"
 
 namespace SF::Engine
 {
@@ -40,9 +40,9 @@ namespace SF::Engine
         std::unique_ptr<RenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
 
-        const Image2d *lastAlbedo_ = nullptr;
-        const Image2d *lastNormal_ = nullptr;
-        const Image2d *lastPbr_ = nullptr;
+        const Image2d *lastAlbedo_   = nullptr;
+        const Image2d *lastNormal_   = nullptr;
+        const Image2d *lastPbr_      = nullptr;
         const ImageDepth *lastDepth_ = nullptr;
     };
-}
+} // namespace SF::Engine

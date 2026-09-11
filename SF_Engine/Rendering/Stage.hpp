@@ -1,12 +1,12 @@
 #pragma once
 
+#include <map>
 #include "Material/Color/Color.hpp"
 #include "Math/Vectors/Vector.hpp"
-#include "Images/ImageDepth.hpp"
-#include "RenderPass/FrameBuffer.hpp"
-#include "RenderPass/RenderPass.hpp"
-#include "RenderPass/SwapChain.hpp"
-#include <map>
+#include "RHI/Images/ImageDepth.hpp"
+#include "RHI/Renderpass/FrameBuffer.hpp"
+#include "RHI/Renderpass/RenderPass.hpp"
+#include "RHI/Renderpass/SwapChain.hpp"
 
 namespace SF::Engine
 {
@@ -33,13 +33,10 @@ namespace SF::Engine
          * @param format The format that will be created (only applies to type ATTACHMENT_IMAGE).
          * @param clearColor The Color to clear to before rendering to it.
          */
-        Attachment(uint32_t binding, std::string name, Type type, bool multisampled = false, VkFormat format = VK_FORMAT_R8G8B8A8_UNORM,
-                   const Color &clearColor = Color::Black) : binding(binding),
-                                                             name(std::move(name)),
-                                                             type(type),
-                                                             multisampled(multisampled),
-                                                             format(format),
-                                                             clearColor(clearColor)
+        Attachment(uint32_t binding, std::string name, Type type, bool multisampled = false,
+                   VkFormat format = VK_FORMAT_R8G8B8A8_UNORM, const Color &clearColor = Color::Black) :
+            binding(binding), name(std::move(name)), type(type), multisampled(multisampled), format(format),
+            clearColor(clearColor)
         {
         }
 
@@ -62,8 +59,8 @@ namespace SF::Engine
     class SubpassType
     {
     public:
-        SubpassType(uint32_t binding, std::vector<uint32_t> attachmentBindings) : binding(binding),
-                                                                                  attachmentBindings(std::move(attachmentBindings))
+        SubpassType(uint32_t binding, std::vector<uint32_t> attachmentBindings) :
+            binding(binding), attachmentBindings(std::move(attachmentBindings))
         {
         }
 
@@ -78,20 +75,11 @@ namespace SF::Engine
     class RenderArea
     {
     public:
-        explicit RenderArea(const UVec2 &extent = {}, const IVec2 &offset = {}) : extent(extent),
-                                                                                             offset(offset)
-        {
-        }
+        explicit RenderArea(const UVec2 &extent = {}, const IVec2 &offset = {}) : extent(extent), offset(offset) {}
 
-        bool operator==(const RenderArea &rhs) const
-        {
-            return extent == rhs.extent && offset == rhs.offset;
-        }
+        bool operator==(const RenderArea &rhs) const { return extent == rhs.extent && offset == rhs.offset; }
 
-        bool operator!=(const RenderArea &rhs) const
-        {
-            return !operator==(rhs);
-        }
+        bool operator!=(const RenderArea &rhs) const { return !operator==(rhs); }
 
         const UVec2 &GetExtent() const { return extent; }
         void SetExtent(const UVec2 &extent) { this->extent = extent; }
@@ -117,9 +105,7 @@ namespace SF::Engine
     public:
         Viewport() = default;
 
-        explicit Viewport(const UVec2 &size) : size(size)
-        {
-        }
+        explicit Viewport(const UVec2 &size) : size(size) {}
 
         const Vec2 &GetScale() const { return scale; }
         void SetScale(const Vec2 &scale) { this->scale = scale; }
@@ -141,7 +127,8 @@ namespace SF::Engine
         friend class RenderSystem;
 
     public:
-        explicit RenderStage(std::vector<Attachment> images = {}, std::vector<SubpassType> subpasses = {}, const Viewport &viewport = Viewport());
+        explicit RenderStage(std::vector<Attachment> images = {}, std::vector<SubpassType> subpasses = {},
+                             const Viewport &viewport = Viewport());
 
         void Update();
         void Rebuild(const Swapchain &swapchain);
@@ -200,4 +187,4 @@ namespace SF::Engine
         RenderArea renderArea;
         bool outOfDate = false;
     };
-}
+} // namespace SF::Engine

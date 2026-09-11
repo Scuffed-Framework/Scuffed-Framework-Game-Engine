@@ -1,7 +1,7 @@
 #pragma once
 #include <Assets/Video/Video.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
-#include <Rendering/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image2d.hpp>
 #include "EngineSplashScreen.hpp"
 #include "SplashScreenQuotes.hpp"
 

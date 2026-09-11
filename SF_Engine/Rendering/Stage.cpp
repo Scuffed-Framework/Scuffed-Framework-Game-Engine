@@ -1,5 +1,5 @@
 #include "Stage.hpp"
-#include "Images/ImageDepth.hpp"
+#include "RHI/Images/ImageDepth.hpp"
 #include "RenderSystem.hpp"
 #include <Platform/Windowing/WindowManager.hpp>
 

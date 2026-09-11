@@ -32,6 +32,19 @@ namespace SF::Engine
         }
 
         /**
+         * Gets the size of the window's framebuffer in physical pixels.
+         * On HiDPI displays this differs from GetSize(), which is in logical
+         * (OS-scaled) pixels. Anything sizing a GPU resource, a compute
+         * dispatch, or per-pixel screen-space math (e.g. SSR) must use this,
+         * not GetSize().
+         * @return The framebuffer size in physical pixels.
+         */
+        const UVec2 &GetFramebufferSize() const
+        {
+            return framebufferSize;
+        }
+
+        /**
          * Sets the window size.
          * @param size The new size in pixels.
          */
@@ -475,6 +488,7 @@ namespace SF::Engine
 
         UVec2 size;
         UVec2 fullscreenSize;
+        UVec2 framebufferSize;
 
         UVec2 position;
 

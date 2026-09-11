@@ -1,5 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import cmake_layout
+import platform
 
 
 class SfEngineConan(ConanFile):
@@ -66,7 +67,12 @@ class SfEngineConan(ConanFile):
         self.requires("vulkan-headers/1.4.313.0")
         self.requires("vulkan-loader/1.4.313.0")
         self.requires("volk/1.4.313.0")
-        self.requires("vulkan-memory-allocator/3.0.1")  # this one is independent, leave as-is
+        self.requires("vulkan-memory-allocator/3.0.1")
+        # d3d
+        self.requires("directx-headers/1.619.1")
+    
+        if platform.system() == "Windows":
+            self.requires("d3d12-memory-allocator/3.0.1")
 
         # Image Loading
         self.requires("libpng/1.6.42")
@@ -77,9 +83,6 @@ class SfEngineConan(ConanFile):
 
         self.requires("openfbx/cci.20210426")
         self.requires("tinyobjloader/2.0.0-rc10")
-
-        # microslop
-        self.requires("directx-headers/1.619.1")
 
     def layout(self):
         cmake_layout(self)
