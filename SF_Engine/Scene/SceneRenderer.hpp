@@ -33,7 +33,7 @@ namespace SF::Engine
     class SceneRenderer : public Renderer
     {
     public:
-        SceneRenderer(SceneRendererConfig cfg = {}) : config_(std::move(cfg))
+        SceneRenderer(SceneRendererConfig cfg = {}) : config_(cfg)
         {
             // todo: replace this shit with a render graph
             AddRenderStage(std::make_unique<RenderStage>(
