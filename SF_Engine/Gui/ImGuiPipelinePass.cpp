@@ -1,10 +1,10 @@
 #include "ImGuiPipelinePass.hpp"
 
 #include <Platform/Windowing/WindowManager.hpp>
+#include <Rendering/FrameGraph/Stage.hpp>
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
-#include <Rendering/RHI/Renderpass/RenderPass.hpp>
+#include <Rendering/RHI/Renderpass/RhiRenderpass.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Stage.hpp>
 
 #include <GLFW/glfw3.h>
 
@@ -15,7 +15,7 @@
 
 namespace SF::Engine
 {
-    ImGuiPipelinePass::ImGuiPipelinePass(Pipeline::Stage stage) : PipelinePass(stage) { Init(); }
+    ImGuiPipelinePass::ImGuiPipelinePass(Pipeline::Stage stage) : EngineRenderpass(stage) { Init(); }
 
     ImGuiPipelinePass::~ImGuiPipelinePass() { Shutdown(); }
 

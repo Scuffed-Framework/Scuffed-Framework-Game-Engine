@@ -1,22 +1,22 @@
 #pragma once
-#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Images/Cubemap.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 
-#include <Rendering/PipelinePassInit.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassInitRegistry.hpp>
 #include <Rendering/Visuals/sfSkies/TimeManager.hpp>
 
 namespace SF::Engine
 {
-    class SkyboxPipelinePass : public PipelinePass
+    class SkyboxPipelinePass : public EngineRenderpass
     {
         inline static bool s_registered = []()
         {
-            PipelinePassInitRegistry::Get().Register(
-                    [](PipelinePassManager &mgr)
+            EngineRenderpassInitRegistry::Get().Register(
+                    [](EngineRenderpassManager &mgr)
                     {
                         mgr.Add<SkyboxPipelinePass>(Pipeline::Stage{0, 0},
                                                     std::make_unique<SkyboxPipelinePass>(Pipeline::Stage{0, 0}));
@@ -34,7 +34,7 @@ namespace SF::Engine
     private:
         std::unique_ptr<Cubemap> cubemap_;
 
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::unique_ptr<RhiRenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
         std::unique_ptr<UniformBuffer> ubo_;
     };

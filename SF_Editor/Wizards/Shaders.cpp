@@ -70,7 +70,7 @@ namespace SF::Engine
     bool hasTE;
     bool hasTC;
     // same for shader includes but without stages
-    void ShowCreateShaderWizzard(std::filesystem::path path)
+    void ShowCreateShaderWizard(std::filesystem::path path)
     {
         ImGui::BeginPopup("Create Shader");
 
@@ -127,7 +127,7 @@ namespace SF::Engine
         showCSI = false;
     }
 
-    void ShowCreateShaderIncludeWizzard(std::filesystem::path path)
+    void ShowCreateShaderIncludeWizard(std::filesystem::path path)
     {
         ImGui::BeginPopup("Create Shader");
 

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <Math/Vectors/Vector.hpp>
+#include <Rendering/FrameGraph/Stage.hpp>
 #include <Rendering/RHI/Shaders/Parser/Parser.hpp>
 #include <Rendering/RHI/Shaders/Shader.hpp>
-#include <Rendering/Stage.hpp>
 #include <array>
 #include "Pipeline.hpp"
 
@@ -20,7 +20,7 @@ namespace SF::Engine
     /**
      * @brief Class that represents a RenderSystem pipeline.
      */
-    class RenderPipeline : public Pipeline
+    class RhiRenderPipeline : public Pipeline
     {
     public:
         enum class Mode
@@ -85,16 +85,16 @@ namespace SF::Engine
          * @param blendStates Only consulted when `blend == Blend::Custom`. Must contain exactly
          *        1 entry for Mode::Polygon, or exactly `attachmentCount` entries for Mode::MRT.
          */
-        RenderPipeline(Stage stage, std::filesystem::path shaderPath, std::vector<Shader::VertexInput> vertexInputs,
-                       std::vector<Shader::Define> defines = {}, Mode mode = Mode::Polygon,
-                       Depth depth                  = Depth::ReadWrite,
-                       VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                       VkPolygonMode polygonMode    = VK_POLYGON_MODE_FILL,
-                       VkCullModeFlags cullMode     = VK_CULL_MODE_BACK_BIT,
-                       VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, bool pushDescriptors = false,
-                       std::vector<VkDescriptorSetLayout> additionalLayouts         = {},
-                       Blend blend                                                  = Blend::PremultipliedAlpha,
-                       std::vector<VkPipelineColorBlendAttachmentState> blendStates = {});
+        RhiRenderPipeline(Stage stage, std::filesystem::path shaderPath, std::vector<Shader::VertexInput> vertexInputs,
+                          std::vector<Shader::Define> defines = {}, Mode mode = Mode::Polygon,
+                          Depth depth                  = Depth::ReadWrite,
+                          VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                          VkPolygonMode polygonMode    = VK_POLYGON_MODE_FILL,
+                          VkCullModeFlags cullMode     = VK_CULL_MODE_BACK_BIT,
+                          VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, bool pushDescriptors = false,
+                          std::vector<VkDescriptorSetLayout> additionalLayouts         = {},
+                          Blend blend                                                  = Blend::PremultipliedAlpha,
+                          std::vector<VkPipelineColorBlendAttachmentState> blendStates = {});
 
         /**
          * Offscreen constructor : uses a caller-supplied VkRenderPass instead of
@@ -103,15 +103,16 @@ namespace SF::Engine
          *
          * IsMultisampled() always returns false for offscreen pipelines.
          */
-        RenderPipeline(VkRenderPass offscreenRenderPass, uint32_t subpassIndex, std::filesystem::path shaderPath,
-                       std::vector<Shader::VertexInput> vertexInputs = {}, std::vector<Shader::Define> defines = {},
-                       Depth depth = Depth::None, VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                       VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL, VkCullModeFlags cullMode = VK_CULL_MODE_NONE,
-                       VkFrontFace frontFace                                = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-                       std::vector<VkDescriptorSetLayout> additionalLayouts = {}, Blend blend = Blend::Opaque,
-                       std::vector<VkPipelineColorBlendAttachmentState> blendStates = {});
+        RhiRenderPipeline(VkRenderPass offscreenRenderPass, uint32_t subpassIndex, std::filesystem::path shaderPath,
+                          std::vector<Shader::VertexInput> vertexInputs = {}, std::vector<Shader::Define> defines = {},
+                          Depth depth = Depth::None, VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                          VkPolygonMode polygonMode                            = VK_POLYGON_MODE_FILL,
+                          VkCullModeFlags cullMode                             = VK_CULL_MODE_NONE,
+                          VkFrontFace frontFace                                = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+                          std::vector<VkDescriptorSetLayout> additionalLayouts = {}, Blend blend = Blend::Opaque,
+                          std::vector<VkPipelineColorBlendAttachmentState> blendStates = {});
 
-        ~RenderPipeline() override;
+        ~RhiRenderPipeline() override;
 
         /**
          * Gets the depth stencil used in a stage. Offscreen pipelines must pass an
@@ -122,7 +123,7 @@ namespace SF::Engine
         [[nodiscard]] const Image2d *GetImage(uint32_t index,
                                               const std::optional<uint32_t> &stage = std::nullopt) const;
 
-        [[nodiscard]] RenderArea GetRenderArea(const std::optional<uint32_t> &stage = std::nullopt) const;
+        [[nodiscard]] RhiRenderArea GetRenderArea(const std::optional<uint32_t> &stage = std::nullopt) const;
 
         [[nodiscard]] const Stage &GetStage() const { return stage; }
         [[nodiscard]] const std::filesystem::path &GetShaderPath() const { return shaderPath; }
@@ -212,14 +213,14 @@ namespace SF::Engine
     public:
         RenderPipelineCreate(std::filesystem::path shaderPath = {}, std::vector<Shader::VertexInput> vertexInputs = {},
                              std::vector<Shader::Define> defines = {},
-                             RenderPipeline::Mode mode           = RenderPipeline::Mode::Polygon,
-                             RenderPipeline::Depth depth         = RenderPipeline::Depth::ReadWrite,
+                             RhiRenderPipeline::Mode mode        = RhiRenderPipeline::Mode::Polygon,
+                             RhiRenderPipeline::Depth depth      = RhiRenderPipeline::Depth::ReadWrite,
                              VkPrimitiveTopology topology        = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
                              VkPolygonMode polygonMode           = VK_POLYGON_MODE_FILL,
                              VkCullModeFlags cullMode            = VK_CULL_MODE_BACK_BIT,
                              VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, bool pushDescriptors = false,
                              std::vector<VkDescriptorSetLayout> additionalLayouts = {},
-                             RenderPipeline::Blend blend = RenderPipeline::Blend::PremultipliedAlpha,
+                             RhiRenderPipeline::Blend blend = RhiRenderPipeline::Blend::PremultipliedAlpha,
                              std::vector<VkPipelineColorBlendAttachmentState> blendStates = {}) :
             shaderPath(std::move(shaderPath)), vertexInputs(std::move(vertexInputs)), defines(std::move(defines)),
             mode(mode), depth(depth), topology(topology), polygonMode(polygonMode), cullMode(cullMode),
@@ -233,18 +234,18 @@ namespace SF::Engine
          * @param pipelineStage The pipelines RenderSystem stage.
          * @return The created RenderSystem pipeline.
          */
-        RenderPipeline *Create(const Pipeline::Stage &pipelineStage) const
+        RhiRenderPipeline *Create(const Pipeline::Stage &pipelineStage) const
         {
-            return new RenderPipeline(pipelineStage, shaderPath, vertexInputs, defines, mode, depth, topology,
-                                      polygonMode, cullMode, frontFace, pushDescriptors, additionalLayouts, blend,
-                                      blendStates);
+            return new RhiRenderPipeline(pipelineStage, shaderPath, vertexInputs, defines, mode, depth, topology,
+                                         polygonMode, cullMode, frontFace, pushDescriptors, additionalLayouts, blend,
+                                         blendStates);
         }
 
         [[nodiscard]] const std::filesystem::path &GetShaderPath() const { return shaderPath; }
         [[nodiscard]] const std::vector<Shader::VertexInput> &GetVertexInputs() const { return vertexInputs; }
         [[nodiscard]] const std::vector<Shader::Define> &GetDefines() const { return defines; }
-        [[nodiscard]] RenderPipeline::Mode GetMode() const { return mode; }
-        [[nodiscard]] RenderPipeline::Depth GetDepth() const { return depth; }
+        [[nodiscard]] RhiRenderPipeline::Mode GetMode() const { return mode; }
+        [[nodiscard]] RhiRenderPipeline::Depth GetDepth() const { return depth; }
         [[nodiscard]] VkPrimitiveTopology GetTopology() const { return topology; }
         [[nodiscard]] VkPolygonMode GetPolygonMode() const { return polygonMode; }
         [[nodiscard]] VkCullModeFlags GetCullMode() const { return cullMode; }
@@ -254,7 +255,7 @@ namespace SF::Engine
         {
             return additionalLayouts;
         }
-        [[nodiscard]] RenderPipeline::Blend GetBlend() const { return blend; }
+        [[nodiscard]] RhiRenderPipeline::Blend GetBlend() const { return blend; }
         [[nodiscard]] const std::vector<VkPipelineColorBlendAttachmentState> &GetBlendStates() const
         {
             return blendStates;
@@ -265,15 +266,15 @@ namespace SF::Engine
         std::vector<Shader::VertexInput> vertexInputs;
         std::vector<Shader::Define> defines;
 
-        RenderPipeline::Mode mode;
-        RenderPipeline::Depth depth;
+        RhiRenderPipeline::Mode mode;
+        RhiRenderPipeline::Depth depth;
         VkPrimitiveTopology topology;
         VkPolygonMode polygonMode;
         VkCullModeFlags cullMode;
         VkFrontFace frontFace;
         bool pushDescriptors;
         std::vector<VkDescriptorSetLayout> additionalLayouts;
-        RenderPipeline::Blend blend;
+        RhiRenderPipeline::Blend blend;
         std::vector<VkPipelineColorBlendAttachmentState> blendStates;
     };
-}
+} // namespace SF::Engine

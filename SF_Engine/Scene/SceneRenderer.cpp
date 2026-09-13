@@ -1,13 +1,13 @@
 #include "SceneRenderer.hpp"
-#include <Rendering/RenderSystem.hpp>
-#include <Platform/Windowing/WindowManager.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Gui/ImGuiPipelinePass.hpp>
-#include <Rendering/PipelinePassManager.hpp>
 #include <Gui/UIRegistry.hpp>
-#include <Scene/Scene.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <Math/Transform.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
+#include <Rendering/RenderSystem.hpp>
+#include <Scene/Scene.hpp>
 #include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace SF::Engine
 {

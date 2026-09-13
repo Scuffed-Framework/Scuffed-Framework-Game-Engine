@@ -1,18 +1,18 @@
 #include "Scene.hpp"
-#include <Rendering/Renderer.hpp>
-#include <Rendering/Stage.hpp>
-#include <Rendering/Mesh/MeshFactory.hpp>
-#include <Platform/Windowing/WindowManager.hpp>
+#include <Rendering/FrameGraph/Stage.hpp>
 #include <Gui/ImGuiPipelinePass.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 #include <Rendering/Lighting/LightingTypes.hpp>
+#include <Rendering/Mesh/MeshFactory.hpp>
+#include <Rendering/Renderer.hpp>
+#include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
 
-#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 
 #include <Math/BasicMath.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
 #include <string>
 
 #include <Rendering/RenderSystem.hpp>

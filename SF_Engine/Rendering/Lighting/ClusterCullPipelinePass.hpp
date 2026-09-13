@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <memory>
@@ -27,7 +27,7 @@ namespace SF::Engine
      * A compute→compute memory barrier separates phases 1 and 2, and a final
      * compute→fragment barrier ensures light lists are visible to the lighting pass.
      */
-    class ClusterCullPipelinePass : public PipelinePass
+    class ClusterCullPipelinePass : public EngineRenderpass
     {
     public:
         explicit ClusterCullPipelinePass(Pipeline::Stage stage, LightManager &lightManager);

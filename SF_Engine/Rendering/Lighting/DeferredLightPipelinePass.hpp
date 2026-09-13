@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Images/Image2d.hpp>
 #include <Rendering/RHI/Images/ImageDepth.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include "LightManager.hpp"
 
@@ -26,7 +26,7 @@ namespace SF::Engine
      * GBuffer image descriptors are refreshed lazily when attachment pointers change
      * (i.e. after swapchain recreation).
      */
-    class DeferredLightPipelinePass : public PipelinePass
+    class DeferredLightPipelinePass : public EngineRenderpass
     {
     public:
         explicit DeferredLightPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
@@ -37,7 +37,7 @@ namespace SF::Engine
 
     private:
         LightManager &lm_;
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::unique_ptr<RhiRenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
 
         const Image2d *lastAlbedo_   = nullptr;

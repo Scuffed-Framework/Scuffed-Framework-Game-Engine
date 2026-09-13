@@ -1,11 +1,11 @@
 #pragma once
 
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Math/BasicMath.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/PipelinePassManager.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Images/Image2d.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include <vector>
 #include "LightManager.hpp"
@@ -35,7 +35,7 @@ namespace SF::Engine
      *
      * Push constants: LitPushConstants (model, normalMatrix, material scalars)
      */
-    class GBufferPass : public PipelinePass
+    class GBufferPass : public EngineRenderpass
     {
     public:
         explicit GBufferPass(Pipeline::Stage stage, LightManager &lightManager);
@@ -46,7 +46,7 @@ namespace SF::Engine
 
         void Render(const CommandBuffer &commandBuffer) override;
 
-        RenderPipeline &GetPipeline() { return *pipeline_; }
+        RhiRenderPipeline &GetPipeline() { return *pipeline_; }
 
     private:
         void WriteFrameDescriptors();
@@ -54,7 +54,7 @@ namespace SF::Engine
 
         LightManager &lm_;
 
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::unique_ptr<RhiRenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
 
         std::unique_ptr<Image2d> fallbackWhite_;

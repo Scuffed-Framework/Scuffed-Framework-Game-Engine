@@ -1,31 +1,26 @@
-#include "PipelinePassManager.hpp"
+#include "EngineRenderpassManager.hpp"
 
 namespace SF::Engine
 {
-    void PipelinePassManager::Clear()
-    {
-        stages.clear();
-    }
+    void EngineRenderpassManager::Clear() { stages.clear(); }
 
-    void PipelinePassManager::RemovePipelinePassStage(const TypeId &id)
+    void EngineRenderpassManager::RemovePipelinePassStage(const TypeId &id)
     {
         for (auto it = stages.begin(); it != stages.end();)
         {
             if (it->second == id)
             {
                 it = stages.erase(it);
-            }
-            else
+            } else
             {
                 ++it;
             }
         }
     }
 
-    void PipelinePassManager::PreRenderStage(const Pipeline::Stage &stage,
-                                             const CommandBuffer &commandBuffer)
+    void EngineRenderpassManager::PreRenderStage(const Pipeline::Stage &stage, const CommandBuffer &commandBuffer)
     {
-        for (const auto &[stageIndex, typeId] : stages)
+        for (const auto &[stageIndex, typeId]: stages)
         {
             if (stageIndex.first != stage)
                 continue;
@@ -36,10 +31,9 @@ namespace SF::Engine
         }
     }
 
-    void PipelinePassManager::RenderStage(const Pipeline::Stage &stage,
-                                          const CommandBuffer &commandBuffer)
+    void EngineRenderpassManager::RenderStage(const Pipeline::Stage &stage, const CommandBuffer &commandBuffer)
     {
-        for (const auto &[stageIndex, typeId] : stages)
+        for (const auto &[stageIndex, typeId]: stages)
         {
             if (stageIndex.first != stage)
             {
@@ -55,4 +49,4 @@ namespace SF::Engine
             }
         }
     }
-}
+} // namespace SF::Engine

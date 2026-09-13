@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Platform/Windowing/WindowManager.hpp>
+#include <Rendering/FrameGraph/Stage.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
 #include <Rendering/RHI/Renderpass/FullscreenPass.hpp>
 #include <Rendering/Renderer.hpp>
-#include <Rendering/Stage.hpp>
 #include <Rendering/Visuals/SSR/SSRPipelinePass.hpp>
 
 #include <Math/BasicMath.hpp>
@@ -20,13 +20,13 @@ namespace SF::Engine
         ForwardLitRenderer()
         {
             using namespace SF::Engine;
-            AddRenderStage(std::make_unique<RenderStage>(
-                    std::vector<Attachment>{
-                            Attachment{0, "depth", Attachment::Type::Depth},
-                            Attachment{1, "swapchain", Attachment::Type::Swapchain},
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "depth", RhiAttachment::Type::Depth},
+                            RhiAttachment{1, "swapchain", RhiAttachment::Type::Swapchain},
                     },
-                    std::vector<SubpassType>{
-                            SubpassType{0, {0, 1}},
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0, 1}},
                     }));
         }
 
@@ -91,28 +91,29 @@ namespace SF::Engine
             using namespace SF::Engine;
 
             // Stage 0: GBuffer (off-screen MRT, no swapchain)
-            AddRenderStage(std::make_unique<RenderStage>(
-                    std::vector<Attachment>{
-                            Attachment{0, "gbuf_depth", Attachment::Type::Depth},
-                            Attachment{1, "gbuf_albedo", Attachment::Type::Image, false, VK_FORMAT_R8G8B8A8_UNORM},
-                            Attachment{2, "gbuf_normal", Attachment::Type::Image, false, VK_FORMAT_R16G16_SNORM},
-                            Attachment{3, "gbuf_pbr", Attachment::Type::Image, false, VK_FORMAT_R8G8B8A8_UNORM},
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "gbuf_depth", RhiAttachment::Type::Depth},
+                            RhiAttachment{1, "gbuf_albedo", RhiAttachment::Type::Image, false,
+                                          VK_FORMAT_R8G8B8A8_UNORM},
+                            RhiAttachment{2, "gbuf_normal", RhiAttachment::Type::Image, false, VK_FORMAT_R16G16_SNORM},
+                            RhiAttachment{3, "gbuf_pbr", RhiAttachment::Type::Image, false, VK_FORMAT_R8G8B8A8_UNORM},
                     },
-                    std::vector<SubpassType>{
-                            SubpassType{0, {0, 1, 2, 3}},
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0, 1, 2, 3}},
                     }));
 
             // Stage 1: Lighting + Transparent + Tonemap
-            AddRenderStage(std::make_unique<RenderStage>(
-                    std::vector<Attachment>{
-                            Attachment{0, "hdr", Attachment::Type::Image, false, VK_FORMAT_R16G16B16A16_SFLOAT,
-                                       Color{0.0f, 0.0f, 0.0f, 1.0f}},
-                            Attachment{1, "swapchain", Attachment::Type::Swapchain},
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "hdr", RhiAttachment::Type::Image, false, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                          Color{0.0f, 0.0f, 0.0f, 1.0f}},
+                            RhiAttachment{1, "swapchain", RhiAttachment::Type::Swapchain},
                     },
-                    std::vector<SubpassType>{
-                            SubpassType{0, {0}}, // deferred lighting → hdr
-                            SubpassType{1, {0}}, // forward transparent → hdr
-                            SubpassType{2, {1}}, // tonemap → swapchain
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0}}, // deferred lighting → hdr
+                            RhiSubpassType{1, {0}}, // forward transparent → hdr
+                            RhiSubpassType{2, {1}}, // tonemap → swapchain
                     }));
         }
 

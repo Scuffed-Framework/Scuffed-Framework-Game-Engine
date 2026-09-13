@@ -68,16 +68,16 @@ namespace SF::Engine
     //  ctor
     DeferredLightPipelinePass::DeferredLightPipelinePass(Pipeline::Stage stage,
                                                          LightManager &lightManager)
-        : PipelinePass(stage), lm_(lightManager)
+        : EngineRenderpass(stage), lm_(lightManager)
     {
         // Fullscreen triangle : no vertex input, no depth
-        pipeline_ = std::make_unique<RenderPipeline>(
+        pipeline_ = std::make_unique<RhiRenderPipeline>(
             stage,
             "Shaders/Lighting/DeferredLight.shader",
             std::vector<Shader::VertexInput>{},
             std::vector<Shader::Define>{},
-            RenderPipeline::Mode::Polygon,
-            RenderPipeline::Depth::None,
+            RhiRenderPipeline::Mode::Polygon,
+            RhiRenderPipeline::Depth::None,
             VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             VK_POLYGON_MODE_FILL,
             VK_CULL_MODE_NONE,

@@ -39,13 +39,13 @@ namespace SF::Engine
 
         void StartAndWaitForCompletion();
 
-        Job *GetDependent() const;
+        [[nodiscard]] Job *GetDependent() const;
 
         [[nodiscard]] unsigned int GetDependentCount() const;
         void IncrementDependentCount();
         void DecrementDependentCount();
 
-        uint8_t GetPriority() const;
+        [[nodiscard]] uint8_t GetPriority() const;
 
     private:
         enum

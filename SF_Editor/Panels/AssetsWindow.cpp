@@ -1,7 +1,7 @@
 #include "AssetsWindow.hpp"
 #include <Engine/Project/Project.hpp>
 #include <Gui/GuiMembers.hpp>
-#include "../Wizzards/Shaders.hpp"
+#include "../Wizards/Shaders.hpp"
 #include "Gui/ocornut/imgui_impl_vulkan.h"
 #include "Panels.hpp"
 
@@ -77,9 +77,9 @@ namespace SF::Engine
         DrawDeleteFolderConfirmPopup();
 
         if (showCS)
-            ShowCreateShaderWizzard(m_currentPath);
+            ShowCreateShaderWizard(m_currentPath);
         if (showCSI)
-            ShowCreateShaderIncludeWizzard(m_currentPath);
+            ShowCreateShaderIncludeWizard(m_currentPath);
     }
 
     template<typename Func>
@@ -1139,7 +1139,7 @@ namespace SF::Engine
             }
             if (ImGui::MenuItem("Prefab"))
             {
-                // ShowPrefabWizzard();
+                // ShowPrefabWizard();
             }
 
             ImGui::Separator();

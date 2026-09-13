@@ -3,12 +3,12 @@
 #define VK_NO_PROTOTYPES
 #include <volk.h>
 
-#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/RHI/Buffers/Buffer.hpp>
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Images/Image2d.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include <string>
 
@@ -28,7 +28,7 @@ namespace SF::Engine
      *
      * The source attachment name is resolved each frame via RenderSystem::GetAttachment().
      */
-    class FullscreenPass : public PipelinePass
+    class FullscreenPass : public EngineRenderpass
     {
     public:
         /**
@@ -45,7 +45,7 @@ namespace SF::Engine
 
     private:
         std::string sourceAttachment_;
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::unique_ptr<RhiRenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descriptorSet_;
 
         // Tracks the last image pointer so we only rewrite descriptors on change.

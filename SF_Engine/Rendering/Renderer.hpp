@@ -1,8 +1,8 @@
 #pragma once
 
+#include "FrameGraph/EngineRenderpassManager.hpp"
+#include "FrameGraph/Stage.hpp"
 #include "PipelineRenderer.hpp"
-#include "Stage.hpp"
-#include "PipelinePassManager.hpp"
 
 namespace SF::Engine
 {
@@ -14,7 +14,7 @@ namespace SF::Engine
         /**
          * Creates a new renderer, fill {@link renderStages} in your subclass of this.
          */
-        Renderer() = default;
+        Renderer()          = default;
         virtual ~Renderer() = default;
 
         virtual void Start() = 0;
@@ -29,7 +29,7 @@ namespace SF::Engine
          * @tparam T The PipelinePass type.
          * @return If the PipelinePass has the System.
          */
-        template <typename T>
+        template<typename T>
         bool HasPipelinePass() const
         {
             return PassManager.Has<T>();
@@ -40,7 +40,7 @@ namespace SF::Engine
          * @tparam T The PipelinePass type.
          * @return The PipelinePass.
          */
-        template <typename T>
+        template<typename T>
         T *GetPipelinePass() const
         {
             return PassManager.Get<T>();
@@ -53,18 +53,17 @@ namespace SF::Engine
          * @param pipelineStage The PipelinePass pipeline stage.
          * @param args The constructor arguments.
          */
-        template <typename T, typename... Args>
+        template<typename T, typename... Args>
         T *AddPipelinePass(const Pipeline::Stage &pipelineStage, Args &&...args)
         {
-            return PassManager.Add<T>(
-                pipelineStage, std::make_unique<T>(pipelineStage, std::forward<Args>(args)...));
+            return PassManager.Add<T>(pipelineStage, std::make_unique<T>(pipelineStage, std::forward<Args>(args)...));
         }
 
         /**
          * Removes a PipelinePass.
          * @tparam T The PipelinePass type.
          */
-        template <typename T>
+        template<typename T>
         void RemovePipelinePass()
         {
             PassManager.Remove<T>();
@@ -73,15 +72,12 @@ namespace SF::Engine
         /**
          * Clears all PipelinePasses.
          */
-        void ClearPipelinePasss()
-        {
-            PassManager.Clear();
-        }
+        void ClearPipelinePasss() { PassManager.Clear(); }
 
         bool IsStarted() const { return started; }
         void SetStarted(bool s) { started = s; }
 
-        RenderStage *GetRenderStage(uint32_t index) const
+        RhiRenderStage *GetRenderStage(uint32_t index) const
         {
             if (renderStages.empty() || renderStages.size() < index)
                 return nullptr;
@@ -89,16 +85,16 @@ namespace SF::Engine
             return renderStages.at(index).get();
         }
 
-        void AddRenderStage(std::unique_ptr<RenderStage> &&renderStage)
+        void AddRenderStage(std::unique_ptr<RhiRenderStage> &&renderStage)
         {
             renderStages.emplace_back(std::move(renderStage));
         }
 
-        PipelinePassManager *GetPipelinePassManager() { return &PassManager; }
+        EngineRenderpassManager *GetPipelinePassManager() { return &PassManager; }
 
     private:
         bool started = false;
-        std::vector<std::unique_ptr<RenderStage>> renderStages;
-        PipelinePassManager PassManager;
+        std::vector<std::unique_ptr<RhiRenderStage>> renderStages;
+        EngineRenderpassManager PassManager;
     };
 }

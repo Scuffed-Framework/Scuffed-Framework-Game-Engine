@@ -240,7 +240,7 @@ namespace SF::Engine
         std::unique_ptr<GameInstance> gameInstance;
 
     public:
-        GameInstance *GetGameInstance() const { return gameInstance.get(); }
+        [[nodiscard]] GameInstance *GetGameInstance() const { return gameInstance.get(); }
     };
 
     inline std::filesystem::path GetEngineRootPath() { return GetExecutablePath(); }

@@ -9,7 +9,7 @@
 #include "RHI/Devices/Instance.hpp"
 #include "RHI/Devices/LogicalDevice.hpp"
 #include "RHI/Devices/PhysicalDevice.hpp"
-#include "RHI/Renderpass/SwapChain.hpp"
+#include "RHI/Renderpass/RhiSwapchain.hpp"
 #include "Renderer.hpp"
 
 #include <Communication/Delegates/MultiCastDelegate.hpp>
@@ -70,7 +70,7 @@ namespace SF::Engine
         /**
          * @brief Get render stage by index
          */
-        const RenderStage *GetRenderStage(uint32_t index) const;
+        const RhiRenderStage *GetRenderStage(uint32_t index) const;
 
         /**
          * @brief Get attachment descriptor by name
@@ -94,7 +94,7 @@ namespace SF::Engine
         /**
          * @brief Get swapchain by index
          */
-        const Swapchain *GetSwapchain(size_t id) const noexcept
+        const RhiSwapchain *GetSwapchain(size_t id) const noexcept
         {
             return id < swapchains.size() ? swapchains[id].get() : nullptr;
         }
@@ -174,11 +174,11 @@ namespace SF::Engine
         // Render loop helpers
         void RecreateSwapchain();
         void RecreateCommandBuffers(size_t surfaceId);
-        void RecreatePass(size_t surfaceId, RenderStage &renderStage);
+        void RecreatePass(size_t surfaceId, RhiRenderStage &renderStage);
         void RecreateAttachmentsMap();
 
-        bool StartRenderpass(size_t surfaceId, RenderStage &renderStage);
-        void EndRenderpass(size_t surfaceId, RenderStage &renderStage);
+        bool StartRenderpass(size_t surfaceId, RhiRenderStage &renderStage);
+        void EndRenderpass(size_t surfaceId, RhiRenderStage &renderStage);
 
         // Core Vulkan objects
         unique_ptr<Instance> instance;
@@ -188,7 +188,7 @@ namespace SF::Engine
 
         // Surfaces and swapchains
         vector<unique_ptr<Surface>> surfaces;
-        vector<unique_ptr<Swapchain>> swapchains;
+        vector<unique_ptr<RhiSwapchain>> swapchains;
         vector<unique_ptr<PerSurfaceBuffers>> perSurfaceBuffers;
 
         // Rendering

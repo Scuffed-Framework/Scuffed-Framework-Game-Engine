@@ -43,15 +43,15 @@ namespace SF::Engine
 
     ForwardTransparentPipelinePass::ForwardTransparentPipelinePass(Pipeline::Stage stage,
                                                                    LightManager &lightManager)
-        : PipelinePass(stage), lm_(lightManager)
+        : EngineRenderpass(stage), lm_(lightManager)
     {
-        pipeline_ = std::make_unique<RenderPipeline>(
+        pipeline_ = std::make_unique<RhiRenderPipeline>(
             stage,
             "Shaders/Lighting/ForwardTransparent.shader",
             std::vector<Shader::VertexInput>{Vertex::GetVertexInput()},
             std::vector<Shader::Define>{},
-            RenderPipeline::Mode::Polygon,
-            RenderPipeline::Depth::Read, // depth test, no depth write
+            RhiRenderPipeline::Mode::Polygon,
+            RhiRenderPipeline::Depth::Read, // depth test, no depth write
             VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             VK_POLYGON_MODE_FILL,
             VK_CULL_MODE_NONE, // double-sided for glass

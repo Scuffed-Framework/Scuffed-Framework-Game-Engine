@@ -1,16 +1,16 @@
-#include "RenderPipeline.hpp"
-#include <Engine/Log/Log.hpp>
-#include <Rendering/RenderSystem.hpp>
-#include <Rendering/RHI/Shaders/Parser/Parser.hpp>
 #include <Engine/Engine.hpp>
+#include <Engine/Log/Log.hpp>
+#include <Rendering/RHI/Shaders/Parser/Parser.hpp>
+#include <Rendering/RenderSystem.hpp>
 #include <filesystem>
+#include "RhiRenderPipeline.hpp"
 
 namespace SF::Engine
 {
     const std::vector<VkDynamicState> DYNAMIC_STATES = {
         VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_LINE_WIDTH};
 
-    RenderPipeline::RenderPipeline(Stage stage, std::filesystem::path shaderPath,
+    RhiRenderPipeline::RhiRenderPipeline(Stage stage, std::filesystem::path shaderPath,
                                std::vector<Shader::VertexInput> vertexInputs,
                                std::vector<Shader::Define> defines, Mode mode, Depth depth,
                                VkPrimitiveTopology topology, VkPolygonMode polygonMode,
@@ -58,7 +58,7 @@ namespace SF::Engine
     }
 
     // --- constructor 2 (offscreen): member init list ---
-    RenderPipeline::RenderPipeline(VkRenderPass offscreenRenderPass, uint32_t subpassIndex,
+    RhiRenderPipeline::RhiRenderPipeline(VkRenderPass offscreenRenderPass, uint32_t subpassIndex,
                                    std::filesystem::path shaderPath,
                                    std::vector<Shader::VertexInput> vertexInputs,
                                    std::vector<Shader::Define> defines,
@@ -100,7 +100,7 @@ namespace SF::Engine
         CreatePipelinePolygon();
     }
 
-    VkPipelineColorBlendAttachmentState RenderPipeline::MakeBlendAttachmentState(Blend preset, VkColorComponentFlags writeMask)
+    VkPipelineColorBlendAttachmentState RhiRenderPipeline::MakeBlendAttachmentState(Blend preset, VkColorComponentFlags writeMask)
     {
         VkPipelineColorBlendAttachmentState s = {};
         s.colorWriteMask = writeMask;
@@ -177,7 +177,7 @@ namespace SF::Engine
         return s;
     }
 
-    RenderPipeline::~RenderPipeline()
+    RhiRenderPipeline::~RhiRenderPipeline()
     {
         // Use the stored raw device handle : never call RenderSystem::Get() here.
         // vkDestroy* with VK_NULL_HANDLE handles is a safe no-op per spec.
@@ -189,7 +189,7 @@ namespace SF::Engine
         vkDestroyDescriptorSetLayout(device_, descriptorSetLayout, nullptr);
     }
 
-    const ImageDepth *RenderPipeline::GetDepthStencil(const std::optional<uint32_t> &stage) const
+    const ImageDepth *RhiRenderPipeline::GetDepthStencil(const std::optional<uint32_t> &stage) const
     {
         if (isOffscreen_ && !stage)
             throw std::runtime_error(
@@ -201,7 +201,7 @@ namespace SF::Engine
             ->GetDepthStencil();
     }
 
-    const Image2d *RenderPipeline::GetImage(uint32_t index,
+    const Image2d *RhiRenderPipeline::GetImage(uint32_t index,
                                         const std::optional<uint32_t> &stage) const
     {
         if (isOffscreen_ && !stage)
@@ -215,7 +215,7 @@ namespace SF::Engine
             ->GetAttachment(index);
     }
 
-    RenderArea RenderPipeline::GetRenderArea(const std::optional<uint32_t> &stage) const
+    RhiRenderArea RhiRenderPipeline::GetRenderArea(const std::optional<uint32_t> &stage) const
     {
         if (isOffscreen_ && !stage)
             throw std::runtime_error(
@@ -226,7 +226,7 @@ namespace SF::Engine
             ->GetRenderArea();
     }
 
-    void RenderPipeline::CreateShaderProgram()
+    void RhiRenderPipeline::CreateShaderProgram()
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
 
@@ -282,7 +282,7 @@ namespace SF::Engine
         stages = shader->GetPipelineStages();
     }
 
-    void RenderPipeline::CreateDescriptorLayout()
+    void RhiRenderPipeline::CreateDescriptorLayout()
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
         const auto &descriptorBindings = shader->GetDescriptorBindings();
@@ -296,7 +296,7 @@ namespace SF::Engine
         RenderSystem::CheckVkResult(vkCreateDescriptorSetLayout(*logicalDevice, &info, nullptr, &descriptorSetLayout));
     }
 
-    void RenderPipeline::CreateDescriptorPool()
+    void RhiRenderPipeline::CreateDescriptorPool()
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
         const auto &descriptorBindings = shader->GetDescriptorBindings();
@@ -329,7 +329,7 @@ namespace SF::Engine
         RenderSystem::CheckVkResult(vkCreateDescriptorPool(*logicalDevice, &info, nullptr, &descriptorPool));
     }
 
-    void RenderPipeline::CreateDescriptorLayout_UpdateAfterBind()
+    void RhiRenderPipeline::CreateDescriptorLayout_UpdateAfterBind()
     {
         // Push descriptors and UPDATE_AFTER_BIND are mutually exclusive.
         // When pushDescriptors=true, fall back to plain layout.
@@ -362,7 +362,7 @@ namespace SF::Engine
             vkCreateDescriptorSetLayout(*logicalDevice, &info, nullptr, &descriptorSetLayout));
     }
 
-    void RenderPipeline::CreatePipelineLayout()
+    void RhiRenderPipeline::CreatePipelineLayout()
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
         const auto &pushConstants = shader->GetPushConstants();
@@ -410,7 +410,7 @@ namespace SF::Engine
         RenderSystem::CheckVkResult(vkCreatePipelineLayout(*logicalDevice, &info, nullptr, &pipelineLayout));
     }
 
-    void RenderPipeline::CreateAttributes()
+    void RhiRenderPipeline::CreateAttributes()
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
 
@@ -498,7 +498,7 @@ namespace SF::Engine
         tessellationState.patchControlPoints = 4;
     }
 
-    void RenderPipeline::CreatePipeline()
+    void RhiRenderPipeline::CreatePipeline()
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
         auto physicalDevice = RenderSystem::Get()->GetPhysicalDevice();
@@ -574,12 +574,12 @@ namespace SF::Engine
             throw std::runtime_error("vkCreateGraphicsPipelines failed: " + RenderSystem::StrVkResult(result));
     }
 
-    void RenderPipeline::CreatePipelinePolygon()
+    void RhiRenderPipeline::CreatePipelinePolygon()
     {
         CreatePipeline();
     }
 
-    void RenderPipeline::CreatePipelineMrt()
+    void RhiRenderPipeline::CreatePipelineMrt()
     {
         auto renderStage = RenderSystem::Get()->GetRenderStage(stage.first);
         auto attachmentCount = renderStage->GetAttachmentCount(stage.second);

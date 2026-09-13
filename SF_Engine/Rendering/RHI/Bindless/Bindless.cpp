@@ -379,12 +379,12 @@ namespace SF::Engine
 
     void BindlessManager::VerifyShaderLayout(const std::vector<BindlessReflectionData> &reflectionData)
     {
-        for (const auto &data: reflectionData)
+        for (const auto &[name, set, binding]: reflectionData)
         {
-            if (data.set != 100)
+            if (set != 100)
                 continue;
 
-            Log::Info("BindlessManager verified: {} at Binding {}", data.name, data.binding);
+            Log::Info("BindlessManager verified: {} at Binding {}", name, binding);
         }
     }
 } // namespace SF::Engine

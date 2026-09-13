@@ -2,7 +2,7 @@
 
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
 #include <Rendering/RHI/Pipelines/Pipeline.hpp>
-#include "PipelinePassInit.hpp"
+#include "EngineRenderpassInitRegistry.hpp"
 #include "UtilityClasses/NoCopy.hpp"
 #include "UtilityClasses/TypeInformation.hpp"
 
@@ -11,14 +11,14 @@ namespace SF::Engine
     /**
      * @brief Represents a render pipeline that is used to render a type of pipeline.
      */
-    class PipelinePass : NoCopy
+    class EngineRenderpass : NoCopy
     {
     public:
         /**
          * Creates a new render pipeline.
          * @param stage The stage this renderer will be used in.
          */
-        explicit PipelinePass(Pipeline::Stage stage) : stage(std::move(stage)) {}
+        explicit EngineRenderpass(Pipeline::Stage stage) : stage(std::move(stage)) {}
 
         // virtual ~PipelinePass() = default; nocopy provides
 
@@ -50,9 +50,9 @@ namespace SF::Engine
         int order = 0;
     };
 
-    template class TypeInformation<PipelinePass>;
+    template class TypeInformation<EngineRenderpass>;
 
-    class PipelinePassManager : NoCopy
+    class EngineRenderpassManager : NoCopy
     {
         friend class RenderSystem;
 
@@ -62,17 +62,17 @@ namespace SF::Engine
          * @tparam T The PipelinePass type.
          * @return If the PipelinePass exists.
          */
-        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, EngineRenderpass *>>>
         bool Has() const
         {
-            const auto it = PipelinePasses.find(TypeInfo<PipelinePass>::template GetTypeId<T>());
+            const auto it = PipelinePasses.find(TypeInfo<EngineRenderpass>::template GetTypeId<T>());
             return it != PipelinePasses.end() && it->second;
         }
 
-        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, EngineRenderpass *>>>
         T *Get() const
         {
-            const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
+            const auto typeId = TypeInfo<EngineRenderpass>::template GetTypeId<T>();
 
             if (auto it = PipelinePasses.find(typeId); it != PipelinePasses.end() && it->second)
                 return static_cast<T *>(it->second.get());
@@ -80,10 +80,10 @@ namespace SF::Engine
             return nullptr;
         }
 
-        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, EngineRenderpass *>>>
         void Remove()
         {
-            const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
+            const auto typeId = TypeInfo<EngineRenderpass>::template GetTypeId<T>();
 
             RemovePipelinePassStage(typeId);
             PipelinePasses.erase(typeId);
@@ -96,10 +96,10 @@ namespace SF::Engine
          * @param PipelinePass The PipelinePass.
          * @return The added renderer.
          */
-        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, PipelinePass *>>>
+        template<typename T, typename = std::enable_if_t<std::is_convertible_v<T *, EngineRenderpass *>>>
         T *Add(const Pipeline::Stage &stage, std::unique_ptr<T> &&pass)
         {
-            const auto typeId = TypeInfo<PipelinePass>::template GetTypeId<T>();
+            const auto typeId = TypeInfo<EngineRenderpass>::template GetTypeId<T>();
 
             stages.emplace(StageIndex{stage, pass->GetOrder()}, typeId);
 
@@ -115,7 +115,7 @@ namespace SF::Engine
         /**
          * Runs things idk
          */
-        void RunInitCallbacks() { PipelinePassInitRegistry::Get().RunAll(*this); }
+        void RunInitCallbacks() { EngineRenderpassInitRegistry::Get().RunAll(*this); }
 
     private:
         using StageIndex = std::pair<Pipeline::Stage, int>;
@@ -138,7 +138,7 @@ namespace SF::Engine
         void RenderStage(const Pipeline::Stage &stage, const CommandBuffer &commandBuffer);
 
         /// List of all PipelinePasses.
-        std::unordered_map<TypeId, std::unique_ptr<PipelinePass>> PipelinePasses;
+        std::unordered_map<TypeId, std::unique_ptr<EngineRenderpass>> PipelinePasses;
         /// List of PipelinePass stages.
         std::multimap<StageIndex, TypeId> stages;
     };

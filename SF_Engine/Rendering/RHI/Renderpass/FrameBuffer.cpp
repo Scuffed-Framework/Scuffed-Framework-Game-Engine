@@ -1,14 +1,14 @@
 #include "FrameBuffer.hpp"
 
+#include <Rendering/FrameGraph/Stage.hpp>
 #include <Rendering/RHI/Images/ImageDepth.hpp>
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/Stage.hpp>
-#include "RenderPass.hpp"
+#include "RhiRenderpass.hpp"
 
 namespace SF::Engine
 {
-    Framebuffer::Framebuffer(const LogicalDevice &logicalDevice, const Swapchain &swapchain,
-                             const RenderStage &renderStage, const Renderpass &renderPass,
+    Framebuffer::Framebuffer(const LogicalDevice &logicalDevice, const RhiSwapchain &swapchain,
+                             const RhiRenderStage &renderStage, const RhiRenderpass &renderPass,
                              const ImageDepth *depthStencil, const UVec2 &extent, VkSampleCountFlagBits samples) :
         logicalDevice(logicalDevice)
     {
@@ -18,16 +18,16 @@ namespace SF::Engine
 
             switch (attachment.GetType())
             {
-                case Attachment::Type::Image:
+                case RhiAttachment::Type::Image:
                     imageAttachments.emplace_back(std::make_unique<Image2d>(
                             extent, attachment.GetFormat(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_FILTER_LINEAR,
                             VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, attachmentSamples));
                     break;
-                case Attachment::Type::Depth:
+                case RhiAttachment::Type::Depth:
                     imageAttachments.emplace_back(nullptr);
                     break;
-                case Attachment::Type::Swapchain:
+                case RhiAttachment::Type::Swapchain:
                     imageAttachments.emplace_back(nullptr);
                     break;
             }
@@ -43,15 +43,15 @@ namespace SF::Engine
             {
                 switch (attachment.GetType())
                 {
-                    case Attachment::Type::Image:
+                    case RhiAttachment::Type::Image:
                         attachments.emplace_back(GetAttachment(attachment.GetBinding())->GetView());
                         break;
-                    case Attachment::Type::Depth:
+                    case RhiAttachment::Type::Depth:
                         // Only reached when this stage actually declares a Depth
                         // attachment, so depthStencil is guaranteed non-null here.
                         attachments.emplace_back(depthStencil->GetView());
                         break;
-                    case Attachment::Type::Swapchain:
+                    case RhiAttachment::Type::Swapchain:
                         attachments.emplace_back(swapchain.GetImageViews().at(i));
                         break;
                 }

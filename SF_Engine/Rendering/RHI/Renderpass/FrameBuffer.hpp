@@ -1,20 +1,20 @@
 #pragma once
 
 #include <Rendering/RHI/Images/Image2d.hpp>
-#include "SwapChain.hpp"
+#include "RhiSwapchain.hpp"
 
 namespace SF::Engine
 {
     class LogicalDevice;
     class ImageDepth;
-    class Renderpass;
-    class RenderStage;
+    class RhiRenderpass;
+    class RhiRenderStage;
 
     class Framebuffer : NoCopy
     {
     public:
-        Framebuffer(const LogicalDevice &logicalDevice, const Swapchain &swapchain, const RenderStage &renderStage,
-                    const Renderpass &renderPass, const ImageDepth *depthStencil, // pointer now
+        Framebuffer(const LogicalDevice &logicalDevice, const RhiSwapchain &swapchain, const RhiRenderStage &renderStage,
+                    const RhiRenderpass &renderPass, const ImageDepth *depthStencil, // pointer now
                     const UVec2 &extent, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
         ~Framebuffer();
 

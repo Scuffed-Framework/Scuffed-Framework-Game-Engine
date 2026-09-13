@@ -355,7 +355,7 @@ namespace SF::Engine
         bitmap.Write(filename);
     }
 
-    const RenderStage *RenderSystem::GetRenderStage(uint32_t index) const
+    const RhiRenderStage *RenderSystem::GetRenderStage(uint32_t index) const
     {
         if (renderer)
             return renderer->GetRenderStage(index);
@@ -422,7 +422,7 @@ namespace SF::Engine
         perSurfaceBuffers.resize(surfaces.size());
         for (const auto [id, surface]: Enumerate(surfaces))
         {
-            swapchains[id] = std::make_unique<Swapchain>(*physicalDevice, *surface, *logicalDevice, displayExtent,
+            swapchains[id] = std::make_unique<RhiSwapchain>(*physicalDevice, *surface, *logicalDevice, displayExtent,
                                                          swapchains[id].get());
 
             // Explicitly destroy semaphores and fences before replacing the buffer set.
@@ -485,7 +485,7 @@ namespace SF::Engine
         }
     }
 
-    void RenderSystem::RecreatePass(std::size_t id, RenderStage &renderStage)
+    void RenderSystem::RecreatePass(std::size_t id, RhiRenderStage &renderStage)
     {
         VkExtent2D displayExtent = {WindowManager::Get()->GetWindow(0)->GetSize().x,
                                     WindowManager::Get()->GetWindow(0)->GetSize().y};
@@ -531,7 +531,7 @@ namespace SF::Engine
             attachments.insert(renderStage->descriptors.begin(), renderStage->descriptors.end());
     }
 
-    bool RenderSystem::StartRenderpass(std::size_t id, RenderStage &renderStage)
+    bool RenderSystem::StartRenderpass(std::size_t id, RhiRenderStage &renderStage)
     {
         // Staleness is now handled up-front in Update(), so this should never
         // be true here. Kept as a safety net only; no RecreatePass call,
@@ -579,7 +579,7 @@ namespace SF::Engine
         return true;
     }
 
-    void RenderSystem::EndRenderpass(std::size_t id, RenderStage &renderStage)
+    void RenderSystem::EndRenderpass(std::size_t id, RhiRenderStage &renderStage)
     {
         auto presentQueue      = logicalDevice->GetPresentQueue();
         auto &swapchain        = swapchains[id];

@@ -4,7 +4,7 @@
 #define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
 #include <volk.h>
 
-#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
 
 // Always use the GLFW backend : it auto-installs all input callbacks and works
@@ -32,7 +32,7 @@ namespace SF::Engine
      *         ImGui::ShowDemoWindow();
      *     });
      */
-    class ImGuiPipelinePass : public PipelinePass
+    class ImGuiPipelinePass : public EngineRenderpass
     {
     public:
         static void SetTargetStage(Pipeline::Stage stage) { s_targetStage = stage; }
@@ -42,8 +42,8 @@ namespace SF::Engine
 
         inline static bool s_registered = []()
         {
-            PipelinePassInitRegistry::Get().Register(
-                    [](PipelinePassManager &mgr)
+            EngineRenderpassInitRegistry::Get().Register(
+                    [](EngineRenderpassManager &mgr)
                     { mgr.Add<ImGuiPipelinePass>(s_targetStage, std::make_unique<ImGuiPipelinePass>(s_targetStage)); });
             return true;
         }();

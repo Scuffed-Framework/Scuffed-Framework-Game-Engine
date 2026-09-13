@@ -12,7 +12,7 @@ namespace SF::Engine
 {
     OceanTessellationPipelinePass::OceanTessellationPipelinePass(Pipeline::Stage stage,
                                                                  const OceanTessellationParams &params) :
-        PipelinePass(stage), params_(params)
+        EngineRenderpass(stage), params_(params)
     {
         clipmapMesh_ = std::make_unique<OceanClipmapMesh>(
                 /*ringCount=*/5,
@@ -79,10 +79,10 @@ namespace SF::Engine
         // PatchVertex layout: location 0 = position, 1 = uv, 2 = normal.
         // RenderPipeline must configure VkPipelineTessellationStateCreateInfo
         // with patchControlPoints = 4 when topology == PATCH_LIST.
-        pipeline_ = std::make_unique<RenderPipeline>(
+        pipeline_ = std::make_unique<RhiRenderPipeline>(
                 stage, "Shaders/Ocean/OceanTessellation.shader",
-                std::vector<Shader::VertexInput>{PatchVertex::GetVertexInput()}, defines, RenderPipeline::Mode::Polygon,
-                RenderPipeline::Depth::ReadWrite, VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_POLYGON_MODE_FILL,
+                std::vector<Shader::VertexInput>{PatchVertex::GetVertexInput()}, defines, RhiRenderPipeline::Mode::Polygon,
+                RhiRenderPipeline::Depth::ReadWrite, VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_POLYGON_MODE_FILL,
                 VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         setupDescriptorSet();

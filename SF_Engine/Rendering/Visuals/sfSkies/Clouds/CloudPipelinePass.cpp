@@ -13,9 +13,9 @@ namespace SF::Engine
 {
     bool CloudPipelinePass::isWindowOpen = true;
 
-    CloudPipelinePass::CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data) : PipelinePass(stage), data_(data)
+    CloudPipelinePass::CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data) : EngineRenderpass(stage), data_(data)
     {
-        PipelinePass::SetOrder(100);
+        EngineRenderpass::SetOrder(100);
         uiHandle = UIRegistry::Get().Register([this] { DrawImGuiPanel(); });
 
         atmoUBO_  = std::make_unique<UniformBuffer>(sizeof(AtmosphereFrameUBO));

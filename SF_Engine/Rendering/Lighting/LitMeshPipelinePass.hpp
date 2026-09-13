@@ -3,12 +3,12 @@
 #include <Entity/Components/Component.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <Math/BasicMath.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
-#include <Rendering/PipelinePassManager.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Images/Image2d.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include <vector>
 #include "LightManager.hpp"
@@ -169,7 +169,7 @@ namespace SF::Engine
      *   bind 6  sampler2D pbrMap       │
      *   bind 7  sampler2D emissiveMap  ┘
      */
-    class LitMeshPipelinePass : public PipelinePass
+    class LitMeshPipelinePass : public EngineRenderpass
     {
     public:
         explicit LitMeshPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
@@ -189,7 +189,7 @@ namespace SF::Engine
 
         LightManager &lm_;
 
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::unique_ptr<RhiRenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
 
         // Fallback 1x1 textures so shaders never get unbound samplers

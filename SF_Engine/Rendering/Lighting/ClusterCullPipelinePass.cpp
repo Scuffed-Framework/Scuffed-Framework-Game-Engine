@@ -30,7 +30,7 @@ namespace SF::Engine
     }
 
     ClusterCullPipelinePass::ClusterCullPipelinePass(Pipeline::Stage stage, LightManager &lm)
-        : PipelinePass(stage), lm_(lm)
+        : EngineRenderpass(stage), lm_(lm)
     {
         buildPipeline_ = std::make_unique<ComputePipeline>("Shaders/Lighting/ClusterBuild.shader");
         cullPipeline_ = std::make_unique<ComputePipeline>("Shaders/Lighting/ClusterCull.shader");

@@ -10,9 +10,9 @@ namespace SF::Engine
     bool SSRPipelinePass::isWindowOpen = true;
 
     SSRPipelinePass::SSRPipelinePass(Pipeline::Stage stage, LightManager &lightManager)
-        : PipelinePass(stage), lm_(lightManager)
+        : EngineRenderpass(stage), lm_(lightManager)
     {
-        PipelinePass::SetOrder(50);
+        EngineRenderpass::SetOrder(50);
 
         uiHandle_ = UIRegistry::Get().Register([this]
                                                { DrawImGuiPanel(); });
@@ -123,13 +123,13 @@ namespace SF::Engine
 
         // Graphics : fullscreen triangle, additive blend into "hdr"; see
         // class comment in the header for why this can't be compute.
-        compositePipeline_ = std::make_unique<RenderPipeline>(
+        compositePipeline_ = std::make_unique<RhiRenderPipeline>(
             stage,
             "Shaders/SSR/Composite.shader",
             std::vector<Shader::VertexInput>{},
             std::vector<Shader::Define>{},
-            RenderPipeline::Mode::Polygon,
-            RenderPipeline::Depth::None,
+            RhiRenderPipeline::Mode::Polygon,
+            RhiRenderPipeline::Depth::None,
             VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             VK_POLYGON_MODE_FILL,
             VK_CULL_MODE_NONE,

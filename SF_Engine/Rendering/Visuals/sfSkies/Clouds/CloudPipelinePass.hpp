@@ -1,13 +1,13 @@
 #pragma once
 
 #include <Gui/UIRegistry.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/LUT/AlligatorNoiseLUT.hpp>
 #include <Rendering/LUT/BlueNoiseLUT.hpp>
-#include <Rendering/PipelinePassManager.hpp>
 #include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereParams.hpp>
 #include "../Atmosphere/LUT/AerialPerspectiveLUT.hpp"
 #include "../Atmosphere/LUT/MultiScatterLUT.hpp"
@@ -52,7 +52,7 @@ namespace SF::Engine
     static_assert(sizeof(CloudUBO) == 80, "CloudUBO size mismatch - check cpu/gpu side");
     static_assert(sizeof(CloudUBO) % 16 == 0, "CloudUBO must satisfy std140 alignment");
 
-    class CloudPipelinePass : public PipelinePass
+    class CloudPipelinePass : public EngineRenderpass
     {
     public:
         explicit CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data);

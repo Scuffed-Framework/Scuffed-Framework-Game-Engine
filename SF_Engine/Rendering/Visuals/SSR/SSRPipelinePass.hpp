@@ -1,14 +1,14 @@
 #pragma once
 
 #include <Gui/UIRegistry.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/Lighting/LightManager.hpp>
-#include <Rendering/PipelinePassManager.hpp>
 #include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Images/Image2d.hpp>
 #include <Rendering/RHI/Images/ImageDepth.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 
 #include <Math/BasicMath.hpp>
 #include <cstdint>
@@ -100,7 +100,7 @@ namespace SF::Engine
      * resolved image sitting in SHADER_READ_ONLY_OPTIMAL at that point).
      * Only the *write* side needed to move.
      */
-    class SSRPipelinePass : public PipelinePass
+    class SSRPipelinePass : public EngineRenderpass
     {
     public:
         explicit SSRPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
@@ -155,7 +155,7 @@ namespace SF::Engine
         std::unique_ptr<ComputePipeline> spatialPipeline_;
 
         // Graphics : the only stage that touches "hdr"; see class comment.
-        std::unique_ptr<RenderPipeline> compositePipeline_;
+        std::unique_ptr<RhiRenderPipeline> compositePipeline_;
         std::unique_ptr<DescriptorSet> compositeSet_;
         const ImageDepth *compositeLastDepth_ = nullptr;
         const Image2d *compositeLastNormal_   = nullptr;

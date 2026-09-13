@@ -64,11 +64,11 @@ namespace SF::Engine
     }
 
     LitMeshPipelinePass::LitMeshPipelinePass(Pipeline::Stage stage, LightManager &lightManager) :
-        PipelinePass(stage), lm_(lightManager)
+        EngineRenderpass(stage), lm_(lightManager)
     {
-        pipeline_ = std::make_unique<RenderPipeline>(
+        pipeline_ = std::make_unique<RhiRenderPipeline>(
                 stage, "Shaders/Lit.shader", std::vector<Shader::VertexInput>{Vertex::GetVertexInput()},
-                std::vector<Shader::Define>{}, RenderPipeline::Mode::Polygon, RenderPipeline::Depth::ReadWrite,
+                std::vector<Shader::Define>{}, RhiRenderPipeline::Mode::Polygon, RhiRenderPipeline::Depth::ReadWrite,
                 VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT,
                 VK_FRONT_FACE_COUNTER_CLOCKWISE);
 

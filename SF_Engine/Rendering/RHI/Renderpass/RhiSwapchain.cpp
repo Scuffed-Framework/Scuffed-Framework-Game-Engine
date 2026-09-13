@@ -1,4 +1,4 @@
-#include "SwapChain.hpp"
+#include "RhiSwapchain.hpp"
 
 #include <Rendering/RenderSystem.hpp>
 #include <algorithm>
@@ -13,8 +13,9 @@ namespace SF::Engine
             VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
     };
 
-    Swapchain::Swapchain(const PhysicalDevice &physicalDevice, const Surface &surface,
-                         const LogicalDevice &logicalDevice, const VkExtent2D &extent, const Swapchain *oldSwapchain) :
+    RhiSwapchain::RhiSwapchain(const PhysicalDevice &physicalDevice, const Surface &surface,
+                               const LogicalDevice &logicalDevice, const VkExtent2D &extent,
+                               const RhiSwapchain *oldSwapchain) :
         physicalDevice(physicalDevice), surface(surface), logicalDevice(logicalDevice), extent(extent),
         presentMode(VK_PRESENT_MODE_FIFO_KHR), preTransform(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR),
         compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR), activeImageIndex(numeric_limits<uint32_t>::max())
@@ -134,7 +135,7 @@ namespace SF::Engine
         vkCreateFence(logicalDevice, &fenceCreateInfo, nullptr, &fenceImage);
     }
 
-    Swapchain::~Swapchain()
+    RhiSwapchain::~RhiSwapchain()
     {
         vkDestroySwapchainKHR(logicalDevice, swapchain, nullptr);
 
@@ -146,7 +147,7 @@ namespace SF::Engine
         vkDestroyFence(logicalDevice, fenceImage, nullptr);
     }
 
-    VkResult Swapchain::AcquireNextImage(const VkSemaphore &presentCompleteSemaphore, VkFence fence)
+    VkResult RhiSwapchain::AcquireNextImage(const VkSemaphore &presentCompleteSemaphore, VkFence fence)
     {
         if (fence != VK_NULL_HANDLE)
         {
@@ -171,7 +172,7 @@ namespace SF::Engine
         return acquireResult;
     }
 
-    VkResult Swapchain::QueuePresent(const VkQueue &presentQueue, const VkSemaphore &waitSemaphore)
+    VkResult RhiSwapchain::QueuePresent(const VkQueue &presentQueue, const VkSemaphore &waitSemaphore)
     {
         VkPresentInfoKHR presentInfo   = {};
         presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

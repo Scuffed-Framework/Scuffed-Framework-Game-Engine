@@ -1,12 +1,12 @@
 #pragma once
 
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Math/BasicMath.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/PipelinePassManager.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Images/Image2d.hpp>
 #include <Rendering/RHI/Images/ImageDepth.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include <vector>
 #include "LightManager.hpp"
@@ -43,7 +43,7 @@ namespace SF::Engine
      * Call BeginFrame() once per frame from your scene/mesh system, then issue
      * per-object draw calls with push constants for model matrix + material.
      */
-    class ForwardTransparentPipelinePass : public PipelinePass
+    class ForwardTransparentPipelinePass : public EngineRenderpass
     {
     public:
         explicit ForwardTransparentPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
@@ -56,7 +56,7 @@ namespace SF::Engine
         void RefreshSceneDescriptors();
 
         LightManager &lm_;
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::unique_ptr<RhiRenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
 
         const Image2d *lastHDR_      = nullptr;

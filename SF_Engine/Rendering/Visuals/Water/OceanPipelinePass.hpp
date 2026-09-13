@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Rendering/PipelinePassInit.hpp>
-#include <Rendering/PipelinePassManager.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassInitRegistry.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Images/Image2dArray.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
-#include <Rendering/RHI/Pipelines/RenderPipeline.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include "OceanClipmapMesh.hpp"
 #include "OceanFFTSpectrum.hpp"
@@ -112,7 +112,7 @@ namespace SF::Engine
     static_assert(sizeof(OceanTessellationFrameUBO) == 384,
                   "OceanTessellationFrameUBO size mismatch. Check std140 padding");
 
-    class OceanTessellationPipelinePass : public PipelinePass
+    class OceanTessellationPipelinePass : public EngineRenderpass
     {
         /*
         inline static bool s_registered = []()
@@ -156,7 +156,7 @@ namespace SF::Engine
         OceanFFTSettings fftSettings_{};
         float accumulatedTime_ = 0.0f;
 
-        std::unique_ptr<RenderPipeline> pipeline_;
+        std::unique_ptr<RhiRenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descSet_;
         std::unique_ptr<UniformBuffer> ubo_;
         std::unique_ptr<UniformBuffer> spectrumUBO_;

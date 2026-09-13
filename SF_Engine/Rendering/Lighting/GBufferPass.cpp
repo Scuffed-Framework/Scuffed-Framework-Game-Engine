@@ -55,15 +55,15 @@ namespace SF::Engine
 
     //  ctor
     GBufferPass::GBufferPass(Pipeline::Stage stage, LightManager &lightManager)
-        : PipelinePass(stage), lm_(lightManager)
+        : EngineRenderpass(stage), lm_(lightManager)
     {
-        pipeline_ = std::make_unique<RenderPipeline>(
+        pipeline_ = std::make_unique<RhiRenderPipeline>(
             stage,
             "Shaders/Lighting/GBuffer.shader",
             std::vector<Shader::VertexInput>{Vertex::GetVertexInput()},
             std::vector<Shader::Define>{},
-            RenderPipeline::Mode::MRT,
-            RenderPipeline::Depth::ReadWrite,
+            RhiRenderPipeline::Mode::MRT,
+            RhiRenderPipeline::Depth::ReadWrite,
             VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             VK_POLYGON_MODE_FILL,
             VK_CULL_MODE_BACK_BIT,
