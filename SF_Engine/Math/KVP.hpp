@@ -32,12 +32,12 @@
 /* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                              */
 /******************************************************************************/
 #pragma once
-#include <utility>
 #include <tuple>
+#include <utility>
 
 namespace SF::Engine
 {
-    template <typename Key, typename Value>
+    template<typename Key, typename Value>
     struct KeyValuePair
     {
         Key key;
@@ -50,8 +50,7 @@ namespace SF::Engine
         KeyValuePair(const Key &k, const Value &v) : key(k), value(v) {}
 
         // Move constructor
-        KeyValuePair(Key &&k, Value &&v)
-            : key(std::move(k)), value(std::move(v)) {}
+        KeyValuePair(Key &&k, Value &&v) : key(std::move(k)), value(std::move(v)) {}
 
         // Copy constructor
         KeyValuePair(const KeyValuePair &other) = default;
@@ -60,7 +59,7 @@ namespace SF::Engine
         KeyValuePair(KeyValuePair &&other) noexcept = default;
 
         // Assignment operators
-        KeyValuePair &operator=(const KeyValuePair &other) = default;
+        KeyValuePair &operator=(const KeyValuePair &other)     = default;
         KeyValuePair &operator=(KeyValuePair &&other) noexcept = default;
 
         // Comparison operators (compare by key only)
@@ -72,7 +71,7 @@ namespace SF::Engine
         bool operator>=(const KeyValuePair &other) const { return key >= other.key; }
 
         // Structured binding support
-        template <std::size_t I>
+        template<std::size_t I>
         auto &get()
         {
             if constexpr (I == 0)
@@ -81,7 +80,7 @@ namespace SF::Engine
                 return value;
         }
 
-        template <std::size_t I>
+        template<std::size_t I>
         const auto &get() const
         {
             if constexpr (I == 0)
@@ -91,10 +90,7 @@ namespace SF::Engine
         }
 
         // Conversion operator to std::pair (if needed)
-        operator std::pair<Key, Value>() const
-        {
-            return std::make_pair(key, value);
-        }
+        operator std::pair<Key, Value>() const { return std::make_pair(key, value); }
 
         // Swap function
         void swap(KeyValuePair &other) noexcept
@@ -105,7 +101,7 @@ namespace SF::Engine
         }
 
         // Factory function for creating with perfect forwarding
-        template <typename K, typename V>
+        template<typename K, typename V>
         static KeyValuePair make(K &&k, V &&v)
         {
             return KeyValuePair(std::forward<K>(k), std::forward<V>(v));
@@ -120,29 +116,27 @@ namespace SF::Engine
     };
 
     // Deduction guide
-    template <typename K, typename V>
+    template<typename K, typename V>
     KeyValuePair(K, V) -> KeyValuePair<K, V>;
 
     // Swap specialization
-    template <typename Key, typename Value>
+    template<typename Key, typename Value>
     void swap(KeyValuePair<Key, Value> &lhs, KeyValuePair<Key, Value> &rhs) noexcept
     {
         lhs.swap(rhs);
     }
-}
+} // namespace SF::Engine
 
-// Specialization for std::tuple_size and std::tuple_element for structured bindings
 namespace std
 {
-    template <typename Key, typename Value>
-    struct tuple_size<SF::Engine::KeyValuePair<Key, Value>>
-        : integral_constant<size_t, 2>
+    template<typename Key, typename Value>
+    struct tuple_size<SF::Engine::KeyValuePair<Key, Value>> : integral_constant<size_t, 2>
     {
     };
 
-    template <size_t I, typename Key, typename Value>
+    template<size_t I, typename Key, typename Value>
     struct tuple_element<I, SF::Engine::KeyValuePair<Key, Value>>
     {
         using type = conditional_t<I == 0, Key, Value>;
     };
-}
+} // namespace std
