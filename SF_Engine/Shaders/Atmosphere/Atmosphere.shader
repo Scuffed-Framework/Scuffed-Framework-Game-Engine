@@ -1,19 +1,5 @@
 #include "Atmosphere/Atmosphere.si"
 
-// -----------------------------------------------------------------------
-// Atmosphere composite — COMPUTE VERSION.
-//
-// Previously a fullscreen vertex/fragment pass that drew into the
-// "swapchain" attachment (relying on hardware alpha blending for the
-// sky-vs-background case). Now a single compute kernel that reads and
-// writes the "hdr" scene-color image *in place*: it loads whatever the
-// opaque pass already wrote there (or the clear colour, for empty sky
-// pixels), composites the atmosphere/aerial-perspective result on top,
-// and stores the result back into the same texel. No separate
-// "sceneColor" input is needed any more — the storage image IS the
-// scene colour target.
-// -----------------------------------------------------------------------
-
 [[vk::binding(0, 0)]]
 ConstantBuffer<AtmoUBO> u;
 
@@ -36,7 +22,7 @@ Sampler2D aerialPerspRange;
 Sampler2D sceneDepth;
 
 [[vk::binding(7, 0)]]
-RWTexture2D<float4> hdrColor;
+RWTexture2D<float4> imgAtmoColor;
 
 float3 sunDisk(float3 rd, float3 sunDir, float sunIntensity,
                float3 viewPos, float bottomRadius, float topRadius)
@@ -80,7 +66,7 @@ float depthToViewDist(float depth, float2 ndc)
 void atmo_cs(uint3 globalThreadID: SV_DispatchThreadID)
 {
     uint2 dims;
-    hdrColor.GetDimensions(dims.x, dims.y);
+    imgAtmoColor.GetDimensions(dims.x, dims.y);
     uint2 pixel = globalThreadID.xy;
     if (any(pixel >= dims))
         return;
@@ -108,14 +94,12 @@ void atmo_cs(uint3 globalThreadID: SV_DispatchThreadID)
     float depth = sceneDepth.SampleLevel(screenUV, 0.0).r;
     if (depth > 0.0)
     {
-        // Geometry hit: composite aerial perspective directly over whatever
-        // the opaque pass already wrote for this texel and store it back.
-        float3 surface = hdrColor[pixel].rgb;
         float sceneDist = depthToViewDist(depth, ndc);
 
         float3 scatter, transmit;
         sampleAerialPerspective(screenUV, sceneDist, scatter, transmit);
-        hdrColor[pixel] = float4(surface * transmit + scatter, 1.0);
+        float transmitLuma = dot(transmit, float3(0.2126, 0.7152, 0.0722));
+        imgAtmoColor[pixel] = float4(scatter, transmitLuma);
         return;
     }
 
@@ -135,5 +119,5 @@ void atmo_cs(uint3 globalThreadID: SV_DispatchThreadID)
                                           cosSky, Rbot, Rtop);
     atmAlpha = 1.0 - dot(skyTrans, float3(0.2126, 0.7152, 0.0722));
 
-    hdrColor[pixel] = float4(col, 1.0);
+    imgAtmoColor[pixel] = float4(col, 1.0);
 }
