@@ -1,43 +1,30 @@
+#include "RhiRenderPipeline.hpp"
 #include <Engine/Engine.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Rendering/RHI/Shaders/Parser/Parser.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <filesystem>
-#include "RhiRenderPipeline.hpp"
 
 namespace SF::Engine
 {
-    const std::vector<VkDynamicState> DYNAMIC_STATES = {
-        VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_LINE_WIDTH};
+    using namespace std;
+    const vector<VkDynamicState> DYNAMIC_STATES = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                                   VK_DYNAMIC_STATE_LINE_WIDTH};
 
-    RhiRenderPipeline::RhiRenderPipeline(Stage stage, std::filesystem::path shaderPath,
-                               std::vector<Shader::VertexInput> vertexInputs,
-                               std::vector<Shader::Define> defines, Mode mode, Depth depth,
-                               VkPrimitiveTopology topology, VkPolygonMode polygonMode,
-                               VkCullModeFlags cullMode, VkFrontFace frontFace,
-                               bool pushDescriptors,
-                               std::vector<VkDescriptorSetLayout> additionalLayouts,
-                               Blend blend,
-                               std::vector<VkPipelineColorBlendAttachmentState> blendStates)
-        : stage(std::move(stage)),
-          shaderPath(std::move(shaderPath)),
-          vertexInputs(std::move(vertexInputs)),
-          defines(std::move(defines)),
-          mode(mode),
-          depth(depth),
-          topology(topology),
-          polygonMode(polygonMode),
-          cullMode(cullMode),
-          frontFace(frontFace),
-          pushDescriptors(pushDescriptors),
-          dynamicStates(DYNAMIC_STATES),
-          pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS),
-          blend(blend),
-          customBlendStates(std::move(blendStates)),
-          additionalLayouts(std::move(additionalLayouts))
+    RhiRenderPipeline::RhiRenderPipeline(Stage stage, filesystem::path shaderPath,
+                                         vector<Shader::VertexInput> vertexInputs, vector<Shader::Define> defines,
+                                         Mode mode, Depth depth, VkPrimitiveTopology topology,
+                                         VkPolygonMode polygonMode, VkCullModeFlags cullMode, VkFrontFace frontFace,
+                                         bool pushDescriptors, vector<VkDescriptorSetLayout> additionalLayouts,
+                                         Blend blend, vector<VkPipelineColorBlendAttachmentState> blendStates) :
+        stage(std::move(stage)), shaderPath(std::move(shaderPath)), vertexInputs(std::move(vertexInputs)),
+        defines(std::move(defines)), mode(mode), depth(depth), topology(topology), polygonMode(polygonMode),
+        cullMode(cullMode), frontFace(frontFace), pushDescriptors(pushDescriptors), dynamicStates(DYNAMIC_STATES),
+        pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS), blend(blend), customBlendStates(std::move(blendStates)),
+        additionalLayouts(std::move(additionalLayouts))
     {
         device_ = *RenderSystem::Get()->GetLogicalDevice();
-        std::sort(this->vertexInputs.begin(), this->vertexInputs.end());
+        sort(this->vertexInputs.begin(), this->vertexInputs.end());
         CreateShaderProgram();
         CreateDescriptorLayout_UpdateAfterBind();
         CreateDescriptorPool();
@@ -46,52 +33,32 @@ namespace SF::Engine
 
         switch (mode)
         {
-        case Mode::Polygon:
-            CreatePipelinePolygon();
-            break;
-        case Mode::MRT:
-            CreatePipelineMrt();
-            break;
-        default:
-            throw std::runtime_error("Unknown pipeline mode");
+            case Mode::Polygon:
+                CreatePipelinePolygon();
+                break;
+            case Mode::MRT:
+                CreatePipelineMrt();
+                break;
+            default:
+                throw runtime_error("Unknown pipeline mode");
         }
     }
 
-    // --- constructor 2 (offscreen): member init list ---
     RhiRenderPipeline::RhiRenderPipeline(VkRenderPass offscreenRenderPass, uint32_t subpassIndex,
-                                   std::filesystem::path shaderPath,
-                                   std::vector<Shader::VertexInput> vertexInputs,
-                                   std::vector<Shader::Define> defines,
-                                   Depth depth,
-                                   VkPrimitiveTopology topology,
-                                   VkPolygonMode polygonMode,
-                                   VkCullModeFlags cullMode,
-                                   VkFrontFace frontFace,
-                                   std::vector<VkDescriptorSetLayout> additionalLayouts,
-                                   Blend blend,
-                                   std::vector<VkPipelineColorBlendAttachmentState> blendStates)
-        : stage({0, subpassIndex}),
-          shaderPath(std::move(shaderPath)),
-          vertexInputs(std::move(vertexInputs)),
-          defines(std::move(defines)),
-          mode(Mode::Polygon),
-          depth(depth),
-          topology(topology),
-          polygonMode(polygonMode),
-          cullMode(cullMode),
-          frontFace(frontFace),
-          pushDescriptors(false),
-          dynamicStates(DYNAMIC_STATES),
-          pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS),
-          offscreenRenderPass_(offscreenRenderPass),
-          offscreenSubpass_(subpassIndex),
-          isOffscreen_(true),
-          blend(blend),
-          customBlendStates(std::move(blendStates)),
-          additionalLayouts(std::move(additionalLayouts))
+                                         filesystem::path shaderPath, vector<Shader::VertexInput> vertexInputs,
+                                         vector<Shader::Define> defines, Depth depth, VkPrimitiveTopology topology,
+                                         VkPolygonMode polygonMode, VkCullModeFlags cullMode, VkFrontFace frontFace,
+                                         vector<VkDescriptorSetLayout> additionalLayouts, Blend blend,
+                                         vector<VkPipelineColorBlendAttachmentState> blendStates) :
+        stage({0, subpassIndex}), shaderPath(std::move(shaderPath)), vertexInputs(std::move(vertexInputs)),
+        defines(std::move(defines)), mode(Mode::Polygon), depth(depth), topology(topology), polygonMode(polygonMode),
+        cullMode(cullMode), frontFace(frontFace), pushDescriptors(false), dynamicStates(DYNAMIC_STATES),
+        pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS), offscreenRenderPass_(offscreenRenderPass),
+        offscreenSubpass_(subpassIndex), isOffscreen_(true), blend(blend), customBlendStates(std::move(blendStates)),
+        additionalLayouts(std::move(additionalLayouts))
     {
         device_ = *RenderSystem::Get()->GetLogicalDevice();
-        std::sort(this->vertexInputs.begin(), this->vertexInputs.end());
+        sort(this->vertexInputs.begin(), this->vertexInputs.end());
         CreateShaderProgram();
         CreateDescriptorLayout_UpdateAfterBind();
         CreateDescriptorPool();
@@ -100,78 +67,79 @@ namespace SF::Engine
         CreatePipelinePolygon();
     }
 
-    VkPipelineColorBlendAttachmentState RhiRenderPipeline::MakeBlendAttachmentState(Blend preset, VkColorComponentFlags writeMask)
+    VkPipelineColorBlendAttachmentState RhiRenderPipeline::MakeBlendAttachmentState(Blend preset,
+                                                                                    VkColorComponentFlags writeMask)
     {
         VkPipelineColorBlendAttachmentState s = {};
-        s.colorWriteMask = writeMask;
-        s.colorBlendOp = VK_BLEND_OP_ADD;
-        s.alphaBlendOp = VK_BLEND_OP_ADD;
+        s.colorWriteMask                      = writeMask;
+        s.colorBlendOp                        = VK_BLEND_OP_ADD;
+        s.alphaBlendOp                        = VK_BLEND_OP_ADD;
 
         switch (preset)
         {
-        case Blend::Opaque:
-            s.blendEnable = VK_FALSE;
-            s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-            break;
+            case Blend::Opaque:
+                s.blendEnable         = VK_FALSE;
+                s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+                s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                break;
 
-        case Blend::AlphaBlend:
-            // out = src*srcA + dst*(1-srcA)  (non-premultiplied "over")
-            s.blendEnable = VK_TRUE;
-            s.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            break;
+            case Blend::AlphaBlend:
+                // out = src*srcA + dst*(1-srcA)  (non-premultiplied "over")
+                s.blendEnable         = VK_TRUE;
+                s.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                break;
 
-        case Blend::PremultipliedAlpha:
-            // out = src*1 + dst*(1-srcA)  (shader already premultiplies)
-            s.blendEnable = VK_TRUE;
-            s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            break;
+            case Blend::PremultipliedAlpha:
+                // out = src*1 + dst*(1-srcA)  (shader already premultiplies)
+                s.blendEnable         = VK_TRUE;
+                s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                break;
 
-        case Blend::Additive:
-            // out = src*srcA + dst*1
-            s.blendEnable = VK_TRUE;
-            s.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            break;
+            case Blend::Additive:
+                // out = src*srcA + dst*1
+                s.blendEnable         = VK_TRUE;
+                s.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                break;
 
-        case Blend::Multiply:
-            // out = src*dst
-            s.blendEnable = VK_TRUE;
-            s.srcColorBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
-            s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
-            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-            break;
+            case Blend::Multiply:
+                // out = src*dst
+                s.blendEnable         = VK_TRUE;
+                s.srcColorBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
+                s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+                s.srcAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+                s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                break;
 
-        case Blend::Screen:
-            // out = src + dst - src*dst
-            s.blendEnable = VK_TRUE;
-            s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
-            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            break;
+            case Blend::Screen:
+                // out = src + dst - src*dst
+                s.blendEnable         = VK_TRUE;
+                s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+                s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                break;
 
-        case Blend::Custom:
-        default:
-            // Should never actually be used - callers on Custom supply blendStates
-            // directly. Kept valid (disabled blend) as a safe fallback.
-            s.blendEnable = VK_FALSE;
-            s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-            s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-            break;
+            case Blend::Custom:
+            default:
+                // Should never actually be used - callers on Custom supply blendStates
+                // directly. Kept valid (disabled blend) as a safe fallback.
+                s.blendEnable         = VK_FALSE;
+                s.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+                s.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                s.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                break;
         }
 
         return s;
@@ -189,41 +157,33 @@ namespace SF::Engine
         vkDestroyDescriptorSetLayout(device_, descriptorSetLayout, nullptr);
     }
 
-    const ImageDepth *RhiRenderPipeline::GetDepthStencil(const std::optional<uint32_t> &stage) const
+    const ImageDepth *RhiRenderPipeline::GetDepthStencil(const optional<uint32_t> &stage) const
     {
         if (isOffscreen_ && !stage)
-            throw std::runtime_error(
-                "RenderPipeline::GetDepthStencil: this pipeline is offscreen and isn't tied to a "
-                "RenderSystem stage; pass an explicit stage index, or query the offscreen render "
-                "target's depth image directly instead.");
-        return RenderSystem::Get()
-            ->GetRenderStage(stage ? *stage : this->stage.first)
-            ->GetDepthStencil();
+            throw runtime_error("RenderPipeline::GetDepthStencil: this pipeline is offscreen and isn't tied to a "
+                                "RenderSystem stage; pass an explicit stage index, or query the offscreen render "
+                                "target's depth image directly instead.");
+        return RenderSystem::Get()->GetRenderStage(stage ? *stage : this->stage.first)->GetDepthStencil();
     }
 
-    const Image2d *RhiRenderPipeline::GetImage(uint32_t index,
-                                        const std::optional<uint32_t> &stage) const
+    const Image2d *RhiRenderPipeline::GetImage(uint32_t index, const optional<uint32_t> &stage) const
     {
         if (isOffscreen_ && !stage)
-            throw std::runtime_error(
-                "RenderPipeline::GetImage: this pipeline is offscreen and isn't tied to a "
-                "RenderSystem stage; pass an explicit stage index, or query the offscreen render "
-                "target's image directly instead.");
+            throw runtime_error("RenderPipeline::GetImage: this pipeline is offscreen and isn't tied to a "
+                                "RenderSystem stage; pass an explicit stage index, or query the offscreen render "
+                                "target's image directly instead.");
         return RenderSystem::Get()
-            ->GetRenderStage(stage ? *stage : this->stage.first)
-            ->GetFramebuffer()
-            ->GetAttachment(index);
+                ->GetRenderStage(stage ? *stage : this->stage.first)
+                ->GetFramebuffer()
+                ->GetAttachment(index);
     }
 
-    RhiRenderArea RhiRenderPipeline::GetRenderArea(const std::optional<uint32_t> &stage) const
+    RhiRenderArea RhiRenderPipeline::GetRenderArea(const optional<uint32_t> &stage) const
     {
         if (isOffscreen_ && !stage)
-            throw std::runtime_error(
-                "RenderPipeline::GetRenderArea: this pipeline is offscreen and isn't tied to a "
-                "RenderSystem stage; pass an explicit stage index instead.");
-        return RenderSystem::Get()
-            ->GetRenderStage(stage ? *stage : this->stage.first)
-            ->GetRenderArea();
+            throw runtime_error("RenderPipeline::GetRenderArea: this pipeline is offscreen and isn't tied to a "
+                                "RenderSystem stage; pass an explicit stage index instead.");
+        return RenderSystem::Get()->GetRenderStage(stage ? *stage : this->stage.first)->GetRenderArea();
     }
 
     void RhiRenderPipeline::CreateShaderProgram()
@@ -231,100 +191,99 @@ namespace SF::Engine
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
 
         Shaders::ShaderParser parser;
-        Log::Info("Loading shader: {} (cwd={})", shaderPath.string(),
-                  GetExecutablePath().string());
-        auto parsedShaderOpt = parser.parse(std::filesystem::path(GetExecutablePath() / shaderPath).string());
+        Log::Info("Loading shader: {} (cwd={})", shaderPath.string(), GetExecutablePath().string());
+        auto parsedShaderOpt = parser.parse(filesystem::path(GetExecutablePath() / shaderPath).string());
 
         if (!parsedShaderOpt)
-            throw std::runtime_error("Failed to parse shader '" + shaderPath.string() +
-                                     "': " + parser.getLastError());
+            throw runtime_error("Failed to parse shader '" + shaderPath.string() + "': " + parser.getLastError());
 
         Shaders::ParsedShader &parsedShader = *parsedShaderOpt;
 
         auto compiledOpt = parser.compileAll(parsedShader, defines);
         if (!compiledOpt)
-            throw std::runtime_error("Failed to compile shader '" + shaderPath.string() +
-                                     "': " + parser.getLastError());
+            throw runtime_error("Failed to compile shader '" + shaderPath.string() + "': " + parser.getLastError());
 
-        std::vector<uint32_t> vertexSpirv, fragmentSpirv, tessCtrlSpv, tessEvalSpv;
+        vector<uint32_t> vertexSpirv, fragmentSpirv, tessCtrlSpv, tessEvalSpv;
         bool hasVertexShader = false, hasFragmentShader = false;
 
-        for (auto &c : *compiledOpt)
+        for (auto &c: *compiledOpt)
         {
             switch (c.stage)
             {
-            case Shaders::ShaderStage::Vertex:
-                vertexSpirv = std::move(c.spirv);
-                hasVertexShader = true;
-                break;
-            case Shaders::ShaderStage::Fragment:
-                fragmentSpirv = std::move(c.spirv);
-                hasFragmentShader = true;
-                break;
-            case Shaders::ShaderStage::TessellationControl:
-                tessCtrlSpv = std::move(c.spirv);
-                break;
-            case Shaders::ShaderStage::TessellationEvaluation:
-                tessEvalSpv = std::move(c.spirv);
-                break;
-            default:
-                break; // Compute/Geometry entries in the same file aren't consumed here
+                case Shaders::ShaderStage::Vertex:
+                    vertexSpirv     = std::move(c.spirv);
+                    hasVertexShader = true;
+                    break;
+                case Shaders::ShaderStage::Fragment:
+                    fragmentSpirv     = std::move(c.spirv);
+                    hasFragmentShader = true;
+                    break;
+                case Shaders::ShaderStage::TessellationControl:
+                    tessCtrlSpv = std::move(c.spirv);
+                    break;
+                case Shaders::ShaderStage::TessellationEvaluation:
+                    tessEvalSpv = std::move(c.spirv);
+                    break;
+                default:
+                    break; // Compute/Geometry entries in the same file aren't consumed here
             }
         }
 
         shader = Shader::CreateFromSPIRV(*logicalDevice, vertexSpirv, fragmentSpirv, tessCtrlSpv, tessEvalSpv);
 
         if (!hasVertexShader || !hasFragmentShader)
-            throw std::runtime_error("RenderSystem pipeline requires both vertex and fragment shaders");
+            throw runtime_error("RenderSystem pipeline requires both vertex and fragment shaders");
         if (!shader)
-            throw std::runtime_error("Failed to create Vulkan shader from SPIR-V");
+            throw runtime_error("Failed to create Vulkan shader from SPIR-V");
 
         stages = shader->GetPipelineStages();
     }
 
     void RhiRenderPipeline::CreateDescriptorLayout()
     {
-        auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
+        auto logicalDevice             = RenderSystem::Get()->GetLogicalDevice();
         const auto &descriptorBindings = shader->GetDescriptorBindings();
 
         VkDescriptorSetLayoutCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        info.flags = pushDescriptors ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR : 0;
+        info.sType                           = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        info.flags        = pushDescriptors ? VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR : 0;
         info.bindingCount = static_cast<uint32_t>(descriptorBindings.size());
-        info.pBindings = descriptorBindings.data();
+        info.pBindings    = descriptorBindings.data();
 
         RenderSystem::CheckVkResult(vkCreateDescriptorSetLayout(*logicalDevice, &info, nullptr, &descriptorSetLayout));
     }
 
     void RhiRenderPipeline::CreateDescriptorPool()
     {
-        auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
+        auto logicalDevice             = RenderSystem::Get()->GetLogicalDevice();
         const auto &descriptorBindings = shader->GetDescriptorBindings();
 
-        std::map<VkDescriptorType, uint32_t> typeCounts;
-        for (const auto &b : descriptorBindings)
+        map<VkDescriptorType, uint32_t> typeCounts;
+        for (const auto &b: descriptorBindings)
             typeCounts[b.descriptorType] += b.descriptorCount;
 
-        typeCounts[VK_DESCRIPTOR_TYPE_SAMPLER] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_SAMPLER], 16u);
-        typeCounts[VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE], 16u);
-        typeCounts[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER], 16u);
-        typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE], 16u);
-        typeCounts[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER], 16u);
-        typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] = std::max(typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER], 16u);
-        
-        std::vector<VkDescriptorPoolSize> poolSizes;
-        for (const auto &[type, count] : typeCounts)
+        typeCounts[VK_DESCRIPTOR_TYPE_SAMPLER]       = max(typeCounts[VK_DESCRIPTOR_TYPE_SAMPLER], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE] = max(typeCounts[VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] =
+                max(typeCounts[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE]  = max(typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_IMAGE], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] = max(typeCounts[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER], 16u);
+        typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] = max(typeCounts[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER], 16u);
+
+        vector<VkDescriptorPoolSize> poolSizes;
+        for (const auto &[type, count]: typeCounts)
             poolSizes.push_back({type, count * 8192});
 
         if (poolSizes.empty())
             poolSizes.push_back({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
         VkDescriptorPoolCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT | (pushDescriptors ? 0 : VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT);
-        info.maxSets = 8192;
+        info.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        info.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT |
+                     (pushDescriptors ? 0 : VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT);
+        info.maxSets       = 8192;
         info.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-        info.pPoolSizes = poolSizes.data();
+        info.pPoolSizes    = poolSizes.data();
 
         RenderSystem::CheckVkResult(vkCreateDescriptorPool(*logicalDevice, &info, nullptr, &descriptorPool));
     }
@@ -339,73 +298,62 @@ namespace SF::Engine
             return;
         }
 
-        auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
+        auto logicalDevice             = RenderSystem::Get()->GetLogicalDevice();
         const auto &descriptorBindings = shader->GetDescriptorBindings();
 
-        std::vector<VkDescriptorBindingFlags> bindingFlags(
-            descriptorBindings.size(),
-            VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT);
+        vector<VkDescriptorBindingFlags> bindingFlags(descriptorBindings.size(),
+                                                      VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT);
 
         VkDescriptorSetLayoutBindingFlagsCreateInfo flagsInfo{};
-        flagsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
-        flagsInfo.bindingCount = static_cast<uint32_t>(bindingFlags.size());
+        flagsInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+        flagsInfo.bindingCount  = static_cast<uint32_t>(bindingFlags.size());
         flagsInfo.pBindingFlags = bindingFlags.data();
 
         VkDescriptorSetLayoutCreateInfo info{};
-        info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        info.pNext = &flagsInfo;
-        info.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+        info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        info.pNext        = &flagsInfo;
+        info.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
         info.bindingCount = static_cast<uint32_t>(descriptorBindings.size());
-        info.pBindings = descriptorBindings.data();
+        info.pBindings    = descriptorBindings.data();
 
-        RenderSystem::CheckVkResult(
-            vkCreateDescriptorSetLayout(*logicalDevice, &info, nullptr, &descriptorSetLayout));
+        RenderSystem::CheckVkResult(vkCreateDescriptorSetLayout(*logicalDevice, &info, nullptr, &descriptorSetLayout));
     }
 
     void RhiRenderPipeline::CreatePipelineLayout()
     {
-        auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
+        auto logicalDevice        = RenderSystem::Get()->GetLogicalDevice();
         const auto &pushConstants = shader->GetPushConstants();
 
-        std::vector<VkPushConstantRange> pushConstantRanges;
-        for (const auto &pc : pushConstants)
+        vector<VkPushConstantRange> pushConstantRanges;
+        for (const auto &pc: pushConstants)
         {
             VkPushConstantRange range = {};
-            range.stageFlags = pc.stageFlags;
-            range.offset = pc.offset;
-            range.size = pc.size;
+            range.stageFlags          = pc.stageFlags;
+            range.offset              = pc.offset;
+            range.size                = pc.size;
             pushConstantRanges.push_back(range);
         }
 
 
-        std::vector<VkDescriptorSetLayout> setLayouts;
+        vector<VkDescriptorSetLayout> setLayouts;
 
         setLayouts.reserve(2 + additionalLayouts.size());
 
         setLayouts.push_back(descriptorSetLayout);
         setLayouts.push_back(SharedSamplers::GetSharedSamplerSetLayout());
 
-        setLayouts.insert(
-            setLayouts.end(),
-            additionalLayouts.begin(),
-            additionalLayouts.end()
-        );
+        setLayouts.insert(setLayouts.end(), additionalLayouts.begin(), additionalLayouts.end());
 
         VkPipelineLayoutCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
-        info.setLayoutCount =
-            static_cast<uint32_t>(setLayouts.size());
+        info.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
 
         info.pSetLayouts = setLayouts.data();
 
-        info.pushConstantRangeCount =
-            static_cast<uint32_t>(pushConstantRanges.size());
+        info.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
 
-        info.pPushConstantRanges =
-            pushConstantRanges.empty()
-                ? nullptr
-                : pushConstantRanges.data();
+        info.pPushConstantRanges = pushConstantRanges.empty() ? nullptr : pushConstantRanges.data();
 
         RenderSystem::CheckVkResult(vkCreatePipelineLayout(*logicalDevice, &info, nullptr, &pipelineLayout));
     }
@@ -414,26 +362,24 @@ namespace SF::Engine
     {
         auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
 
-        if (polygonMode == VK_POLYGON_MODE_LINE &&
-            !logicalDevice->GetEnabledFeatures().fillModeNonSolid)
+        if (polygonMode == VK_POLYGON_MODE_LINE && !logicalDevice->GetEnabledFeatures().fillModeNonSolid)
         {
-            throw std::runtime_error(
-                "Cannot create RenderSystem pipeline with line polygon mode when logical device "
-                "does not support non solid fills.");
+            throw runtime_error("Cannot create RenderSystem pipeline with line polygon mode when logical device "
+                                "does not support non solid fills.");
         }
 
-        inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        inputAssemblyState.topology = topology;
+        inputAssemblyState.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssemblyState.topology               = topology;
         inputAssemblyState.primitiveRestartEnable = VK_FALSE;
 
-        rasterizationState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterizationState.depthClampEnable = VK_FALSE;
+        rasterizationState.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterizationState.depthClampEnable        = VK_FALSE;
         rasterizationState.rasterizerDiscardEnable = VK_FALSE;
-        rasterizationState.polygonMode = polygonMode;
-        rasterizationState.cullMode = cullMode;
-        rasterizationState.frontFace = frontFace;
-        rasterizationState.depthBiasEnable = VK_FALSE;
-        rasterizationState.lineWidth = 1.0f;
+        rasterizationState.polygonMode             = polygonMode;
+        rasterizationState.cullMode                = cullMode;
+        rasterizationState.frontFace               = frontFace;
+        rasterizationState.depthBiasEnable         = VK_FALSE;
+        rasterizationState.lineWidth               = 1.0f;
 
         // Single-attachment blend state, covers Mode::Polygon and offscreen pipelines.
         // Mode::MRT overwrites this with one entry per colour attachment once the
@@ -441,68 +387,67 @@ namespace SF::Engine
         if (blend == Blend::Custom)
         {
             if (customBlendStates.size() != 1)
-                throw std::runtime_error(
-                    "RenderPipeline: Blend::Custom requires exactly 1 entry in blendStates for a "
-                    "single-attachment pipeline (got " + std::to_string(customBlendStates.size()) + ")");
+                throw runtime_error("RenderPipeline: Blend::Custom requires exactly 1 entry in blendStates for a "
+                                    "single-attachment pipeline (got " +
+                                    to_string(customBlendStates.size()) + ")");
             blendAttachmentStates = customBlendStates;
-        }
-        else
+        } else
         {
-            blendAttachmentStates = { MakeBlendAttachmentState(blend) };
+            blendAttachmentStates = {MakeBlendAttachmentState(blend)};
         }
 
-        colourBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        colourBlendState.logicOpEnable = VK_FALSE;
-        colourBlendState.logicOp = VK_LOGIC_OP_COPY;
+        colourBlendState.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colourBlendState.logicOpEnable   = VK_FALSE;
+        colourBlendState.logicOp         = VK_LOGIC_OP_COPY;
         colourBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());
-        colourBlendState.pAttachments = blendAttachmentStates.data();
+        colourBlendState.pAttachments    = blendAttachmentStates.data();
 
-        depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depthStencilState.sType          = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
-        depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS; // set back first...
-        depthStencilState.front = depthStencilState.back;        // ...then copy it into front
+        depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;   // set back first...
+        depthStencilState.front          = depthStencilState.back; // ...then copy it into front
 
         switch (depth)
         {
-        case Depth::None:
-            depthStencilState.depthTestEnable = VK_FALSE;
-            depthStencilState.depthWriteEnable = VK_FALSE;
-            break;
-        case Depth::Read:
-            depthStencilState.depthTestEnable = VK_TRUE;
-            depthStencilState.depthWriteEnable = VK_FALSE;
-            break;
-        case Depth::Write:
-            depthStencilState.depthTestEnable = VK_FALSE;
-            depthStencilState.depthWriteEnable = VK_TRUE;
-            break;
-        case Depth::ReadWrite:
-            depthStencilState.depthTestEnable = VK_TRUE;
-            depthStencilState.depthWriteEnable = VK_TRUE;
-            break;
+            case Depth::None:
+                depthStencilState.depthTestEnable  = VK_FALSE;
+                depthStencilState.depthWriteEnable = VK_FALSE;
+                break;
+            case Depth::Read:
+                depthStencilState.depthTestEnable  = VK_TRUE;
+                depthStencilState.depthWriteEnable = VK_FALSE;
+                break;
+            case Depth::Write:
+                depthStencilState.depthTestEnable  = VK_FALSE;
+                depthStencilState.depthWriteEnable = VK_TRUE;
+                break;
+            case Depth::ReadWrite:
+                depthStencilState.depthTestEnable  = VK_TRUE;
+                depthStencilState.depthWriteEnable = VK_TRUE;
+                break;
         }
 
-        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportState.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = 1;
-        viewportState.scissorCount = 1;
+        viewportState.scissorCount  = 1;
 
-        multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampleState.sType                = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-        multisampleState.sampleShadingEnable = VK_FALSE;
+        multisampleState.sampleShadingEnable  = VK_FALSE;
 
-        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicState.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-        dynamicState.pDynamicStates = dynamicStates.data();
+        dynamicState.pDynamicStates    = dynamicStates.data();
 
-        tessellationState.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+        tessellationState.sType              = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
         tessellationState.patchControlPoints = 4;
     }
 
     void RhiRenderPipeline::CreatePipeline()
     {
-        auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
+        auto logicalDevice  = RenderSystem::Get()->GetLogicalDevice();
         auto physicalDevice = RenderSystem::Get()->GetPhysicalDevice();
-        auto pipelineCache = RenderSystem::Get()->GetPipelineCache();
+        auto pipelineCache  = RenderSystem::Get()->GetPipelineCache();
 
         // Offscreen pipelines always use 1x MSAA (they render into plain images).
         // Scene pipelines query the actual render stage sample count.
@@ -511,30 +456,28 @@ namespace SF::Engine
         if (isOffscreen_)
         {
             multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-            vkRenderPass = offscreenRenderPass_;
-            vkSubpass = offscreenSubpass_;
-        }
-        else
+            vkRenderPass                          = offscreenRenderPass_;
+            vkSubpass                             = offscreenSubpass_;
+        } else
         {
-            auto renderStage = RenderSystem::Get()->GetRenderStage(stage.first);
-            multisampleState.rasterizationSamples =
-                renderStage->IsMultisampled(stage.second)
-                    ? physicalDevice->GetMsaaSamples()
-                    : VK_SAMPLE_COUNT_1_BIT;
-            vkRenderPass = *renderStage->GetRenderpass();
-            vkSubpass = stage.second;
+            auto renderStage                      = RenderSystem::Get()->GetRenderStage(stage.first);
+            multisampleState.rasterizationSamples = renderStage->IsMultisampled(stage.second)
+                                                            ? physicalDevice->GetMsaaSamples()
+                                                            : VK_SAMPLE_COUNT_1_BIT;
+            vkRenderPass                          = *renderStage->GetRenderpass();
+            vkSubpass                             = stage.second;
         }
 
-        std::vector<VkVertexInputBindingDescription> bindingDescriptions;
-        std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+        vector<VkVertexInputBindingDescription> bindingDescriptions;
+        vector<VkVertexInputAttributeDescription> attributeDescriptions;
         uint32_t lastAttribute = 0;
 
-        for (const auto &vertexInput : vertexInputs)
+        for (const auto &vertexInput: vertexInputs)
         {
-            for (const auto &binding : vertexInput.GetBindingDescriptions())
+            for (const auto &binding: vertexInput.GetBindingDescriptions())
                 bindingDescriptions.emplace_back(binding);
 
-            for (const auto &attribute : vertexInput.GetAttributeDescriptions())
+            for (const auto &attribute: vertexInput.GetAttributeDescriptions())
             {
                 auto &a = attributeDescriptions.emplace_back(attribute);
                 a.location += lastAttribute;
@@ -546,61 +489,58 @@ namespace SF::Engine
 
         vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputStateCreateInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
-        vertexInputStateCreateInfo.pVertexBindingDescriptions = bindingDescriptions.data();
-        vertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputStateCreateInfo.pVertexBindingDescriptions    = bindingDescriptions.data();
+        vertexInputStateCreateInfo.vertexAttributeDescriptionCount =
+                static_cast<uint32_t>(attributeDescriptions.size());
         vertexInputStateCreateInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
-        pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineCreateInfo.stageCount = static_cast<uint32_t>(stages.size());
-        pipelineCreateInfo.pStages = stages.data();
-        pipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
-        pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
-        pipelineCreateInfo.pTessellationState = &tessellationState;
-        pipelineCreateInfo.pViewportState = &viewportState;
-        pipelineCreateInfo.pRasterizationState = &rasterizationState;
-        pipelineCreateInfo.pMultisampleState = &multisampleState;
-        pipelineCreateInfo.pDepthStencilState = &depthStencilState;
-        pipelineCreateInfo.pColorBlendState = &colourBlendState;
-        pipelineCreateInfo.pDynamicState = &dynamicState;
-        pipelineCreateInfo.layout = pipelineLayout;
-        pipelineCreateInfo.renderPass = vkRenderPass;
-        pipelineCreateInfo.subpass = vkSubpass;
-        pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
-        pipelineCreateInfo.basePipelineIndex = -1;
+        pipelineCreateInfo.sType                        = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipelineCreateInfo.stageCount                   = static_cast<uint32_t>(stages.size());
+        pipelineCreateInfo.pStages                      = stages.data();
+        pipelineCreateInfo.pVertexInputState            = &vertexInputStateCreateInfo;
+        pipelineCreateInfo.pInputAssemblyState          = &inputAssemblyState;
+        pipelineCreateInfo.pTessellationState           = &tessellationState;
+        pipelineCreateInfo.pViewportState               = &viewportState;
+        pipelineCreateInfo.pRasterizationState          = &rasterizationState;
+        pipelineCreateInfo.pMultisampleState            = &multisampleState;
+        pipelineCreateInfo.pDepthStencilState           = &depthStencilState;
+        pipelineCreateInfo.pColorBlendState             = &colourBlendState;
+        pipelineCreateInfo.pDynamicState                = &dynamicState;
+        pipelineCreateInfo.layout                       = pipelineLayout;
+        pipelineCreateInfo.renderPass                   = vkRenderPass;
+        pipelineCreateInfo.subpass                      = vkSubpass;
+        pipelineCreateInfo.basePipelineHandle           = VK_NULL_HANDLE;
+        pipelineCreateInfo.basePipelineIndex            = -1;
 
-        auto result = vkCreateGraphicsPipelines(*logicalDevice, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline);
+        auto result =
+                vkCreateGraphicsPipelines(*logicalDevice, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline);
         if (result != VK_SUCCESS)
-            throw std::runtime_error("vkCreateGraphicsPipelines failed: " + RenderSystem::StrVkResult(result));
+            throw runtime_error("vkCreateGraphicsPipelines failed: " + RenderSystem::StrVkResult(result));
     }
 
-    void RhiRenderPipeline::CreatePipelinePolygon()
-    {
-        CreatePipeline();
-    }
+    void RhiRenderPipeline::CreatePipelinePolygon() { CreatePipeline(); }
 
     void RhiRenderPipeline::CreatePipelineMrt()
     {
-        auto renderStage = RenderSystem::Get()->GetRenderStage(stage.first);
+        auto renderStage     = RenderSystem::Get()->GetRenderStage(stage.first);
         auto attachmentCount = renderStage->GetAttachmentCount(stage.second);
 
         if (blend == Blend::Custom)
         {
             if (customBlendStates.size() != attachmentCount)
-                throw std::runtime_error(
-                    "RenderPipeline: Blend::Custom requires exactly " + std::to_string(attachmentCount) +
-                    " entries in blendStates for this MRT pipeline (got " +
-                    std::to_string(customBlendStates.size()) + ")");
+                throw runtime_error("RenderPipeline: Blend::Custom requires exactly " + to_string(attachmentCount) +
+                                    " entries in blendStates for this MRT pipeline (got " +
+                                    to_string(customBlendStates.size()) + ")");
             blendAttachmentStates = customBlendStates;
-        }
-        else
+        } else
         {
             blendAttachmentStates.assign(attachmentCount, MakeBlendAttachmentState(blend));
         }
 
         colourBlendState.attachmentCount = static_cast<uint32_t>(blendAttachmentStates.size());
-        colourBlendState.pAttachments = blendAttachmentStates.data();
+        colourBlendState.pAttachments    = blendAttachmentStates.data();
 
         CreatePipeline();
     }
-}
+} // namespace SF::Engine
