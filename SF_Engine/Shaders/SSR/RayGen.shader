@@ -51,19 +51,23 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
     float roughness = max(pbr.r, 0.02);
     float metallic = pbr.g;
 
-    // Roughness cutoff : past this, the specular lobe is broad enough that
-    // screen-space information contributes little over the probe fallback,
-    // so skip the trace and let Composite fall back to ambient directly.
-    if (roughness > kSSR.maxRoughness)
-    {
-        imgRayDir[workPos] = float4(0.0, 0.0, 0.0, 0.0);
-        imgRayData[workPos] = float4(roughness, metallic, 1.0, 0.0);
-        return;
-    }
-
     float3 N = SSR_OctDecodeNormal(gbufNormal.Load(int3(workPos, 0)).rg);
     float3 worldPos = SSR_WorldPosFromDepth(uv, depth, kCam.inverseProjection, kCam.inverseView);
     float3 V = normalize(kCam.cameraPosition.xyz - worldPos);
+
+    // Roughness cutoff : past this, the specular lobe is broad enough that screen-space information contributes little over the probe fallback,
+    // so skip the (expensive, importance-sampled) trace direction and use the plain mirror direction instead. This still gets marked as a
+    // normal (non-sky) ray NOT the same b=1.0 flag the background case above uses, so Trace.shader treats a miss here exactly like any
+    // other miss and falls through to ProbeFallback, rather than hard-zeroing the pixel. Without this, every pixel whose roughness
+    // straddles maxRoughness flips between "full reflection" and "nothing" with no smoothing, invisible at low metallic (F0=0.04 makes the
+    // difference imperceptible) but a visible hard band the instant metallic pushes F0 (and so the whole contribution) up.
+    if (roughness > kSSR.maxRoughness)
+    {
+        float3 Rm = reflect(-V, N);
+        imgRayDir[workPos] = float4(Rm, 1.0);
+        imgRayData[workPos] = float4(roughness, metallic, 0.0, 1.0);
+        return;
+    }
 
     // Stable per-pixel, per-frame sample: Owen-scrambled Sobol' (dimensions
     // 0/1), rotated across frames via frameIndex as the sample index so the
