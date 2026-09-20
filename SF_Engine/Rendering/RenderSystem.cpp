@@ -17,12 +17,11 @@
 namespace SF::Engine
 {
     RenderSystem::RenderSystem() :
-        elapsedPurge(5s), instance(std::make_unique<Instance>()),
-        physicalDevice(std::make_unique<PhysicalDevice>(*instance)),
-        logicalDevice(std::make_unique<LogicalDevice>(*instance, *physicalDevice))
+        instance(std::make_unique<Instance>()), physicalDevice(std::make_unique<PhysicalDevice>(*instance)),
+        logicalDevice(std::make_unique<LogicalDevice>(*instance, *physicalDevice)), elapsedPurge(5s)
     {
         WindowManager::Get()->OnAddWindow().connect(
-                [this](Window *window, bool added)
+                [this](Window *window, bool)
                 {
                     surfaces.emplace_back(
                             std::make_unique<Surface>(*instance, *physicalDevice, *logicalDevice, *window));
@@ -210,6 +209,14 @@ namespace SF::Engine
                     renderer->PassManager.PreRenderStage(stage, *commandBuffer);
                 }
                 stage.second = 0;
+
+                // Frame-graph-driven resource barriers: this is the only point guaranteed to run
+                // after every PreRender() for this render stage (compute dispatches, etc.) and
+                // before its renderpass and therefore its attachments' LOAD_OP_CLEAR
+                // begins. Barriers can't be recorded once vkCmdBeginRenderPass has run, so this
+                // has to happen here, not inside any individual pass. A no-op for any render
+                // stage with no passes registered in the frame graph.
+                renderer->GetFrameGraph().EmitPendingBarriers(stage.first, *commandBuffer);
 
                 if (!StartRenderpass(id, *renderStage))
                 {
@@ -423,7 +430,7 @@ namespace SF::Engine
         for (const auto [id, surface]: Enumerate(surfaces))
         {
             swapchains[id] = std::make_unique<RhiSwapchain>(*physicalDevice, *surface, *logicalDevice, displayExtent,
-                                                         swapchains[id].get());
+                                                            swapchains[id].get());
 
             // Explicitly destroy semaphores and fences before replacing the buffer set.
             // Simply assigning a new PerSurfaceBuffers leaks them because the Vulkan

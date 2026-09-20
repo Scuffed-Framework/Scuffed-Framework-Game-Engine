@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FrameGraph/EngineRenderpassManager.hpp"
+#include "FrameGraph/FrameGraph.hpp"
 #include "FrameGraph/Stage.hpp"
 #include "PipelineRenderer.hpp"
 
@@ -91,10 +92,20 @@ namespace SF::Engine
         }
 
         EngineRenderpassManager *GetPipelinePassManager() { return &PassManager; }
+        /*
+                 The frame graph is opt-in per pass: only passes registered via GetFrameGraph().AddPass()
+                 are touched by Compile()'s culling/ordering/barriers. A pass never handed to the graph
+                 keeps running exactly as EngineRenderpassManager always ran it (enabled, order 0).
+                 See SceneRenderer::Start() for which passes are actually wired up and why (buffer-only
+                 passes like ClusterCullPipelinePass are deliberately left out; the graph only models
+                 image resources today).
+        */
+        FrameGraph &GetFrameGraph() { return frameGraph; }
 
     private:
         bool started = false;
         std::vector<std::unique_ptr<RhiRenderStage>> renderStages;
         EngineRenderpassManager PassManager;
+        FrameGraph frameGraph;
     };
-}
+} // namespace SF::Engine
