@@ -43,7 +43,7 @@
 #include <Platform/PlatformIncludes.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 
-#include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
+#include <Configuration/Default/ImGuiDefaultWidgets.hpp>
 #include <Engine/InitGame/GameInfo.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
