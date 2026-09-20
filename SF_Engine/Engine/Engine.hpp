@@ -49,7 +49,7 @@
 namespace SF::Engine
 {
     // Provide a global constant version of the engine
-    inline const Version EngineVersion{Engine_VERSION_MAJOR, Engine_VERSION_MINOR, Engine_VERSION_PATCH};
+    inline constexpr Version EngineVersion{Engine_VERSION_MAJOR, Engine_VERSION_MINOR, Engine_VERSION_PATCH};
 
     class Engine : NoCopy
     {
@@ -223,11 +223,11 @@ namespace SF::Engine
         const std::thread::id g_render_thread_id =
                 std::thread::id(); // Set to main thread by default, will be updated if a separate render thread is used
 
-        const std::thread::id &GetMainThreadId() const { return g_main_thread_id; }
+        [[nodiscard]] const std::thread::id &GetMainThreadId() const { return g_main_thread_id; }
 
-        const std::thread::id &GetRenderThreadId() const { return g_render_thread_id; }
+        [[nodiscard]] const std::thread::id &GetRenderThreadId() const { return g_render_thread_id; }
 
-        bool IsMainThread() const { return std::this_thread::get_id() == g_main_thread_id; }
+        [[nodiscard]] bool IsMainThread() const { return std::this_thread::get_id() == g_main_thread_id; }
 
     private:
         ThreadPool threadPool{
