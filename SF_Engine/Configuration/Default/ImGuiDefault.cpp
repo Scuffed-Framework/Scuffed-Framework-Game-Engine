@@ -202,7 +202,6 @@ namespace SF::Engine
         ImGuiStyle &style = ImGui::GetStyle();
         ImVec4 *colors = style.Colors;
 
-        // --- Layout: flat, sharp, tight ---
         style.WindowRounding = 0.0f;
         style.ChildRounding = 0.0f;
         style.FrameRounding = 0.0f;
