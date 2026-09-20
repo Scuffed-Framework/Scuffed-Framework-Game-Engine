@@ -58,7 +58,6 @@ namespace SF::Engine
             nearestClampSampler_ = makeSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_BORDER_COLOR_INT_OPAQUE_BLACK, false);
             nearestRepeatSampler_ = makeSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_BORDER_COLOR_INT_OPAQUE_BLACK, false);
 
-            // Bindings 0-9 in Samplers.si, in exact order:
             pointClampEdge_ = nearestClampSampler_;
             pointClampBorder0000_ = makeSampler(VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK, false);
             pointRepeat_ = nearestRepeatSampler_;
@@ -81,7 +80,6 @@ namespace SF::Engine
     {
         VkDevice device = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice();
 
-        // Layout: 10 bindings, all VK_DESCRIPTOR_TYPE_SAMPLER, matching Samplers.si order exactly.
         VkDescriptorSetLayoutBinding bindings[10]{};
         for (uint32_t i = 0; i < 10; ++i)
         {

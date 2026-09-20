@@ -68,42 +68,7 @@ namespace SF::Engine
                     }));
         }
 
-        void Start() override
-        {
-            lightManager_ = std::make_unique<LightManager>();
-
-            clusterCull_ = AddPipelinePass<ClusterCullPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
-            gbuffer_     = AddPipelinePass<GBufferPass>(Pipeline::Stage{0, 0}, *lightManager_);
-
-            // Stage 1, subpass 0 : Deferred lighting resolve → hdr.
-            AddPipelinePass<DeferredLightPipelinePass>(Pipeline::Stage{1, 0}, *lightManager_);
-
-            ssr_ = AddPipelinePass<SSRPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
-
-            // Stage 1, subpass 2 : Transparent forward pass.
-            AddPipelinePass<ForwardTransparentPipelinePass>(Pipeline::Stage{1, 2}, *lightManager_);
-
-            AddPipelinePass<FullscreenPass>(Pipeline::Stage{2, 0}, "hdr", "Shaders/CompositeSampler.shader");
-
-            atmoController = std::make_unique<AtmosphereController>(
-                    Pipeline::Stage{1, 0}, [this](const Pipeline::Stage &s, const AtmosphereParams &p)
-                    { return AddPipelinePass<AtmospherePipelinePass>(s, p); });
-
-            if (config_.enableAtmosphere)
-            {
-                const Vec3 earthPos = {0.0f, -config_.atmosphereParams.bottomRadius, 0.0f};
-                // TODO: load from xml
-                atmoController->AddAtmosphere("Earth", earthData, earthPos);
-
-                cloudPass_ = AddPipelinePass<CloudPipelinePass>(Pipeline::Stage{1, 0}, earthData);
-
-                // disable cloud pass cuz its broken
-                cloudPass_->SetEnabled(false);
-                // disable cloud pass cuz its broken
-            }
-
-            GetPipelinePassManager()->RunInitCallbacks();
-        }
+        void Start() override;
 
         void Update() override {} // Heavy per-frame work is driven by RenderScene()
 

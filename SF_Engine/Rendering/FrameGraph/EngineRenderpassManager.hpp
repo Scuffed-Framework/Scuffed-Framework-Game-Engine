@@ -3,8 +3,8 @@
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
 #include <Rendering/RHI/Pipelines/Pipeline.hpp>
 #include "EngineRenderpassInitRegistry.hpp"
-#include "UtilityClasses/NoCopy.hpp"
-#include "UtilityClasses/TypeInformation.hpp"
+#include <UtilityClasses/NoCopy.hpp>
+#include <UtilityClasses/TypeInformation.hpp>
 
 namespace SF::Engine
 {

@@ -62,7 +62,6 @@ namespace SF::Engine
                 format.colorSpace == VK_COLOR_SPACE_BT2020_LINEAR_EXT)
                 return format;
         }
-
         return availFormats[0];
     }
 } // namespace SF::Engine

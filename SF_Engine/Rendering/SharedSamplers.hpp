@@ -29,8 +29,6 @@ namespace SF::Engine
         static VkSampler linearRepeatSampler_;
         static VkSampler nearestClampSampler_;
         static VkSampler nearestRepeatSampler_;
-
-        // Matches Samplers.si bindings 0-9 exactly.
         static VkSampler pointClampEdge_;
         static VkSampler pointClampBorder0000_;
         static VkSampler pointRepeat_;
