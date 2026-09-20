@@ -14,7 +14,7 @@ namespace SF::Engine
     {
         std::string name;
         AtmosphereData data;
-        AtmospherePipelinePass *pass = nullptr; // non-owning; owned by PipelinePassManager
+        AtmospherePipelinePass *pass = nullptr;
         Vec3 planetPos               = {0.0f, 0.0f, 0.0f};
         bool active                  = true;
     };
