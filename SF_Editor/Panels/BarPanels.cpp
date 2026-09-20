@@ -1,15 +1,15 @@
 #include "BarPanels.hpp"
-#include <Engine/Engine.hpp>
-#include <Scene/SceneManager.hpp>
-#include <Controllers/CameraController.hpp>
-#include <algorithm>
-#include <functional>
-#include <Gui/GuiMembers.hpp>
-#include <Engine/Project/Project.hpp>
-#include <Engine/Version.hpp>
-#include "Panels.hpp"
 #include <Assets/Audio/AudioClip.hpp>
 #include <Assets/Audio/Waves.hpp>
+#include <Controllers/CameraController.hpp>
+#include <Engine/Engine.hpp>
+#include <Engine/Project/Project.hpp>
+#include <Engine/Version.hpp>
+#include <Gui/GuiMembers.hpp>
+#include <Scene/SceneManager.hpp>
+#include <algorithm>
+#include <functional>
+#include "Panels.hpp"
 
 namespace SF::Engine
 {
@@ -27,7 +27,7 @@ namespace SF::Engine
         static AudioClip clip;
 
         buffer = SoundBuffer::CreateWave(dat, freq, time);
-        clip = AudioClip(buffer);
+        clip   = AudioClip(buffer);
         clip.SetEnabled(true);
         clip.Play();
     }
@@ -123,9 +123,9 @@ namespace SF::Engine
             }
             if (ImGui::BeginMenu("Test"))
             {
-                
-                ImGui::InputFloat("freq##cs", &freq);
-                ImGui::InputFloat("time##cs", &time);
+
+                ImGui::InputFloat("freq (hz)##cs", &freq);
+                ImGui::InputFloat("time (seconds)##cs", &time);
 
                 if (ImGui::MenuItem("Sawtooth Wave"))
                     TestAudio(ExtraAudioWaves::Wave_Sawtooth, freq, time);
@@ -152,18 +152,16 @@ namespace SF::Engine
 
     void BarPanels::DrawEngineStatusBar()
     {
-        auto &io = ImGui::GetIO();
+        auto &io   = ImGui::GetIO();
         float barH = ImGui::GetFrameHeightWithSpacing() + 4.0f;
-        ImGui::SetNextWindowPos(
-            {0, io.DisplaySize.y - barH}, ImGuiCond_Always);
-        ImGui::SetNextWindowSize(
-            {io.DisplaySize.x, barH}, ImGuiCond_Always);
+        ImGui::SetNextWindowPos({0, io.DisplaySize.y - barH}, ImGuiCond_Always);
+        ImGui::SetNextWindowSize({io.DisplaySize.x, barH}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.55f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 3));
         ImGui::Begin("##statusbar", nullptr,
-                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs |
-                         ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
+                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNav |
+                             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_NoBringToFrontOnFocus);
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -199,4 +197,4 @@ namespace SF::Engine
         //}
         ImGui::End();
     }
-}
+} // namespace SF::Engine

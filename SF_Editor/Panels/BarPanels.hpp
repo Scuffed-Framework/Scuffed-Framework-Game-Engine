@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
+#include <Configuration/Default/ImGuiDefaultWidgets.hpp>
 #include <Scene/Types.hpp>
 
 #include <Commands/CommandsWindow.hpp>
