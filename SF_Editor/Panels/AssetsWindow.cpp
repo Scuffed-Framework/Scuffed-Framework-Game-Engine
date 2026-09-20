@@ -82,19 +82,22 @@ namespace SF::Engine
             ShowCreateShaderIncludeWizard(m_currentPath);
     }
 
+
+    // NOLINTBEGIN(readability-convert-member-functions-to-static)
     template<typename Func>
     bool AssetBrowser::TryWithImageTexture(const std::shared_ptr<AssetBase> &asset, Func &&fn)
     {
-        if (auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image2d>>(asset))
+        if (const auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image2d>>(asset))
             return a->texture ? (fn(a->texture, a->uuid), true) : false;
-        if (auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image3d>>(asset))
+        if (const auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image3d>>(asset))
             return a->texture ? (fn(a->texture, a->uuid), true) : false;
-        if (auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image2dArray>>(asset))
+        if (const auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image2dArray>>(asset))
             return a->texture ? (fn(a->texture, a->uuid), true) : false;
-        if (auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Cubemap>>(asset))
+        if (const auto a = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Cubemap>>(asset))
             return a->texture ? (fn(a->texture, a->uuid), true) : false;
         return false;
     }
+    // NOLINTEND(readability-convert-member-functions-to-static)
 
     void AssetBrowser::DrawMenuBar()
     {
