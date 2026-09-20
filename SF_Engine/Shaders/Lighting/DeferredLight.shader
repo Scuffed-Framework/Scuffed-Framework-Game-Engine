@@ -42,9 +42,6 @@ struct ClusterList { uint offset; uint count; };
 [[vk::binding(7, 0)]] Texture2D gbufDepth;
 [[vk::binding(8, 0)]] SamplerState linearSampler;
 
-// ---------------------------------------------------------------------
-// Vertex stage : fullscreen triangle, no vertex buffer
-// ---------------------------------------------------------------------
 
 struct VSOutput
 {
@@ -61,9 +58,6 @@ VSOutput vertexMain(uint vertexIndex : SV_VertexID)
     return output;
 }
 
-// ---------------------------------------------------------------------
-// Fragment stage
-// ---------------------------------------------------------------------
 
 #define PI        3.14159265359
 #define CLUSTER_X 16
@@ -150,7 +144,7 @@ FSOutput fragmentMain(VSOutput input)
     FSOutput output;
 
     float depth = gbufDepth.Sample(linearSampler, input.uv).r;
-    if (depth >= 1.0) { output.color = float4(0.0, 0.0, 0.0, 1.0); return output; }
+    if (depth <= 0.0) { output.color = float4(0.0, 0.0, 0.0, 0.0); return output; }
 
     float3 albedo = gbufAlbedo.Sample(linearSampler, input.uv).rgb;
     float3 N      = octDecode(gbufNormal.Sample(linearSampler, input.uv).rg);
