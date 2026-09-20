@@ -17,6 +17,9 @@ namespace SF::Engine
     using glm::max;
     using glm::min;
 
+    using glm::rotate;
+    using glm::translate;
+
     using glm::double2;
     using glm::double2x2;
     using glm::double2x3;
