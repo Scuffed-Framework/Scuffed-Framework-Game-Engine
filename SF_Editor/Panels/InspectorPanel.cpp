@@ -1,12 +1,12 @@
 #include "InspectorPanel.hpp"
+#include <Configuration/Default/ImGuiDefaultWidgets.hpp>
 #include <Entity/Entity.hpp>
-#include <Math/Transform.hpp>
+#include <Gui/Declare_Widget.hpp>
 #include <Gui/ocornut/imgui_internal.h>
 #include <Gui/ocornut/imgui_stdlib.h>
-#include <Gui/Declare_Widget.hpp>
-#include "Panels.hpp"
-#include <Configuration/Default/ImGuiDefaultWIDGETS.hpp>
+#include <Math/Transform.hpp>
 #include <Scene/SceneManager.hpp>
+#include "Panels.hpp"
 
 namespace SF::Engine
 {
