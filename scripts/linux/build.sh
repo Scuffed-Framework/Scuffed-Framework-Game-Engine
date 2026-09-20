@@ -42,10 +42,10 @@ cat > "$VERSION_HEADER" <<EOF
 #include "Version.hpp"
 
 namespace SF::Engine {
-const uint16_t Engine_VERSION_MAJOR = $CURRENT_YEAR;
-const uint8_t Engine_VERSION_MINOR = $CURRENT_MONTH;
-const uint16_t Engine_VERSION_PATCH = $BUILD_NUMBER;
-const std::string_view Engine_VERSION = "$CURRENT_YEAR.$CURRENT_MONTH_PADDED.$BUILD_NUMBER";
+constexpr uint16_t Engine_VERSION_MAJOR = $CURRENT_YEAR;
+constexpr uint8_t Engine_VERSION_MINOR = $CURRENT_MONTH;
+constexpr uint16_t Engine_VERSION_PATCH = $BUILD_NUMBER;
+constexpr std::string_view Engine_VERSION = "$CURRENT_YEAR.$CURRENT_MONTH_PADDED.$BUILD_NUMBER";
 } // namespace SF::Engine
 EOF
 

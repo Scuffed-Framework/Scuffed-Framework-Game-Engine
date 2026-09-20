@@ -56,10 +56,10 @@ $versionHeaderContent = @"
 #include "Version.hpp"
 
 namespace SF::Engine {
-const uint16_t Engine_VERSION_MAJOR = $currentYear;
-const uint8_t Engine_VERSION_MINOR = $currentMonth;
-const uint16_t Engine_VERSION_PATCH = $buildNumber;
-const std::string_view Engine_VERSION = "$currentYear.$currentMonthPadded.$buildNumber";
+constexpr uint16_t Engine_VERSION_MAJOR = $currentYear;
+constexpr uint8_t Engine_VERSION_MINOR = $currentMonth;
+constexpr uint16_t Engine_VERSION_PATCH = $buildNumber;
+constexpr std::string_view Engine_VERSION = "$currentYear.$currentMonthPadded.$buildNumber";
 } // namespace SF::Engine
 "@
 
