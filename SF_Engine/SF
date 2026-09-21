@@ -8,7 +8,7 @@ namespace SF::Engine
     using AdvancedArray = vector<T>;
 
     template<typename T>
-    inline constexpr T&& RToL(remove_reference_t<T>& t) noexcept
+    inline constexpr T&& LToR(remove_reference_t<T>& t) noexcept
     {
         return static_cast<T&&>(t);
     }
@@ -22,3 +22,10 @@ namespace SF::Engine
         return static_cast<T&&>(t);
     }
 }
+#infdef NODISCARD
+#define NODISCARD [[nodiscard]]
+#endif
+
+#ifndef DEPRECATED
+#define DEPRECATED(x) __attribute__ ((__deprecated__("use '" x "' instead")))
+#endif
