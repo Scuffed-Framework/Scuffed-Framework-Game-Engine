@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef _PLATFORM_LINUX
+    #include <csignal>
+#endif
+
 #include <stdarg.h>
 #include <stddef.h>
 
@@ -185,8 +189,8 @@ namespace SF::Engine
         }
 
         /**
-         * @brief Gets the Applicationlication's name.
-         * @return The Applicationlication's name.
+         * @brief Gets the Application's name.
+         * @return The Application's name.
          */
         [[nodiscard]] const std::string &GetName() const noexcept
         {
