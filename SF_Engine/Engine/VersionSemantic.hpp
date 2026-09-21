@@ -3,6 +3,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     class Version
     {
     public:
