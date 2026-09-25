@@ -1,13 +1,15 @@
-#pragma once //  todo: move this into UtilityClasses/ resolved 8/15/28 
+#pragma once
+#include <algorithm>
 #include <array>
 #include <cstdint>
-#include <string>
-#include <sstream>
+#include <cstring>
+#include <functional>
 #include <iomanip>
 #include <random>
-#include <functional>
-#include <cstring>
-#include <algorithm>
+#include <sstream>
+#include <string>
+
+
 namespace SF::Engine
 {
     class UUID
@@ -18,7 +20,8 @@ namespace SF::Engine
         // Thread-safe random number generator (non-constexpr)
         static std::mt19937 &get_random_engine()
         {
-            static thread_local std::mt19937 engine(std::random_device{}() ^ static_cast<uint64_t>(reinterpret_cast<uintptr_t>(&engine)));
+            static thread_local std::mt19937 engine(std::random_device{}() ^
+                                                    static_cast<uint64_t>(reinterpret_cast<uintptr_t>(&engine)));
             return engine;
         }
 
@@ -51,7 +54,7 @@ namespace SF::Engine
         constexpr UUID(std::initializer_list<uint8_t> init) : data{0}
         {
             size_t i = 0;
-            for (auto val : init)
+            for (const auto val: init)
             {
                 if (i < 16)
                     data[i++] = val;
@@ -71,7 +74,7 @@ namespace SF::Engine
             auto &engine = get_random_engine();
 
             // Fill with random bytes
-            for (auto &byte : uuid.data)
+            for (auto &byte: uuid.data)
             {
                 byte = random_byte();
             }
@@ -116,15 +119,15 @@ namespace SF::Engine
                 }
 
                 std::string byteStr = str.substr(i, 2);
-                arr[idx++] = static_cast<uint8_t>(std::stoul(byteStr, nullptr, 16));
+                arr[idx++]          = static_cast<uint8_t>(std::stoul(byteStr, nullptr, 16));
                 i++; // Skip second hex digit
             }
 
-            return UUID(arr);
+            return {arr};
         }
 
         // Constexpr version for compile-time string parsing
-        template <size_t N>
+        template<size_t N>
         static constexpr UUID FromStringConstexpr(const char (&str)[N])
         {
             static_assert(N == 37, "UUID string must be exactly 36 characters plus null terminator");
@@ -139,19 +142,17 @@ namespace SF::Engine
 
                 // Check bounds and validate hex chars
                 if (i >= 35 ||
-                    !((str[i] >= '0' && str[i] <= '9') ||
-                      (str[i] >= 'a' && str[i] <= 'f') ||
+                    !((str[i] >= '0' && str[i] <= '9') || (str[i] >= 'a' && str[i] <= 'f') ||
                       (str[i] >= 'A' && str[i] <= 'F')) ||
-                    !((str[i + 1] >= '0' && str[i + 1] <= '9') ||
-                      (str[i + 1] >= 'a' && str[i + 1] <= 'f') ||
+                    !((str[i + 1] >= '0' && str[i + 1] <= '9') || (str[i + 1] >= 'a' && str[i + 1] <= 'f') ||
                       (str[i + 1] >= 'A' && str[i + 1] <= 'F')))
                 {
-                    return UUID(); // Return null UUID on error
+                    return {}; // Return null UUID on error
                 }
 
-                uint8_t high = hex_char_to_byte(str[i]);
-                uint8_t low = hex_char_to_byte(str[i + 1]);
-                arr[idx++] = (high << 4) | low;
+                const uint8_t high = hex_char_to_byte(str[i]);
+                const uint8_t low  = hex_char_to_byte(str[i + 1]);
+                arr[idx++]         = (high << 4) | low;
                 i++; // Skip second hex digit
             }
 
@@ -178,8 +179,8 @@ namespace SF::Engine
                 }
 
                 uint8_t high = hex_char_to_byte(str[i]);
-                uint8_t low = hex_char_to_byte(str[i + 1]);
-                arr[idx++] = (high << 4) | low;
+                uint8_t low  = hex_char_to_byte(str[i + 1]);
+                arr[idx++]   = (high << 4) | low;
                 i++; // Skip second hex digit
             }
 
@@ -202,10 +203,7 @@ namespace SF::Engine
             return true;
         }
 
-        constexpr bool operator!=(const UUID &other) const
-        {
-            return !(*this == other);
-        }
+        constexpr bool operator!=(const UUID &other) const { return !(*this == other); }
 
         constexpr bool operator<(const UUID &other) const
         {
@@ -222,7 +220,7 @@ namespace SF::Engine
         // Check if null UUID (all zeros) - constexpr
         constexpr bool IsNull() const
         {
-            for (auto byte : data)
+            for (auto byte: data)
             {
                 if (byte != 0)
                     return false;
@@ -231,7 +229,7 @@ namespace SF::Engine
         }
 
         // Convert to string (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-        std::string ToString() const
+        [[nodiscard]] std::string ToString() const
         {
             std::stringstream ss;
             ss << std::hex << std::setfill('0');
@@ -274,7 +272,7 @@ namespace SF::Engine
         }
 
         // Upper-case string version
-        std::string ToUpperString() const
+        [[nodiscard]] std::string ToUpperString() const
         {
             auto str = ToString();
             std::transform(str.begin(), str.end(), str.begin(), ::toupper);
@@ -282,8 +280,8 @@ namespace SF::Engine
         }
 
         // Access raw bytes - constexpr
-        constexpr const uint8_t *Bytes() const { return data.data(); }
-        constexpr size_t Size() const { return data.size(); }
+        [[nodiscard]] constexpr const uint8_t *Bytes() const { return data.data(); }
+        [[nodiscard]] constexpr size_t Size() const { return data.size(); }
 
         // For use in std::unordered_map
         struct Hash
@@ -291,8 +289,8 @@ namespace SF::Engine
             size_t operator()(const UUID &uuid) const
             {
                 // Use std::hash on the underlying bytes
-                size_t hash = 0;
-                const uint64_t *ptr = reinterpret_cast<const uint64_t *>(uuid.data.data());
+                size_t hash     = 0;
+                const auto *ptr = reinterpret_cast<const uint64_t *>(uuid.data.data());
                 std::hash<uint64_t> hasher;
                 hash ^= hasher(ptr[0]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
                 hash ^= hasher(ptr[1]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
@@ -307,7 +305,7 @@ namespace SF::Engine
         if (len != 36)
         {
             // In compile-time context, return null UUID for invalid length
-            return UUID();
+            return {};
         }
 
         // Use the constexpr parsing function
@@ -315,27 +313,29 @@ namespace SF::Engine
     }
 
     // Null UUID constant - constexpr
-    constexpr UUID NullUUID = UUID();
+    constexpr auto NullUUID = UUID();
 
     // Predefined UUIDs (compile-time)
-    constexpr UUID UUID_Zero = UUID();
-    constexpr UUID UUID_Max = UUID({0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF});
+    constexpr auto UUID_Zero = UUID();
+    constexpr auto UUID_Max =
+            UUID({0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF});
 
     // Common/well-known UUIDs
-    constexpr UUID UUID_Namespace_DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"_uuid;
-    constexpr UUID UUID_Namespace_URL = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"_uuid;
-    constexpr UUID UUID_Namespace_OID = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"_uuid;
-    constexpr UUID UUID_Namespace_X500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"_uuid;
-}
+    constexpr auto UUID_Namespace_DNS  = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"_uuid;
+    constexpr auto UUID_Namespace_URL  = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"_uuid;
+    constexpr auto UUID_Namespace_OID  = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"_uuid;
+    constexpr auto UUID_Namespace_X500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"_uuid;
+} // namespace SF::Engine
+
 namespace std
 {
-    template <>
+    template<>
     struct hash<SF::Engine::UUID>
     {
-        size_t operator()(const SF::Engine::UUID &uuid) const
+        size_t operator()(const SF::Engine::UUID &uuid) const noexcept
         {
             // Use the built-in Hash struct from UUID
             return SF::Engine::UUID::Hash{}(uuid);
         }
     };
-}
+} // namespace std

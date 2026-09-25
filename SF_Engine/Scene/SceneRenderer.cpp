@@ -209,6 +209,21 @@ namespace SF::Engine
         }
         fd.sunDirIntensity = Vec4(sunDir, sunInt);
 
+        // Ambient sky/ground colour: sourced from SSR's own tunables so deferred lighting's
+        // ambient and SSR's reflected sky colour agree (see LightingTypes.hpp's GpuFrameData
+        // comment). Falls back to SSR's own defaults if no SSR pass exists this frame, rather
+        // than duplicating those defaults here where they could drift out of sync.
+        if (ssr_)
+        {
+            fd.ambientSkyColor    = Vec4(ssr_->ambientSkyColor, ssr_->ambientIntensity);
+            fd.ambientGroundColor = Vec4(ssr_->ambientGroundColor, 0.0f);
+        }
+        else
+        {
+            fd.ambientSkyColor    = Vec4(0.45f, 0.6f, 0.9f, 0.6f);
+            fd.ambientGroundColor = Vec4(0.2f, 0.18f, 0.15f, 0.0f);
+        }
+
         lightManager_->Upload(fd);
 
         // Legacy single-planet centre, still used by CloudPipelinePass until it's

@@ -56,16 +56,16 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
     float3 V = normalize(kCam.cameraPosition.xyz - worldPos);
 
     // Roughness cutoff : past this, the specular lobe is broad enough that screen-space information contributes little over the probe fallback,
-    // so skip the (expensive, importance-sampled) trace direction and use the plain mirror direction instead. This still gets marked as a
-    // normal (non-sky) ray NOT the same b=1.0 flag the background case above uses, so Trace.shader treats a miss here exactly like any
-    // other miss and falls through to ProbeFallback, rather than hard-zeroing the pixel. Without this, every pixel whose roughness
-    // straddles maxRoughness flips between "full reflection" and "nothing" with no smoothing, invisible at low metallic (F0=0.04 makes the
-    // difference imperceptible) but a visible hard band the instant metallic pushes F0 (and so the whole contribution) up.
+    // so skip the trace entirely -- both the importance-sampled dispatch AND the march, not just the former. imgRayDir carries the surface
+    // NORMAL here (not a reflection direction), and imgRayData.b=0.5 tells Trace.shader to read it that way: go straight to ProbeFallback(N)
+    // without attempting a march. N varies smoothly across a surface; a mirror-reflected direction (reflect(-V,N)) does not -- it's maximally
+    // sensitive to per-pixel normal variation (any normal-map/geometric noise turns into wildly different, spatially incoherent sample
+    // directions), which shows up as visible speckle noise and a visible noise-level seam against the neighbouring, properly importance-
+    // sampled pixels just below the threshold. Using N avoids both the noise and the wasted march.
     if (roughness > kSSR.maxRoughness)
     {
-        float3 Rm = reflect(-V, N);
-        imgRayDir[workPos] = float4(Rm, 1.0);
-        imgRayData[workPos] = float4(roughness, metallic, 0.0, 1.0);
+        imgRayDir[workPos] = float4(N, 1.0);
+        imgRayData[workPos] = float4(roughness, metallic, 0.5, 1.0);
         return;
     }
 

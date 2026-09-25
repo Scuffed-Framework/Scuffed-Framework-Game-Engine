@@ -40,7 +40,15 @@ namespace SF::Engine
     {
         // Scalars / colors
         Color baseColor          = Color::White;
-        float metallicFactor     = 1.0f;
+        // Defaults to dielectric, not metallic: an object with no material assigned should
+        // render as a plain white diffuse surface (what "white, unconfigured" reads as to
+        // anyone placing an object), not a mirror. At metallic=1, DeferredLight.shader's
+        // diffuse term `(1 - F) * (1 - metal) * albedo` is forced to exactly zero regardless
+        // of baseColor -- a fully metallic surface only ever shows reflected environment
+        // color (via SSR's F0=albedo tinted specular/ProbeFallback), never its own flat
+        // color. That's correct PBR behavior for an object that's actually supposed to be
+        // metal, but it's a surprising default for one that just hasn't been configured yet.
+        float metallicFactor     = 0.0f;
         float roughnessFactor    = 1.0f;
         float aoFactor           = 1.0f;
         float emissiveFactor     = 0.0f;

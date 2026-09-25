@@ -1,0 +1,273 @@
+// BRDF.si
+// Higher-level BRDF terms (diffuse models, specular GGX, clear coat) built on top of
+// Fresnel.si/GGX.si. Ported from O3DE's BRDF.azsli.
+#pragma once
+#include "Common/Math.si"
+#include "Lighting/BRDF/GGX.si"
+#include "Lighting/BRDF/Fresnel.si"
+
+
+float3 DiffuseLambertian(
+    float3 albedo,
+    float3 normal,
+    float3 dirToLight,
+    float3 diffuseResponse)
+{
+    float NdotL = saturate(dot(normal, dirToLight));
+
+    return albedo * NdotL * INV_PI * diffuseResponse;
+}
+
+
+float3 NormalizedDisneyDiffuse(
+    float3 albedo,
+    float3 normal,
+    float3 dirToCamera,
+    float3 dirToLight,
+    float roughnessLinear)
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+
+    float NdotV = saturate(dot(normal, dirToCamera));
+    float NdotL = saturate(dot(normal, dirToLight));
+    float HdotV = saturate(dot(halfVector, dirToCamera));
+
+    float energyBias = lerp(0.0, 0.5, roughnessLinear);
+    float energyFactor = lerp(1.0, 1.0 / 1.51, roughnessLinear);
+
+    float fd90 = energyBias + 2.0 * HdotV * HdotV * roughnessLinear;
+
+    float3 f0 = float3(1.0, 1.0, 1.0);
+
+    // HdotL == HdotV, so only one Fresnel term is needed for the half vector.
+    float lightScatter = FresnelSchlickF90(NdotL, f0, fd90).r;
+    float viewScatter = FresnelSchlickF90(NdotV, f0, fd90).r;
+
+    return albedo
+         * lightScatter
+         * viewScatter
+         * energyFactor
+         * NdotL
+         * INV_PI;
+}
+
+
+float3 DiffuseTitanfall(
+    float roughnessA,
+    float3 albedo,
+    float3 normal,
+    float3 dirToLight,
+    float3 dirToCamera)
+{
+    float NdotL = saturate(dot(normal, dirToLight));
+    float NdotV = saturate(dot(normal, dirToCamera));
+    float LdotV = saturate(dot(dirToLight, dirToCamera));
+
+    // Squared length of L + V:
+    // |L + V|^2 = |L|^2 + |V|^2 + 2(L . V) = 2 + 2(L . V)
+    float LplusVLengthSq = 2.0 + 2.0 * LdotV;
+    float NdotH = (NdotL + NdotV) * rsqrt(LplusVLengthSq);
+
+    float facing = LplusVLengthSq * 0.25;
+
+    // Empirical formula for rough surfaces.
+    float rough =
+        facing
+        * (0.9 - 0.4 * facing)
+        * ((0.5 + NdotH) / NdotH);
+
+    // Double Fresnel approximation for the smooth term.
+    // This could also be replaced with another diffuse function,
+    // such as pure Lambertian.
+    float smoothTerm =
+        1.05
+        * FresnelSchlickF90(NdotL, float3(1.0, 1.0, 1.0), 0.0).x
+        * FresnelSchlickF90(NdotV, float3(1.0, 1.0, 1.0), 0.0).x;
+
+    float single = INV_PI * lerp(smoothTerm, rough, roughnessA);
+
+    // Coarse approximation of multiple scattering.
+    float multi = 0.1159 * roughnessA;
+
+    return albedo * (single + albedo * multi) * NdotL;
+}
+
+
+float3 SpecularGGX(
+    float3 dirToCamera,
+    float3 dirToLight,
+    float3 normal,
+    float3 specularF0,
+    float NdotV,
+    float roughnessA2,
+    float3 multiScatterCompensation)
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+
+    float NdotH = saturate(dot(normal, halfVector));
+    float NdotL = saturate(dot(normal, dirToLight));
+    float HdotV = saturate(dot(halfVector, dirToCamera));
+
+    // D, G and F from the lighting equation.
+    //
+    // Note: The division by (4 * NdotL * NdotV) is already
+    // factored into the G function as an optimization.
+    float D = NormalDistributionGGX(NdotH, roughnessA2);
+    float G = GeometricShadowingMaskingGGXCorrelated(
+        NdotV,
+        NdotL,
+        roughnessA2);
+
+    float3 F = FresnelSchlick(HdotV, specularF0);
+
+    D = max(0.0, D);
+    G = max(0.0, G);
+
+    float3 specularLighting =
+        float(D * G * NdotL)
+        * F
+        * multiScatterCompensation;
+
+    return specularLighting;
+}
+
+
+float3 AnisotropicGGX(
+    float3 dirToCamera,
+    float3 dirToLight,
+    float3 normal,
+    float3 tangent,
+    float3 bitangent,
+    float2 anisotropyFactors,
+    float3 specularF0,
+    float NdotV,
+    float3 multiScatterCompensation)
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+
+    float NdotH = saturate(dot(normal, halfVector));
+    float NdotL = saturate(dot(normal, dirToLight));
+    float HdotV = saturate(dot(halfVector, dirToCamera));
+
+    float D = NormalDistibution_AnisotropicGGX(
+        NdotH,
+        halfVector,
+        tangent,
+        bitangent,
+        anisotropyFactors);
+
+    float G = ShadowingMasking_AnisotropicSmithGGXCorrelated(
+        tangent,
+        bitangent,
+        dirToCamera,
+        dirToLight,
+        NdotV,
+        NdotL,
+        anisotropyFactors);
+
+    float3 F = FresnelSchlick(HdotV, specularF0);
+
+    D = max(0.0, D);
+    G = max(0.0, G);
+
+    return multiScatterCompensation * (D * G * F * NdotL);
+}
+
+
+float3 SpecularGGXMobile(
+    float3 dirToCamera,
+    float3 dirToLight,
+    float3 normal,
+    float3 specularF0,
+    float roughnessA2,
+    float roughnessA,
+    float roughnessLinear)
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+
+    float NdotH = saturate(dot(normal, halfVector));
+    float LdotH = saturate(dot(dirToLight, halfVector));
+    float NdotL = saturate(dot(normal, dirToLight));
+
+    float LdotH2 = LdotH * LdotH;
+
+    float D =
+        (NdotH * roughnessA2 - NdotH) * NdotH
+        + 1.000001;
+
+    float denominator =
+        4.0
+        * PI_
+        * D
+        * D
+        * max(0.1, LdotH2)
+        * (roughnessLinear + 0.5);
+
+    float specularTerm = roughnessA2 / denominator;
+
+    // Prevent FP16 overflow on mobile GPUs.
+    specularTerm -= F16MIN;
+    specularTerm = clamp(specularTerm, 0.0, 100.0);
+
+    return specularTerm * NdotL * specularF0;
+}
+
+
+// --- Clear coat ---------------------------------------------------------------------------
+// Not wired into any material/pipeline yet -- needs a clearCoatFactor/clearCoatRoughness (and
+// optionally a separate clear-coat normal) added to MeshMaterial and threaded through the
+// GBuffer/push-constant path the same way roughness/metallic/ao/emissive are, plus a gbuffer
+// channel (or a second small attachment) to carry clearCoatFactor+clearCoatRoughness through
+// to DeferredLight.shader, before ClearCoatSpecular below can actually be called anywhere.
+
+float3 ClearCoatGGX(
+    float NdotH,
+    float HdotL,
+    float NdotL,
+    float3 normal,
+    float roughnessA,
+    float3 F)
+{
+    float roughnessA2 = roughnessA * roughnessA;
+
+    float D = NormalDistributionGGX(NdotH, roughnessA2);
+    float G = 0.25 / max(HdotL * HdotL, 1e-4);
+
+    D = max(0.0, D);
+    G = max(0.0, G);
+
+    return float(D) * G * F * NdotL;
+}
+
+
+float3 ClearCoatSpecular(
+    const float3 dirToLight,
+    const float3 dirToCamera,
+    const float3 surfaceClearCoatNormal,
+    float surfaceClearCoatFactor,
+    float surfaceClearCoatRoughness,
+    const float3 specular)
+{
+    float3 halfVector = normalize(dirToLight + dirToCamera);
+
+    float NdotH = saturate(dot(surfaceClearCoatNormal, halfVector));
+    float NdotL = saturate(dot(surfaceClearCoatNormal, dirToLight));
+    float HdotL = saturate(dot(halfVector, dirToLight));
+
+    float3 clearCoatF =
+        FresnelSchlick(HdotL, float3(0.04, 0.04, 0.04))
+        * surfaceClearCoatFactor;
+
+    float clearCoatRoughness =
+        max(surfaceClearCoatRoughness * surfaceClearCoatRoughness, 0.0005);
+
+    float3 clearCoatSpecular = ClearCoatGGX(
+        NdotH,
+        HdotL,
+        NdotL,
+        surfaceClearCoatNormal,
+        clearCoatRoughness,
+        clearCoatF);
+
+    return specular * (1.0 - clearCoatF) + clearCoatSpecular;
+}

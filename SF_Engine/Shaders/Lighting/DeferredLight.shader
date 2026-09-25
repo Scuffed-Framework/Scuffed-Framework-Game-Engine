@@ -18,6 +18,9 @@ struct FrameData
     float2   screenSize;  float2   invScreenSize;
     float    nearPlane;   float    farPlane;   float time; float deltaTime;
     uint     lightCount;  uint     frameIndex; float2 _pad;
+    float4   sunDirIntensity;    // .xyz = toward-sun unit vector, .w = sun intensity
+    float4   ambientSkyColor;    // .rgb = sky colour,    .a = ambientIntensity
+    float4   ambientGroundColor; // .rgb = ground colour, .a = unused
 };
 
 [[vk::binding(0, 0)]]
@@ -59,7 +62,8 @@ VSOutput vertexMain(uint vertexIndex : SV_VertexID)
 }
 
 
-#define PI        3.14159265359
+#include "Lighting/BRDF/BRDF.si"
+
 #define CLUSTER_X 16
 #define CLUSTER_Y 9
 #define CLUSTER_Z 24
@@ -76,21 +80,6 @@ float3 worldPosFromDepth(float depth, float2 uv)
     float4 ndc = float4(uv * 2.0 - 1.0, depth, 1.0);
     float4 wp  = mul(frame.invViewProj, ndc);
     return wp.xyz / wp.w;
-}
-
-float distGGX(float NdH, float a)
-{
-    float a2 = a * a; // Correct: roughness squared
-    float d = NdH * NdH * (a2 - 1.0) + 1.0;
-    return a2 / (PI * d * d);
-}
-float geomSGGX(float NdX, float a)
-{
-    float k = (a + 1.0) * (a + 1.0) / 8.0; return NdX / (NdX * (1.0 - k) + k);
-}
-float3 fresnel(float cosTheta, float3 F0)
-{
-    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 uint clusterIdx(float2 fragCoord, float3 wp)
@@ -124,13 +113,31 @@ float3 evalLight(Light l, float3 P, float3 N, float3 V,
         }
     }
     float NdL = max(dot(N, L), 0.0); if (NdL == 0.0) return float3(0.0, 0.0, 0.0);
-    float3 H = normalize(V + L);
-    float NdH = max(dot(N, H), 0.0), NdV = max(dot(N, V), 0.0), HdV = max(dot(H, V), 0.0);
-    float D = distGGX(NdH, rough), G = geomSGGX(NdV, rough) * geomSGGX(NdL, rough);
-    float3 F = fresnel(HdV, F0);
-    float3 spec = (D * G * F) / max(4.0 * NdV * NdL, 1e-3);
-    float3 diff = (1.0 - F) * (1.0 - metal) * albedo / PI;
-    return (diff + spec) * l.color * l.intensity * atten * NdL;
+    float NdV = max(dot(N, V), 0.0);
+
+    // Disney/UE4 perceptual-roughness remap: alpha = roughness^2, matching what
+    // NormalDistributionGGX/GeometricShadowingMaskingGGXCorrelated (BRDF/GGX.si) expect as
+    // roughnessA2 = alpha^2. The old ad-hoc distGGX/geomSGGX used `rough` directly as alpha with
+    // no remap, so this reads slightly differently on the same slider value than before.
+    // expected when swapping to a properly-conventioned BRDF library, not a regression.
+    float roughnessA = max(rough * rough, 0.0009); // avoid a fully-singular mirror lobe
+    float roughnessA2 = roughnessA * roughnessA;
+
+    // GeometricShadowingMaskingGGXCorrelated (height-correlated Smith) already folds the
+    // 4*NdotV*NdotL denominator AND NdotL itself into its result (see SpecularGGX's own
+    // comment). Unlike the old geomSGGX, which needed both applied by the caller. So spec is
+    // combined with diff*NdL below rather than inside a shared (diff+spec)*NdL.
+    //
+    // multiScatterCompensation is left at 1 (disabled): proper multi-scatter energy
+    // compensation needs a precomputed LUT this engine doesn't have yet. Known, minor
+    // simplification (slightly less energetic at high roughness), not a bug.
+    float3 spec = SpecularGGX(V, L, N, F0, NdV, roughnessA2, float3(1.0, 1.0, 1.0));
+
+    float HdotV = saturate(dot(normalize(V + L), V));
+    float3 F = FresnelSchlick(HdotV, F0);
+    float3 diff = (1.0 - F) * (1.0 - metal) * albedo * INV_PI;
+
+    return (diff * NdL + spec) * l.color * l.intensity * atten;
 }
 
 struct FSOutput
@@ -155,7 +162,32 @@ FSOutput fragmentMain(VSOutput input)
     float3 V  = normalize(frame.cameraPos.xyz - wp);
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metal);
 
-    float3 Lo = lerp(float3(0.03, 0.03, 0.03), float3(0.07, 0.07, 0.07), N.y * 0.5 + 0.5) * albedo * ao;
+    // Real ambient, replacing a flat 0.03/0.07 grey constant: same two-colour sky/ground model
+    // SSR's ProbeFallback uses (frame.ambientSkyColor/ambientGroundColor, sourced from SSR's own
+    // tunables in SceneRenderer::RenderScene), so a surface's diffuse ambient and its SSR-
+    // reflected sky colour agree instead of ambient being unrelated to what SSR shows.
+    //
+    // Weighted by (1-F)*(1-metal), mirroring evalLight()'s diffuse term below: energy that goes
+    // into Fresnel-driven specular reflection (which SSR supplies via ProbeFallback at grazing
+    // angles, where F->1) doesn't also go into diffuse. Without this, near-normal incidence showed
+    // almost nothing (F0=0.04, near-black placeholder ambient) while grazing incidence showed
+    // nearly full sky brightness via SSR alone, the exact 'flips from black to bright depending
+    // on where I am looking' symptom. With it, near-normal incidence gets a real, sky-coloured
+    // ambient instead of near-black, and hands off to SSR's reflection smoothly as F rises, so the
+    // two no longer read as a discontinuity.
+    //
+    // Also fades with sun elevation (frame.sunDirIntensity.y), matching Lit.shader's ambientDay/
+    // ambientNight blend, deferred-path (gbuffer) objects previously had no day/night ambient
+    // response at all, unlike forward-path ones.
+    float horizonFade = smoothstep(-0.10, 0.0, frame.sunDirIntensity.y);
+    float NdV = max(dot(N, V), 0.0);
+    float3 Famb = FresnelSchlickWithRoughness(NdV, F0, rough);
+    float3 ambientSky = lerp(frame.ambientGroundColor.rgb, frame.ambientSkyColor.rgb, N.y * 0.5 + 0.5)
+                       * frame.ambientSkyColor.a;
+    float3 ambientNight = float3(0.001, 0.001, 0.001);
+    float3 ambient = lerp(ambientNight, ambientSky, horizonFade);
+
+    float3 Lo = ambient * albedo * (1.0 - Famb) * (1.0 - metal) * ao;
 
     uint cidx   = clusterIdx(input.svPosition.xy, wp);
     uint offset = lists[cidx].offset, count = lists[cidx].count;

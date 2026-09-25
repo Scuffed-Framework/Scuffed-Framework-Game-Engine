@@ -12,9 +12,9 @@
 //       uint32 m_maxMipLevels = 4;
 //       ...
 //
-//       static void Reflect(sf::reflect::ReflectContext* context)
+//       static void Reflect(SF::RTTI::ReflectContext* context)
 //       {
-//           if (auto* serializeContext = ::rtti_cast<sf::reflect::SerializeContext>(context))
+//           if (auto* serializeContext = ::rtti_cast<SF::RTTI::SerializeContext>(context))
 //           {
 //               serializeContext->Class<CloudscapeShaderConstantData>()
 //                   ->Version(1)

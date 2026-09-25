@@ -1,0 +1,39 @@
+// Fresnel.si
+// Schlick Fresnel approximations, ported from O3DE's Fresnel.azsli.
+#pragma once
+
+
+float3 FresnelSchlickF90(
+    const float HdotV,
+    const float3 F0,
+    const float F90)
+{
+    return F0 + (F90 - F0) * pow(1.0 - HdotV, 5.0);
+}
+
+
+float3 FresnelSchlick(
+    const float HdotV,
+    const float3 F0)
+{
+    return FresnelSchlickF90(HdotV, F0, 1.0);
+}
+
+
+// Roughness-aware variant for ambient/IBL Fresnel: as roughness increases, F90 is allowed to
+// drop below 1.0 (a rough surface's grazing-angle response is less mirror-like than a smooth
+// one's), so this reads as NdotV against the SURFACE (not the half-vector against a specific
+// light), unlike FresnelSchlick above which is meant for direct-light specular at HdotV.
+float3 FresnelSchlickWithRoughness(
+    const float NdotV,
+    const float3 specularF0,
+    const float roughness)
+{
+    float smoothness = 1.0 - roughness;
+    float3 F0 = specularF0;
+
+    float3 F90 = max(smoothness, F0);
+    float fresnel = pow(1.0 - saturate(NdotV), 5.0);
+
+    return F0 + (F90 - F0) * fresnel;
+}

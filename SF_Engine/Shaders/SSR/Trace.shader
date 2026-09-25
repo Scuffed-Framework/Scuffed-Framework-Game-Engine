@@ -126,7 +126,8 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
 
     float4 rayDir4 = inRayDir.Load(int3(workPos, 0));
     float4 rayData = inRayData.Load(int3(workPos, 0));
-    bool bSky = rayData.b > 0.5;
+    bool bSky = rayData.b > 0.9;       // true background -- RayGen.shader's depth<=0 case
+    bool bTooRough = rayData.b > 0.4 && rayData.b < 0.6; // RayGen's roughness-cutoff case (b=0.5)
 
     float2 uv = (float2(workPos) + 0.5) * kSSR.invScreenSize;
     float depth = gbufDepth.Load(int3(workPos, 0)).r;
@@ -138,9 +139,32 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         return;
     }
 
+    float pdf = rayData.a;
+
+    // Too-rough pixel: rayDir4.xyz is the surface NORMAL (see RayGen.shader), not a reflection
+    // direction -- deliberately skip March() here. A mirror bounce off a rough surface is
+    // maximally sensitive to per-pixel normal variance and would sample wildly incoherent scene
+    // points frame-to-frame and pixel-to-pixel (visible as speckle noise); the normal itself
+    // varies smoothly, so feeding it straight to the probe reads as a stable ambient-like term
+    // instead, and skipping the march is strictly cheaper than the old "trace a mirror bounce
+    // that's unlikely to hit anything useful anyway" approach.
+    if (bTooRough)
+    {
+        if (kSSR.bProbeFallbackEnabled != 0)
+        {
+            float3 probeColor = ProbeFallback(normalize(rayDir4.xyz));
+            imgTraceColor[workPos] = float4(probeColor, 0.6);
+        }
+        else
+        {
+            imgTraceColor[workPos] = float4(0.0, 0.0, 0.0, 0.0);
+        }
+        imgTraceHit[workPos] = float4(0.0, 0.0, pdf, 0.0);
+        return;
+    }
+
     float3 worldPos = SSR_WorldPosFromDepth(uv, depth, kCam.inverseProjection, kCam.inverseView);
     float3 rayDirWorld = normalize(rayDir4.xyz);
-    float pdf = rayData.a;
 
     float viewZ0 = SSR_ViewZ(worldPos, kCam.view);
     float jitter = BlueNoiseErrorDistrib(uint(workPos.x), uint(workPos.y), uint(kSSR.frameIndex), 2u);

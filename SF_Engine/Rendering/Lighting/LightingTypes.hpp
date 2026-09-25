@@ -81,6 +81,16 @@ namespace SF::Engine::Lighting
         // Used by Lit.shader to modulate the ambient term so the scene goes dark
         // when the sun dips below the horizon (matching the atmosphere response).
         Vec4 sunDirIntensity; // .xyz = towardSun, .w = intensity (0 at night)
+
+        // Ambient (image-based) term: two-colour sky/ground model, matching
+        // SSRPipelinePass::ambientSkyColor/ambientGroundColor/ambientIntensity so a
+        // surface's diffuse ambient and its SSR-reflected sky colour agree instead of
+        // ambient being an unrelated flat constant. Sourced from SSR's own ImGui-tunable
+        // values in SceneRenderer::RenderScene (falls back to SSR's own defaults if no
+        // SSR pass exists this frame). .a on each carries ambientIntensity / padding so
+        // both fit in two Vec4s with no extra alignment bookkeeping.
+        Vec4 ambientSkyColor;    // .rgb = sky colour,    .a = ambientIntensity
+        Vec4 ambientGroundColor; // .rgb = ground colour, .a = unused
     };
     static_assert(sizeof(GpuFrameData) % 16 == 0);
 }

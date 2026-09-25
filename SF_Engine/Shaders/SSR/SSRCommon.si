@@ -21,8 +21,8 @@
 #include "Common/Camera.si"
 #include "Common/Math.si"
 #include "Common/DebugNaN.si"
-#include "PBR/Microfacet/GGX.slang"
-#include "PBR/Microfacet/Fresnel.slang"
+#include "Lighting/BRDF/GGX.si"
+#include "Lighting/BRDF/Fresnel.si"
 
 #ifndef SSR_CAMERA_BIND
 #define SSR_CAMERA_BIND 31
