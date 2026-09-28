@@ -67,7 +67,15 @@ namespace SF::Engine
             VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
             VK_POLYGON_MODE_FILL,
             VK_CULL_MODE_BACK_BIT,
-            VK_FRONT_FACE_COUNTER_CLOCKWISE);
+            VK_FRONT_FACE_COUNTER_CLOCKWISE,
+            false,
+            std::vector<VkDescriptorSetLayout>{},
+            // A G-buffer must overwrite, never blend. This used to fall through to the
+            // RhiRenderPipeline default (PremultipliedAlpha: src*1 + dst*(1-srcA)), so every
+            // attachment whose shader-output alpha wasn't 1 accumulated onto the clear value /
+            // previous overdraw instead of replacing it -- gbuf_pbr's alpha is *emission*, and
+            // gbuf_normal is a 2-channel RG output with no defined alpha at all.
+            RhiRenderPipeline::Blend::Opaque);
 
         descSet_ = std::make_unique<DescriptorSet>(*pipeline_);
 

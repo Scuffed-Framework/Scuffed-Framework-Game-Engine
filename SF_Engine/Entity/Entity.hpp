@@ -1,13 +1,16 @@
 #pragma once
 
-#include <UtilityClasses/NoCopy.hpp>
 #include <Entity/Components/Component.hpp>
+#include <UtilityClasses/NoCopy.hpp>
+#include <ranges>
 #include <string>
+#include <typeindex>
 #include <unordered_map>
 
 namespace SF::Engine
 {
-    using EntityId = std::uint64_t;
+    using namespace std;
+    using EntityId                          = uint64_t;
     constexpr std::uint64_t InvalidEntityId = 0u; // should do the trick
     /**
      * @brief Tag component that presence/state of enabled flag. Entities
@@ -23,45 +26,44 @@ namespace SF::Engine
     class Entity
     {
     public:
-        Entity(const std::string &entityName, Entity *parent = nullptr);
+        Entity(const string &entityName, Entity *parent = nullptr);
 
-        virtual ~Entity() = default;
-        Entity(const Entity &) = delete;
+        virtual ~Entity()                 = default;
+        Entity(const Entity &)            = delete;
         Entity &operator=(const Entity &) = delete;
         Entity(Entity &&other) noexcept;
         Entity &operator=(Entity &&other) noexcept;
 
-        std::unordered_map<std::type_index, std::unique_ptr<Component>> components;
+        unordered_map<type_index, unique_ptr<Component>> components;
 
-        std::vector<std::unique_ptr<Entity>> children;
-        std::vector<std::string> tags = {};
-        std::string name;
+        vector<unique_ptr<Entity>> children;
+        vector<string> tags = {};
+        string name;
 
-        EntityId id = 0;
+        EntityId id    = 0;
         Entity *parent = nullptr;
 
         bool markedForRemoval = false;
-        bool active = true;
+        bool active           = true;
 
         bool IsMarkedForRemoval() const { return markedForRemoval; }
         void MarkForRemoval() { markedForRemoval = true; }
 
-        bool HasTag(std::string tag)
-        {
-            return std::find(tags.begin(), tags.end(), tag) != tags.end();
-        }
+        bool HasTag(const std::string &tag) { return ranges::find(tags, tag) != tags.end(); }
 
-        void AddTag(std::string tag)
+        void AddTag(const std::string &tag)
         {
-            if (std::find(tags.begin(), tags.end(), tag) == tags.end()) // not found
+            if (ranges::find(tags, tag) == tags.end()) // not found
                 tags.emplace_back(tag);
             else
-                Log::Warning("Call to add tag to entity failed because the entity already has that tag."); // wont crash the engine so warn.
+                Log::Warning(
+                        "Call to add tag to entity failed because the entity already has that tag."); // wont crash the
+                                                                                                      // engine so warn.
         }
 
         void RemoveTag(std::string tag)
         {
-            if (std::find(tags.begin(), tags.end(), tag) != tags.end()) // found
+            if (ranges::find(tags, tag) != tags.end()) // found
                 std::erase(tags, tag);
             else
                 Log::Warning("Entity does not have the tag:{}", tag);
@@ -79,19 +81,19 @@ namespace SF::Engine
         bool IsActive() const { return active; }
         void SetActive(bool isActive) { active = isActive; }
 
-        template <typename T, typename... Args>
+        template<typename T, typename... Args>
         T *AddComponent(Args &&...args)
         {
-            static_assert(std::is_base_of<Component, T>::value, "T must derive from Component");
+            static_assert(std::is_base_of_v<Component, T>, "T must derive from Component");
 
-            auto component = std::make_unique<T>(std::forward<Args>(args)...);
+            auto component  = std::make_unique<T>(std::forward<Args>(args)...);
             T *componentPtr = component.get();
             componentPtr->SetOwner(this);
             components[std::type_index(typeid(T))] = std::move(component);
             return componentPtr;
         }
 
-        template <typename T>
+        template<typename T>
         T *GetComponent()
         {
             // Fast path: exact concrete type was stored under typeid(T).
@@ -104,7 +106,7 @@ namespace SF::Engine
 
             // Fallback: T might be a base/interface type (e.g. IRenderable)
             // that some other concrete component derives from.
-            for (auto &[type, component] : components)
+            for (auto &component: components | views::values)
             {
                 if (T *result = dynamic_cast<T *>(component.get()))
                     return result;
@@ -112,7 +114,7 @@ namespace SF::Engine
             return nullptr;
         }
 
-        template <typename T>
+        template<typename T>
         const T *GetComponent() const
         {
             // Fast path: exact concrete type was stored under typeid(T).
@@ -125,7 +127,7 @@ namespace SF::Engine
 
             // Fallback: T might be a base/interface type (e.g. IRenderable)
             // that some other concrete component derives from.
-            for (auto &[type, component] : components)
+            for (const auto &component: components | views::values)
             {
                 if (T *result = dynamic_cast<T *>(component.get()))
                     return result;
@@ -133,7 +135,7 @@ namespace SF::Engine
             return nullptr;
         }
 
-        template <typename T>
+        template<typename T>
         bool RemoveComponent()
         {
             if constexpr (std::is_same_v<T, Transform>)
@@ -167,7 +169,7 @@ namespace SF::Engine
          */
         bool RemoveComponentByType(std::type_index ti);
 
-        template <typename T>
+        template<typename T>
         bool HasComponent()
         {
             return GetComponent<T>() != nullptr;
@@ -175,7 +177,7 @@ namespace SF::Engine
 
         bool HasComponent(std::string_view typeName) const
         {
-            for (auto &[type, component] : components)
+            for (const auto &component: components | views::values)
             {
                 if (component->GetTypeName() == typeName)
                     return true;
@@ -192,13 +194,13 @@ namespace SF::Engine
          *        T must derive from Entity. Parent is set after construction,
          *        so pass only T's non-parent constructor args here.
          */
-        template <typename T = Entity, typename... Args>
+        template<typename T = Entity, typename... Args>
         T *AddChild(Args &&...args)
         {
-            static_assert(std::is_base_of<Entity, T>::value, "T must derive from Entity");
-            auto child = std::make_unique<T>(std::forward<Args>(args)...);
+            static_assert(std::is_base_of_v<Entity, T>, "T must derive from Entity");
+            auto child    = std::make_unique<T>(std::forward<Args>(args)...);
             child->parent = this;
-            T *ptr = child.get();
+            T *ptr        = child.get();
             children.push_back(std::move(child));
             return ptr;
         }
@@ -214,7 +216,7 @@ namespace SF::Engine
             assert(child->parent == nullptr && "Entity already has a parent; use SetParent() to reparent");
 
             child->parent = this;
-            Entity *ptr = child.get();
+            Entity *ptr   = child.get();
             children.push_back(std::move(child));
             return ptr;
         }
@@ -232,7 +234,7 @@ namespace SF::Engine
             assert(child->parent == nullptr && "Entity already has a parent; use SetParent() to reparent");
 
             child->parent = this;
-            Entity *ptr = child.get();
+            Entity *ptr   = child.get();
             children.push_back(std::move(child));
             return ptr;
         }
@@ -243,9 +245,7 @@ namespace SF::Engine
          */
         std::unique_ptr<Entity> ReleaseChild(Entity *child)
         {
-            auto it = std::find_if(children.begin(), children.end(),
-                                   [child](const std::unique_ptr<Entity> &c)
-                                   { return c.get() == child; });
+            auto it = ranges::find_if(children, [child](const std::unique_ptr<Entity> &c) { return c.get() == child; });
 
             if (it == children.end())
                 return nullptr;
@@ -261,9 +261,7 @@ namespace SF::Engine
          */
         bool DestroyChild(Entity *child)
         {
-            auto it = std::find_if(children.begin(), children.end(),
-                                   [child](const std::unique_ptr<Entity> &c)
-                                   { return c.get() == child; });
+            auto it = ranges::find_if(children, [child](const std::unique_ptr<Entity> &c) { return c.get() == child; });
 
             if (it == children.end())
                 return false;
@@ -280,7 +278,7 @@ namespace SF::Engine
         {
             if (candidate == this)
                 return true;
-            for (auto &child : children)
+            for (auto &child: children)
             {
                 if (child->IsSelfOrDescendant(candidate))
                     return true;
@@ -299,16 +297,15 @@ namespace SF::Engine
             if (newParent == parent)
                 return;
             assert(newParent != this && "Entity cannot be its own parent");
-            assert((newParent == nullptr || !newParent->IsSelfOrDescendant(this)) && "Reparenting would create a cycle");
-            assert(parent != nullptr &&
-                   "This entity has no current parent; reparent it via the owning Scene instead");
+            assert((newParent == nullptr || !newParent->IsSelfOrDescendant(this)) &&
+                   "Reparenting would create a cycle");
+            assert(parent != nullptr && "This entity has no current parent; reparent it via the owning Scene instead");
 
             std::unique_ptr<Entity> self = parent->ReleaseChild(this);
             if (newParent)
             {
                 newParent->AddChild(std::move(self));
-            }
-            else
+            } else
             {
                 // Detaching to become a root entity: hand `self` off to
                 // wherever your Scene keeps root entities.
@@ -330,14 +327,14 @@ namespace SF::Engine
         /**
          * @brief Creates a new root entity of type T, owned directly by the registry.
          */
-        template <typename T = Entity, typename... Args>
+        template<typename T = Entity, typename... Args>
         T *CreateEntity(Args &&...args)
         {
             EntityId id = nextId++;
             auto entity = std::make_unique<T>(std::forward<Args>(args)...);
             entity->SetId(id);
 
-            T *ptr = entity.get();
+            T *ptr     = entity.get();
             lookup[id] = ptr;
             roots.push_back(std::move(entity));
             return ptr;
@@ -350,14 +347,14 @@ namespace SF::Engine
          *        entity is owned by `roots`, a child is owned by its parent's
          *        `children`; mixing those up leaves the registry inconsistent.
          */
-        template <typename T = Entity, typename... Args>
+        template<typename T = Entity, typename... Args>
         T *CreateChildEntity(Entity *parent, Args &&...args)
         {
             if (!parent)
                 return CreateEntity<T>(std::forward<Args>(args)...);
 
             EntityId id = nextId++;
-            T *ptr = parent->AddChild<T>(std::forward<Args>(args)...);
+            T *ptr      = parent->AddChild<T>(std::forward<Args>(args)...);
             ptr->SetId(id);
             lookup[id] = ptr;
             return ptr;
@@ -394,12 +391,10 @@ namespace SF::Engine
             if (Entity *parent = entity->GetParent())
             {
                 parent->DestroyChild(entity);
-            }
-            else
+            } else
             {
-                auto it = std::find_if(roots.begin(), roots.end(),
-                                       [entity](const std::unique_ptr<Entity> &e)
-                                       { return e.get() == entity; });
+                auto it = ranges::find_if(roots,
+                                          [entity](const std::unique_ptr<Entity> &e) { return e.get() == entity; });
                 if (it != roots.end())
                     roots.erase(it);
             }
@@ -424,20 +419,17 @@ namespace SF::Engine
         {
             if (!entity || entity == newParent)
                 return;
-            assert((!newParent || !newParent->IsSelfOrDescendant(entity)) &&
-                   "Reparenting would create a cycle");
+            assert((!newParent || !newParent->IsSelfOrDescendant(entity)) && "Reparenting would create a cycle");
 
             std::unique_ptr<Entity> owned;
 
             if (Entity *oldParent = entity->GetParent())
             {
                 owned = oldParent->ReleaseChild(entity);
-            }
-            else
+            } else
             {
-                auto it = std::find_if(roots.begin(), roots.end(),
-                                       [entity](const std::unique_ptr<Entity> &e)
-                                       { return e.get() == entity; });
+                auto it = ranges::find_if(roots,
+                                          [entity](const std::unique_ptr<Entity> &e) { return e.get() == entity; });
                 assert(it != roots.end() && "Entity not tracked by this registry");
                 owned = std::move(*it);
                 roots.erase(it);
@@ -446,8 +438,7 @@ namespace SF::Engine
             if (newParent)
             {
                 newParent->AddChild(std::move(owned));
-            }
-            else
+            } else
             {
                 owned->SetParentRaw(nullptr); // just clears the pointer, no reparent logic needed
                 roots.push_back(std::move(owned));
@@ -459,7 +450,7 @@ namespace SF::Engine
          */
         void ForEach(const std::function<void(Entity *)> &fn) const
         {
-            for (auto &root : roots)
+            for (auto &root: roots)
                 VisitRecursive(root.get(), fn);
         }
 
@@ -473,11 +464,14 @@ namespace SF::Engine
         {
             // Collect first; DestroyEntity mutates the containers we'd be iterating.
             std::vector<Entity *> toRemove;
-            ForEach([&](Entity *e)
+            ForEach(
+                    [&](Entity *e)
                     {
-                if (e->IsMarkedForRemoval()) toRemove.push_back(e); });
+                        if (e->IsMarkedForRemoval())
+                            toRemove.push_back(e);
+                    });
 
-            for (Entity *e : toRemove)
+            for (Entity *e: toRemove)
             {
                 if (!IsValid(e))
                     continue;
@@ -485,23 +479,20 @@ namespace SF::Engine
             }
         }
 
-        bool IsValid(Entity *entity) const
-        {
-            return entity != nullptr && lookup.count(entity->GetId()) != 0;
-        }
+        bool IsValid(Entity *entity) const { return entity != nullptr && lookup.count(entity->GetId()) != 0; }
 
     private:
         void VisitRecursive(Entity *entity, const std::function<void(Entity *)> &fn) const
         {
             fn(entity);
-            for (auto &child : entity->GetChildren())
+            for (auto &child: entity->GetChildren())
                 VisitRecursive(child.get(), fn);
         }
 
         void UnregisterSubtree(Entity *entity)
         {
             lookup.erase(entity->GetId());
-            for (auto &child : entity->GetChildren())
+            for (auto &child: entity->GetChildren())
                 UnregisterSubtree(child.get());
         }
 
@@ -529,13 +520,8 @@ namespace SF::Engine
 
         std::unique_ptr<Entity> RemoveRoot(Entity *entity)
         {
-            auto it = std::find_if(
-                roots.begin(),
-                roots.end(),
-                [entity](const std::unique_ptr<Entity> &root)
-                {
-                    return root.get() == entity;
-                });
+            auto it = ranges::find_if(roots,
+                                      [entity](const std::unique_ptr<Entity> &root) { return root.get() == entity; });
 
             if (it == roots.end())
                 return nullptr;
@@ -562,4 +548,4 @@ namespace SF::Engine
             }
         }
     };
-}
+} // namespace SF::Engine

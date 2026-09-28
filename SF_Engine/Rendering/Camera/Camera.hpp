@@ -49,27 +49,25 @@ namespace SF::Engine
          * Gets the distance of the near pane of the view frustum.
          * @return The distance of the near pane of the view frustum.
          */
-        float GetNearPlane() const { return nearPlane; }
+        [[nodiscard]] float GetNearPlane() const { return nearPlane; }
         void SetNearPlane(float nearPlane) { this->nearPlane = nearPlane; }
 
         /**
          * Gets the distance of the view frustum's far plane.
          * @return The distance of the view frustum's far plane.
          */
-        float GetFarPlane() const { return farPlane; }
+        [[nodiscard]] float GetFarPlane() const { return farPlane; }
         void SetFarPlane(float farPlane) { this->farPlane = farPlane; }
 
         /**
          * Gets the field of view angle for the view frustum.
          * @return The field of view angle for the view frustum.
          */
-        float GetFieldOfView() const { return fieldOfView; }
+        [[nodiscard]] float GetFieldOfView() const { return fieldOfView; }
         void SetFieldOfView(float fieldOfView) { this->fieldOfView = fieldOfView; }
-
-        Vec3 GetPosition() const { return position; }
-
-        const Vec3 &GetRotation() const { return rotation; }
-        const Vec3 &GetVelocity() const { return velocity; }
+        [[nodiscard]] Vec3 GetPosition() const { return position; }
+        [[nodiscard]] const Vec3 &GetRotation() const { return rotation; }
+        [[nodiscard]] const Vec3 &GetVelocity() const { return velocity; }
 
         /**
          * Gets the view matrix created by the current camera position and rotation.
@@ -81,33 +79,33 @@ namespace SF::Engine
          * Gets the projection matrix used in the current scene render.
          * @return The projection matrix used in the current scene render.
          */
-        const Mat4 &GetProjectionMatrix() const { return projectionMatrix; }
+        [[nodiscard]] const Mat4 &GetProjectionMatrix() const { return projectionMatrix; }
 
         /**
          * Gets the view frustum created by the current camera position and rotation.
          * @return The view frustum created by the current camera position and rotation.
          */
-        const Frustum &GetViewFrustum() const { return viewFrustum; }
+        [[nodiscard]] const Frustum &GetViewFrustum() const { return viewFrustum; }
 
         /**
          * Gets the ray that extends from the cameras position though the screen.
          * @return The cameras view ray.
          */
-        const Ray &GetViewRay() const { return viewRay; }
+        [[nodiscard]] const Ray &GetViewRay() const { return viewRay; }
 
-        Vec3 GetFront() const { return front_; }
+        [[nodiscard]] Vec3 GetFront() const { return front_; }
 
         /**
         @brief inverse depth buffer and infinite far plane,
         no way to turn off inv z and infinite depth
         @claude fix this
         */
-        bool IsInverseZ() const { return inverseZ; }
+        [[nodiscard]] bool IsInverseZ() const { return inverseZ; }
         void SetInverseZ(bool value) { inverseZ = value; }
-        bool IsFarPlaneInfinite() const { return infiniteFarPlane; }
+        [[nodiscard]] bool IsFarPlaneInfinite() const { return infiniteFarPlane; }
         void SetFarPlaneInfinite(bool value) { infiniteFarPlane = value; }
 
-        Mat4 GetProjection(float aspect) const
+        [[nodiscard]] Mat4 GetProjection(float aspect) const
         {
             if (infiniteFarPlane)
                 return InfiniteFarProjection(aspect);
@@ -141,7 +139,7 @@ namespace SF::Engine
          * volumetric/cloud reprojection, etc).
          * @return The previous frame's view-projection matrix.
          */
-        const Mat4 &GetPrevViewProjection() const { return prevViewProjection; }
+        [[nodiscard]] const Mat4 &GetPrevViewProjection() const { return prevViewProjection; }
 
         /**
          * Snapshots the current viewMatrix/projectionMatrix into prevViewProjection.
@@ -153,7 +151,7 @@ namespace SF::Engine
 
         void SetPosition(Vec3 p) { position = p; }
 
-        Mat4 InfiniteFarProjection(float aspect) const
+        [[nodiscard]] Mat4 InfiniteFarProjection(float aspect) const
         {
             float f = 1.0f / std::tan(glm::radians(fovDeg) * 0.5f);
             Mat4 p(0.0f);
@@ -185,7 +183,7 @@ namespace SF::Engine
             up_    = normalize(cross(right_, front_));
         }
 
-        Mat4 GetView() const
+        [[nodiscard]] Mat4 GetView() const
         {
             // Build view matrix from basis vectors directly instead of lookAt(eye, eye+dir, up).
             // lookAt(position_, position_ + front_, up) loses precision at large |position_|
@@ -259,4 +257,4 @@ namespace SF::Engine
         delete detail::g_sharedCameraBuffer;
         detail::g_sharedCameraBuffer = nullptr;
     }
-}
+} // namespace SF::Engine

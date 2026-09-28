@@ -1,21 +1,28 @@
 #pragma once
 #include <Math/KVP.hpp>
 #include <vector>
+#include "Keyframe.hpp"
 
-namespace SF::Engine
+namespace SF::Engine::Animation
 {
+    using namespace std;
     class AnimationCurve
     {
     public:
         // Properties
-        std::vector<KeyValuePair<float, float>> keyframes;
+        vector<Keyframe> keyframes;
         const int length = static_cast<int>(keyframes.size());
 
-        KeyValuePair<float, float> AddKeyframe(float time, float value)
+        Keyframe AddKeyframe(const Keyframe &frame)
         {
-            KeyValuePair<float, float> kvp(time, value);
-            keyframes.push_back(kvp);
-            return kvp;
+            keyframes.push_back(frame);
+            return frame;
+        }
+
+        void RemoveKeyframe(const Keyframe &frame)
+        {
+            if (const auto it = ranges::find(keyframes, frame); it != keyframes.end())
+                keyframes.erase(it);
         }
     };
-} // namespace SF::Engine
+} // namespace SF::Engine::Animation

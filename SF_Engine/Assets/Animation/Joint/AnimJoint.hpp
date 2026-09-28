@@ -4,7 +4,6 @@
 #include <Math/Quaternion/Quaternion.hpp>
 #include <Math/Vectors/Vector3.hpp>
 
-
 namespace SF::Engine
 {
     using namespace std;
@@ -35,7 +34,7 @@ namespace SF::Engine
             [[nodiscard]] const string &GetName() const { return name; }
             void SetName(const string &name) { this->name = name; }
 
-            [[nodiscard]] const glm::vec<Joint> &GetChildren() const { return children; }
+            [[nodiscard]] const vector<Joint> &GetChildren() const { return children; }
 
             void AddChild(const Joint &child) { children.emplace_back(child); }
 
@@ -56,7 +55,7 @@ namespace SF::Engine
             vector<Joint> children;
 
             Mat4 localBindTransform;
-            Mat4 inverseBindTransform;
+            Mat4 inverseBindTransform{};
         };
 
         class JointTransform
@@ -80,6 +79,11 @@ namespace SF::Engine
 
             [[nodiscard]] const Quaternion &GetRotation() const { return rotation; }
             void SetRotation(const Quaternion &rotation) { this->rotation = rotation; }
+
+            bool operator==(const JointTransform &other) const
+            {
+                return position == other.position && rotation == other.rotation;
+            }
 
         private:
             Vec3 position;

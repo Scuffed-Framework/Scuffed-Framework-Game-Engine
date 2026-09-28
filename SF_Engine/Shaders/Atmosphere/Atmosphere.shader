@@ -99,7 +99,15 @@ void atmo_cs(uint3 globalThreadID: SV_DispatchThreadID)
         float3 scatter, transmit;
         sampleAerialPerspective(screenUV, sceneDist, scatter, transmit);
         float transmitLuma = dot(transmit, float3(0.2126, 0.7152, 0.0722));
-        imgAtmoColor[pixel] = float4(scatter, transmitLuma);
+        // Alpha is the *opacity* of the air in front of the surface (1 - transmittance), NOT the
+        // transmittance itself: AtmosphereComposite.shader blends with PremultipliedAlpha,
+        // finalRGB = srcRGB + dstRGB * (1 - srcA). To get the intended
+        //   scatter + surface * transmittance
+        // the (1 - srcA) factor has to equal the transmittance, so srcA = 1 - transmittance.
+        // Writing the transmittance directly (as this used to) inverted it: a nearby surface
+        // (transmittance ~1) was multiplied by ~0 and rendered black, getting brighter only as
+        // distance grew and transmittance fell.
+        imgAtmoColor[pixel] = float4(scatter, 1.0 - transmitLuma);
         return;
     }
 

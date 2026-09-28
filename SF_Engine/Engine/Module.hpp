@@ -6,6 +6,7 @@
 #include <memory>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <LowLevel/Reflection/RTTI/RTTI.hpp>
@@ -18,6 +19,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     // Forward declaration
     class Module;
 
@@ -46,7 +48,7 @@ namespace SF::Engine
      * @brief Concept to ensure a type is derived from Module
      */
     template<typename T>
-    concept ModuleDerived = std::is_base_of_v<Module, T> && !std::is_same_v<Module, T>;
+    concept ModuleDerived = is_base_of_v<Module, T> && !is_same_v<Module, T>;
 
     /**
      * @brief Factory for creating and managing module instances
@@ -60,13 +62,13 @@ namespace SF::Engine
          */
         struct CreateInfo
         {
-            std::function<std::unique_ptr<Base>()> createFunc;
+            function<unique_ptr<Base>()> createFunc;
             ModuleStage stage;
-            std::vector<TypeId> dependencies;
-            std::string_view name; // For debugging and logging
+            vector<TypeId> dependencies;
+            string_view name; // For debugging and logging
         };
 
-        using RegistryMap = std::unordered_map<TypeId, CreateInfo>;
+        using RegistryMap = unordered_map<TypeId, CreateInfo>;
 
         virtual ~ModuleFactory() = default;
 
@@ -86,9 +88,9 @@ namespace SF::Engine
         class Requires // Ensure this is in a public section
         {
         public:
-            [[nodiscard]] std::vector<TypeId> Get() const
+            [[nodiscard]] vector<TypeId> Get() const
             {
-                std::vector<TypeId> dependencies;
+                vector<TypeId> dependencies;
                 dependencies.reserve(sizeof...(Args));
                 (dependencies.emplace_back(TypeInfo<Base>::template GetTypeId<Args>()), ...);
                 return dependencies;
@@ -119,18 +121,18 @@ namespace SF::Engine
                 s_registeredName  = typeid(T).name();
 
                 ModuleFactory::Registry()[TypeInfo<Base>::template GetTypeId<T>()] = {
-                        []() -> std::unique_ptr<Base>
+                        []() -> unique_ptr<Base>
                         {
                             s_instance = new T();
-                            return std::unique_ptr<Base>(s_instance);
+                            return unique_ptr<Base>(s_instance);
                         },
                         stage, dependencies.Get(), s_registeredName};
 
                 return true;
             }
 
-            inline static ModuleStage s_registeredStage     = ModuleStage::Never;
-            inline static std::string_view s_registeredName = "";
+            inline static ModuleStage s_registeredStage = ModuleStage::Never;
+            inline static string_view s_registeredName  = "";
 
         private:
             inline static T *s_instance = nullptr;
@@ -166,7 +168,7 @@ namespace SF::Engine
         /**
          * @brief Stage and type identifier pair
          */
-        using StageIndex = std::pair<Stage, TypeId>;
+        using StageIndex = pair<Stage, TypeId>;
 
         virtual ~Module() = default;
 
@@ -199,7 +201,7 @@ namespace SF::Engine
         /**
          * @brief Get the module's name (for debugging)
          */
-        [[nodiscard]] virtual std::string_view GetName() const = 0;
+        [[nodiscard]] virtual string_view GetName() const = 0;
     };
 
     // Explicit template instantiation
@@ -220,7 +222,7 @@ namespace SF::Engine
 
         [[nodiscard]] TypeId GetTypeId() const override { return TypeInfo<Module>::template GetTypeId<T>(); }
 
-        [[nodiscard]] std::string_view GetName() const override { return ModuleRegistrar<T>::s_registeredName; }
+        [[nodiscard]] string_view GetName() const override { return ModuleRegistrar<T>::s_registeredName; }
     };
 
     /**
@@ -229,71 +231,54 @@ namespace SF::Engine
     class ModuleFilter
     {
     public:
-        static constexpr size_t MaxModules = 128;
-
-        ModuleFilter() { IncludeAll(); }
+        ModuleFilter() { m_includeAll = true; }
 
         template<ModuleDerived T>
         [[nodiscard]] bool Check() const noexcept
         {
-            const auto id = TypeInfo<Module>::GetTypeId<T>();
-            return id < MaxModules && m_include.test(id);
+            return Check(TypeInfo<Module>::GetTypeId<T>());
         }
 
-        [[nodiscard]] bool Check(TypeId typeId) const noexcept { return typeId < MaxModules && m_include.test(typeId); }
+        [[nodiscard]] bool Check(TypeId typeId) const noexcept
+        {
+            if (m_includeAll)
+                return !m_excluded.contains(typeId);
+            return m_included.contains(typeId);
+        }
 
         template<ModuleDerived T>
         ModuleFilter &Exclude() noexcept
         {
-            const auto id = TypeInfo<Module>::GetTypeId<T>();
-            if (id < MaxModules)
-                m_include.reset(id);
+            m_excluded.insert(TypeInfo<Module>::GetTypeId<T>());
+            m_includeAll = true;
             return *this;
         }
 
         template<ModuleDerived T>
         ModuleFilter &Include() noexcept
         {
-            const auto id = TypeInfo<Module>::GetTypeId<T>();
-            if (id < MaxModules)
-                m_include.set(id);
-            return *this;
-        }
-
-        template<ModuleDerived... Args>
-        ModuleFilter &Exclude() noexcept
-        {
-            (Exclude<Args>(), ...);
-            return *this;
-        }
-
-        template<ModuleDerived... Args>
-        ModuleFilter &Include() noexcept
-        {
-            (Include<Args>(), ...);
+            m_included.insert(TypeInfo<Module>::GetTypeId<T>());
+            m_includeAll = false;
             return *this;
         }
 
         ModuleFilter &ExcludeAll() noexcept
         {
-            m_include.reset();
+            m_includeAll = false;
+            m_included.clear();
             return *this;
         }
-
         ModuleFilter &IncludeAll() noexcept
         {
-            m_include.set();
+            m_includeAll = true;
+            m_excluded.clear();
             return *this;
         }
 
-        [[nodiscard]] size_t Count() const noexcept { return m_include.count(); }
-
-        [[nodiscard]] bool Any() const noexcept { return m_include.any(); }
-
-        [[nodiscard]] bool All() const noexcept { return m_include.all(); }
-
     private:
-        std::bitset<MaxModules> m_include;
+        bool m_includeAll = true;
+        unordered_set<TypeId> m_included;
+        unordered_set<TypeId> m_excluded;
     };
 
 /**

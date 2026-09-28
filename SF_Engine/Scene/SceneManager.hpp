@@ -21,11 +21,11 @@ namespace SF::Engine
          * Gets the current scene.
          * @return The current scene.
          */
-        Scene *GetScene() const { return scene.get(); }
+        [[nodiscard]] Scene *GetScene() const { return scene.get(); }
 
         /**
          * Sets the current scene to a new scene.
-         * @param scene The new scene.
+         * @param newScene The new scene.
          */
         void SetScene(std::unique_ptr<Scene> &&newScene)
         {
@@ -33,7 +33,7 @@ namespace SF::Engine
             sceneStarted = false;
         }
 
-        bool IsSceneStarted() { return sceneStarted; }
+        [[nodiscard]] bool IsSceneStarted() const { return sceneStarted; }
 
     private:
         std::unique_ptr<Scene> scene;

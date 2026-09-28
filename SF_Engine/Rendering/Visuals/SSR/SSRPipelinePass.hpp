@@ -141,6 +141,8 @@ namespace SF::Engine
 
     private:
         void CreateResources();
+        void CreateScreenSizedResources(UVec2 resolution);
+        void EnsureResourcesSized(UVec2 required);
         void CreatePipelines(Pipeline::Stage stage);
         void BindStaticDescriptors();
         void UpdateUBO();
@@ -163,6 +165,14 @@ namespace SF::Engine
         const Image2d *compositeLastPbr_      = nullptr;
 
         static constexpr uint32_t kFramesInFlight = 3;
+
+        // The resolution rayDirRT_/traceColorRT_/filteredRT_/accumColor_/accumMoments_ are
+        // CURRENTLY allocated at. Checked every PreRender() against the live "hdr" attachment's
+        // extent (EnsureResourcesSized) so a window resize actually reallocates these -- they
+        // used to be sized once from GetScreenSize() at construction and never touched again,
+        // which is exactly why SSR only rendered correctly in a region matching whatever the
+        // window size was when the pass was constructed.
+        UVec2 allocatedRes_{0, 0};
 
         // Intra-frame scratch : written and consumed within the same
         // PreRender() call, so; like CloudPipelinePass's cloudRenderRT_/

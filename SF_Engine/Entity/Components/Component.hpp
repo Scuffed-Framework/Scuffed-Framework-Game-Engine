@@ -1,6 +1,5 @@
 #pragma once
 
-#include <LowLevel/XML/XMLModule.hpp>
 #include <UtilityClasses/StreamFactory.hpp>
 
 namespace SF::Engine
@@ -11,6 +10,7 @@ namespace SF::Engine
      */
     class Component : public StreamFactory<Component>, public Serializable
     {
+        SF_RTTI(Component, Serializable, StreamFactory<Component>)
     public:
         virtual ~Component() = default;
 

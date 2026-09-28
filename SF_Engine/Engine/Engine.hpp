@@ -48,9 +48,6 @@
 
 namespace SF::Engine
 {
-    // Provide a global constant version of the engine
-    inline const Version EngineVersion{Engine_VERSION_MAJOR, Engine_VERSION_MINOR, Engine_VERSION_PATCH};
-
     class Engine : NoCopy
     {
     public:
@@ -62,7 +59,7 @@ namespace SF::Engine
         static Engine *Get() { return Instance; }
 
         /**
-         * Carries out the setup for basic engine components and the engine. Call {@link Engine#Run}
+         * Carries out the setup for basic engine components and the engine. Call {@link Engine#Run @endlink}
          * after creating a instance.
          * @param argv0 The first argument passed to main.
          * @param moduleFilter A filter for blacklisting/whitelisting modules.
@@ -74,10 +71,6 @@ namespace SF::Engine
 
         ~Engine() override;
 
-        /**
-         * The update function for the updater.
-         * @return {@code EXIT_SUCCESS} or {@code EXIT_FAILURE}
-         */
         int32_t Run();
 
         /**

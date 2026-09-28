@@ -84,7 +84,17 @@ float3 worldPosFromDepth(float depth, float2 uv)
 
 uint clusterIdx(float2 fragCoord, float3 wp)
 {
-    uint2 tile  = uint2(fragCoord / (frame.screenSize / float2(CLUSTER_X, CLUSTER_Y)));
+    // tile.x/tile.y clamped explicitly: fragCoord can round to exactly frame.screenSize at an
+    // edge pixel, or frame.screenSize can momentarily disagree with the actual active render
+    // target (the same class of staleness bug SSRPipelinePass had before its resize fix) --
+    // either way, an unclamped tile.x/tile.y walking past CLUSTER_X/CLUSTER_Y silently reads a
+    // neighbouring or out-of-bounds cluster's light list. The sun (a directional light) is
+    // unconditionally present in every VALID cluster's list (see ClusterCull.shader), so a
+    // genuinely wrong-but-in-bounds cluster would still light the surface -- a fully black
+    // result specifically implies reading past the buffer's actual bounds, which is what this
+    // clamp forecloses.
+    uint2 tile = min(uint2(fragCoord / (frame.screenSize / float2(CLUSTER_X, CLUSTER_Y))),
+                     uint2(CLUSTER_X - 1, CLUSTER_Y - 1));
     float viewZ = -(mul(frame.view, float4(wp, 1.0))).z;
     uint  slice = uint(max(0.0,
         log(viewZ / frame.nearPlane) / log(frame.farPlane / frame.nearPlane) * float(CLUSTER_Z)));

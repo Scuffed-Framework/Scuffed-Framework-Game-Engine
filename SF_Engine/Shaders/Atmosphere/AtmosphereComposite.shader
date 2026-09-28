@@ -8,8 +8,8 @@
 //
 // Relies on the pipeline's PremultipliedAlpha blend state:
 //   finalRGB = srcRGB + dstRGB * (1 - srcA)
-// Sky pixels (Atmosphere.shader wrote alpha=1)      -> finalRGB = srcRGB
-// Geometry pixels (alpha=luminance(transmittance))  -> finalRGB = scatter + surface*transmit
+// Sky pixels (Atmosphere.shader wrote alpha=1)            -> finalRGB = srcRGB
+// Geometry pixels (alpha = 1 - luminance(transmittance)) -> finalRGB = scatter + surface*transmit
 // matching the same convention SSR's Composite.shader already uses.
 
 struct VSOutput
