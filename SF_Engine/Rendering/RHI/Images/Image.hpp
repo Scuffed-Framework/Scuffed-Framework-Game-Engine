@@ -15,8 +15,8 @@
 #include <LowLevel/Reflection/RTTISingle.hpp>
 #include <LowLevel/XML/XMLNodeWriter.hpp>
 
-#include "Gui/ocornut/imgui.h"
-#include "Gui/ocornut/imgui_impl_vulkan.h"
+#include <Gui/ImGui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui_impl_vulkan.h>
 
 SF_REFLECT_EXTERNAL_TYPE(VkExtent3D)
 

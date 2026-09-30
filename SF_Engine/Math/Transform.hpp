@@ -2,7 +2,7 @@
 
 #include <Math/Vectors/Vector.hpp>
 #include <Entity/Components/Component.hpp>
-#include <Math/Matrix/Matrix4.hpp>
+#include <Math/Matrix/Matrix.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <Scene/SceneSerialization.hpp>
 #include <glm/gtx/euler_angles.hpp>

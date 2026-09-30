@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Gui/UIRegistry.hpp>
+#include <Gui/ImGui/UIRegistry.hpp>
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/LUT/AlligatorNoiseLUT.hpp>
 #include <Rendering/LUT/BlueNoiseLUT.hpp>

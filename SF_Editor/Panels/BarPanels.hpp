@@ -1,5 +1,5 @@
 #pragma once
-#include <Gui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui.h>
 #include <Rendering/Camera/EditorCamera.hpp>
 #include <cstdio>
 #include <string>
@@ -10,8 +10,8 @@
 
 #include <Commands/CommandsWindow.hpp>
 
-#include <Gui/StaticPanel.hpp>
-#include <Gui/ocornut/imgui_stdlib.h>
+#include <Gui/ImGui/StaticPanel.hpp>
+#include <Gui/ImGui/ocornut/imgui_stdlib.h>
 
 namespace SF::Engine
 {

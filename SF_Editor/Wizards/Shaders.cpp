@@ -1,6 +1,6 @@
 #pragma once
 #include "Shaders.hpp"
-#include <Gui/GuiMembers.hpp>
+#include <Gui/ImGui/GuiMembers.hpp>
 #include <LowLevel/FileSystem/File.hpp>
 #include <Rendering/RHI/Shaders/ShaderAsset.hpp>
 #include "../Panels/AssetsWindow.hpp"

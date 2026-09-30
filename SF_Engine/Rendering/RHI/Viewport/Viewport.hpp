@@ -1,5 +1,5 @@
 #pragma once
-#include <Gui/ocornut/imgui_impl_vulkan.h>
+#include <Gui/ImGui/ocornut/imgui_impl_vulkan.h>
 #include <Rendering/Camera/Camera.hpp>
 #include <Rendering/RHI/Images/Image2d.hpp>
 #include <Rendering/RHI/Images/ImageDepth.hpp>
@@ -57,8 +57,10 @@ namespace SF::Engine
 
         vp->SetDesiredExtent(avail);
 
-        ImGui::Image(reinterpret_cast<ImTextureID>(vp->GetImGuiTexture()), ImGui::GetContentRegionAvail());
+        // awful. just awful.
+        ImGui::Image(ImTextureRef(reinterpret_cast<ImTextureID>(vp->GetImGuiTexture())),
+                     ImGui::GetContentRegionAvail());
 
         ImGui::End();
     }
-}
+} // namespace SF::Engine

@@ -1,6 +1,6 @@
 #include "Scene.hpp"
 #include <Rendering/FrameGraph/Stage.hpp>
-#include <Gui/ImGuiPipelinePass.hpp>
+#include <Gui/ImGui/ImGuiPipelinePass.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Lighting/LightingTypes.hpp>
@@ -20,7 +20,7 @@
 #include <Rendering/RHI/Images/ImageDepth.hpp>
 
 #include <Scene/SceneManager.hpp>
-#include <Gui/UIRegistry.hpp>
+#include <Gui/ImGui/UIRegistry.hpp>
 
 namespace SF::Engine
 {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Matrix/Matrix2.hpp"
-#include "Matrix/Matrix3.hpp"
-#include "Matrix/Matrix4.hpp"
+#include <glm/gtx/compatibility.hpp>
+
+#include "Matrix/Matrix.hpp"
 #include "Quaternion/Quaternion.hpp"
 #include "Vectors/Vector.hpp"
 

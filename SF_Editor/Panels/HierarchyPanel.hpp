@@ -1,9 +1,9 @@
 #pragma once
 
 #include <Entity/Entity.hpp>
-#include <Gui/StaticPanel.hpp>
-#include <Gui/UIRegistry.hpp>
-#include <Gui/ocornut/imgui.h>
+#include <Gui/ImGui/StaticPanel.hpp>
+#include <Gui/ImGui/UIRegistry.hpp>
+#include <Gui/ImGui/ocornut/imgui.h>
 #include <functional>
 #include <string>
 #include <vector>

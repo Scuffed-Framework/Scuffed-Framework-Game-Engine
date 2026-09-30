@@ -1,7 +1,7 @@
 #pragma once
 #include <Engine/Module.hpp>
-#include <Gui/FileDialog/ImGuiFileDialog.hpp>
-#include <Gui/UIRegistry.hpp>
+#include <Gui/ImGui/FileDialog/ImGuiFileDialog.hpp>
+#include <Gui/ImGui/UIRegistry.hpp>
 #include <LowLevel/FileSystem/File.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <Rendering/RHI/Images/Image2d.hpp>
@@ -152,9 +152,9 @@ namespace SF::Engine
         }
 
         // Draw a preview image, or a grey placeholder when img == nullptr.
-        void DrawPreviewImage(const Image2d *img, ImVec2 size)
+        void DrawPreviewImage(const Image2d *img, Vec2 size)
         {
-            ImVec2 cursor  = ImGui::GetCursorScreenPos();
+            Vec2 cursor    = ImGui::GetCursorScreenPos();
             ImDrawList *dl = ImGui::GetWindowDrawList();
 
             if (img)
@@ -165,7 +165,7 @@ namespace SF::Engine
                 dl->AddRectFilled(cursor, {cursor.x + size.x, cursor.y + size.y}, IM_COL32(30, 50, 70, 255));
                 dl->AddRect(cursor, {cursor.x + size.x, cursor.y + size.y}, IM_COL32(80, 140, 200, 255));
                 const char *lbl = "Preview";
-                ImVec2 lsize    = ImGui::CalcTextSize(lbl);
+                Vec2 lsize      = ImGui::CalcTextSize(lbl);
                 dl->AddText({cursor.x + (size.x - lsize.x) * 0.5f, cursor.y + (size.y - lsize.y) * 0.5f},
                             IM_COL32(80, 140, 200, 255), lbl);
             } else
@@ -173,7 +173,7 @@ namespace SF::Engine
                 dl->AddRectFilled(cursor, {cursor.x + size.x, cursor.y + size.y}, IM_COL32(45, 45, 45, 255));
                 dl->AddRect(cursor, {cursor.x + size.x, cursor.y + size.y}, IM_COL32(100, 100, 100, 255));
                 const char *lbl = "No Preview";
-                ImVec2 lsize    = ImGui::CalcTextSize(lbl);
+                Vec2 lsize      = ImGui::CalcTextSize(lbl);
                 dl->AddText({cursor.x + (size.x - lsize.x) * 0.5f, cursor.y + (size.y - lsize.y) * 0.5f},
                             IM_COL32(130, 130, 130, 255), lbl);
             }
@@ -210,4 +210,4 @@ namespace SF::Engine
             }
         }
     } // namespace
-}
+} // namespace SF::Engine

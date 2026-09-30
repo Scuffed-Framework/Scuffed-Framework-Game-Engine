@@ -1,7 +1,7 @@
 #include <Engine/Engine.hpp>
-#include <Rendering/RenderSystem.hpp>
+#include <Gui/ImGui/ImGuiPipelinePass.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
-#include <Gui/ImGuiPipelinePass.hpp>
+#include <Rendering/RenderSystem.hpp>
 #include <Scene/SceneManager.hpp>
 
 #include <filesystem>

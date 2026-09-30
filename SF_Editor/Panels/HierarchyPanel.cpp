@@ -1,6 +1,6 @@
 #include "HierarchyPanel.hpp"
 #include <Entity/Entity.hpp>
-#include <Gui/ocornut/imgui_internal.h>
+#include <Gui/ImGui/ocornut/imgui_internal.h>
 #include "Panels.hpp"
 #include <Scene/SceneManager.hpp>
 
@@ -48,19 +48,19 @@ namespace SF::Engine
         // Draw alternating row backgrounds
         ImDrawList *drawList = ImGui::GetWindowDrawList();
         float rowHeight = ImGui::GetTextLineHeightWithSpacing();
-        ImVec2 contentMin = ImGui::GetWindowContentRegionMin();
-        ImVec2 contentMax = ImGui::GetWindowContentRegionMax();
-        ImVec2 windowPos = ImGui::GetWindowPos();
+        Vec2 contentMin = ImGui::GetWindowContentRegionMin();
+        Vec2 contentMax = ImGui::GetWindowContentRegionMax();
+        Vec2 windowPos = ImGui::GetWindowPos();
 
         ImU32 colEven = ImGui::GetColorU32(ImGuiCol_TableRowBg, 0.3f);
         ImU32 colOdd = ImGui::GetColorU32(ImGuiCol_TableRowBgAlt, 0.3f);
 
         for (size_t i = 0; i < visibleEntities.size(); i++)
         {
-            ImVec2 rowMin = ImVec2(
+            Vec2 rowMin = Vec2(
                 windowPos.x + contentMin.x,
                 ImGui::GetCursorScreenPos().y + i * rowHeight);
-            ImVec2 rowMax = ImVec2(
+            Vec2 rowMax = Vec2(
                 windowPos.x + contentMax.x,
                 rowMin.y + rowHeight);
 
@@ -68,7 +68,7 @@ namespace SF::Engine
         }
 
         // Draw entity nodes
-        ImGui::BeginChild("HierarchyTree", ImVec2(0, 0), false, ImGuiWindowFlags_NoBackground);
+        ImGui::BeginChild("HierarchyTree", Vec2(0, 0), false, ImGuiWindowFlags_NoBackground);
 
         for (auto &root : registry.GetRoots())
         {
@@ -111,7 +111,7 @@ namespace SF::Engine
         ImGui::PushID(static_cast<int>(entity->GetId()));
 
         // Entity active state indicator
-        ImGui::PushStyleColor(ImGuiCol_Text, entity->IsActive() ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, entity->IsActive() ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : Vec4(0.5f, 0.5f, 0.5f, 1.0f));
 
         bool opened = ImGui::TreeNodeEx("##EntityNode", flags, "%s", entity->GetName().c_str());
 
@@ -205,8 +205,8 @@ namespace SF::Engine
 
         static int rowCount = 0;
         ImU32 bgColor = (rowCount++ % 2 == 0)
-                            ? ImGui::GetColorU32(ImVec4(0.15f, 0.15f, 0.18f, 1.0f))
-                            : ImGui::GetColorU32(ImVec4(0.18f, 0.18f, 0.22f, 1.0f));
+                            ? ImGui::GetColorU32(Vec4(0.15f, 0.15f, 0.18f, 1.0f))
+                            : ImGui::GetColorU32(Vec4(0.18f, 0.18f, 0.22f, 1.0f));
 
         window->DrawList->AddRectFilled(rowRect.Min, rowRect.Max, bgColor);
     }

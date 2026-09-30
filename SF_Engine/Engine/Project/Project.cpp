@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <numeric>
 #include <fstream>
-#include <Gui/GuiMembers.hpp>
+#include <Gui/ImGui/GuiMembers.hpp>
 #include <Assets/AssetPipeline.hpp>
 
 namespace SF::Engine
@@ -147,7 +147,7 @@ namespace SF::Engine
             // Footer: tab buttons row + optional status row
             const float footerH = ImGui::GetFrameHeightWithSpacing() * 2.0f + 8.0f;
             const float listH = totalH - footerH;
-            const ImVec2 previewSize = {detailW, detailW * 0.5625f}; // 16:9
+            const Vec2 previewSize = {detailW, detailW * 0.5625f}; // 16:9
 
             ImGui::BeginChild("##LeftPanel", {listW, listH}, false);
             {
@@ -254,7 +254,7 @@ namespace SF::Engine
                         IGFD::FileDialogConfig cfg;
                         cfg.path = ".";
                         cfg.flags = ImGuiFileDialogFlags_Modal;
-                        ImGui::SetNextWindowSize(ImVec2(700, 500));
+                        ImGui::SetNextWindowSize(Vec2(700, 500));
                         ImGuiFileDialog::Instance()->OpenDialog(
                             "FindProjDir", "Find Project", ".projxml", cfg);
                     }
@@ -301,7 +301,7 @@ namespace SF::Engine
                         IGFD::FileDialogConfig cfg;
                         cfg.path = ".";
                         cfg.flags = ImGuiFileDialogFlags_Modal;
-                        ImGui::SetNextWindowSize(ImVec2(700, 500));
+                        ImGui::SetNextWindowSize(Vec2(700, 500));
                         ImGuiFileDialog::Instance()->OpenDialog(
                             "ChooseProjDir", "Choose Project Folder", nullptr, cfg);
                     }
@@ -327,7 +327,7 @@ namespace SF::Engine
                     if (s_newDesc[0] == '\0' && !ImGui::IsItemActive())
                     {
                         ImDrawList *dl = ImGui::GetWindowDrawList();
-                        ImVec2 pos = ImGui::GetItemRectMin();
+                        Vec2 pos = ImGui::GetItemRectMin();
                         pos.x += ImGui::GetStyle().FramePadding.x;
                         pos.y += ImGui::GetStyle().FramePadding.y;
                         dl->AddText(pos, ImGui::GetColorU32(ImGuiCol_TextDisabled), "Description (optional)");

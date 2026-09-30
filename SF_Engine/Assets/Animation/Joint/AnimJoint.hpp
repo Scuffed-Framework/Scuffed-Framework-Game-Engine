@@ -1,8 +1,8 @@
 #pragma once
 #include <LowLevel/Reflection/RTTISingle.hpp>
-#include <Math/Matrix/Matrix4.hpp>
+#include <Math/Matrix/Matrix.hpp>
 #include <Math/Quaternion/Quaternion.hpp>
-#include <Math/Vectors/Vector3.hpp>
+#include <Math/BasicMath.hpp>
 
 namespace SF::Engine
 {

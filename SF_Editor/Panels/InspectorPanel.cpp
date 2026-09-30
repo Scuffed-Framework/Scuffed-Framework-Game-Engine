@@ -1,9 +1,9 @@
 #include "InspectorPanel.hpp"
 #include <Configuration/Default/ImGuiDefaultWidgets.hpp>
 #include <Entity/Entity.hpp>
-#include <Gui/Declare_Widget.hpp>
-#include <Gui/ocornut/imgui_internal.h>
-#include <Gui/ocornut/imgui_stdlib.h>
+#include <Gui/ImGui/Declare_Widget.hpp>
+#include <Gui/ImGui/ocornut/imgui_internal.h>
+#include <Gui/ImGui/ocornut/imgui_stdlib.h>
 #include <Math/Transform.hpp>
 #include <Scene/SceneManager.hpp>
 #include "Panels.hpp"
@@ -12,8 +12,7 @@ namespace SF::Engine
 {
     void InspectorPanel::Draw()
     {
-        EntityRegistry &registry =
-            SceneManager::Get()->GetScene()->GetEntities()->GetRegistry();
+        EntityRegistry &registry = SceneManager::Get()->GetScene()->GetEntities()->GetRegistry();
 
         m_registry = &registry;
 
@@ -22,7 +21,7 @@ namespace SF::Engine
         // Validate entity
         if (m_entity && !registry.IsValid(m_entity))
         {
-            m_entity = nullptr;
+            m_entity   = nullptr;
             m_entityId = 0;
         }
 
@@ -36,7 +35,7 @@ namespace SF::Engine
         // Refresh entity if needed
         if (m_needsRefresh)
         {
-            m_entity = registry.Find(m_entityId);
+            m_entity       = registry.Find(m_entityId);
             m_needsRefresh = false;
         }
 
@@ -73,8 +72,7 @@ namespace SF::Engine
             if (m_registry)
             {
                 m_registry->RenameEntity(m_entity, name);
-            }
-            else
+            } else
             {
                 m_entity->SetName(name);
             }
@@ -97,9 +95,9 @@ namespace SF::Engine
         if (!m_entity)
             return;
 
-        ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Components");
+        ImGui::TextColored(Vec4(0.4f, 0.8f, 1.0f, 1.0f), "Components");
 
-        for (auto &[type, component] : m_entity->components)
+        for (auto &[type, component]: m_entity->components)
         {
             if (!component)
                 continue;
@@ -122,12 +120,10 @@ namespace SF::Engine
                     }
                     ImGui::EndPopup();
                 }
-            }
-            else
+            } else
             {
-                bool expanded = ImGui::CollapsingHeader(
-                    component->GetTypeName().data(),
-                    ImGuiTreeNodeFlags_DefaultOpen);
+                bool expanded =
+                        ImGui::CollapsingHeader(component->GetTypeName().data(), ImGuiTreeNodeFlags_DefaultOpen);
 
                 ImGui::SameLine(ImGui::GetWindowWidth() - 30);
                 if (ImGui::SmallButton("..."))
@@ -159,17 +155,11 @@ namespace SF::Engine
 
     void InspectorPanel::DrawAddComponentMenu()
     {
-        ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Add Component");
+        ImGui::TextColored(Vec4(0.4f, 0.8f, 1.0f, 1.0f), "Add Component");
 
         static int selectedComponent = -1;
-        const char *components[] = {
-            "No",
-            "No",
-            "No",
-            "No",
-            "No",
-            "No",
-            "No"}; // when I add ComponentRegistry::Get()->GetAll()
+        const char *components[]     = {"No", "No", "No", "No",
+                                        "No", "No", "No"}; // when I add ComponentRegistry::Get()->GetAll()
 
         ImGui::PushItemWidth(-1);
         if (ImGui::Combo("##AddComponent", &selectedComponent, components, IM_ARRAYSIZE(components)))
@@ -177,16 +167,16 @@ namespace SF::Engine
             // Handle component addition based on selection
             switch (selectedComponent)
             {
-            case 0:
-                // m_entity->AddComponent<idk>();
-                break;
-            case 1:
-                // m_entity->AddComponent<skibidi>();
-                break;
-            case 2:
-                // m_entity->AddComponent<67>();
-                break;
-                // ... add other cases
+                case 0:
+                    // m_entity->AddComponent<idk>();
+                    break;
+                case 1:
+                    // m_entity->AddComponent<skibidi>();
+                    break;
+                case 2:
+                    // m_entity->AddComponent<67>();
+                    break;
+                    // ... add other cases
             }
             selectedComponent = -1; // Reset selection
         }
@@ -241,16 +231,12 @@ namespace SF::Engine
         if (entity)
         {
             m_entityId = entity->GetId();
-        }
-        else
+        } else
         {
             m_entityId = 0;
         }
         m_needsRefresh = true;
     }
 
-    void InspectorPanel::Refresh()
-    {
-        m_needsRefresh = true;
-    }
+    void InspectorPanel::Refresh() { m_needsRefresh = true; }
 }

@@ -11,8 +11,8 @@
 
 #include <algorithm>
 #include <Rendering/RenderSystem.hpp>
-#include <Gui/ocornut/imgui.h>
-#include <Gui/ocornut/imgui_impl_glfw.h>
+#include <Gui/ImGui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui_impl_glfw.h>
 
 namespace SF::Engine
 {

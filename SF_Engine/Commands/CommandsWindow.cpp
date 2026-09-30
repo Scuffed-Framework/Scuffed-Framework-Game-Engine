@@ -1,5 +1,5 @@
 #include "CommandsWindow.hpp"
-#include <Gui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui.h>
 #include <algorithm>
 #include <cctype>
 #include "ConsoleVariable/ConsoleVariable.hpp"
@@ -155,16 +155,16 @@ namespace SF::Engine
 
         for (auto &entry: m_log)
         {
-            ImVec4 col = [&]
+            Vec4 col = [&]
             {
                 switch (entry.level)
                 {
                     case LogEntry::Level::Ok:
-                        return ImVec4(0.24f, 0.78f, 0.49f, 1.f);
+                        return Vec4(0.24f, 0.78f, 0.49f, 1.f);
                     case LogEntry::Level::Warning:
-                        return ImVec4(0.95f, 0.63f, 0.15f, 1.f);
+                        return Vec4(0.95f, 0.63f, 0.15f, 1.f);
                     case LogEntry::Level::Error:
-                        return ImVec4(0.88f, 0.29f, 0.29f, 1.f);
+                        return Vec4(0.88f, 0.29f, 0.29f, 1.f);
                     default:
                         return ImGui::GetStyleColorVec4(ImGuiCol_Text);
                 }

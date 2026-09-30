@@ -1,4 +1,4 @@
-#include <Gui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui.h>
 
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSetBuilder.hpp>
@@ -13,7 +13,8 @@ namespace SF::Engine
 {
     bool CloudPipelinePass::isWindowOpen = true;
 
-    CloudPipelinePass::CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data) : EngineRenderpass(stage), data_(data)
+    CloudPipelinePass::CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data) :
+        EngineRenderpass(stage), data_(data)
     {
         EngineRenderpass::SetOrder(100);
         uiHandle = UIRegistry::Get().Register([this] { DrawImGuiPanel(); });

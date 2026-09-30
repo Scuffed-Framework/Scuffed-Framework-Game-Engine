@@ -1,8 +1,8 @@
 #include "AssetsWindow.hpp"
 #include <Engine/Project/Project.hpp>
-#include <Gui/GuiMembers.hpp>
+#include <Gui/ImGui/GuiMembers.hpp>
 #include "../Wizards/Shaders.hpp"
-#include "Gui/ocornut/imgui_impl_vulkan.h"
+#include <Gui/ImGui/ocornut/imgui_impl_vulkan.h>
 #include "Panels.hpp"
 
 namespace SF::Engine
@@ -199,7 +199,7 @@ namespace SF::Engine
         ImGui::PopStyleColor();
 
         ImGui::SameLine();
-        ImGui::Dummy(ImVec2(10, 0));
+        ImGui::Dummy(Vec2(10, 0));
         ImGui::SameLine();
 
         if (ImGui::Button(ICON_MD_ADD))
@@ -214,14 +214,14 @@ namespace SF::Engine
         }
 
         ImGui::SameLine();
-        ImGui::Dummy(ImVec2(10, 0));
+        ImGui::Dummy(Vec2(10, 0));
         ImGui::SameLine();
 
         ImGui::SetNextItemWidth(120);
         ImGui::SliderFloat(ICON_MD_ZOOM_IN, &m_thumbnailSize, 32.0f, 200.0f, "%.0f");
 
         ImGui::SameLine();
-        ImGui::Dummy(ImVec2(10, 0));
+        ImGui::Dummy(Vec2(10, 0));
         ImGui::SameLine();
 
         ImGui::Checkbox(ICON_MD_IMAGE " Thumbs", &m_showThumbnails);
@@ -311,7 +311,7 @@ namespace SF::Engine
             return;
         const auto &assets = controller->assets_;
 
-        ImGui::BeginChild("AssetGrid", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+        ImGui::BeginChild("AssetGrid", Vec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 
         if (m_viewMode == ViewMode::List)
             DrawListView(assets);
@@ -372,14 +372,14 @@ namespace SF::Engine
 
         if (isSelected)
         {
-            ImVec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_HeaderActive];
+            Vec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_HeaderActive];
             bgColor.w      = 0.3f;
             ImGui::PushStyleColor(ImGuiCol_Button, bgColor);
         }
 
         ImGui::BeginGroup();
 
-        ImVec2 thumbnailSize(m_thumbnailSize, m_thumbnailSize);
+        Vec2 thumbnailSize(m_thumbnailSize, m_thumbnailSize);
         bool renderedPreview = false;
 
         if (m_showThumbnails)
@@ -394,7 +394,7 @@ namespace SF::Engine
                                     {
                                         float aspect =
                                                 static_cast<float>(preview.size.x) / static_cast<float>(preview.size.y);
-                                        ImVec2 displaySize = thumbnailSize;
+                                        Vec2 displaySize = thumbnailSize;
                                         if (aspect > 1.0f)
                                             displaySize.y = thumbnailSize.x / aspect;
                                         else
@@ -409,15 +409,15 @@ namespace SF::Engine
         if (!renderedPreview)
         {
             ImGui::PushStyleColor(ImGuiCol_Button,
-                                  m_showThumbnails ? ImVec4(0.2f, 0.2f, 0.2f, 1.0f) : ImVec4(0.2f, 0.2f, 0.2f, 0.0f));
+                                  m_showThumbnails ? Vec4(0.2f, 0.2f, 0.2f, 1.0f) : Vec4(0.2f, 0.2f, 0.2f, 0.0f));
             if (ImGui::Button(("##" + std::to_string(index)).c_str(), thumbnailSize))
             {
                 m_selectedAsset = asset->uuid;
             }
             ImGui::PopStyleColor();
 
-            ImVec2 cursorPos = ImGui::GetCursorPos();
-            ImGui::SetCursorPos(ImVec2(cursorPos.x + thumbnailSize.x / 2 - 16, cursorPos.y + thumbnailSize.y / 2 - 16));
+            Vec2 cursorPos = ImGui::GetCursorPos();
+            ImGui::SetCursorPos(Vec2(cursorPos.x + thumbnailSize.x / 2 - 16, cursorPos.y + thumbnailSize.y / 2 - 16));
             DrawAssetIcon(asset);
             ImGui::SetCursorPos(cursorPos);
         }
@@ -552,7 +552,7 @@ namespace SF::Engine
 
     void AssetBrowser::DrawSmallPreview(const std::shared_ptr<AssetBase> &asset)
     {
-        ImVec2 previewSize(50, 50);
+        Vec2 previewSize(50, 50);
 
         bool rendered = TryWithImageTexture(asset,
                                             [&](auto &tex, const UUID &guid)
@@ -562,7 +562,7 @@ namespace SF::Engine
                                                 {
                                                     float aspect = static_cast<float>(preview.size.x) /
                                                                    static_cast<float>(preview.size.y);
-                                                    ImVec2 displaySize = previewSize;
+                                                    Vec2 displaySize = previewSize;
                                                     if (aspect > 1.0f)
                                                         displaySize.y = previewSize.x / aspect;
                                                     else
@@ -576,25 +576,25 @@ namespace SF::Engine
             return;
 
         // Fallback to icon
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.2f, 0.2f, 0.5f));
+        ImGui::PushStyleColor(ImGuiCol_Button, Vec4(0.2f, 0.2f, 0.2f, 0.5f));
         std::string previewId = "##preview" + asset->uuid.ToString();
         ImGui::Button(previewId.c_str(), previewSize);
         ImGui::PopStyleColor();
 
-        ImVec2 cursorPos = ImGui::GetCursorPos();
-        ImGui::SetCursorPos(ImVec2(cursorPos.x + previewSize.x / 2 - 12, cursorPos.y + previewSize.y / 2 - 12));
+        Vec2 cursorPos = ImGui::GetCursorPos();
+        ImGui::SetCursorPos(Vec2(cursorPos.x + previewSize.x / 2 - 12, cursorPos.y + previewSize.y / 2 - 12));
         DrawAssetIcon(asset);
         ImGui::SetCursorPos(cursorPos);
     }
 
     void AssetBrowser::DrawDetailsPanel()
     {
-        ImGui::BeginChild("DetailsPanel", ImVec2(0, 0), true);
+        ImGui::BeginChild("DetailsPanel", Vec2(0, 0), true);
 
         auto asset = AssetController::Get()->FindByUUID(*m_selectedAsset);
         if (!asset)
         {
-            ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), ICON_MD_ERROR " Asset not found");
+            ImGui::TextColored(Vec4(1.0f, 0.3f, 0.3f, 1.0f), ICON_MD_ERROR " Asset not found");
             ImGui::EndChild();
             return;
         }
@@ -625,7 +625,7 @@ namespace SF::Engine
         ImGui::BeginGroup();
 
         // Header with icon
-        ImGui::TextColored(ImVec4(0.5f, 0.8f, 1.0f, 1.0f), ICON_MD_IMAGE " Image Asset Details");
+        ImGui::TextColored(Vec4(0.5f, 0.8f, 1.0f, 1.0f), ICON_MD_IMAGE " Image Asset Details");
         ImGui::Separator();
 
         // Large preview
@@ -643,7 +643,7 @@ namespace SF::Engine
                 float maxHeight = 300.0f;
 
                 float aspect = static_cast<float>(preview.size.x) / static_cast<float>(preview.size.y);
-                ImVec2 displaySize;
+                Vec2 displaySize;
 
                 if (aspect > 1.0f)
                 {
@@ -667,7 +667,7 @@ namespace SF::Engine
         }
 
         // Properties in a grid
-        ImGui::TextColored(ImVec4(0.5f, 0.8f, 1.0f, 1.0f), ICON_MD_INFO " Properties");
+        ImGui::TextColored(Vec4(0.5f, 0.8f, 1.0f, 1.0f), ICON_MD_INFO " Properties");
 
         if (ImGui::BeginTable("ImageProperties", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
         {
@@ -710,7 +710,7 @@ namespace SF::Engine
     {
         ImGui::BeginGroup();
 
-        ImGui::TextColored(ImVec4(0.5f, 0.8f, 1.0f, 1.0f), ICON_MD_INFO " Asset Details");
+        ImGui::TextColored(Vec4(0.5f, 0.8f, 1.0f, 1.0f), ICON_MD_INFO " Asset Details");
         ImGui::Separator();
 
         if (ImGui::BeginTable("AssetProperties", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
@@ -743,14 +743,14 @@ namespace SF::Engine
     template<typename T>
     void AssetBrowser::DrawActionButtons(const std::shared_ptr<T> &asset)
     {
-        ImGui::TextColored(ImVec4(0.5f, 0.8f, 1.0f, 1.0f), ICON_MD_SETTINGS " Actions");
+        ImGui::TextColored(Vec4(0.5f, 0.8f, 1.0f, 1.0f), ICON_MD_SETTINGS " Actions");
 
-        if (ImGui::Button(ICON_MD_SAVE " Save", ImVec2(100, 0)))
+        if (ImGui::Button(ICON_MD_SAVE " Save", Vec2(100, 0)))
         {
             asset->Save();
         }
         ImGui::SameLine();
-        if (ImGui::Button(ICON_MD_DELETE " Delete", ImVec2(100, 0)))
+        if (ImGui::Button(ICON_MD_DELETE " Delete", Vec2(100, 0)))
         {
             // Delete asset
         }
@@ -998,10 +998,10 @@ namespace SF::Engine
 
         ImGui::PushID(("folder_" + std::to_string(index)).c_str());
 
-        ImVec2 thumbnailSize(m_thumbnailSize, m_thumbnailSize);
-        ImVec2 tileSize(thumbnailSize.x, thumbnailSize.y + ImGui::GetTextLineHeight() + 4);
+        Vec2 thumbnailSize(m_thumbnailSize, m_thumbnailSize);
+        Vec2 tileSize(thumbnailSize.x, thumbnailSize.y + ImGui::GetTextLineHeight() + 4);
 
-        ImVec2 origin = ImGui::GetCursorPos();
+        Vec2 origin = ImGui::GetCursorPos();
 
         // Real interactive item covering the whole tile
         ImGui::InvisibleButton("##tile", tileSize);
@@ -1101,15 +1101,15 @@ namespace SF::Engine
             m_showDeleteConfirmPopup = false;
         }
 
-        ImGui::SetNextWindowSize(ImVec2(360, 0), ImGuiCond_Appearing);
+        ImGui::SetNextWindowSize(Vec2(360, 0), ImGuiCond_Appearing);
         if (ImGui::BeginPopupModal("Delete Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
+            ImGui::TextColored(Vec4(1.0f, 0.6f, 0.2f, 1.0f),
                                ICON_MD_WARNING " Delete this folder and all its contents?");
             ImGui::TextWrapped("%s", m_deleteTargetPath.string().c_str());
             ImGui::Separator();
 
-            if (ImGui::Button(ICON_MD_DELETE " Delete", ImVec2(120, 0)))
+            if (ImGui::Button(ICON_MD_DELETE " Delete", Vec2(120, 0)))
             {
                 bool wasCurrentOrParent = m_currentPath == m_deleteTargetPath ||
                                           (m_currentPath.string().rfind(m_deleteTargetPath.string(), 0) == 0);
@@ -1122,7 +1122,7 @@ namespace SF::Engine
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
-            if (ImGui::Button(ICON_MD_CLOSE " Cancel", ImVec2(120, 0)))
+            if (ImGui::Button(ICON_MD_CLOSE " Cancel", Vec2(120, 0)))
                 ImGui::CloseCurrentPopup();
 
             ImGui::EndPopup();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Gui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui.h>
 #include <Math/Transform.hpp>
 #include <Rendering/Lighting/Light.hpp>
 #include <Rendering/Lighting/LitMeshPipelinePass.hpp> // MeshMaterial
@@ -61,4 +61,4 @@ namespace SF::Engine
         static void Draw(Light &light, const char *id = "##Light");
     };
     void RegisterDefaultComponentWidgets();
-}
+} // namespace SF::Engine

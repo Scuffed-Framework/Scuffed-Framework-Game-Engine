@@ -1,5 +1,5 @@
 #pragma once
-#include <Gui/UIRegistry.hpp>
+#include <Gui/ImGui/UIRegistry.hpp>
 #include <deque>
 #include "Commands.hpp"
 

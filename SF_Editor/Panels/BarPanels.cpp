@@ -5,7 +5,7 @@
 #include <Engine/Engine.hpp>
 #include <Engine/Project/Project.hpp>
 #include <Engine/Version.hpp>
-#include <Gui/GuiMembers.hpp>
+#include <Gui/ImGui/GuiMembers.hpp>
 #include <Scene/SceneManager.hpp>
 #include <algorithm>
 #include <functional>
@@ -157,13 +157,13 @@ namespace SF::Engine
         ImGui::SetNextWindowPos({0, io.DisplaySize.y - barH}, ImGuiCond_Always);
         ImGui::SetNextWindowSize({io.DisplaySize.x, barH}, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.55f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 3));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, Vec2(8, 3));
         ImGui::Begin("##statusbar", nullptr,
                      ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNav |
                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
                              ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, Vec4(0.0f, 0.0f, 0.0f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
         ImGui::Text("SF Engine Version: {}", Engine_VERSION);

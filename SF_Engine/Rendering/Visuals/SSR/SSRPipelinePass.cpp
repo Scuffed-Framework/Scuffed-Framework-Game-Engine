@@ -1,5 +1,5 @@
 #include "SSRPipelinePass.hpp"
-#include <Gui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui.h>
 #include <Rendering/RHI/Descriptors/DescriptorSetBuilder.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/SharedFunctions.hpp>

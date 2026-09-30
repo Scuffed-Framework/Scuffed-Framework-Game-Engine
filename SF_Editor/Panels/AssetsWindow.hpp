@@ -1,10 +1,10 @@
 #pragma once
 #include <Assets/AssetPipeline.hpp>
 #include <Assets/AssetTextures.hpp>
-#include <Gui/IconHeaders/IconMaterialDesign.hpp>
-#include <Gui/UIRegistry.hpp>
-#include <Gui/ocornut/imgui.h>
-#include <Gui/ocornut/imgui_internal.h>
+#include <Gui/ImGui/IconHeaders/IconMaterialDesign.hpp>
+#include <Gui/ImGui/UIRegistry.hpp>
+#include <Gui/ImGui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui_internal.h>
 #include <LowLevel/Reflection/RTTI/RTTICast.hpp>
 #include <Rendering/RHI/Images/ImageAsset.hpp>
 #include <algorithm>
