@@ -14,14 +14,13 @@ namespace SF::Engine
 {
     class UUID
     {
-    private:
         std::array<uint8_t, 16> data;
 
         // Thread-safe random number generator (non-constexpr)
         static std::mt19937 &get_random_engine()
         {
             static thread_local std::mt19937 engine(std::random_device{}() ^
-                                                    static_cast<uint64_t>(reinterpret_cast<uintptr_t>(&engine)));
+                                                    reinterpret_cast<uintptr_t>(&engine));
             return engine;
         }
 
@@ -71,7 +70,6 @@ namespace SF::Engine
         static UUID Generate()
         {
             UUID uuid;
-            auto &engine = get_random_engine();
 
             // Fill with random bytes
             for (auto &byte: uuid.data)
@@ -156,7 +154,7 @@ namespace SF::Engine
                 i++; // Skip second hex digit
             }
 
-            return UUID(arr);
+            return {arr};
         }
 
         // Alternative: Use a raw pointer with length check
@@ -175,7 +173,7 @@ namespace SF::Engine
                 // Check if we have enough characters
                 if (i >= 35 || str[i + 1] == '\0')
                 {
-                    return UUID();
+                    return {};
                 }
 
                 uint8_t high = hex_char_to_byte(str[i]);
@@ -186,10 +184,10 @@ namespace SF::Engine
 
             if (idx != 16)
             {
-                return UUID(); // Didn't parse enough bytes
+                return {}; // Didn't parse enough bytes
             }
 
-            return UUID(arr);
+            return {arr};
         }
 
         // Comparison operators - constexpr
@@ -218,7 +216,7 @@ namespace SF::Engine
         }
 
         // Check if null UUID (all zeros) - constexpr
-        constexpr bool IsNull() const
+        [[nodiscard]] constexpr bool IsNull() const
         {
             for (auto byte: data)
             {
@@ -275,7 +273,7 @@ namespace SF::Engine
         [[nodiscard]] std::string ToUpperString() const
         {
             auto str = ToString();
-            std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+            ranges::transform(str, str.begin(), ::toupper);
             return str;
         }
 
@@ -300,7 +298,7 @@ namespace SF::Engine
     };
 
     // User-defined literal for compile-time UUIDs - constexpr
-    consteval UUID operator"" _uuid(const char *str, size_t len)
+    consteval UUID operator""_uuid(const char *str, size_t len)
     {
         if (len != 36)
         {

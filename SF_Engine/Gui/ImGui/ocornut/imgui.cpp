@@ -444,9 +444,9 @@ ImGuiIO::ImGuiIO()
     LogFilename = "imgui_log.txt";
     UserData    = nullptr;
 
-    Fonts                = nullptr;
-    FontDefault          = nullptr;
-    FontAllowUserScaling = false;
+    Fonts                   = nullptr;
+    FontDefault             = nullptr;
+    FontAllowUserScaling    = false;
     DisplayFramebufferScale = Vec2(1.0f, 1.0f);
 
     // Keyboard/Gamepad Navigation options
@@ -5657,7 +5657,6 @@ void ImGui::SetNextItemAllowOverlap()
     ImGuiContext &g = *GImGui;
     g.NextItemData.ItemFlagsSet |= ImGuiItemFlags_AllowOverlap;
 }
-
 
 
 // This is a shortcut for not taking ownership of 100+ keys, frequently used by drag operations.
@@ -16830,16 +16829,16 @@ static void ImGui::UpdateViewportsNewFrame()
         monitor->WorkPos              = main_viewport->WorkPos;
         monitor->WorkSize             = main_viewport->WorkSize;
         monitor->DpiScale             = main_viewport->DpiScale;
-        g.PlatformMonitorsFullWorkRect.Add(monitor->WorkPos);
-        g.PlatformMonitorsFullWorkRect.Add(monitor->WorkPos + monitor->WorkSize);
+        g.PlatformMonitorsFullWorkRect.AddXY(monitor->WorkPos);
+        g.PlatformMonitorsFullWorkRect.AddXY(monitor->WorkPos + monitor->WorkSize);
     } else
     {
         g.FallbackMonitor = g.PlatformIO.Monitors[0];
     }
     for (ImGuiPlatformMonitor &monitor: g.PlatformIO.Monitors)
     {
-        g.PlatformMonitorsFullWorkRect.Add(monitor.WorkPos);
-        g.PlatformMonitorsFullWorkRect.Add(monitor.WorkPos + monitor.WorkSize);
+        g.PlatformMonitorsFullWorkRect.AddXY(monitor.WorkPos);
+        g.PlatformMonitorsFullWorkRect.AddXY(monitor.WorkPos + monitor.WorkSize);
     }
 
     if (!viewports_enabled)
