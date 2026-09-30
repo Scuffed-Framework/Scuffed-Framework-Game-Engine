@@ -223,7 +223,7 @@ target_link_libraries(SF_Engine PUBLIC
         slang::slang
         openfbx::openfbx
         tinyobjloader::tinyobjloader
-        plutosvg
+        plutosvg::plutosvg # it is a C library what the hell Conan?
 
         #d3d
         Microsoft::DirectX-Headers

@@ -11,11 +11,10 @@ namespace SF::Engine
         ImGuiStyle &style = ImGui::GetStyle();
         Vec4 *colors      = ImGui::GetStyle().Colors;
 
-        colors[ImGuiCol_BorderShadow]       = Vec4(0.1f, 0.1f, 0.0f, 1.00);
-        style.Colors[ImGuiCol_Text]         = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-        style.Colors[ImGuiCol_TextDisabled] = Vec4(0.50f, 0.50f, 0.50f, 1.00f);
-        style.Colors[ImGuiCol_Border]       = (Vec4) ImColor(IM_COL32(61, 61, 61, 255));
-        ;
+        colors[ImGuiCol_BorderShadow]                = Vec4(0.1f, 0.1f, 0.0f, 1.00);
+        style.Colors[ImGuiCol_Text]                  = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+        style.Colors[ImGuiCol_TextDisabled]          = Vec4(0.50f, 0.50f, 0.50f, 1.00f);
+        style.Colors[ImGuiCol_Border]                = (Vec4) ImColor(IM_COL32(61, 61, 61, 255));
         style.Colors[ImGuiCol_BorderShadow]          = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
         style.Colors[ImGuiCol_FrameBg]               = Vec4(0.25f, 0.25f, 0.25f, 1.00f);
         style.Colors[ImGuiCol_WindowBg]              = (Vec4) ImColor(IM_COL32(15, 15, 15, 255));
@@ -47,9 +46,6 @@ namespace SF::Engine
         style.Colors[ImGuiCol_ResizeGripActive]      = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
         style.Colors[ImGuiCol_Tab]                   = Vec4(0.08f, 0.08f, 0.09f, 1.00f);
         style.Colors[ImGuiCol_TabHovered]            = Vec4(0.33f, 0.34f, 0.36f, 1.00f);
-        style.Colors[ImGuiCol_TabActive]             = Vec4(0.23f, 0.23f, 0.24f, 1.00f);
-        style.Colors[ImGuiCol_TabUnfocused]          = Vec4(0.08f, 0.08f, 0.09f, 1.00f);
-        style.Colors[ImGuiCol_TabUnfocusedActive]    = Vec4(0.13f, 0.14f, 0.15f, 1.00f);
         style.Colors[ImGuiCol_DockingPreview]        = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
         style.Colors[ImGuiCol_DockingEmptyBg]        = Vec4(0.20f, 0.20f, 0.20f, 1.00f);
         style.Colors[ImGuiCol_PlotLines]             = Vec4(0.61f, 0.61f, 0.61f, 1.00f);
@@ -58,7 +54,6 @@ namespace SF::Engine
         style.Colors[ImGuiCol_PlotHistogramHovered]  = Vec4(1.00f, 0.60f, 0.00f, 1.00f);
         style.Colors[ImGuiCol_TextSelectedBg]        = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
         style.Colors[ImGuiCol_DragDropTarget]        = Vec4(0.11f, 0.64f, 0.92f, 1.00f);
-        style.Colors[ImGuiCol_NavHighlight]          = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
         style.Colors[ImGuiCol_NavWindowingHighlight] = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
         style.Colors[ImGuiCol_NavWindowingDimBg]     = Vec4(0.80f, 0.80f, 0.80f, 1.00f);
         style.Colors[ImGuiCol_ModalWindowDimBg]      = Vec4(0.80f, 0.80f, 0.80f, 1.00f);
@@ -283,11 +278,8 @@ namespace SF::Engine
         colors[ImGuiCol_ResizeGripHovered] = accentHover;
         colors[ImGuiCol_ResizeGripActive]  = accentActive;
 
-        colors[ImGuiCol_Tab]                = bgPanel;
-        colors[ImGuiCol_TabHovered]         = bgFieldHover;
-        colors[ImGuiCol_TabActive]          = bgField;
-        colors[ImGuiCol_TabUnfocused]       = bgPanel;
-        colors[ImGuiCol_TabUnfocusedActive] = bgField;
+        colors[ImGuiCol_Tab]        = bgPanel;
+        colors[ImGuiCol_TabHovered] = bgFieldHover;
 
         colors[ImGuiCol_PlotLines]            = accent;
         colors[ImGuiCol_PlotLinesHovered]     = accentHover;
@@ -296,7 +288,6 @@ namespace SF::Engine
 
         colors[ImGuiCol_TextSelectedBg]        = Vec4(accent.x, accent.y, accent.z, 0.35f);
         colors[ImGuiCol_DragDropTarget]        = accent;
-        colors[ImGuiCol_NavHighlight]          = accent;
         colors[ImGuiCol_NavWindowingHighlight] = Vec4(1.0f, 1.0f, 1.0f, 0.7f);
         colors[ImGuiCol_NavWindowingDimBg]     = Vec4(0.0f, 0.0f, 0.0f, 0.5f);
         colors[ImGuiCol_ModalWindowDimBg]      = Vec4(0.0f, 0.0f, 0.0f, 0.5f);
@@ -344,7 +335,6 @@ namespace SF::Engine
         colors[ImGuiCol_PlotHistogramHovered]  = Vec4(1.00f, 0.60f, 0.00f, 1.00f);
         colors[ImGuiCol_TextSelectedBg]        = Vec4(0.87f, 0.87f, 0.87f, 0.35f);
         colors[ImGuiCol_DragDropTarget]        = Vec4(1.00f, 1.00f, 0.00f, 0.90f);
-        colors[ImGuiCol_NavHighlight]          = Vec4(0.60f, 0.60f, 0.60f, 1.00f);
         colors[ImGuiCol_NavWindowingHighlight] = Vec4(1.00f, 1.00f, 1.00f, 0.70f);
     }
 } // namespace SF::Engine

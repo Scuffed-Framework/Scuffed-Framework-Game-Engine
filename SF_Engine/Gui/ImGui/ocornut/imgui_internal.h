@@ -137,8 +137,8 @@ Index of this file:
         #error Use IMGUI_DISABLE_DEFAULT_MATH_FUNCTIONS
     #endif
 
-    // Enable stb_truetype by default unless FreeType is enabled.
-    // You can compile with both by defining both IMGUI_ENABLE_FREETYPE and IMGUI_ENABLE_STB_TRUETYPE together.
+// Enable stb_truetype by default unless FreeType is enabled.
+// You can compile with both by defining both IMGUI_ENABLE_FREETYPE and IMGUI_ENABLE_STB_TRUETYPE together.
 
     #define IMGUI_ENABLE_STB_TRUETYPE
 
@@ -787,39 +787,44 @@ struct ImRect
     constexpr ImRect(const Vec4 &v) : Min(v.x, v.y), Max(v.z, v.w) {}
     constexpr ImRect(float x1, float y1, float x2, float y2) : Min(x1, y1), Max(x2, y2) {}
 
-    Vec2 GetCenter() const { return Vec2((Min.x + Max.x) * 0.5f, (Min.y + Max.y) * 0.5f); }
-    Vec2 GetSize() const { return Vec2(Max.x - Min.x, Max.y - Min.y); }
-    float GetWidth() const { return Max.x - Min.x; }
-    float GetHeight() const { return Max.y - Min.y; }
-    float GetArea() const { return (Max.x - Min.x) * (Max.y - Min.y); }
-    Vec2 GetTL() const { return Min; }                // Top-left
-    Vec2 GetTR() const { return Vec2(Max.x, Min.y); } // Top-right
-    Vec2 GetBL() const { return Vec2(Min.x, Max.y); } // Bottom-left
-    Vec2 GetBR() const { return Max; }                // Bottom-right
-    bool Contains(const Vec2 &p) const { return p.x >= Min.x && p.y >= Min.y && p.x < Max.x && p.y < Max.y; }
-    bool Contains(const ImRect &r) const
+    [[nodiscard]] Vec2 GetCenter() const { return Vec2((Min.x + Max.x) * 0.5f, (Min.y + Max.y) * 0.5f); }
+    [[nodiscard]] Vec2 GetSize() const { return Vec2(Max.x - Min.x, Max.y - Min.y); }
+    [[nodiscard]] float GetWidth() const { return Max.x - Min.x; }
+    [[nodiscard]] float GetHeight() const { return Max.y - Min.y; }
+    [[nodiscard]] float GetArea() const { return (Max.x - Min.x) * (Max.y - Min.y); }
+    [[nodiscard]] Vec2 GetTL() const { return Min; }                // Top-left
+    [[nodiscard]] Vec2 GetTR() const { return Vec2(Max.x, Min.y); } // Top-right
+    [[nodiscard]] Vec2 GetBL() const { return Vec2(Min.x, Max.y); } // Bottom-left
+    [[nodiscard]] Vec2 GetBR() const { return Max; }                // Bottom-right
+    [[nodiscard]] bool Contains(const Vec2 &p) const
+    {
+        return p.x >= Min.x && p.y >= Min.y && p.x < Max.x && p.y < Max.y;
+    }
+    [[nodiscard]] bool Contains(const ImRect &r) const
     {
         return r.Min.x >= Min.x && r.Min.y >= Min.y && r.Max.x <= Max.x && r.Max.y <= Max.y;
     }
-    bool ContainsWithPad(const Vec2 &p, const Vec2 &pad) const
+    [[nodiscard]] bool ContainsWithPad(const Vec2 &p, const Vec2 &pad) const
     {
         return p.x >= Min.x - pad.x && p.y >= Min.y - pad.y && p.x < Max.x + pad.x && p.y < Max.y + pad.y;
     }
-    bool Overlaps(const ImRect &r) const
+    [[nodiscard]] bool Overlaps(const ImRect &r) const
     {
         return r.Min.y < Max.y && r.Max.y > Min.y && r.Min.x < Max.x && r.Max.x > Min.x;
     }
-    void Add(const Vec2 &p)
+
+    void AddXY(const Vec2 &rhs)
     {
-        if (Min.x > p.x)
-            Min.x = p.x;
-        if (Min.y > p.y)
-            Min.y = p.y;
-        if (Max.x < p.x)
-            Max.x = p.x;
-        if (Max.y < p.y)
-            Max.y = p.y;
+        if (Min.x > rhs.x)
+            Min.x = rhs.x;
+        if (Min.y > rhs.y)
+            Min.y = rhs.y;
+        if (Max.x < rhs.x)
+            Max.x = rhs.x;
+        if (Max.y < rhs.y)
+            Max.y = rhs.y;
     }
+
     void Add(const ImRect &r)
     {
         if (Min.x > r.Min.x)
@@ -887,9 +892,9 @@ struct ImRect
         Min = ImClamp(Min, r.Min, r.Max);
         Max = ImClamp(Max, r.Min, r.Max);
     } // Full version, ensure both points are fully clipped.
-    bool IsInverted() const { return Min.x > Max.x || Min.y > Max.y; }
-    Vec4 ToVec4() const { return Vec4(Min.x, Min.y, Max.x, Max.y); }
-    const Vec4 &AsVec4() const { return *(const Vec4 *) &Min.x; }
+    [[nodiscard]] bool IsInverted() const { return Min.x > Max.x || Min.y > Max.y; }
+    [[nodiscard]] Vec4 ToVec4() const { return Vec4(Min.x, Min.y, Max.x, Max.y); }
+    [[nodiscard]] const Vec4 &AsVec4() const { return *(const Vec4 *) &Min.x; }
 };
 
     // Helper: ImBitArray
