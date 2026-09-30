@@ -3188,12 +3188,6 @@ struct ImGuiTableColumnSortSpecs
 };
 
 
-#ifndef IMGUI_DISABLE_DEBUG_TOOLS
-    #define IMGUI_DEBUG_LOG(...) ImGui::DebugLog(__VA_ARGS__)
-#else
-    #define IMGUI_DEBUG_LOG(...) ((void) 0)
-#endif
-
 //-----------------------------------------------------------------------------
 // IM_MALLOC(), IM_FREE(), IM_NEW(), IM_PLACEMENT_NEW(), IM_DELETE()
 // We call C++ constructor on own allocated memory via the placement "new(ptr) Type()" syntax.
