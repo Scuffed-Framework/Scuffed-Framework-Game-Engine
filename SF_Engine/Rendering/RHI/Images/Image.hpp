@@ -164,8 +164,7 @@ namespace SF::Engine
          */
         void GenerateTexId()
         {
-            imguiTexId = (ImTextureID) ImGui_ImplVulkan_AddTexture(GetSampler(), GetView(),
-                                                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            imguiTexId = (ImTextureID) ImGui_ImplVulkan_AddTexture(GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
     public:
@@ -245,4 +244,4 @@ namespace SF::Engine
         b.dstAccessMask                   = dstAccess;
         vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &b);
     }
-}
+} // namespace SF::Engine
