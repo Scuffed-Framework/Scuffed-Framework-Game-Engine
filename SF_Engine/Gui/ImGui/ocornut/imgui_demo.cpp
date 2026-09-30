@@ -9213,9 +9213,6 @@ void ImGui::ShowAboutWindow(bool *p_open)
         #ifdef IMGUI_ENABLE_TEST_ENGINE
         ImGui::Text("define: IMGUI_ENABLE_TEST_ENGINE");
         #endif
-        #ifdef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        ImGui::Text("define: IMGUI_DISABLE_OBSOLETE_FUNCTIONS");
-        #endif
         #ifdef IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
         ImGui::Text("define: IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS");
         #endif

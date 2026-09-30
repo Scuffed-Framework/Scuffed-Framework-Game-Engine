@@ -52,6 +52,7 @@ find_package(spdlog CONFIG REQUIRED)                # spdlog-config.cmake
 find_package(spirv-reflect-static CONFIG REQUIRED)
 find_package(utf8cpp CONFIG QUIET) # header-only, may not generate a config file
 find_package(libraw CONFIG REQUIRED)
+find_package(plutosvg CONFIG REQUIRED)
 #microslop
 find_package(DirectX-Headers REQUIRED)
 
@@ -222,6 +223,7 @@ target_link_libraries(SF_Engine PUBLIC
         slang::slang
         openfbx::openfbx
         tinyobjloader::tinyobjloader
+        plutosvg
 
         #d3d
         Microsoft::DirectX-Headers

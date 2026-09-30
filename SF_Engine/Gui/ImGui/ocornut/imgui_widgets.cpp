@@ -1312,25 +1312,6 @@ void ImGui::Image(ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0,
     ImageWithBg(tex_ref, image_size, uv0, uv1);
 }
 
-    // 1.91.9 (February 2025) removed 'tint_col' and 'border_col' parameters, made border size not depend on color
-    // value. (#8131, #8238)
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-void ImGui::Image(ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0, const Vec2 &uv1, const Vec4 &tint_col,
-                  const Vec4 &border_col)
-{
-    ImGuiContext &g = *GImGui;
-    PushStyleVar(
-            ImGuiStyleVar_ImageBorderSize,
-            (border_col.w > 0.0f)
-                    ? ImMax(1.0f, g.Style.ImageBorderSize)
-                    : 0.0f); // Preserve legacy behavior where border is always visible when border_col's Alpha is >0.0f
-    PushStyleColor(ImGuiCol_Border, border_col);
-    ImageWithBg(tex_ref, image_size, uv0, uv1, Vec4(0, 0, 0, 0), tint_col);
-    PopStyleColor();
-    PopStyleVar();
-}
-    #endif
-
 bool ImGui::ImageButtonEx(ImGuiID id, ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0, const Vec2 &uv1,
                           const Vec4 &bg_col, const Vec4 &tint_col, ImGuiButtonFlags flags)
 {
@@ -1380,30 +1361,6 @@ bool ImGui::ImageButton(const char *str_id, ImTextureRef tex_ref, const Vec2 &im
 
     return ImageButtonEx(window->GetID(str_id), tex_ref, image_size, uv0, uv1, bg_col, tint_col);
 }
-
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    // Legacy API obsoleted in 1.89. Two differences with new ImageButton()
-    // - old ImageButton() used ImTextureID as item id (created issue with multiple buttons with same image, transient
-    // texture id values, opaque computation of ID)
-    // - new ImageButton() requires an explicit 'const char* str_id'
-    // - old ImageButton() had frame_padding' override argument.
-    // - new ImageButton() always use style.FramePadding.
-    /*
-    bool ImGui::ImageButton(ImTextureID user_texture_id, const Vec2& size, const Vec2& uv0, const Vec2& uv1, int
-    frame_padding, const Vec4& bg_col, const Vec4& tint_col)
-    {
-        // Default to using texture ID as ID. User can still push string/integer prefixes.
-        PushID((ImTextureID)(intptr_t)user_texture_id);
-        if (frame_padding >= 0)
-            PushStyleVar(ImGuiStyleVar_FramePadding, Vec2((float)frame_padding, (float)frame_padding));
-        bool ret = ImageButton("", user_texture_id, size, uv0, uv1, bg_col, tint_col);
-        if (frame_padding >= 0)
-            PopStyleVar();
-        PopID();
-        return ret;
-    }
-    */
-    #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
 bool ImGui::Checkbox(const char *label, bool *v)
 {
@@ -2013,10 +1970,6 @@ bool ImGui::SplitterBehavior(const ImRect &bb, ImGuiID id, ImGuiAxis axis, float
     // to allow caller of SplitterBehavior() to call SetItemAllowOverlap() after the item.
     // Nowadays we would instead want to use SetNextItemAllowOverlap() before the item.
     ImGuiButtonFlags button_flags = ImGuiButtonFlags_FlattenChildren;
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    button_flags |= ImGuiButtonFlags_AllowOverlap;
-    #endif
-
     bool hovered, held;
     ImRect bb_interact = bb;
     bb_interact.Expand(axis == ImGuiAxis_Y ? Vec2(0.0f, hover_extend) : Vec2(hover_extend, 0.0f));
@@ -4635,7 +4588,7 @@ bool ImGui::InputDouble(const char *label, double *v, double step, double step_f
 
 namespace ImStb
 {
-    #include "imstb_textedit.h"
+    #include <LowLevel/imstb_textedit.h>
 }
 
 // If you want to use InputText() with std::string or any custom dynamic string type, use the wrapper in
@@ -4959,7 +4912,7 @@ namespace ImStb
 
     #define IMSTB_TEXTEDIT_IMPLEMENTATION
     #define IMSTB_TEXTEDIT_memmove memmove
-    #include "imstb_textedit.h"
+    #include <LowLevel/imstb_textedit.h>
 
     // stb_textedit internally allows for a single undo record to do addition and deletion, but somehow, calling
     // the stb_textedit_paste() function creates two separate records, so we perform it manually. (FIXME: Report to
@@ -5334,7 +5287,6 @@ void ImGui::InputTextDeactivateHook(ImGuiID id)
         return;
     if (!state->EditedBefore)
         return;
-    // IMGUI_DEBUG_LOG_ACTIVEID("InputTextDeactivateHook() id = 0x%08X\n", id);
     state->EditedBefore                     = false;
     g.InputTextDeactivatedState.ID          = state->ID;
     g.InputTextDeactivatedState.ElapseFrame = g.FrameCount + 1;
@@ -7532,31 +7484,6 @@ bool ImGui::ColorButton(const char *desc_id, const Vec4 &col, ImGuiColorEditFlag
     return pressed;
 }
 
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-// This allowed passing 0 to set default, whereas NewFrame() will assert if one of missing. Abide to old logic.
-void ImGui::SetColorEditOptions(ImGuiColorEditFlags flags)
-{
-    ImGuiContext &g = *GImGui;
-    if ((flags & ImGuiColorEditFlags_DisplayMask_) == 0)
-    {
-        flags |= ImGuiColorEditFlags_DefaultOptions_ & ImGuiColorEditFlags_DisplayMask_;
-    }
-    if ((flags & ImGuiColorEditFlags_DataTypeMask_) == 0)
-    {
-        flags |= ImGuiColorEditFlags_DefaultOptions_ & ImGuiColorEditFlags_DataTypeMask_;
-    }
-    if ((flags & ImGuiColorEditFlags_PickerMask_) == 0)
-    {
-        flags |= ImGuiColorEditFlags_DefaultOptions_ & ImGuiColorEditFlags_PickerMask_;
-    }
-    if ((flags & ImGuiColorEditFlags_InputMask_) == 0)
-    {
-        flags |= ImGuiColorEditFlags_DefaultOptions_ & ImGuiColorEditFlags_InputMask_;
-    }
-    g.IO.ConfigColorEditFlags = flags;
-}
-    #endif
-
 // Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
 void ImGui::ColorTooltip(const char *text, const float *col, ImGuiColorEditFlags flags)
 {
@@ -8905,10 +8832,9 @@ static void BoxSelectPreStartDrag(ImGuiID id, ImGuiSelectionUserData clicked_ite
 static void BoxSelectActivateDrag(ImGuiBoxSelectState *bs, ImGuiWindow *window)
 {
     ImGuiContext &g = *GImGui;
-    IMGUI_DEBUG_LOG_SELECTION("[selection] BeginBoxSelect() 0X%08X: Activate\n", bs->ID);
-    bs->IsActive   = true;
-    bs->Window     = window;
-    bs->IsStarting = false;
+    bs->IsActive    = true;
+    bs->Window      = window;
+    bs->IsStarting  = false;
     ImGui::SetActiveID(bs->ID, window);
     ImGui::SetActiveIdUsingAllKeyboardKeys();
     if (bs->IsStartedFromVoid && (bs->KeyMods & (ImGuiMod_Ctrl | ImGuiMod_Shift)) == 0)
@@ -8921,7 +8847,6 @@ static void BoxSelectDeactivateDrag(ImGuiBoxSelectState *bs)
     bs->IsActive = bs->IsStarting = false;
     if (g.ActiveId == bs->ID)
     {
-        IMGUI_DEBUG_LOG_SELECTION("[selection] BeginBoxSelect() 0X%08X: Deactivate\n", bs->ID);
         ImGui::ClearActiveID();
     }
     bs->ID = 0;
@@ -9116,22 +9041,7 @@ void ImGui::EndBoxSelect(const ImRect &scope_rect, ImGuiMultiSelectFlags ms_flag
 // - DebugNodeMultiSelectState() [Internal]
 //-------------------------------------------------------------------------
 
-static void DebugLogMultiSelectRequests(const char *function, const ImGuiMultiSelectIO *io)
-{
-    ImGuiContext &g = *GImGui;
-    IM_UNUSED(function);
-    for (const ImGuiSelectionRequest &req: io->Requests)
-    {
-        if (req.Type == ImGuiSelectionRequestType_SetAll)
-            IMGUI_DEBUG_LOG_SELECTION("[selection] %s: Request: SetAll %d (= %s)\n", function, req.Selected,
-                                      req.Selected ? "SelectAll" : "Clear");
-        if (req.Type == ImGuiSelectionRequestType_SetRange)
-            IMGUI_DEBUG_LOG_SELECTION("[selection] %s: Request: SetRange %" IM_PRId64 "..%" IM_PRId64 " (0x%" IM_PRIX64
-                                      "..0x%" IM_PRIX64 ") = %d (dir %d)\n",
-                                      function, req.RangeFirstItem, req.RangeLastItem, req.RangeFirstItem,
-                                      req.RangeLastItem, req.Selected, req.RangeDirection);
-    }
-}
+static void DebugLogMultiSelectRequests(const char *function, const ImGuiMultiSelectIO *io) {}
 
 static ImRect CalcScopeRect(ImGuiMultiSelectTempData *ms, ImGuiWindow *window)
 {
@@ -9326,12 +9236,10 @@ ImGuiMultiSelectIO *ImGui::EndMultiSelect()
                      ImGuiSelectionUserData_Invalid)) // Can't read storage->RangeSrcItem here -> we want the state at
                                                       // beginning of the scope (see tests for easy failure)
         {
-            IMGUI_DEBUG_LOG_SELECTION("[selection] EndMultiSelect: Reset RangeSrcItem.\n"); // Will set be to NavId.
             storage->RangeSrcItem = ImGuiSelectionUserData_Invalid;
         }
         if (ms->NavIdPassedBy == false && storage->NavIdItem != ImGuiSelectionUserData_Invalid)
         {
-            IMGUI_DEBUG_LOG_SELECTION("[selection] EndMultiSelect: Reset NavIdItem.\n");
             storage->NavIdItem     = ImGuiSelectionUserData_Invalid;
             storage->NavIdSelected = -1;
         }

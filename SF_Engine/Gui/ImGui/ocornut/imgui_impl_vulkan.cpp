@@ -755,7 +755,6 @@ void ImGui_ImplVulkan_UpdateTexture(ImTextureData *tex)
     if (tex->Status == ImTextureStatus_WantCreate)
     {
         // Create and upload new texture to graphics system
-        // IMGUI_DEBUG_LOG("UpdateTexture #%03d: WantCreate %dx%d\n", tex->UniqueID, tex->Width, tex->Height);
         IM_ASSERT(tex->TexID == ImTextureID_Invalid && tex->BackendUserData == nullptr);
         IM_ASSERT(tex->Format == ImTextureFormat_RGBA32);
         ImGui_ImplVulkan_Texture *backend_tex = IM_NEW(ImGui_ImplVulkan_Texture)();
@@ -1581,14 +1580,6 @@ VkDescriptorSet ImGui_ImplVulkan_AddTexture(VkImageView image_view, VkImageLayou
     }
     return descriptor_set;
 }
-
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-VkDescriptorSet ImGui_ImplVulkan_AddTexture(VkSampler sampler, VkImageView image_view, VkImageLayout image_layout)
-{
-    IM_UNUSED(sampler);
-    return ImGui_ImplVulkan_AddTexture(image_view, image_layout);
-}
-    #endif
 
 void ImGui_ImplVulkan_RemoveTexture(VkDescriptorSet descriptor_set)
 {

@@ -70,7 +70,7 @@ class SfEngineConan(ConanFile):
         self.requires("vulkan-memory-allocator/3.0.1")
         # d3d
         self.requires("directx-headers/1.619.1")
-    
+
         if platform.system() == "Windows":
             self.requires("d3d12-memory-allocator/3.0.1")
 
@@ -83,6 +83,8 @@ class SfEngineConan(ConanFile):
 
         self.requires("openfbx/cci.20210426")
         self.requires("tinyobjloader/2.0.0-rc10")
+
+        self.requires("plutosvg/0.0.8")
 
     def layout(self):
         cmake_layout(self)

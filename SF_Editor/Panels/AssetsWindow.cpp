@@ -964,10 +964,6 @@ namespace SF::Engine
         // This is a placeholder - you'd need to integrate with your rendering system
         // to create ImGui-compatible texture IDs
 
-        // For example with your Vulkan backend:
-        // preview.textureID = ImGui_ImplVulkan_AddTexture(texture->GetSampler(), texture->GetView(),
-        // texture->GetLayout());
-
         m_previewCache[guid] = preview;
         return preview;
     }

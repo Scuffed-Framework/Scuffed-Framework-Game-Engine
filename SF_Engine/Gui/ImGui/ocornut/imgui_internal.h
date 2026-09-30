@@ -139,9 +139,8 @@ Index of this file:
 
     // Enable stb_truetype by default unless FreeType is enabled.
     // You can compile with both by defining both IMGUI_ENABLE_FREETYPE and IMGUI_ENABLE_STB_TRUETYPE together.
-    #ifndef IMGUI_ENABLE_FREETYPE
-        #define IMGUI_ENABLE_STB_TRUETYPE
-    #endif
+
+    #define IMGUI_ENABLE_STB_TRUETYPE
 
 //-----------------------------------------------------------------------------
 // [SECTION] Forward declarations
@@ -264,9 +263,6 @@ extern ImGuiContext *GImGui; // Current implicit context pointer
     // Internal Drag and Drop payload types. String starting with '_' are reserved for Dear ImGui.
     #define IMGUI_PAYLOAD_TYPE_WINDOW "_IMWINDOW" // Payload == ImGuiWindow*
 
-    // Debug Printing Into TTY
-    // (since IMGUI_VERSION_NUM >= 18729: IMGUI_DEBUG_LOG was reworked into IMGUI_DEBUG_PRINTF (and removed framecount
-    // from it). If you were using a #define IMGUI_DEBUG_LOG please rename)
     #ifndef IMGUI_DEBUG_PRINTF
         #define IMGUI_DEBUG_PRINTF(_FMT, ...) ((void) 0)
     #endif
@@ -2534,15 +2530,7 @@ enum ImGuiNavRenderCursorFlags_
     ImGuiNavRenderCursorFlags_None       = 0,
     ImGuiNavRenderCursorFlags_Compact    = 1 << 1, // Compact highlight, no padding/distance from focused item
     ImGuiNavRenderCursorFlags_AlwaysDraw = 1 << 2, // Draw rectangular highlight if (g.NavId == id) even when
-                                                   // g.NavCursorVisible == false, aka even when using the mouse.
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    ImGuiNavRenderCursorFlags_NoRounding = 1 << 3,
-    ImGuiNavHighlightFlags_None          = ImGuiNavRenderCursorFlags_None,       // Renamed in 1.91.4
-    ImGuiNavHighlightFlags_Compact       = ImGuiNavRenderCursorFlags_Compact,    // Renamed in 1.91.4
-    ImGuiNavHighlightFlags_AlwaysDraw    = ImGuiNavRenderCursorFlags_AlwaysDraw, // Renamed in 1.91.4
-    ImGuiNavHighlightFlags_NoRounding    = ImGuiNavRenderCursorFlags_NoRounding, // Renamed in 1.91.4
-    // ImGuiNavHighlightFlags_TypeThin       = ImGuiNavRenderCursorFlags_Compact,    // Renamed in 1.90.2
-    #endif
+                                                   // g.NavCursorVisible == false, aka even when using the mouse
 };
 
 enum ImGuiNavMoveFlags_
@@ -2682,15 +2670,6 @@ enum ImGuiOldColumnFlags_
             1 << 4, // Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the
                     // columns width at all_. Will eventually remove.
 
-// Obsolete names (will be removed)
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    // ImGuiColumnsFlags_None                    = ImGuiOldColumnFlags_None,
-    // ImGuiColumnsFlags_NoBorder                = ImGuiOldColumnFlags_NoBorder,
-    // ImGuiColumnsFlags_NoResize                = ImGuiOldColumnFlags_NoResize,
-    // ImGuiColumnsFlags_NoPreserveWidths        = ImGuiOldColumnFlags_NoPreserveWidths,
-    // ImGuiColumnsFlags_NoForceWithinWindow     = ImGuiOldColumnFlags_NoForceWithinWindow,
-    // ImGuiColumnsFlags_GrowParentContentsSize  = ImGuiOldColumnFlags_GrowParentContentsSize,
-    #endif
 };
 
 struct ImGuiOldColumnData
@@ -3270,7 +3249,6 @@ typedef void (*ImGuiErrorCallback)(ImGuiContext *ctx, void *user_data,
 // [SECTION] Metrics, Debug Tools
 //-----------------------------------------------------------------------------
 
-// See IMGUI_DEBUG_LOG() and IMGUI_DEBUG_LOG_XXX() macros.
 enum ImGuiDebugLogFlags_
 {
     // Event types
@@ -4220,11 +4198,6 @@ public:
         float y1 = Pos.y + TitleBarHeight;
         return ImRect(Pos.x, y1, Pos.x + SizeFull.x, y1 + MenuBarHeight);
     }
-
-    // [OBSOLETE] ImGuiWindow::CalcFontSize() was removed in 1.92.0 because error-prone/misleading. You can use
-    // window->FontRefSize for a copy of g.FontSize at the time of the last Begin() call for this window.
-    // float     CalcFontSize() const    { ImGuiContext& g = *Ctx; return g.FontSizeBase * FontWindowScale *
-    // FontDpiScale * FontWindowScaleParents;
 };
 
 //-----------------------------------------------------------------------------
@@ -4984,12 +4957,10 @@ namespace ImGui
     void ScrollToItem(ImGuiScrollFlags flags = 0);
     void ScrollToRect(ImGuiWindow *window, const ImRect &rect, ImGuiScrollFlags flags = 0);
     Vec2 ScrollToRectEx(ImGuiWindow *window, const ImRect &rect, ImGuiScrollFlags flags = 0);
-    // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
     inline void ScrollToBringRectIntoView(ImGuiWindow *window, const ImRect &rect)
     {
         ScrollToRect(window, rect, ImGuiScrollFlags_KeepVisibleEdgeY);
     }
-    // #endif
 
     // Basic Accessors
     inline ImGuiItemStatusFlags GetItemStatusFlags()
@@ -5478,13 +5449,6 @@ namespace ImGui
                                               ImDrawFlags flags = 0);
     void RenderNavCursor(const ImRect &bb, ImGuiID id, ImGuiNavRenderCursorFlags flags = ImGuiNavRenderCursorFlags_None,
                          float rounding = -1.0f); // Navigation highlight
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    inline void RenderNavHighlight(const ImRect &bb, ImGuiID id,
-                                   ImGuiNavRenderCursorFlags flags = ImGuiNavRenderCursorFlags_None)
-    {
-        RenderNavCursor(bb, id, flags);
-    } // Renamed in 1.91.4
-    #endif
     const char *
     FindRenderedTextEnd(const char *text,
                         const char *text_end = nullptr); // Find the optional ## from which we stop displaying text.
@@ -5698,28 +5662,6 @@ namespace ImGui
     void DebugRenderKeyboardPreview(ImDrawList *draw_list);
     void DebugRenderViewportThumbnail(ImDrawList *draw_list, ImGuiViewportP *viewport, const ImRect &bb);
 
-    // Obsolete functions
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        // inline void   SetItemUsingMouseWheel()                                            {
-        // SetItemKeyOwner(ImGuiKey_MouseWheelY); }      // Changed in 1.89 inline bool   TreeNodeBehaviorIsOpen(ImGuiID
-        // id, ImGuiTreeNodeFlags flags = 0)    { return TreeNodeUpdateNextOpen(id, flags); }   // Renamed in 1.89
-        // inline bool   IsKeyPressedMap(ImGuiKey key, bool repeat = true)                   {
-        // IM_ASSERT(IsNamedKey(key)); return IsKeyPressed(key, repeat); } // Removed in 1.87: Mapping from named key is
-        // always identity!
-
-        // Refactored focus/nav/tabbing system in 1.82 and 1.84. If you have old/custom copy-and-pasted widgets which
-        // used FocusableItemRegister():
-        //  (Old) IMGUI_VERSION_NUM  < 18209: using 'ItemAdd(....)'                              and 'bool tab_focused =
-        //  FocusableItemRegister(...)' (Old) IMGUI_VERSION_NUM >= 18209: using 'ItemAdd(...,
-        //  ImGuiItemAddFlags_Focusable)'  and 'bool tab_focused = (g.LastItemData.StatusFlags &
-        //  ImGuiItemStatusFlags_Focused) != 0' (New) IMGUI_VERSION_NUM >= 18413: using 'ItemAdd(...,
-        //  ImGuiItemFlags_Inputable)'     and 'bool tab_focused = (g.NavActivateId == id && (g.NavActivateFlags &
-        //  ImGuiActivateFlags_PreferInput))'
-        // inline bool   FocusableItemRegister(ImGuiWindow* window, ImGuiID id)              // -> pass
-        // ImGuiItemAddFlags_Inputable flag to ItemAdd() inline void   FocusableItemUnregister(ImGuiWindow* window) //
-        // -> unnecessary: TempInputText() uses ImGuiInputTextFlags_MergedItem
-    #endif
-
 } // namespace ImGui
 
 
@@ -5751,14 +5693,6 @@ struct ImFontLoader
 
     ImFontLoader() { memset((void *) this, 0, sizeof(*this)); }
 };
-
-    #ifdef IMGUI_ENABLE_STB_TRUETYPE
-const ImFontLoader *ImFontAtlasGetFontLoaderForStbTruetype();
-    #endif
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-typedef ImFontLoader ImFontBuilderIO; // [renamed/changed in 1.92.0] The types are not actually compatible but we
-                                      // provide this as a compile-time error report helper.
-    #endif
 
 //-----------------------------------------------------------------------------
 // [SECTION] ImFontAtlas internal API

@@ -35,10 +35,8 @@ Index of this file:
 
 #include "imgui.h"
 #ifndef IMGUI_DISABLE
+    #include "imgui_freetype.h"
     #include "imgui_internal.h"
-    #ifdef IMGUI_ENABLE_FREETYPE
-        #include "misc/freetype/imgui_freetype.h"
-    #endif
 
     #include <stdint.h> // intptr_t
     #include <stdio.h>  // vsnprintf, sscanf, printf
@@ -171,11 +169,7 @@ namespace IMGUI_STB_NAMESPACE
             #define STBRP_SORT ImQsort
             #define STB_RECT_PACK_IMPLEMENTATION
         #endif
-        #ifdef IMGUI_STB_RECT_PACK_FILENAME
-            #include IMGUI_STB_RECT_PACK_FILENAME
-        #else
-            #include "imstb_rectpack.h"
-        #endif
+        #include <LowLevel/imstb_rectpack.h>
     #endif
 
     #ifdef IMGUI_ENABLE_STB_TRUETYPE
@@ -205,7 +199,7 @@ namespace IMGUI_STB_NAMESPACE
             #ifdef IMGUI_STB_TRUETYPE_FILENAME
                 #include IMGUI_STB_TRUETYPE_FILENAME
             #else
-                #include "imstb_truetype.h"
+                #include <LowLevel/imstb_truetype.h>
             #endif
         #endif
     #endif // IMGUI_ENABLE_STB_TRUETYPE
@@ -585,12 +579,6 @@ void ImDrawList::_PopUnusedDrawCmd()
 void ImDrawList::AddCallback(ImDrawCallback callback, void *userdata, size_t userdata_size)
 {
     IM_ASSERT(callback != nullptr);
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    if (callback == ImDrawCallback_ResetRenderState && _Data->Context != nullptr &&
-        _Data->Context->PlatformIO.DrawCallback_ResetRenderState != nullptr)
-        callback = _Data->Context->PlatformIO
-                           .DrawCallback_ResetRenderState; // == ImGui::GetPlatformIO().DrawCallback_ResetRenderState
-    #endif
 
     IM_ASSERT_PARANOID(CmdBuffer.Size > 0);
     ImDrawCmd *curr_cmd = &CmdBuffer.Data[CmdBuffer.Size - 1];
@@ -2615,9 +2603,6 @@ void ImDrawData::Clear()
     DisplayPos = DisplaySize = FramebufferScale = Vec2(0.0f, 0.0f);
     OwnerViewport                               = nullptr;
     Textures                                    = nullptr;
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    CmdListsCount = 0;
-    #endif
 }
 
 // Important: 'out_list' is generally going to be draw_data->CmdLists, but may be another temporary list
@@ -3073,7 +3058,6 @@ ImFontAtlas::~ImFontAtlas()
 // may have textures queued for creation or updates.
 void ImFontAtlas::Clear()
 {
-    IMGUI_DEBUG_LOG_FONT("[font] ImFontAtlas::Clear()\n");
     bool backup_renderer_has_textures = RendererHasTextures;
     RendererHasTextures               = false; // Full Clear() is supported, but ClearTexData() only isn't.
     ClearFonts();
@@ -3084,7 +3068,6 @@ void ImFontAtlas::Clear()
 void ImFontAtlas::ClearFonts()
 {
     // FIXME-NEWATLAS: Illegal to remove currently bound font.
-    IMGUI_DEBUG_LOG_FONT("[font] ImFontAtlas::ClearFonts()\n");
     IM_ASSERT(!Locked && "Cannot modify a locked ImFontAtlas!");
     for (ImFont *font: Fonts)
         ImFontAtlasBuildNotifySetFont(this, font, nullptr);
@@ -3420,54 +3403,6 @@ void ImTextureDataQueueUpload(ImTextureData *tex, int x, int y, int w, int h)
     }
 }
 
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-static void GetTexDataAsFormat(ImFontAtlas *atlas, ImTextureFormat format, unsigned char **out_pixels, int *out_width,
-                               int *out_height, int *out_bytes_per_pixel)
-{
-    ImTextureData *tex = atlas->TexData;
-    if (!atlas->TexIsBuilt || tex == nullptr || tex->Pixels == nullptr || atlas->TexDesiredFormat != format)
-    {
-        atlas->TexDesiredFormat = format;
-        atlas->Build();
-        tex = atlas->TexData;
-    }
-    if (out_pixels)
-    {
-        *out_pixels = (unsigned char *) tex->Pixels;
-    };
-    if (out_width)
-    {
-        *out_width = tex->Width;
-    };
-    if (out_height)
-    {
-        *out_height = tex->Height;
-    };
-    if (out_bytes_per_pixel)
-    {
-        *out_bytes_per_pixel = tex->BytesPerPixel;
-    }
-}
-
-void ImFontAtlas::GetTexDataAsAlpha8(unsigned char **out_pixels, int *out_width, int *out_height,
-                                     int *out_bytes_per_pixel)
-{
-    GetTexDataAsFormat(this, ImTextureFormat_Alpha8, out_pixels, out_width, out_height, out_bytes_per_pixel);
-}
-
-void ImFontAtlas::GetTexDataAsRGBA32(unsigned char **out_pixels, int *out_width, int *out_height,
-                                     int *out_bytes_per_pixel)
-{
-    GetTexDataAsFormat(this, ImTextureFormat_RGBA32, out_pixels, out_width, out_height, out_bytes_per_pixel);
-}
-
-bool ImFontAtlas::Build()
-{
-    ImFontAtlasBuildMain(this);
-    return true;
-}
-    #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-
 ImFont *ImFontAtlas::AddFont(const ImFontConfig *font_cfg_in)
 {
     // Sanity Checks
@@ -3685,7 +3620,6 @@ ImFont *ImFontAtlas::AddFontFromFileTTF(const char *filename, float size_pixels,
     {
         if (font_cfg_template == nullptr || (font_cfg_template->Flags & ImFontFlags_NoLoadError) == 0)
         {
-            IMGUI_DEBUG_LOG("While loading '%s'\n", filename);
             IM_ASSERT_USER_ERROR(0, "Could not load font file!");
         }
         return nullptr;
@@ -3840,58 +3774,6 @@ void ImFontAtlas::RemoveCustomRect(ImFontAtlasRectId id)
         return;
     ImFontAtlasPackDiscardRect(this, id);
 }
-
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-// This API does not make sense anymore with scalable fonts.
-// - Prefer adding a font source (ImFontConfig) using a custom/procedural loader.
-// - You may use ImFontFlags_LockBakedSizes to limit an existing font to known baked sizes:
-//     ImFont* myfont = io.Fonts->AddFontFromFileTTF(....);
-//     myfont->GetFontBaked(16.0f);
-//     myfont->Flags |= ImFontFlags_LockBakedSizes;
-ImFontAtlasRectId ImFontAtlas::AddCustomRectFontGlyph(ImFont *font, ImWchar codepoint, int width, int height,
-                                                      float advance_x, const Vec2 &offset)
-{
-    float font_size = font->LegacySize;
-    return AddCustomRectFontGlyphForSize(font, font_size, codepoint, width, height, advance_x, offset);
-}
-// FIXME: we automatically set glyph.Colored=true by default.
-// If you need to alter this, you can write 'font->Glyphs.back()->Colored' after calling AddCustomRectFontGlyph().
-ImFontAtlasRectId ImFontAtlas::AddCustomRectFontGlyphForSize(ImFont *font, float font_size, ImWchar codepoint,
-                                                             int width, int height, float advance_x, const Vec2 &offset)
-{
-        #ifdef IMGUI_USE_WCHAR32
-    IM_ASSERT(codepoint <= IM_UNICODE_CODEPOINT_MAX);
-        #endif
-    IM_ASSERT(font != nullptr);
-    IM_ASSERT(width > 0 && width <= 0xFFFF);
-    IM_ASSERT(height > 0 && height <= 0xFFFF);
-
-    ImFontBaked *baked = font->GetFontBaked(font_size);
-
-    ImFontAtlasRectId r_id = ImFontAtlasPackAddRect(this, width, height);
-    if (r_id == ImFontAtlasRectId_Invalid)
-        return ImFontAtlasRectId_Invalid;
-    ImTextureRect *r = ImFontAtlasPackGetRect(this, r_id);
-    if (RendererHasTextures)
-        ImFontAtlasTextureBlockQueueUpload(this, TexData, r->x, r->y, r->w, r->h);
-
-    if (baked->IsGlyphLoaded(codepoint))
-        ImFontAtlasBakedDiscardFontGlyph(this, font, baked, baked->FindGlyph(codepoint));
-
-    ImFontGlyph glyph;
-    glyph.Codepoint = codepoint;
-    glyph.AdvanceX  = advance_x;
-    glyph.X0        = offset.x;
-    glyph.Y0        = offset.y;
-    glyph.X1        = offset.x + r->w;
-    glyph.Y1        = offset.y + r->h;
-    glyph.Visible   = true;
-    glyph.Colored   = true; // FIXME: Arbitrary
-    glyph.PackId    = r_id;
-    ImFontAtlasBakedAddFontGlyph(this, baked, font->Sources[0], &glyph);
-    return r_id;
-}
-    #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
 bool ImFontAtlas::GetCustomRect(ImFontAtlasRectId id, ImFontAtlasRect *out_r) const
 {
@@ -4378,7 +4260,6 @@ void ImFontAtlasBakedDiscardFontGlyph(ImFontAtlas *atlas, ImFont *font, ImFontBa
 ImFontBaked *ImFontAtlasBakedAdd(ImFontAtlas *atlas, ImFont *font, float font_size, float font_rasterizer_density,
                                  ImGuiID baked_id)
 {
-    IMGUI_DEBUG_LOG_FONT("[font] Created baked %.2fpx\n", font_size);
     ImFontBaked *baked       = atlas->Builder->BakedPool.push_back(ImFontBaked());
     baked->Size              = font_size;
     baked->RasterizerDensity = font_rasterizer_density;
@@ -4444,7 +4325,6 @@ ImFontBaked *ImFontAtlasBakedGetClosestMatch(ImFontAtlas *atlas, ImFont *font, f
 void ImFontAtlasBakedDiscard(ImFontAtlas *atlas, ImFont *font, ImFontBaked *baked)
 {
     ImFontAtlasBuilder *builder = atlas->Builder;
-    IMGUI_DEBUG_LOG_FONT("[font] Discard baked %.2f for \"%s\"\n", baked->Size, font->GetDebugName());
 
     for (ImFontGlyph &glyph: baked->Glyphs)
         if (glyph.PackId != ImFontAtlasRectId_Invalid)
@@ -4629,14 +4509,6 @@ void ImFontAtlasTextureRepack(ImFontAtlas *atlas, int w, int h)
     ImTextureData *old_tex = atlas->TexData;
     ImTextureData *new_tex = ImFontAtlasTextureAdd(atlas, w, h);
     new_tex->UseColors     = old_tex->UseColors;
-    IMGUI_DEBUG_LOG_FONT("[font] Texture #%03d: resize+repack %dx%d => Texture #%03d: %dx%d\n", old_tex->UniqueID,
-                         old_tex->Width, old_tex->Height, new_tex->UniqueID, new_tex->Width, new_tex->Height);
-    // for (int baked_n = 0; baked_n < builder->BakedPool.Size; baked_n++)
-    //     IMGUI_DEBUG_LOG_FONT("[font] - Baked %.2fpx, %d glyphs, want_destroy=%d\n",
-    //     builder->BakedPool[baked_n].FontSize, builder->BakedPool[baked_n].Glyphs.Size,
-    //     builder->BakedPool[baked_n].WantDestroy);
-    // IMGUI_DEBUG_LOG_FONT("[font] - Old packed rects: %d, area %d px\n", builder->RectsPackedCount,
-    // builder->RectsPackedSurface); ImFontAtlasDebugWriteTexToDisk(old_tex, "Before Pack");
 
     // Repack, lose discarded rectangle, copy pixels
     // FIXME-NEWATLAS: This is unstable because packing order is based on RectsIndex
@@ -4659,7 +4531,6 @@ void ImFontAtlasTextureRepack(ImFontAtlas *atlas, int w, int h)
         {
             // Undo, grow texture and try repacking again.
             // FIXME-NEWATLAS-TESTS: This is a very rarely exercised path! It needs to be automatically tested properly.
-            IMGUI_DEBUG_LOG_FONT("[font] Texture #%03d: resize failed. Will grow.\n", new_tex->UniqueID);
             new_tex->WantDestroyNextFrame = true;
             builder->Rects.swap(old_rects);
             builder->RectsIndex = old_index;
@@ -4732,7 +4603,6 @@ void ImFontAtlasTextureGrow(ImFontAtlas *atlas, int old_tex_w, int old_tex_h)
 void ImFontAtlasTextureMakeSpace(ImFontAtlas *atlas)
 {
     // Can some baked contents be ditched?
-    // IMGUI_DEBUG_LOG_FONT("[font] ImFontAtlasBuildMakeSpace()\n");
     ImFontAtlasBuilder *builder = atlas->Builder;
     ImFontAtlasBuildDiscardBakes(atlas, 2);
 
@@ -4817,13 +4687,7 @@ void ImFontAtlasBuildInit(ImFontAtlas *atlas)
     //   and point to it instead of pointing directly to return value of the GetFontLoaderXXX functions.
     if (atlas->FontLoader == nullptr)
     {
-    #ifdef IMGUI_ENABLE_FREETYPE
         atlas->SetFontLoader(ImGuiFreeType::GetFontLoader());
-    #elif defined(IMGUI_ENABLE_STB_TRUETYPE)
-        atlas->SetFontLoader(ImFontAtlasGetFontLoaderForStbTruetype());
-    #else
-        IM_ASSERT(0); // Invalid Build function
-    #endif
     }
 
     // Create initial texture size
@@ -4977,7 +4841,6 @@ ImFontAtlasRectId ImFontAtlasPackAddRect(ImFontAtlas *atlas, int w, int h, ImFon
         // If we ran out of attempts, return fallback
         if (attempts_remaining == 0 || builder->LockDisableResize)
         {
-            IMGUI_DEBUG_LOG_FONT("[font] Failed packing %dx%d rectangle. Returning fallback.\n", w, h);
             return ImFontAtlasRectId_Invalid;
         }
 
@@ -5075,10 +4938,6 @@ static ImFontGlyph *ImFontBaked_BuildLoadGlyph(ImFontBaked *baked, ImWchar codep
     ImWchar src_codepoint = codepoint;
     ImFontAtlas_FontHookRemapCodepoint(atlas, font, &codepoint);
 
-    // char utf8_buf[5];
-    // IMGUI_DEBUG_LOG("[font] BuildLoadGlyph U+%04X (%s)\n", (unsigned int)codepoint, ImTextCharToUtf8(utf8_buf,
-    // (unsigned int)codepoint));
-
     // Special hook
     // FIXME-NEWATLAS: it would be nicer if this used a more standardized way of hooking
     if (codepoint == font->EllipsisChar && font->EllipsisAutoBake)
@@ -5153,44 +5012,6 @@ static float BuildLoadGlyphGetAdvanceOrFallback(ImFontBaked *baked, unsigned int
     return ImFontBaked_BuildLoadGlyphAdvanceX(baked, (ImWchar) codepoint);
 }
 IM_MSVC_RUNTIME_CHECKS_RESTORE
-
-    #ifndef IMGUI_DISABLE_DEBUG_TOOLS
-void ImFontAtlasDebugLogTextureRequests(ImFontAtlas *atlas)
-{
-    // [DEBUG] Log texture update requests
-    ImGuiContext &g = *GImGui;
-    IM_UNUSED(g);
-    for (ImTextureData *tex: atlas->TexList)
-    {
-        if ((g.IO.BackendFlags & ImGuiBackendFlags_RendererHasTextures) == 0)
-            IM_ASSERT(tex->Updates.Size == 0);
-        if (tex->Status == ImTextureStatus_WantCreate)
-            IMGUI_DEBUG_LOG_FONT("[font] Texture #%03d: create %dx%d\n", tex->UniqueID, tex->Width, tex->Height);
-        else if (tex->Status == ImTextureStatus_WantDestroy)
-            IMGUI_DEBUG_LOG_FONT("[font] Texture #%03d: destroy %dx%d, texid=0x%" IM_PRIX64 ", backend_data=%p\n",
-                                 tex->UniqueID, tex->Width, tex->Height, ImGui::DebugTextureIDToU64(tex->TexID),
-                                 tex->BackendUserData);
-        else if (tex->Status == ImTextureStatus_WantUpdates)
-        {
-            IMGUI_DEBUG_LOG_FONT("[font] Texture #%03d: update %d regions, texid=0x%" IM_PRIX64
-                                 ", backend_data=0x%" IM_PRIX64 "\n",
-                                 tex->UniqueID, tex->Updates.Size, ImGui::DebugTextureIDToU64(tex->TexID),
-                                 (uint64_t) (intptr_t) tex->BackendUserData);
-            for (const ImTextureRect &r: tex->Updates)
-            {
-                IM_UNUSED(r);
-                IM_ASSERT(r.x >= 0 && r.y >= 0);
-                IM_ASSERT(r.x + r.w <= tex->Width &&
-                          r.y + r.h <= tex->Height); // In theory should subtract PackPadding but it's currently part of
-                                                     // atlas and mid-frame change would wreck assert.
-                // IMGUI_DEBUG_LOG_FONT("[font] Texture #%03d: update (% 4d..%-4d)->(% 4d..%-4d), texid=0x%" IM_PRIX64
-                // ", backend_data=0x%" IM_PRIX64 "\n", tex->UniqueID, r.x, r.y, r.x + r.w, r.y + r.h,
-                // ImGui::DebugTextureIDToU64(tex->TexID), (uint64_t)(intptr_t)tex->BackendUserData);
-            }
-        }
-    }
-}
-    #endif
 
 //-------------------------------------------------------------------------
 // [SECTION] ImFontAtlas: backend for stb_truetype
@@ -5413,392 +5234,6 @@ const ImWchar *ImFontAtlas::GetGlyphRangesDefault()
     return &ranges[0];
 }
 
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-const ImWchar *ImFontAtlas::GetGlyphRangesGreek()
-{
-    static const ImWchar ranges[] = {
-            0x0020, 0x00FF, // Basic Latin + Latin Supplement
-            0x0370, 0x03FF, // Greek and Coptic
-            0,
-    };
-    return &ranges[0];
-}
-
-const ImWchar *ImFontAtlas::GetGlyphRangesKorean()
-{
-    static const ImWchar ranges[] = {
-            0x0020, 0x00FF, // Basic Latin + Latin Supplement
-            0x3131, 0x3163, // Korean alphabets
-            0xAC00, 0xD7A3, // Korean characters
-            0xFFFD, 0xFFFD, // Invalid
-            0,
-    };
-    return &ranges[0];
-}
-
-const ImWchar *ImFontAtlas::GetGlyphRangesChineseFull()
-{
-    static const ImWchar ranges[] = {
-            0x0020, 0x00FF, // Basic Latin + Latin Supplement
-            0x2000, 0x206F, // General Punctuation
-            0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
-            0x31F0, 0x31FF, // Katakana Phonetic Extensions
-            0xFF00, 0xFFEF, // Half-width characters
-            0xFFFD, 0xFFFD, // Invalid
-            0x4e00, 0x9FAF, // CJK Ideograms
-            0,
-    };
-    return &ranges[0];
-}
-
-static void UnpackAccumulativeOffsetsIntoRanges(int base_codepoint, const short *accumulative_offsets,
-                                                int accumulative_offsets_count, ImWchar *out_ranges)
-{
-    for (int n = 0; n < accumulative_offsets_count; n++, out_ranges += 2)
-    {
-        out_ranges[0] = out_ranges[1] = (ImWchar) (base_codepoint + accumulative_offsets[n]);
-        base_codepoint += accumulative_offsets[n];
-    }
-    out_ranges[0] = 0;
-}
-
-const ImWchar *ImFontAtlas::GetGlyphRangesChineseSimplifiedCommon()
-{
-    // Store 2500 regularly used characters for Simplified Chinese.
-    // Sourced from
-    // https://zh.wiktionary.org/wiki/%E9%99%84%E5%BD%95:%E7%8E%B0%E4%BB%A3%E6%B1%89%E8%AF%AD%E5%B8%B8%E7%94%A8%E5%AD%97%E8%A1%A8
-    // This table covers 97.97% of all characters used during the month in July, 1987.
-    // You can use ImFontGlyphRangesBuilder to create your own ranges derived from this, by merging existing ranges or
-    // adding new characters. (Stored as accumulative offsets from the initial unicode codepoint 0x4E00. This encoding
-    // is designed to helps us compact the source code size.)
-    static const short accumulative_offsets_from_0x4E00[] = {
-            0,  1,   2,   4,   1,  1,  1,  1,  2,   1,   3,   2,   1,   2,  2,  1,   1,   1,   1,   1,  5,   2,  1,
-            2,  3,   3,   3,   2,  2,  4,  1,  1,   1,   2,   1,   5,   2,  3,  1,   2,   1,   2,   1,  1,   2,  1,
-            1,  2,   2,   1,   4,  1,  1,  1,  1,   5,   10,  1,   2,   19, 2,  1,   2,   1,   2,   1,  2,   1,  2,
-            1,  5,   1,   6,   3,  2,  1,  2,  2,   1,   1,   1,   4,   8,  5,  1,   1,   4,   1,   1,  3,   1,  2,
-            1,  5,   1,   2,   1,  1,  1,  10, 1,   1,   5,   2,   4,   6,  1,  4,   2,   2,   2,   12, 2,   1,  1,
-            6,  1,   1,   1,   4,  1,  1,  4,  6,   5,   1,   4,   2,   2,  4,  10,  7,   1,   1,   4,  2,   4,  2,
-            1,  4,   3,   6,   10, 12, 5,  7,  2,   14,  2,   9,   1,   1,  6,  7,   10,  4,   7,   13, 1,   5,  4,
-            8,  4,   1,   1,   2,  28, 5,  6,  1,   1,   5,   2,   5,   20, 2,  2,   9,   8,   11,  2,  9,   17, 1,
-            8,  6,   8,   27,  4,  6,  9,  20, 11,  27,  6,   68,  2,   2,  1,  1,   1,   2,   1,   2,  2,   7,  6,
-            11, 3,   3,   1,   1,  3,  1,  2,  1,   1,   1,   1,   1,   3,  1,  1,   8,   3,   4,   1,  5,   7,  2,
-            1,  4,   4,   8,   4,  2,  1,  2,  1,   1,   4,   5,   6,   3,  6,  2,   12,  3,   1,   3,  9,   2,  4,
-            3,  4,   1,   5,   3,  3,  1,  3,  7,   1,   5,   1,   1,   1,  1,  2,   3,   4,   5,   2,  3,   2,  6,
-            1,  1,   2,   1,   7,  1,  7,  3,  4,   5,   15,  2,   2,   1,  5,  3,   22,  19,  2,   1,  1,   1,  1,
-            2,  5,   1,   1,   1,  6,  1,  1,  12,  8,   2,   9,   18,  22, 4,  1,   1,   5,   1,   16, 1,   2,  7,
-            10, 15,  1,   1,   6,  2,  4,  1,  2,   4,   1,   6,   1,   1,  3,  2,   4,   1,   6,   4,  5,   1,  2,
-            1,  1,   2,   1,   10, 3,  1,  3,  2,   1,   9,   3,   2,   5,  7,  2,   19,  4,   3,   6,  1,   1,  1,
-            1,  1,   4,   3,   2,  1,  1,  1,  2,   5,   3,   1,   1,   1,  2,  2,   1,   1,   2,   1,  1,   2,  1,
-            3,  1,   1,   1,   3,  7,  1,  4,  1,   1,   2,   1,   1,   2,  1,  2,   4,   4,   3,   8,  1,   1,  1,
-            2,  1,   3,   5,   1,  3,  1,  3,  4,   6,   2,   2,   14,  4,  6,  6,   11,  9,   1,   15, 3,   1,  28,
-            5,  2,   5,   5,   3,  1,  3,  4,  5,   4,   6,   14,  3,   2,  3,  5,   21,  2,   7,   20, 10,  1,  2,
-            19, 2,   4,   28,  28, 2,  3,  2,  1,   14,  4,   1,   26,  28, 42, 12,  40,  3,   52,  79, 5,   14, 17,
-            3,  2,   2,   11,  3,  4,  6,  3,  1,   8,   2,   23,  4,   5,  8,  10,  4,   2,   7,   3,  5,   1,  1,
-            6,  3,   1,   2,   2,  2,  5,  28, 1,   1,   7,   7,   20,  5,  3,  29,  3,   17,  26,  1,  8,   4,  27,
-            3,  6,   11,  23,  5,  3,  4,  6,  13,  24,  16,  6,   5,   10, 25, 35,  7,   3,   2,   3,  3,   14, 3,
-            6,  2,   6,   1,   4,  2,  3,  8,  2,   1,   1,   3,   3,   3,  4,  1,   1,   13,  2,   2,  4,   5,  2,
-            1,  14,  14,  1,   2,  2,  1,  4,  5,   2,   3,   1,   14,  3,  12, 3,   17,  2,   16,  5,  1,   2,  1,
-            8,  9,   3,   19,  4,  2,  2,  4,  17,  25,  21,  20,  28,  75, 1,  10,  29,  103, 4,   1,  2,   1,  1,
-            4,  2,   4,   1,   2,  3,  24, 2,  2,   2,   1,   1,   2,   1,  3,  8,   1,   1,   1,   2,  1,   1,  3,
-            1,  1,   1,   6,   1,  5,  3,  1,  1,   1,   3,   4,   1,   1,  5,  2,   1,   5,   6,   13, 9,   16, 1,
-            1,  1,   1,   3,   2,  3,  2,  4,  5,   2,   5,   2,   2,   3,  7,  13,  7,   2,   2,   1,  1,   1,  1,
-            2,  3,   3,   2,   1,  6,  4,  9,  2,   1,   14,  2,   14,  2,  1,  18,  3,   4,   14,  4,  11,  41, 15,
-            23, 15,  23,  176, 1,  3,  4,  1,  1,   1,   1,   5,   3,   1,  2,  3,   7,   3,   1,   1,  2,   1,  2,
-            4,  4,   6,   2,   4,  1,  9,  7,  1,   10,  5,   8,   16,  29, 1,  1,   2,   2,   3,   1,  3,   5,  2,
-            4,  5,   4,   1,   1,  2,  2,  3,  3,   7,   1,   6,   10,  1,  17, 1,   44,  4,   6,   2,  1,   1,  6,
-            5,  4,   2,   10,  1,  6,  9,  2,  8,   1,   24,  1,   2,   13, 7,  8,   8,   2,   1,   4,  1,   3,  1,
-            3,  3,   5,   2,   5,  10, 9,  4,  9,   12,  2,   1,   6,   1,  10, 1,   1,   7,   7,   4,  10,  8,  3,
-            1,  13,  4,   3,   1,  6,  1,  3,  5,   2,   1,   2,   17,  16, 5,  2,   16,  6,   1,   4,  2,   1,  3,
-            3,  6,   8,   5,   11, 11, 1,  3,  3,   2,   4,   6,   10,  9,  5,  7,   4,   7,   4,   7,  1,   1,  4,
-            2,  1,   3,   6,   8,  7,  1,  6,  11,  5,   5,   3,   24,  9,  4,  2,   7,   13,  5,   1,  8,   82, 16,
-            61, 1,   1,   1,   4,  2,  2,  16, 10,  3,   8,   1,   1,   6,  4,  2,   1,   3,   1,   1,  1,   4,  3,
-            8,  4,   2,   2,   1,  1,  1,  1,  1,   6,   3,   5,   1,   1,  4,  6,   9,   2,   1,   1,  1,   2,  1,
-            7,  2,   1,   6,   1,  5,  4,  4,  3,   1,   8,   1,   3,   3,  1,  3,   2,   2,   2,   2,  3,   1,  6,
-            1,  2,   1,   2,   1,  3,  7,  1,  8,   2,   1,   2,   1,   5,  2,  5,   3,   5,   10,  1,  2,   1,  1,
-            3,  2,   5,   11,  3,  9,  3,  5,  1,   1,   5,   9,   1,   2,  1,  5,   7,   9,   9,   8,  1,   3,  3,
-            3,  6,   8,   2,   3,  2,  1,  1,  32,  6,   1,   2,   15,  9,  3,  7,   13,  1,   3,   10, 13,  2,  14,
-            1,  13,  10,  2,   1,  3,  10, 4,  15,  2,   15,  15,  10,  1,  3,  9,   6,   9,   32,  25, 26,  47, 7,
-            3,  2,   3,   1,   6,  3,  4,  3,  2,   8,   5,   4,   1,   9,  4,  2,   2,   19,  10,  6,  2,   3,  8,
-            1,  2,   2,   4,   2,  1,  9,  4,  4,   4,   6,   4,   8,   9,  2,  3,   1,   1,   1,   1,  3,   5,  5,
-            1,  3,   8,   4,   6,  2,  1,  4,  12,  1,   5,   3,   7,   13, 2,  5,   8,   1,   6,   1,  2,   5,  14,
-            6,  1,   5,   2,   4,  8,  15, 5,  1,   23,  6,   62,  2,   10, 1,  1,   8,   1,   2,   2,  10,  4,  2,
-            2,  9,   2,   1,   1,  3,  2,  3,  1,   5,   3,   3,   2,   1,  3,  8,   1,   1,   1,   11, 3,   1,  1,
-            4,  3,   7,   1,   14, 1,  2,  3,  12,  5,   2,   5,   1,   6,  7,  5,   7,   14,  11,  1,  3,   1,  8,
-            9,  12,  2,   1,   11, 8,  4,  4,  2,   6,   10,  9,   13,  1,  1,  3,   1,   5,   1,   3,  2,   4,  4,
-            1,  18,  2,   3,   14, 11, 4,  29, 4,   2,   7,   1,   3,   13, 9,  2,   2,   5,   3,   5,  20,  7,  16,
-            8,  5,   72,  34,  6,  4,  22, 12, 12,  28,  45,  36,  9,   7,  39, 9,   191, 1,   1,   1,  4,   11, 8,
-            4,  9,   2,   3,   22, 1,  1,  1,  1,   4,   17,  1,   7,   7,  1,  11,  31,  10,  2,   4,  8,   2,  3,
-            2,  1,   4,   2,   16, 4,  32, 2,  3,   19,  13,  4,   9,   1,  5,  2,   14,  8,   1,   1,  3,   6,  19,
-            6,  5,   1,   16,  6,  2,  10, 8,  5,   1,   2,   3,   1,   5,  5,  1,   11,  6,   6,   1,  3,   3,  2,
-            6,  3,   8,   1,   1,  4,  10, 7,  5,   7,   7,   5,   8,   9,  2,  1,   3,   4,   1,   1,  3,   1,  3,
-            3,  2,   6,   16,  1,  4,  6,  3,  1,   10,  6,   1,   3,   15, 2,  9,   2,   10,  25,  13, 9,   16, 6,
-            2,  2,   10,  11,  4,  3,  9,  1,  2,   6,   6,   5,   4,   30, 40, 1,   10,  7,   12,  14, 33,  6,  3,
-            6,  7,   3,   1,   3,  1,  11, 14, 4,   9,   5,   12,  11,  49, 18, 51,  31,  140, 31,  2,  2,   1,  5,
-            1,  8,   1,   10,  1,  4,  4,  3,  24,  1,   10,  1,   3,   6,  6,  16,  3,   4,   5,   2,  1,   4,  2,
-            57, 10,  6,   22,  2,  22, 3,  7,  22,  6,   10,  11,  36,  18, 16, 33,  36,  2,   5,   5,  1,   1,  1,
-            4,  10,  1,   4,   13, 2,  7,  5,  2,   9,   3,   4,   1,   7,  43, 3,   7,   3,   9,   14, 7,   9,  1,
-            11, 1,   1,   3,   7,  4,  18, 13, 1,   14,  1,   3,   6,   10, 73, 2,   2,   30,  6,   1,  11,  18, 19,
-            13, 22,  3,   46,  42, 37, 89, 7,  3,   16,  34,  2,   2,   3,  9,  1,   7,   1,   1,   1,  2,   2,  4,
-            10, 7,   3,   10,  3,  9,  5,  28, 9,   2,   6,   13,  7,   3,  1,  3,   10,  2,   7,   2,  11,  3,  6,
-            21, 54,  85,  2,   1,  4,  2,  2,  1,   39,  3,   21,  2,   2,  5,  1,   1,   1,   4,   1,  1,   3,  4,
-            15, 1,   3,   2,   4,  4,  2,  3,  8,   2,   20,  1,   8,   7,  13, 4,   1,   26,  6,   2,  9,   34, 4,
-            21, 52,  10,  4,   4,  1,  5,  12, 2,   11,  1,   7,   2,   30, 12, 44,  2,   30,  1,   1,  3,   6,  16,
-            9,  17,  39,  82,  2,  2,  24, 7,  1,   7,   3,   16,  9,   14, 44, 2,   1,   2,   1,   2,  3,   5,  2,
-            4,  1,   6,   7,   5,  3,  2,  6,  1,   11,  5,   11,  2,   1,  18, 19,  8,   1,   3,   24, 29,  2,  1,
-            3,  5,   2,   2,   1,  13, 6,  5,  1,   46,  11,  3,   5,   1,  1,  5,   8,   2,   10,  6,  12,  6,  3,
-            7,  11,  2,   4,   16, 13, 2,  5,  1,   1,   2,   2,   5,   2,  28, 5,   2,   23,  10,  8,  4,   4,  22,
-            39, 95,  38,  8,   14, 9,  5,  1,  13,  5,   4,   3,   13,  12, 11, 1,   9,   1,   27,  37, 2,   5,  4,
-            4,  63,  211, 95,  2,  2,  2,  1,  3,   5,   2,   1,   1,   2,  2,  1,   1,   1,   3,   2,  4,   1,  2,
-            1,  1,   5,   2,   2,  1,  1,  2,  3,   1,   3,   1,   1,   1,  3,  1,   4,   2,   1,   3,  6,   1,  1,
-            3,  7,   15,  5,   3,  2,  5,  3,  9,   11,  4,   2,   22,  1,  6,  3,   8,   7,   1,   4,  28,  4,  16,
-            3,  3,   25,  4,   4,  27, 27, 1,  4,   1,   2,   2,   7,   1,  3,  5,   2,   28,  8,   2,  14,  1,  8,
-            6,  16,  25,  3,   3,  3,  14, 3,  3,   1,   1,   2,   1,   4,  6,  3,   8,   4,   1,   1,  1,   2,  3,
-            6,  10,  6,   2,   3,  18, 3,  2,  5,   5,   4,   3,   1,   5,  2,  5,   4,   23,  7,   6,  12,  6,  4,
-            17, 11,  9,   5,   1,  1,  10, 5,  12,  1,   1,   11,  26,  33, 7,  3,   6,   1,   17,  7,  1,   5,  12,
-            1,  11,  2,   4,   1,  8,  14, 17, 23,  1,   2,   1,   7,   8,  16, 11,  9,   6,   5,   2,  6,   4,  16,
-            2,  8,   14,  1,   11, 8,  9,  1,  1,   1,   9,   25,  4,   11, 19, 7,   2,   15,  2,   12, 8,   52, 7,
-            5,  19,  2,   16,  4,  36, 8,  1,  16,  8,   24,  26,  4,   6,  2,  9,   5,   4,   36,  3,  28,  12, 25,
-            15, 37,  27,  17,  12, 59, 38, 5,  32,  127, 1,   2,   9,   17, 14, 4,   1,   2,   1,   1,  8,   11, 50,
-            4,  14,  2,   19,  16, 4,  17, 5,  4,   5,   26,  12,  45,  2,  23, 45,  104, 30,  12,  8,  3,   10, 2,
-            2,  3,   3,   1,   4,  20, 7,  2,  9,   6,   15,  2,   20,  1,  3,  16,  4,   11,  15,  6,  134, 2,  5,
-            59, 1,   2,   2,   2,  1,  9,  17, 3,   26,  137, 10,  211, 59, 1,  2,   4,   1,   4,   1,  1,   1,  2,
-            6,  2,   3,   1,   1,  2,  3,  2,  3,   1,   3,   4,   4,   2,  3,  3,   1,   4,   3,   1,  7,   2,  2,
-            3,  1,   2,   1,   3,  3,  3,  2,  2,   3,   2,   1,   3,   14, 6,  1,   3,   2,   9,   6,  15,  27, 9,
-            34, 145, 1,   1,   2,  1,  1,  1,  1,   2,   1,   1,   1,   1,  2,  2,   2,   3,   1,   2,  1,   1,  1,
-            2,  3,   5,   8,   3,  5,  2,  4,  1,   3,   2,   2,   2,   12, 4,  1,   1,   1,   10,  4,  5,   1,  20,
-            4,  16,  1,   15,  9,  5,  12, 2,  9,   2,   5,   4,   2,   26, 19, 7,   1,   26,  4,   30, 12,  15, 42,
-            1,  6,   8,   172, 1,  1,  4,  2,  1,   1,   11,  2,   2,   4,  2,  1,   2,   1,   10,  8,  1,   2,  1,
-            4,  5,   1,   2,   5,  1,  8,  4,  1,   3,   4,   2,   1,   6,  2,  1,   3,   4,   1,   2,  1,   1,  1,
-            1,  12,  5,   7,   2,  4,  3,  1,  1,   1,   3,   3,   6,   1,  2,  2,   3,   3,   3,   2,  1,   2,  12,
-            14, 11,  6,   6,   4,  12, 2,  8,  1,   7,   10,  1,   35,  7,  4,  13,  15,  4,   3,   23, 21,  28, 52,
-            5,  26,  5,   6,   1,  7,  10, 2,  7,   53,  3,   2,   1,   1,  1,  2,   163, 532, 1,   10, 11,  1,  3,
-            3,  4,   8,   2,   8,  6,  2,  2,  23,  22,  4,   2,   2,   4,  2,  1,   3,   1,   3,   3,  5,   9,  8,
-            2,  1,   2,   8,   1,  10, 2,  12, 21,  20,  15,  105, 2,   3,  1,  1,   3,   2,   3,   1,  1,   2,  5,
-            1,  4,   15,  11,  19, 1,  1,  1,  1,   5,   4,   5,   1,   1,  2,  5,   3,   5,   12,  1,  2,   5,  1,
-            11, 1,   1,   15,  9,  1,  4,  5,  3,   26,  8,   2,   1,   3,  1,  1,   15,  19,  2,   12, 1,   2,  5,
-            2,  7,   2,   19,  2,  20, 6,  26, 7,   5,   2,   2,   7,   34, 21, 13,  70,  2,   128, 1,  1,   2,  1,
-            1,  2,   1,   1,   3,  2,  2,  2,  15,  1,   4,   1,   3,   4,  42, 10,  6,   1,   49,  85, 8,   1,  2,
-            1,  1,   4,   4,   2,  3,  6,  1,  5,   7,   4,   3,   211, 4,  1,  2,   1,   2,   5,   1,  2,   4,  2,
-            2,  6,   5,   6,   10, 3,  4,  48, 100, 6,   2,   16,  296, 5,  27, 387, 2,   2,   3,   7,  16,  8,  5,
-            38, 15,  39,  21,  9,  10, 3,  7,  59,  13,  27,  21,  47,  5,  21, 6};
-    static ImWchar base_ranges[] = // not zero-terminated
-            {
-                    0x0020, 0x00FF, // Basic Latin + Latin Supplement
-                    0x2000, 0x206F, // General Punctuation
-                    0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
-                    0x31F0, 0x31FF, // Katakana Phonetic Extensions
-                    0xFF00, 0xFFEF, // Half-width characters
-                    0xFFFD, 0xFFFD  // Invalid
-            };
-    static ImWchar full_ranges[IM_COUNTOF(base_ranges) + IM_COUNTOF(accumulative_offsets_from_0x4E00) * 2 + 1] = {0};
-    if (!full_ranges[0])
-    {
-        memcpy(full_ranges, base_ranges, sizeof(base_ranges));
-        UnpackAccumulativeOffsetsIntoRanges(0x4E00, accumulative_offsets_from_0x4E00,
-                                            IM_COUNTOF(accumulative_offsets_from_0x4E00),
-                                            full_ranges + IM_COUNTOF(base_ranges));
-    }
-    return &full_ranges[0];
-}
-
-const ImWchar *ImFontAtlas::GetGlyphRangesJapanese()
-{
-    // 2999 ideograms code points for Japanese
-    // - 2136 Joyo (meaning "for regular use" or "for common use") Kanji code points
-    // - 863 Jinmeiyo (meaning "for personal name") Kanji code points
-    // - Sourced from official information provided by the government agencies of Japan:
-    //   - List of Joyo Kanji by the Agency for Cultural Affairs
-    //     - https://www.bunka.go.jp/kokugo_nihongo/sisaku/joho/joho/kijun/naikaku/kanji/
-    //   - List of Jinmeiyo Kanji by the Ministry of Justice
-    //     - http://www.moj.go.jp/MINJI/minji86.html
-    //   - Available under the terms of the Creative Commons Attribution 4.0 International (CC BY 4.0).
-    //     - https://creativecommons.org/licenses/by/4.0/legalcode
-    // - You can generate this code by the script at:
-    //   - https://github.com/vaiorabbit/everyday_use_kanji
-    // - References:
-    //   - List of Joyo Kanji
-    //     - (Wikipedia) https://en.wikipedia.org/wiki/List_of_j%C5%8Dy%C5%8D_kanji
-    //   - List of Jinmeiyo Kanji
-    //     - (Wikipedia) https://en.wikipedia.org/wiki/Jinmeiy%C5%8D_kanji
-    // - Missing 1 Joyo Kanji: U+20B9F (Kun'yomi: Shikaru, On'yomi: Shitsu,shichi), see
-    // https://github.com/ocornut/imgui/pull/3627 for details. You can use ImFontGlyphRangesBuilder to create your own
-    // ranges derived from this, by merging existing ranges or adding new characters. (Stored as accumulative offsets
-    // from the initial unicode codepoint 0x4E00. This encoding is designed to helps us compact the source code size.)
-    static const short accumulative_offsets_from_0x4E00[] = {
-            0,  1,  2,  4,   1,  1,  1,  1,  2,  1,  3,  3,  2,  2,   1,  5,  3,  5,     7,  5,   6,  1,   2,  1,  7,
-            2,  6,  3,  1,   8,  1,  1,  4,  1,  1,  18, 2,  11, 2,   6,  2,  1,  2,     1,  5,   1,  2,   1,  3,  1,
-            2,  1,  2,  3,   3,  1,  1,  2,  3,  1,  1,  1,  12, 7,   9,  1,  4,  5,     1,  1,   2,  1,   10, 1,  1,
-            9,  2,  2,  4,   5,  6,  9,  3,  1,  1,  1,  1,  9,  3,   18, 5,  2,  2,     2,  2,   1,  6,   3,  7,  1,
-            1,  1,  1,  2,   2,  4,  2,  1,  23, 2,  10, 4,  3,  5,   2,  4,  10, 2,     4,  13,  1,  6,   1,  9,  3,
-            1,  1,  6,  6,   7,  6,  3,  1,  2,  11, 3,  2,  2,  3,   2,  15, 2,  2,     5,  4,   3,  6,   4,  1,  2,
-            5,  2,  12, 16,  6,  13, 9,  13, 2,  1,  1,  7,  16, 4,   7,  1,  19, 1,     5,  1,   2,  2,   7,  7,  8,
-            2,  6,  5,  4,   9,  18, 7,  4,  5,  9,  13, 11, 8,  15,  2,  1,  1,  1,     2,  1,   2,  2,   1,  2,  2,
-            8,  2,  9,  3,   3,  1,  1,  4,  4,  1,  1,  1,  4,  9,   1,  4,  3,  5,     5,  2,   7,  5,   3,  4,  8,
-            2,  1,  13, 2,   3,  3,  1,  14, 1,  1,  4,  5,  1,  3,   6,  1,  5,  2,     1,  1,   3,  3,   3,  3,  1,
-            1,  2,  7,  6,   6,  7,  1,  4,  7,  6,  1,  1,  1,  1,   1,  12, 3,  3,     9,  5,   2,  6,   1,  5,  6,
-            1,  2,  3,  18,  2,  4,  14, 4,  1,  3,  6,  1,  1,  6,   3,  5,  5,  3,     2,  2,   2,  2,   12, 3,  1,
-            4,  2,  3,  2,   3,  11, 1,  7,  4,  1,  2,  1,  3,  17,  1,  9,  1,  24,    1,  1,   4,  2,   2,  4,  1,
-            2,  7,  1,  1,   1,  3,  1,  2,  2,  4,  15, 1,  1,  2,   1,  1,  2,  1,     5,  2,   5,  20,  2,  5,  9,
-            1,  10, 8,  7,   6,  1,  1,  1,  1,  1,  1,  6,  2,  1,   2,  8,  1,  1,     1,  1,   5,  1,   1,  3,  1,
-            1,  1,  1,  3,   1,  1,  12, 4,  1,  3,  1,  1,  1,  1,   1,  10, 3,  1,     7,  5,   13, 1,   2,  3,  4,
-            6,  1,  1,  30,  2,  9,  9,  1,  15, 38, 11, 3,  1,  8,   24, 7,  1,  9,     8,  10,  2,  1,   9,  31, 2,
-            13, 6,  2,  9,   4,  49, 5,  2,  15, 2,  1,  10, 2,  1,   1,  1,  2,  2,     6,  15,  30, 35,  3,  14, 18,
-            8,  1,  16, 10,  28, 12, 19, 45, 38, 1,  3,  2,  3,  13,  2,  1,  7,  3,     6,  5,   3,  4,   3,  1,  5,
-            7,  8,  1,  5,   3,  18, 5,  3,  6,  1,  21, 4,  24, 9,   24, 40, 3,  14,    3,  21,  3,  2,   1,  2,  4,
-            2,  3,  1,  15,  15, 6,  5,  1,  1,  3,  1,  5,  6,  1,   9,  7,  3,  3,     2,  1,   4,  3,   8,  21, 5,
-            16, 4,  5,  2,   10, 11, 11, 3,  6,  3,  2,  9,  3,  6,   13, 1,  2,  1,     1,  1,   1,  11,  12, 6,  6,
-            1,  4,  2,  6,   5,  2,  1,  1,  3,  3,  6,  13, 3,  1,   1,  5,  1,  2,     3,  3,   14, 2,   1,  2,  2,
-            2,  5,  1,  9,   5,  1,  1,  6,  12, 3,  12, 3,  4,  13,  2,  14, 2,  8,     1,  17,  5,  1,   16, 4,  2,
-            2,  21, 8,  9,   6,  23, 20, 12, 25, 19, 9,  38, 8,  3,   21, 40, 25, 33,    13, 4,   3,  1,   4,  1,  2,
-            4,  1,  2,  5,   26, 2,  1,  1,  2,  1,  3,  6,  2,  1,   1,  1,  1,  1,     1,  2,   3,  1,   1,  1,  9,
-            2,  3,  1,  1,   1,  3,  6,  3,  2,  1,  1,  6,  6,  1,   8,  2,  2,  2,     1,  4,   1,  2,   3,  2,  7,
-            3,  2,  4,  1,   2,  1,  2,  2,  1,  1,  1,  1,  1,  3,   1,  2,  5,  4,     10, 9,   4,  9,   1,  1,  1,
-            1,  1,  1,  5,   3,  2,  1,  6,  4,  9,  6,  1,  10, 2,   31, 17, 8,  3,     7,  5,   40, 1,   7,  7,  1,
-            6,  5,  2,  10,  7,  8,  4,  15, 39, 25, 6,  28, 47, 18,  10, 7,  1,  3,     1,  1,   2,  1,   1,  1,  3,
-            3,  3,  1,  1,   1,  3,  4,  2,  1,  4,  1,  3,  6,  10,  7,  8,  6,  2,     2,  1,   3,  3,   2,  5,  8,
-            7,  9,  12, 2,   15, 1,  1,  4,  1,  2,  1,  1,  1,  3,   2,  1,  3,  3,     5,  6,   2,  3,   2,  10, 1,
-            4,  2,  8,  1,   1,  1,  11, 6,  1,  21, 4,  16, 3,  1,   3,  1,  4,  2,     3,  6,   5,  1,   3,  1,  1,
-            3,  3,  4,  6,   1,  1,  10, 4,  2,  7,  10, 4,  7,  4,   2,  9,  4,  3,     1,  1,   1,  4,   1,  8,  3,
-            4,  1,  3,  1,   6,  1,  4,  2,  1,  4,  7,  2,  1,  8,   1,  4,  5,  1,     1,  2,   2,  4,   6,  2,  7,
-            1,  10, 1,  1,   3,  4,  11, 10, 8,  21, 4,  6,  1,  3,   5,  2,  1,  2,     28, 5,   5,  2,   3,  13, 1,
-            2,  3,  1,  4,   2,  1,  5,  20, 3,  8,  11, 1,  3,  3,   3,  1,  8,  10,    9,  2,   10, 9,   2,  3,  1,
-            1,  2,  4,  1,   8,  3,  6,  1,  7,  8,  6,  11, 1,  4,   29, 8,  4,  3,     1,  2,   7,  13,  1,  4,  1,
-            6,  2,  6,  12,  12, 2,  20, 3,  2,  3,  6,  4,  8,  9,   2,  7,  34, 5,     1,  18,  6,  1,   1,  4,  4,
-            5,  7,  9,  1,   2,  2,  4,  3,  4,  1,  7,  2,  2,  2,   6,  2,  3,  25,    5,  3,   6,  1,   4,  6,  7,
-            4,  2,  1,  4,   2,  13, 6,  4,  4,  3,  1,  5,  3,  4,   4,  3,  2,  1,     1,  4,   1,  2,   1,  1,  3,
-            1,  11, 1,  6,   3,  1,  7,  3,  6,  2,  8,  8,  6,  9,   3,  4,  11, 3,     2,  10,  12, 2,   5,  11, 1,
-            6,  4,  5,  3,   1,  8,  5,  4,  6,  6,  3,  5,  1,  1,   3,  2,  1,  2,     2,  6,   17, 12,  1,  10, 1,
-            6,  12, 1,  6,   6,  19, 9,  6,  16, 1,  13, 4,  4,  15,  7,  17, 6,  11,    9,  15,  12, 6,   7,  2,  1,
-            2,  2,  15, 9,   3,  21, 4,  6,  49, 18, 7,  3,  2,  3,   1,  6,  8,  2,     2,  6,   2,  9,   1,  3,  6,
-            4,  4,  1,  2,   16, 2,  5,  2,  1,  6,  2,  3,  5,  3,   1,  2,  5,  1,     2,  1,   9,  3,   1,  8,  6,
-            4,  8,  11, 3,   1,  1,  1,  1,  3,  1,  13, 8,  4,  1,   3,  2,  2,  1,     4,  1,   11, 1,   5,  2,  1,
-            5,  2,  5,  8,   6,  1,  1,  7,  4,  3,  8,  3,  2,  7,   2,  1,  5,  1,     5,  2,   4,  7,   6,  2,  8,
-            5,  1,  11, 4,   5,  3,  6,  18, 1,  2,  13, 3,  3,  1,   21, 1,  1,  4,     1,  4,   1,  1,   1,  8,  1,
-            2,  2,  7,  1,   2,  4,  2,  2,  9,  2,  1,  1,  1,  4,   3,  6,  3,  12,    5,  1,   1,  1,   5,  6,  3,
-            2,  4,  8,  2,   2,  4,  2,  7,  1,  8,  9,  5,  2,  3,   2,  1,  3,  2,     13, 7,   14, 6,   5,  1,  1,
-            2,  1,  4,  2,   23, 2,  1,  1,  6,  3,  1,  4,  1,  15,  3,  1,  7,  3,     9,  14,  1,  3,   1,  4,  1,
-            1,  5,  8,  1,   3,  8,  3,  8,  15, 11, 4,  14, 4,  4,   2,  5,  5,  1,     7,  1,   6,  14,  7,  7,  8,
-            5,  15, 4,  8,   6,  5,  6,  2,  1,  13, 1,  20, 15, 11,  9,  2,  5,  6,     2,  11,  2,  6,   2,  5,  1,
-            5,  8,  4,  13,  19, 25, 4,  1,  1,  11, 1,  34, 2,  5,   9,  14, 6,  2,     2,  6,   1,  1,   14, 1,  3,
-            14, 13, 1,  6,   12, 21, 14, 14, 6,  32, 17, 8,  32, 9,   28, 1,  2,  4,     11, 8,   3,  1,   14, 2,  5,
-            15, 1,  1,  1,   1,  3,  6,  4,  1,  3,  4,  11, 3,  1,   1,  11, 30, 1,     5,  1,   4,  1,   5,  8,  1,
-            1,  3,  2,  4,   3,  17, 35, 2,  6,  12, 17, 3,  1,  6,   2,  1,  1,  12,    2,  7,   3,  3,   2,  1,  16,
-            2,  8,  3,  6,   5,  4,  7,  3,  3,  8,  1,  9,  8,  5,   1,  2,  1,  3,     2,  8,   1,  2,   9,  12, 1,
-            1,  2,  3,  8,   3,  24, 12, 4,  3,  7,  5,  8,  3,  3,   3,  3,  3,  3,     1,  23,  10, 3,   1,  2,  2,
-            6,  3,  1,  16,  1,  16, 22, 3,  10, 4,  11, 6,  9,  7,   7,  3,  6,  2,     2,  2,   4,  10,  2,  1,  1,
-            2,  8,  7,  1,   6,  4,  1,  3,  3,  3,  5,  10, 12, 12,  2,  3,  12, 8,     15, 1,   1,  16,  6,  6,  1,
-            5,  9,  11, 4,   11, 4,  2,  6,  12, 1,  17, 5,  13, 1,   4,  9,  5,  1,     11, 2,   1,  8,   1,  5,  7,
-            28, 8,  3,  5,   10, 2,  17, 3,  38, 22, 1,  2,  18, 12,  10, 4,  38, 18,    1,  4,   44, 19,  4,  1,  8,
-            4,  1,  12, 1,   4,  31, 12, 1,  14, 7,  75, 7,  5,  10,  6,  6,  13, 3,     2,  11,  11, 3,   2,  5,  28,
-            15, 6,  18, 18,  5,  6,  4,  3,  16, 1,  7,  18, 7,  36,  3,  5,  3,  1,     7,  1,   9,  1,   10, 7,  2,
-            4,  2,  6,  2,   9,  7,  4,  3,  32, 12, 3,  7,  10, 2,   23, 16, 3,  1,     12, 3,   31, 4,   11, 1,  3,
-            8,  9,  5,  1,   30, 15, 6,  12, 3,  2,  2,  11, 19, 9,   14, 2,  6,  2,     3,  19,  13, 17,  5,  3,  3,
-            25, 3,  14, 1,   1,  1,  36, 1,  3,  2,  19, 3,  13, 36,  9,  13, 31, 6,     4,  16,  34, 2,   5,  4,  2,
-            3,  3,  5,  1,   1,  1,  4,  3,  1,  17, 3,  2,  3,  5,   3,  1,  3,  2,     3,  5,   6,  3,   12, 11, 1,
-            3,  1,  2,  26,  7,  12, 7,  2,  14, 3,  3,  7,  7,  11,  25, 25, 28, 16,    4,  36,  1,  2,   1,  6,  2,
-            1,  9,  3,  27,  17, 4,  3,  4,  13, 4,  1,  3,  2,  2,   1,  10, 4,  2,     4,  6,   3,  8,   2,  1,  18,
-            1,  1,  24, 2,   2,  4,  33, 2,  3,  63, 7,  1,  6,  40,  7,  3,  4,  4,     2,  4,   15, 18,  1,  16, 1,
-            1,  11, 2,  41,  14, 1,  3,  18, 13, 3,  2,  4,  16, 2,   17, 7,  15, 24,    7,  18,  13, 44,  2,  2,  3,
-            6,  1,  1,  7,   5,  1,  7,  1,  4,  3,  3,  5,  10, 8,   2,  3,  1,  8,     1,  1,   27, 4,   2,  1,  12,
-            1,  2,  1,  10,  6,  1,  6,  7,  5,  2,  3,  7,  11, 5,   11, 3,  6,  6,     2,  3,   15, 4,   9,  1,  1,
-            2,  1,  2,  11,  2,  8,  12, 8,  5,  4,  2,  3,  1,  5,   2,  2,  1,  14,    1,  12,  11, 4,   1,  11, 17,
-            17, 4,  3,  2,   5,  5,  7,  3,  1,  5,  9,  9,  8,  2,   5,  6,  6,  13,    13, 2,   1,  2,   6,  1,  2,
-            2,  49, 4,  9,   1,  2,  10, 16, 7,  8,  4,  3,  2,  23,  4,  58, 3,  29,    1,  14,  19, 19,  11, 11, 2,
-            7,  5,  1,  3,   4,  6,  2,  18, 5,  12, 12, 17, 17, 3,   3,  2,  4,  1,     6,  2,   3,  4,   3,  1,  1,
-            1,  1,  5,  1,   1,  9,  1,  3,  1,  3,  6,  1,  8,  1,   1,  2,  6,  4,     14, 3,   1,  4,   11, 4,  1,
-            3,  32, 1,  2,   4,  13, 4,  1,  2,  4,  2,  1,  3,  1,   11, 1,  4,  2,     1,  4,   4,  6,   3,  5,  1,
-            6,  5,  7,  6,   3,  23, 3,  5,  3,  5,  3,  3,  13, 3,   9,  10, 1,  12,    10, 2,   3,  18,  13, 7,  160,
-            52, 4,  2,  2,   3,  2,  14, 5,  4,  12, 4,  6,  4,  1,   20, 4,  11, 6,     2,  12,  27, 1,   4,  1,  2,
-            2,  7,  4,  5,   2,  28, 3,  7,  25, 8,  3,  19, 3,  6,   10, 2,  2,  1,     10, 2,   5,  4,   1,  3,  4,
-            1,  5,  3,  2,   6,  9,  3,  6,  2,  16, 3,  3,  16, 4,   5,  5,  3,  2,     1,  2,   16, 15,  8,  2,  6,
-            21, 2,  4,  1,   22, 5,  8,  1,  1,  21, 11, 2,  1,  11,  11, 19, 13, 12,    4,  2,   3,  2,   3,  6,  1,
-            8,  11, 1,  4,   2,  9,  5,  2,  1,  11, 2,  9,  1,  1,   2,  14, 31, 9,     3,  4,   21, 14,  4,  8,  1,
-            7,  2,  2,  2,   5,  1,  4,  20, 3,  3,  4,  10, 1,  11,  9,  8,  2,  1,     4,  5,   14, 12,  14, 2,  17,
-            9,  6,  31, 4,   14, 1,  20, 13, 26, 5,  2,  7,  3,  6,   13, 2,  4,  2,     19, 6,   2,  2,   18, 9,  3,
-            5,  12, 12, 14,  4,  6,  2,  3,  6,  9,  5,  22, 4,  5,   25, 6,  4,  8,     5,  2,   6,  27,  2,  35, 2,
-            16, 3,  7,  8,   8,  6,  6,  5,  9,  17, 2,  20, 6,  19,  2,  13, 3,  1,     1,  1,   4,  17,  12, 2,  14,
-            7,  1,  4,  18,  12, 38, 33, 2,  10, 1,  1,  2,  13, 14,  17, 11, 50, 6,     33, 20,  26, 74,  16, 23, 45,
-            50, 13, 38, 33,  6,  6,  7,  4,  4,  2,  1,  3,  2,  5,   8,  7,  8,  9,     3,  11,  21, 9,   13, 1,  3,
-            10, 6,  7,  1,   2,  2,  18, 5,  5,  1,  9,  9,  2,  68,  9,  19, 13, 2,     5,  1,   4,  4,   7,  4,  13,
-            3,  9,  10, 21,  17, 3,  26, 2,  1,  5,  2,  4,  5,  4,   1,  7,  4,  7,     3,  4,   2,  1,   6,  1,  1,
-            20, 4,  1,  9,   2,  2,  1,  3,  3,  2,  3,  2,  1,  1,   1,  20, 2,  3,     1,  6,   2,  3,   6,  2,  4,
-            8,  1,  3,  2,   10, 3,  5,  3,  4,  4,  3,  4,  16, 1,   6,  1,  10, 2,     4,  2,   1,  1,   2,  10, 11,
-            2,  2,  3,  1,   24, 31, 4,  10, 10, 2,  5,  12, 16, 164, 15, 4,  16, 7,     9,  15,  19, 17,  1,  2,  1,
-            1,  5,  1,  1,   1,  1,  1,  3,  1,  4,  3,  1,  3,  1,   3,  1,  2,  1,     1,  3,   3,  7,   2,  8,  1,
-            2,  2,  2,  1,   3,  4,  3,  7,  8,  12, 92, 2,  10, 3,   1,  3,  14, 5,     25, 16,  42, 4,   7,  7,  4,
-            2,  21, 5,  27,  26, 27, 21, 25, 30, 31, 2,  1,  5,  13,  3,  22, 5,  6,     6,  11,  9,  12,  1,  5,  9,
-            7,  5,  5,  22,  60, 3,  5,  13, 1,  1,  8,  1,  1,  3,   3,  2,  1,  9,     3,  3,   18, 4,   1,  2,  3,
-            7,  6,  3,  1,   2,  3,  9,  1,  3,  1,  3,  2,  1,  3,   1,  1,  1,  2,     1,  11,  3,  1,   6,  9,  1,
-            3,  2,  3,  1,   2,  1,  5,  1,  1,  4,  3,  4,  1,  2,   2,  4,  4,  1,     7,  2,   1,  2,   2,  3,  5,
-            13, 18, 3,  4,   14, 9,  9,  4,  16, 3,  7,  5,  8,  2,   6,  48, 28, 3,     1,  1,   4,  2,   14, 8,  2,
-            9,  2,  1,  15,  2,  4,  3,  2,  10, 16, 12, 8,  7,  1,   1,  3,  1,  1,     1,  2,   7,  4,   1,  6,  4,
-            38, 39, 16, 23,  7,  15, 15, 3,  2,  12, 7,  21, 37, 27,  6,  5,  4,  8,     2,  10,  8,  8,   6,  5,  1,
-            2,  1,  3,  24,  1,  16, 17, 9,  23, 10, 17, 6,  1,  51,  55, 44, 13, 294,   9,  3,   6,  2,   4,  2,  2,
-            15, 1,  1,  1,   13, 21, 17, 68, 14, 8,  9,  4,  1,  4,   9,  3,  11, 7,     1,  1,   1,  5,   6,  3,  2,
-            1,  1,  1,  2,   3,  8,  1,  2,  2,  4,  1,  5,  5,  2,   1,  4,  3,  7,     13, 4,   1,  4,   1,  3,  1,
-            1,  1,  5,  5,   10, 1,  6,  1,  5,  2,  1,  5,  2,  4,   1,  4,  5,  7,     3,  18,  2,  9,   11, 32, 4,
-            3,  3,  2,  4,   7,  11, 16, 9,  11, 8,  13, 38, 32, 8,   4,  2,  1,  1,     2,  1,   2,  4,   4,  1,  1,
-            1,  4,  1,  21,  3,  11, 1,  16, 1,  1,  6,  1,  3,  2,   4,  9,  8,  57,    7,  44,  1,  3,   3,  13, 3,
-            10, 1,  1,  7,   5,  2,  7,  21, 47, 63, 3,  15, 4,  7,   1,  16, 1,  1,     2,  8,   2,  3,   42, 15, 4,
-            1,  29, 7,  22,  10, 3,  78, 16, 12, 20, 18, 4,  67, 11,  5,  1,  3,  15,    6,  21,  31, 32,  27, 18, 13,
-            71, 35, 5,  142, 4,  10, 1,  2,  50, 19, 33, 16, 35, 37,  16, 19, 27, 7,     1,  133, 19, 1,   4,  8,  7,
-            20, 1,  4,  4,   1,  10, 3,  1,  6,  1,  2,  51, 5,  40,  15, 24, 43, 22928, 11, 1,   13, 154, 70, 3,  1,
-            1,  7,  4,  10,  1,  2,  1,  1,  2,  1,  2,  1,  2,  2,   1,  1,  2,  1,     1,  1,   1,  1,   2,  1,  1,
-            1,  1,  1,  1,   1,  1,  1,  1,  1,  1,  1,  2,  1,  1,   1,  3,  2,  1,     1,  1,   1,  2,   1,  1,
-    };
-    static ImWchar base_ranges[] = // not zero-terminated
-            {
-                    0x0020, 0x00FF, // Basic Latin + Latin Supplement
-                    0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
-                    0x31F0, 0x31FF, // Katakana Phonetic Extensions
-                    0xFF00, 0xFFEF, // Half-width characters
-                    0xFFFD, 0xFFFD  // Invalid
-            };
-    static ImWchar full_ranges[IM_COUNTOF(base_ranges) + IM_COUNTOF(accumulative_offsets_from_0x4E00) * 2 + 1] = {0};
-    if (!full_ranges[0])
-    {
-        memcpy(full_ranges, base_ranges, sizeof(base_ranges));
-        UnpackAccumulativeOffsetsIntoRanges(0x4E00, accumulative_offsets_from_0x4E00,
-                                            IM_COUNTOF(accumulative_offsets_from_0x4E00),
-                                            full_ranges + IM_COUNTOF(base_ranges));
-    }
-    return &full_ranges[0];
-}
-
-const ImWchar *ImFontAtlas::GetGlyphRangesCyrillic()
-{
-    static const ImWchar ranges[] = {
-            0x0020, 0x00FF, // Basic Latin + Latin Supplement
-            0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
-            0x2DE0, 0x2DFF, // Cyrillic Extended-A
-            0xA640, 0xA69F, // Cyrillic Extended-B
-            0,
-    };
-    return &ranges[0];
-}
-
-const ImWchar *ImFontAtlas::GetGlyphRangesThai()
-{
-    static const ImWchar ranges[] = {
-            0x0020, 0x00FF, // Basic Latin
-            0x2010, 0x205E, // Punctuations
-            0x0E00, 0x0E7F, // Thai
-            0,
-    };
-    return &ranges[0];
-}
-
-const ImWchar *ImFontAtlas::GetGlyphRangesVietnamese()
-{
-    static const ImWchar ranges[] = {
-            0x0020, 0x00FF, // Basic Latin
-            0x0102, 0x0103, 0x0110, 0x0111, 0x0128, 0x0129, 0x0168, 0x0169,
-            0x01A0, 0x01A1, 0x01AF, 0x01B0, 0x1EA0, 0x1EF9, 0,
-    };
-    return &ranges[0];
-}
-    #endif // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-
 //-----------------------------------------------------------------------------
 // [SECTION] ImFontGlyphRangesBuilder
 //-----------------------------------------------------------------------------
@@ -5863,9 +5298,6 @@ void ImFontBaked::ClearOutputData()
 ImFont::ImFont()
 {
     memset((void *) this, 0, sizeof(*this));
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    Scale = 1.0f;
-    #endif
 }
 
 ImFont::~ImFont() { ClearOutputData(); }
@@ -6734,8 +6166,6 @@ begin:
         draw_list->CmdBuffer.pop_back();
         draw_list->PrimUnreserve(idx_count_max, vtx_count_max);
         draw_list->AddDrawCmd();
-        // IMGUI_DEBUG_LOG("RenderText: cancel and retry to missing glyphs.\n"); // [DEBUG]
-        // draw_list->AddRectFilled(pos, pos + Vec2(10, 10), IM_COL32(255, 0, 0, 255)); // [DEBUG]
         goto begin;
         // RenderText(draw_list, size, pos, col, clip_rect, text_begin, text_end, wrap_width, cpu_fine_clip); //
         // FIXME-OPT: Would a 'goto begin' be better for code-gen? return;

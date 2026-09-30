@@ -46,25 +46,7 @@ enum ImGuiFreeTypeLoaderFlags_
             1 << 7, // Disable anti-aliasing. Combine this with MonoHinting for best results!
     ImGuiFreeTypeLoaderFlags_LoadColor = 1 << 8, // Enable FreeType color-layered glyphs
     ImGuiFreeTypeLoaderFlags_Bitmap    = 1 << 9, // Enable FreeType bitmap glyphs
-
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    ImGuiFreeTypeBuilderFlags_NoHinting     = ImGuiFreeTypeLoaderFlags_NoHinting,
-    ImGuiFreeTypeBuilderFlags_NoAutoHint    = ImGuiFreeTypeLoaderFlags_NoAutoHint,
-    ImGuiFreeTypeBuilderFlags_ForceAutoHint = ImGuiFreeTypeLoaderFlags_ForceAutoHint,
-    ImGuiFreeTypeBuilderFlags_LightHinting  = ImGuiFreeTypeLoaderFlags_LightHinting,
-    ImGuiFreeTypeBuilderFlags_MonoHinting   = ImGuiFreeTypeLoaderFlags_MonoHinting,
-    ImGuiFreeTypeBuilderFlags_Bold          = ImGuiFreeTypeLoaderFlags_Bold,
-    ImGuiFreeTypeBuilderFlags_Oblique       = ImGuiFreeTypeLoaderFlags_Oblique,
-    ImGuiFreeTypeBuilderFlags_Monochrome    = ImGuiFreeTypeLoaderFlags_Monochrome,
-    ImGuiFreeTypeBuilderFlags_LoadColor     = ImGuiFreeTypeLoaderFlags_LoadColor,
-    ImGuiFreeTypeBuilderFlags_Bitmap        = ImGuiFreeTypeLoaderFlags_Bitmap,
-    #endif
 };
-
-    // Obsolete names (will be removed)
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-typedef ImGuiFreeTypeLoaderFlags_ ImGuiFreeTypeBuilderFlags_;
-    #endif
 
 namespace ImGuiFreeType
 {
@@ -84,15 +66,6 @@ namespace ImGuiFreeType
     // Display UI to edit ImFontAtlas::FontLoaderFlags (shared) or ImFontConfig::FontLoaderFlags (single source)
     bool DebugEditFontLoaderFlags(ImGuiFreeTypeLoaderFlags *p_font_loader_flags);
 
-    // Obsolete names (will be removed)
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        // const ImFontBuilderIO* GetBuilderForFreeType(); // Renamed/changed in 1.92. Change 'io.Fonts->FontBuilderIO =
-        // ImGuiFreeType::GetBuilderForFreeType()' to 'io.Fonts->SetFontLoader(ImGuiFreeType::GetFontLoader())' if you
-        // need runtime selection.
-        // static inline bool BuildFontAtlas(ImFontAtlas* atlas, unsigned int flags = 0) { atlas->FontBuilderIO =
-        // GetBuilderForFreeType(); atlas->FontLoaderFlags = flags; return atlas->Build(); } // Prefer using '#define
-        // IMGUI_ENABLE_FREETYPE'
-    #endif
 } // namespace ImGuiFreeType
 
 #endif // #ifndef IMGUI_DISABLE

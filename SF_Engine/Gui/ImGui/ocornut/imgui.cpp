@@ -355,9 +355,6 @@ ImGuiStyle::ImGuiStyle()
     // [Internal]
     _MainScale             = 1.0f;
     _NextFrameFontSizeBase = 0.0f;
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    CurveTessellationTol = 0.0f; // Old CurveTessellationTol = CurveTessellationMaxError*CurveTessellationMaxError.
-    #endif
 
     // Default theme
     ImGui::StyleColorsDark(this);
@@ -450,9 +447,6 @@ ImGuiIO::ImGuiIO()
     Fonts                = nullptr;
     FontDefault          = nullptr;
     FontAllowUserScaling = false;
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    FontGlobalScale = 1.0f; // Use style.FontScaleMain instead!
-    #endif
     DisplayFramebufferScale = Vec2(1.0f, 1.0f);
 
     // Keyboard/Gamepad Navigation options
@@ -2212,7 +2206,7 @@ void ImGuiListClipper::Begin(int items_count, float items_height)
 
 void ImGuiListClipper::End()
 {
-    if (ImGuiListClipperData *data = (ImGuiListClipperData *) TempData)
+    if (auto *data = (ImGuiListClipperData *) TempData)
     {
         // In theory here we should assert that we are already at the right position, but it seems saner to just seek at
         // the end and not assert/crash the user.
@@ -3058,10 +3052,6 @@ void ImGui::RenderNavCursor(const ImRect &bb, ImGuiID id, ImGuiNavRenderCursorFl
     if (window->DC.NavHideHighlightOneFrame)
         return;
 
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    if (rounding < 0.0f && (flags & ImGuiNavRenderCursorFlags_NoRounding))
-        rounding = 0.0f;
-    #endif
     if (rounding < 0.0f)
         rounding = g.Style.FrameRounding;
 
@@ -5090,9 +5080,6 @@ static void InitViewportDrawData(ImGuiViewportP *viewport)
     draw_data->FramebufferScale                         = viewport->FramebufferScale;
     draw_data->OwnerViewport                            = viewport;
     draw_data->Textures                                 = &g.PlatformIO.Textures;
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    draw_data->CmdListsCount = 0;
-    #endif
 }
 
 // Push a clipping rectangle for both ImGui logic (hit-testing etc.) and low-level ImDrawList rendering.
@@ -5436,9 +5423,6 @@ void ImGui::Render()
         ImDrawData *draw_data = &viewport->DrawDataP;
         for (ImDrawList *draw_list: draw_data->CmdLists)
             draw_list->_PopUnusedDrawCmd();
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        draw_data->CmdListsCount = draw_data->CmdLists.Size;
-    #endif
         g.IO.MetricsRenderVertices += draw_data->TotalVtxCount;
         g.IO.MetricsRenderIndices += draw_data->TotalIdxCount;
     }
@@ -5674,20 +5658,7 @@ void ImGui::SetNextItemAllowOverlap()
     g.NextItemData.ItemFlagsSet |= ImGuiItemFlags_AllowOverlap;
 }
 
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    // Allow last item to be overlapped by a subsequent item. Both may be activated during the same frame before the
-    // later one takes priority. Use SetNextItemAllowOverlap() *before* your item instead of calling this!
-    // void ImGui::SetItemAllowOverlap()
-    //{
-    //    ImGuiContext& g = *GImGui;
-    //    ImGuiID id = g.LastItemData.ID;
-    //    if (g.HoveredId == id)
-    //        g.HoveredIdAllowOverlap = true;
-    //    if (g.ActiveId == id) // Before we made this obsolete, most calls to SetItemAllowOverlap() used to avoid this
-    //    path by testing g.ActiveId != id.
-    //        g.ActiveIdAllowOverlap = true;
-    //}
-    #endif
+
 
 // This is a shortcut for not taking ownership of 100+ keys, frequently used by drag operations.
 // FIXME: It might be undesirable that this will likely disable KeyOwner-aware shortcuts systems. Consider a more
@@ -5777,11 +5748,6 @@ bool ImGui::BeginChildEx(const char *name, ImGuiID id, const Vec2 &size_arg, ImG
                   "Must use ImGuiChildFlags_AutoResizeX or ImGuiChildFlags_AutoResizeY with "
                   "ImGuiChildFlags_AlwaysAutoResize!");
     }
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        // if (window_flags & ImGuiWindowFlags_AlwaysUseWindowPadding) { child_flags |=
-        // ImGuiChildFlags_AlwaysUseWindowPadding; } if (window_flags & ImGuiWindowFlags_NavFlattened) { child_flags |=
-        // ImGuiChildFlags_NavFlattened; }
-    #endif
     if (child_flags & ImGuiChildFlags_AutoResizeX)
         child_flags &= ~ImGuiChildFlags_ResizeX;
     if (child_flags & ImGuiChildFlags_AutoResizeY)
@@ -9119,9 +9085,6 @@ void ImGui::SetCurrentFont(ImFont *font, float font_size_before_scaling, float f
     {
         IM_ASSERT(font && font->IsLoaded()); // Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 /
                                              // GetTexDataAsAlpha8 ?
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        IM_ASSERT(font->Scale > 0.0f);
-    #endif
         ImFontAtlas *atlas             = font->OwnerAtlas;
         g.DrawListSharedData.FontAtlas = atlas;
         g.DrawListSharedData.Font      = font;
@@ -9152,13 +9115,6 @@ void ImGui::UpdateCurrentFontSize(float restore_font_size_after_scaling)
         // Window scale (mostly obsolete now)
         if (window != nullptr)
             final_size *= window->FontWindowScale;
-
-        // Legacy scale factors
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-        final_size *= g.IO.FontGlobalScale; // Use style.FontScaleMain instead!
-        if (g.Font != nullptr)
-            final_size *= g.Font->Scale; // Was never really useful.
-    #endif
     }
 
     // Round font size
@@ -11233,51 +11189,6 @@ static void ImGui::ErrorCheckNewFrameSanityChecks()
         IM_ASSERT(g.IO.ConfigErrorRecoveryEnableAssert || g.IO.ConfigErrorRecoveryEnableDebugLog ||
                   g.IO.ConfigErrorRecoveryEnableTooltip || g.ErrorCallback != nullptr);
 
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    if (g.IO.FontGlobalScale > 1.0f)
-        IM_ASSERT(g.Style.FontScaleMain == 1.0f &&
-                  "Since 1.92: use style.FontScaleMain instead of g.IO.FontGlobalScale!");
-
-    // Remap legacy names
-    if (g.IO.ConfigFlags & ImGuiConfigFlags_NavEnableSetMousePos)
-    {
-        g.IO.ConfigNavMoveSetMousePos = true;
-        g.IO.ConfigFlags &= ~ImGuiConfigFlags_NavEnableSetMousePos;
-    }
-    if (g.IO.ConfigFlags & ImGuiConfigFlags_NavNoCaptureKeyboard)
-    {
-        g.IO.ConfigNavCaptureKeyboard = false;
-        g.IO.ConfigFlags &= ~ImGuiConfigFlags_NavNoCaptureKeyboard;
-    }
-    if (g.IO.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleFonts)
-    {
-        g.IO.ConfigDpiScaleFonts = true;
-        g.IO.ConfigFlags &= ~ImGuiConfigFlags_DpiEnableScaleFonts;
-    }
-    if (g.IO.ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports)
-    {
-        g.IO.ConfigDpiScaleViewports = true;
-        g.IO.ConfigFlags &= ~ImGuiConfigFlags_DpiEnableScaleViewports;
-    }
-
-    // Remap legacy clipboard handlers (OBSOLETED in 1.91.1, August 2024)
-    if (g.IO.GetClipboardTextFn != nullptr &&
-        (g.PlatformIO.Platform_GetClipboardTextFn == nullptr ||
-         g.PlatformIO.Platform_GetClipboardTextFn == Platform_GetClipboardTextFn_DefaultImpl))
-        g.PlatformIO.Platform_GetClipboardTextFn = [](ImGuiContext *ctx)
-        { return ctx->IO.GetClipboardTextFn(ctx->IO.ClipboardUserData); };
-    if (g.IO.SetClipboardTextFn != nullptr &&
-        (g.PlatformIO.Platform_SetClipboardTextFn == nullptr ||
-         g.PlatformIO.Platform_SetClipboardTextFn == Platform_SetClipboardTextFn_DefaultImpl))
-        g.PlatformIO.Platform_SetClipboardTextFn = [](ImGuiContext *ctx, const char *text)
-        { return ctx->IO.SetClipboardTextFn(ctx->IO.ClipboardUserData, text); };
-
-    // Remap legacy CurveTessellationTol into CurveTessellationMaxError (OBSOLETED in 1.93.0, August 2026)
-    if (g.Style.CurveTessellationTol != 0.0f)
-        g.Style.CurveTessellationMaxError = ImSqrt(g.Style.CurveTessellationTol);
-    g.Style.CurveTessellationTol = 0.0f;
-    #endif
-
     // Perform simple check: error if Docking or Viewport are enabled _exactly_ on frame 1 (instead of frame 0 or
     // later), which is a common error leading to loss of .ini data.
     if (g.FrameCount == 1 && (g.IO.ConfigFlags & ImGuiConfigFlags_DockingEnable) &&
@@ -12862,12 +12773,7 @@ void ImGui::EndPopup()
 
 ImGuiMouseButton ImGui::GetMouseButtonFromPopupFlags(ImGuiPopupFlags flags)
 {
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-    if ((flags & ImGuiPopupFlags_InvalidMask_) != 0) // 1,2 --> ImGuiMouseButton_Right, ImGuiMouseButton_Middle
-        return (flags & ImGuiPopupFlags_InvalidMask_);
-    #else
     IM_ASSERT((flags & ImGuiPopupFlags_InvalidMask_) == 0);
-    #endif
     if (flags & ImGuiPopupFlags_MouseButtonMask_)
         return ((flags & ImGuiPopupFlags_MouseButtonMask_) >> ImGuiPopupFlags_MouseButtonShift_) - 1;
     return ImGuiMouseButton_Right; // Default == 1

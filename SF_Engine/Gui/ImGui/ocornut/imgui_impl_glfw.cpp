@@ -863,8 +863,6 @@ static EM_BOOL ImGui_ImplEmscripten_WheelCallback(int, const EmscriptenWheelEven
     float wheel_y = ev->deltaY * -multiplier;
     ImGuiIO &io   = ImGui::GetIO(bd->Context);
     io.AddMouseWheelEvent(wheel_x, wheel_y);
-    // IMGUI_DEBUG_LOG("[Emsc] mode %d dx: %.2f, dy: %.2f, dz: %.2f --> feed %.2f %.2f\n", (int)ev->deltaMode,
-    // ev->deltaX, ev->deltaY, ev->deltaZ, wheel_x, wheel_y);
     return EM_TRUE;
 }
     #endif

@@ -661,9 +661,6 @@ bool ImGui::BeginTableEx(const char *name, ImGuiID id, int columns_count, ImGuiT
     const int old_columns_count = table->Columns.size();
     if (old_columns_count != 0 && old_columns_count != columns_count)
     {
-        // Attempt to preserve width and other settings on column count/specs change (#4046, #9108)
-        IMGUI_DEBUG_LOG_TABLE("[table] Table 0x%08X column count %d -> %d, recreating storage.\n", table->ID,
-                              old_columns_count, columns_count);
         IM_ASSERT(temp_data->OldColumnsRawData == nullptr);
         temp_data->OldColumnsRawData = table->RawData; // Freed during layout
         temp_data->OldColumnsData    = table->Columns;
@@ -1029,8 +1026,6 @@ void ImGui::TableUpdateLayout(ImGuiTable *table)
     if (table->RefScale != 0.0f && table->RefScale != new_ref_scale_unit)
     {
         const float scale_factor = new_ref_scale_unit / table->RefScale;
-        IMGUI_DEBUG_LOG_TABLE("[table] 0x%08X RefScale %.3f -> %.3f, scaling width by %.3f\n", table->ID,
-                              table->RefScale, new_ref_scale_unit, scale_factor);
         for (int n = 0; n < columns_count; n++)
             table->Columns[n].WidthRequest = table->Columns[n].WidthRequest * scale_factor;
     }
@@ -2043,7 +2038,6 @@ void ImGui::TableReconcileColumns(ImGuiTable *table)
     ImGuiContext &g               = *GImGui;
     ImGuiTableTempData *temp_data = table->TempData;
     IM_UNUSED(g);
-    IMGUI_DEBUG_LOG_TABLE("[table] Reconcile columns for table 0x%08X\n", table->ID);
 
     ImSpan<ImGuiTableColumn> &dst_columns = table->Columns;
     ImSpan<ImGuiTableColumn> &src_columns =
@@ -2095,10 +2089,7 @@ void ImGui::TableReconcileColumns(ImGuiTable *table)
                                               // data (which will set IsJustCreated=true)
         TableSetupColumnApply(table, reconcile_data.ColumnNewIdx, reconcile_data.ID, reconcile_data.NameOffset,
                               reconcile_data.Flags, reconcile_data.InitWidthOrWeight, reconcile_data.UserData);
-        IMGUI_DEBUG_LOG_TABLE(
-                "[table] - old %d -> new %d \"%s\"\n", reconcile_data.ColumnOldIdx, reconcile_data.ColumnNewIdx,
-                TableGetColumnName(table, reconcile_data.ColumnNewIdx)); // Log at the end so NameOffset was copied.
-    }
+        }
     TableFixDisplayOrder(table);
     table->IsSettingsDirty = true; // FIXME-RECONCILE: Necessary?
     table->IsReconcileMode = false;

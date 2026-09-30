@@ -187,11 +187,6 @@ void ImGui_ImplVulkan_UpdateTexture(ImTextureData *tex);
 VkDescriptorSet ImGui_ImplVulkan_AddTexture(VkImageView image_view, VkImageLayout image_layout);
 void ImGui_ImplVulkan_RemoveTexture(VkDescriptorSet descriptor_set);
 
-    #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-VkDescriptorSet ImGui_ImplVulkan_AddTexture(VkSampler sampler, VkImageView image_view,
-                                            VkImageLayout image_layout); // Ignore VkSampler
-    #endif
-
 // Optional: load Vulkan functions with a custom function loader
 // This is only useful with IMGUI_IMPL_VULKAN_NO_PROTOTYPES / VK_NO_PROTOTYPES
 bool ImGui_ImplVulkan_LoadFunctions(uint32_t api_version,
