@@ -10737,10 +10737,7 @@ struct ExampleAppPropertyEditor
 
             if (ImGui::BeginTable("##list", 1, ImGuiTableFlags_RowBg))
             {
-                if (UseClipper)
-                    DrawClippedTree(root_node);
-                else
-                    DrawTree(root_node);
+                DrawTree(root_node);
                 ImGui::EndTable();
             }
         }
