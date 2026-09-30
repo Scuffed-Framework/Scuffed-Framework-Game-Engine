@@ -229,19 +229,19 @@ namespace SF::Engine
                                   VkPipelineStageFlags dstStage, uint32_t layerCount,
                                   VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT)
     {
-        VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
-        b.oldLayout                       = oldLayout;
-        b.newLayout                       = newLayout;
-        b.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        b.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        b.image                           = image;
-        b.subresourceRange.aspectMask     = aspect;
-        b.subresourceRange.baseMipLevel   = 0;
-        b.subresourceRange.levelCount     = 1;
-        b.subresourceRange.baseArrayLayer = 0;
-        b.subresourceRange.layerCount     = layerCount;
-        b.srcAccessMask                   = srcAccess;
-        b.dstAccessMask                   = dstAccess;
+        VkImageMemoryBarrier b{
+                .sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .srcAccessMask       = srcAccess,
+                .dstAccessMask       = dstAccess,
+                .oldLayout           = oldLayout,
+                .newLayout           = newLayout,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image               = image,
+        };
+        b.subresourceRange.aspectMask = aspect, b.subresourceRange.baseMipLevel = 0, b.subresourceRange.levelCount = 1,
+        b.subresourceRange.baseArrayLayer = 0, b.subresourceRange.layerCount = layerCount,
+
         vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &b);
     }
 } // namespace SF::Engine
