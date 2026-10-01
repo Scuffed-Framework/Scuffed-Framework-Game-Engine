@@ -2067,6 +2067,31 @@ void ImGuiTextBuffer::appendf(const char *fmt, ...)
     va_end(args);
 }
 
+int ImFormatString(char *buf, size_t buf_size, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    int w = vsnprintf(buf, buf_size, fmt, args);
+    va_end(args);
+    if (buf == nullptr)
+        return w;
+    if (w == -1 || w >= (int) buf_size)
+        w = (int) buf_size - 1;
+    buf[w] = 0;
+    return w;
+}
+
+int ImFormatStringV(char *buf, size_t buf_size, const char *fmt, va_list args)
+{
+    int w = vsnprintf(buf, buf_size, fmt, args);
+    if (buf == NULL)
+        return w;
+    if (w == -1 || w >= (int) buf_size)
+        w = (int) buf_size - 1;
+    buf[w] = 0;
+    return w;
+}
+
 // Helper: Text buffer for logging/accumulating text
 void ImGuiTextBuffer::appendfv(const char *fmt, va_list args)
 {
