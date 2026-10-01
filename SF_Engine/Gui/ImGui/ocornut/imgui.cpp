@@ -2291,10 +2291,11 @@ void ImGuiListClipper::SeekCursorForItem(int item_n)
 
 static bool ImGuiListClipper_StepInternal(ImGuiListClipper *clipper)
 {
-    ImGuiContext &g            = *clipper->Ctx;
-    ImGuiWindow *window        = g.CurrentWindow;
-    ImGuiListClipperData *data = (ImGuiListClipperData *) clipper->TempData;
-    IM_ASSERT(data != NULL && "Called ImGuiListClipper::Step() too many times, or before ImGuiListClipper::Begin() ?");
+    ImGuiContext &g     = *clipper->Ctx;
+    ImGuiWindow *window = g.CurrentWindow;
+    auto *data          = (ImGuiListClipperData *) clipper->TempData;
+    IM_ASSERT(data != nullptr &&
+              "Called ImGuiListClipper::Step() too many times, or before ImGuiListClipper::Begin() ?");
 
     ImGuiTable *table = g.CurrentTable;
     if (table && table->IsInsideRow)
@@ -2474,15 +2475,11 @@ static bool ImGuiListClipper_StepInternal(ImGuiListClipper *clipper)
 
 bool ImGuiListClipper::Step()
 {
-    ImGuiContext &g        = *Ctx;
-    bool need_items_height = (ItemsHeight <= 0.0f);
-    bool ret               = ImGuiListClipper_StepInternal(this);
+    bool ret = ImGuiListClipper_StepInternal(this);
     if (ret && (DisplayStart >= DisplayEnd))
         ret = false;
-    else
-    {
+    if (!ret)
         End();
-    }
     return ret;
 }
 
