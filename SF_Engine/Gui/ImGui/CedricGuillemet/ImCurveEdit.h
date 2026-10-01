@@ -63,13 +63,13 @@ namespace ImCurveEdit
         virtual size_t GetCurveCount() = 0;
         virtual bool IsVisible(size_t /*curveIndex*/) { return true; }
         virtual CurveType GetCurveType(size_t /*curveIndex*/) const { return CurveLinear; }
-        virtual Vec2 &GetMin()                                               = 0;
-        virtual Vec2 &GetMax()                                               = 0;
-        virtual size_t GetPointCount(size_t curveIndex)                      = 0;
-        virtual uint32_t GetCurveColor(size_t curveIndex)                    = 0;
-        virtual Vec2 *GetPoints(size_t curveIndex)                           = 0;
-        virtual int EditPoint(size_t curveIndex, int pointIndex, Vec2 value) = 0;
-        virtual void AddPoint(size_t curveIndex, Vec2 value)                 = 0;
+        virtual ::SF::Engine::Vec2 &GetMin()                                               = 0;
+        virtual ::SF::Engine::Vec2 &GetMax()                                               = 0;
+        virtual size_t GetPointCount(size_t curveIndex)                                    = 0;
+        virtual uint32_t GetCurveColor(size_t curveIndex)                                  = 0;
+        virtual ::SF::Engine::Vec2 *GetPoints(size_t curveIndex)                           = 0;
+        virtual int EditPoint(size_t curveIndex, int pointIndex, ::SF::Engine::Vec2 value) = 0;
+        virtual void AddPoint(size_t curveIndex, ::SF::Engine::Vec2 value)                 = 0;
         virtual unsigned int GetBackgroundColor() { return 0xFF202020; }
         // handle undo/redo thru this functions
         virtual void BeginEdit(int /*index*/) {}
@@ -78,6 +78,6 @@ namespace ImCurveEdit
         virtual ~Delegate() = default;
     };
 
-    int Edit(Delegate &delegate, const Vec2 &size, unsigned int id, const ImRect *clippingRect = nullptr,
+    int Edit(Delegate &delegate, const ::SF::Engine::Vec2 &size, unsigned int id, const ImRect *clippingRect = nullptr,
              ImVector<EditPoint> *selectedPoints = nullptr);
 } // namespace ImCurveEdit

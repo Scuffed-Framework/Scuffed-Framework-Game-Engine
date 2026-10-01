@@ -2,10 +2,10 @@
 
 #define VK_NO_PROTOTYPES
 
-#include <volk.h>
-#include <Platform/Input/ButtonCodes.hpp>
 #include <LowLevel/Bitmask.hpp>
 #include <LowLevel/Rocket.hpp>
+#include <Platform/Input/ButtonCodes.hpp>
+#include <volk.h>
 #include "Monitor.hpp"
 
 namespace SF::Engine
@@ -17,7 +17,7 @@ namespace SF::Engine
     {
     public:
         Window(std::size_t id);
-        ~Window();
+        ~Window() override;
 
         void Update();
 
@@ -39,10 +39,7 @@ namespace SF::Engine
          * not GetSize().
          * @return The framebuffer size in physical pixels.
          */
-        const UVec2 &GetFramebufferSize() const
-        {
-            return framebufferSize;
-        }
+        const UVec2 &GetFramebufferSize() const { return framebufferSize; }
 
         /**
          * Sets the window size.
@@ -54,19 +51,13 @@ namespace SF::Engine
          * Gets the aspect ratio between the windows width and height.
          * @return The aspect ratio.
          */
-        float GetAspectRatio() const
-        {
-            return static_cast<float>(GetSize().x) / static_cast<float>(GetSize().y);
-        }
+        float GetAspectRatio() const { return static_cast<float>(GetSize().x) / static_cast<float>(GetSize().y); }
 
         /**
          * Gets the windows position in pixels.
          * @return The windows position.
          */
-        const UVec2 &GetPosition() const
-        {
-            return position;
-        }
+        const UVec2 &GetPosition() const { return position; }
 
         /**
          * Sets the window position to a new position in pixels.
@@ -78,10 +69,7 @@ namespace SF::Engine
          * Gets the window's title.
          * @return The window's title.
          */
-        const std::string &GetTitle() const
-        {
-            return title;
-        }
+        const std::string &GetTitle() const { return title; }
 
         /**
          * Sets window title.
@@ -99,10 +87,7 @@ namespace SF::Engine
          * Gets weather the window is borderless or not.
          * @return If the window is borderless.
          */
-        bool IsBorderless() const
-        {
-            return borderless;
-        }
+        bool IsBorderless() const { return borderless; }
 
         /**
          * Sets the window to be borderless.
@@ -114,10 +99,7 @@ namespace SF::Engine
          * Gets weather the window is resizable or not.
          * @return If the window is resizable.
          */
-        bool IsResizable() const
-        {
-            return resizable;
-        }
+        bool IsResizable() const { return resizable; }
 
         /**
          * Sets the window to be resizable.
@@ -130,10 +112,7 @@ namespace SF::Engine
          * above other windows.
          * @return If the window is floating.
          */
-        bool IsFloating() const
-        {
-            return floating;
-        }
+        bool IsFloating() const { return floating; }
 
         /**
          * Sets the window to be floating.
@@ -145,10 +124,7 @@ namespace SF::Engine
          * Gets weather the window is fullscreen or not.
          * @return Fullscreen or windowed.
          */
-        bool IsFullscreen() const
-        {
-            return fullscreen;
-        }
+        bool IsFullscreen() const { return fullscreen; }
 
         /**
          * Sets the window to be fullscreen or windowed.
@@ -161,28 +137,19 @@ namespace SF::Engine
          * Gets if the window is closed.
          * @return If the window is closed.
          */
-        bool IsClosed() const
-        {
-            return closed;
-        }
+        bool IsClosed() const { return closed; }
 
         /**
          * Gets if the window is selected.
          * @return If the window is selected.
          */
-        bool IsFocused() const
-        {
-            return focused;
-        }
+        bool IsFocused() const { return focused; }
 
         /**
          * Gets the windows is minimized.
          * @return If the window is minimized.
          */
-        bool IsIconified() const
-        {
-            return iconified;
-        }
+        bool IsIconified() const { return iconified; }
 
         /**
          * Sets the window to be iconified (minimized).
@@ -209,19 +176,13 @@ namespace SF::Engine
          * Gets if the display is selected.
          * @return If the display is selected.
          */
-        bool IsWindowSelected() const
-        {
-            return windowSelected;
-        }
+        bool IsWindowSelected() const { return windowSelected; }
 
         /**
          * If the cursor is hidden, the mouse is the display locked if true.
          * @return If the cursor is hidden.
          */
-        bool IsCursorHidden() const
-        {
-            return cursorHidden;
-        }
+        bool IsCursorHidden() const { return cursorHidden; }
 
         /**
          * Sets if the operating systems cursor is hidden whilst in the display.
@@ -253,10 +214,7 @@ namespace SF::Engine
          * Gets the mouses position.
          * @return The mouses position.
          */
-        const DVec2 &GetMousePosition() const
-        {
-            return mousePosition;
-        }
+        const DVec2 &GetMousePosition() const { return mousePosition; }
 
         /**
          * Sets the mouse position.
@@ -268,19 +226,13 @@ namespace SF::Engine
          * Gets the mouse position delta.
          * @return The mouse position delta.
          */
-        const DVec2 &GetMousePositionDelta() const
-        {
-            return mousePositionDelta;
-        }
+        const DVec2 &GetMousePositionDelta() const { return mousePositionDelta; }
 
         /**
          * Gets the mouses virtual scroll position.
          * @return The mouses virtual scroll position.
          */
-        const DVec2 &GetMouseScroll() const
-        {
-            return mouseScroll;
-        }
+        const DVec2 &GetMouseScroll() const { return mouseScroll; }
 
         /**
          * Sets the mouse virtual scroll position.
@@ -292,17 +244,11 @@ namespace SF::Engine
          * Gets the mouse scroll delta.
          * @return The mouse scroll delta.
          */
-        const DVec2 &GetMouseScrollDelta() const
-        {
-            return mouseScrollDelta;
-        }
+        const DVec2 &GetMouseScrollDelta() const { return mouseScrollDelta; }
 
         static std::string ToString(Key key);
 
-        GLFWwindow *GetWindow() const
-        {
-            return window;
-        }
+        GLFWwindow *GetWindow() const { return window; }
 
         const Monitor *GetCurrentMonitor() const;
 
@@ -313,133 +259,91 @@ namespace SF::Engine
          * Called when the window is resized.
          * @return The rocket::signal.
          */
-        rocket::signal<void(UVec2)> &OnSize()
-        {
-            return onSize;
-        }
+        rocket::signal<void(UVec2)> &OnSize() { return onSize; }
 
         /**
          * Called when the window is moved.
          * @return The rocket::signal.
          */
-        rocket::signal<void(UVec2)> &OnPosition()
-        {
-            return onPosition;
-        }
+        rocket::signal<void(UVec2)> &OnPosition() { return onPosition; }
 
         /**
          * Called when the windows title changed.
          * @return The rocket::signal.
          */
-        rocket::signal<void(std::string)> &OnTitle()
-        {
-            return onTitle;
-        }
+        rocket::signal<void(std::string)> &OnTitle() { return onTitle; }
 
         /**
          * Called when the window has toggled borderless on or off.
          * @return The rocket::signal.
          */
-        rocket::signal<void(bool)> &OnBorderless()
-        {
-            return onBorderless;
-        }
+        rocket::signal<void(bool)> &OnBorderless() { return onBorderless; }
 
         /**
          * Called when the window has toggled resizable on or off.
          * @return The rocket::signal.
          */
-        rocket::signal<void(bool)> &OnResizable()
-        {
-            return onResizable;
-        }
+        rocket::signal<void(bool)> &OnResizable() { return onResizable; }
 
         /**
          * Called when the window has toggled floating on or off.
          * @return The rocket::signal.
          */
-        rocket::signal<void(bool)> &OnFloating()
-        {
-            return onFloating;
-        }
+        rocket::signal<void(bool)> &OnFloating() { return onFloating; }
 
         /**
          * Called when the has gone fullscreen or windowed.
          * @return The rocket::signal.
          */
-        rocket::signal<void(bool)> &OnFullscreen()
-        {
-            return onFullscreen;
-        }
+        rocket::signal<void(bool)> &OnFullscreen() { return onFullscreen; }
 
         /**
          * Called when the window requests a close.
          * @return The rocket::signal.
          */
-        rocket::signal<void()> &OnClose()
-        {
-            return onClose;
-        }
+        rocket::signal<void()> &OnClose() { return onClose; }
 
         /**
          * Called when the window is focused or unfocused.
          * @return The rocket::signal.
          */
-        rocket::signal<void(bool)> &OnFocus()
-        {
-            return onFocus;
-        }
+        rocket::signal<void(bool)> &OnFocus() { return onFocus; }
 
         /**
          * Called when the window is minimized or maximized.
          * @return The rocket::signal.
          */
-        rocket::signal<void(bool)> &OnIconify()
-        {
-            return onIconify;
-        }
+        rocket::signal<void(bool)> &OnIconify() { return onIconify; }
 
         /**
          * Called when the mouse enters the window.
          * @return The delegate.
          */
-        rocket::signal<void(bool)> &OnEnter()
-        {
-            return onEnter;
-        }
+        rocket::signal<void(bool)> &OnEnter() { return onEnter; }
 
         /**
          * Called when a group of files/folders is dropped onto the window.
          * @return The delegate.
          */
-        rocket::signal<void(std::vector<std::string>)> &OnDrop()
-        {
-            return onDrop;
-        }
+        rocket::signal<void(std::vector<std::string>)> &OnDrop() { return onDrop; }
 
         /**
          * Called when a key changes state.
          * @return The delegate.
          */
-        rocket::signal<void(Key, InputAction, Bitmask::Bitmask<InputMod>)> &OnKey()  
-        {
-            return onKey;
-        }
+        rocket::signal<void(Key, InputAction, Bitmask::Bitmask<InputMod>)> &OnKey() { return onKey; }
 
         /**
          * Called when a character has been typed.
          * @return The delegate.
          */
-        rocket::signal<void(char)> &OnChar()
-        {
-            return onChar;
-        }
+        rocket::signal<void(char)> &OnChar() { return onChar; }
 
         /**
          * Called when a mouse button changes state.
          * @return The delegate.
          */
-        rocket::signal<void(MouseButton, InputAction, Bitmask::Bitmask<InputMod>)> &OnMouseButton()  
+        rocket::signal<void(MouseButton, InputAction, Bitmask::Bitmask<InputMod>)> &OnMouseButton()
         {
             return onMouseButton;
         }
@@ -448,21 +352,15 @@ namespace SF::Engine
          * Called when the mouse moves.
          * @return The delegate.
          */
-        rocket::signal<void(DVec2)> &OnMousePosition()
-        {
-            return onMousePosition;
-        }
+        rocket::signal<void(DVec2)> &OnMousePosition() { return onMousePosition; }
 
         /**
          * Called when the scroll wheel changes.
          * @return The delegate.
          */
-        rocket::signal<void(DVec2)> &OnMouseScroll()
-        {
-            return onMouseScroll;
-        }
+        rocket::signal<void(DVec2)> &OnMouseScroll() { return onMouseScroll; }
 
-        bool ShouldClose() const { return glfwWindowShouldClose(this->window);}
+        bool ShouldClose() const { return glfwWindowShouldClose(this->window); }
 
     private:
         friend void CallbackWindowPosition(GLFWwindow *glfwWindow, int32_t xpos, int32_t ypos);
@@ -473,11 +371,9 @@ namespace SF::Engine
         friend void CallbackFramebufferSize(GLFWwindow *glfwWindow, int32_t width, int32_t height);
         friend void CallbackCursorEnter(GLFWwindow *glfwWindow, int32_t entered);
         friend void CallbackDrop(GLFWwindow *glfwWindow, int32_t count, const char **paths);
-        friend void CallbackKey(GLFWwindow *glfwWindow, int32_t key, int32_t scancode,
-                                int32_t action, int32_t mods);
+        friend void CallbackKey(GLFWwindow *glfwWindow, int32_t key, int32_t scancode, int32_t action, int32_t mods);
         friend void CallbackChar(GLFWwindow *glfwWindow, uint32_t codepoint);
-        friend void CallbackMouseButton(GLFWwindow *glfwWindow, int32_t button, int32_t action,
-                                        int32_t mods);
+        friend void CallbackMouseButton(GLFWwindow *glfwWindow, int32_t button, int32_t action, int32_t mods);
         friend void CallbackCursorPos(GLFWwindow *glfwWindow, double xpos, double ypos);
         friend void CallbackScroll(GLFWwindow *glfwWindow, double xoffset, double yoffset);
 
@@ -494,16 +390,16 @@ namespace SF::Engine
 
         std::string title;
         bool borderless = false;
-        bool resizable = false;
-        bool floating = false;
+        bool resizable  = false;
+        bool floating   = false;
         bool fullscreen = false;
 
-        bool closed = false;
-        bool focused = false;
+        bool closed    = false;
+        bool focused   = false;
         bool iconified = false;
 
         bool windowSelected = false;
-        bool cursorHidden = false;
+        bool cursorHidden   = false;
 
         DVec2 mouseLastPosition;
         DVec2 mousePosition;
@@ -524,13 +420,13 @@ namespace SF::Engine
         rocket::signal<void(bool)> onIconify;
         rocket::signal<void(bool)> onEnter;
         rocket::signal<void(std::vector<std::string>)> onDrop;
-        rocket::signal<void(Key, InputAction, Bitmask::Bitmask<InputMod>)> onKey;  
+        rocket::signal<void(Key, InputAction, Bitmask::Bitmask<InputMod>)> onKey;
         rocket::signal<void(char)> onChar;
-        rocket::signal<void(MouseButton, InputAction, Bitmask::Bitmask<InputMod>)> onMouseButton;  
+        rocket::signal<void(MouseButton, InputAction, Bitmask::Bitmask<InputMod>)> onMouseButton;
         rocket::signal<void(DVec2)> onMousePosition;
         rocket::signal<void(DVec2)> onMouseScroll;
 
     public:
         WindowId GetId() { return id; }
     };
-}
+} // namespace SF::Engine

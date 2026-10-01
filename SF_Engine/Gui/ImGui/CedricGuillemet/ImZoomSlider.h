@@ -54,39 +54,43 @@ namespace ImZoomSlider
         static bool movingScrollBarSvg = false;
         static bool sizingRBarSvg      = false;
         static bool sizingLBarSvg      = false;
-        static ImGuiID editingId       = (ImGuiID) -1;
+        static IdType editingId        = (IdType) -1;
         static float scrollingSource   = 0.f;
         static float saveViewLower;
         static float saveViewHigher;
 
-        const bool isVertical        = flags & ImGuiZoomSliderFlags_Vertical;
-        const Vec2 canvasPos         = ImGui::GetCursorScreenPos();
-        const Vec2 canvasSize        = ImGui::GetContentRegionAvail();
-        const float canvasSizeLength = isVertical ? ImGui::GetItemRectSize().y : canvasSize.x;
-        const Vec2 scrollBarSize     = isVertical ? Vec2(14.f, canvasSizeLength) : Vec2(canvasSizeLength, 14.f);
+        const bool isVertical               = flags & ImGuiZoomSliderFlags_Vertical;
+        const ::SF::Engine::Vec2 canvasPos  = ImGui::GetCursorScreenPos();
+        const ::SF::Engine::Vec2 canvasSize = ImGui::GetContentRegionAvail();
+        const float canvasSizeLength        = isVertical ? ImGui::GetItemRectSize().y : canvasSize.x;
+        const ::SF::Engine::Vec2 scrollBarSize =
+                isVertical ? ::SF::Engine::Vec2(14.f, canvasSizeLength) : ::SF::Engine::Vec2(canvasSizeLength, 14.f);
 
         ImGui::InvisibleButton(controlName, scrollBarSize);
-        const ImGuiID currentId = ImGui::GetID(controlName);
+        const IdType currentId = ImGui::GetID(controlName);
 
-        const bool usingEditingId  = currentId == editingId;
-        const bool canUseControl   = usingEditingId || editingId == -1;
-        const bool movingScrollBar = usingEditingId ? movingScrollBarSvg : false;
-        const bool sizingRBar      = usingEditingId ? sizingRBarSvg : false;
-        const bool sizingLBar      = usingEditingId ? sizingLBarSvg : false;
-        const int componentIndex   = isVertical ? 1 : 0;
-        const Vec2 scrollBarMin    = ImGui::GetItemRectMin();
-        const Vec2 scrollBarMax    = ImGui::GetItemRectMax();
-        const Vec2 scrollBarA      = Vec2(scrollBarMin.x, scrollBarMin.y) - (isVertical ? Vec2(2, 0) : Vec2(0, 2));
-        const Vec2 scrollBarB      = isVertical ? Vec2(scrollBarMax.x - 1.f, scrollBarMin.y + canvasSizeLength)
-                                                : Vec2(scrollBarMin.x + canvasSizeLength, scrollBarMax.y - 1.f);
+        const bool usingEditingId             = currentId == editingId;
+        const bool canUseControl              = usingEditingId || editingId == -1;
+        const bool movingScrollBar            = usingEditingId ? movingScrollBarSvg : false;
+        const bool sizingRBar                 = usingEditingId ? sizingRBarSvg : false;
+        const bool sizingLBar                 = usingEditingId ? sizingLBarSvg : false;
+        const int componentIndex              = isVertical ? 1 : 0;
+        const ::SF::Engine::Vec2 scrollBarMin = ImGui::GetItemRectMin();
+        const ::SF::Engine::Vec2 scrollBarMax = ImGui::GetItemRectMax();
+        const ::SF::Engine::Vec2 scrollBarA   = ::SF::Engine::Vec2(scrollBarMin.x, scrollBarMin.y) -
+                                              (isVertical ? ::SF::Engine::Vec2(2, 0) : ::SF::Engine::Vec2(0, 2));
+        const ::SF::Engine::Vec2 scrollBarB =
+                isVertical ? ::SF::Engine::Vec2(scrollBarMax.x - 1.f, scrollBarMin.y + canvasSizeLength)
+                           : ::SF::Engine::Vec2(scrollBarMin.x + canvasSizeLength, scrollBarMax.y - 1.f);
         const float scrollStart =
                 ((viewLower - lower) / (higher - lower)) * canvasSizeLength + scrollBarMin[componentIndex];
         const float scrollEnd =
                 ((viewHigher - lower) / (higher - lower)) * canvasSizeLength + scrollBarMin[componentIndex];
-        const float screenSize   = scrollEnd - scrollStart;
-        const Vec2 scrollTopLeft = isVertical ? Vec2(scrollBarMin.x, scrollStart) : Vec2(scrollStart, scrollBarMin.y);
-        const Vec2 scrollBottomRight =
-                isVertical ? Vec2(scrollBarMax.x - 2.f, scrollEnd) : Vec2(scrollEnd, scrollBarMax.y - 2.f);
+        const float screenSize                     = scrollEnd - scrollStart;
+        const ::SF::Engine::Vec2 scrollTopLeft     = isVertical ? ::SF::Engine::Vec2(scrollBarMin.x, scrollStart)
+                                                                : ::SF::Engine::Vec2(scrollStart, scrollBarMin.y);
+        const ::SF::Engine::Vec2 scrollBottomRight = isVertical ? ::SF::Engine::Vec2(scrollBarMax.x - 2.f, scrollEnd)
+                                                                : ::SF::Engine::Vec2(scrollEnd, scrollBarMax.y - 2.f);
         const bool inScrollBar = canUseControl && ImRect(scrollTopLeft, scrollBottomRight).Contains(io.MousePos);
         const ImRect scrollBarRect(scrollBarA, scrollBarB);
         const float deltaScreen = io.MousePos[componentIndex] - scrollingSource;
@@ -124,19 +128,19 @@ namespace ImZoomSlider
         {
             for (float i = 0.5f; i < 3.f; i += 1.f)
             {
-                const float coordA = middleCoord - handleSize * 0.5f;
-                const float coordB = middleCoord + handleSize * 0.5f;
-                Vec2 base          = scrollBarMin;
+                const float coordA      = middleCoord - handleSize * 0.5f;
+                const float coordB      = middleCoord + handleSize * 0.5f;
+                ::SF::Engine::Vec2 base = scrollBarMin;
                 base.x += scrollBarSize.x * 0.25f * i;
                 base.y += scrollBarSize.y * 0.25f * i;
 
                 if (isVertical)
                 {
-                    draw_list->AddLine(Vec2(base.x, coordA), Vec2(base.x, coordB),
+                    draw_list->AddLine(::SF::Engine::Vec2(base.x, coordA), ::SF::Engine::Vec2(base.x, coordB),
                                        ImGui::GetColorU32(ImGuiCol_SliderGrab));
                 } else
                 {
-                    draw_list->AddLine(Vec2(coordA, base.y), Vec2(coordB, base.y),
+                    draw_list->AddLine(::SF::Engine::Vec2(coordA, base.y), ::SF::Engine::Vec2(coordB, base.y),
                                        ImGui::GetColorU32(ImGuiCol_SliderGrab));
                 }
             }
@@ -169,11 +173,12 @@ namespace ImZoomSlider
 
         if (screenSize > handleSize * 2.f && hasAnchors)
         {
-            const ImRect barHandleLeft(scrollTopLeft,
-                                       isVertical ? Vec2(scrollBottomRight.x, scrollTopLeft.y + handleSize)
-                                                  : Vec2(scrollTopLeft.x + handleSize, scrollBottomRight.y));
-            const ImRect barHandleRight(isVertical ? Vec2(scrollTopLeft.x, scrollBottomRight.y - handleSize)
-                                                   : Vec2(scrollBottomRight.x - handleSize, scrollTopLeft.y),
+            const ImRect barHandleLeft(
+                    scrollTopLeft, isVertical ? ::SF::Engine::Vec2(scrollBottomRight.x, scrollTopLeft.y + handleSize)
+                                              : ::SF::Engine::Vec2(scrollTopLeft.x + handleSize, scrollBottomRight.y));
+            const ImRect barHandleRight(isVertical
+                                                ? ::SF::Engine::Vec2(scrollTopLeft.x, scrollBottomRight.y - handleSize)
+                                                : ::SF::Engine::Vec2(scrollBottomRight.x - handleSize, scrollTopLeft.y),
                                         scrollBottomRight);
 
             onLeft  = barHandleLeft.Contains(io.MousePos);
@@ -194,7 +199,7 @@ namespace ImZoomSlider
             if (!io.MouseDown[0])
             {
                 sizingRBarSvg = false;
-                editingId     = (ImGuiID) -1;
+                editingId     = (IdType) -1;
             } else
             {
                 viewHigher = ImMin(saveViewHigher + deltaView, higher);
@@ -204,7 +209,7 @@ namespace ImZoomSlider
             if (!io.MouseDown[0])
             {
                 sizingLBarSvg = false;
-                editingId     = (ImGuiID) -1;
+                editingId     = (IdType) -1;
             } else
             {
                 viewLower = ImMax(saveViewLower + deltaView, lower);
@@ -216,7 +221,7 @@ namespace ImZoomSlider
                 if (!io.MouseDown[0])
                 {
                     movingScrollBarSvg = false;
-                    editingId          = (ImGuiID) -1;
+                    editingId          = (IdType) -1;
                 } else
                 {
                     viewLower  = saveViewLower + deltaView;

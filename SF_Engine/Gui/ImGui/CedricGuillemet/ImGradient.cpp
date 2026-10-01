@@ -30,36 +30,52 @@
 namespace ImGradient
 {
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
-    static inline Vec2 operator*(const Vec2 &lhs, const float rhs) { return Vec2(lhs.x * rhs, lhs.y * rhs); }
-    static inline Vec2 operator/(const Vec2 &lhs, const float rhs) { return Vec2(lhs.x / rhs, lhs.y / rhs); }
-    static inline Vec2 operator+(const Vec2 &lhs, const Vec2 &rhs) { return Vec2(lhs.x + rhs.x, lhs.y + rhs.y); }
-    static inline Vec2 operator-(const Vec2 &lhs, const Vec2 &rhs) { return Vec2(lhs.x - rhs.x, lhs.y - rhs.y); }
-    static inline Vec2 operator*(const Vec2 &lhs, const Vec2 &rhs) { return Vec2(lhs.x * rhs.x, lhs.y * rhs.y); }
-    static inline Vec2 operator/(const Vec2 &lhs, const Vec2 &rhs) { return Vec2(lhs.x / rhs.x, lhs.y / rhs.y); }
+    static inline ::SF::Engine::Vec2 operator*(const ::SF::Engine::Vec2 &lhs, const float rhs)
+    {
+        return ::SF::Engine::Vec2(lhs.x * rhs, lhs.y * rhs);
+    }
+    static inline ::SF::Engine::Vec2 operator/(const ::SF::Engine::Vec2 &lhs, const float rhs)
+    {
+        return ::SF::Engine::Vec2(lhs.x / rhs, lhs.y / rhs);
+    }
+    static inline ::SF::Engine::Vec2 operator+(const ::SF::Engine::Vec2 &lhs, const ::SF::Engine::Vec2 &rhs)
+    {
+        return ::SF::Engine::Vec2(lhs.x + rhs.x, lhs.y + rhs.y);
+    }
+    static inline ::SF::Engine::Vec2 operator-(const ::SF::Engine::Vec2 &lhs, const ::SF::Engine::Vec2 &rhs)
+    {
+        return ::SF::Engine::Vec2(lhs.x - rhs.x, lhs.y - rhs.y);
+    }
+    static inline ::SF::Engine::Vec2 operator*(const ::SF::Engine::Vec2 &lhs, const ::SF::Engine::Vec2 &rhs)
+    {
+        return ::SF::Engine::Vec2(lhs.x * rhs.x, lhs.y * rhs.y);
+    }
+    static inline ::SF::Engine::Vec2 operator/(const ::SF::Engine::Vec2 &lhs, const ::SF::Engine::Vec2 &rhs)
+    {
+        return ::SF::Engine::Vec2(lhs.x / rhs.x, lhs.y / rhs.y);
+    }
 #endif
 
-    static int DrawPoint(ImDrawList *draw_list, Vec4 color, const Vec2 size, bool editing, Vec2 pos)
+    static int DrawPoint(ImDrawList *draw_list, ::SF::Engine::Vec4 color, const ::SF::Engine::Vec2 size, bool editing,
+                         ::SF::Engine::Vec2 pos)
     {
         ImGuiIO &io = ImGui::GetIO();
 
-        Vec2 p1 = ImLerp(pos, Vec2(pos + Vec2(size.x - size.y, 0.f)), color.w) + Vec2(3, 3);
-        Vec2 p2 = ImLerp(pos + Vec2(size.y, size.y), Vec2(pos + size), color.w) - Vec2(3, 3);
+        ::SF::Engine::Vec2 p1 =
+                ImLerp(pos, ::SF::Engine::Vec2(pos + ::SF::Engine::Vec2(size.x - size.y, 0.f)), color.w) +
+                ::SF::Engine::Vec2(3, 3);
+        ::SF::Engine::Vec2 p2 =
+                ImLerp(pos + ::SF::Engine::Vec2(size.y, size.y), ::SF::Engine::Vec2(pos + size), color.w) -
+                ::SF::Engine::Vec2(3, 3);
         ImRect rc(p1, p2);
 
         color.w = 1.f;
-        draw_list->AddRectFilled(p1, p2, ImColor(color));
-#if IMGUI_VERSION_NUM < 19276
-        if (editing)
-            draw_list->AddRect(p1, p2, 0xFFFFFFFF, 2.f, 15, 2.5f);
-        else
-            draw_list->AddRect(p1, p2, 0x80FFFFFF, 2.f, 15, 1.25f);
-#else
+        draw_list->AddRectFilled(p1, p2, ::SF::Engine::Color(color).ToInt());
+
         if (editing)
             draw_list->AddRect(p1, p2, 0xFFFFFFFF, 2.f, 2.5f);
         else
             draw_list->AddRect(p1, p2, 0x80FFFFFF, 2.f, 1.25f);
-#endif
-
         if (rc.Contains(io.MousePos))
         {
             if (io.MouseClicked[0])
@@ -69,24 +85,24 @@ namespace ImGradient
         return 0;
     }
 
-    bool Edit(Delegate &delegate, const Vec2 &size, int &selection)
+    bool Edit(Delegate &delegate, const ::SF::Engine::Vec2 &size, int &selection)
     {
         bool ret    = false;
         ImGuiIO &io = ImGui::GetIO();
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, Vec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ::SF::Engine::Vec2(0, 0));
         ImGui::BeginChild(137, size, ImGuiChildFlags_FrameStyle);
 
-        ImDrawList *draw_list = ImGui::GetWindowDrawList();
-        const Vec2 offset     = ImGui::GetCursorScreenPos();
+        ImDrawList *draw_list           = ImGui::GetWindowDrawList();
+        const ::SF::Engine::Vec2 offset = ImGui::GetCursorScreenPos();
 
-        const Vec4 *pts             = delegate.GetPoints();
-        static int currentSelection = -1;
-        static int movingPt         = -1;
+        const ::SF::Engine::Vec4 *pts = delegate.GetPoints();
+        static int currentSelection   = -1;
+        static int movingPt           = -1;
         if (currentSelection >= int(delegate.GetPointCount()))
             currentSelection = -1;
         if (movingPt != -1)
         {
-            Vec4 current = pts[movingPt];
+            ::SF::Engine::Vec4 current = pts[movingPt];
             current.w += io.MouseDelta.x / size.x;
             current.w = ImClamp(current.w, 0.f, 1.f);
             delegate.EditPoint(movingPt, current);

@@ -36,38 +36,39 @@
 namespace GraphEditor
 {
 
-    static inline float Distance(const Vec2 &a, const Vec2 &b)
+    static inline float Distance(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b)
     {
         return sqrtf((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
     }
 
     static inline float sign(float v) { return (v >= 0.f) ? 1.f : -1.f; }
 
-    static Vec2 GetInputSlotPos(Delegate &delegate, const Node &node, SlotIndex slotIndex, float factor)
+    static ::SF::Engine::Vec2 GetInputSlotPos(Delegate &delegate, const Node &node, SlotIndex slotIndex, float factor)
     {
-        Vec2 Size          = node.mRect.GetSize() * factor;
-        size_t InputsCount = delegate.GetTemplate(node.mTemplateIndex).mInputCount;
-        return Vec2(node.mRect.Min.x * factor,
-                    node.mRect.Min.y * factor + Size.y * ((float) slotIndex + 1) / ((float) InputsCount + 1) + 8.f);
+        ::SF::Engine::Vec2 Size = node.mRect.GetSize() * factor;
+        size_t InputsCount      = delegate.GetTemplate(node.mTemplateIndex).mInputCount;
+        return ::SF::Engine::Vec2(node.mRect.Min.x * factor,
+                                  node.mRect.Min.y * factor +
+                                          Size.y * ((float) slotIndex + 1) / ((float) InputsCount + 1) + 8.f);
     }
 
-    static Vec2 GetOutputSlotPos(Delegate &delegate, const Node &node, SlotIndex slotIndex, float factor)
+    static ::SF::Engine::Vec2 GetOutputSlotPos(Delegate &delegate, const Node &node, SlotIndex slotIndex, float factor)
     {
-        Vec2 Size           = node.mRect.GetSize() * factor;
-        size_t OutputsCount = delegate.GetTemplate(node.mTemplateIndex).mOutputCount;
-        return Vec2(node.mRect.Min.x * factor + Size.x,
-                    node.mRect.Min.y * factor + Size.y * ((float) slotIndex + 1) / ((float) OutputsCount + 1) + 8.f);
+        ::SF::Engine::Vec2 Size = node.mRect.GetSize() * factor;
+        size_t OutputsCount     = delegate.GetTemplate(node.mTemplateIndex).mOutputCount;
+        return {node.mRect.Min.x * factor + Size.x,
+                node.mRect.Min.y * factor + Size.y * ((float) slotIndex + 1) / ((float) OutputsCount + 1) + 8.f};
     }
 
     static ImRect GetNodeRect(const Node &node, float factor)
     {
-        Vec2 Size = node.mRect.GetSize() * factor;
+        ::SF::Engine::Vec2 Size = node.mRect.GetSize() * factor;
         return ImRect(node.mRect.Min * factor, node.mRect.Min * factor + Size);
     }
 
-    static Vec2 editingNodeSource;
+    static ::SF::Engine::Vec2 editingNodeSource;
     static bool editingInput = false;
-    static Vec2 captureOffset;
+    static ::SF::Engine::Vec2 captureOffset;
 
     enum NodeOperation
     {
@@ -97,10 +98,10 @@ namespace GraphEditor
             }
         }
 
-        Vec2 mouseWPosPre       = (io.MousePos - ImGui::GetCursorScreenPos()) / viewState.mFactor;
-        viewState.mFactorTarget = ImClamp(viewState.mFactorTarget, options.mMinZoom, options.mMaxZoom);
-        viewState.mFactor       = ImLerp(viewState.mFactor, viewState.mFactorTarget, options.mZoomLerpFactor);
-        Vec2 mouseWPosPost      = (io.MousePos - ImGui::GetCursorScreenPos()) / viewState.mFactor;
+        ::SF::Engine::Vec2 mouseWPosPre  = (io.MousePos - ImGui::GetCursorScreenPos()) / viewState.mFactor;
+        viewState.mFactorTarget          = ImClamp(viewState.mFactorTarget, options.mMinZoom, options.mMaxZoom);
+        viewState.mFactor                = ImLerp(viewState.mFactor, viewState.mFactorTarget, options.mZoomLerpFactor);
+        ::SF::Engine::Vec2 mouseWPosPost = (io.MousePos - ImGui::GetCursorScreenPos()) / viewState.mFactor;
         if (ImGui::IsMousePosValid())
         {
             viewState.mPosition += mouseWPosPost - mouseWPosPre;
@@ -109,7 +110,8 @@ namespace GraphEditor
 
     void GraphEditorClear() { nodeOperation = NO_None; }
 
-    static void FitNodes(Delegate &delegate, ViewState &viewState, const Vec2 viewSize, bool selectedNodesOnly)
+    static void FitNodes(Delegate &delegate, ViewState &viewState, const ::SF::Engine::Vec2 viewSize,
+                         bool selectedNodesOnly)
     {
         const size_t nodeCount = delegate.GetNodeCount();
 
@@ -119,8 +121,8 @@ namespace GraphEditor
         }
 
         bool validNode = false;
-        Vec2 min(FLT_MAX, FLT_MAX);
-        Vec2 max(-FLT_MAX, -FLT_MAX);
+        ::SF::Engine::Vec2 min(FLT_MAX, FLT_MAX);
+        ::SF::Engine::Vec2 max(-FLT_MAX, -FLT_MAX);
         for (NodeIndex nodeIndex = 0; nodeIndex < nodeCount; nodeIndex++)
         {
             const Node &node = delegate.GetNode(nodeIndex);
@@ -144,18 +146,19 @@ namespace GraphEditor
 
         min -= viewSize * 0.05f;
         max += viewSize * 0.05f;
-        Vec2 nodesSize  = max - min;
-        Vec2 nodeCenter = (max + min) * 0.5f;
+        ::SF::Engine::Vec2 nodesSize  = max - min;
+        ::SF::Engine::Vec2 nodeCenter = (max + min) * 0.5f;
 
         float ratioY = viewSize.y / nodesSize.y;
         float ratioX = viewSize.x / nodesSize.x;
 
         viewState.mFactor = viewState.mFactorTarget = ImMin(ImMin(ratioY, ratioX), 1.f);
-        viewState.mPosition = Vec2(-nodeCenter.x, -nodeCenter.y) + (viewSize * 0.5f) / viewState.mFactorTarget;
+        viewState.mPosition =
+                ::SF::Engine::Vec2(-nodeCenter.x, -nodeCenter.y) + (viewSize * 0.5f) / viewState.mFactorTarget;
     }
 
-    static void DisplayLinks(Delegate &delegate, ImDrawList *drawList, const Vec2 offset, const float factor,
-                             const ImRect regionRect, NodeIndex hoveredNode, const Options &options)
+    static void DisplayLinks(Delegate &delegate, ImDrawList *drawList, const ::SF::Engine::Vec2 offset,
+                             const float factor, const ImRect regionRect, NodeIndex hoveredNode, const Options &options)
     {
         const size_t linkCount = delegate.GetLinkCount();
         for (LinkIndex linkIndex = 0; linkIndex < linkCount; linkIndex++)
@@ -163,8 +166,8 @@ namespace GraphEditor
             const auto link       = delegate.GetLink(linkIndex);
             const auto nodeInput  = delegate.GetNode(link.mInputNodeIndex);
             const auto nodeOutput = delegate.GetNode(link.mOutputNodeIndex);
-            Vec2 p1               = offset + GetOutputSlotPos(delegate, nodeInput, link.mInputSlotIndex, factor);
-            Vec2 p2               = offset + GetInputSlotPos(delegate, nodeOutput, link.mOutputSlotIndex, factor);
+            ::SF::Engine::Vec2 p1 = offset + GetOutputSlotPos(delegate, nodeInput, link.mInputSlotIndex, factor);
+            ::SF::Engine::Vec2 p2 = offset + GetInputSlotPos(delegate, nodeOutput, link.mOutputSlotIndex, factor);
 
             // con. view clipping
             if ((p1.y < 0.f && p2.y < 0.f) || (p1.y > regionRect.Max.y && p2.y > regionRect.Max.y) ||
@@ -176,25 +179,27 @@ namespace GraphEditor
             if (options.mDisplayLinksAsCurves)
             {
                 // curves
-                drawList->AddBezierCubic(p1, p1 + Vec2(50, 0) * factor, p2 + Vec2(-50, 0) * factor, p2, 0xFF000000,
+                drawList->AddBezierCubic(p1, p1 + ::SF::Engine::Vec2(50, 0) * factor,
+                                         p2 + ::SF::Engine::Vec2(-50, 0) * factor, p2, 0xFF000000,
                                          options.mLineThickness * 1.5f * factor);
-                drawList->AddBezierCubic(p1, p1 + Vec2(50, 0) * factor, p2 + Vec2(-50, 0) * factor, p2, col,
+                drawList->AddBezierCubic(p1, p1 + ::SF::Engine::Vec2(50, 0) * factor,
+                                         p2 + ::SF::Engine::Vec2(-50, 0) * factor, p2, col,
                                          options.mLineThickness * 1.5f * factor);
                 /*
-               Vec2 p10 = p1 + Vec2(20.f * factor, 0.f);
-               Vec2 p20 = p2 - Vec2(20.f * factor, 0.f);
+               ::SF::Engine::Vec2 p10 = p1 + ::SF::Engine::Vec2(20.f * factor, 0.f);
+               ::SF::Engine::Vec2 p20 = p2 - ::SF::Engine::Vec2(20.f * factor, 0.f);
 
-               Vec2 dif = p20 - p10;
-               Vec2 p1a, p1b;
+               ::SF::Engine::Vec2 dif = p20 - p10;
+               ::SF::Engine::Vec2 p1a, p1b;
                if (fabsf(dif.x) > fabsf(dif.y))
                {
-                   p1a = p10 + Vec2(fabsf(fabsf(dif.x) - fabsf(dif.y)) * 0.5 * sign(dif.x), 0.f);
-                   p1b = p1a + Vec2(fabsf(dif.y) * sign(dif.x) , dif.y);
+                   p1a = p10 + ::SF::Engine::Vec2(fabsf(fabsf(dif.x) - fabsf(dif.y)) * 0.5 * sign(dif.x), 0.f);
+                   p1b = p1a + ::SF::Engine::Vec2(fabsf(dif.y) * sign(dif.x) , dif.y);
                }
                else
                {
-                   p1a = p10 + Vec2(0.f, fabsf(fabsf(dif.y) - fabsf(dif.x)) * 0.5 * sign(dif.y));
-                   p1b = p1a + Vec2(dif.x, fabsf(dif.x) * sign(dif.y));
+                   p1a = p10 + ::SF::Engine::Vec2(0.f, fabsf(fabsf(dif.y) - fabsf(dif.x)) * 0.5 * sign(dif.y));
+                   p1b = p1a + ::SF::Engine::Vec2(dif.x, fabsf(dif.x) * sign(dif.y));
                }
                drawList->AddLine(p1,  p10, col, 3.f * factor);
                drawList->AddLine(p10, p1a, col, 3.f * factor);
@@ -205,20 +210,20 @@ namespace GraphEditor
             } else
             {
                 // straight lines
-                std::array<Vec2, 6> pts;
-                int ptCount = 0;
-                Vec2 dif    = p2 - p1;
+                std::array<::SF::Engine::Vec2, 6> pts;
+                int ptCount            = 0;
+                ::SF::Engine::Vec2 dif = p2 - p1;
 
-                Vec2 p1a, p1b;
+                ::SF::Engine::Vec2 p1a, p1b;
                 const float limitx = 12.f * factor;
                 if (dif.x < limitx)
                 {
-                    Vec2 p10 = p1 + Vec2(limitx, 0.f);
-                    Vec2 p20 = p2 - Vec2(limitx, 0.f);
+                    ::SF::Engine::Vec2 p10 = p1 + ::SF::Engine::Vec2(limitx, 0.f);
+                    ::SF::Engine::Vec2 p20 = p2 - ::SF::Engine::Vec2(limitx, 0.f);
 
                     dif = p20 - p10;
-                    p1a = p10 + Vec2(0.f, dif.y * 0.5f);
-                    p1b = p1a + Vec2(dif.x, 0.f);
+                    p1a = p10 + ::SF::Engine::Vec2(0.f, dif.y * 0.5f);
+                    p1b = p1a + ::SF::Engine::Vec2(dif.x, 0.f);
 
                     pts     = {p1, p10, p1a, p1b, p20, p2};
                     ptCount = 6;
@@ -234,25 +239,27 @@ namespace GraphEditor
                         {
                             if (fabsf(dif.x) > fabsf(dif.y))
                             {
-                                p1a = p1 + Vec2(fabsf(fabsf(dif.x) - fabsf(dif.y)) * 0.5f * sign(dif.x), 0.f);
-                                p1b = p1a + Vec2(fabsf(dif.y) * sign(dif.x), dif.y);
+                                p1a = p1 +
+                                      ::SF::Engine::Vec2(fabsf(fabsf(dif.x) - fabsf(dif.y)) * 0.5f * sign(dif.x), 0.f);
+                                p1b = p1a + ::SF::Engine::Vec2(fabsf(dif.y) * sign(dif.x), dif.y);
                             } else
                             {
-                                p1a = p1 + Vec2(0.f, fabsf(fabsf(dif.y) - fabsf(dif.x)) * 0.5f * sign(dif.y));
-                                p1b = p1a + Vec2(dif.x, fabsf(dif.x) * sign(dif.y));
+                                p1a = p1 +
+                                      ::SF::Engine::Vec2(0.f, fabsf(fabsf(dif.y) - fabsf(dif.x)) * 0.5f * sign(dif.y));
+                                p1b = p1a + ::SF::Engine::Vec2(dif.x, fabsf(dif.x) * sign(dif.y));
                             }
                         } else
                         {
                             if (fabsf(dif.x) > fabsf(dif.y))
                             {
                                 float d = fabsf(dif.y) * sign(dif.x) * 0.5f;
-                                p1a     = p1 + Vec2(d, dif.y * 0.5f);
-                                p1b     = p1a + Vec2(fabsf(fabsf(dif.x) - fabsf(d) * 2.f) * sign(dif.x), 0.f);
+                                p1a     = p1 + ::SF::Engine::Vec2(d, dif.y * 0.5f);
+                                p1b = p1a + ::SF::Engine::Vec2(fabsf(fabsf(dif.x) - fabsf(d) * 2.f) * sign(dif.x), 0.f);
                             } else
                             {
                                 float d = fabsf(dif.x) * sign(dif.y) * 0.5f;
-                                p1a     = p1 + Vec2(dif.x * 0.5f, d);
-                                p1b     = p1a + Vec2(0.f, fabsf(fabsf(dif.y) - fabsf(d) * 2.f) * sign(dif.y));
+                                p1a     = p1 + ::SF::Engine::Vec2(dif.x * 0.5f, d);
+                                p1b = p1a + ::SF::Engine::Vec2(0.f, fabsf(fabsf(dif.y) - fabsf(d) * 2.f) * sign(dif.y));
                             }
                         }
                         pts     = {p1, p1a, p1b, p2};
@@ -276,22 +283,22 @@ namespace GraphEditor
         }
     }
 
-    static void HandleQuadSelection(Delegate &delegate, ImDrawList *drawList, const Vec2 offset, const float factor,
-                                    ImRect contentRect, const Options &options)
+    static void HandleQuadSelection(Delegate &delegate, ImDrawList *drawList, const ::SF::Engine::Vec2 offset,
+                                    const float factor, ImRect contentRect, const Options &options)
     {
         if (!options.mAllowQuadSelection)
         {
             return;
         }
         ImGuiIO &io = ImGui::GetIO();
-        static Vec2 quadSelectPos;
+        static ::SF::Engine::Vec2 quadSelectPos;
         // auto& nodes = delegate->GetNodes();
         auto nodeCount = delegate.GetNodeCount();
 
         if (nodeOperation == NO_QuadSelecting && ImGui::IsWindowFocused())
         {
-            const Vec2 bmin = ImMin(quadSelectPos, io.MousePos);
-            const Vec2 bmax = ImMax(quadSelectPos, io.MousePos);
+            const ::SF::Engine::Vec2 bmin = ImMin(quadSelectPos, io.MousePos);
+            const ::SF::Engine::Vec2 bmax = ImMax(quadSelectPos, io.MousePos);
             drawList->AddRectFilled(bmin, bmax, options.mQuadSelection, 1.f);
             drawList->AddRect(bmin, bmax, options.mQuadSelectionBorder, 1.f);
             if (!io.MouseDown[0])
@@ -308,9 +315,9 @@ namespace GraphEditor
                 ImRect selectionRect(bmin, bmax);
                 for (unsigned int nodeIndex = 0; nodeIndex < nodeCount; nodeIndex++)
                 {
-                    const auto node       = delegate.GetNode(nodeIndex);
-                    Vec2 nodeRectangleMin = offset + node.mRect.Min * factor;
-                    Vec2 nodeRectangleMax = nodeRectangleMin + node.mRect.GetSize() * factor;
+                    const auto node                     = delegate.GetNode(nodeIndex);
+                    ::SF::Engine::Vec2 nodeRectangleMin = offset + node.mRect.Min * factor;
+                    ::SF::Engine::Vec2 nodeRectangleMax = nodeRectangleMin + node.mRect.GetSize() * factor;
                     if (selectionRect.Overlaps(ImRect(nodeRectangleMin, nodeRectangleMax)))
                     {
                         if (io.KeyCtrl)
@@ -337,9 +344,9 @@ namespace GraphEditor
         }
     }
 
-    static bool HandleConnections(ImDrawList *drawList, NodeIndex nodeIndex, const Vec2 offset, const float factor,
-                                  Delegate &delegate, const Options &options, bool bDrawOnly, SlotIndex &inputSlotOver,
-                                  SlotIndex &outputSlotOver, const bool inMinimap)
+    static bool HandleConnections(ImDrawList *drawList, NodeIndex nodeIndex, const ::SF::Engine::Vec2 offset,
+                                  const float factor, Delegate &delegate, const Options &options, bool bDrawOnly,
+                                  SlotIndex &inputSlotOver, SlotIndex &outputSlotOver, const bool inMinimap)
     {
         static NodeIndex editingNodeIndex;
         static SlotIndex editingSlotIndex;
@@ -360,8 +367,8 @@ namespace GraphEditor
         {
             float closestDistance = FLT_MAX;
             SlotIndex closestConn = -1;
-            Vec2 closestTextPos;
-            Vec2 closestPos;
+            ::SF::Engine::Vec2 closestTextPos;
+            ::SF::Engine::Vec2 closestPos;
             const size_t slotCount[2] = {InputsCount, OutputsCount};
 
             for (SlotIndex slotIndex = 0; slotIndex < slotCount[i]; slotIndex++)
@@ -369,18 +376,19 @@ namespace GraphEditor
                 const char **con    = i ? nodeTemplate.mOutputNames : nodeTemplate.mInputNames;
                 const char *conText = (con && con[slotIndex]) ? con[slotIndex] : "";
 
-                Vec2 p         = offset + (i ? GetOutputSlotPos(delegate, node, slotIndex, factor)
-                                             : GetInputSlotPos(delegate, node, slotIndex, factor));
-                float distance = Distance(p, io.MousePos);
-                bool overCon   = (nodeOperation == NO_None || nodeOperation == NO_EditingLink) &&
+                ::SF::Engine::Vec2 p = offset + (i ? GetOutputSlotPos(delegate, node, slotIndex, factor)
+                                                   : GetInputSlotPos(delegate, node, slotIndex, factor));
+                float distance       = Distance(p, io.MousePos);
+                bool overCon         = (nodeOperation == NO_None || nodeOperation == NO_EditingLink) &&
                                (distance < options.mNodeSlotRadius * 2.f) && (distance < closestDistance);
 
 
-                Vec2 textSize;
-                textSize     = ImGui::CalcTextSize(conText);
-                Vec2 textPos = p + Vec2(-options.mNodeSlotRadius * (i ? -1.f : 1.f) * (overCon ? 3.f : 2.f) -
-                                                (i ? 0 : textSize.x),
-                                        -textSize.y / 2);
+                ::SF::Engine::Vec2 textSize;
+                textSize = ImGui::CalcTextSize(conText);
+                ::SF::Engine::Vec2 textPos =
+                        p + ::SF::Engine::Vec2(-options.mNodeSlotRadius * (i ? -1.f : 1.f) * (overCon ? 3.f : 2.f) -
+                                                       (i ? 0 : textSize.x),
+                                               -textSize.y / 2);
 
                 ImRect nodeRect = GetNodeRect(node, factor);
                 if (!inMinimap && (overCon || (nodeRect.Contains(io.MousePos - offset) && closestConn == -1 &&
@@ -406,7 +414,8 @@ namespace GraphEditor
                     drawList->AddCircleFilled(p, options.mNodeSlotRadius * 0.75f, slotColor);
                     if (!options.mDrawIONameOnHover)
                     {
-                        drawList->AddText(io.FontDefault, 14, textPos + Vec2(2, 2), IM_COL32(0, 0, 0, 255), conText);
+                        drawList->AddText(io.FontDefault, 14, textPos + ::SF::Engine::Vec2(2, 2),
+                                          IM_COL32(0, 0, 0, 255), conText);
                         drawList->AddText(io.FontDefault, 14, textPos, IM_COL32(150, 150, 150, 255), conText);
                     }
                 }
@@ -423,7 +432,8 @@ namespace GraphEditor
                                           IM_COL32(0, 0, 0, 200));
                 drawList->AddCircleFilled(closestPos, options.mNodeSlotRadius * options.mNodeSlotHoverFactor,
                                           slotColor);
-                drawList->AddText(io.FontDefault, 16, closestTextPos + Vec2(1, 1), IM_COL32(0, 0, 0, 255), conText);
+                drawList->AddText(io.FontDefault, 16, closestTextPos + ::SF::Engine::Vec2(1, 1), IM_COL32(0, 0, 0, 255),
+                                  conText);
                 drawList->AddText(io.FontDefault, 16, closestTextPos, IM_COL32(250, 250, 250, 255), conText);
                 bool inputToOutput = (!editingInput && !i) || (editingInput && i);
                 if (nodeOperation == NO_EditingLink && !io.MouseDown[0] && !bDrawOnly)
@@ -500,8 +510,8 @@ namespace GraphEditor
         return hoverSlot;
     }
 
-    static void DrawGrid(ImDrawList *drawList, Vec2 windowPos, const ViewState &viewState, const Vec2 canvasSize,
-                         uint32_t gridColor, uint32_t gridColor2, float gridSize)
+    static void DrawGrid(ImDrawList *drawList, ::SF::Engine::Vec2 windowPos, const ViewState &viewState,
+                         const ::SF::Engine::Vec2 canvasSize, uint32_t gridColor, uint32_t gridColor2, float gridSize)
     {
         float gridSpace = gridSize * viewState.mFactor;
         int divx        = static_cast<int>(-viewState.mPosition.x / gridSize);
@@ -510,20 +520,20 @@ namespace GraphEditor
              x += gridSpace, divx++)
         {
             bool tenth = !(divx % 10);
-            drawList->AddLine(Vec2(x, 0.0f) + windowPos, Vec2(x, canvasSize.y) + windowPos,
+            drawList->AddLine(::SF::Engine::Vec2(x, 0.0f) + windowPos, ::SF::Engine::Vec2(x, canvasSize.y) + windowPos,
                               tenth ? gridColor2 : gridColor);
         }
         for (float y = fmodf(viewState.mPosition.y * viewState.mFactor, gridSpace); y < canvasSize.y;
              y += gridSpace, divy++)
         {
             bool tenth = !(divy % 10);
-            drawList->AddLine(Vec2(0.0f, y) + windowPos, Vec2(canvasSize.x, y) + windowPos,
+            drawList->AddLine(::SF::Engine::Vec2(0.0f, y) + windowPos, ::SF::Engine::Vec2(canvasSize.x, y) + windowPos,
                               tenth ? gridColor2 : gridColor);
         }
     }
 
     // return true if node is hovered
-    static bool DrawNode(ImDrawList *drawList, NodeIndex nodeIndex, const Vec2 offset, const float factor,
+    static bool DrawNode(ImDrawList *drawList, NodeIndex nodeIndex, const ::SF::Engine::Vec2 offset, const float factor,
                          Delegate &delegate, bool overInput, const Options &options, const bool inMinimap,
                          const ImRect &viewPort)
     {
@@ -531,12 +541,12 @@ namespace GraphEditor
         const auto node = delegate.GetNode(nodeIndex);
         IM_ASSERT((node.mRect.GetWidth() != 0.f) && (node.mRect.GetHeight() != 0.f) &&
                   "Nodes must have a non-zero rect.");
-        const auto nodeTemplate     = delegate.GetTemplate(node.mTemplateIndex);
-        const Vec2 nodeRectangleMin = offset + node.mRect.Min * factor;
+        const auto nodeTemplate                   = delegate.GetTemplate(node.mTemplateIndex);
+        const ::SF::Engine::Vec2 nodeRectangleMin = offset + node.mRect.Min * factor;
 
         const bool old_any_active = ImGui::IsAnyItemActive();
         ImGui::SetCursorScreenPos(nodeRectangleMin);
-        const Vec2 nodeSize = node.mRect.GetSize() * factor;
+        const ::SF::Engine::Vec2 nodeSize = node.mRect.GetSize() * factor;
 
         // test nested IO
         drawList->ChannelsSetCurrent(1); // Background
@@ -558,13 +568,13 @@ namespace GraphEditor
                 }
                 continue;
 
-                Vec2 p = offset + (i ? GetOutputSlotPos(delegate, node, slotIndex, factor) : GetInputSlotPos(delegate,
-        node, slotIndex, factor)); const float arc = 28.f * (float(i) * 0.3f + 1.0f) * (i ? 1.f : -1.f); const float ofs
-        = 0.f;
+                ::SF::Engine::Vec2 p = offset + (i ? GetOutputSlotPos(delegate, node, slotIndex, factor) :
+        GetInputSlotPos(delegate, node, slotIndex, factor)); const float arc = 28.f * (float(i) * 0.3f + 1.0f) * (i
+        ? 1.f : -1.f); const float ofs = 0.f;
 
-                Vec2 pts[3] = {p + Vec2(arc + ofs, 0.f), p + Vec2(0.f + ofs, -arc), p + Vec2(0.f + ofs, arc)};
-                drawList->AddTriangleFilled(pts[0], pts[1], pts[2], i ? 0xFFAA5030 : 0xFF30AA50);
-                drawList->AddTriangle(pts[0], pts[1], pts[2], 0xFF000000, 2.f);
+                ::SF::Engine::Vec2 pts[3] = {p + ::SF::Engine::Vec2(arc + ofs, 0.f), p + ::SF::Engine::Vec2(0.f + ofs,
+        -arc), p + ::SF::Engine::Vec2(0.f + ofs, arc)}; drawList->AddTriangleFilled(pts[0], pts[1], pts[2], i ?
+        0xFFAA5030 : 0xFF30AA50); drawList->AddTriangle(pts[0], pts[1], pts[2], 0xFF000000, 2.f);
             }
         }
         */
@@ -572,13 +582,13 @@ namespace GraphEditor
         ImGui::SetCursorScreenPos(nodeRectangleMin);
         float maxHeight = ImMin(viewPort.Max.y, nodeRectangleMin.y + nodeSize.y) - nodeRectangleMin.y;
         float maxWidth  = ImMin(viewPort.Max.x, nodeRectangleMin.x + nodeSize.x) - nodeRectangleMin.x;
-        ImGui::InvisibleButton("node", Vec2(maxWidth, maxHeight));
+        ImGui::InvisibleButton("node", ::SF::Engine::Vec2(maxWidth, maxHeight));
         // must be called right after creating the control we want to be able to move
         bool nodeMovingActive = ImGui::IsItemActive();
 
         // Save the size of what we have emitted and whether any of the widgets are being used
-        bool nodeWidgetsActive = (!old_any_active && ImGui::IsAnyItemActive());
-        Vec2 nodeRectangleMax  = nodeRectangleMin + nodeSize;
+        bool nodeWidgetsActive              = (!old_any_active && ImGui::IsAnyItemActive());
+        ::SF::Engine::Vec2 nodeRectangleMax = nodeRectangleMin + nodeSize;
 
         bool nodeHovered = false;
         if (ImGui::IsItemHovered() && nodeOperation == NO_None && !overInput)
@@ -628,29 +638,29 @@ namespace GraphEditor
                           ImDrawFlags_RoundCornersAll);
 #endif
 
-        Vec2 imgPos       = nodeRectangleMin + Vec2(14, 25);
-        Vec2 imgSize      = nodeRectangleMax + Vec2(-5, -5) - imgPos;
-        float imgSizeComp = std::min(imgSize.x, imgSize.y);
+        ::SF::Engine::Vec2 imgPos  = nodeRectangleMin + ::SF::Engine::Vec2(14, 25);
+        ::SF::Engine::Vec2 imgSize = nodeRectangleMax + ::SF::Engine::Vec2(-5, -5) - imgPos;
+        float imgSizeComp          = std::min(imgSize.x, imgSize.y);
 
         drawList->AddRectFilled(nodeRectangleMin, nodeRectangleMax, node_bg_color, options.mRounding);
         /*float progress = delegate->NodeProgress(nodeIndex);
         if (progress > FLT_EPSILON && progress < 1.f - FLT_EPSILON)
         {
-            Vec2 progressLineA = nodeRectangleMax - Vec2(nodeSize.x - 2.f, 3.f);
-            Vec2 progressLineB = progressLineA + Vec2(nodeSize.x * factor - 4.f, 0.f);
+            ::SF::Engine::Vec2 progressLineA = nodeRectangleMax - ::SF::Engine::Vec2(nodeSize.x - 2.f, 3.f);
+            ::SF::Engine::Vec2 progressLineB = progressLineA + ::SF::Engine::Vec2(nodeSize.x * factor - 4.f, 0.f);
             drawList->AddLine(progressLineA, progressLineB, 0xFF400000, 3.f);
             drawList->AddLine(progressLineA, ImLerp(progressLineA, progressLineB, progress), 0xFFFF0000, 3.f);
         }*/
-        Vec2 imgPosMax = imgPos + Vec2(imgSizeComp, imgSizeComp);
+        ::SF::Engine::Vec2 imgPosMax = imgPos + ::SF::Engine::Vec2(imgSizeComp, imgSizeComp);
 
-        // Vec2 imageSize = delegate->GetEvaluationSize(nodeIndex);
+        // ::SF::Engine::Vec2 imageSize = delegate->GetEvaluationSize(nodeIndex);
         /*float imageRatio = 1.f;
         if (imageSize.x > 0.f && imageSize.y > 0.f)
         {
             imageRatio = imageSize.y / imageSize.x;
         }
-        Vec2 quadSize = imgPosMax - imgPos;
-        Vec2 marge(0.f, 0.f);
+        ::SF::Engine::Vec2 quadSize = imgPosMax - imgPos;
+        ::SF::Engine::Vec2 marge(0.f, 0.f);
         if (imageRatio > 1.f)
         {
             marge.x = (quadSize.x - quadSize.y / imageRatio) * 0.5f;
@@ -662,15 +672,15 @@ namespace GraphEditor
 
         // delegate->DrawNodeImage(drawList, ImRect(imgPos, imgPosMax), marge, nodeIndex);
 
-        drawList->AddRectFilled(nodeRectangleMin, Vec2(nodeRectangleMax.x, nodeRectangleMin.y + 20),
+        drawList->AddRectFilled(nodeRectangleMin, ::SF::Engine::Vec2(nodeRectangleMax.x, nodeRectangleMin.y + 20),
                                 nodeTemplate.mHeaderColor, options.mRounding);
 
-        drawList->PushClipRect(nodeRectangleMin, Vec2(nodeRectangleMax.x, nodeRectangleMin.y + 20), true);
-        drawList->AddText(nodeRectangleMin + Vec2(2, 2), IM_COL32(0, 0, 0, 255), node.mName);
+        drawList->PushClipRect(nodeRectangleMin, ::SF::Engine::Vec2(nodeRectangleMax.x, nodeRectangleMin.y + 20), true);
+        drawList->AddText(nodeRectangleMin + ::SF::Engine::Vec2(2, 2), IM_COL32(0, 0, 0, 255), node.mName);
         drawList->PopClipRect();
 
-        ImRect customDrawRect(nodeRectangleMin + Vec2(options.mRounding, 20 + options.mRounding),
-                              nodeRectangleMax - Vec2(options.mRounding, options.mRounding));
+        ImRect customDrawRect(nodeRectangleMin + ::SF::Engine::Vec2(options.mRounding, 20 + options.mRounding),
+                              nodeRectangleMax - ::SF::Engine::Vec2(options.mRounding, options.mRounding));
         if (customDrawRect.Max.y > customDrawRect.Min.y && customDrawRect.Max.x > customDrawRect.Min.x)
         {
             delegate.CustomDraw(drawList, customDrawRect, nodeIndex);
@@ -679,30 +689,30 @@ namespace GraphEditor
             const ImTextureID bmpInfo = (ImTextureID)(uint64_t)delegate->GetBitmapInfo(nodeIndex).idx;
             if (bmpInfo)
             {
-                Vec2 bmpInfoPos(nodeRectangleMax - Vec2(26, 12));
-                Vec2 bmpInfoSize(20, 20);
+                ::SF::Engine::Vec2 bmpInfoPos(nodeRectangleMax - ::SF::Engine::Vec2(26, 12));
+                ::SF::Engine::Vec2 bmpInfoSize(20, 20);
                 if (delegate->NodeIsCompute(nodeIndex))
                 {
                     drawList->AddImageQuad(bmpInfo,
                                            bmpInfoPos,
-                                           bmpInfoPos + Vec2(bmpInfoSize.x, 0.f),
+                                           bmpInfoPos + ::SF::Engine::Vec2(bmpInfoSize.x, 0.f),
                                            bmpInfoPos + bmpInfoSize,
-                                           bmpInfoPos + Vec2(0., bmpInfoSize.y));
+                                           bmpInfoPos + ::SF::Engine::Vec2(0., bmpInfoSize.y));
                 }
                 else if (delegate->NodeIs2D(nodeIndex))
                 {
                     drawList->AddImageQuad(bmpInfo,
                                            bmpInfoPos,
-                                           bmpInfoPos + Vec2(bmpInfoSize.x, 0.f),
+                                           bmpInfoPos + ::SF::Engine::Vec2(bmpInfoSize.x, 0.f),
                                            bmpInfoPos + bmpInfoSize,
-                                           bmpInfoPos + Vec2(0., bmpInfoSize.y));
+                                           bmpInfoPos + ::SF::Engine::Vec2(0., bmpInfoSize.y));
                 }
                 else if (delegate->NodeIsCubemap(nodeIndex))
                 {
                     drawList->AddImageQuad(bmpInfo,
-                                           bmpInfoPos + Vec2(0., bmpInfoSize.y),
+                                           bmpInfoPos + ::SF::Engine::Vec2(0., bmpInfoSize.y),
                                            bmpInfoPos + bmpInfoSize,
-                                           bmpInfoPos + Vec2(bmpInfoSize.x, 0.f),
+                                           bmpInfoPos + ::SF::Engine::Vec2(bmpInfoSize.x, 0.f),
                                            bmpInfoPos);
                 }
             }*/
@@ -710,7 +720,7 @@ namespace GraphEditor
     }
 
     bool DrawMiniMap(ImDrawList *drawList, Delegate &delegate, ViewState &viewState, const Options &options,
-                     const Vec2 windowPos, const Vec2 canvasSize)
+                     const ::SF::Engine::Vec2 windowPos, const ::SF::Engine::Vec2 canvasSize)
     {
         if (Distance(options.mMinimap.Min, options.mMinimap.Max) <= FLT_EPSILON)
         {
@@ -724,9 +734,9 @@ namespace GraphEditor
             return false;
         }
 
-        Vec2 min(FLT_MAX, FLT_MAX);
-        Vec2 max(-FLT_MAX, -FLT_MAX);
-        const Vec2 margin(50, 50);
+        ::SF::Engine::Vec2 min(FLT_MAX, FLT_MAX);
+        ::SF::Engine::Vec2 max(-FLT_MAX, -FLT_MAX);
+        const ::SF::Engine::Vec2 margin(50, 50);
         for (NodeIndex nodeIndex = 0; nodeIndex < nodeCount; nodeIndex++)
         {
             const Node &node = delegate.GetNode(nodeIndex);
@@ -737,20 +747,20 @@ namespace GraphEditor
         }
 
         // add view in world space
-        const Vec2 worldSizeView = canvasSize / viewState.mFactor;
-        const Vec2 viewMin(-viewState.mPosition.x, -viewState.mPosition.y);
-        const Vec2 viewMax      = viewMin + worldSizeView;
-        min                     = ImMin(min, viewMin);
-        max                     = ImMax(max, viewMax);
-        const Vec2 nodesSize    = max - min;
-        const Vec2 middleWorld  = (min + max) * 0.5f;
-        const Vec2 minScreen    = windowPos + options.mMinimap.Min * canvasSize;
-        const Vec2 maxScreen    = windowPos + options.mMinimap.Max * canvasSize;
-        const Vec2 viewSize     = maxScreen - minScreen;
-        const Vec2 middleScreen = (minScreen + maxScreen) * 0.5f;
-        const float ratioY      = viewSize.y / nodesSize.y;
-        const float ratioX      = viewSize.x / nodesSize.x;
-        const float factor      = ImMin(ImMin(ratioY, ratioX), 1.f);
+        const ::SF::Engine::Vec2 worldSizeView = canvasSize / viewState.mFactor;
+        const ::SF::Engine::Vec2 viewMin(-viewState.mPosition.x, -viewState.mPosition.y);
+        const ::SF::Engine::Vec2 viewMax      = viewMin + worldSizeView;
+        min                                   = ImMin(min, viewMin);
+        max                                   = ImMax(max, viewMax);
+        const ::SF::Engine::Vec2 nodesSize    = max - min;
+        const ::SF::Engine::Vec2 middleWorld  = (min + max) * 0.5f;
+        const ::SF::Engine::Vec2 minScreen    = windowPos + options.mMinimap.Min * canvasSize;
+        const ::SF::Engine::Vec2 maxScreen    = windowPos + options.mMinimap.Max * canvasSize;
+        const ::SF::Engine::Vec2 viewSize     = maxScreen - minScreen;
+        const ::SF::Engine::Vec2 middleScreen = (minScreen + maxScreen) * 0.5f;
+        const float ratioY                    = viewSize.y / nodesSize.y;
+        const float ratioX                    = viewSize.x / nodesSize.x;
+        const float factor                    = ImMin(ImMin(ratioY, ratioX), 1.f);
 
         drawList->AddRectFilled(minScreen, maxScreen, IM_COL32(30, 30, 30, 200), 3, ImDrawFlags_RoundCornersAll);
 
@@ -776,8 +786,8 @@ namespace GraphEditor
         }
 
         // add view
-        Vec2 viewMinScreen = (viewMin - middleWorld) * factor + middleScreen;
-        Vec2 viewMaxScreen = (viewMax - middleWorld) * factor + middleScreen;
+        ::SF::Engine::Vec2 viewMinScreen = (viewMin - middleWorld) * factor + middleScreen;
+        ::SF::Engine::Vec2 viewMaxScreen = (viewMax - middleWorld) * factor + middleScreen;
         drawList->AddRectFilled(viewMinScreen, viewMaxScreen, IM_COL32(255, 255, 255, 32), 1,
                                 ImDrawFlags_RoundCornersAll);
         drawList->AddRect(viewMinScreen, viewMaxScreen, IM_COL32(255, 255, 255, 128), 1, ImDrawFlags_RoundCornersAll);
@@ -786,12 +796,12 @@ namespace GraphEditor
         const bool mouseInMinimap = ImRect(minScreen, maxScreen).Contains(io.MousePos);
         if (mouseInMinimap && io.MouseClicked[0])
         {
-            const Vec2 clickedRatio = (io.MousePos - minScreen) / viewSize;
-            const Vec2 worldPosCenter =
-                    Vec2(ImLerp(min.x, max.x, clickedRatio.x), ImLerp(min.y, max.y, clickedRatio.y));
+            const ::SF::Engine::Vec2 clickedRatio = (io.MousePos - minScreen) / viewSize;
+            const ::SF::Engine::Vec2 worldPosCenter =
+                    ::SF::Engine::Vec2(ImLerp(min.x, max.x, clickedRatio.x), ImLerp(min.y, max.y, clickedRatio.y));
 
-            Vec2 worldPosViewMin = worldPosCenter - worldSizeView * 0.5;
-            Vec2 worldPosViewMax = worldPosCenter + worldSizeView * 0.5;
+            ::SF::Engine::Vec2 worldPosViewMin = worldPosCenter - worldSizeView * ::SF::Engine::Vec2{0.5};
+            ::SF::Engine::Vec2 worldPosViewMax = worldPosCenter + worldSizeView * ::SF::Engine::Vec2{0.5};
             if (worldPosViewMin.x < min.x)
             {
                 worldPosViewMin.x = min.x;
@@ -812,7 +822,7 @@ namespace GraphEditor
                 worldPosViewMax.y = max.y;
                 worldPosViewMin.y = worldPosViewMax.y - worldSizeView.y;
             }
-            viewState.mPosition = Vec2(-worldPosViewMin.x, -worldPosViewMin.y);
+            viewState.mPosition = ::SF::Engine::Vec2(-worldPosViewMin.x, -worldPosViewMin.y);
         }
         return mouseInMinimap;
     }
@@ -820,18 +830,18 @@ namespace GraphEditor
     void Show(Delegate &delegate, const Options &options, ViewState &viewState, bool enabled, FitOnScreen *fit)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.f);
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, Vec2(0.f, 0.f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ::SF::Engine::Vec2(0.f, 0.f));
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.f);
 
-        const Vec2 windowPos  = ImGui::GetCursorScreenPos();
-        const Vec2 canvasSize = ImGui::GetContentRegionAvail();
-        const Vec2 scrollRegionLocalPos(0, 0);
+        const ::SF::Engine::Vec2 windowPos  = ImGui::GetCursorScreenPos();
+        const ::SF::Engine::Vec2 canvasSize = ImGui::GetContentRegionAvail();
+        const ::SF::Engine::Vec2 scrollRegionLocalPos(0, 0);
 
         ImRect regionRect(windowPos, windowPos + canvasSize);
 
         HandleZoomScroll(regionRect, viewState, options);
-        Vec2 offset   = ImGui::GetCursorScreenPos() + viewState.mPosition * viewState.mFactor;
-        captureOffset = viewState.mPosition * viewState.mFactor;
+        ::SF::Engine::Vec2 offset = ImGui::GetCursorScreenPos() + viewState.mPosition * viewState.mFactor;
+        captureOffset             = viewState.mPosition * viewState.mFactor;
 
         // ImGui::InvisibleButton("GraphEditorButton", canvasSize);
         ImGui::BeginChild(71711, canvasSize, ImGuiChildFlags_FrameStyle);
@@ -842,8 +852,8 @@ namespace GraphEditor
         ImGuiIO &io = ImGui::GetIO();
 
         // Create our child canvas
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, Vec2(1, 1));
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, Vec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ::SF::Engine::Vec2(1, 1));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ::SF::Engine::Vec2(0, 0));
         ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(30, 30, 30, 255));
 
         ImDrawList *drawList = ImGui::GetWindowDrawList();
@@ -891,8 +901,8 @@ namespace GraphEditor
             // edit node link
             if (nodeOperation == NO_EditingLink)
             {
-                Vec2 p1 = editingNodeSource;
-                Vec2 p2 = io.MousePos;
+                ::SF::Engine::Vec2 p1 = editingNodeSource;
+                ::SF::Engine::Vec2 p2 = io.MousePos;
                 drawList->AddLine(p1, p2, IM_COL32(200, 200, 200, 255), 3.0f);
             }
 
@@ -935,13 +945,17 @@ namespace GraphEditor
 
                     // shadow
                     /*
-                    Vec2 shadowOffset = Vec2(30, 30);
-                    Vec2 shadowPivot = (nodeRect.Min + nodeRect.Max) /2.f;
-                    Vec2 shadowPointMiddle = shadowPivot + shadowOffset;
-                    Vec2 shadowPointTop = Vec2(shadowPivot.x, nodeRect.Min.y) + shadowOffset;
-                    Vec2 shadowPointBottom = Vec2(shadowPivot.x, nodeRect.Max.y) + shadowOffset;
-                    Vec2 shadowPointLeft = Vec2(nodeRect.Min.x, shadowPivot.y) + shadowOffset;
-                    Vec2 shadowPointRight = Vec2(nodeRect.Max.x, shadowPivot.y) + shadowOffset;
+                    ::SF::Engine::Vec2 shadowOffset = ::SF::Engine::Vec2(30, 30);
+                    ::SF::Engine::Vec2 shadowPivot = (nodeRect.Min + nodeRect.Max) /2.f;
+                    ::SF::Engine::Vec2 shadowPointMiddle = shadowPivot + shadowOffset;
+                    ::SF::Engine::Vec2 shadowPointTop = ::SF::Engine::Vec2(shadowPivot.x, nodeRect.Min.y) +
+                    shadowOffset;
+                    ::SF::Engine::Vec2 shadowPointBottom = ::SF::Engine::Vec2(shadowPivot.x, nodeRect.Max.y) +
+                    shadowOffset;
+                    ::SF::Engine::Vec2 shadowPointLeft = ::SF::Engine::Vec2(nodeRect.Min.x, shadowPivot.y) +
+                    shadowOffset;
+                    ::SF::Engine::Vec2 shadowPointRight = ::SF::Engine::Vec2(nodeRect.Max.x, shadowPivot.y) +
+                    shadowOffset;
 
                     // top left
                     drawList->AddRectFilledMultiColor(nodeRect.Min + shadowOffset, shadowPointMiddle, IM_COL32(0 ,0, 0,
@@ -985,7 +999,7 @@ namespace GraphEditor
             {
                 if (ImGui::IsMouseDragging(0, 1))
                 {
-                    Vec2 delta = io.MouseDelta / viewState.mFactor;
+                    ::SF::Engine::Vec2 delta = io.MouseDelta / viewState.mFactor;
                     if (fabsf(delta.x) >= 1.f || fabsf(delta.y) >= 1.f)
                     {
                         delegate.MoveSelectedNodes(delta);
@@ -1054,14 +1068,14 @@ namespace GraphEditor
         bool updated = false;
         if (ImGui::CollapsingHeader("Colors", nullptr))
         {
-            ImColor backgroundColor(options.mBackgroundColor);
-            ImColor gridColor(options.mGridColor);
-            ImColor selectedNodeBorderColor(options.mSelectedNodeBorderColor);
-            ImColor nodeBorderColor(options.mNodeBorderColor);
-            ImColor quadSelection(options.mQuadSelection);
-            ImColor quadSelectionBorder(options.mQuadSelectionBorder);
-            ImColor defaultSlotColor(options.mDefaultSlotColor);
-            ImColor frameFocus(options.mFrameFocus);
+            ::SF::Engine::Color backgroundColor(options.mBackgroundColor);
+            ::SF::Engine::Color gridColor(options.mGridColor);
+            ::SF::Engine::Color selectedNodeBorderColor(options.mSelectedNodeBorderColor);
+            ::SF::Engine::Color nodeBorderColor(options.mNodeBorderColor);
+            ::SF::Engine::Color quadSelection(options.mQuadSelection);
+            ::SF::Engine::Color quadSelectionBorder(options.mQuadSelectionBorder);
+            ::SF::Engine::Color defaultSlotColor(options.mDefaultSlotColor);
+            ::SF::Engine::Color frameFocus(options.mFrameFocus);
 
             updated |= ImGui::ColorEdit4("Background", (float *) &backgroundColor);
             updated |= ImGui::ColorEdit4("Grid", (float *) &gridColor);
@@ -1072,14 +1086,14 @@ namespace GraphEditor
             updated |= ImGui::ColorEdit4("Default Slot", (float *) &defaultSlotColor);
             updated |= ImGui::ColorEdit4("Frame when has focus", (float *) &frameFocus);
 
-            options.mBackgroundColor         = backgroundColor;
-            options.mGridColor               = gridColor;
-            options.mSelectedNodeBorderColor = selectedNodeBorderColor;
-            options.mNodeBorderColor         = nodeBorderColor;
-            options.mQuadSelection           = quadSelection;
-            options.mQuadSelectionBorder     = quadSelectionBorder;
-            options.mDefaultSlotColor        = defaultSlotColor;
-            options.mFrameFocus              = frameFocus;
+            options.mBackgroundColor         = backgroundColor.ToInt();
+            options.mGridColor               = gridColor.ToInt();
+            options.mSelectedNodeBorderColor = selectedNodeBorderColor.ToInt();
+            options.mNodeBorderColor         = nodeBorderColor.ToInt();
+            options.mQuadSelection           = quadSelection.ToInt();
+            options.mQuadSelectionBorder     = quadSelectionBorder.ToInt();
+            options.mDefaultSlotColor        = defaultSlotColor.ToInt();
+            options.mFrameFocus              = frameFocus.ToInt();
         }
 
         if (ImGui::CollapsingHeader("Options", nullptr))

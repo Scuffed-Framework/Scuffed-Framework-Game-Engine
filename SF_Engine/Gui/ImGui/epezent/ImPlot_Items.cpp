@@ -193,7 +193,8 @@ namespace ImPlot
         return sqrt(x);
     }
 
-    IMPLOT_INLINE void GetLineRenderProps(ImDrawList &draw_list, float &half_weight, Vec2 &tex_uv0, Vec2 &tex_uv1)
+    IMPLOT_INLINE void GetLineRenderProps(ImDrawList &draw_list, float &half_weight, ::SF::Engine::Vec2 &tex_uv0,
+                                          ::SF::Engine::Vec2 &tex_uv1)
     {
 #if IMGUI_VERSION_NUM >= 19299 || defined(IM_DRAWLIST_TEX_LINES_SAMPLE_COUNT)
         float fringe;
@@ -206,9 +207,9 @@ namespace ImPlot
                         ImHasFlag(draw_list.Flags, ImDrawListFlags_AntiAliasedLinesUseTex);
         if (aa)
         {
-            Vec4 tex_uvs = draw_list._Data->TexUvLines[(int) (half_weight * 2)];
-            tex_uv0      = Vec2(tex_uvs.x, tex_uvs.y);
-            tex_uv1      = Vec2(tex_uvs.z, tex_uvs.w);
+            ::SF::Engine::Vec4 tex_uvs = draw_list._Data->TexUvLines[(int) (half_weight * 2)];
+            tex_uv0                    = ::SF::Engine::Vec2(tex_uvs.x, tex_uvs.y);
+            tex_uv1                    = ::SF::Engine::Vec2(tex_uvs.z, tex_uvs.w);
             half_weight += 1;
         } else
         {
@@ -217,8 +218,9 @@ namespace ImPlot
 #endif
     }
 
-    IMPLOT_INLINE void PrimLine(ImDrawList &draw_list, const Vec2 &P1, const Vec2 &P2, float half_weight, uint32_t col,
-                                const Vec2 &tex_uv0, const Vec2 tex_uv1)
+    IMPLOT_INLINE void PrimLine(ImDrawList &draw_list, const ::SF::Engine::Vec2 &P1, const ::SF::Engine::Vec2 &P2,
+                                float half_weight, uint32_t col, const ::SF::Engine::Vec2 &tex_uv0,
+                                const ::SF::Engine::Vec2 tex_uv1)
     {
         float dx = P2.x - P1.x;
         float dy = P2.y - P1.y;
@@ -252,8 +254,8 @@ namespace ImPlot
         draw_list._VtxCurrentIdx += 4;
     }
 
-    IMPLOT_INLINE void PrimRectFill(ImDrawList &draw_list, const Vec2 &Pmin, const Vec2 &Pmax, uint32_t col,
-                                    const Vec2 &uv)
+    IMPLOT_INLINE void PrimRectFill(ImDrawList &draw_list, const ::SF::Engine::Vec2 &Pmin,
+                                    const ::SF::Engine::Vec2 &Pmax, uint32_t col, const ::SF::Engine::Vec2 &uv)
     {
         draw_list._VtxWritePtr[0].pos   = Pmin;
         draw_list._VtxWritePtr[0].uv    = uv;
@@ -280,8 +282,9 @@ namespace ImPlot
         draw_list._VtxCurrentIdx += 4;
     }
 
-    IMPLOT_INLINE void PrimRectLine(ImDrawList &draw_list, const Vec2 &Pmin, const Vec2 &Pmax, float weight,
-                                    uint32_t col, const Vec2 &uv)
+    IMPLOT_INLINE void PrimRectLine(ImDrawList &draw_list, const ::SF::Engine::Vec2 &Pmin,
+                                    const ::SF::Engine::Vec2 &Pmax, float weight, uint32_t col,
+                                    const ::SF::Engine::Vec2 &uv)
     {
 
         draw_list._VtxWritePtr[0].pos.x = Pmin.x;
@@ -378,7 +381,7 @@ namespace ImPlot
     {
         ImPlotContext &gp      = *GImPlot;
         ImPlotItemGroup &Items = *gp.CurrentItems;
-        ImGuiID id             = Items.GetItemID(label_id);
+        IdType id              = Items.GetItemID(label_id);
         if (just_created != nullptr)
             *just_created = Items.GetItem(id) == nullptr;
         ImPlotItem *item = Items.GetOrAddItem(id);
@@ -417,12 +420,12 @@ namespace ImPlot
         return gp.CurrentItem;
     }
 
-    Vec4 GetLastItemColor()
+    ::SF::Engine::Vec4 GetLastItemColor()
     {
         ImPlotContext &gp = *GImPlot;
         if (gp.PreviousItem)
             return ImGui::ColorConvertU32ToFloat4(gp.PreviousItem->Color);
-        return Vec4();
+        return ::SF::Engine::Vec4();
     }
 
     void BustItemCache()
@@ -448,7 +451,7 @@ namespace ImPlot
             BustItemCache();
         } else
         {
-            ImGuiID id       = ImGui::GetCurrentWindow()->GetID(plot_title_id);
+            IdType id        = ImGui::GetCurrentWindow()->GetID(plot_title_id);
             ImPlotPlot *plot = gp.Plots.GetByKey(id);
             if (plot != nullptr)
                 plot->Items.Reset();
@@ -469,7 +472,8 @@ namespace ImPlot
     constexpr float ITEM_HIGHLIGHT_MARK_SCALE = 1.25f;
 
     // Begins a new item. Returns false if the item should not be plotted.
-    bool BeginItem(const char *label_id, const ImPlotSpec &spec, const Vec4 &item_col, ImPlotMarker item_mkr)
+    bool BeginItem(const char *label_id, const ImPlotSpec &spec, const ::SF::Engine::Vec4 &item_col,
+                   ImPlotMarker item_mkr)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr,
@@ -514,7 +518,7 @@ namespace ImPlot
             return false;
         } else
         {
-            Vec4 item_color = ImGui::ColorConvertU32ToFloat4(item->Color);
+            ::SF::Engine::Vec4 item_color = ImGui::ColorConvertU32ToFloat4(item->Color);
             // stage next item spec
             s.Spec           = spec;
             s.Spec.LineColor = IsColorAuto(s.Spec.LineColor) ? item_color : s.Spec.LineColor;
@@ -811,7 +815,7 @@ namespace ImPlot
             uint32_t col = color;
             if (alpha < 1.0f)
             {
-                Vec4 col_vec = ImGui::ColorConvertU32ToFloat4(col);
+                ::SF::Engine::Vec4 col_vec = ImGui::ColorConvertU32ToFloat4(col);
                 col_vec.w *= alpha;
                 col = ImGui::GetColorU32(col_vec);
             }
@@ -835,7 +839,7 @@ namespace ImPlot
             uint32_t col = Data[idx];
             if (Alpha < 1.0f)
             {
-                Vec4 col_vec = ImGui::ColorConvertU32ToFloat4(col);
+                ::SF::Engine::Vec4 col_vec = ImGui::ColorConvertU32ToFloat4(col);
                 col_vec.w *= Alpha;
                 col = ImGui::GetColorU32(col_vec);
             }
@@ -1082,18 +1086,18 @@ namespace ImPlot
         Transformer2() : Transformer2(*GImPlot->CurrentPlot) {}
 
         template<typename P>
-        IMPLOT_INLINE Vec2 operator()(const P &plt) const
+        IMPLOT_INLINE ::SF::Engine::Vec2 operator()(const P &plt) const
         {
-            Vec2 out;
+            ::SF::Engine::Vec2 out;
             out.x = Tx(plt.x);
             out.y = Ty(plt.y);
             return out;
         }
 
         template<typename T>
-        IMPLOT_INLINE Vec2 operator()(T x, T y) const
+        IMPLOT_INLINE ::SF::Engine::Vec2 operator()(T x, T y) const
         {
-            Vec2 out;
+            ::SF::Engine::Vec2 out;
             out.x = Tx(x);
             out.y = Ty(y);
             return out;
@@ -1131,7 +1135,7 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { GetLineRenderProps(draw_list, HalfWeight, UV0, UV1); }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P2 = this->Transformer(Getter[prim + 1]);
+            ::SF::Engine::Vec2 P2 = this->Transformer(Getter[prim + 1]);
             if (!cull_rect.Overlaps(ImRect(ImMin(P1, P2), ImMax(P1, P2))))
             {
                 P1 = P2;
@@ -1145,9 +1149,9 @@ namespace ImPlot
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         mutable float HalfWeight;
-        mutable Vec2 P1;
-        mutable Vec2 UV0;
-        mutable Vec2 UV1;
+        mutable ::SF::Engine::Vec2 P1;
+        mutable ::SF::Engine::Vec2 UV0;
+        mutable ::SF::Engine::Vec2 UV1;
     };
 
     template<class _Getter, class _GetterColor>
@@ -1162,7 +1166,7 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { GetLineRenderProps(draw_list, HalfWeight, UV0, UV1); }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P2 = this->Transformer(Getter[prim + 1]);
+            ::SF::Engine::Vec2 P2 = this->Transformer(Getter[prim + 1]);
             if (!cull_rect.Overlaps(ImRect(ImMin(P1, P2), ImMax(P1, P2))))
             {
                 if (!ImNan(P2.x) && !ImNan(P2.y))
@@ -1178,9 +1182,9 @@ namespace ImPlot
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         mutable float HalfWeight;
-        mutable Vec2 P1;
-        mutable Vec2 UV0;
-        mutable Vec2 UV1;
+        mutable ::SF::Engine::Vec2 P1;
+        mutable ::SF::Engine::Vec2 UV0;
+        mutable ::SF::Engine::Vec2 UV1;
     };
 
     template<class _Getter, class _GetterColor>
@@ -1194,8 +1198,8 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { GetLineRenderProps(draw_list, HalfWeight, UV0, UV1); }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P1 = this->Transformer(Getter[prim * 2 + 0]);
-            Vec2 P2 = this->Transformer(Getter[prim * 2 + 1]);
+            ::SF::Engine::Vec2 P1 = this->Transformer(Getter[prim * 2 + 0]);
+            ::SF::Engine::Vec2 P2 = this->Transformer(Getter[prim * 2 + 1]);
             if (!cull_rect.Overlaps(ImRect(ImMin(P1, P2), ImMax(P1, P2))))
                 return false;
             uint32_t col = GetterColor[prim * 2];
@@ -1205,8 +1209,8 @@ namespace ImPlot
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         mutable float HalfWeight;
-        mutable Vec2 UV0;
-        mutable Vec2 UV1;
+        mutable ::SF::Engine::Vec2 UV0;
+        mutable ::SF::Engine::Vec2 UV1;
     };
 
     template<class _Getter1, class _Getter2, class _GetterColor>
@@ -1221,8 +1225,8 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { GetLineRenderProps(draw_list, HalfWeight, UV0, UV1); }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P1 = this->Transformer(Getter1[prim]);
-            Vec2 P2 = this->Transformer(Getter2[prim]);
+            ::SF::Engine::Vec2 P1 = this->Transformer(Getter1[prim]);
+            ::SF::Engine::Vec2 P2 = this->Transformer(Getter2[prim]);
             if (!cull_rect.Overlaps(ImRect(ImMin(P1, P2), ImMax(P1, P2))))
                 return false;
             uint32_t col = GetterColor[prim];
@@ -1233,8 +1237,8 @@ namespace ImPlot
         const _Getter2 &Getter2;
         const _GetterColor &GetterColor;
         mutable float HalfWeight;
-        mutable Vec2 UV0;
-        mutable Vec2 UV1;
+        mutable ::SF::Engine::Vec2 UV0;
+        mutable ::SF::Engine::Vec2 UV1;
     };
 
     template<class _Getter1, class _Getter2, class _GetterColor>
@@ -1253,16 +1257,16 @@ namespace ImPlot
             ImPlotPoint p2 = Getter2[prim];
             p1.x += HalfWidth;
             p2.x -= HalfWidth;
-            Vec2 P1        = this->Transformer(p1);
-            Vec2 P2        = this->Transformer(p2);
-            float width_px = ImAbs(P1.x - P2.x);
+            ::SF::Engine::Vec2 P1 = this->Transformer(p1);
+            ::SF::Engine::Vec2 P2 = this->Transformer(p2);
+            float width_px        = ImAbs(P1.x - P2.x);
             if (width_px < 1.0f)
             {
                 P1.x += P1.x > P2.x ? (1 - width_px) / 2 : (width_px - 1) / 2;
                 P2.x += P2.x > P1.x ? (1 - width_px) / 2 : (width_px - 1) / 2;
             }
-            Vec2 PMin = ImMin(P1, P2);
-            Vec2 PMax = ImMax(P1, P2);
+            ::SF::Engine::Vec2 PMin = ImMin(P1, P2);
+            ::SF::Engine::Vec2 PMax = ImMax(P1, P2);
             if (!cull_rect.Overlaps(ImRect(PMin, PMax)))
                 return false;
             uint32_t col = GetterColor[prim];
@@ -1273,7 +1277,7 @@ namespace ImPlot
         const _Getter2 &Getter2;
         const _GetterColor &GetterColor;
         const double HalfWidth;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     template<class _Getter1, class _Getter2, class _GetterColor>
@@ -1292,16 +1296,16 @@ namespace ImPlot
             ImPlotPoint p2 = Getter2[prim];
             p1.y += HalfHeight;
             p2.y -= HalfHeight;
-            Vec2 P1         = this->Transformer(p1);
-            Vec2 P2         = this->Transformer(p2);
-            float height_px = ImAbs(P1.y - P2.y);
+            ::SF::Engine::Vec2 P1 = this->Transformer(p1);
+            ::SF::Engine::Vec2 P2 = this->Transformer(p2);
+            float height_px       = ImAbs(P1.y - P2.y);
             if (height_px < 1.0f)
             {
                 P1.y += P1.y > P2.y ? (1 - height_px) / 2 : (height_px - 1) / 2;
                 P2.y += P2.y > P1.y ? (1 - height_px) / 2 : (height_px - 1) / 2;
             }
-            Vec2 PMin = ImMin(P1, P2);
-            Vec2 PMax = ImMax(P1, P2);
+            ::SF::Engine::Vec2 PMin = ImMin(P1, P2);
+            ::SF::Engine::Vec2 PMax = ImMax(P1, P2);
             if (!cull_rect.Overlaps(ImRect(PMin, PMax)))
                 return false;
             uint32_t col = GetterColor[prim];
@@ -1312,7 +1316,7 @@ namespace ImPlot
         const _Getter2 &Getter2;
         const _GetterColor &GetterColor;
         const double HalfHeight;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     template<class _Getter1, class _Getter2, class _GetterColor>
@@ -1331,16 +1335,16 @@ namespace ImPlot
             ImPlotPoint p2 = Getter2[prim];
             p1.x += HalfWidth;
             p2.x -= HalfWidth;
-            Vec2 P1        = this->Transformer(p1);
-            Vec2 P2        = this->Transformer(p2);
-            float width_px = ImAbs(P1.x - P2.x);
+            ::SF::Engine::Vec2 P1 = this->Transformer(p1);
+            ::SF::Engine::Vec2 P2 = this->Transformer(p2);
+            float width_px        = ImAbs(P1.x - P2.x);
             if (width_px < 1.0f)
             {
                 P1.x += P1.x > P2.x ? (1 - width_px) / 2 : (width_px - 1) / 2;
                 P2.x += P2.x > P1.x ? (1 - width_px) / 2 : (width_px - 1) / 2;
             }
-            Vec2 PMin = ImMin(P1, P2);
-            Vec2 PMax = ImMax(P1, P2);
+            ::SF::Engine::Vec2 PMin = ImMin(P1, P2);
+            ::SF::Engine::Vec2 PMax = ImMax(P1, P2);
             if (!cull_rect.Overlaps(ImRect(PMin, PMax)))
                 return false;
             uint32_t col = GetterColor[prim];
@@ -1352,7 +1356,7 @@ namespace ImPlot
         const _GetterColor &GetterColor;
         const double HalfWidth;
         const float Weight;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     template<class _Getter1, class _Getter2, class _GetterColor>
@@ -1371,16 +1375,16 @@ namespace ImPlot
             ImPlotPoint p2 = Getter2[prim];
             p1.y += HalfHeight;
             p2.y -= HalfHeight;
-            Vec2 P1         = this->Transformer(p1);
-            Vec2 P2         = this->Transformer(p2);
-            float height_px = ImAbs(P1.y - P2.y);
+            ::SF::Engine::Vec2 P1 = this->Transformer(p1);
+            ::SF::Engine::Vec2 P2 = this->Transformer(p2);
+            float height_px       = ImAbs(P1.y - P2.y);
             if (height_px < 1.0f)
             {
                 P1.y += P1.y > P2.y ? (1 - height_px) / 2 : (height_px - 1) / 2;
                 P2.y += P2.y > P1.y ? (1 - height_px) / 2 : (height_px - 1) / 2;
             }
-            Vec2 PMin = ImMin(P1, P2);
-            Vec2 PMax = ImMax(P1, P2);
+            ::SF::Engine::Vec2 PMin = ImMin(P1, P2);
+            ::SF::Engine::Vec2 PMax = ImMax(P1, P2);
             if (!cull_rect.Overlaps(ImRect(PMin, PMax)))
                 return false;
             uint32_t col = GetterColor[prim];
@@ -1392,7 +1396,7 @@ namespace ImPlot
         const _GetterColor &GetterColor;
         const double HalfHeight;
         const float Weight;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
 
@@ -1408,23 +1412,25 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { UV = draw_list._Data->TexUvWhitePixel; }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P2 = this->Transformer(Getter[prim + 1]);
+            ::SF::Engine::Vec2 P2 = this->Transformer(Getter[prim + 1]);
             if (!cull_rect.Overlaps(ImRect(ImMin(P1, P2), ImMax(P1, P2))))
             {
                 P1 = P2;
                 return false;
             }
             uint32_t col = GetterColor[prim];
-            PrimRectFill(draw_list, Vec2(P1.x - HalfWeight, P1.y), Vec2(P1.x + HalfWeight, P2.y), col, UV);
-            PrimRectFill(draw_list, Vec2(P1.x, P2.y + HalfWeight), Vec2(P2.x, P2.y - HalfWeight), col, UV);
+            PrimRectFill(draw_list, ::SF::Engine::Vec2(P1.x - HalfWeight, P1.y),
+                         ::SF::Engine::Vec2(P1.x + HalfWeight, P2.y), col, UV);
+            PrimRectFill(draw_list, ::SF::Engine::Vec2(P1.x, P2.y + HalfWeight),
+                         ::SF::Engine::Vec2(P2.x, P2.y - HalfWeight), col, UV);
             P1 = P2;
             return true;
         }
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         mutable float HalfWeight;
-        mutable Vec2 P1;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 P1;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     template<class _Getter, class _GetterColor>
@@ -1439,23 +1445,25 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { UV = draw_list._Data->TexUvWhitePixel; }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P2 = this->Transformer(Getter[prim + 1]);
+            ::SF::Engine::Vec2 P2 = this->Transformer(Getter[prim + 1]);
             if (!cull_rect.Overlaps(ImRect(ImMin(P1, P2), ImMax(P1, P2))))
             {
                 P1 = P2;
                 return false;
             }
             uint32_t col = GetterColor[prim];
-            PrimRectFill(draw_list, Vec2(P1.x, P1.y + HalfWeight), Vec2(P2.x, P1.y - HalfWeight), col, UV);
-            PrimRectFill(draw_list, Vec2(P2.x - HalfWeight, P2.y), Vec2(P2.x + HalfWeight, P1.y), col, UV);
+            PrimRectFill(draw_list, ::SF::Engine::Vec2(P1.x, P1.y + HalfWeight),
+                         ::SF::Engine::Vec2(P2.x, P1.y - HalfWeight), col, UV);
+            PrimRectFill(draw_list, ::SF::Engine::Vec2(P2.x - HalfWeight, P2.y),
+                         ::SF::Engine::Vec2(P2.x + HalfWeight, P1.y), col, UV);
             P1 = P2;
             return true;
         }
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         mutable float HalfWeight;
-        mutable Vec2 P1;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 P1;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     template<class _Getter, class _GetterColor>
@@ -1470,9 +1478,9 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { UV = draw_list._Data->TexUvWhitePixel; }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P2 = this->Transformer(Getter[prim + 1]);
-            Vec2 PMin(ImMin(P1.x, P2.x), ImMin(Y0, P2.y));
-            Vec2 PMax(ImMax(P1.x, P2.x), ImMax(Y0, P2.y));
+            ::SF::Engine::Vec2 P2 = this->Transformer(Getter[prim + 1]);
+            ::SF::Engine::Vec2 PMin(ImMin(P1.x, P2.x), ImMin(Y0, P2.y));
+            ::SF::Engine::Vec2 PMax(ImMax(P1.x, P2.x), ImMax(Y0, P2.y));
             if (!cull_rect.Overlaps(ImRect(PMin, PMax)))
             {
                 P1 = P2;
@@ -1486,8 +1494,8 @@ namespace ImPlot
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         float Y0;
-        mutable Vec2 P1;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 P1;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     template<class _Getter, class _GetterColor>
@@ -1502,9 +1510,9 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { UV = draw_list._Data->TexUvWhitePixel; }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P2 = this->Transformer(Getter[prim + 1]);
-            Vec2 PMin(ImMin(P1.x, P2.x), ImMin(P1.y, Y0));
-            Vec2 PMax(ImMax(P1.x, P2.x), ImMax(P1.y, Y0));
+            ::SF::Engine::Vec2 P2 = this->Transformer(Getter[prim + 1]);
+            ::SF::Engine::Vec2 PMin(ImMin(P1.x, P2.x), ImMin(P1.y, Y0));
+            ::SF::Engine::Vec2 PMax(ImMax(P1.x, P2.x), ImMax(P1.y, Y0));
             if (!cull_rect.Overlaps(ImRect(PMin, PMax)))
             {
                 P1 = P2;
@@ -1518,8 +1526,8 @@ namespace ImPlot
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         float Y0;
-        mutable Vec2 P1;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 P1;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
 
@@ -1536,8 +1544,8 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { UV = draw_list._Data->TexUvWhitePixel; }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 P21 = this->Transformer(Getter1[prim + 1]);
-            Vec2 P22 = this->Transformer(Getter2[prim + 1]);
+            ::SF::Engine::Vec2 P21 = this->Transformer(Getter1[prim + 1]);
+            ::SF::Engine::Vec2 P22 = this->Transformer(Getter2[prim + 1]);
             ImRect rect(ImMin(ImMin(ImMin(P11, P12), P21), P22), ImMax(ImMax(ImMax(P11, P12), P21), P22));
             if (!cull_rect.Overlaps(rect))
             {
@@ -1545,9 +1553,10 @@ namespace ImPlot
                 P12 = P22;
                 return false;
             }
-            uint32_t col                  = GetterColor[prim];
-            const int intersect           = (P11.y > P12.y && P22.y > P21.y) || (P12.y > P11.y && P21.y > P22.y);
-            const Vec2 intersection       = intersect == 0 ? Vec2(0, 0) : Intersection(P11, P21, P12, P22);
+            uint32_t col        = GetterColor[prim];
+            const int intersect = (P11.y > P12.y && P22.y > P21.y) || (P12.y > P11.y && P21.y > P22.y);
+            const ::SF::Engine::Vec2 intersection =
+                    intersect == 0 ? ::SF::Engine::Vec2(0, 0) : Intersection(P11, P21, P12, P22);
             draw_list._VtxWritePtr[0].pos = P11;
             draw_list._VtxWritePtr[0].uv  = UV;
             draw_list._VtxWritePtr[0].col = col;
@@ -1579,9 +1588,9 @@ namespace ImPlot
         const _Getter1 &Getter1;
         const _Getter2 &Getter2;
         const _GetterColor &GetterColor;
-        mutable Vec2 P11;
-        mutable Vec2 P12;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 P11;
+        mutable ::SF::Engine::Vec2 P12;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     struct RectC
@@ -1598,16 +1607,16 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { UV = draw_list._Data->TexUvWhitePixel; }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            RectC rect = Getter[prim];
-            Vec2 P1    = this->Transformer(rect.Pos.x - rect.HalfSize.x, rect.Pos.y - rect.HalfSize.y);
-            Vec2 P2    = this->Transformer(rect.Pos.x + rect.HalfSize.x, rect.Pos.y + rect.HalfSize.y);
+            RectC rect            = Getter[prim];
+            ::SF::Engine::Vec2 P1 = this->Transformer(rect.Pos.x - rect.HalfSize.x, rect.Pos.y - rect.HalfSize.y);
+            ::SF::Engine::Vec2 P2 = this->Transformer(rect.Pos.x + rect.HalfSize.x, rect.Pos.y + rect.HalfSize.y);
             if ((rect.Color & IM_COL32_A_MASK) == 0 || !cull_rect.Overlaps(ImRect(ImMin(P1, P2), ImMax(P1, P2))))
                 return false;
             PrimRectFill(draw_list, P1, P2, rect.Color, UV);
             return true;
         }
         const _Getter &Getter;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     //-----------------------------------------------------------------------------
@@ -1696,7 +1705,7 @@ namespace ImPlot
     struct RendererMarkersFill : RendererBase
     {
         RendererMarkersFill(const _Getter &getter, const _GetterColor &getter_color, const _GetterSize &getter_size,
-                            const Vec2 *marker, int count) :
+                            const ::SF::Engine::Vec2 *marker, int count) :
             RendererBase(getter.Count, (count - 2) * 3, count), Getter(getter), GetterColor(getter_color),
             GetterSize(getter_size), Marker(marker), Count(count)
         {
@@ -1704,7 +1713,7 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { UV = draw_list._Data->TexUvWhitePixel; }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 p = this->Transformer(Getter[prim]);
+            ::SF::Engine::Vec2 p = this->Transformer(Getter[prim]);
             if (p.x >= cull_rect.Min.x && p.y >= cull_rect.Min.y && p.x <= cull_rect.Max.x && p.y <= cull_rect.Max.y)
             {
                 uint32_t col = GetterColor[prim];
@@ -1732,9 +1741,9 @@ namespace ImPlot
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         const _GetterSize &GetterSize;
-        const Vec2 *Marker;
+        const ::SF::Engine::Vec2 *Marker;
         const int Count;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
 
@@ -1742,7 +1751,7 @@ namespace ImPlot
     struct RendererMarkersLine : RendererBase
     {
         RendererMarkersLine(const _Getter &getter, const _GetterColor &getter_color, const _GetterSize &getter_size,
-                            const Vec2 *marker, int count, float weight) :
+                            const ::SF::Engine::Vec2 *marker, int count, float weight) :
             RendererBase(getter.Count, count / 2 * 6, count / 2 * 4), Getter(getter), GetterColor(getter_color),
             GetterSize(getter_size), Marker(marker), Count(count), HalfWeight(ImMax(1.0f, weight) * 0.5f)
         {
@@ -1750,15 +1759,15 @@ namespace ImPlot
         void Init(ImDrawList &draw_list) const { GetLineRenderProps(draw_list, HalfWeight, UV0, UV1); }
         IMPLOT_INLINE bool Render(ImDrawList &draw_list, const ImRect &cull_rect, int prim) const
         {
-            Vec2 p = this->Transformer(Getter[prim]);
+            ::SF::Engine::Vec2 p = this->Transformer(Getter[prim]);
             if (p.x >= cull_rect.Min.x && p.y >= cull_rect.Min.y && p.x <= cull_rect.Max.x && p.y <= cull_rect.Max.y)
             {
                 uint32_t col = GetterColor[prim];
                 float size   = GetterSize[prim];
                 for (int i = 0; i < Count; i = i + 2)
                 {
-                    Vec2 p1(p.x + Marker[i].x * size, p.y + Marker[i].y * size);
-                    Vec2 p2(p.x + Marker[i + 1].x * size, p.y + Marker[i + 1].y * size);
+                    ::SF::Engine::Vec2 p1(p.x + Marker[i].x * size, p.y + Marker[i].y * size);
+                    ::SF::Engine::Vec2 p2(p.x + Marker[i + 1].x * size, p.y + Marker[i + 1].y * size);
                     PrimLine(draw_list, p1, p2, HalfWeight, col, UV0, UV1);
                 }
                 return true;
@@ -1768,11 +1777,11 @@ namespace ImPlot
         const _Getter &Getter;
         const _GetterColor &GetterColor;
         const _GetterSize &GetterSize;
-        const Vec2 *Marker;
+        const ::SF::Engine::Vec2 *Marker;
         const int Count;
         mutable float HalfWeight;
-        mutable Vec2 UV0;
-        mutable Vec2 UV1;
+        mutable ::SF::Engine::Vec2 UV0;
+        mutable ::SF::Engine::Vec2 UV1;
     };
 
     template<class _Getter, class _GetterColor>
@@ -1798,8 +1807,8 @@ namespace ImPlot
             ImPlotPoint plot_max(p3D.x + radius_in_plot_coords, p3D.y + radius_in_plot_coords);
 
             // Transform bounding box to pixel coordinates
-            Vec2 pixel_min = this->Transformer(plot_min);
-            Vec2 pixel_max = this->Transformer(plot_max);
+            ::SF::Engine::Vec2 pixel_min = this->Transformer(plot_min);
+            ::SF::Engine::Vec2 pixel_max = this->Transformer(plot_max);
 
             // Create bounding rectangle (handle axis inversion)
             ImRect bbox(ImMin(pixel_min, pixel_max), ImMax(pixel_min, pixel_max));
@@ -1824,7 +1833,7 @@ namespace ImPlot
                     ImPlotPoint plot_point(p3D.x + cos_a * radius_in_plot_coords,
                                            p3D.y + sin_a * radius_in_plot_coords);
                     // Transform to pixel coordinates
-                    Vec2 pixel_pos = this->Transformer(plot_point);
+                    ::SF::Engine::Vec2 pixel_pos = this->Transformer(plot_point);
 
                     draw_list._VtxWritePtr[0].pos = pixel_pos;
                     draw_list._VtxWritePtr[0].uv  = UV;
@@ -1855,7 +1864,7 @@ namespace ImPlot
         }
         const _Getter &Getter;
         const _GetterColor &GetterColor;
-        mutable Vec2 UV;
+        mutable ::SF::Engine::Vec2 UV;
     };
 
     template<class _Getter, class _GetterColor>
@@ -1882,8 +1891,8 @@ namespace ImPlot
             ImPlotPoint plot_max(p3D.x + radius_in_plot_coords, p3D.y + radius_in_plot_coords);
 
             // Transform bounding box to pixel coordinates
-            Vec2 pixel_min = this->Transformer(plot_min);
-            Vec2 pixel_max = this->Transformer(plot_max);
+            ::SF::Engine::Vec2 pixel_min = this->Transformer(plot_min);
+            ::SF::Engine::Vec2 pixel_max = this->Transformer(plot_max);
 
             // Create bounding rectangle (handle axis inversion)
             ImRect bbox(ImMin(pixel_min, pixel_max), ImMax(pixel_min, pixel_max));
@@ -1908,8 +1917,8 @@ namespace ImPlot
                                             p3D.y + ImSin(angle2) * radius_in_plot_coords);
 
                     // Transform to pixel coordinates
-                    Vec2 p1 = this->Transformer(plot_point1);
-                    Vec2 p2 = this->Transformer(plot_point2);
+                    ::SF::Engine::Vec2 p1 = this->Transformer(plot_point1);
+                    ::SF::Engine::Vec2 p2 = this->Transformer(plot_point2);
 
                     PrimLine(draw_list, p1, p2, HalfWeight, col, UV0, UV1);
                 }
@@ -1928,71 +1937,94 @@ namespace ImPlot
         const _Getter &Getter;
         mutable float HalfWeight;
         const _GetterColor &GetterColor;
-        mutable Vec2 UV0;
-        mutable Vec2 UV1;
+        mutable ::SF::Engine::Vec2 UV0;
+        mutable ::SF::Engine::Vec2 UV1;
     };
 
-    static const Vec2 MARKER_FILL_CIRCLE[10] = {Vec2(1.0f, 0.0f),
-                                                Vec2(0.809017f, 0.58778524f),
-                                                Vec2(0.30901697f, 0.95105654f),
-                                                Vec2(-0.30901703f, 0.9510565f),
-                                                Vec2(-0.80901706f, 0.5877852f),
-                                                Vec2(-1.0f, 0.0f),
-                                                Vec2(-0.80901694f, -0.58778536f),
-                                                Vec2(-0.3090171f, -0.9510565f),
-                                                Vec2(0.30901712f, -0.9510565f),
-                                                Vec2(0.80901694f, -0.5877853f)};
-    static const Vec2 MARKER_FILL_SQUARE[4]  = {Vec2(SQRT_1_2, SQRT_1_2), Vec2(SQRT_1_2, -SQRT_1_2),
-                                                Vec2(-SQRT_1_2, -SQRT_1_2), Vec2(-SQRT_1_2, SQRT_1_2)};
-    static const Vec2 MARKER_FILL_DIAMOND[4] = {Vec2(1, 0), Vec2(0, -1), Vec2(-1, 0), Vec2(0, 1)};
-    static const Vec2 MARKER_FILL_UP[3]      = {Vec2(SQRT_3_2, 0.5f), Vec2(0, -1), Vec2(-SQRT_3_2, 0.5f)};
-    static const Vec2 MARKER_FILL_DOWN[3]    = {Vec2(SQRT_3_2, -0.5f), Vec2(0, 1), Vec2(-SQRT_3_2, -0.5f)};
-    static const Vec2 MARKER_FILL_LEFT[3]    = {Vec2(-1, 0), Vec2(0.5, SQRT_3_2), Vec2(0.5, -SQRT_3_2)};
-    static const Vec2 MARKER_FILL_RIGHT[3]   = {Vec2(1, 0), Vec2(-0.5, SQRT_3_2), Vec2(-0.5, -SQRT_3_2)};
+    static const ::SF::Engine::Vec2 MARKER_FILL_CIRCLE[10] = {::SF::Engine::Vec2(1.0f, 0.0f),
+                                                              ::SF::Engine::Vec2(0.809017f, 0.58778524f),
+                                                              ::SF::Engine::Vec2(0.30901697f, 0.95105654f),
+                                                              ::SF::Engine::Vec2(-0.30901703f, 0.9510565f),
+                                                              ::SF::Engine::Vec2(-0.80901706f, 0.5877852f),
+                                                              ::SF::Engine::Vec2(-1.0f, 0.0f),
+                                                              ::SF::Engine::Vec2(-0.80901694f, -0.58778536f),
+                                                              ::SF::Engine::Vec2(-0.3090171f, -0.9510565f),
+                                                              ::SF::Engine::Vec2(0.30901712f, -0.9510565f),
+                                                              ::SF::Engine::Vec2(0.80901694f, -0.5877853f)};
+    static const ::SF::Engine::Vec2 MARKER_FILL_SQUARE[4]  = {
+            ::SF::Engine::Vec2(SQRT_1_2, SQRT_1_2), ::SF::Engine::Vec2(SQRT_1_2, -SQRT_1_2),
+            ::SF::Engine::Vec2(-SQRT_1_2, -SQRT_1_2), ::SF::Engine::Vec2(-SQRT_1_2, SQRT_1_2)};
+    static const ::SF::Engine::Vec2 MARKER_FILL_DIAMOND[4] = {::SF::Engine::Vec2(1, 0), ::SF::Engine::Vec2(0, -1),
+                                                              ::SF::Engine::Vec2(-1, 0), ::SF::Engine::Vec2(0, 1)};
+    static const ::SF::Engine::Vec2 MARKER_FILL_UP[3] = {::SF::Engine::Vec2(SQRT_3_2, 0.5f), ::SF::Engine::Vec2(0, -1),
+                                                         ::SF::Engine::Vec2(-SQRT_3_2, 0.5f)};
+    static const ::SF::Engine::Vec2 MARKER_FILL_DOWN[3] = {
+            ::SF::Engine::Vec2(SQRT_3_2, -0.5f), ::SF::Engine::Vec2(0, 1), ::SF::Engine::Vec2(-SQRT_3_2, -0.5f)};
+    static const ::SF::Engine::Vec2 MARKER_FILL_LEFT[3] = {::SF::Engine::Vec2(-1, 0), ::SF::Engine::Vec2(0.5, SQRT_3_2),
+                                                           ::SF::Engine::Vec2(0.5, -SQRT_3_2)};
+    static const ::SF::Engine::Vec2 MARKER_FILL_RIGHT[3] = {
+            ::SF::Engine::Vec2(1, 0), ::SF::Engine::Vec2(-0.5, SQRT_3_2), ::SF::Engine::Vec2(-0.5, -SQRT_3_2)};
 
-    static const Vec2 MARKER_LINE_CIRCLE[20] = {Vec2(1.0f, 0.0f),
-                                                Vec2(0.809017f, 0.58778524f),
-                                                Vec2(0.809017f, 0.58778524f),
-                                                Vec2(0.30901697f, 0.95105654f),
-                                                Vec2(0.30901697f, 0.95105654f),
-                                                Vec2(-0.30901703f, 0.9510565f),
-                                                Vec2(-0.30901703f, 0.9510565f),
-                                                Vec2(-0.80901706f, 0.5877852f),
-                                                Vec2(-0.80901706f, 0.5877852f),
-                                                Vec2(-1.0f, 0.0f),
-                                                Vec2(-1.0f, 0.0f),
-                                                Vec2(-0.80901694f, -0.58778536f),
-                                                Vec2(-0.80901694f, -0.58778536f),
-                                                Vec2(-0.3090171f, -0.9510565f),
-                                                Vec2(-0.3090171f, -0.9510565f),
-                                                Vec2(0.30901712f, -0.9510565f),
-                                                Vec2(0.30901712f, -0.9510565f),
-                                                Vec2(0.80901694f, -0.5877853f),
-                                                Vec2(0.80901694f, -0.5877853f),
-                                                Vec2(1.0f, 0.0f)};
-    constexpr Vec2 MARKER_LINE_SQUARE[8]     = {Vec2(SQRT_1_2, SQRT_1_2),   Vec2(SQRT_1_2, -SQRT_1_2),
-                                                Vec2(SQRT_1_2, -SQRT_1_2),  Vec2(-SQRT_1_2, -SQRT_1_2),
-                                                Vec2(-SQRT_1_2, -SQRT_1_2), Vec2(-SQRT_1_2, SQRT_1_2),
-                                                Vec2(-SQRT_1_2, SQRT_1_2),  Vec2(SQRT_1_2, SQRT_1_2)};
-    constexpr Vec2 MARKER_LINE_DIAMOND[8]    = {Vec2(1, 0),  Vec2(0, -1), Vec2(0, -1), Vec2(-1, 0),
-                                                Vec2(-1, 0), Vec2(0, 1),  Vec2(0, 1),  Vec2(1, 0)};
-    constexpr Vec2 MARKER_LINE_UP[6]         = {Vec2(SQRT_3_2, 0.5f),  Vec2(0, -1),           Vec2(0, -1),
-                                                Vec2(-SQRT_3_2, 0.5f), Vec2(-SQRT_3_2, 0.5f), Vec2(SQRT_3_2, 0.5f)};
-    constexpr Vec2 MARKER_LINE_DOWN[6]       = {
-            Vec2(SQRT_3_2, -0.5f),  Vec2(0, 1),           Vec2(0, 1), Vec2(-SQRT_3_2, -0.5f),
-            Vec2(-SQRT_3_2, -0.5f), Vec2(SQRT_3_2, -0.5f)};
-    constexpr Vec2 MARKER_LINE_LEFT[6]  = {Vec2(-1, 0),          Vec2(0.5, SQRT_3_2),  Vec2(0.5, SQRT_3_2),
-                                           Vec2(0.5, -SQRT_3_2), Vec2(0.5, -SQRT_3_2), Vec2(-1, 0)};
-    constexpr Vec2 MARKER_LINE_RIGHT[6] = {
-            Vec2(1, 0), Vec2(-0.5, SQRT_3_2), Vec2(-0.5, SQRT_3_2), Vec2(-0.5, -SQRT_3_2), Vec2(-0.5, -SQRT_3_2),
-            Vec2(1, 0)};
-    constexpr Vec2 MARKER_LINE_ASTERISK[6]   = {Vec2(-SQRT_3_2, -0.5f), Vec2(SQRT_3_2, 0.5f), Vec2(-SQRT_3_2, 0.5f),
-                                                Vec2(SQRT_3_2, -0.5f),  Vec2(0, -1),          Vec2(0, 1)};
-    constexpr Vec2 MARKER_LINE_PLUS[4]       = {Vec2(-1, 0), Vec2(1, 0), Vec2(0, -1), Vec2(0, 1)};
-    constexpr Vec2 MARKER_LINE_CROSS[4]      = {Vec2(-SQRT_1_2, -SQRT_1_2), Vec2(SQRT_1_2, SQRT_1_2),
-                                                Vec2(SQRT_1_2, -SQRT_1_2), Vec2(-SQRT_1_2, SQRT_1_2)};
-    constexpr Vec2 MARKER_LINE_VERTICAL[2]   = {Vec2(0, -1), Vec2(0, 1)};
-    constexpr Vec2 MARKER_LINE_HORIZONTAL[2] = {Vec2(-1, 0), Vec2(1, 0)};
+    static const ::SF::Engine::Vec2 MARKER_LINE_CIRCLE[20] = {::SF::Engine::Vec2(1.0f, 0.0f),
+                                                              ::SF::Engine::Vec2(0.809017f, 0.58778524f),
+                                                              ::SF::Engine::Vec2(0.809017f, 0.58778524f),
+                                                              ::SF::Engine::Vec2(0.30901697f, 0.95105654f),
+                                                              ::SF::Engine::Vec2(0.30901697f, 0.95105654f),
+                                                              ::SF::Engine::Vec2(-0.30901703f, 0.9510565f),
+                                                              ::SF::Engine::Vec2(-0.30901703f, 0.9510565f),
+                                                              ::SF::Engine::Vec2(-0.80901706f, 0.5877852f),
+                                                              ::SF::Engine::Vec2(-0.80901706f, 0.5877852f),
+                                                              ::SF::Engine::Vec2(-1.0f, 0.0f),
+                                                              ::SF::Engine::Vec2(-1.0f, 0.0f),
+                                                              ::SF::Engine::Vec2(-0.80901694f, -0.58778536f),
+                                                              ::SF::Engine::Vec2(-0.80901694f, -0.58778536f),
+                                                              ::SF::Engine::Vec2(-0.3090171f, -0.9510565f),
+                                                              ::SF::Engine::Vec2(-0.3090171f, -0.9510565f),
+                                                              ::SF::Engine::Vec2(0.30901712f, -0.9510565f),
+                                                              ::SF::Engine::Vec2(0.30901712f, -0.9510565f),
+                                                              ::SF::Engine::Vec2(0.80901694f, -0.5877853f),
+                                                              ::SF::Engine::Vec2(0.80901694f, -0.5877853f),
+                                                              ::SF::Engine::Vec2(1.0f, 0.0f)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_SQUARE[8]     = {
+            ::SF::Engine::Vec2(SQRT_1_2, SQRT_1_2),   ::SF::Engine::Vec2(SQRT_1_2, -SQRT_1_2),
+            ::SF::Engine::Vec2(SQRT_1_2, -SQRT_1_2),  ::SF::Engine::Vec2(-SQRT_1_2, -SQRT_1_2),
+            ::SF::Engine::Vec2(-SQRT_1_2, -SQRT_1_2), ::SF::Engine::Vec2(-SQRT_1_2, SQRT_1_2),
+            ::SF::Engine::Vec2(-SQRT_1_2, SQRT_1_2),  ::SF::Engine::Vec2(SQRT_1_2, SQRT_1_2)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_DIAMOND[8] = {
+            ::SF::Engine::Vec2(1, 0),  ::SF::Engine::Vec2(0, -1), ::SF::Engine::Vec2(0, -1), ::SF::Engine::Vec2(-1, 0),
+            ::SF::Engine::Vec2(-1, 0), ::SF::Engine::Vec2(0, 1),  ::SF::Engine::Vec2(0, 1),  ::SF::Engine::Vec2(1, 0)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_UP[6] = {
+            ::SF::Engine::Vec2(SQRT_3_2, 0.5f),  ::SF::Engine::Vec2(0, -1),
+            ::SF::Engine::Vec2(0, -1),           ::SF::Engine::Vec2(-SQRT_3_2, 0.5f),
+            ::SF::Engine::Vec2(-SQRT_3_2, 0.5f), ::SF::Engine::Vec2(SQRT_3_2, 0.5f)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_DOWN[6] = {::SF::Engine::Vec2(SQRT_3_2, -0.5f),
+                                                        ::SF::Engine::Vec2(0, 1),
+                                                        ::SF::Engine::Vec2(0, 1),
+                                                        ::SF::Engine::Vec2(-SQRT_3_2, -0.5f),
+                                                        ::SF::Engine::Vec2(-SQRT_3_2, -0.5f),
+                                                        ::SF::Engine::Vec2(SQRT_3_2, -0.5f)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_LEFT[6] = {
+            ::SF::Engine::Vec2(-1, 0),          ::SF::Engine::Vec2(0.5, SQRT_3_2),  ::SF::Engine::Vec2(0.5, SQRT_3_2),
+            ::SF::Engine::Vec2(0.5, -SQRT_3_2), ::SF::Engine::Vec2(0.5, -SQRT_3_2), ::SF::Engine::Vec2(-1, 0)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_RIGHT[6]    = {::SF::Engine::Vec2(1, 0),
+                                                            ::SF::Engine::Vec2(-0.5, SQRT_3_2),
+                                                            ::SF::Engine::Vec2(-0.5, SQRT_3_2),
+                                                            ::SF::Engine::Vec2(-0.5, -SQRT_3_2),
+                                                            ::SF::Engine::Vec2(-0.5, -SQRT_3_2),
+                                                            ::SF::Engine::Vec2(1, 0)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_ASTERISK[6] = {::SF::Engine::Vec2(-SQRT_3_2, -0.5f),
+                                                            ::SF::Engine::Vec2(SQRT_3_2, 0.5f),
+                                                            ::SF::Engine::Vec2(-SQRT_3_2, 0.5f),
+                                                            ::SF::Engine::Vec2(SQRT_3_2, -0.5f),
+                                                            ::SF::Engine::Vec2(0, -1),
+                                                            ::SF::Engine::Vec2(0, 1)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_PLUS[4]     = {::SF::Engine::Vec2(-1, 0), ::SF::Engine::Vec2(1, 0),
+                                                            ::SF::Engine::Vec2(0, -1), ::SF::Engine::Vec2(0, 1)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_CROSS[4]    = {
+            ::SF::Engine::Vec2(-SQRT_1_2, -SQRT_1_2), ::SF::Engine::Vec2(SQRT_1_2, SQRT_1_2),
+            ::SF::Engine::Vec2(SQRT_1_2, -SQRT_1_2), ::SF::Engine::Vec2(-SQRT_1_2, SQRT_1_2)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_VERTICAL[2]   = {::SF::Engine::Vec2(0, -1), ::SF::Engine::Vec2(0, 1)};
+    constexpr ::SF::Engine::Vec2 MARKER_LINE_HORIZONTAL[2] = {::SF::Engine::Vec2(-1, 0), ::SF::Engine::Vec2(1, 0)};
 
     template<typename _Getter, typename _GetterFillColor, typename _GetterLineColor, typename _GetterSize>
     void RenderMarkers(const _Getter &getter, ImPlotMarker marker, bool rend_fill,
@@ -2445,7 +2477,7 @@ namespace ImPlot
             bool flip  = !((x_inv ? 1 : 0) ^ (y_inv ? 1 : 0));
 
             // Transform all points to screen space
-            Vec2 *points = (Vec2 *) IM_ALLOC(getter.Count * sizeof(Vec2));
+            ::SF::Engine::Vec2 *points = (::SF::Engine::Vec2 *) IM_ALLOC(getter.Count * sizeof(::SF::Engine::Vec2));
             for (int i = 0; i < getter.Count; ++i)
             {
                 ImPlotPoint p = flip ? getter[getter.Count - 1 - i] : getter[i];
@@ -2987,8 +3019,8 @@ namespace ImPlot
             const float half_whisker = s.Spec.Size * 0.5f;
             for (int i = 0; i < getter_pos.Count; ++i)
             {
-                Vec2 p1 = PlotToPixels(getter_neg[i], IMPLOT_AUTO, IMPLOT_AUTO);
-                Vec2 p2 = PlotToPixels(getter_pos[i], IMPLOT_AUTO, IMPLOT_AUTO);
+                ::SF::Engine::Vec2 p1 = PlotToPixels(getter_neg[i], IMPLOT_AUTO, IMPLOT_AUTO);
+                ::SF::Engine::Vec2 p2 = PlotToPixels(getter_pos[i], IMPLOT_AUTO, IMPLOT_AUTO);
                 draw_list.AddLine(p1, p2, col, s.Spec.LineWeight);
                 if (rend_whisker)
                 {
@@ -3019,8 +3051,8 @@ namespace ImPlot
             const float half_whisker = s.Spec.Size * 0.5f;
             for (int i = 0; i < getter_pos.Count; ++i)
             {
-                Vec2 p1 = PlotToPixels(getter_neg[i], IMPLOT_AUTO, IMPLOT_AUTO);
-                Vec2 p2 = PlotToPixels(getter_pos[i], IMPLOT_AUTO, IMPLOT_AUTO);
+                ::SF::Engine::Vec2 p1 = PlotToPixels(getter_neg[i], IMPLOT_AUTO, IMPLOT_AUTO);
+                ::SF::Engine::Vec2 p2 = PlotToPixels(getter_pos[i], IMPLOT_AUTO, IMPLOT_AUTO);
                 draw_list.AddLine(p1, p2, col, s.Spec.LineWeight);
                 if (rend_whisker)
                 {
@@ -3243,8 +3275,8 @@ namespace ImPlot
     // [SECTION] PlotPieChart
     //-----------------------------------------------------------------------------
 
-    IMPLOT_INLINE void PrimPieSliceFill(ImDrawList &draw_list, const Vec2 *points, int count, uint32_t col,
-                                        const Vec2 &uv)
+    IMPLOT_INLINE void PrimPieSliceFill(ImDrawList &draw_list, const ::SF::Engine::Vec2 *points, int count,
+                                        uint32_t col, const ::SF::Engine::Vec2 &uv)
     {
         // Write vertices
         for (int i = 0; i < count; ++i)
@@ -3266,16 +3298,17 @@ namespace ImPlot
         draw_list._VtxCurrentIdx += count;
     }
 
-    IMPLOT_INLINE void PrimPieSliceLine(ImDrawList &draw_list, const Vec2 *points, int count, uint32_t col,
-                                        float half_weight, const Vec2 &tex_uv0, const Vec2 &tex_uv1)
+    IMPLOT_INLINE void PrimPieSliceLine(ImDrawList &draw_list, const ::SF::Engine::Vec2 *points, int count,
+                                        uint32_t col, float half_weight, const ::SF::Engine::Vec2 &tex_uv0,
+                                        const ::SF::Engine::Vec2 &tex_uv1)
     {
         // Create a thick polyline by drawing quads between each segment
         const int segments = count - 1;
 
         for (int i = 0; i < segments; ++i)
         {
-            const Vec2 &p1 = points[i];
-            const Vec2 &p2 = points[i + 1];
+            const ::SF::Engine::Vec2 &p1 = points[i];
+            const ::SF::Engine::Vec2 &p2 = points[i + 1];
 
             // Calculate perpendicular vector for line thickness (same as PrimLine)
             float dx = p2.x - p1.x;
@@ -3321,9 +3354,9 @@ namespace ImPlot
         }
     }
 
-    IMPLOT_INLINE void RenderPieSliceFill(ImDrawList &draw_list, Vec2 *buffer, int count, uint32_t col)
+    IMPLOT_INLINE void RenderPieSliceFill(ImDrawList &draw_list, ::SF::Engine::Vec2 *buffer, int count, uint32_t col)
     {
-        const Vec2 uv = draw_list._Data->TexUvWhitePixel;
+        const ::SF::Engine::Vec2 uv = draw_list._Data->TexUvWhitePixel;
         // Reserve space for vertices and indices
         // Triangle fan: n-2 triangles for n vertices, so (n-2)*3 indices
         const int idx_count = (count - 2) * 3;
@@ -3331,10 +3364,10 @@ namespace ImPlot
         PrimPieSliceFill(draw_list, buffer, count, col, uv);
     }
 
-    IMPLOT_INLINE void RenderPieSliceLine(ImDrawList &draw_list, Vec2 *buffer, int count, uint32_t col)
+    IMPLOT_INLINE void RenderPieSliceLine(ImDrawList &draw_list, ::SF::Engine::Vec2 *buffer, int count, uint32_t col)
     {
         float half_weight = 1.0f; // Weight of 2.0f -> half_weight of 1.0f
-        Vec2 tex_uv0, tex_uv1;
+        ::SF::Engine::Vec2 tex_uv0, tex_uv1;
         GetLineRenderProps(draw_list, half_weight, tex_uv0, tex_uv1);
 
         // Polyline with n points has n-1 segments, each needs 4 vertices and 6 indices
@@ -3349,7 +3382,7 @@ namespace ImPlot
                                       double a1, uint32_t col, ImPlotPieChartFlags flags, bool detached = false)
     {
         const float resolution = 50 / (2 * IM_PI);
-        Vec2 buffer[52];
+        ::SF::Engine::Vec2 buffer[52];
 
         int n     = ImMax(3, (int) ((a1 - a0) * resolution));
         double da = (a1 - a0) / (n - 1);
@@ -3529,14 +3562,14 @@ namespace ImPlot
                     if (item->Show)
                     {
                         fmt((double) indexer[i], buffer, 32, fmt_data);
-                        Vec2 size          = ImGui::CalcTextSize(buffer);
-                        double angle       = a0 + (a1 - a0) * 0.5;
-                        const bool hovered = ImPlot::IsLegendEntryHovered(label_ids[i]) &&
+                        ::SF::Engine::Vec2 size = ImGui::CalcTextSize(buffer);
+                        double angle            = a0 + (a1 - a0) * 0.5;
+                        const bool hovered      = ImPlot::IsLegendEntryHovered(label_ids[i]) &&
                                              ImHasFlag(spec.Flags, ImPlotPieChartFlags_Exploding);
-                        const double offset = (hovered ? 0.6 : 0.5) * radius;
-                        Vec2 pos     = PlotToPixels(center.x + offset * cos(angle), center.y + offset * sin(angle),
-                                                    IMPLOT_AUTO, IMPLOT_AUTO);
-                        uint32_t col = CalcTextColor(ImGui::ColorConvertU32ToFloat4(item->Color));
+                        const double offset    = (hovered ? 0.6 : 0.5) * radius;
+                        ::SF::Engine::Vec2 pos = PlotToPixels(center.x + offset * cos(angle),
+                                                              center.y + offset * sin(angle), IMPLOT_AUTO, IMPLOT_AUTO);
+                        uint32_t col           = CalcTextColor(ImGui::ColorConvertU32ToFloat4(item->Color));
                         draw_list.AddText(pos - size * 0.5f, col, buffer);
                     }
                     a0 = a1;
@@ -3632,9 +3665,9 @@ namespace ImPlot
         }
         if (scale_min == scale_max)
         {
-            Vec2 a       = transformer(bounds_min);
-            Vec2 b       = transformer(bounds_max);
-            uint32_t col = GetColormapColorU32(0, gp.Style.Colormap);
+            ::SF::Engine::Vec2 a = transformer(bounds_min);
+            ::SF::Engine::Vec2 b = transformer(bounds_max);
+            uint32_t col         = GetColormapColorU32(0, gp.Style.Colormap);
             draw_list.AddRectFilled(a, b, col);
             return;
         }
@@ -3667,15 +3700,15 @@ namespace ImPlot
                     for (int r = 0; r < rows; ++r)
                     {
                         ImPlotPoint p;
-                        p.x     = bounds_min.x + 0.5 * w + c * w;
-                        p.y     = yref + ydir * (0.5 * h + r * h);
-                        Vec2 px = transformer(p);
+                        p.x                   = bounds_min.x + 0.5 * w + c * w;
+                        p.y                   = yref + ydir * (0.5 * h + r * h);
+                        ::SF::Engine::Vec2 px = transformer(p);
                         char buff[32];
                         ImFormatString(buff, 32, fmt, indexer[i]);
-                        Vec2 size    = ImGui::CalcTextSize(buff);
-                        double t     = ImClamp(ImRemap01((double) indexer[i], scale_min, scale_max), 0.0, 1.0);
-                        Vec4 color   = SampleColormap((float) t);
-                        uint32_t col = CalcTextColor(color);
+                        ::SF::Engine::Vec2 size = ImGui::CalcTextSize(buff);
+                        double t = ImClamp(ImRemap01((double) indexer[i], scale_min, scale_max), 0.0, 1.0);
+                        ::SF::Engine::Vec4 color = SampleColormap((float) t);
+                        uint32_t col             = CalcTextColor(color);
                         draw_list.AddText(px - size * 0.5f, col, buff);
                         i++;
                     }
@@ -3687,15 +3720,15 @@ namespace ImPlot
                     for (int c = 0; c < cols; ++c)
                     {
                         ImPlotPoint p;
-                        p.x     = bounds_min.x + 0.5 * w + c * w;
-                        p.y     = yref + ydir * (0.5 * h + r * h);
-                        Vec2 px = transformer(p);
+                        p.x                   = bounds_min.x + 0.5 * w + c * w;
+                        p.y                   = yref + ydir * (0.5 * h + r * h);
+                        ::SF::Engine::Vec2 px = transformer(p);
                         char buff[32];
                         ImFormatString(buff, 32, fmt, indexer[i]);
-                        Vec2 size    = ImGui::CalcTextSize(buff);
-                        double t     = ImClamp(ImRemap01((double) indexer[i], scale_min, scale_max), 0.0, 1.0);
-                        Vec4 color   = SampleColormap((float) t);
-                        uint32_t col = CalcTextColor(color);
+                        ::SF::Engine::Vec2 size = ImGui::CalcTextSize(buff);
+                        double t = ImClamp(ImRemap01((double) indexer[i], scale_min, scale_max), 0.0, 1.0);
+                        ::SF::Engine::Vec4 color = SampleColormap((float) t);
+                        uint32_t col             = CalcTextColor(color);
                         draw_list.AddText(px - size * 0.5f, col, buff);
                         i++;
                     }
@@ -3963,8 +3996,8 @@ namespace ImPlot
                     const float pixY_1         = s.Spec.Size * (float) itemData1.y;
                     const int pixY_chPosOffset = (int) (ImMax(s.Spec.Size, pixY_1) + gp.Style.DigitalSpacing);
                     pixYMax                    = ImMax(pixYMax, pixY_chPosOffset);
-                    Vec2 pMin                  = PlotToPixels(itemData1, IMPLOT_AUTO, IMPLOT_AUTO);
-                    Vec2 pMax                  = PlotToPixels(itemData2, IMPLOT_AUTO, IMPLOT_AUTO);
+                    ::SF::Engine::Vec2 pMin    = PlotToPixels(itemData1, IMPLOT_AUTO, IMPLOT_AUTO);
+                    ::SF::Engine::Vec2 pMax    = PlotToPixels(itemData2, IMPLOT_AUTO, IMPLOT_AUTO);
                     const int pixY_Offset      = (int) gp.Style.DigitalPadding;
                     const float y_ref          = y_axis.IsInverted() ? y_axis.PixelMax : y_axis.PixelMin;
                     pMin.y                     = y_ref - (gp.DigitalPlotOffset + pixY_Offset);
@@ -3987,7 +4020,7 @@ namespace ImPlot
                     // plot a rectangle that extends up to x2 with y1 height
                     if ((gp.CurrentPlot->PlotRect.Contains(pMin) || gp.CurrentPlot->PlotRect.Contains(pMax)))
                     {
-                        // Vec4 colAlpha = item->Color;
+                        // ::SF::Engine::Vec4 colAlpha = item->Color;
                         // colAlpha.w = item->Highlight ? 1.0f : 0.9f;
                         draw_list.AddRectFilled(pMin, pMax, ImGui::GetColorU32(s.Spec.FillColor));
                     }
@@ -4026,15 +4059,16 @@ namespace ImPlot
     //-----------------------------------------------------------------------------
 
     void PlotImage(const char *label_id, ImTextureRef tex_ref, const ImPlotPoint &bmin, const ImPlotPoint &bmax,
-                   const Vec2 &uv0, const Vec2 &uv1, const Vec4 &tint_col, const ImPlotSpec &spec)
+                   const ::SF::Engine::Vec2 &uv0, const ::SF::Engine::Vec2 &uv1, const ::SF::Engine::Vec4 &tint_col,
+                   const ImPlotSpec &spec)
     {
         if (BeginItemEx(label_id, FitterRect(bmin, bmax), spec))
         {
             uint32_t tint_col32     = ImGui::ColorConvertFloat4ToU32(tint_col);
             GetCurrentItem()->Color = tint_col32;
             ImDrawList &draw_list   = *GetPlotDrawList();
-            Vec2 p1                 = PlotToPixels(bmin.x, bmax.y, IMPLOT_AUTO, IMPLOT_AUTO);
-            Vec2 p2                 = PlotToPixels(bmax.x, bmin.y, IMPLOT_AUTO, IMPLOT_AUTO);
+            ::SF::Engine::Vec2 p1   = PlotToPixels(bmin.x, bmax.y, IMPLOT_AUTO, IMPLOT_AUTO);
+            ::SF::Engine::Vec2 p2   = PlotToPixels(bmax.x, bmin.y, IMPLOT_AUTO, IMPLOT_AUTO);
             PushPlotClipRect();
             draw_list.AddImage(tex_ref, p1, p2, uv0, uv1, tint_col32);
             PopPlotClipRect();
@@ -4046,7 +4080,7 @@ namespace ImPlot
     // [SECTION] PlotText
     //-----------------------------------------------------------------------------
 
-    void PlotText(const char *text, double x, double y, const Vec2 &pixel_offset, const ImPlotSpec &spec)
+    void PlotText(const char *text, double x, double y, const ::SF::Engine::Vec2 &pixel_offset, const ImPlotSpec &spec)
     {
         IM_ASSERT_USER_ERROR(GImPlot->CurrentPlot != nullptr,
                              "PlotText() needs to be called between BeginPlot() and EndPlot()!");
@@ -4056,9 +4090,10 @@ namespace ImPlot
         uint32_t colTxt = GetStyleColorU32(ImPlotCol_InlayText);
         if (ImHasFlag(spec.Flags, ImPlotTextFlags_Vertical))
         {
-            Vec2 siz = CalcTextSizeVertical(text) * 0.5f;
-            Vec2 ctr = siz * 0.5f;
-            Vec2 pos = PlotToPixels(ImPlotPoint(x, y), IMPLOT_AUTO, IMPLOT_AUTO) + Vec2(-ctr.x, ctr.y) + pixel_offset;
+            ::SF::Engine::Vec2 siz = CalcTextSizeVertical(text) * 0.5f;
+            ::SF::Engine::Vec2 ctr = siz * 0.5f;
+            ::SF::Engine::Vec2 pos = PlotToPixels(ImPlotPoint(x, y), IMPLOT_AUTO, IMPLOT_AUTO) +
+                                     ::SF::Engine::Vec2(-ctr.x, ctr.y) + pixel_offset;
             if (FitThisFrame() && !ImHasFlag(spec.Flags, ImPlotItemFlags_NoFit))
             {
                 FitPoint(PixelsToPlot(pos));
@@ -4067,8 +4102,9 @@ namespace ImPlot
             AddTextVertical(&draw_list, pos, colTxt, text);
         } else
         {
-            Vec2 siz = ImGui::CalcTextSize(text);
-            Vec2 pos = PlotToPixels(ImPlotPoint(x, y), IMPLOT_AUTO, IMPLOT_AUTO) - siz * 0.5f + pixel_offset;
+            ::SF::Engine::Vec2 siz = ImGui::CalcTextSize(text);
+            ::SF::Engine::Vec2 pos =
+                    PlotToPixels(ImPlotPoint(x, y), IMPLOT_AUTO, IMPLOT_AUTO) - siz * 0.5f + pixel_offset;
             if (FitThisFrame() && !ImHasFlag(spec.Flags, ImPlotItemFlags_NoFit))
             {
                 FitPoint(PixelsToPlot(pos));
@@ -4086,7 +4122,7 @@ namespace ImPlot
     void PlotDummy(const char *label_id, const ImPlotSpec &spec)
     {
         // Pick the first non-auto color from the spec to override the legend icon color
-        Vec4 item_col = spec.LineColor;
+        ::SF::Engine::Vec4 item_col = spec.LineColor;
         if (IsColorAuto(item_col))
             item_col = spec.FillColor;
         if (IsColorAuto(item_col))

@@ -5,7 +5,7 @@
 // - Call and read ImGui::ShowDemoWindow() in imgui_demo.cpp. All applications in examples/ are doing that.
 // - Read top of imgui.cpp for more details, links and comments.
 // - Add '#define IMGUI_DEFINE_MATH_OPERATORS' before including imgui.h (or in imconfig.h) to access courtesy maths
-// operators for Vec2 and Vec4.
+// operators for ::SF::Engine::Vec2 and ::SF::Engine::Vec4.
 
 // Resources:
 // - FAQ ........................ https://dearimgui.com/faq (in repository as docs/FAQ.md)
@@ -36,10 +36,9 @@
 #pragma once
 #define IMGUI_VERSION "1.93.0 WIP"
 #define IMGUI_VERSION_NUM 19293
-#define IMGUI_HAS_TEXTURES // Added ImGuiBackendFlags_RendererHasTextures - from IMGUI_VERSION_NUM >= 19198
+#include "Math/Vectors/Vector.hpp"
 
 /*
-
 Index of this file:
 // [SECTION] Header mess
 // [SECTION] Forward declarations and basic types
@@ -53,7 +52,7 @@ ImGuiTableBgTarget, ImGuiTableSortSpecs, ImGuiTableColumnSortSpecs)
 // [SECTION] ImGuiIO
 // [SECTION] Misc data structures (ImGuiInputTextCallbackData, ImGuiSizeCallbackData, ImGuiWindowClass, ImGuiPayload)
 // [SECTION] Helpers (ImGuiOnceUponAFrame, ImGuiTextFilter, ImGuiTextBuffer, ImGuiStorage, ImGuiListClipper, Math
-Operators, ImColor)
+Operators, ::SF::Engine::Color)
 // [SECTION] Multi-Select API flags and structures (ImGuiMultiSelectFlags, ImGuiMultiSelectIO, ImGuiSelectionRequest,
 ImGuiSelectionBasicStorage, ImGuiSelectionExternalStorage)
 // [SECTION] Drawing API (ImDrawCallback, ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListSplitter,
@@ -72,109 +71,112 @@ ImFont)
 #include <cstdint>
 #include <cstring> // memset, memmove, memcpy, strlen, strchr, strcpy, strcmp
 #include "Macros.hpp"
+#include "Rendering/Material/Color/Color.hpp"
 
-using namespace SF::Engine;
-
-//-----------------------------------------------------------------------------
-// [SECTION] Forward declarations and basic types
-//-----------------------------------------------------------------------------
 
 // Scalar data types
-typedef uint32_t ImGuiID; // A unique ID used by widgets (typically the result of hashing a stack of string)
+using IdType = uint32_t; // A unique ID used by widgets (typically the result of hashing a stack of string)
 // Forward declarations: ImDrawList, ImFontAtlas layer
 struct ImDrawChannel; // Temporary storage to output draw commands out of order, used by ImDrawListSplitter and
-                      // ImDrawList::ChannelsSplit()
-struct ImDrawCmd; // A single draw command within a parent ImDrawList (generally maps to 1 GPU draw call, unless it is a
-                  // callback)
+// ImDrawList::ChannelsSplit()
+struct ImDrawCmd; // A single draw command within a parent ImDrawList (generally maps to 1 GPU draw call, unless it
+                  // is a
+// callback)
 struct ImDrawData; // All draw command lists required to render the frame + pos/size coordinates to use for the
-                   // projection matrix.
-struct ImDrawList; // A single draw command list (generally one per window, conceptually you may see this as a dynamic
-                   // "mesh" builder)
-struct ImDrawListSharedData; // Data shared among multiple draw lists (typically owned by parent ImGui context, but you
-                             // may create one yourself)
-struct ImDrawListSplitter;   // Helper to split a draw list into different layers which can be drawn into out of order,
-                             // then flattened back.
-struct ImDrawVert;           // A single vertex (pos + uv + col = 20 bytes by default. Override layout with
-                             // IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT)
-struct ImFont;               // Runtime data for a single font within a parent ImFontAtlas
-struct ImFontAtlas; // Runtime data for multiple fonts, bake multiple fonts into a single texture, TTF/OTF font loader
-struct ImFontAtlasBuilder;       // Opaque storage for building a ImFontAtlas
-struct ImFontAtlasRect;          // Output of ImFontAtlas::GetCustomRect() when using custom rectangles.
-struct ImFontBaked;              // Baked data for a ImFont at a given size.
-struct ImFontConfig;             // Configuration data when adding a font or merging fonts
-struct ImFontGlyph;              // A single font glyph (code point + coordinates within in ImFontAtlas + offset)
+// projection matrix.
+struct ImDrawList; // A single draw command list (generally one per window, conceptually you may see this as a
+                   // dynamic
+// "mesh" builder)
+struct ImDrawListSharedData; // Data shared among multiple draw lists (typically owned by parent ImGui context, but
+                             // you
+// may create one yourself)
+struct ImDrawListSplitter; // Helper to split a draw list into different layers which can be drawn into out of
+                           // order,
+// then flattened back.
+struct ImDrawVert; // A single vertex (pos + uv + col = 20 bytes by default. Override layout with
+// IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT)
+struct ImFont;             // Runtime data for a single font within a parent ImFontAtlas
+struct ImFontAtlas;        // Runtime data for multiple fonts, bake multiple fonts into a single texture, TTF/OTF font
+                           // loader
+struct ImFontAtlasBuilder; // Opaque storage for building a ImFontAtlas
+struct ImFontAtlasRect;    // Output of ImFontAtlas::GetCustomRect() when using custom rectangles.
+struct ImFontBaked;        // Baked data for a ImFont at a given size.
+struct ImFontConfig;       // Configuration data when adding a font or merging fonts
+struct ImFontGlyph;        // A single font glyph (code point + coordinates within in ImFontAtlas + offset)
 struct ImFontGlyphRangesBuilder; // Helper to build glyph ranges from text/string data
 struct ImFontLoader;             // Opaque interface to a font loading backend (stb_truetype, FreeType etc.).
 struct ImTextureData;            // Specs and pixel storage for a texture used by Dear ImGui.
 struct ImTextureRect;            // Coordinates of a rectangle within a texture.
-struct ImColor; // Helper functions to create a color that can be converted to either u32 or float4 (*OBSOLETE* please
-                // avoid using)
 
 // Forward declarations: ImGui layer
 struct ImGuiContext; // Dear ImGui context (opaque structure, unless including imgui_internal.h)
 struct ImGuiIO;      // Main configuration and I/O between your application and ImGui (also see: ImGuiPlatformIO)
 struct ImGuiInputTextCallbackData; // Shared state of InputText() when using custom ImGuiInputTextCallback
-                                   // (rare/advanced use)
-struct ImGuiKeyData;               // Storage for ImGuiIO and IsKeyDown(), IsKeyPressed() etc functions.
-struct ImGuiListClipper;           // Helper to manually clip large list of items
-struct ImGuiMultiSelectIO;         // Structure to interact with a BeginMultiSelect()/EndMultiSelect() block
-struct ImGuiOnceUponAFrame;        // Helper for running a block of code not more than once a frame
-struct ImGuiPayload;               // User data payload for drag and drop operations
-struct ImGuiPlatformIO; // Interface between platform/renderer backends and ImGui (e.g. Clipboard, IME, Multi-Viewport
-                        // support). Extends ImGuiIO.
+// (rare/advanced use)
+struct ImGuiKeyData;        // Storage for ImGuiIO and IsKeyDown(), IsKeyPressed() etc functions.
+struct ImGuiListClipper;    // Helper to manually clip large list of items
+struct ImGuiMultiSelectIO;  // Structure to interact with a BeginMultiSelect()/EndMultiSelect() block
+struct ImGuiOnceUponAFrame; // Helper for running a block of code not more than once a frame
+struct ImGuiPayload;        // User data payload for drag and drop operations
+struct ImGuiPlatformIO;     // Interface between platform/renderer backends and ImGui (e.g. Clipboard, IME,
+                            // Multi-Viewport
+// support). Extends ImGuiIO.
 struct ImGuiPlatformImeData; // Platform IME data for io.PlatformSetImeDataFn() function.
-struct ImGuiPlatformMonitor; // Multi-viewport support: user-provided bounds for each connected monitor/display. Used
-                             // when positioning popups and tooltips to avoid them straddling monitors
-struct ImGuiSelectionBasicStorage; // Optional helper to store multi-selection state + apply multi-selection requests.
+struct ImGuiPlatformMonitor; // Multi-viewport support: user-provided bounds for each connected monitor/display.
+                             // Used
+// when positioning popups and tooltips to avoid them straddling monitors
+struct ImGuiSelectionBasicStorage;    // Optional helper to store multi-selection state + apply multi-selection
+                                      // requests.
 struct ImGuiSelectionExternalStorage; // Optional helper to apply multi-selection requests to existing randomly
-                                      // accessible storage.
-struct ImGuiSelectionRequest;         // A selection request (stored in ImGuiMultiSelectIO)
-struct ImGuiSizeCallbackData;         // Callback data when using SetNextWindowSizeConstraints() (rare/advanced use)
-struct ImGuiStorage;                  // Helper for key->value storage (container sorted by key)
-struct ImGuiStoragePair;              // Helper for key->value storage (pair)
-struct ImGuiStyle;                    // Runtime data for styling/colors
-struct ImGuiTableSortSpecs;       // Sorting specifications for a table (often handling sort specs for a single column,
-                                  // occasionally more)
+// accessible storage.
+struct ImGuiSelectionRequest; // A selection request (stored in ImGuiMultiSelectIO)
+struct ImGuiSizeCallbackData; // Callback data when using SetNextWindowSizeConstraints() (rare/advanced use)
+struct ImGuiStorage;          // Helper for key->value storage (container sorted by key)
+struct ImGuiStoragePair;      // Helper for key->value storage (pair)
+struct ImGuiStyle;            // Runtime data for styling/colors
+struct ImGuiTableSortSpecs;   // Sorting specifications for a table (often handling sort specs for a single column,
+// occasionally more)
 struct ImGuiTableColumnSortSpecs; // Sorting specification for one column of a table
 struct ImGuiTextBuffer;           // Helper to hold and append into a text buffer (~string builder)
 struct ImGuiTextFilter;           // Helper to parse and apply text filters (e.g. "aaaaa[,bbbbb][,ccccc]")
-struct ImGuiViewport;    // A Platform Window (always 1 unless multi-viewport are enabled. One per platform window to
-                         // output to). In the future may represent Platform Monitor
-struct ImGuiWindowClass; // Window class (rare/advanced uses: provide hints to the platform backend via altered viewport
-                         // flags and parent/child info)
+struct ImGuiViewport; // A Platform Window (always 1 unless multi-viewport are enabled. One per platform window to
+// output to). In the future may represent Platform Monitor
+struct ImGuiWindowClass; // Window class (rare/advanced uses: provide hints to the platform backend via altered
+                         // viewport
+// flags and parent/child info)
 
 // Enumerations
 // - We don't use strongly typed enums much because they add constraints (can't extend in private code, can't store
 // typed in bit fields, extra casting on iteration)
-// - Tip: Use your programming IDE navigation facilities on the names in the _central column_ below to find the actual
-// flags/enum lists!
+// - Tip: Use your programming IDE navigation facilities on the names in the _central column_ below to find the
+// actual flags/enum lists!
 //   - In Visual Studio: Ctrl+Comma ("Edit.GoToAll") can follow symbols inside comments, whereas Ctrl+F12
 //   ("Edit.GoToImplementation") cannot.
-//   - In Visual Studio w/ Visual Assist installed: Alt+G ("VAssistX.GoToImplementation") can also follow symbols inside
-//   comments.
+//   - In Visual Studio w/ Visual Assist installed: Alt+G ("VAssistX.GoToImplementation") can also follow symbols
+//   inside comments.
 //   - In VS Code, CLion, etc.: Ctrl+Click can follow symbols inside comments.
 enum ImGuiDir : int; // -> enum ImGuiDir              // Enum: A cardinal direction (Left, Right, Up, Down)
 enum ImGuiKey : int; // -> enum ImGuiKey              // Enum: A key identifier (ImGuiKey_XXX or ImGuiMod_XXX value)
-enum ImGuiMouseSource : int;       // -> enum ImGuiMouseSource      // Enum; A mouse input source identifier (Mouse,
-                                   // TouchScreen, Pen)
+enum ImGuiMouseSource : int; // -> enum ImGuiMouseSource      // Enum; A mouse input source identifier (Mouse,
+// TouchScreen, Pen)
 enum ImGuiSortDirection : uint8_t; // -> enum ImGuiSortDirection    // Enum: A sorting direction (ascending or
-                                   // descending)
-typedef int ImGuiCol;              // -> enum ImGuiCol_             // Enum: A color identifier for styling
-typedef int ImGuiCond;             // -> enum ImGuiCond_            // Enum: A condition for many Set*() functions
-typedef int ImGuiDataType;         // -> enum ImGuiDataType_        // Enum: A primary data type
-typedef int ImGuiMouseButton;      // -> enum ImGuiMouseButton_     // Enum: A mouse button identifier (0=left, 1=right,
-                                   // 2=middle)
-typedef int ImGuiMouseCursor;      // -> enum ImGuiMouseCursor_     // Enum: A mouse cursor shape
-typedef int ImGuiStyleVar;         // -> enum ImGuiStyleVar_        // Enum: A variable identifier for styling
-typedef int ImGuiTableBgTarget;    // -> enum ImGuiTableBgTarget_   // Enum: A color target for TableSetBgColor()
+// descending)
+typedef int ImGuiCol;         // -> enum ImGuiCol_             // Enum: A color identifier for styling
+typedef int ImGuiCond;        // -> enum ImGuiCond_            // Enum: A condition for many Set*() functions
+typedef int ImGuiDataType;    // -> enum ImGuiDataType_        // Enum: A primary data type
+typedef int ImGuiMouseButton; // -> enum ImGuiMouseButton_     // Enum: A mouse button identifier (0=left, 1=right,
+// 2=middle)
+typedef int ImGuiMouseCursor;   // -> enum ImGuiMouseCursor_     // Enum: A mouse cursor shape
+typedef int ImGuiStyleVar;      // -> enum ImGuiStyleVar_        // Enum: A variable identifier for styling
+typedef int ImGuiTableBgTarget; // -> enum ImGuiTableBgTarget_   // Enum: A color target for TableSetBgColor()
 
 // Flags (declared as int to allow using as flags without overhead, and to not pollute the top of this file)
-// - Tip: Use your programming IDE navigation facilities on the names in the _central column_ below to find the actual
-// flags/enum lists!
+// - Tip: Use your programming IDE navigation facilities on the names in the _central column_ below to find the
+// actual flags/enum lists!
 //   - In Visual Studio: Ctrl+Comma ("Edit.GoToAll") can follow symbols inside comments, whereas Ctrl+F12
 //   ("Edit.GoToImplementation") cannot.
-//   - In Visual Studio w/ Visual Assist installed: Alt+G ("VAssistX.GoToImplementation") can also follow symbols inside
-//   comments.
+//   - In Visual Studio w/ Visual Assist installed: Alt+G ("VAssistX.GoToImplementation") can also follow symbols
+//   inside comments.
 //   - In VS Code, CLion, etc.: Ctrl+Click can follow symbols inside comments.
 typedef int ImDrawFlags;         // -> enum ImDrawFlags_          // Flags: for ImDrawList functions
 typedef int ImDrawListFlags;     // -> enum ImDrawListFlags_      // Flags: for ImDrawList instance
@@ -185,45 +187,45 @@ typedef int ImGuiBackendFlags;   // -> enum ImGuiBackendFlags_    // Flags: for 
 typedef int ImGuiButtonFlags;    // -> enum ImGuiButtonFlags_     // Flags: for InvisibleButton()
 typedef int ImGuiChildFlags;     // -> enum ImGuiChildFlags_      // Flags: for BeginChild()
 typedef int ImGuiColorEditFlags; // -> enum ImGuiColorEditFlags_  // Flags: for ColorEdit4(), ColorPicker4(),
-                                 // io.ConfigColorEditFlags etc.
-typedef int ImGuiConfigFlags;    // -> enum ImGuiConfigFlags_     // Flags: for io.ConfigFlags
-typedef int ImGuiComboFlags;     // -> enum ImGuiComboFlags_      // Flags: for BeginCombo()
-typedef int ImGuiDockNodeFlags;  // -> enum ImGuiDockNodeFlags_   // Flags: for DockSpace()
-typedef int ImGuiDragDropFlags;  // -> enum ImGuiDragDropFlags_   // Flags: for BeginDragDropSource(),
-                                 // AcceptDragDropPayload()
+// io.ConfigColorEditFlags etc.
+typedef int ImGuiConfigFlags;   // -> enum ImGuiConfigFlags_     // Flags: for io.ConfigFlags
+typedef int ImGuiComboFlags;    // -> enum ImGuiComboFlags_      // Flags: for BeginCombo()
+typedef int ImGuiDockNodeFlags; // -> enum ImGuiDockNodeFlags_   // Flags: for DockSpace()
+typedef int ImGuiDragDropFlags; // -> enum ImGuiDragDropFlags_   // Flags: for BeginDragDropSource(),
+// AcceptDragDropPayload()
 typedef int ImGuiFocusedFlags;   // -> enum ImGuiFocusedFlags_    // Flags: for IsWindowFocused()
 typedef int ImGuiHoveredFlags;   // -> enum ImGuiHoveredFlags_    // Flags: for IsItemHovered(), IsWindowHovered() etc.
 typedef int ImGuiInputFlags;     // -> enum ImGuiInputFlags_      // Flags: for Shortcut(), SetNextItemShortcut()
 typedef int ImGuiInputTextFlags; // -> enum ImGuiInputTextFlags_  // Flags: for InputText(), InputTextMultiline()
 typedef int ImGuiItemFlags;      // -> enum ImGuiItemFlags_       // Flags: for PushItemFlag(), shared by all items
 typedef int ImGuiKeyChord;       // -> ImGuiKey | ImGuiMod_XXX    // Flags: for IsKeyChordPressed(), Shortcut() etc. an
-                                 // ImGuiKey optionally OR-ed with one or more ImGuiMod_XXX values.
+// ImGuiKey optionally OR-ed with one or more ImGuiMod_XXX values.
 typedef int ImGuiListClipperFlags; // -> enum ImGuiListClipperFlags_// Flags: for ImGuiListClipper
 typedef int ImGuiPopupFlags;       // -> enum ImGuiPopupFlags_      // Flags: for OpenPopup*(), BeginPopupContext*(),
-                                   // IsPopupOpen()
+// IsPopupOpen()
 typedef int ImGuiMultiSelectFlags; // -> enum ImGuiMultiSelectFlags_// Flags: for BeginMultiSelect()
 typedef int ImGuiSelectableFlags;  // -> enum ImGuiSelectableFlags_ // Flags: for Selectable()
 typedef int ImGuiSliderFlags;      // -> enum ImGuiSliderFlags_     // Flags: for DragFloat(), DragInt(), SliderFloat(),
-                                   // SliderInt() etc.
+// SliderInt() etc.
 typedef int ImGuiTabBarFlags;      // -> enum ImGuiTabBarFlags_     // Flags: for BeginTabBar()
 typedef int ImGuiTabItemFlags;     // -> enum ImGuiTabItemFlags_    // Flags: for BeginTabItem()
 typedef int ImGuiTableFlags;       // -> enum ImGuiTableFlags_      // Flags: For BeginTable()
 typedef int ImGuiTableColumnFlags; // -> enum ImGuiTableColumnFlags_// Flags: For TableSetupColumn()
 typedef int ImGuiTableRowFlags;    // -> enum ImGuiTableRowFlags_   // Flags: For TableNextRow()
-typedef int
-        ImGuiTreeNodeFlags; // -> enum ImGuiTreeNodeFlags_   // Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()
-typedef int ImGuiViewportFlags; // -> enum ImGuiViewportFlags_   // Flags: for ImGuiViewport
-typedef int ImGuiWindowFlags;   // -> enum ImGuiWindowFlags_     // Flags: for Begin(), BeginChild()
+typedef int ImGuiTreeNodeFlags;    // -> enum ImGuiTreeNodeFlags_   // Flags: for TreeNode(), TreeNodeEx(),
+                                   // CollapsingHeader()
+typedef int ImGuiViewportFlags;    // -> enum ImGuiViewportFlags_   // Flags: for ImGuiViewport
+typedef int ImGuiWindowFlags;      // -> enum ImGuiWindowFlags_     // Flags: for Begin(), BeginChild()
 
 // Character types
 // (we generally use UTF-8 encoded string in the API. This is storage specifically for a decoded character used for
 // keyboard input and display)
-typedef unsigned int ImWchar32;   // A single decoded U32 character/code point. We encode them as multi bytes UTF-8 when
-                                  // used in strings.
+typedef unsigned int ImWchar32; // A single decoded U32 character/code point. We encode them as multi bytes UTF-8 when
+// used in strings.
 typedef unsigned short ImWchar16; // A single decoded U16 character/code point. We encode them as multi bytes UTF-8 when
-                                  // used in strings.
+// used in strings.
 #ifdef IMGUI_USE_WCHAR32 // ImWchar [configurable type: override in imconfig.h with '#define IMGUI_USE_WCHAR32' to
-                         // support Unicode planes 1-16]
+// support Unicode planes 1-16]
 typedef ImWchar32 ImWchar;
 #else
 typedef ImWchar16 ImWchar;
@@ -239,8 +241,10 @@ typedef int64_t ImGuiSelectionUserData;
 typedef int (*ImGuiInputTextCallback)(ImGuiInputTextCallbackData *data); // Callback function for ImGui::InputText()
 typedef void (*ImGuiSizeCallback)(
         ImGuiSizeCallbackData *data); // Callback function for ImGui::SetNextWindowSizeConstraints()
-typedef void *(*ImGuiMemAllocFunc)(size_t sz, void *user_data); // Function signature for ImGui::SetAllocatorFunctions()
-typedef void (*ImGuiMemFreeFunc)(void *ptr, void *user_data);   // Function signature for ImGui::SetAllocatorFunctions()
+typedef void *(*ImGuiMemAllocFunc)(size_t sz,
+                                   void *user_data); // Function signature for ImGui::SetAllocatorFunctions()
+typedef void (*ImGuiMemFreeFunc)(void *ptr,
+                                 void *user_data); // Function signature for ImGui::SetAllocatorFunctions()
 
 
 //-----------------------------------------------------------------------------
@@ -267,8 +271,8 @@ typedef void (*ImGuiMemFreeFunc)(void *ptr, void *user_data);   // Function sign
 // - In v1.92.0 (2025/06/11): added ImTextureRef which carry either a ImTextureID either a pointer to internal
 // texture atlas. All user facing functions taking ImTextureID changed to ImTextureRef
 #ifndef ImTextureID
-typedef uint64_t
-        ImTextureID; // Default: store up to 64-bits (any pointer or integer). A majority of backends are ok with that.
+typedef uint64_t ImTextureID; // Default: store up to 64-bits (any pointer or integer). A majority of backends are
+                              // ok with that.
 #endif
 
 // Define this if you need to change the invalid value for your backend.
@@ -297,8 +301,8 @@ typedef uint64_t
 //      inline ImTextureRef ImTextureRefFromID(ImTextureID tex_id) { ImTextureRef tex_ref = { ._TexData = nullptr,
 //      .TexID = tex_id }; return tex_ref; }
 // In 1.92 we changed most drawing functions using ImTextureID to use ImTextureRef.
-// We intentionally do not provide an implicit ImTextureRef -> ImTextureID cast operator because it is technically lossy
-// to convert ImTextureRef to ImTextureID before rendering.
+// We intentionally do not provide an implicit ImTextureRef -> ImTextureID cast operator because it is technically
+// lossy to convert ImTextureRef to ImTextureID before rendering.
 IM_MSVC_RUNTIME_CHECKS_OFF
 struct ImTextureRef
 {
@@ -318,9 +322,9 @@ struct ImTextureRef
 
     // Members (either are set, never both!)
     ImTextureData *_TexData; //      A texture, generally owned by a ImFontAtlas. Will convert to ImTextureID during
-                             //      render loop, after texture has been uploaded.
-    ImTextureID _TexID;      // _OR_ Low-level backend texture identifier, if already uploaded or created by user/app.
-                             // Generally provided to e.g. ImGui::Image() calls.
+    //      render loop, after texture has been uploaded.
+    ImTextureID _TexID; // _OR_ Low-level backend texture identifier, if already uploaded or created by user/app.
+    // Generally provided to e.g. ImGui::Image() calls.
 };
 IM_MSVC_RUNTIME_CHECKS_RESTORE
 
@@ -335,54 +339,52 @@ namespace ImGui
     // Context creation and access
     // - Each context create its own ImFontAtlas by default. You may instance one yourself and pass it to
     // CreateContext() to share a font atlas between contexts.
-    // - DLL users: heaps and globals are not shared across DLL boundaries! You will need to call SetCurrentContext() +
-    // SetAllocatorFunctions()
-    //   for each static/DLL boundary you are calling from. Read "Context and Memory Allocators" section of imgui.cpp
-    //   for details.
+    // - DLL users: heaps and globals are not shared across DLL boundaries! You will need to call
+    // SetCurrentContext() + SetAllocatorFunctions()
+    //   for each static/DLL boundary you are calling from. Read "Context and Memory Allocators" section of
+    //   imgui.cpp for details.
     ImGuiContext *CreateContext(ImFontAtlas *shared_font_atlas = nullptr);
     void DestroyContext(ImGuiContext *ctx = nullptr); // nullptr = destroy current context
     ImGuiContext *GetCurrentContext();
     void SetCurrentContext(ImGuiContext *ctx);
 
     // Main
-    ImGuiIO &
-    GetIO(); // access the ImGuiIO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags)
+    ImGuiIO &GetIO(); // access the ImGuiIO structure (mouse/keyboard/gamepad inputs, time, various configuration
+                      // options/flags)
     ImGuiPlatformIO &GetPlatformIO(); // access the ImGuiPlatformIO structure (mostly hooks/functions to connect to
-                                      // platform/renderer and OS Clipboard, IME etc.)
+    // platform/renderer and OS Clipboard, IME etc.)
     ImGuiStyle &GetStyle(); // access the Style structure (colors, sizes). Always use PushStyleColor(), PushStyleVar()
-                            // to modify style mid-frame!
-    void
-    NewFrame(); // start a new Dear ImGui frame, you can submit any command from this point until Render()/EndFrame().
-    void
-    EndFrame(); // ends the Dear ImGui frame. automatically called by Render(). If you don't need to render data
-                // (skipping rendering) you may call EndFrame() without Render()... but you'll have wasted CPU already!
-                // If you don't need to render, better to not create any windows and not call NewFrame() at all!
+    // to modify style mid-frame!
+    void NewFrame(); // start a new Dear ImGui frame, you can submit any command from this point until
+                     // Render()/EndFrame().
+    void EndFrame(); // ends the Dear ImGui frame. automatically called by Render(). If you don't need to render data
+    // (skipping rendering) you may call EndFrame() without Render()... but you'll have wasted CPU already!
+    // If you don't need to render, better to not create any windows and not call NewFrame() at all!
     void Render(); // ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData().
     ImDrawData *GetDrawData(); // valid after Render() and until the next call to NewFrame(). Call
-                               // ImGui_ImplXXXX_RenderDrawData() function in your Renderer Backend to render.
+    // ImGui_ImplXXXX_RenderDrawData() function in your Renderer Backend to render.
 
     // Demo, Debug, Information
     void
     ShowDemoWindow(bool *p_open = nullptr); // create Demo window. demonstrate most ImGui features. call this to learn
-                                            // about the library! try to make it always available in your application!
-    void ShowMetricsWindow(bool *p_open = nullptr);     // create Metrics/Debugger window. display Dear ImGui internals:
-                                                        // windows, draw commands, various internal state, etc.
+    // about the library! try to make it always available in your application!
+    void ShowMetricsWindow(bool *p_open = nullptr); // create Metrics/Debugger window. display Dear ImGui internals:
+    // windows, draw commands, various internal state, etc.
     void ShowIDStackToolWindow(bool *p_open = nullptr); // create Stack Tool window. hover items with mouse to query
-                                                        // information about the source of their unique ID.
-    void ShowAboutWindow(bool *p_open = nullptr);       // create About window. display Dear ImGui version, credits and
-                                                        // build/system information.
-    void
-    ShowStyleEditor(ImGuiStyle *ref =
-                            nullptr); // add style editor block (not a window). you can pass in a reference ImGuiStyle
-                                      // structure to compare to, revert to and save to (else it uses the default style)
+    // information about the source of their unique ID.
+    void ShowAboutWindow(bool *p_open = nullptr); // create About window. display Dear ImGui version, credits and
+    // build/system information.
+    void ShowStyleEditor(ImGuiStyle *ref = nullptr); // add style editor block (not a window). you can pass in a
+                                                     // reference ImGuiStyle
+    // structure to compare to, revert to and save to (else it uses the default style)
     bool ShowStyleSelector(const char *label); // add style selector block (not a window), essentially a combo listing
-                                               // the default styles.
-    void ShowFontSelector(
-            const char *label); // add font selector block (not a window), essentially a combo listing the loaded fonts.
-    void ShowUserGuide();       // add basic help/info block (not a window): how to manipulate ImGui as an end-user
-                                // (mouse/keyboard controls).
-    const char *GetVersion();   // get the compiled version string e.g. "1.80 WIP" (essentially the value for
-                                // IMGUI_VERSION from the compiled version of imgui.cpp)
+    // the default styles.
+    void ShowFontSelector(const char *label); // add font selector block (not a window), essentially a combo listing
+                                              // the loaded fonts.
+    void ShowUserGuide(); // add basic help/info block (not a window): how to manipulate ImGui as an end-user
+    // (mouse/keyboard controls).
+    const char *GetVersion(); // get the compiled version string e.g. "1.80 WIP" (essentially the value for
+    // IMGUI_VERSION from the compiled version of imgui.cpp)
 
     // Styles
     void StyleColorsDark(ImGuiStyle *dst = nullptr);    // new, recommended style (default)
@@ -393,192 +395,202 @@ namespace ImGui
     // - Begin() = push window to the stack and start appending to it. End() = pop window from the stack.
     // - Passing 'bool* p_open != nullptr' shows a window-closing widget in the upper-right corner of the window,
     //   which clicking will set the boolean to false when clicked.
-    // - You may append multiple times to the same window during the same frame by calling Begin()/End() pairs multiple
-    // times.
+    // - You may append multiple times to the same window during the same frame by calling Begin()/End() pairs
+    // multiple times.
     //   Some information such as 'flags' or 'p_open' will only be considered by the first call to Begin().
     // - Begin() return false to indicate the window is collapsed or fully clipped, so you may early out and omit
     // submitting
     //   anything to the window. Always call a matching End() for each Begin() call, regardless of its return value!
-    //   [Important: due to legacy reason, Begin/End and BeginChild/EndChild are inconsistent with all other functions
+    //   [Important: due to legacy reason, Begin/End and BeginChild/EndChild are inconsistent with all other
+    //   functions
     //    such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc. where the EndXXX call should only be called if the
-    //    corresponding BeginXXX function returned true. Begin and BeginChild are the only odd ones out. Will be fixed
-    //    in a future update.]
+    //    corresponding BeginXXX function returned true. Begin and BeginChild are the only odd ones out. Will be
+    //    fixed in a future update.]
     // - Note that the bottom of window stack always contains a window called "Debug".
     bool Begin(const char *name, bool *p_open = nullptr, ImGuiWindowFlags flags = 0);
     void End();
 
     // Child Windows
-    // - Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window.
-    // Child windows can embed their own child.
+    // - Use child windows to begin into a self-contained independent scrolling/clipping regions within a host
+    // window. Child windows can embed their own child.
     // - Before 1.90 (November 2023), the "ImGuiChildFlags child_flags = 0" parameter was "bool border = false".
     //   This API is backward compatible with old code, as we guarantee that ImGuiChildFlags_Borders == true.
     //   Consider updating your old code:
-    //      BeginChild("Name", size, false)   -> Begin("Name", size, 0); or Begin("Name", size, ImGuiChildFlags_None);
-    //      BeginChild("Name", size, true)    -> Begin("Name", size, ImGuiChildFlags_Borders);
-    // - Manual sizing (each axis can use a different setting e.g. Vec2(0.0f, 400.0f)):
+    //      BeginChild("Name", size, false)   -> Begin("Name", size, 0); or Begin("Name", size,
+    //      ImGuiChildFlags_None); BeginChild("Name", size, true)    -> Begin("Name", size,
+    //      ImGuiChildFlags_Borders);
+    // - Manual sizing (each axis can use a different setting e.g. ::SF::Engine::Vec2(0.0f, 400.0f)):
     //     == 0.0f: use remaining parent window size for this axis.
     //      > 0.0f: use specified size for this axis.
     //      < 0.0f: right/bottom-align to specified distance from available content boundaries.
-    // - Specifying ImGuiChildFlags_AutoResizeX or ImGuiChildFlags_AutoResizeY makes the sizing automatic based on child
-    // contents.
+    // - Specifying ImGuiChildFlags_AutoResizeX or ImGuiChildFlags_AutoResizeY makes the sizing automatic based on
+    // child contents.
     //   Combining both ImGuiChildFlags_AutoResizeX _and_ ImGuiChildFlags_AutoResizeY defeats purpose of a scrolling
     //   region and is NOT recommended.
-    // - BeginChild() returns false to indicate the window is collapsed or fully clipped, so you may early out and omit
-    // submitting
-    //   anything to the window. Always call a matching EndChild() for each BeginChild() call, regardless of its return
-    //   value. [Important: due to legacy reason, Begin/End and BeginChild/EndChild are inconsistent with all other
-    //   functions
+    // - BeginChild() returns false to indicate the window is collapsed or fully clipped, so you may early out and
+    // omit submitting
+    //   anything to the window. Always call a matching EndChild() for each BeginChild() call, regardless of its
+    //   return value. [Important: due to legacy reason, Begin/End and BeginChild/EndChild are inconsistent with all
+    //   other functions
     //    such as BeginMenu/EndMenu, BeginPopup/EndPopup, etc. where the EndXXX call should only be called if the
-    //    corresponding BeginXXX function returned true. Begin and BeginChild are the only odd ones out. Will be fixed
-    //    in a future update.]
-    bool BeginChild(const char *str_id, const Vec2 &size = Vec2(0, 0), ImGuiChildFlags child_flags = 0,
-                    ImGuiWindowFlags window_flags = 0);
-    bool BeginChild(ImGuiID id, const Vec2 &size = Vec2(0, 0), ImGuiChildFlags child_flags = 0,
-                    ImGuiWindowFlags window_flags = 0);
+    //    corresponding BeginXXX function returned true. Begin and BeginChild are the only odd ones out. Will be
+    //    fixed in a future update.]
+    bool BeginChild(const char *str_id, const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0),
+                    ImGuiChildFlags child_flags = 0, ImGuiWindowFlags window_flags = 0);
+    bool BeginChild(IdType id, const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0),
+                    ImGuiChildFlags child_flags = 0, ImGuiWindowFlags window_flags = 0);
     void EndChild();
 
     // Windows Utilities
-    // - 'current window' = the window we are appending into while inside a Begin()/End() block. 'next window' = next
-    // window we will Begin() into.
+    // - 'current window' = the window we are appending into while inside a Begin()/End() block. 'next window' =
+    // next window we will Begin() into.
     bool IsWindowAppearing();
     bool IsWindowCollapsed();
     bool IsWindowFocused(ImGuiFocusedFlags flags = 0); // is current window focused? or its root/child, depending on
-                                                       // flags. see flags for options.
-    bool IsWindowHovered(
-            ImGuiHoveredFlags flags =
-                    0); // is current window hovered and hoverable (e.g. not blocked by a popup/modal)? See
-                        // ImGuiHoveredFlags_ for options. IMPORTANT: If you are trying to check whether your mouse
-                        // should be dispatched to Dear ImGui or to your underlying app, you should not use this
-                        // function! Use the 'io.WantCaptureMouse' boolean for that! Refer to FAQ entry "How can I tell
-                        // whether to dispatch mouse/keyboard to Dear ImGui or my application?" for details.
+    // flags. see flags for options.
+    bool IsWindowHovered(ImGuiHoveredFlags flags =
+                                 0); // is current window hovered and hoverable (e.g. not blocked by a popup/modal)? See
+    // ImGuiHoveredFlags_ for options. IMPORTANT: If you are trying to check whether your mouse
+    // should be dispatched to Dear ImGui or to your underlying app, you should not use this
+    // function! Use the 'io.WantCaptureMouse' boolean for that! Refer to FAQ entry "How can I tell
+    // whether to dispatch mouse/keyboard to Dear ImGui or my application?" for details.
     ImDrawList *
     GetWindowDrawList();       // get draw list associated to the current window, to append your own drawing primitives
     float GetWindowDpiScale(); // get DPI scale currently associated to the current window's viewport.
-    Vec2 GetWindowPos();       // get current window position in screen space (IT IS UNLIKELY YOU EVER NEED TO USE THIS.
-                               // Consider always using GetCursorScreenPos() and GetContentRegionAvail() instead)
-    Vec2 GetWindowSize();    // get current window size (IT IS UNLIKELY YOU EVER NEED TO USE THIS. Consider always using
-                             // GetCursorScreenPos() and GetContentRegionAvail() instead)
-    float GetWindowWidth();  // get current window width (IT IS UNLIKELY YOU EVER NEED TO USE THIS). Shortcut for
-                             // GetWindowSize().x.
+    ::SF::Engine::Vec2
+    GetWindowPos(); // get current window position in screen space (IT IS UNLIKELY YOU EVER NEED TO USE THIS.
+    // Consider always using GetCursorScreenPos() and GetContentRegionAvail() instead)
+    ::SF::Engine::Vec2
+    GetWindowSize(); // get current window size (IT IS UNLIKELY YOU EVER NEED TO USE THIS. Consider always using
+    // GetCursorScreenPos() and GetContentRegionAvail() instead)
+    float GetWindowWidth(); // get current window width (IT IS UNLIKELY YOU EVER NEED TO USE THIS). Shortcut for
+    // GetWindowSize().x.
     float GetWindowHeight(); // get current window height (IT IS UNLIKELY YOU EVER NEED TO USE THIS). Shortcut for
-                             // GetWindowSize().y.
+    // GetWindowSize().y.
     ImGuiViewport *GetWindowViewport(); // get viewport currently associated to the current window.
 
     // Window manipulation
     // - Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
-    void SetNextWindowPos(const Vec2 &pos, ImGuiCond cond = 0,
-                          const Vec2 &pivot = Vec2(0, 0));        // set next window position. call before Begin(). use
-                                                                  // pivot=(0.5f,0.5f) to center on given point, etc.
-    void SetNextWindowSize(const Vec2 &size, ImGuiCond cond = 0); // set next window size. set axis to 0.0f to force
-                                                                  // an auto-fit on this axis. call before Begin()
-    void SetNextWindowSizeConstraints(
-            const Vec2 &size_min, const Vec2 &size_max, ImGuiSizeCallback custom_callback = nullptr,
-            void *custom_callback_data =
-                    nullptr); // set next window size limits. use 0.0f or FLT_MAX if you don't want limits. Use -1 for
-                              // both min and max of same axis to preserve current size (which itself is a constraint).
-                              // Use callback to apply non-trivial programmatic constraints.
-    void SetNextWindowContentSize(
-            const Vec2 &size); // set next window content size (~ scrollable client area, which enforce the range of
-                               // scrollbars). Not including window decorations (title bar, menu bar, etc.) nor
-                               // WindowPadding. set an axis to 0.0f to leave it automatic. call before Begin()
+    void SetNextWindowPos(const ::SF::Engine::Vec2 &pos, ImGuiCond cond = 0,
+                          const ::SF::Engine::Vec2 &pivot =
+                                  ::SF::Engine::Vec2(0, 0)); // set next window position. call before Begin(). use
+    // pivot=(0.5f,0.5f) to center on given point, etc.
+    void SetNextWindowSize(const ::SF::Engine::Vec2 &size,
+                           ImGuiCond cond = 0); // set next window size. set axis to 0.0f to force
+    // an auto-fit on this axis. call before Begin()
+    void
+    SetNextWindowSizeConstraints(const ::SF::Engine::Vec2 &size_min, const ::SF::Engine::Vec2 &size_max,
+                                 ImGuiSizeCallback custom_callback = nullptr,
+                                 void *custom_callback_data = nullptr); // set next window size limits. use 0.0f or
+                                                                        // FLT_MAX if you don't want limits. Use -1 for
+    // both min and max of same axis to preserve current size (which itself is a constraint).
+    // Use callback to apply non-trivial programmatic constraints.
+    void SetNextWindowContentSize(const ::SF::Engine::Vec2 &size); // set next window content size (~ scrollable client
+                                                                   // area, which enforce the range of
+    // scrollbars). Not including window decorations (title bar, menu bar, etc.) nor
+    // WindowPadding. set an axis to 0.0f to leave it automatic. call before Begin()
     void SetNextWindowCollapsed(bool collapsed,
                                 ImGuiCond cond = 0); // set next window collapsed state. call before Begin()
     void SetNextWindowFocus();                       // set next window to be focused / top-most. call before Begin()
-    void
-    SetNextWindowScroll(const Vec2 &scroll); // set next window scrolling value (use < 0.0f to not affect a given axis).
-    void SetNextWindowBgAlpha(
-            float alpha); // set next window background color alpha. helper to easily override the Alpha component of
-                          // ImGuiCol_WindowBg/ChildBg/PopupBg. you may also use ImGuiWindowFlags_NoBackground.
-    void SetNextWindowViewport(ImGuiID viewport_id); // set next window viewport
-    void
-    SetWindowPos(const Vec2 &pos,
-                 ImGuiCond cond = 0); // (not recommended) set current window position - call within Begin()/End().
-                                      // prefer using SetNextWindowPos(), as this may incur tearing and side-effects.
-    void SetWindowSize(const Vec2 &size,
+    void SetNextWindowScroll(const ::SF::Engine::Vec2 &scroll); // set next window scrolling value (use < 0.0f to not
+                                                                // affect a given axis).
+    void SetNextWindowBgAlpha(float alpha); // set next window background color alpha. helper to easily override the
+                                            // Alpha component of
+    // ImGuiCol_WindowBg/ChildBg/PopupBg. you may also use ImGuiWindowFlags_NoBackground.
+    void SetNextWindowViewport(IdType viewport_id); // set next window viewport
+    void SetWindowPos(const ::SF::Engine::Vec2 &pos,
+                      ImGuiCond cond = 0); // (not recommended) set current window position - call within Begin()/End().
+    // prefer using SetNextWindowPos(), as this may incur tearing and side-effects.
+    void SetWindowSize(const ::SF::Engine::Vec2 &size,
                        ImGuiCond cond = 0); // (not recommended) set current window size - call within Begin()/End().
-                                            // set to Vec2(0, 0) to force an auto-fit. prefer using
-                                            // SetNextWindowSize(), as this may incur tearing and minor side-effects.
+    // set to ::SF::Engine::Vec2(0, 0) to force an auto-fit. prefer using
+    // SetNextWindowSize(), as this may incur tearing and minor side-effects.
     void SetWindowCollapsed(bool collapsed, ImGuiCond cond = 0); // (not recommended) set current window collapsed
-                                                                 // state. prefer using SetNextWindowCollapsed().
+    // state. prefer using SetNextWindowCollapsed().
     void SetWindowFocus(); // (not recommended) set current window to be focused / top-most. prefer using
-                           // SetNextWindowFocus().
-    void SetWindowPos(const char *name, const Vec2 &pos, ImGuiCond cond = 0); // set named window position.
+    // SetNextWindowFocus().
+    void SetWindowPos(const char *name, const ::SF::Engine::Vec2 &pos,
+                      ImGuiCond cond = 0); // set named window position.
     void
-    SetWindowSize(const char *name, const Vec2 &size,
+    SetWindowSize(const char *name, const ::SF::Engine::Vec2 &size,
                   ImGuiCond cond = 0); // set named window size. set axis to 0.0f to force an auto-fit on this axis.
-    void SetWindowCollapsed(const char *name, bool collapsed, ImGuiCond cond = 0); // set named window collapsed state
+    void SetWindowCollapsed(const char *name, bool collapsed,
+                            ImGuiCond cond = 0); // set named window collapsed state
     void SetWindowFocus(const char *name); // set named window to be focused / top-most. use nullptr to remove focus.
 
     // Windows Scrolling
     // - Any change of Scroll will be applied at the beginning of next frame in the first call to Begin().
-    // - You may instead use SetNextWindowScroll() prior to calling Begin() to avoid this delay, as an alternative to
-    // using SetScrollX()/SetScrollY().
+    // - You may instead use SetNextWindowScroll() prior to calling Begin() to avoid this delay, as an alternative
+    // to using SetScrollX()/SetScrollY().
     float GetScrollX();              // get scrolling amount [0 .. GetScrollMaxX()]
     float GetScrollY();              // get scrolling amount [0 .. GetScrollMaxY()]
     void SetScrollX(float scroll_x); // set scrolling amount [0 .. GetScrollMaxX()]
     void SetScrollY(float scroll_y); // set scrolling amount [0 .. GetScrollMaxY()]
     float GetScrollMaxX();           // get maximum scrolling amount ~~ ContentSize.x - WindowSize.x - DecorationsSize.x
     float GetScrollMaxY();           // get maximum scrolling amount ~~ ContentSize.y - WindowSize.y - DecorationsSize.y
-    void SetScrollHereX(float center_x_ratio =
-                                0.5f); // adjust scrolling amount to make current cursor position visible.
-                                       // center_x_ratio=0.0: left, 0.5: center, 1.0: right. When using to make a
-                                       // "default/current item" visible, consider using SetItemDefaultFocus() instead.
-    void SetScrollHereY(float center_y_ratio =
-                                0.5f); // adjust scrolling amount to make current cursor position visible.
-                                       // center_y_ratio=0.0: top, 0.5: center, 1.0: bottom. When using to make a
-                                       // "default/current item" visible, consider using SetItemDefaultFocus() instead.
+    void
+    SetScrollHereX(float center_x_ratio = 0.5f); // adjust scrolling amount to make current cursor position visible.
+    // center_x_ratio=0.0: left, 0.5: center, 1.0: right. When using to make a
+    // "default/current item" visible, consider using SetItemDefaultFocus() instead.
+    void
+    SetScrollHereY(float center_y_ratio = 0.5f); // adjust scrolling amount to make current cursor position visible.
+    // center_y_ratio=0.0: top, 0.5: center, 1.0: bottom. When using to make a
+    // "default/current item" visible, consider using SetItemDefaultFocus() instead.
     void
     SetScrollFromPosX(float local_x,
                       float center_x_ratio = 0.5f); // adjust scrolling amount to make given position visible. Generally
-                                                    // GetCursorStartPos() + offset to compute a valid position.
+    // GetCursorStartPos() + offset to compute a valid position.
     void
     SetScrollFromPosY(float local_y,
                       float center_y_ratio = 0.5f); // adjust scrolling amount to make given position visible. Generally
-                                                    // GetCursorStartPos() + offset to compute a valid position.
+    // GetCursorStartPos() + offset to compute a valid position.
 
     // Parameters stacks (font)
     //  - PushFont(font, 0.0f)                       // Change font and keep current size
     //  - PushFont(nullptr, 20.0f)                      // Keep font and change current size
     //  - PushFont(font, 20.0f)                      // Change font and set size to 20.0f
-    //  - PushFont(font, style.FontSizeBase * 2.0f)  // Change font and set size to be twice bigger than current size.
+    //  - PushFont(font, style.FontSizeBase * 2.0f)  // Change font and set size to be twice bigger than current
+    //  size.
     //  - PushFont(font, font->LegacySize)           // Change font and set size to size passed to AddFontXXX()
     //  function. Same as pre-1.92 behavior.
     // *IMPORTANT* before 1.92, fonts had a single size. They can now be dynamically be adjusted.
-    //  - In 1.92 we have REMOVED the single parameter version of PushFont() because it seems like the easiest way to
-    //  provide an error-proof transition.
-    //  - PushFont(font) before 1.92 = PushFont(font, font->LegacySize) after 1.92          // Use default font size as
-    //  passed to AddFontXXX() function.
+    //  - In 1.92 we have REMOVED the single parameter version of PushFont() because it seems like the easiest way
+    //  to provide an error-proof transition.
+    //  - PushFont(font) before 1.92 = PushFont(font, font->LegacySize) after 1.92          // Use default font size
+    //  as passed to AddFontXXX() function.
     // *IMPORTANT* global scale factors are applied over the provided size.
     //  - Global scale factors are: 'style.FontScaleMain', 'style.FontScaleDpi' and maybe more.
     // -  If you want to apply a factor to the _current_ font size:
     //  - CORRECT:   PushFont(nullptr, style.FontSizeBase)         // use current unscaled size    == does nothing
-    //  - CORRECT:   PushFont(nullptr, style.FontSizeBase * 2.0f)  // use current unscaled size x2 == make text twice
-    //  bigger
-    //  - INCORRECT: PushFont(nullptr, GetFontSize())              // INCORRECT! using size after global factors already
-    //  applied == GLOBAL SCALING FACTORS WILL APPLY TWICE!
-    //  - INCORRECT: PushFont(nullptr, GetFontSize() * 2.0f)       // INCORRECT! using size after global factors already
-    //  applied == GLOBAL SCALING FACTORS WILL APPLY TWICE!
-    void PushFont(ImFont *font, float font_size_base_unscaled); // Use nullptr as a shortcut to keep current font. Use
-                                                                // 0.0f to keep current size.
+    //  - CORRECT:   PushFont(nullptr, style.FontSizeBase * 2.0f)  // use current unscaled size x2 == make text
+    //  twice bigger
+    //  - INCORRECT: PushFont(nullptr, GetFontSize())              // INCORRECT! using size after global factors
+    //  already applied == GLOBAL SCALING FACTORS WILL APPLY TWICE!
+    //  - INCORRECT: PushFont(nullptr, GetFontSize() * 2.0f)       // INCORRECT! using size after global factors
+    //  already applied == GLOBAL SCALING FACTORS WILL APPLY TWICE!
+    void PushFont(ImFont *font,
+                  float font_size_base_unscaled); // Use nullptr as a shortcut to keep current font. Use
+    // 0.0f to keep current size.
     void PopFont();
     ImFont *GetFont();   // get current font
     float GetFontSize(); // get current scaled font size (= height in pixels). AFTER global scale factors applied.
-                         // *IMPORTANT* DO NOT PASS THIS VALUE TO PushFont()! Use ImGui::GetStyle().FontSizeBase to get
-                         // value before global scale factors.
+    // *IMPORTANT* DO NOT PASS THIS VALUE TO PushFont()! Use ImGui::GetStyle().FontSizeBase to get
+    // value before global scale factors.
     ImFontBaked *GetFontBaked(); // get current font bound at current size // == GetFont()->GetFontBaked(GetFontSize())
 
     // Parameters stacks (shared)
     void
     PushStyleColor(ImGuiCol idx,
                    uint32_t col); // modify a style color. always use this if you modify the style after NewFrame().
-    void PushStyleColor(ImGuiCol idx, const Vec4 &col);
+    void PushStyleColor(ImGuiCol idx, const ::SF::Engine::Vec4 &col);
     void PopStyleColor(int count = 1);
     void
     PushStyleVar(ImGuiStyleVar idx,
                  float val); // modify a style float variable. always use this if you modify the style after NewFrame()!
-    void PushStyleVar(ImGuiStyleVar idx, const Vec2 &val); // modify a style Vec2 variable. "
-    void PushStyleVarX(ImGuiStyleVar idx, float val_x);    // modify X component of a style Vec2 variable. "
-    void PushStyleVarY(ImGuiStyleVar idx, float val_y);    // modify Y component of a style Vec2 variable. "
+    void PushStyleVar(ImGuiStyleVar idx,
+                      const ::SF::Engine::Vec2 &val);   // modify a style ::SF::Engine::Vec2 variable. "
+    void PushStyleVarX(ImGuiStyleVar idx, float val_x); // modify X component of a style ::SF::Engine::Vec2 variable. "
+    void PushStyleVarY(ImGuiStyleVar idx, float val_y); // modify Y component of a style ::SF::Engine::Vec2 variable. "
     void PopStyleVar(int count = 1);
     void
     PushItemFlag(ImGuiItemFlags option,
@@ -587,94 +599,104 @@ namespace ImGui
 
     // Parameters stacks (current window)
     void PushItemWidth(float item_width); // push width of items for common large "item+label" widgets. >0.0f: width in
-                                          // pixels, <0.0f align xx pixels to the right of window (so -FLT_MIN always
-                                          // align width to the right side).
+    // pixels, <0.0f align xx pixels to the right of window (so -FLT_MIN always
+    // align width to the right side).
     void PopItemWidth();
     void SetNextItemWidth(float item_width); // set width of the _next_ common large "item+label" widget. >0.0f: width
-                                             // in pixels, <0.0f align xx pixels to the right of window (so -FLT_MIN
-                                             // always align width to the right side)
+    // in pixels, <0.0f align xx pixels to the right of window (so -FLT_MIN
+    // always align width to the right side)
     float CalcItemWidth(); // width of item given pushed settings and current cursor position. NOT necessarily the width
-                           // of last item unlike most 'Item' functions.
+    // of last item unlike most 'Item' functions.
     void PushTextWrapPos(float wrap_local_pos_x = 0.0f); // push word-wrapping position for Text*() commands. < 0.0f: no
-                                                         // wrapping; 0.0f: wrap to end of window (or column); > 0.0f:
-                                                         // wrap at 'wrap_pos_x' position in window local space
+    // wrapping; 0.0f: wrap to end of window (or column); > 0.0f:
+    // wrap at 'wrap_pos_x' position in window local space
     void PopTextWrapPos();
 
     // Style read access
     // - Use the ShowStyleEditor() function to interactively see/edit the colors.
-    Vec2 GetFontTexUvWhitePixel(); // get UV coordinate for a white pixel, useful to draw custom shapes via the
-                                   // ImDrawList API
+    ::SF::Engine::Vec2
+    GetFontTexUvWhitePixel(); // get UV coordinate for a white pixel, useful to draw custom shapes via the
+    // ImDrawList API
     uint32_t
     GetColorU32(ImGuiCol idx,
-                float alpha_mul = 1.0f);   // retrieve given style color with style alpha applied and optional extra
-                                           // alpha multiplier, packed as a 32-bit value suitable for ImDrawList
-    uint32_t GetColorU32(const Vec4 &col); // retrieve given color with style alpha applied, packed as a 32-bit value
-                                           // suitable for ImDrawList
-    uint32_t GetColorU32(uint32_t col, float alpha_mul = 1.0f); // retrieve given color with style alpha applied, packed
-                                                                // as a 32-bit value suitable for ImDrawList
-    const Vec4 &GetStyleColorVec4(ImGuiCol idx); // retrieve style color as stored in ImGuiStyle structure. use to
-                                                 // feed back into PushStyleColor(), otherwise use GetColorU32() to
-                                                 // get style color with style alpha baked in.
+                float alpha_mul = 1.0f); // retrieve given style color with style alpha applied and optional extra
+    // alpha multiplier, packed as a 32-bit value suitable for ImDrawList
+    uint32_t GetColorU32(
+            const ::SF::Engine::Vec4 &col); // retrieve given color with style alpha applied, packed as a 32-bit value
+    // suitable for ImDrawList
+    uint32_t GetColorU32(uint32_t col,
+                         float alpha_mul = 1.0f); // retrieve given color with style alpha applied, packed
+    // as a 32-bit value suitable for ImDrawList
+    const ::SF::Engine::Vec4 &
+    GetStyleColorVec4(ImGuiCol idx); // retrieve style color as stored in ImGuiStyle structure. use to
+    // feed back into PushStyleColor(), otherwise use GetColorU32() to
+    // get style color with style alpha baked in.
 
     // Layout cursor positioning
     // - By "cursor" we mean the current output position.
-    // - The typical widget behavior is to output themselves at the current cursor position, then move the cursor one
-    // line down.
+    // - The typical widget behavior is to output themselves at the current cursor position, then move the cursor
+    // one line down.
     // - You can call SameLine() between widgets to undo the last carriage return and output at the right of the
     // preceding widget.
     // - YOU CAN DO 99% OF WHAT YOU NEED WITH ONLY GetCursorScreenPos() and GetContentRegionAvail().
     // - Attention! We currently have inconsistencies between window-local and absolute positions we will aim to fix
     // with future API:
-    //    - Absolute coordinate:        GetCursorScreenPos(), SetCursorScreenPos(), all ImDrawList:: functions. -> this
-    //    is the preferred way forward.
+    //    - Absolute coordinate:        GetCursorScreenPos(), SetCursorScreenPos(), all ImDrawList:: functions. ->
+    //    this is the preferred way forward.
     //    - Window-local coordinates:   SameLine(offset), GetCursorPos(), SetCursorPos(), GetCursorStartPos(),
     //    PushTextWrapPos()
-    //    - Window-local coordinates:   GetContentRegionMax(), GetWindowContentRegionMin(), GetWindowContentRegionMax()
+    //    - Window-local coordinates:   GetContentRegionMax(), GetWindowContentRegionMin(),
+    //    GetWindowContentRegionMax()
     //    --> all obsoleted. YOU DON'T NEED THEM.
-    // - GetCursorScreenPos() = GetCursorPos() + GetWindowPos(). GetWindowPos() is almost only ever useful to convert
-    // from window-local to absolute coordinates. Try not to use it.
-    Vec2 GetCursorScreenPos(); // cursor position, absolute coordinates. THIS IS YOUR BEST FRIEND (prefer using this
-                               // rather than GetCursorPos(), also more useful to work with ImDrawList API).
-    void SetCursorScreenPos(const Vec2 &pos); // cursor position, absolute coordinates. THIS IS YOUR BEST FRIEND.
-    Vec2 GetContentRegionAvail();             // available space from current position. THIS IS YOUR BEST FRIEND.
-    Vec2 GetCursorPos();   // [window-local] cursor position in window-local coordinates. This is not your best friend.
+    // - GetCursorScreenPos() = GetCursorPos() + GetWindowPos(). GetWindowPos() is almost only ever useful to
+    // convert from window-local to absolute coordinates. Try not to use it.
+    ::SF::Engine::Vec2
+    GetCursorScreenPos(); // cursor position, absolute coordinates. THIS IS YOUR BEST FRIEND (prefer using this
+    // rather than GetCursorPos(), also more useful to work with ImDrawList API).
+    void SetCursorScreenPos(
+            const ::SF::Engine::Vec2 &pos);     // cursor position, absolute coordinates. THIS IS YOUR BEST FRIEND.
+    ::SF::Engine::Vec2 GetContentRegionAvail(); // available space from current position. THIS IS YOUR BEST FRIEND.
+    ::SF::Engine::Vec2
+    GetCursorPos();        // [window-local] cursor position in window-local coordinates. This is not your best friend.
     float GetCursorPosX(); // [window-local] "
     float GetCursorPosY(); // [window-local] "
-    void SetCursorPos(const Vec2 &local_pos); // [window-local] "
-    void SetCursorPosX(float local_x);        // [window-local] "
-    void SetCursorPosY(float local_y);        // [window-local] "
-    Vec2 GetCursorStartPos(); // [window-local] initial cursor position, in window-local coordinates. Call
-                              // GetCursorScreenPos() after Begin() to get the absolute coordinates version.
+    void SetCursorPos(const ::SF::Engine::Vec2 &local_pos); // [window-local] "
+    void SetCursorPosX(float local_x);                      // [window-local] "
+    void SetCursorPosY(float local_y);                      // [window-local] "
+    ::SF::Engine::Vec2 GetCursorStartPos(); // [window-local] initial cursor position, in window-local coordinates. Call
+    // GetCursorScreenPos() after Begin() to get the absolute coordinates version.
 
     // Other layout functions
     void Separator(); // separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a
-                      // vertical separator.
+    // vertical separator.
     void SameLine(float offset_from_start_x = 0.0f,
                   float spacing = -1.0f); // call between widgets or groups to layout them horizontally. X position
-                                          // given in window coordinates.
-    void NewLine();                       // undo a SameLine() or force a new line when in a horizontal-layout context.
-    void Spacing();                       // add vertical spacing.
-    void Dummy(const Vec2 &size); // add a dummy item of given size. unlike InvisibleButton(), Dummy() won't take the
-                                  // mouse click or be navigable into.
-    void Indent(float indent_w = 0.0f);   // move content position toward the right, by indent_w, or style.IndentSpacing
-                                          // if indent_w <= 0
+    // given in window coordinates.
+    void NewLine(); // undo a SameLine() or force a new line when in a horizontal-layout context.
+    void Spacing(); // add vertical spacing.
+    void Dummy(const ::SF::Engine::Vec2
+                       &size); // add a dummy item of given size. unlike InvisibleButton(), Dummy() won't take the
+    // mouse click or be navigable into.
+    void Indent(float indent_w = 0.0f); // move content position toward the right, by indent_w, or style.IndentSpacing
+    // if indent_w <= 0
     void Unindent(float indent_w = 0.0f); // move content position back to the left, by indent_w, or style.IndentSpacing
-                                          // if indent_w <= 0
-    void BeginGroup();                    // lock horizontal starting position
-    void EndGroup(); // unlock horizontal starting position + capture the whole group bounding box into one "item" (so
-                     // you can use IsItemHovered() or layout primitives such as SameLine() on whole group, etc.)
+    // if indent_w <= 0
+    void BeginGroup(); // lock horizontal starting position
+    void EndGroup();   // unlock horizontal starting position + capture the whole group bounding box into one "item" (so
+    // you can use IsItemHovered() or layout primitives such as SameLine() on whole group, etc.)
     void AlignTextToFramePadding(); // vertically align upcoming text baseline to FramePadding.y so that it will align
-                                    // properly to regularly framed items (call if you have text on a line before a
-                                    // framed item)
-    float GetTextLineHeight();      // ~ FontSize
+    // properly to regularly framed items (call if you have text on a line before a
+    // framed item)
+    float GetTextLineHeight();            // ~ FontSize
     float GetTextLineHeightWithSpacing(); // ~ FontSize + style.ItemSpacing.y (distance in pixels between 2 consecutive
-                                          // lines of text)
-    float GetFrameHeight();               // ~ FontSize + style.FramePadding.y * 2
-    float GetFrameHeightWithSpacing();    // ~ FontSize + style.FramePadding.y * 2 + style.ItemSpacing.y (distance in
-                                          // pixels between 2 consecutive lines of framed widgets)
+    // lines of text)
+    float GetFrameHeight();            // ~ FontSize + style.FramePadding.y * 2
+    float GetFrameHeightWithSpacing(); // ~ FontSize + style.FramePadding.y * 2 + style.ItemSpacing.y (distance in
+    // pixels between 2 consecutive lines of framed widgets)
 
     // ID stack/scopes
-    // Read the FAQ (docs/FAQ.md or http://dearimgui.com/faq) for more details about how ID are handled in dear imgui.
+    // Read the FAQ (docs/FAQ.md or http://dearimgui.com/faq) for more details about how ID are handled in dear
+    // imgui.
     // - Those questions are answered and impacted by understanding of the ID stack system:
     //   - "Q: Why is my widget not reacting when I click on it?"
     //   - "Q: How can I have widgets with an empty label?"
@@ -682,19 +704,20 @@ namespace ImGui
     // - Short version: ID are hashes of the entire ID stack. If you are creating widgets in a loop you most likely
     //   want to push a unique identifier (e.g. object pointer, loop index) to uniquely differentiate them.
     // - You can also use the "Label##foobar" syntax within widget label to distinguish them from each others.
-    // - In this header file we use the "label"/"name" terminology to denote a string that will be displayed + used as
-    // an ID,
+    // - In this header file we use the "label"/"name" terminology to denote a string that will be displayed + used
+    // as an ID,
     //   whereas "str_id" denote a string that is only used as an ID and not normally displayed.
-    void PushID(const char *str_id);                               // push string into the ID stack (will hash string).
-    void PushID(const char *str_id_begin, const char *str_id_end); // push string into the ID stack (will hash string).
-    void PushID(const void *ptr_id);   // push pointer into the ID stack (will hash pointer).
-    void PushID(int int_id);           // push integer into the ID stack (will hash integer).
-    void PopID();                      // pop from the ID stack.
-    ImGuiID GetID(const char *str_id); // calculate unique ID (hash of whole ID stack + given parameter). e.g. if you
-                                       // want to query into ImGuiStorage yourself
-    ImGuiID GetID(const char *str_id_begin, const char *str_id_end);
-    ImGuiID GetID(const void *ptr_id);
-    ImGuiID GetID(int int_id);
+    void PushID(const char *str_id); // push string into the ID stack (will hash string).
+    void PushID(const char *str_id_begin,
+                const char *str_id_end); // push string into the ID stack (will hash string).
+    void PushID(const void *ptr_id);     // push pointer into the ID stack (will hash pointer).
+    void PushID(int int_id);             // push integer into the ID stack (will hash integer).
+    void PopID();                        // pop from the ID stack.
+    IdType GetID(const char *str_id);    // calculate unique ID (hash of whole ID stack + given parameter). e.g. if you
+    // want to query into ImGuiStorage yourself
+    IdType GetID(const char *str_id_begin, const char *str_id_end);
+    IdType GetID(const void *ptr_id);
+    IdType GetID(int int_id);
 
     // Widgets: Text
     // - Note that all functions taking format strings in the API may be passed ("%s", text) or ("%.*s", text_len,
@@ -702,20 +725,20 @@ namespace ImGui
     void TextUnformatted(const char *text,
                          const char *text_end =
                                  nullptr); // raw text without formatting. Practically equivalent to 'Text("%s", text)'
-                                           // but doesn't require null terminated string if 'text_end' is specified.
+    // but doesn't require null terminated string if 'text_end' is specified.
     void Text(const char *fmt, ...) IM_FMTARGS(1); // formatted text
     void TextV(const char *fmt, va_list args) IM_FMTLIST(1);
-    void TextColored(const Vec4 &col, const char *fmt, ...)
+    void TextColored(const ::SF::Engine::Vec4 &col, const char *fmt, ...)
             IM_FMTARGS(2); // shortcut for PushStyleColor(ImGuiCol_Text, col); Text(fmt, ...); PopStyleColor();
-    void TextColoredV(const Vec4 &col, const char *fmt, va_list args) IM_FMTLIST(2);
+    void TextColoredV(const ::SF::Engine::Vec4 &col, const char *fmt, va_list args) IM_FMTLIST(2);
     void TextDisabled(const char *fmt, ...)
             IM_FMTARGS(1); // shortcut for PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]); Text(fmt,
-                           // ...); PopStyleColor();
+    // ...); PopStyleColor();
     void TextDisabledV(const char *fmt, va_list args) IM_FMTLIST(1);
     void TextWrapped(const char *fmt, ...)
             IM_FMTARGS(1); // shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this
-                           // won't work on an auto-resizing window if there's no other widgets to extend the window
-                           // width, yoy may need to set a size using SetNextWindowSize().
+    // won't work on an auto-resizing window if there's no other widgets to extend the window
+    // width, yoy may need to set a size using SetNextWindowSize().
     void TextWrappedV(const char *fmt, va_list args) IM_FMTLIST(1);
     void LabelText(const char *label, const char *fmt, ...)
             IM_FMTARGS(2); // display text+label aligned the same way as value+label widgets
@@ -726,14 +749,14 @@ namespace ImGui
 
     // Widgets: Main
     // - Most widgets return true when the value has been changed or when pressed/selected
-    // - You may also use one of the many IsItemXXX functions (e.g. IsItemActive, IsItemHovered, etc.) to query widget
-    // state.
-    bool Button(const char *label, const Vec2 &size = Vec2(0, 0)); // button
+    // - You may also use one of the many IsItemXXX functions (e.g. IsItemActive, IsItemHovered, etc.) to query
+    // widget state.
+    bool Button(const char *label, const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0)); // button
     bool SmallButton(const char *label); // button with (FramePadding.y == 0) to easily embed within text
-    bool InvisibleButton(const char *str_id, const Vec2 &size,
+    bool InvisibleButton(const char *str_id, const ::SF::Engine::Vec2 &size,
                          ImGuiButtonFlags flags =
                                  0); // flexible button behavior without the visuals, frequently useful to build custom
-                                     // behaviors using the public api (along with IsItemActive, IsItemHovered, etc.)
+    // behaviors using the public api (along with IsItemActive, IsItemHovered, etc.)
     bool ArrowButton(const char *str_id, ImGuiDir dir); // square button with an arrow shape
     bool Checkbox(const char *label, bool *v);
     bool CheckboxFlags(const char *label, int *flags, int flags_value);
@@ -742,9 +765,10 @@ namespace ImGui
                      bool active); // use with e.g. if (RadioButton("one", my_value==1)) { my_value = 1; }
     bool RadioButton(const char *label, int *v,
                      int v_button); // shortcut to handle the above pattern when value is an integer
-    void ProgressBar(float fraction, const Vec2 &size_arg = Vec2(-FLT_MIN, 0), const char *overlay = nullptr);
+    void ProgressBar(float fraction, const ::SF::Engine::Vec2 &size_arg = ::SF::Engine::Vec2(-FLT_MIN, 0),
+                     const char *overlay = nullptr);
     void Bullet(); // draw a small circle + keep the cursor on the same line. advance cursor x position by
-                   // GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses
+    // GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses
     bool TextLink(const char *label); // hyperlink text button, return true when clicked
     bool TextLinkOpenURL(const char *label,
                          const char *url = nullptr); // hyperlink text button, automatically open file/url when clicked
@@ -754,23 +778,29 @@ namespace ImGui
     // https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
     // - 'uv0' and 'uv1' are texture coordinates. Read about them from the same link above.
     // - Image() adds style.ImageBorderSize on each side, ImageButton() adds style.FramePadding on each side.
-    // - ImageButton() draws a background based on regular Button() color + optionally an inner background if specified.
-    // - An obsolete version of Image(), before 1.91.9 (March 2025), had a 'tint_col' parameter which is now supported
-    // by the ImageWithBg() function.
-    void Image(ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0 = Vec2(0, 0),
-               const Vec2 &uv1 = Vec2(1, 1));
-    void ImageWithBg(ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0 = Vec2(0, 0),
-                     const Vec2 &uv1 = Vec2(1, 1), const Vec4 &bg_col = Vec4(0, 0, 0, 0),
-                     const Vec4 &tint_col = Vec4(1, 1, 1, 1));
-    bool ImageButton(const char *str_id, ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0 = Vec2(0, 0),
-                     const Vec2 &uv1 = Vec2(1, 1), const Vec4 &bg_col = Vec4(0, 0, 0, 0),
-                     const Vec4 &tint_col = Vec4(1, 1, 1, 1));
+    // - ImageButton() draws a background based on regular Button() color + optionally an inner background if
+    // specified.
+    // - An obsolete version of Image(), before 1.91.9 (March 2025), had a 'tint_col' parameter which is now
+    // supported by the ImageWithBg() function.
+    void Image(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &image_size,
+               const ::SF::Engine::Vec2 &uv0 = ::SF::Engine::Vec2(0, 0),
+               const ::SF::Engine::Vec2 &uv1 = ::SF::Engine::Vec2(1, 1));
+    void ImageWithBg(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &image_size,
+                     const ::SF::Engine::Vec2 &uv0      = ::SF::Engine::Vec2(0, 0),
+                     const ::SF::Engine::Vec2 &uv1      = ::SF::Engine::Vec2(1, 1),
+                     const ::SF::Engine::Vec4 &bg_col   = ::SF::Engine::Vec4(0, 0, 0, 0),
+                     const ::SF::Engine::Vec4 &tint_col = ::SF::Engine::Vec4(1, 1, 1, 1));
+    bool ImageButton(const char *str_id, ImTextureRef tex_ref, const ::SF::Engine::Vec2 &image_size,
+                     const ::SF::Engine::Vec2 &uv0      = ::SF::Engine::Vec2(0, 0),
+                     const ::SF::Engine::Vec2 &uv1      = ::SF::Engine::Vec2(1, 1),
+                     const ::SF::Engine::Vec4 &bg_col   = ::SF::Engine::Vec4(0, 0, 0, 0),
+                     const ::SF::Engine::Vec4 &tint_col = ::SF::Engine::Vec4(1, 1, 1, 1));
 
     // Widgets: Combo Box (Dropdown)
-    // - The BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it, by
-    // creating e.g. Selectable() items.
-    // - The old Combo() api are helpers over BeginCombo()/EndCombo() which are kept available for convenience purpose.
-    // This is analogous to how ListBox are created.
+    // - The BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it,
+    // by creating e.g. Selectable() items.
+    // - The old Combo() api are helpers over BeginCombo()/EndCombo() which are kept available for convenience
+    // purpose. This is analogous to how ListBox are created.
     bool BeginCombo(const char *label, const char *preview_value, ImGuiComboFlags flags = 0);
     void EndCombo(); // only call EndCombo() if BeginCombo() returns true!
     bool Combo(const char *label, int *current_item, const char *const items[], int items_count,
@@ -782,26 +812,27 @@ namespace ImGui
                int items_count, int popup_max_height_in_items = -1);
 
     // Widgets: Drag Sliders
-    // - Ctrl+Click on any drag box to turn them into an input box. Manually input values aren't clamped by default and
-    // can go off-bounds. Use ImGuiSliderFlags_AlwaysClamp to always clamp.
-    // - For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every function, note that a 'float v[X]' function
-    // argument is the same as 'float* v',
-    //   the array syntax is just a way to document the number of elements that are expected to be accessible. You can
-    //   pass address of your first element out of a contiguous set, e.g. &myvector.x
-    // - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
-    // e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
+    // - Ctrl+Click on any drag box to turn them into an input box. Manually input values aren't clamped by default
+    // and can go off-bounds. Use ImGuiSliderFlags_AlwaysClamp to always clamp.
+    // - For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every function, note that a 'float v[X]'
+    // function argument is the same as 'float* v',
+    //   the array syntax is just a way to document the number of elements that are expected to be accessible. You
+    //   can pass address of your first element out of a contiguous set, e.g. &myvector.x
+    // - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display
+    // precision e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
     // - Format string may also be set to nullptr or use the default format ("%f" or "%d").
-    // - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
-    // For keyboard/gamepad navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision).
-    // - Use v_min < v_max to clamp edits to given limits. Note that Ctrl+Click manual input can override those limits
-    // if ImGuiSliderFlags_AlwaysClamp is not used.
-    // - Use v_max = FLT_MAX / INT_MAX etc to avoid clamping to a maximum, same with v_min = -FLT_MAX / INT_MIN to avoid
-    // clamping to a minimum.
-    // - We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes
-    // it easier to swap them.
-    // - Legacy: Pre-1.78 there are DragXXX() function signatures that take a final `float power=1.0f' argument instead
-    // of the `ImGuiSliderFlags flags=0' argument.
-    //   If you get a warning converting a float to ImGuiSliderFlags, read https://github.com/ocornut/imgui/issues/3361
+    // - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by
+    // 1). For keyboard/gamepad navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision).
+    // - Use v_min < v_max to clamp edits to given limits. Note that Ctrl+Click manual input can override those
+    // limits if ImGuiSliderFlags_AlwaysClamp is not used.
+    // - Use v_max = FLT_MAX / INT_MAX etc to avoid clamping to a maximum, same with v_min = -FLT_MAX / INT_MIN to
+    // avoid clamping to a minimum.
+    // - We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it
+    // makes it easier to swap them.
+    // - Legacy: Pre-1.78 there are DragXXX() function signatures that take a final `float power=1.0f' argument
+    // instead of the `ImGuiSliderFlags flags=0' argument.
+    //   If you get a warning converting a float to ImGuiSliderFlags, read
+    //   https://github.com/ocornut/imgui/issues/3361
     bool DragFloat(const char *label, float *v, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f,
                    const char *format = "%.3f", ImGuiSliderFlags flags = 0); // If v_min >= v_max we have no bound
     bool DragFloat2(const char *label, float v[2], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f,
@@ -832,17 +863,18 @@ namespace ImGui
                      ImGuiSliderFlags flags = 0);
 
     // Widgets: Regular Sliders
-    // - Ctrl+Click on any slider to turn them into an input box. Manually input values aren't clamped by default and
-    // can go off-bounds. Use ImGuiSliderFlags_AlwaysClamp to always clamp.
-    // - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
-    // e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
+    // - Ctrl+Click on any slider to turn them into an input box. Manually input values aren't clamped by default
+    // and can go off-bounds. Use ImGuiSliderFlags_AlwaysClamp to always clamp.
+    // - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display
+    // precision e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
     // - Format string may also be set to nullptr or use the default format ("%f" or "%d").
     // - Legacy: Pre-1.78 there are SliderXXX() function signatures that take a final `float power=1.0f' argument
     // instead of the `ImGuiSliderFlags flags=0' argument.
-    //   If you get a warning converting a float to ImGuiSliderFlags, read https://github.com/ocornut/imgui/issues/3361
+    //   If you get a warning converting a float to ImGuiSliderFlags, read
+    //   https://github.com/ocornut/imgui/issues/3361
     bool SliderFloat(const char *label, float *v, float v_min, float v_max, const char *format = "%.3f",
                      ImGuiSliderFlags flags = 0); // adjust format to decorate the value with a prefix or a suffix for
-                                                  // in-slider labels or unit display.
+    // in-slider labels or unit display.
     bool SliderFloat2(const char *label, float v[2], float v_min, float v_max, const char *format = "%.3f",
                       ImGuiSliderFlags flags = 0);
     bool SliderFloat3(const char *label, float v[3], float v_min, float v_max, const char *format = "%.3f",
@@ -863,12 +895,12 @@ namespace ImGui
                       const char *format = nullptr, ImGuiSliderFlags flags = 0);
     bool SliderScalarN(const char *label, ImGuiDataType data_type, void *p_data, int components, const void *p_min,
                        const void *p_max, const char *format = nullptr, ImGuiSliderFlags flags = 0);
-    bool VSliderFloat(const char *label, const Vec2 &size, float *v, float v_min, float v_max,
+    bool VSliderFloat(const char *label, const ::SF::Engine::Vec2 &size, float *v, float v_min, float v_max,
                       const char *format = "%.3f", ImGuiSliderFlags flags = 0);
-    bool VSliderInt(const char *label, const Vec2 &size, int *v, int v_min, int v_max, const char *format = "%d",
-                    ImGuiSliderFlags flags = 0);
-    bool VSliderScalar(const char *label, const Vec2 &size, ImGuiDataType data_type, void *p_data, const void *p_min,
-                       const void *p_max, const char *format = nullptr, ImGuiSliderFlags flags = 0);
+    bool VSliderInt(const char *label, const ::SF::Engine::Vec2 &size, int *v, int v_min, int v_max,
+                    const char *format = "%d", ImGuiSliderFlags flags = 0);
+    bool VSliderScalar(const char *label, const ::SF::Engine::Vec2 &size, ImGuiDataType data_type, void *p_data,
+                       const void *p_min, const void *p_max, const char *format = nullptr, ImGuiSliderFlags flags = 0);
 
     // Widgets: Input with Keyboard
     // - If you want to use InputText() with std::string or any custom dynamic string type, use the wrapper in
@@ -877,9 +909,9 @@ namespace ImGui
     // InputDouble etc.
     bool InputText(const char *label, char *buf, size_t buf_size, ImGuiInputTextFlags flags = 0,
                    ImGuiInputTextCallback callback = nullptr, void *user_data = nullptr);
-    bool InputTextMultiline(const char *label, char *buf, size_t buf_size, const Vec2 &size = Vec2(0, 0),
-                            ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr,
-                            void *user_data = nullptr);
+    bool InputTextMultiline(const char *label, char *buf, size_t buf_size,
+                            const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0), ImGuiInputTextFlags flags = 0,
+                            ImGuiInputTextCallback callback = nullptr, void *user_data = nullptr);
     bool InputTextWithHint(const char *label, const char *hint, char *buf, size_t buf_size,
                            ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr,
                            void *user_data = nullptr);
@@ -900,26 +932,27 @@ namespace ImGui
                       const void *p_step = nullptr, const void *p_step_fast = nullptr, const char *format = nullptr,
                       ImGuiInputTextFlags flags = 0);
 
-    // Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little color square that can be left-clicked
-    // to open a picker, and right-clicked to open an option menu.)
-    // - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a way
-    // to document the number of elements that are expected to be accessible.
+    // Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little color square that can be
+    // left-clicked to open a picker, and right-clicked to open an option menu.)
+    // - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a
+    // way to document the number of elements that are expected to be accessible.
     // - You can pass the address of a first float element out of a contiguous structure, e.g. &myvector.x
     bool ColorEdit3(const char *label, float col[3], ImGuiColorEditFlags flags = 0);
     bool ColorEdit4(const char *label, float col[4], ImGuiColorEditFlags flags = 0);
     bool ColorPicker3(const char *label, float col[3], ImGuiColorEditFlags flags = 0);
     bool ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags flags = 0, const float *ref_col = nullptr);
-    bool ColorButton(const char *desc_id, const Vec4 &col, ImGuiColorEditFlags flags = 0,
-                     const Vec2 &size =
-                             Vec2(0, 0)); // display a color square/button, hover for details, return true when pressed.
+    bool ColorButton(const char *desc_id, const ::SF::Engine::Vec4 &col, ImGuiColorEditFlags flags = 0,
+                     const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(
+                             0, 0)); // display a color square/button, hover for details, return true when pressed.
 
     // Widgets: Trees
-    // - TreeNode functions return true when the node is open, in which case you need to also call TreePop() when you
-    // are finished displaying the tree node contents.
+    // - TreeNode functions return true when the node is open, in which case you need to also call TreePop() when
+    // you are finished displaying the tree node contents.
     bool TreeNode(const char *label);
-    bool TreeNode(const char *str_id, const char *fmt, ...) IM_FMTARGS(
-            2); // helper variation to easily decorrelate the id from the displayed string. Read the FAQ about why and
-                // how to use ID. to align arbitrary text at the same level as a TreeNode() you can use Bullet().
+    bool TreeNode(const char *str_id, const char *fmt, ...)
+            IM_FMTARGS(2); // helper variation to easily decorrelate the id from the displayed string. Read the FAQ
+                           // about why and
+    // how to use ID. to align arbitrary text at the same level as a TreeNode() you can use Bullet().
     bool TreeNode(const void *ptr_id, const char *fmt, ...) IM_FMTARGS(2); // "
     bool TreeNodeV(const char *str_id, const char *fmt, va_list args) IM_FMTLIST(2);
     bool TreeNodeV(const void *ptr_id, const char *fmt, va_list args) IM_FMTLIST(2);
@@ -929,72 +962,72 @@ namespace ImGui
     bool TreeNodeExV(const char *str_id, ImGuiTreeNodeFlags flags, const char *fmt, va_list args) IM_FMTLIST(3);
     bool TreeNodeExV(const void *ptr_id, ImGuiTreeNodeFlags flags, const char *fmt, va_list args) IM_FMTLIST(3);
     void TreePush(const char *str_id); // ~ Indent()+PushID(). Already called by TreeNode() when returning true, but you
-                                       // can call TreePush/TreePop yourself if desired.
+    // can call TreePush/TreePop yourself if desired.
     void TreePush(const void *ptr_id); // "
     void TreePop();                    // ~ Unindent()+PopID()
     float GetTreeNodeToLabelSpacing(); // horizontal distance preceding label when using TreeNode*() or Bullet() ==
-                                       // (g.FontSize + style.FramePadding.x*2) for a regular unframed TreeNode
+    // (g.FontSize + style.FramePadding.x*2) for a regular unframed TreeNode
     bool CollapsingHeader(const char *label,
                           ImGuiTreeNodeFlags flags = 0); // if returning 'true' the header is open. doesn't indent nor
-                                                         // push on ID stack. user doesn't have to call TreePop().
+    // push on ID stack. user doesn't have to call TreePop().
     bool CollapsingHeader(
             const char *label, bool *p_visible,
             ImGuiTreeNodeFlags flags = 0); // when 'p_visible != nullptr': if '*p_visible==true' display an additional
-                                           // small close button on upper right of the header which will set the bool to
-                                           // false when clicked, if '*p_visible==false' don't display the header.
+    // small close button on upper right of the header which will set the bool to
+    // false when clicked, if '*p_visible==false' don't display the header.
     void SetNextItemOpen(bool is_open, ImGuiCond cond = 0); // set next TreeNode/CollapsingHeader open state.
-    void SetNextItemStorageID(ImGuiID storage_id); // set id to use for open/close storage (default to same as item id).
-    bool TreeNodeGetOpen(ImGuiID storage_id);      // retrieve tree node open/close state.
+    void SetNextItemStorageID(IdType storage_id); // set id to use for open/close storage (default to same as item id).
+    bool TreeNodeGetOpen(IdType storage_id);      // retrieve tree node open/close state.
 
     // Widgets: Selectables
     // - A selectable highlights when hovered, and can display another color when selected.
-    // - Neighbors selectable extend their highlight bounds in order to leave no gap between them. This is so a series
-    // of selected Selectable appear contiguous.
-    bool
-    Selectable(const char *label, bool selected = false, ImGuiSelectableFlags flags = 0,
-               const Vec2 &size = Vec2(
-                       0, 0)); // "bool selected" carry the selection state (read-only). Selectable() is clicked is
-                               // returns true so you can modify your selection state. size.x==0.0: use remaining width,
-                               // size.x>0.0: specify width. size.y==0.0: use label height, size.y>0.0: specify height
-    bool
-    Selectable(const char *label, bool *p_selected, ImGuiSelectableFlags flags = 0,
-               const Vec2 &size = Vec2(
-                       0, 0)); // "bool* p_selected" point to the selection state (read-write), as a convenient helper.
+    // - Neighbors selectable extend their highlight bounds in order to leave no gap between them. This is so a
+    // series of selected Selectable appear contiguous.
+    bool Selectable(const char *label, bool selected = false, ImGuiSelectableFlags flags = 0,
+                    const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(
+                            0, 0)); // "bool selected" carry the selection state (read-only). Selectable() is clicked is
+    // returns true so you can modify your selection state. size.x==0.0: use remaining width,
+    // size.x>0.0: specify width. size.y==0.0: use label height, size.y>0.0: specify height
+    bool Selectable(
+            const char *label, bool *p_selected, ImGuiSelectableFlags flags = 0,
+            const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0)); // "bool* p_selected" point to the selection
+                                                                        // state (read-write), as a convenient helper.
 
     // Multi-selection system for Selectable(), Checkbox(), TreeNode() functions [BETA]
-    // - This enables standard multi-selection/range-selection idioms (Ctrl+Mouse/Keyboard, Shift+Mouse/Keyboard, etc.)
-    // in a way that also allow a clipper to be used.
-    // - ImGuiSelectionUserData is often used to store your item index within the current view (but may store something
-    // else).
+    // - This enables standard multi-selection/range-selection idioms (Ctrl+Mouse/Keyboard, Shift+Mouse/Keyboard,
+    // etc.) in a way that also allow a clipper to be used.
+    // - ImGuiSelectionUserData is often used to store your item index within the current view (but may store
+    // something else).
     // - Read comments near ImGuiMultiSelectIO for instructions/details and see 'Demo->Widgets->Selection State &
     // Multi-Select' for demo.
     // - TreeNode() is technically supported but... using this correctly is more complicated. You need some sort of
     // linear/random access to your tree,
-    //   which is suited to advanced trees setups already implementing filters and clipper. We will work simplifying the
-    //   current demo.
-    // - 'selection_size' and 'items_count' parameters are optional and used by a few features. If they are costly for
-    // you to compute, you may avoid them.
+    //   which is suited to advanced trees setups already implementing filters and clipper. We will work simplifying
+    //   the current demo.
+    // - 'selection_size' and 'items_count' parameters are optional and used by a few features. If they are costly
+    // for you to compute, you may avoid them.
     ImGuiMultiSelectIO *BeginMultiSelect(ImGuiMultiSelectFlags flags, int selection_size = -1, int items_count = -1);
     ImGuiMultiSelectIO *EndMultiSelect();
     void SetNextItemSelectionUserData(ImGuiSelectionUserData selection_user_data);
     bool IsItemToggledSelection(); // Was the last item selection state toggled? Useful if you need the per-item
-                                   // information _before_ reaching EndMultiSelect(). We only returns toggle _event_ in
-                                   // order to handle clipping correctly.
+    // information _before_ reaching EndMultiSelect(). We only returns toggle _event_ in
+    // order to handle clipping correctly.
 
     // Widgets: List Boxes
-    // - This is essentially a thin wrapper to using BeginChild/EndChild with the ImGuiChildFlags_FrameStyle flag for
-    // stylistic changes + displaying a label.
-    // - If you don't need a label you can probably simply use BeginChild() with the ImGuiChildFlags_FrameStyle flag for
-    // the same result.
-    // - You can submit contents and manage your selection state however you want it, by creating e.g. Selectable() or
-    // any other items.
+    // - This is essentially a thin wrapper to using BeginChild/EndChild with the ImGuiChildFlags_FrameStyle flag
+    // for stylistic changes + displaying a label.
+    // - If you don't need a label you can probably simply use BeginChild() with the ImGuiChildFlags_FrameStyle flag
+    // for the same result.
+    // - You can submit contents and manage your selection state however you want it, by creating e.g. Selectable()
+    // or any other items.
     // - The simplified/old ListBox() api are helpers over BeginListBox()/EndListBox() which are kept available for
     // convenience purpose. This is analogous to how Combos are created.
     // - Choose frame width:   size.x > 0.0f: custom  /  size.x < 0.0f or -FLT_MIN: right-align   /  size.x = 0.0f
     // (default): use current ItemWidth
     // - Choose frame height:  size.y > 0.0f: custom  /  size.y < 0.0f or -FLT_MIN: bottom-align  /  size.y = 0.0f
     // (default): arbitrary default height which can fit ~7 items
-    bool BeginListBox(const char *label, const Vec2 &size = Vec2(0, 0)); // open a framed scrolling region
+    bool BeginListBox(const char *label,
+                      const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0)); // open a framed scrolling region
     void EndListBox(); // only call EndListBox() if BeginListBox() returned true!
     bool ListBox(const char *label, int *current_item, const char *const items[], int items_count,
                  int height_in_items = -1);
@@ -1005,20 +1038,21 @@ namespace ImGui
     // - Consider using ImPlot (https://github.com/epezent/implot) which is much better!
     void PlotLines(const char *label, const float *values, int values_count, int values_offset = 0,
                    const char *overlay_text = nullptr, float scale_min = FLT_MAX, float scale_max = FLT_MAX,
-                   Vec2 graph_size = Vec2(0, 0), int stride = sizeof(float));
+                   ::SF::Engine::Vec2 graph_size = ::SF::Engine::Vec2(0, 0), int stride = sizeof(float));
     void PlotLines(const char *label, float (*values_getter)(void *data, int idx), void *data, int values_count,
                    int values_offset = 0, const char *overlay_text = nullptr, float scale_min = FLT_MAX,
-                   float scale_max = FLT_MAX, Vec2 graph_size = Vec2(0, 0));
+                   float scale_max = FLT_MAX, ::SF::Engine::Vec2 graph_size = ::SF::Engine::Vec2(0, 0));
     void PlotHistogram(const char *label, const float *values, int values_count, int values_offset = 0,
                        const char *overlay_text = nullptr, float scale_min = FLT_MAX, float scale_max = FLT_MAX,
-                       Vec2 graph_size = Vec2(0, 0), int stride = sizeof(float));
+                       ::SF::Engine::Vec2 graph_size = ::SF::Engine::Vec2(0, 0), int stride = sizeof(float));
     void PlotHistogram(const char *label, float (*values_getter)(void *data, int idx), void *data, int values_count,
                        int values_offset = 0, const char *overlay_text = nullptr, float scale_min = FLT_MAX,
-                       float scale_max = FLT_MAX, Vec2 graph_size = Vec2(0, 0));
+                       float scale_max = FLT_MAX, ::SF::Engine::Vec2 graph_size = ::SF::Engine::Vec2(0, 0));
 
     // Widgets: Value() Helpers.
-    // - Those are merely shortcut to calling Text() with a format string. Output single value in "name: value" format
-    // (tip: freely declare more in your code to handle your types. you can add functions to the ImGui namespace)
+    // - Those are merely shortcut to calling Text() with a format string. Output single value in "name: value"
+    // format (tip: freely declare more in your code to handle your types. you can add functions to the ImGui
+    // namespace)
     void Value(const char *prefix, bool b);
     void Value(const char *prefix, int v);
     void Value(const char *prefix, unsigned int v);
@@ -1029,11 +1063,11 @@ namespace ImGui
     // - Use BeginMainMenuBar() to create a menu bar at the top of the screen and append to it.
     // - Use BeginMenu() to create a menu. You can call BeginMenu() multiple time with the same identifier to append
     // more items to it.
-    // - Note that MenuItem() keyboard shortcuts are displayed as a convenience but _not processed_ by Dear ImGui at the
-    // moment.
+    // - Note that MenuItem() keyboard shortcuts are displayed as a convenience but _not processed_ by Dear ImGui at
+    // the moment.
     bool BeginMenuBar(); // append to menu-bar of current window (requires ImGuiWindowFlags_MenuBar flag set on parent
-                         // window).
-    void EndMenuBar();   // only call EndMenuBar() if BeginMenuBar() returns true!
+    // window).
+    void EndMenuBar();       // only call EndMenuBar() if BeginMenuBar() returns true!
     bool BeginMainMenuBar(); // create and append to a full screen menu-bar.
     void EndMainMenuBar();   // only call EndMainMenuBar() if BeginMainMenuBar() returns true!
     bool BeginMenu(const char *label,
@@ -1047,40 +1081,40 @@ namespace ImGui
     // Tooltips
     // - Tooltips are windows following the mouse. They do not take focus away.
     // - A tooltip window can contain items of any types.
-    // - SetTooltip() is more or less a shortcut for the 'if (BeginTooltip()) { Text(...); EndTooltip(); }' idiom (with
-    // a subtlety that it discard any previously submitted tooltip)
+    // - SetTooltip() is more or less a shortcut for the 'if (BeginTooltip()) { Text(...); EndTooltip(); }' idiom
+    // (with a subtlety that it discard any previously submitted tooltip)
     bool BeginTooltip(); // begin/append a tooltip window.
     void EndTooltip();   // only call EndTooltip() if BeginTooltip()/BeginItemTooltip() returns true!
     void SetTooltip(const char *fmt, ...)
             IM_FMTARGS(1); // set a text-only tooltip. Often used after a ImGui::IsItemHovered() check. Override any
-                           // previous call to SetTooltip().
+    // previous call to SetTooltip().
     void SetTooltipV(const char *fmt, va_list args) IM_FMTLIST(1);
 
     // Tooltips: helpers for showing a tooltip when hovering an item
-    // - BeginItemTooltip() is a shortcut for the 'if (IsItemHovered(ImGuiHoveredFlags_ForTooltip) && BeginTooltip())'
-    // idiom.
-    // - SetItemTooltip() is a shortcut for the 'if (IsItemHovered(ImGuiHoveredFlags_ForTooltip)) { SetTooltip(...); }'
-    // idiom.
+    // - BeginItemTooltip() is a shortcut for the 'if (IsItemHovered(ImGuiHoveredFlags_ForTooltip) &&
+    // BeginTooltip())' idiom.
+    // - SetItemTooltip() is a shortcut for the 'if (IsItemHovered(ImGuiHoveredFlags_ForTooltip)) { SetTooltip(...);
+    // }' idiom.
     // - Where 'ImGuiHoveredFlags_ForTooltip' itself is a shortcut to use 'style.HoverFlagsForTooltipMouse' or
     // 'style.HoverFlagsForTooltipNav' depending on active input type. For mouse it defaults to
     // 'ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayShort'.
     bool BeginItemTooltip(); // begin/append a tooltip window if preceding item was hovered.
-    void SetItemTooltip(const char *fmt, ...) IM_FMTARGS(
-            1); // set a text-only tooltip if preceding item was hovered. override any previous call to SetTooltip().
+    void SetItemTooltip(const char *fmt, ...) IM_FMTARGS(1); // set a text-only tooltip if preceding item was
+                                                             // hovered. override any previous call to SetTooltip().
     void SetItemTooltipV(const char *fmt, va_list args) IM_FMTLIST(1);
 
     // Popups, Modals
     //  - They block normal mouse hovering detection (and therefore most mouse interactions) behind them.
     //  - If not modal: they can be closed by clicking anywhere outside them, or by pressing Escape (call
     //  'Shortcut(ImGuiKey_Escape)' to claim a higher-priority shortcut).
-    //  - Their visibility state (~bool) is held internally instead of being held by the programmer as we are used to
-    //  with regular Begin*() calls.
-    //  - The 3 properties above are related: we need to retain popup visibility state in the library because popups may
-    //  be closed as any time.
+    //  - Their visibility state (~bool) is held internally instead of being held by the programmer as we are used
+    //  to with regular Begin*() calls.
+    //  - The 3 properties above are related: we need to retain popup visibility state in the library because popups
+    //  may be closed as any time.
     //  - You can bypass the hovering restriction by using ImGuiHoveredFlags_AllowWhenBlockedByPopup when calling
     //  IsItemHovered() or IsWindowHovered().
-    //  - IMPORTANT: Popup identifiers are relative to the current ID stack, so OpenPopup and BeginPopup generally needs
-    //  to be at the same level of the stack.
+    //  - IMPORTANT: Popup identifiers are relative to the current ID stack, so OpenPopup and BeginPopup generally
+    //  needs to be at the same level of the stack.
     //    This is sometimes leading to confusing mistakes. May rework this in the future.
     //  - BeginPopup(): query popup state, if open start appending into the window. Call EndPopup() afterwards if
     //  returned true. ImGuiWindowFlags are forwarded to the window.
@@ -1096,25 +1130,27 @@ namespace ImGui
 
     // Popups: open/close functions
     //  - OpenPopup(): set popup state to open (unless one of the specified ImGuiPopupFlags prevent opening).
-    //  - OpenPopupXXX() functions return true when the popup is toggled open, which allows you to capture local state
-    //  if needed.
-    //    You may also call IsWindowAppearing() inside the later BeginPopup() scope if you need to prepare/compute data
-    //    for the popup.
+    //  - OpenPopupXXX() functions return true when the popup is toggled open, which allows you to capture local
+    //  state if needed.
+    //    You may also call IsWindowAppearing() inside the later BeginPopup() scope if you need to prepare/compute
+    //    data for the popup.
     //  - If not modal: they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
     //  - CloseCurrentPopup(): use inside the BeginPopup()/EndPopup() scope to close manually.
-    //  - CloseCurrentPopup() is called by default by Selectable()/MenuItem() when activated (FIXME: need some options).
-    //  - Use ImGuiPopupFlags_NoOpenOverExistingPopup to avoid opening a popup if there's already one at the same level.
-    //  This is equivalent to e.g. testing for !IsAnyPopupOpen() prior to OpenPopup().
+    //  - CloseCurrentPopup() is called by default by Selectable()/MenuItem() when activated (FIXME: need some
+    //  options).
+    //  - Use ImGuiPopupFlags_NoOpenOverExistingPopup to avoid opening a popup if there's already one at the same
+    //  level. This is equivalent to e.g. testing for !IsAnyPopupOpen() prior to OpenPopup().
     //  - Use IsWindowAppearing() after BeginPopup() to tell if a window just opened.
     bool OpenPopup(const char *str_id,
                    ImGuiPopupFlags popup_flags = 0); // call to mark popup as open (don't call every frame!).
-    bool OpenPopup(ImGuiID id, ImGuiPopupFlags popup_flags = 0); // id overload to facilitate calling from nested stacks
-    bool OpenPopupOnItemClick(
-            const char *str_id          = nullptr,
-            ImGuiPopupFlags popup_flags = 0); // helper to open popup when clicked on last item. Default to
-                                              // ImGuiPopupFlags_MouseButtonRight == 1. (note: actually triggers on the
-                                              // mouse _released_ event to be consistent with popup behaviors)
-    void CloseCurrentPopup();                 // manually close the popup we have begin-ed into.
+    bool OpenPopup(IdType id,
+                   ImGuiPopupFlags popup_flags = 0); // id overload to facilitate calling from nested stacks
+    bool
+    OpenPopupOnItemClick(const char *str_id          = nullptr,
+                         ImGuiPopupFlags popup_flags = 0); // helper to open popup when clicked on last item. Default to
+    // ImGuiPopupFlags_MouseButtonRight == 1. (note: actually triggers on the
+    // mouse _released_ event to be consistent with popup behaviors)
+    void CloseCurrentPopup(); // manually close the popup we have begin-ed into.
 
     // Popups: Open+Begin popup combined functions helpers to create context menus.
     //  - Helpers to do OpenPopup+BeginPopup where the Open action is triggered by e.g. hovering an item and
@@ -1130,15 +1166,15 @@ namespace ImGui
     //    - After: The default = 0 means ImGuiPopupFlags_MouseButtonRight. Explicitly passing a literal 1 also means
     //    ImGuiPopupFlags_MouseButtonRight (if legacy behavior are enabled) or will assert (if legacy behavior are
     //    disabled).
-    //    - TL;DR: if you don't want to use right mouse button for popups, always specify it explicitly using a named
-    //    ImGuiPopupFlags_MouseButtonXXXX value.
-    //    - Read "API BREAKING CHANGES" 2026/01/07 (1.92.6) entry in imgui.cpp or GitHub topic #9157 for all details.
-    bool
-    BeginPopupContextItem(const char *str_id = nullptr,
-                          ImGuiPopupFlags popup_flags =
-                                  0); // open+begin popup when clicked on last item. Use str_id==nullptr to associate
-                                      // the popup to previous item. If you want to use that on a non-interactive item
-                                      // such as Text() you need to pass in an explicit ID here. read comments in .cpp!
+    //    - TL;DR: if you don't want to use right mouse button for popups, always specify it explicitly using a
+    //    named ImGuiPopupFlags_MouseButtonXXXX value.
+    //    - Read "API BREAKING CHANGES" 2026/01/07 (1.92.6) entry in imgui.cpp or GitHub topic #9157 for all
+    //    details.
+    bool BeginPopupContextItem(const char *str_id          = nullptr,
+                               ImGuiPopupFlags popup_flags = 0); // open+begin popup when clicked on last item. Use
+                                                                 // str_id==nullptr to associate
+    // the popup to previous item. If you want to use that on a non-interactive item
+    // such as Text() you need to pass in an explicit ID here. read comments in .cpp!
     bool BeginPopupContextWindow(const char *str_id          = nullptr,
                                  ImGuiPopupFlags popup_flags = 0); // open+begin popup when clicked on current window.
     bool BeginPopupContextVoid(
@@ -1147,8 +1183,8 @@ namespace ImGui
 
     // Popups: query functions
     //  - IsPopupOpen(): return true if the popup is open at the current BeginPopup() level of the popup stack.
-    //  - IsPopupOpen() with ImGuiPopupFlags_AnyPopupId: return true if any popup is open at the current BeginPopup()
-    //  level of the popup stack.
+    //  - IsPopupOpen() with ImGuiPopupFlags_AnyPopupId: return true if any popup is open at the current
+    //  BeginPopup() level of the popup stack.
     //  - IsPopupOpen() with ImGuiPopupFlags_AnyPopupId + ImGuiPopupFlags_AnyPopupLevel: return true if any popup is
     //  open.
     bool IsPopupOpen(const char *str_id, ImGuiPopupFlags flags = 0); // return true if the popup is open.
@@ -1167,94 +1203,100 @@ namespace ImGui
     //    - If you are using tables as a sort of grid, where every column is holding the same type of contents,
     //      you may prefer using TableNextColumn() instead of TableNextRow() + TableSetColumnIndex().
     //      TableNextColumn() will automatically wrap-around into the next row if needed.
-    //    - IMPORTANT: Comparatively to the old Columns() API, we need to call TableNextColumn() for the first column!
+    //    - IMPORTANT: Comparatively to the old Columns() API, we need to call TableNextColumn() for the first
+    //    column!
     //    - Summary of possible call flow:
-    //        - TableNextRow() -> TableSetColumnIndex(0) -> Text("Hello 0") -> TableSetColumnIndex(1) -> Text("Hello 1")
+    //        - TableNextRow() -> TableSetColumnIndex(0) -> Text("Hello 0") -> TableSetColumnIndex(1) -> Text("Hello
+    //        1")
     //        // OK
-    //        - TableNextRow() -> TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello 1")
+    //        - TableNextRow() -> TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello
+    //        1")
     //        // OK
-    //        -                   TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello 1")
+    //        -                   TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello
+    //        1")
     //        // OK: TableNextColumn() automatically gets to next row!
-    //        - TableNextRow()                           -> Text("Hello 0") // Not OK! Missing TableSetColumnIndex() or
-    //        TableNextColumn()! Text will not appear!
+    //        - TableNextRow()                           -> Text("Hello 0") // Not OK! Missing TableSetColumnIndex()
+    //        or TableNextColumn()! Text will not appear!
     // - 5. Call EndTable()
     bool BeginTable(const char *str_id, int columns, ImGuiTableFlags flags = 0,
-                    const Vec2 &outer_size = Vec2(0.0f, 0.0f), float inner_width = 0.0f);
+                    const ::SF::Engine::Vec2 &outer_size = ::SF::Engine::Vec2(0.0f, 0.0f), float inner_width = 0.0f);
     void EndTable(); // only call EndTable() if BeginTable() returns true!
     void TableNextRow(ImGuiTableRowFlags row_flags = 0,
                       float min_row_height = 0.0f); // append into the first cell of a new row. 'min_row_height' include
-                                                    // the minimum top and bottom padding aka CellPadding.y * 2.0f.
+    // the minimum top and bottom padding aka CellPadding.y * 2.0f.
     bool TableNextColumn(); // append into the next column (or first column of next row if currently in last column).
-                            // Return true when column is visible.
+    // Return true when column is visible.
     bool TableSetColumnIndex(int column_n); // append into the specified column. Return true when column is visible.
 
     // Tables: Headers & Columns declaration
     // - Use TableSetupColumn() to specify label, resizing policy, default width/weight, various other flags etc.
-    //   (the trailing 'ImGuiID user_data', which used to be referred to as 'ImGuiID user_id', is merely user data that
-    //   is blindly copied in ImGuiTableColumnSortSpecs).
+    //   (the trailing 'IdType user_data', which used to be referred to as 'IdType user_id', is merely user data
+    //   that is blindly copied in ImGuiTableColumnSortSpecs).
     // - Use TableHeadersRow() to create a header row and automatically submit a TableHeader() for each column.
     //   Headers are required to perform: reordering, sorting, and opening the context menu.
     //   The context menu can also be made available in columns body using ImGuiTableFlags_ContextMenuInBody.
     // - You may manually submit headers using TableNextRow() + TableHeader() calls, but this is only useful in
     //   some advanced use cases (e.g. adding custom widgets in header row).
-    // - Use TableSetupScrollFreeze() to lock columns/rows so they stay visible when scrolled. When freezing columns you
-    // would usually also use ImGuiTableColumnFlags_NoHide on them.
+    // - Use TableSetupScrollFreeze() to lock columns/rows so they stay visible when scrolled. When freezing columns
+    // you would usually also use ImGuiTableColumnFlags_NoHide on them.
     void TableSetupColumn(const char *label, ImGuiTableColumnFlags flags = 0, float init_width_or_weight = 0.0f,
-                          ImGuiID user_data = 0);
+                          IdType user_data = 0);
     void TableSetupScrollFreeze(int cols, int rows); // lock columns/rows so they stay visible when scrolled.
     void TableHeader(const char *label);             // submit one header cell manually (rarely used)
     void TableHeadersRow(); // submit a row with headers cells based on data provided to TableSetupColumn() + submit
-                            // context menu
+    // context menu
     void TableAngledHeadersRow(); // submit a row with angled headers for every column with the
-                                  // ImGuiTableColumnFlags_AngledHeader flag. MUST BE FIRST ROW.
+    // ImGuiTableColumnFlags_AngledHeader flag. MUST BE FIRST ROW.
 
     // Tables: Sorting & Miscellaneous functions
     // - Sorting: call TableGetSortSpecs() to retrieve latest sort specs for the table. nullptr when not sorting.
     //   When 'sort_specs->SpecsDirty == true' you should sort your data. It will be true when sorting specs have
     //   changed since last call, or the first time. Make sure to set 'SpecsDirty = false' after sorting,
     //   else you may wastefully sort your data every frame!
-    // - Functions args 'int column_n' treat the default value of -1 as the same as passing the current column index.
-    ImGuiTableSortSpecs *
-    TableGetSortSpecs(); // get latest sort specs for the table (nullptr if not sorting).  Lifetime: don't hold on this
-                         // pointer over multiple frames or past any subsequent call to BeginTable().
+    // - Functions args 'int column_n' treat the default value of -1 as the same as passing the current column
+    // index.
+    ImGuiTableSortSpecs *TableGetSortSpecs(); // get latest sort specs for the table (nullptr if not sorting).
+                                              // Lifetime: don't hold on this
+    // pointer over multiple frames or past any subsequent call to BeginTable().
     int TableGetColumnCount();                         // return number of columns (value passed to BeginTable)
     int TableGetColumnIndex();                         // return current column index.
     int TableGetRowIndex();                            // return current row index (header rows are accounted for)
     const char *TableGetColumnName(int column_n = -1); // return "" if column didn't have a name declared by
-                                                       // TableSetupColumn(). Pass -1 to use current column.
+    // TableSetupColumn(). Pass -1 to use current column.
     ImGuiTableColumnFlags
     TableGetColumnFlags(int column_n = -1); // return column flags so you can query their Enabled/Visible/Sorted/Hovered
-                                            // status flags. Pass -1 to use current column.
+    // status flags. Pass -1 to use current column.
     void
     TableSetColumnEnabled(int column_n,
                           bool v); // change user accessible enabled/disabled state of a column. Set to false to hide
-                                   // the column. User can use the context menu to change this themselves (right-click
-                                   // in headers, or right-click in columns body with ImGuiTableFlags_ContextMenuInBody)
+    // the column. User can use the context menu to change this themselves (right-click
+    // in headers, or right-click in columns body with ImGuiTableFlags_ContextMenuInBody)
     int TableGetHoveredColumn(); // return hovered column. return -1 when table is not hovered. return columns_count if
-                                 // the unused space at the right of visible columns is hovered. Can also use
-                                 // (TableGetColumnFlags() & ImGuiTableColumnFlags_IsHovered) instead.
+    // the unused space at the right of visible columns is hovered. Can also use
+    // (TableGetColumnFlags() & ImGuiTableColumnFlags_IsHovered) instead.
     void TableSetBgColor(ImGuiTableBgTarget target, uint32_t color,
                          int column_n = -1); // change the color of a cell, row, or column. See ImGuiTableBgTarget_
-                                             // flags for details.
+    // flags for details.
 
     // Legacy Columns API (prefer using Tables!)
     // - You can also use SameLine(pos_x) to mimic simplified columns.
     void Columns(int count = 1, const char *id = nullptr, bool borders = true);
     void NextColumn();    // next column, defaults to current row or next row if the current row is finished
     int GetColumnIndex(); // get current column index
-    float GetColumnWidth(int column_index = -1);        // get column width (in pixels). pass -1 to use current column
-    void SetColumnWidth(int column_index, float width); // set column width (in pixels). pass -1 to use current column
+    float GetColumnWidth(int column_index = -1); // get column width (in pixels). pass -1 to use current column
+    void SetColumnWidth(int column_index,
+                        float width);             // set column width (in pixels). pass -1 to use current column
     float GetColumnOffset(int column_index = -1); // get position of column line (in pixels, from the left side of the
-                                                  // contents region). pass -1 to use current column, otherwise
-                                                  // 0..GetColumnsCount() inclusive. column 0 is typically 0.0f
+    // contents region). pass -1 to use current column, otherwise
+    // 0..GetColumnsCount() inclusive. column 0 is typically 0.0f
     void SetColumnOffset(int column_index,
                          float offset_x); // set position of column line (in pixels, from the left side of the contents
-                                          // region). pass -1 to use current column
+    // region). pass -1 to use current column
     int GetColumnsCount();
 
     // Tab Bars, Tabs
-    // - Note: Tabs are automatically created by the docking system (when in 'docking' branch). Use this to create tab
-    // bars/tabs yourself.
+    // - Note: Tabs are automatically created by the docking system (when in 'docking' branch). Use this to create
+    // tab bars/tabs yourself.
     bool BeginTabBar(const char *str_id, ImGuiTabBarFlags flags = 0); // create and append into a TabBar
     void EndTabBar(); // only call EndTabBar() if BeginTabBar() returns true!
     bool BeginTabItem(const char *label, bool *p_open = nullptr,
@@ -1262,12 +1304,12 @@ namespace ImGui
     void EndTabItem();                              // only call EndTabItem() if BeginTabItem() returns true!
     bool TabItemButton(const char *label,
                        ImGuiTabItemFlags flags = 0); // create a Tab behaving like a button. return true when clicked.
-                                                     // cannot be selected in the tab bar.
+    // cannot be selected in the tab bar.
     void SetTabItemClosed(
             const char *tab_or_docked_window_label); // notify TabBar or Docking system of a closed tab/window ahead
-                                                     // (useful to reduce visual flicker on reorderable tab bars). For
-                                                     // tab-bar: call after BeginTabBar() and before Tab submissions.
-                                                     // Otherwise call with a window name.
+    // (useful to reduce visual flicker on reorderable tab bars). For
+    // tab-bar: call after BeginTabBar() and before Tab submissions.
+    // Otherwise call with a window name.
 
     // Docking
     // - Read https://github.com/ocornut/imgui/wiki/Docking for details.
@@ -1278,12 +1320,11 @@ namespace ImGui
     //   - When io.ConfigDockingWithShift == true, you instead need to hold SHIFT to enable docking.
     // - DockSpaceOverViewport:
     //   - This is a helper to create an invisible window covering a viewport, then submit a DockSpace() into it.
-    //   - Most applications can simply call DockSpaceOverViewport() once to allow docking windows into e.g. the edge of
-    //   your screen.
-    //     e.g. ImGui::NewFrame(); ImGui::DockSpaceOverViewport();                                                   //
-    //     Create a dockspace in main viewport.
-    //      or: ImGui::NewFrame(); ImGui::DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_PassthruCentralNode); //
-    //      Create a dockspace in main viewport, central node is transparent.
+    //   - Most applications can simply call DockSpaceOverViewport() once to allow docking windows into e.g. the
+    //   edge of your screen.
+    //     e.g. ImGui::NewFrame(); ImGui::DockSpaceOverViewport(); // Create a dockspace in main viewport.
+    //      or: ImGui::NewFrame(); ImGui::DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
+    //      // Create a dockspace in main viewport, central node is transparent.
     // - Dockspaces:
     //   - A dockspace is an explicit dock node within an existing window.
     //   - IMPORTANT: Dockspaces need to be submitted _before_ any window they can host. Submit them early in your
@@ -1295,17 +1336,16 @@ namespace ImGui
     // - Programmatic docking:
     //   - There is no public API yet other than the very limited SetNextWindowDockID() function. Sorry for that!
     //   - Read https://github.com/ocornut/imgui/wiki/Docking for examples of how to use current internal API.
-    ImGuiID DockSpace(ImGuiID dockspace_id, const Vec2 &size = Vec2(0, 0), ImGuiDockNodeFlags flags = 0,
-                      const ImGuiWindowClass *window_class = nullptr);
-    ImGuiID DockSpaceOverViewport(ImGuiID dockspace_id = 0, const ImGuiViewport *viewport = nullptr,
-                                  ImGuiDockNodeFlags flags = 0, const ImGuiWindowClass *window_class = nullptr);
-    void SetNextWindowDockID(ImGuiID dock_id, ImGuiCond cond = 0); // set next window dock id
-    void SetNextWindowClass(
-            const ImGuiWindowClass
-                    *window_class); // set next window class (control docking compatibility + provide hints to platform
-                                    // backend via custom viewport flags and platform parent/child relationship)
-    ImGuiID GetWindowDockID();      // get dock id of current window, or 0 if not associated to any docking node.
-    bool IsWindowDocked();          // is current window docked into another window?
+    IdType DockSpace(IdType dockspace_id, const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0),
+                     ImGuiDockNodeFlags flags = 0, const ImGuiWindowClass *window_class = nullptr);
+    IdType DockSpaceOverViewport(IdType dockspace_id = 0, const ImGuiViewport *viewport = nullptr,
+                                 ImGuiDockNodeFlags flags = 0, const ImGuiWindowClass *window_class = nullptr);
+    void SetNextWindowDockID(IdType dock_id, ImGuiCond cond = 0);  // set next window dock id
+    void SetNextWindowClass(const ImGuiWindowClass *window_class); // set next window class (control docking
+                                                                   // compatibility + provide hints to platform
+    // backend via custom viewport flags and platform parent/child relationship)
+    IdType GetWindowDockID(); // get dock id of current window, or 0 if not associated to any docking node.
+    bool IsWindowDocked();    // is current window docked into another window?
 
     // Logging/Capture
     // - All text output from the interface can be captured into tty/file/clipboard. By default, tree nodes are
@@ -1323,179 +1363,182 @@ namespace ImGui
     // EndDragDropSource().
     // - On target candidates, call BeginDragDropTarget(), if it returns true also call AcceptDragDropPayload() +
     // EndDragDropTarget().
-    // - If you stop calling BeginDragDropSource() the payload is preserved however it won't have a preview tooltip (we
-    // currently display a fallback "..." tooltip, see #1725)
+    // - If you stop calling BeginDragDropSource() the payload is preserved however it won't have a preview tooltip
+    // (we currently display a fallback "..." tooltip, see #1725)
     // - An item can be both drag source and drop target.
     bool BeginDragDropSource(
             ImGuiDragDropFlags flags = 0); // call after submitting an item which may be dragged. when this return true,
-                                           // you can call SetDragDropPayload() + EndDragDropSource()
+    // you can call SetDragDropPayload() + EndDragDropSource()
     bool
     SetDragDropPayload(const char *type, const void *data, size_t sz,
                        ImGuiCond cond = 0); // type is a user defined string of maximum 32 characters. Strings starting
-                                            // with '_' are reserved for dear imgui internal types. Data is copied and
-                                            // held by imgui. Return true when payload has been accepted.
-    void EndDragDropSource();               // only call EndDragDropSource() if BeginDragDropSource() returns true!
+    // with '_' are reserved for dear imgui internal types. Data is copied and
+    // held by imgui. Return true when payload has been accepted.
+    void EndDragDropSource();   // only call EndDragDropSource() if BeginDragDropSource() returns true!
     bool BeginDragDropTarget(); // call after submitting an item that may receive a payload. If this returns true, you
-                                // can call AcceptDragDropPayload() + EndDragDropTarget()
+    // can call AcceptDragDropPayload() + EndDragDropTarget()
     const ImGuiPayload *
     AcceptDragDropPayload(const char *type,
                           ImGuiDragDropFlags flags =
                                   0); // accept contents of a given type. If ImGuiDragDropFlags_AcceptBeforeDelivery is
-                                      // set you can peek into the payload before the mouse button is released.
-    void EndDragDropTarget();         // only call EndDragDropTarget() if BeginDragDropTarget() returns true!
-    const ImGuiPayload *
-    GetDragDropPayload(); // peek directly into the current payload from anywhere. returns nullptr when drag and drop is
-                          // finished or inactive. use ImGuiPayload::IsDataType() to test for the payload type.
+    // set you can peek into the payload before the mouse button is released.
+    void EndDragDropTarget();                 // only call EndDragDropTarget() if BeginDragDropTarget() returns true!
+    const ImGuiPayload *GetDragDropPayload(); // peek directly into the current payload from anywhere. returns
+                                              // nullptr when drag and drop is
+    // finished or inactive. use ImGuiPayload::IsDataType() to test for the payload type.
 
     // Disabling [BETA API]
     // - Disable all user interactions and dim items visuals (applying style.DisabledAlpha over current colors)
-    // - Those can be nested but it cannot be used to enable an already disabled section (a single BeginDisabled(true)
-    // in the stack is enough to keep everything disabled)
-    // - Tooltips windows are automatically opted out of disabling. Note that IsItemHovered() by default returns false
-    // on disabled items, unless using ImGuiHoveredFlags_AllowWhenDisabled.
+    // - Those can be nested but it cannot be used to enable an already disabled section (a single
+    // BeginDisabled(true) in the stack is enough to keep everything disabled)
+    // - Tooltips windows are automatically opted out of disabling. Note that IsItemHovered() by default returns
+    // false on disabled items, unless using ImGuiHoveredFlags_AllowWhenDisabled.
     // - BeginDisabled(false)/EndDisabled() essentially does nothing but is provided to facilitate use of boolean
-    // expressions (as a micro-optimization: if you have tens of thousands of BeginDisabled(false)/EndDisabled() pairs,
-    // you might want to reformulate your code to avoid making those calls)
+    // expressions (as a micro-optimization: if you have tens of thousands of BeginDisabled(false)/EndDisabled()
+    // pairs, you might want to reformulate your code to avoid making those calls)
     void BeginDisabled(bool disabled = true);
     void EndDisabled();
 
     // Clipping
-    // - Mouse hovering is affected by ImGui::PushClipRect() calls, unlike direct calls to ImDrawList::PushClipRect()
-    // which are render only.
-    void PushClipRect(const Vec2 &clip_rect_min, const Vec2 &clip_rect_max, bool intersect_with_current_clip_rect);
+    // - Mouse hovering is affected by ImGui::PushClipRect() calls, unlike direct calls to
+    // ImDrawList::PushClipRect() which are render only.
+    void PushClipRect(const ::SF::Engine::Vec2 &clip_rect_min, const ::SF::Engine::Vec2 &clip_rect_max,
+                      bool intersect_with_current_clip_rect);
     void PopClipRect();
 
     // Focus, Activation
-    void SetItemDefaultFocus(); // make last item the default focused item of a newly appearing window.
-    void SetKeyboardFocusHere(
-            int offset = 0); // focus keyboard on the next widget. Use positive 'offset' to access sub components of a
-                             // multiple component widget. Use -1 to access previous widget.
+    void SetItemDefaultFocus();                // make last item the default focused item of a newly appearing window.
+    void SetKeyboardFocusHere(int offset = 0); // focus keyboard on the next widget. Use positive 'offset' to access
+                                               // sub components of a
+    // multiple component widget. Use -1 to access previous widget.
 
     // Keyboard/Gamepad Navigation
     void SetNavCursorVisible(bool visible); // alter visibility of keyboard/gamepad cursor. by default: show when using
-                                            // an arrow key, hide when clicking with mouse.
+    // an arrow key, hide when clicking with mouse.
 
     // Overlapping mode
     void SetNextItemAllowOverlap(); // allow next item to be overlapped by a subsequent item. Typically useful with
-                                    // InvisibleButton(), Selectable(), TreeNode() covering an area where subsequent
-                                    // items may need to be added. Note that both Selectable() and TreeNode() have
-                                    // dedicated flags doing this.
+    // InvisibleButton(), Selectable(), TreeNode() covering an area where subsequent
+    // items may need to be added. Note that both Selectable() and TreeNode() have
+    // dedicated flags doing this.
 
     // Item/Widgets Utilities and Query Functions
     // - Most of the functions are referring to the previous Item that has been submitted.
-    // - See Demo Window under "Widgets->Querying Status" for an interactive visualization of most of those functions.
+    // - See Demo Window under "Widgets->Querying Status" for an interactive visualization of most of those
+    // functions.
     bool IsItemHovered(ImGuiHoveredFlags flags = 0); // is the last item hovered? (and usable, aka not blocked by a
-                                                     // popup, etc.). See ImGuiHoveredFlags for more options.
-    bool IsItemActive();  // is the last item active? (e.g. button being held, text field being edited. This will
-                          // continuously return true while holding mouse button on an item. Items that don't interact
-                          // will always return false)
-    bool IsItemFocused(); // is the last item focused for keyboard/gamepad navigation?
-    bool IsItemClicked(ImGuiMouseButton mouse_button =
-                               0); // is the last item hovered and mouse clicked on? (**)  ==
-                                   // IsMouseClicked(mouse_button) && IsItemHovered()Important. (**) this is NOT
-                                   // equivalent to the behavior of e.g. Button(). Read comments in function definition.
+    // popup, etc.). See ImGuiHoveredFlags for more options.
+    bool IsItemActive(); // is the last item active? (e.g. button being held, text field being edited. This will
+    // continuously return true while holding mouse button on an item. Items that don't interact
+    // will always return false)
+    bool IsItemFocused();                                  // is the last item focused for keyboard/gamepad navigation?
+    bool IsItemClicked(ImGuiMouseButton mouse_button = 0); // is the last item hovered and mouse clicked on? (**) ==
+    // IsMouseClicked(mouse_button) && IsItemHovered()Important. (**) this is NOT
+    // equivalent to the behavior of e.g. Button(). Read comments in function definition.
     bool IsItemVisible(); // is the last item visible? (items may be out of sight because of clipping/scrolling)
     bool IsItemEdited();  // did the last item modify its underlying value this frame? or was pressed? This is generally
-                          // the same as the "bool" return value of many widgets.
+    // the same as the "bool" return value of many widgets.
     bool IsItemActivated();   // was the last item just made active (item was previously inactive).
     bool IsItemDeactivated(); // was the last item just made inactive (item was previously active). Useful for Undo/Redo
-                              // patterns with widgets that require continuous editing.
+    // patterns with widgets that require continuous editing.
     bool IsItemDeactivatedAfterEdit(); // was the last item just made inactive and made a value change when it was
-                                       // active? (e.g. Slider/Drag moved). Useful for Undo/Redo patterns with widgets
-                                       // that require continuous editing. Note that you may get false positives (some
-                                       // widgets such as Combo()/ListBox()/Selectable() will return true even when
-                                       // clicking an already selected item).
-    bool IsItemToggledOpen();          // was the last item open state toggled? set by TreeNode().
-    bool IsAnyItemHovered();           // is any item hovered?
-    bool IsAnyItemActive();            // is any item active?
-    bool IsAnyItemFocused();           // is any item focused?
-    ImGuiID GetItemID();               // get ID of last item (~~ often same ImGui::GetID(label) beforehand)
-    Vec2 GetItemRectMin();             // get upper-left bounding rectangle of the last item (screen space)
-    Vec2 GetItemRectMax();             // get lower-right bounding rectangle of the last item (screen space)
-    Vec2 GetItemRectSize();            // get size of last item
-    ImGuiItemFlags GetItemFlags();     // get generic flags of last item
+    // active? (e.g. Slider/Drag moved). Useful for Undo/Redo patterns with widgets
+    // that require continuous editing. Note that you may get false positives (some
+    // widgets such as Combo()/ListBox()/Selectable() will return true even when
+    // clicking an already selected item).
+    bool IsItemToggledOpen();             // was the last item open state toggled? set by TreeNode().
+    bool IsAnyItemHovered();              // is any item hovered?
+    bool IsAnyItemActive();               // is any item active?
+    bool IsAnyItemFocused();              // is any item focused?
+    IdType GetItemID();                   // get ID of last item (~~ often same ImGui::GetID(label) beforehand)
+    ::SF::Engine::Vec2 GetItemRectMin();  // get upper-left bounding rectangle of the last item (screen space)
+    ::SF::Engine::Vec2 GetItemRectMax();  // get lower-right bounding rectangle of the last item (screen space)
+    ::SF::Engine::Vec2 GetItemRectSize(); // get size of last item
+    ImGuiItemFlags GetItemFlags();        // get generic flags of last item
     int GetItemClickedCountWithSingleClickDelay(
             ImGuiMouseButton mouse_button = 0,
             float delay = -1.0f); // [BETA] building block for disambiguation between single-click and double-click.
-                                  // Returns 1 on single-click but delayed by io.MouseSingleClickDelay after mouse
-                                  // release. Returns 2+ on double-click or repeated clicks.
+    // Returns 1 on single-click but delayed by io.MouseSingleClickDelay after mouse
+    // release. Returns 2+ on double-click or repeated clicks.
 
     // Viewports
-    // - Currently represents the Platform Window created by the application which is hosting our Dear ImGui windows.
+    // - Currently represents the Platform Window created by the application which is hosting our Dear ImGui
+    // windows.
     // - In 'docking' branch with multi-viewport enabled, we extend this concept to have multiple active viewports.
     // - In the future we will extend this concept further to also represent Platform Monitor and support a "no main
     // platform window" operation mode.
     ImGuiViewport *GetMainViewport(); // return primary/default viewport. This can never be nullptr.
 
     // Background/Foreground Draw Lists
-    ImDrawList *
-    GetBackgroundDrawList(ImGuiViewport *viewport =
-                                  nullptr); // get background draw list for the given viewport or viewport associated
-                                            // to the current window. this draw list will be the first rendering one.
-                                            // Useful to quickly draw shapes/text behind dear imgui contents.
-    ImDrawList *
-    GetForegroundDrawList(ImGuiViewport *viewport =
-                                  nullptr); // get foreground draw list for the given viewport or viewport associated
-                                            // to the current window. this draw list will be the top-most rendered one.
-                                            // Useful to quickly draw shapes/text over dear imgui contents.
+    ImDrawList *GetBackgroundDrawList(ImGuiViewport *viewport = nullptr); // get background draw list for the given
+                                                                          // viewport or viewport associated
+    // to the current window. this draw list will be the first rendering one.
+    // Useful to quickly draw shapes/text behind dear imgui contents.
+    ImDrawList *GetForegroundDrawList(ImGuiViewport *viewport = nullptr); // get foreground draw list for the given
+                                                                          // viewport or viewport associated
+    // to the current window. this draw list will be the top-most rendered one.
+    // Useful to quickly draw shapes/text over dear imgui contents.
 
     // Miscellaneous Utilities
-    bool IsRectVisible(const Vec2 &size); // test if rectangle (of given size, starting from cursor position) is
-                                          // visible / not clipped.
-    bool IsRectVisible(const Vec2 &rect_min,
-                       const Vec2 &rect_max);      // test if rectangle (in screen space) is visible / not clipped. to
-                                                   // perform coarse clipping on user's side.
+    bool IsRectVisible(
+            const ::SF::Engine::Vec2 &size); // test if rectangle (of given size, starting from cursor position) is
+    // visible / not clipped.
+    bool IsRectVisible(
+            const ::SF::Engine::Vec2 &rect_min,
+            const ::SF::Engine::Vec2 &rect_max); // test if rectangle (in screen space) is visible / not clipped. to
+    // perform coarse clipping on user's side.
     double GetTime();                              // get global imgui time. incremented by io.DeltaTime every frame.
     int GetFrameCount();                           // get global imgui frame count. incremented by 1 every frame.
     ImDrawListSharedData *GetDrawListSharedData(); // you may use this when creating your own ImDrawList instances.
     const char *
     GetStyleColorName(ImGuiCol idx); // get a string corresponding to the enum value (for display, saving, etc.).
     void SetStateStorage(ImGuiStorage *storage); // replace current window storage with our own (if you want to
-                                                 // manipulate it yourself, typically clear subsection of it)
+    // manipulate it yourself, typically clear subsection of it)
     ImGuiStorage *GetStateStorage();
 
     // Text Utilities
-    Vec2 CalcTextSize(const char *text, const char *text_end = nullptr, bool hide_text_after_double_hash = false,
-                      float wrap_width = -1.0f);
+    ::SF::Engine::Vec2 CalcTextSize(const char *text, const char *text_end = nullptr,
+                                    bool hide_text_after_double_hash = false, float wrap_width = -1.0f);
 
     // Color Utilities
-    Vec4 ColorConvertU32ToFloat4(uint32_t in);
-    uint32_t ColorConvertFloat4ToU32(const Vec4 &in);
+    ::SF::Engine::Vec4 ColorConvertU32ToFloat4(uint32_t in);
+    uint32_t ColorConvertFloat4ToU32(const ::SF::Engine::Vec4 &in);
     void ColorConvertRGBtoHSV(float r, float g, float b, float &out_h, float &out_s, float &out_v);
     void ColorConvertHSVtoRGB(float h, float s, float v, float &out_r, float &out_g, float &out_b);
 
     // Inputs Utilities: Raw Keyboard/Mouse/Gamepad Access
-    // - Consider using the Shortcut() function instead of IsKeyPressed()/IsKeyChordPressed()! Shortcut() is easier to
-    // use and better featured (can do focus routing check).
+    // - Consider using the Shortcut() function instead of IsKeyPressed()/IsKeyChordPressed()! Shortcut() is easier
+    // to use and better featured (can do focus routing check).
     // - the ImGuiKey enum contains all possible keyboard, mouse and gamepad inputs (e.g. ImGuiKey_A,
     // ImGuiKey_MouseLeft, ImGuiKey_GamepadDpadUp...).
-    // - (legacy: before v1.87 (2022-02), we used ImGuiKey < 512 values to carry native/user indices as defined by each
-    // backends. This was obsoleted in 1.87 (2022-02) and completely removed in 1.91.5 (2024-11). See
+    // - (legacy: before v1.87 (2022-02), we used ImGuiKey < 512 values to carry native/user indices as defined by
+    // each backends. This was obsoleted in 1.87 (2022-02) and completely removed in 1.91.5 (2024-11). See
     // https://github.com/ocornut/imgui/issues/4921)
-    bool IsKeyDown(ImGuiKey key);                        // is key being held.
-    bool IsKeyPressed(ImGuiKey key, bool repeat = true); // was key pressed (went from !Down to Down)? Repeat rate uses
-                                                         // io.KeyRepeatDelay / KeyRepeatRate.
-    bool IsKeyReleased(ImGuiKey key);                    // was key released (went from Down to !Down)?
+    bool IsKeyDown(ImGuiKey key); // is key being held.
+    bool IsKeyPressed(ImGuiKey key,
+                      bool repeat = true); // was key pressed (went from !Down to Down)? Repeat rate uses
+    // io.KeyRepeatDelay / KeyRepeatRate.
+    bool IsKeyReleased(ImGuiKey key); // was key released (went from Down to !Down)?
     bool
     IsKeyChordPressed(ImGuiKeyChord key_chord); // was key chord (mods + key) pressed, e.g. you can pass 'ImGuiMod_Ctrl
-                                                // | ImGuiKey_S' as a key-chord. This doesn't do any routing or focus
-                                                // check, please consider using Shortcut() function instead.
+    // | ImGuiKey_S' as a key-chord. This doesn't do any routing or focus
+    // check, please consider using Shortcut() function instead.
     int GetKeyPressedAmount(ImGuiKey key, float repeat_delay,
                             float rate); // uses provided repeat rate/delay. return a count, most often 0 or 1 but might
-                                         // be >1 if RepeatRate is small enough that DeltaTime > RepeatRate
+    // be >1 if RepeatRate is small enough that DeltaTime > RepeatRate
     const char *GetKeyName(ImGuiKey key); // [DEBUG] returns English name of the key. Those names are provided for
-                                          // debugging purpose and are not meant to be saved persistently nor compared.
-    void SetNextFrameWantCaptureKeyboard(
-            bool want_capture_keyboard); // Override io.WantCaptureKeyboard flag next frame (said flag is left for your
-                                         // application to handle, typically when true it instructs your app to ignore
-                                         // inputs). e.g. force capture keyboard when your widget is being hovered. This
-                                         // is equivalent to setting "io.WantCaptureKeyboard = want_capture_keyboard";
-                                         // after the next NewFrame() call.
+    // debugging purpose and are not meant to be saved persistently nor compared.
+    void SetNextFrameWantCaptureKeyboard(bool want_capture_keyboard); // Override io.WantCaptureKeyboard flag next
+                                                                      // frame (said flag is left for your
+    // application to handle, typically when true it instructs your app to ignore
+    // inputs). e.g. force capture keyboard when your widget is being hovered. This
+    // is equivalent to setting "io.WantCaptureKeyboard = want_capture_keyboard";
+    // after the next NewFrame() call.
 
     // Inputs Utilities: Shortcut Testing & Routing
     // - Typical use is e.g.: 'if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S)) { ... }'.
-    // - Flags: Default route use ImGuiInputFlags_RouteFocused, but see ImGuiInputFlags_RouteGlobal and other options in
-    // ImGuiInputFlags_!
+    // - Flags: Default route use ImGuiInputFlags_RouteFocused, but see ImGuiInputFlags_RouteGlobal and other
+    // options in ImGuiInputFlags_!
     // - Flags: Use ImGuiInputFlags_Repeat to support repeat.
     // - ImGuiKeyChord = a ImGuiKey + optional ImGuiMod_Alt/ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Super.
     //       ImGuiKey_C                          // Accepted by functions taking ImGuiKey or ImGuiKeyChord arguments
@@ -1503,14 +1546,16 @@ namespace ImGui
     //   only ImGuiMod_XXX values are legal to combine with an ImGuiKey. You CANNOT combine two ImGuiKey values.
     // - The general idea is that several callers may register interest in a shortcut, and only one owner gets it.
     //      Parent   -> call Shortcut(Ctrl+S)    // When Parent is focused, Parent gets the shortcut.
-    //        Child1 -> call Shortcut(Ctrl+S)    // When Child1 is focused, Child1 gets the shortcut (Child1 overrides
-    //        Parent shortcuts) Child2 -> no call                  // When Child2 is focused, Parent gets the shortcut.
-    //   The whole system is order independent, so if Child1 makes its calls before Parent, results will be identical.
-    //   This is an important property as it facilitate working with foreign code or larger codebase.
+    //        Child1 -> call Shortcut(Ctrl+S)    // When Child1 is focused, Child1 gets the shortcut (Child1
+    //        overrides Parent shortcuts) Child2 -> no call                  // When Child2 is focused, Parent gets
+    //        the shortcut.
+    //   The whole system is order independent, so if Child1 makes its calls before Parent, results will be
+    //   identical. This is an important property as it facilitate working with foreign code or larger codebase.
     // - To understand the difference:
     //   - IsKeyChordPressed() compares mods and call IsKeyPressed()
     //     -> the function has no side-effect.
-    //   - Shortcut() submits a route, routes are resolved, if it currently can be routed it calls IsKeyChordPressed()
+    //   - Shortcut() submits a route, routes are resolved, if it currently can be routed it calls
+    //   IsKeyChordPressed()
     //     -> the function has (desirable) side-effects as it can prevents another call from getting the route.
     // - Visualize registered routes in 'Metrics/Debugger->Inputs'.
     bool Shortcut(ImGuiKeyChord key_chord, ImGuiInputFlags flags = 0);
@@ -1522,66 +1567,68 @@ namespace ImGui
     //   e.g. `Button(...); if (SetItemKeyOwner(ImGuiKey_MouseWheelY)) { ... }` to make hovering/activating a button
     //   disable wheel for scrolling.
     // - Reminder ImGuiKey enum include access to mouse buttons and gamepad, so key ownership can apply to them.
-    // - The return value of SetItemKeyOwner() says if ownership has been requested for the item, which is a shortcut to
-    // calling yet non-public TestKeyOwner() function.
-    // - Many related features are still in imgui_internal.h. For instance, most IsKeyXXX()/IsMouseXXX() functions have
-    // an owner-id-aware version.
-    bool
-    SetItemKeyOwner(ImGuiKey key); // Set key owner to last item ID if it is hovered or active. Return true when
-                                   // ownership has been set. Roughly equivalent to 'if (TestKeyOwner(key, GetItemID())
-                                   // && (IsItemHovered() || IsItemActive())) { SetKeyOwner(key, GetItemID());'.
+    // - The return value of SetItemKeyOwner() says if ownership has been requested for the item, which is a
+    // shortcut to calling yet non-public TestKeyOwner() function.
+    // - Many related features are still in imgui_internal.h. For instance, most IsKeyXXX()/IsMouseXXX() functions
+    // have an owner-id-aware version.
+    bool SetItemKeyOwner(ImGuiKey key); // Set key owner to last item ID if it is hovered or active. Return true when
+    // ownership has been set. Roughly equivalent to 'if (TestKeyOwner(key, GetItemID())
+    // && (IsItemHovered() || IsItemActive())) { SetKeyOwner(key, GetItemID());'.
 
     // Inputs Utilities: Mouse
     // - To refer to a mouse button, you may use named enums in your code e.g. ImGuiMouseButton_Left,
     // ImGuiMouseButton_Right.
     // - You can also use regular integer: it is forever guaranteed that 0=Left, 1=Right, 2=Middle.
-    // - Dragging operations are only reported after mouse has moved a certain distance away from the initial clicking
-    // position (see 'lock_threshold' and 'io.MouseDraggingThreshold')
-    bool IsMouseDown(ImGuiMouseButton button);                         // is mouse button held?
-    bool IsMouseClicked(ImGuiMouseButton button, bool repeat = false); // did mouse button clicked? (went from !Down to
-                                                                       // Down). Same as GetMouseClickedCount() == 1.
+    // - Dragging operations are only reported after mouse has moved a certain distance away from the initial
+    // clicking position (see 'lock_threshold' and 'io.MouseDraggingThreshold')
+    bool IsMouseDown(ImGuiMouseButton button); // is mouse button held?
+    bool IsMouseClicked(ImGuiMouseButton button,
+                        bool repeat = false); // did mouse button clicked? (went from !Down to
+    // Down). Same as GetMouseClickedCount() == 1.
     bool IsMouseReleased(ImGuiMouseButton button); // did mouse button released? (went from Down to !Down)
     bool IsMouseDoubleClicked(
             ImGuiMouseButton button); // did mouse button double-clicked? Same as GetMouseClickedCount() == 2. (note
-                                      // that a double-click will also report IsMouseClicked() == true)
-    bool IsMouseReleasedWithDelay(
-            ImGuiMouseButton button,
-            float delay = -1.f); // delayed mouse release. Use sparingly. Prefer higher-level helper
-                                 // GetItemClickedCountWithSingleClickDelay(). Generally used with 'delay >=
-                                 // io.MouseDoubleClickTime' + combined with a 'io.MouseClickedLastCount==1' test.
+    // that a double-click will also report IsMouseClicked() == true)
+    bool
+    IsMouseReleasedWithDelay(ImGuiMouseButton button,
+                             float delay = -1.f); // delayed mouse release. Use sparingly. Prefer higher-level helper
+    // GetItemClickedCountWithSingleClickDelay(). Generally used with 'delay >=
+    // io.MouseDoubleClickTime' + combined with a 'io.MouseClickedLastCount==1' test.
     int GetMouseClickedCount(ImGuiMouseButton button); // return the number of successive mouse-clicks at the time where
-                                                       // a click happen (otherwise 0).
-    bool IsMouseHoveringRect(const Vec2 &r_min, const Vec2 &r_max,
+    // a click happen (otherwise 0).
+    bool IsMouseHoveringRect(const ::SF::Engine::Vec2 &r_min, const ::SF::Engine::Vec2 &r_max,
                              bool clip = true); // is mouse hovering given bounding rect (in screen space). clipped by
-                                                // current clipping settings, but disregarding of other consideration of
-                                                // focus/window ordering/popup-block.
-    bool IsMousePosValid(const Vec2 *mouse_pos = nullptr); // by convention we use (-FLT_MAX,-FLT_MAX) to denote that
-                                                           // there is no mouse available
+    // current clipping settings, but disregarding of other consideration of
+    // focus/window ordering/popup-block.
+    bool IsMousePosValid(
+            const ::SF::Engine::Vec2 *mouse_pos = nullptr); // by convention we use (-FLT_MAX,-FLT_MAX) to denote that
+    // there is no mouse available
     bool IsAnyMouseDown(); // [WILL OBSOLETE] is any mouse button held? This was designed for backends, but prefer
-                           // having backend maintain a mask of held mouse buttons, because upcoming input queue system
-                           // will make this invalid.
-    Vec2 GetMousePos();    // shortcut to ImGui::GetIO().MousePos provided by user, to be consistent with other calls
-    Vec2 GetMousePosOnOpeningCurrentPopup(); // retrieve mouse position at the time of opening popup we have
-                                             // BeginPopup() into (helper to avoid user backing that value themselves)
+    // having backend maintain a mask of held mouse buttons, because upcoming input queue system
+    // will make this invalid.
+    ::SF::Engine::Vec2
+    GetMousePos(); // shortcut to ImGui::GetIO().MousePos provided by user, to be consistent with other calls
+    ::SF::Engine::Vec2
+    GetMousePosOnOpeningCurrentPopup(); // retrieve mouse position at the time of opening popup we have
+    // BeginPopup() into (helper to avoid user backing that value themselves)
     bool IsMouseDragging(ImGuiMouseButton button,
                          float lock_threshold =
                                  -1.0f); // is mouse dragging? (uses io.MouseDraggingThreshold if lock_threshold < 0.0f)
-    Vec2 GetMouseDragDelta(
-            ImGuiMouseButton button = 0,
-            float lock_threshold =
-                    -1.0f); // return the delta from the initial clicking position while the mouse button is pressed or
-                            // was just released. This is locked and return 0.0f until the mouse moves past a distance
-                            // threshold at least once (uses io.MouseDraggingThreshold if lock_threshold < 0.0f)
+    ::SF::Engine::Vec2 GetMouseDragDelta(ImGuiMouseButton button = 0,
+                                         float lock_threshold    = -1.0f); // return the delta from the initial clicking
+                                                                        // position while the mouse button is pressed or
+    // was just released. This is locked and return 0.0f until the mouse moves past a distance
+    // threshold at least once (uses io.MouseDraggingThreshold if lock_threshold < 0.0f)
     void ResetMouseDragDelta(ImGuiMouseButton button = 0); //
     ImGuiMouseCursor GetMouseCursor(); // get desired mouse cursor shape. Important: reset in ImGui::NewFrame(), this is
-                                       // updated during the frame. valid before Render(). If you use software rendering
-                                       // by setting io.MouseDrawCursor ImGui will render those for you
+    // updated during the frame. valid before Render(). If you use software rendering
+    // by setting io.MouseDrawCursor ImGui will render those for you
     void SetMouseCursor(ImGuiMouseCursor cursor_type); // set desired mouse cursor shape
     void SetNextFrameWantCaptureMouse(
             bool want_capture_mouse); // Override io.WantCaptureMouse flag next frame (said flag is left for your
-                                      // application to handle, typical when true it instructs your app to ignore
-                                      // inputs). This is equivalent to setting "io.WantCaptureMouse =
-                                      // want_capture_mouse;" after the next NewFrame() call.
+    // application to handle, typical when true it instructs your app to ignore
+    // inputs). This is equivalent to setting "io.WantCaptureMouse =
+    // want_capture_mouse;" after the next NewFrame() call.
 
     // Clipboard Utilities
     // - Also see the LogToClipboard() function to capture GUI into clipboard, or easily output text data to the
@@ -1593,29 +1640,29 @@ namespace ImGui
     // - The disk functions are automatically called if io.IniFilename != nullptr (default is "imgui.ini").
     // - Set io.IniFilename to nullptr to load/save manually. Read io.WantSaveIniSettings description about handling
     // .ini saving manually.
-    // - Important: default value "imgui.ini" is relative to current working dir! Most apps will want to lock this to an
-    // absolute path (e.g. same path as executables).
-    void LoadIniSettingsFromDisk(
-            const char *ini_filename); // call after CreateContext() and before the first call to NewFrame(). NewFrame()
-                                       // automatically calls LoadIniSettingsFromDisk(io.IniFilename).
+    // - Important: default value "imgui.ini" is relative to current working dir! Most apps will want to lock this
+    // to an absolute path (e.g. same path as executables).
+    void LoadIniSettingsFromDisk(const char *ini_filename); // call after CreateContext() and before the first call
+                                                            // to NewFrame(). NewFrame()
+    // automatically calls LoadIniSettingsFromDisk(io.IniFilename).
     void LoadIniSettingsFromMemory(const char *ini_data,
-                                   size_t ini_size = 0);  // call after CreateContext() and before the first call to
-                                                          // NewFrame() to provide .ini data from your own data source.
+                                   size_t ini_size = 0); // call after CreateContext() and before the first call to
+    // NewFrame() to provide .ini data from your own data source.
     void SaveIniSettingsToDisk(const char *ini_filename); // this is automatically called (if io.IniFilename is not
-                                                          // empty) a few seconds after any modification that should be
-                                                          // reflected in the .ini file (and also by DestroyContext).
-    const char *SaveIniSettingsToMemory(
-            size_t *out_ini_size = nullptr); // return a zero-terminated string with the .ini data which you can save by
-                                             // your own mean. call when io.WantSaveIniSettings is set, then save data
-                                             // by your own mean and clear io.WantSaveIniSettings.
+    // empty) a few seconds after any modification that should be
+    // reflected in the .ini file (and also by DestroyContext).
+    const char *SaveIniSettingsToMemory(size_t *out_ini_size = nullptr); // return a zero-terminated string with the
+                                                                         // .ini data which you can save by
+    // your own mean. call when io.WantSaveIniSettings is set, then save data
+    // by your own mean and clear io.WantSaveIniSettings.
 
 
     // Memory Allocators
     // - Those functions are not reliant on the current context.
-    // - DLL users: heaps and globals are not shared across DLL boundaries! You will need to call SetCurrentContext() +
-    // SetAllocatorFunctions()
-    //   for each static/DLL boundary you are calling from. Read "Context and Memory Allocators" section of imgui.cpp
-    //   for more details.
+    // - DLL users: heaps and globals are not shared across DLL boundaries! You will need to call
+    // SetCurrentContext() + SetAllocatorFunctions()
+    //   for each static/DLL boundary you are calling from. Read "Context and Memory Allocators" section of
+    //   imgui.cpp for more details.
     void SetAllocatorFunctions(ImGuiMemAllocFunc alloc_func, ImGuiMemFreeFunc free_func, void *user_data = nullptr);
     void GetAllocatorFunctions(ImGuiMemAllocFunc *p_alloc_func, ImGuiMemFreeFunc *p_free_func, void **p_user_data);
     void *MemAlloc(size_t size);
@@ -1625,20 +1672,20 @@ namespace ImGui
     // Read comments around the ImGuiPlatformIO structure for more details.
     // Note: You may use GetWindowViewport() to get the current viewport of the current window.
     void UpdatePlatformWindows(); // call in main loop. will call CreateWindow/ResizeWindow/etc. platform functions for
-                                  // each secondary viewport, and DestroyWindow for each inactive viewport.
+    // each secondary viewport, and DestroyWindow for each inactive viewport.
     void RenderPlatformWindowsDefault(
             void *platform_render_arg = nullptr,
             void *renderer_render_arg =
                     nullptr); // call in main loop. will call RenderWindow/SwapBuffers platform functions for each
-                              // secondary viewport which doesn't have the ImGuiViewportFlags_Minimized flag set. May be
-                              // reimplemented by user for custom rendering needs.
+    // secondary viewport which doesn't have the ImGuiViewportFlags_Minimized flag set. May be
+    // reimplemented by user for custom rendering needs.
     void DestroyPlatformWindows(); // call DestroyWindow platform functions for all viewports. call from backend
-                                   // Shutdown() if you need to close platform windows before imgui shutdown. otherwise
-                                   // will be called by DestroyContext().
-    ImGuiViewport *FindViewportByID(ImGuiID viewport_id); // this is a helper for backends.
-    ImGuiViewport *FindViewportByPlatformHandle(
-            void *platform_handle); // this is a helper for backends. the type platform_handle is decided by the backend
-                                    // (e.g. HWND, MyWindow*, GLFWwindow* etc.)
+    // Shutdown() if you need to close platform windows before imgui shutdown. otherwise
+    // will be called by DestroyContext().
+    ImGuiViewport *FindViewportByID(IdType viewport_id);                // this is a helper for backends.
+    ImGuiViewport *FindViewportByPlatformHandle(void *platform_handle); // this is a helper for backends. the type
+                                                                        // platform_handle is decided by the backend
+    // (e.g. HWND, MyWindow*, GLFWwindow* etc.)
 
 } // namespace ImGui
 
@@ -1660,8 +1707,8 @@ enum ImGuiWindowFlags_
     ImGuiWindowFlags_NoScrollWithMouse =
             1 << 4, // Disable user vertically scrolling with mouse wheel. On child window, mouse wheel will be
                     // forwarded to the parent unless NoScrollbar is also set.
-    ImGuiWindowFlags_NoCollapse = 1 << 5, // Disable user collapsing window by double-clicking on it. Also referred to
-                                          // as Window Menu Button (e.g. within a docking node).
+    ImGuiWindowFlags_NoCollapse = 1 << 5, // Disable user collapsing window by double-clicking on it. Also referred
+                                          // to as Window Menu Button (e.g. within a docking node).
     ImGuiWindowFlags_AlwaysAutoResize = 1 << 6, // Resize every window to its content every frame
     ImGuiWindowFlags_NoBackground     = 1 << 7, // Disable drawing background color (WindowBg, etc.) and outside border.
                                                 // Similar as using SetNextWindowBgAlpha(0.0f).
@@ -1670,8 +1717,8 @@ enum ImGuiWindowFlags_
     ImGuiWindowFlags_MenuBar         = 1 << 10, // Has a menu-bar
     ImGuiWindowFlags_HorizontalScrollbar =
             1 << 11, // Allow horizontal scrollbar to appear (off by default). You may use
-                     // SetNextWindowContentSize(Vec2(width,0.0f)); prior to calling Begin() to specify width. Read
-                     // code in imgui_demo in the "Horizontal Scrolling" section.
+                     // SetNextWindowContentSize(::SF::Engine::Vec2(width,0.0f)); prior to calling Begin() to specify
+                     // width. Read code in imgui_demo in the "Horizontal Scrolling" section.
     ImGuiWindowFlags_NoFocusOnAppearing = 1
                                           << 12, // Disable taking focus when transitioning from hidden to visible state
     ImGuiWindowFlags_NoBringToFrontOnFocus = 1 << 13, // Disable bringing window to front when taking focus (e.g.
@@ -1684,10 +1731,10 @@ enum ImGuiWindowFlags_
     ImGuiWindowFlags_NoNavFocus =
             1 << 17, // No focusing toward this window with keyboard/gamepad navigation (e.g. skipped by Ctrl+Tab)
     ImGuiWindowFlags_UnsavedDocument =
-            1
-            << 18, // Display a dot next to the title. When used in a tab/docking context, tab is selected when clicking
-                   // the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure
-                   // is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar.
+            1 << 18, // Display a dot next to the title. When used in a tab/docking context, tab is selected when
+                     // clicking the X + closure is not assumed (will wait for user to stop submitting the tab).
+                     // Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may
+                     // reappear at end of tab bar.
     ImGuiWindowFlags_NoDocking    = 1 << 19, // Disable docking of this window
     ImGuiWindowFlags_NoNav        = ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus,
     ImGuiWindowFlags_NoDecoration = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
@@ -1705,29 +1752,29 @@ enum ImGuiWindowFlags_
 };
 
 // Flags for ImGui::BeginChild()
-// (Legacy: bit 0 must always correspond to ImGuiChildFlags_Borders to be backward compatible with old API using 'bool
-// border = false'.) About using AutoResizeX/AutoResizeY flags:
+// (Legacy: bit 0 must always correspond to ImGuiChildFlags_Borders to be backward compatible with old API using
+// 'bool border = false'.) About using AutoResizeX/AutoResizeY flags:
 // - May be combined with SetNextWindowSizeConstraints() to set a min/max size for each axis (see
 // "Demo->Child->Auto-resize with Constraints").
-// - Size measurement for a given axis is only performed when the child window is within visible boundaries, or is just
-// appearing.
-//   - This allows BeginChild() to return false when not within boundaries (e.g. when scrolling), which is more optimal.
-//   BUT it won't update its auto-size while clipped.
-//     While not perfect, it is a better default behavior as the always-on performance gain is more valuable than the
-//     occasional "resizing after becoming visible again" glitch.
+// - Size measurement for a given axis is only performed when the child window is within visible boundaries, or is
+// just appearing.
+//   - This allows BeginChild() to return false when not within boundaries (e.g. when scrolling), which is more
+//   optimal. BUT it won't update its auto-size while clipped.
+//     While not perfect, it is a better default behavior as the always-on performance gain is more valuable than
+//     the occasional "resizing after becoming visible again" glitch.
 //   - You may also use ImGuiChildFlags_AlwaysAutoResize to force an update even when child window is not in view.
-//     HOWEVER PLEASE UNDERSTAND THAT DOING SO WILL PREVENT BeginChild() FROM EVER RETURNING FALSE, disabling benefits
-//     of coarse clipping.
+//     HOWEVER PLEASE UNDERSTAND THAT DOING SO WILL PREVENT BeginChild() FROM EVER RETURNING FALSE, disabling
+//     benefits of coarse clipping.
 enum ImGuiChildFlags_
 {
     ImGuiChildFlags_None    = 0,
     ImGuiChildFlags_Borders = 1 << 0, // Show an outer border and enable WindowPadding. (IMPORTANT: this is always == 1
                                       // == true for legacy reason)
     ImGuiChildFlags_AlwaysUseWindowPadding =
-            1 << 1, // Pad with style.WindowPadding even if no border are drawn (no padding by default for non-bordered
-                    // child windows because it makes more sense)
-    ImGuiChildFlags_ResizeX = 1 << 2, // Allow resize from right border (layout direction). Enable .ini saving (unless
-                                      // ImGuiWindowFlags_NoSavedSettings passed to window flags)
+            1 << 1, // Pad with style.WindowPadding even if no border are drawn (no padding by default for
+                    // non-bordered child windows because it makes more sense)
+    ImGuiChildFlags_ResizeX = 1 << 2, // Allow resize from right border (layout direction). Enable .ini saving
+                                      // (unless ImGuiWindowFlags_NoSavedSettings passed to window flags)
     ImGuiChildFlags_ResizeY = 1 << 3, // Allow resize from bottom border (layout direction). "
     ImGuiChildFlags_AutoResizeX =
             1 << 4, // Enable auto-resizing width. Read "IMPORTANT: Size measurement" details above.
@@ -1739,8 +1786,8 @@ enum ImGuiChildFlags_
     ImGuiChildFlags_FrameStyle =
             1 << 7, // Style the child window like a framed item: use FrameBg, FrameRounding, FrameBorderSize,
                     // FramePadding instead of ChildBg, ChildRounding, ChildBorderSize, WindowPadding.
-    ImGuiChildFlags_NavFlattened = 1 << 8, // [BETA] Share focus scope, allow keyboard/gamepad navigation to cross over
-                                           // parent border to this child or between sibling child windows.
+    ImGuiChildFlags_NavFlattened = 1 << 8, // [BETA] Share focus scope, allow keyboard/gamepad navigation to cross
+                                           // over parent border to this child or between sibling child windows.
 };
 
 // Flags for ImGui::PushItemFlag()
@@ -1750,8 +1797,8 @@ enum ImGuiItemFlags_
     ImGuiItemFlags_None = 0, // Default:
     ImGuiItemFlags_NoTabStop =
             1 << 0, // false    // Disable keyboard tabbing. This is a "lighter" version of ImGuiItemFlags_NoNav.
-    ImGuiItemFlags_NoNav = 1 << 1, // false    // Disable any form of focusing: keyboard/gamepad directional navigation
-                                   // and SetKeyboardFocusHere() calls.
+    ImGuiItemFlags_NoNav = 1 << 1, // false    // Disable any form of focusing: keyboard/gamepad directional
+                                   // navigation and SetKeyboardFocusHere() calls.
     ImGuiItemFlags_NoNavDefaultFocus =
             1 << 2, // false    // Disable item being a candidate for default focus (e.g. used by title bar items).
     ImGuiItemFlags_ButtonRepeat = 1 << 3, // false    // Any button-like behavior will have repeat mode enabled (based
@@ -1760,8 +1807,8 @@ enum ImGuiItemFlags_
     ImGuiItemFlags_AutoClosePopups =
             1 << 4, // true     // MenuItem()/Selectable() automatically close their parent popup window.
     ImGuiItemFlags_AllowDuplicateId =
-            1 << 5, // false    // Allow submitting an item with the same identifier as an item already submitted this
-                    // frame without triggering a warning tooltip if io.ConfigDebugHighlightIdConflicts is set.
+            1 << 5, // false    // Allow submitting an item with the same identifier as an item already submitted
+                    // this frame without triggering a warning tooltip if io.ConfigDebugHighlightIdConflicts is set.
     ImGuiItemFlags_Disabled =
             1 << 6, // false    // [Internal] Disable interactions. DOES NOT affect visuals. This is used by
                     // BeginDisabled()/EndDisabled() and only provided here so you can read back via GetItemFlags().
@@ -1770,18 +1817,19 @@ enum ImGuiItemFlags_
     // LiveEdit refers to applying edits to backing variables _while_ typing a value using the keyboard.
     // Widget:                          | Input:   | w/ LiveEdit:    | Output:
     //   InputText()                    |   "123"  |   on(default)   |  "1" then "12" then "123"
-    //   InputText()                    |   "123"  |   off           |  "123" after validating or tabbing out or losing
-    //   focus. DragFloat(), SliderInt(), etc. |   "123"  |   on*           |  1 then 12 then 123 DragFloat(),
-    //   SliderInt(), etc. |   "123"  |   off(default)* |  123 after validation or tabbing out or losing focus.
-    // (*) Since 1.92.9 (July 2026), ImGuiItemFlags_LiveEditOnInputScalar is OFF by default. In prior version it was ON
-    // for everything.
+    //   InputText()                    |   "123"  |   off           |  "123" after validating or tabbing out or
+    //   losing focus. DragFloat(), SliderInt(), etc. |   "123"  |   on*           |  1 then 12 then 123
+    //   DragFloat(), SliderInt(), etc. |   "123"  |   off(default)* |  123 after validation or tabbing out or
+    //   losing focus.
+    // (*) Since 1.92.9 (July 2026), ImGuiItemFlags_LiveEditOnInputScalar is OFF by default. In prior version it was
+    // ON for everything.
     //---------------------------------------------------------------------------------
     ImGuiItemFlags_LiveEditOnInputText =
-            1 << 7, // true     // InputText: apply keyboard edits to backing value while typing. Otherwise, edits are
-                    // applied when validating, tabbing out or losing focus.
+            1 << 7, // true     // InputText: apply keyboard edits to backing value while typing. Otherwise, edits
+                    // are applied when validating, tabbing out or losing focus.
     ImGuiItemFlags_LiveEditOnInputScalar =
-            1 << 8, // false    // DragXXX, SliderXXX, InputScalar: apply keyboard edits to backing value while typing.
-                    // Otherwise, edits are applied when validating, tabbing out or losing focus.
+            1 << 8, // false    // DragXXX, SliderXXX, InputScalar: apply keyboard edits to backing value while
+                    // typing. Otherwise, edits are applied when validating, tabbing out or losing focus.
     ImGuiItemFlags_LiveEditOnInput = ImGuiItemFlags_LiveEditOnInputText | ImGuiItemFlags_LiveEditOnInputScalar,
 };
 
@@ -1801,10 +1849,10 @@ enum ImGuiInputTextFlags_
     // Inputs
     ImGuiInputTextFlags_AllowTabInput = 1 << 5, // Pressing TAB input a '\t' character into the text field
     ImGuiInputTextFlags_EnterReturnsTrue =
-            1 << 6, // Return 'true' when Enter is pressed (as opposed to every time the value was modified). Consider
-                    // disabling LiveEdit! or using IsItemDeactivatedAfterEdit() instead!
-    ImGuiInputTextFlags_EscapeClearsAll = 1 << 7, // Escape key clears content if not empty, and deactivate otherwise
-                                                  // (contrast to default behavior of Escape to revert)
+            1 << 6, // Return 'true' when Enter is pressed (as opposed to every time the value was modified).
+                    // Consider disabling LiveEdit! or using IsItemDeactivatedAfterEdit() instead!
+    ImGuiInputTextFlags_EscapeClearsAll = 1 << 7, // Escape key clears content if not empty, and deactivate
+                                                  // otherwise (contrast to default behavior of Escape to revert)
     ImGuiInputTextFlags_CtrlEnterForNewLine =
             1 << 8, // In multi-line mode: validate with Enter, add new line with Ctrl+Enter (default is opposite:
                     // validate with Ctrl+Enter, add line with Enter). Note that Shift+Enter always enter a new line
@@ -1822,10 +1870,10 @@ enum ImGuiInputTextFlags_
                      // Generally used with ImGuiInputTextFlags_ParseEmptyRefVal.
     ImGuiInputTextFlags_NoHorizontalScroll = 1 << 15, // Disable following the cursor horizontally
     ImGuiInputTextFlags_NoUndoRedo =
-            1 << 16, // Disable undo/redo. Note that input text owns the text data while active, if you want to provide
-                     // your own undo/redo stack you need e.g. to call ClearActiveID().
-                     // ImGuiInputTextFlags_NoLiveEdit        = 1 << 25,  // Disable applying output to backing variable
-                     // while typing. Same as setting ImGuiItemFlags_LiveEditOnInput to false.
+            1 << 16, // Disable undo/redo. Note that input text owns the text data while active, if you want to
+                     // provide your own undo/redo stack you need e.g. to call ClearActiveID().
+                     // ImGuiInputTextFlags_NoLiveEdit        = 1 << 25,  // Disable applying output to backing
+                     // variable while typing. Same as setting ImGuiItemFlags_LiveEditOnInput to false.
 
     // Elide display / Alignment
     ImGuiInputTextFlags_ElideLeft = 1 << 17, // When text doesn't fit, elide left side to ensure right side stays
@@ -1840,30 +1888,29 @@ enum ImGuiInputTextFlags_
             1 << 21, // Callback on character inputs to replace or discard them. Modify 'EventChar' to replace or
                      // discard, or return 1 in callback to discard.
     ImGuiInputTextFlags_CallbackResize =
-            1 << 22, // Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the
-                     // string to grow. Notify when the string wants to be resized (for string types which hold a cache
-                     // of their Size). You will be provided a new BufSize in the callback and NEED to honor it. (see
-                     // misc/cpp/imgui_stdlib.h for an example of using this)
-    ImGuiInputTextFlags_CallbackEdit =
-            1
-            << 23, // Callback on any edit. Note that InputText() already returns true on edit + you can always use
-                   // IsItemEdited(). The callback is useful to manipulate the underlying buffer while focus is active.
+            1 << 22, // Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing
+                     // the string to grow. Notify when the string wants to be resized (for string types which hold
+                     // a cache of their Size). You will be provided a new BufSize in the callback and NEED to honor
+                     // it. (see misc/cpp/imgui_stdlib.h for an example of using this)
+    ImGuiInputTextFlags_CallbackEdit = 1 << 23, // Callback on any edit. Note that InputText() already returns true
+                                                // on edit + you can always use IsItemEdited(). The callback is
+                                                // useful to manipulate the underlying buffer while focus is active.
 
     // Multi-line Word-Wrapping [BETA]
     // - Not well tested yet. Please report any incorrect cursor movement, selection behavior etc. bug to
     // https://github.com/ocornut/imgui/issues/3237.
-    // - Wrapping style is not ideal. Wrapping of long words/sections (e.g. words larger than total available width) may
-    // be particularly unpleasing.
+    // - Wrapping style is not ideal. Wrapping of long words/sections (e.g. words larger than total available width)
+    // may be particularly unpleasing.
     // - Wrapping width needs to always account for the possibility of a vertical scrollbar.
     // - It is much slower than regular text fields.
     //   Ballpark estimate of cost on my 2019 desktop PC: for a 100 KB text buffer: +~0.3 ms (Optimized) / +~1.0 ms
-    //   (Debug build). The CPU cost is very roughly proportional to text length, so a 10 KB buffer should cost about
-    //   ten times less.
+    //   (Debug build). The CPU cost is very roughly proportional to text length, so a 10 KB buffer should cost
+    //   about ten times less.
     ImGuiInputTextFlags_WordWrap = 1 << 24, // InputTextMultiline(): word-wrap lines that are too long.
 
     // Obsolete names
-    // ImGuiInputTextFlags_AlwaysInsertMode  = ImGuiInputTextFlags_AlwaysOverwrite   // [renamed in 1.82] name was not
-    // matching behavior
+    // ImGuiInputTextFlags_AlwaysInsertMode  = ImGuiInputTextFlags_AlwaysOverwrite   // [renamed in 1.82] name was
+    // not matching behavior
 };
 
 // Flags for ImGui::TreeNodeEx(), ImGui::CollapsingHeader*()
@@ -1873,30 +1920,30 @@ enum ImGuiTreeNodeFlags_
     ImGuiTreeNodeFlags_Selected = 1 << 0, // Draw as selected
     ImGuiTreeNodeFlags_Framed   = 1 << 1, // Draw frame with background (e.g. for CollapsingHeader)
     ImGuiTreeNodeFlags_AllowOverlap =
-            1 << 2, // Hit testing will allow subsequent widgets to overlap this one. Require previous frame HoveredId
-                    // to match before being usable. Shortcut to calling SetNextItemAllowOverlap().
-    ImGuiTreeNodeFlags_NoTreePushOnOpen = 1 << 3, // Don't do a TreePush() when open (e.g. for CollapsingHeader) = no
-                                                  // extra indent nor pushing on ID stack
-    ImGuiTreeNodeFlags_NoAutoOpenOnLog = 1 << 4, // Don't automatically and temporarily open node when Logging is active
-                                                 // (by default logging will automatically open tree nodes)
-    ImGuiTreeNodeFlags_DefaultOpen = 1 << 5,     // Default node to be open
+            1 << 2, // Hit testing will allow subsequent widgets to overlap this one. Require previous frame
+                    // HoveredId to match before being usable. Shortcut to calling SetNextItemAllowOverlap().
+    ImGuiTreeNodeFlags_NoTreePushOnOpen = 1 << 3, // Don't do a TreePush() when open (e.g. for CollapsingHeader) =
+                                                  // no extra indent nor pushing on ID stack
+    ImGuiTreeNodeFlags_NoAutoOpenOnLog = 1 << 4,  // Don't automatically and temporarily open node when Logging is
+                                                  // active (by default logging will automatically open tree nodes)
+    ImGuiTreeNodeFlags_DefaultOpen = 1 << 5,      // Default node to be open
     ImGuiTreeNodeFlags_OpenOnDoubleClick =
             1 << 6, // Open on double-click instead of simple click (default for multi-select unless any _OpenOnXXX
                     // behavior is set explicitly). Both behaviors may be combined.
     ImGuiTreeNodeFlags_OpenOnArrow =
-            1 << 7, // Open when clicking on the arrow part (default for multi-select unless any _OpenOnXXX behavior is
-                    // set explicitly). Both behaviors may be combined.
+            1 << 7, // Open when clicking on the arrow part (default for multi-select unless any _OpenOnXXX behavior
+                    // is set explicitly). Both behaviors may be combined.
     ImGuiTreeNodeFlags_Leaf =
             1 << 8, // No collapsing, no arrow (use as a convenience for leaf nodes). Note: will always open a tree/id
                     // scope and return true. If you never use that scope, add ImGuiTreeNodeFlags_NoTreePushOnOpen.
     ImGuiTreeNodeFlags_Bullet = 1 << 9, // Display a bullet instead of arrow. IMPORTANT: node can still be marked
                                         // open/close if you don't set the _Leaf flag!
     ImGuiTreeNodeFlags_FramePadding =
-            1 << 10, // Use FramePadding (even for an unframed text node) to vertically align text baseline to regular
-                     // widget height. Equivalent to calling AlignTextToFramePadding() before the node.
+            1 << 10, // Use FramePadding (even for an unframed text node) to vertically align text baseline to
+                     // regular widget height. Equivalent to calling AlignTextToFramePadding() before the node.
     ImGuiTreeNodeFlags_SpanAvailWidth =
-            1 << 11, // Extend hit box to the right-most edge, even if not framed. This is not the default in order to
-                     // allow adding other items on the same line without using AllowOverlap mode.
+            1 << 11, // Extend hit box to the right-most edge, even if not framed. This is not the default in order
+                     // to allow adding other items on the same line without using AllowOverlap mode.
     ImGuiTreeNodeFlags_SpanFullWidth =
             1 << 12, // Extend hit box to the left-most and right-most edges (cover the indent area).
     ImGuiTreeNodeFlags_SpanLabelWidth =
@@ -1904,11 +1951,11 @@ enum ImGuiTreeNodeFlags_
     ImGuiTreeNodeFlags_SpanAllColumns =
             1 << 14, // Frame will span all columns of its container table (label will still fit in current column)
     ImGuiTreeNodeFlags_LabelSpanAllColumns = 1 << 15, // Label will span all columns of its container table
-    // ImGuiTreeNodeFlags_NoScrollOnOpen     = 1 << 16,  // FIXME: TODO: Disable automatic scroll on TreePop() if node
-    // got just open and contents is not visible
+    // ImGuiTreeNodeFlags_NoScrollOnOpen     = 1 << 16,  // FIXME: TODO: Disable automatic scroll on TreePop() if
+    // node got just open and contents is not visible
     ImGuiTreeNodeFlags_NavLeftJumpsToParent =
-            1 << 17, // Nav: left arrow moves back to parent. This is processed in TreePop() when there's an unfulfilled
-                     // Left nav request remaining.
+            1 << 17, // Nav: left arrow moves back to parent. This is processed in TreePop() when there's an
+                     // unfulfilled Left nav request remaining.
     ImGuiTreeNodeFlags_CollapsingHeader =
             ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_NoAutoOpenOnLog,
 
@@ -1936,16 +1983,15 @@ enum ImGuiPopupFlags_
             3 << 2, // For BeginPopupContext*(): open on Middle Mouse release. Only one button allowed!
     ImGuiPopupFlags_NoReopen = 1 << 5, // For OpenPopup*(), BeginPopupContext*(): don't reopen same popup if already
                                        // open (won't reposition, won't reinitialize navigation)
-    // ImGuiPopupFlags_NoReopenAlwaysNavInit = 1 << 6,   // For OpenPopup*(), BeginPopupContext*(): focus and initialize
-    // navigation even when not reopening.
+    // ImGuiPopupFlags_NoReopenAlwaysNavInit = 1 << 6,   // For OpenPopup*(), BeginPopupContext*(): focus and
+    // initialize navigation even when not reopening.
     ImGuiPopupFlags_NoOpenOverExistingPopup = 1 << 7, // For OpenPopup*(), BeginPopupContext*(): don't open if there's
                                                       // already a popup at the same level of the popup stack
-    ImGuiPopupFlags_NoOpenOverItems = 1 << 8, // For BeginPopupContextWindow(): don't return true when hovering items,
-                                              // only when hovering empty space
-    ImGuiPopupFlags_AnyPopupId = 1 << 10,     // For IsPopupOpen(): ignore the ImGuiID parameter and test for any popup.
-    ImGuiPopupFlags_AnyPopupLevel =
-            1
-            << 11, // For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level)
+    ImGuiPopupFlags_NoOpenOverItems = 1 << 8,         // For BeginPopupContextWindow(): don't return true when hovering
+                                                      // items, only when hovering empty space
+    ImGuiPopupFlags_AnyPopupId    = 1 << 10, // For IsPopupOpen(): ignore the IdType parameter and test for any popup.
+    ImGuiPopupFlags_AnyPopupLevel = 1 << 11, // For IsPopupOpen(): search/test at any level of the popup stack
+                                             // (default test in the current level)
     ImGuiPopupFlags_AnyPopup          = ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel,
     ImGuiPopupFlags_MouseButtonShift_ = 2,    // [Internal]
     ImGuiPopupFlags_MouseButtonMask_  = 0x0C, // [Internal]
@@ -1964,8 +2010,8 @@ enum ImGuiSelectableFlags_
     ImGuiSelectableFlags_AllowDoubleClick = 1 << 2, // Generate press events on double clicks too
     ImGuiSelectableFlags_Disabled         = 1 << 3, // Cannot be selected, display grayed out text
     ImGuiSelectableFlags_AllowOverlap =
-            1 << 4, // Hit testing will allow subsequent widgets to overlap this one. Require previous frame HoveredId
-                    // to match before being usable. Shortcut to calling SetNextItemAllowOverlap().
+            1 << 4, // Hit testing will allow subsequent widgets to overlap this one. Require previous frame
+                    // HoveredId to match before being usable. Shortcut to calling SetNextItemAllowOverlap().
     ImGuiSelectableFlags_Highlight = 1 << 5, // Make the item be displayed as if it is hovered
     ImGuiSelectableFlags_SelectOnNav =
             1 << 6, // Auto-select when moved into, unless Ctrl is held. Automatic when in a BeginMultiSelect() block.
@@ -1998,9 +2044,9 @@ enum ImGuiTabBarFlags_
     ImGuiTabBarFlags_AutoSelectNewTabs  = 1 << 1, // Automatically select new tabs when they appear
     ImGuiTabBarFlags_TabListPopupButton = 1 << 2, // Disable buttons to open the tab list popup
     ImGuiTabBarFlags_NoCloseWithMiddleMouseButton =
-            1 << 3, // Disable behavior of closing tabs (that are submitted with p_open != nullptr) with middle mouse
-                    // button. You may handle this behavior manually on user's side with if (IsItemHovered() &&
-                    // IsMouseClicked(2)) *p_open = false.
+            1 << 3, // Disable behavior of closing tabs (that are submitted with p_open != nullptr) with middle
+                    // mouse button. You may handle this behavior manually on user's side with if (IsItemHovered()
+                    // && IsMouseClicked(2)) *p_open = false.
     ImGuiTabBarFlags_NoTabListScrollingButtons =
             1 << 4, // Disable scrolling buttons (apply when fitting policy is ImGuiTabBarFlags_FittingPolicyScroll)
     ImGuiTabBarFlags_NoTooltip            = 1 << 5, // Disable tooltips when hovering a tab
@@ -2027,9 +2073,9 @@ enum ImGuiTabItemFlags_
     ImGuiTabItemFlags_SetSelected =
             1 << 1, // Trigger flag to programmatically make the tab selected when calling BeginTabItem()
     ImGuiTabItemFlags_NoCloseWithMiddleMouseButton =
-            1 << 2, // Disable behavior of closing tabs (that are submitted with p_open != nullptr) with middle mouse
-                    // button. You may handle this behavior manually on user's side with if (IsItemHovered() &&
-                    // IsMouseClicked(2)) *p_open = false.
+            1 << 2, // Disable behavior of closing tabs (that are submitted with p_open != nullptr) with middle
+                    // mouse button. You may handle this behavior manually on user's side with if (IsItemHovered()
+                    // && IsMouseClicked(2)) *p_open = false.
     ImGuiTabItemFlags_NoPushId  = 1 << 3, // Don't call PushID()/PopID() on BeginTabItem()/EndTabItem()
     ImGuiTabItemFlags_NoTooltip = 1 << 4, // Disable tooltip for the given tab
     ImGuiTabItemFlags_NoReorder = 1 << 5, // Disable reordering this tab or having another tab cross over this tab
@@ -2038,8 +2084,8 @@ enum ImGuiTabItemFlags_
     ImGuiTabItemFlags_Trailing =
             1 << 7, // Enforce the tab position to the right of the tab bar (before the scrolling buttons)
     ImGuiTabItemFlags_NoAssumedClosure =
-            1 << 8, // Tab is selected when trying to close + closure is not immediately assumed (will wait for user to
-                    // stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep
+            1 << 8, // Tab is selected when trying to close + closure is not immediately assumed (will wait for user
+                    // to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep
                     // submitting the tab may reappear at end of tab bar.
 };
 
@@ -2054,44 +2100,44 @@ enum ImGuiFocusedFlags_
                     // low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ!
     ImGuiFocusedFlags_NoPopupHierarchy = 1 << 3, // Do not consider popup hierarchy (do not treat popup emitter as
                                                  // parent of popup) (when used with _ChildWindows or _RootWindow)
-    ImGuiFocusedFlags_DockHierarchy = 1 << 4,    // Consider docking hierarchy (treat dockspace host as parent of docked
-                                                 // window) (when used with _ChildWindows or _RootWindow)
+    ImGuiFocusedFlags_DockHierarchy = 1 << 4,    // Consider docking hierarchy (treat dockspace host as parent of
+                                                 // docked window) (when used with _ChildWindows or _RootWindow)
     ImGuiFocusedFlags_RootAndChildWindows = ImGuiFocusedFlags_RootWindow | ImGuiFocusedFlags_ChildWindows,
 };
 
 // Flags for ImGui::IsItemHovered(), ImGui::IsWindowHovered()
-// Note: if you are trying to check whether your mouse should be dispatched to Dear ImGui or to your app, you should use
-// 'io.WantCaptureMouse' instead! Please read the FAQ! Note: windows with the ImGuiWindowFlags_NoInputs flag are ignored
-// by IsWindowHovered() calls.
+// Note: if you are trying to check whether your mouse should be dispatched to Dear ImGui or to your app, you should
+// use 'io.WantCaptureMouse' instead! Please read the FAQ! Note: windows with the ImGuiWindowFlags_NoInputs flag are
+// ignored by IsWindowHovered() calls.
 enum ImGuiHoveredFlags_
 {
-    ImGuiHoveredFlags_None = 0, // Return true if directly over the item/window, not obstructed by another window, not
-                                // obstructed by an active popup or modal blocking inputs under them.
+    ImGuiHoveredFlags_None = 0, // Return true if directly over the item/window, not obstructed by another window,
+                                // not obstructed by an active popup or modal blocking inputs under them.
     ImGuiHoveredFlags_ChildWindows =
             1 << 0, // IsWindowHovered() only: Return true if any children of the window is hovered
     ImGuiHoveredFlags_RootWindow =
             1 << 1, // IsWindowHovered() only: Test from root window (top most parent of the current hierarchy)
     ImGuiHoveredFlags_AnyWindow = 1 << 2, // IsWindowHovered() only: Return true if any window is hovered
     ImGuiHoveredFlags_NoPopupHierarchy =
-            1 << 3, // IsWindowHovered() only: Do not consider popup hierarchy (do not treat popup emitter as parent of
-                    // popup) (when used with _ChildWindows or _RootWindow)
+            1 << 3, // IsWindowHovered() only: Do not consider popup hierarchy (do not treat popup emitter as parent
+                    // of popup) (when used with _ChildWindows or _RootWindow)
     ImGuiHoveredFlags_DockHierarchy =
             1 << 4, // IsWindowHovered() only: Consider docking hierarchy (treat dockspace host as parent of docked
                     // window) (when used with _ChildWindows or _RootWindow)
     ImGuiHoveredFlags_AllowWhenBlockedByPopup =
             1 << 5, // Return true even if a popup window is normally blocking access to this item/window
-    // ImGuiHoveredFlags_AllowWhenBlockedByModal     = 1 << 6,   // Return true even if a modal popup window is normally
-    // blocking access to this item/window. FIXME-TODO: Unavailable yet.
+    // ImGuiHoveredFlags_AllowWhenBlockedByModal     = 1 << 6,   // Return true even if a modal popup window is
+    // normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
     ImGuiHoveredFlags_AllowWhenBlockedByActiveItem = 1 << 7, // Return true even if an active item is blocking access to
                                                              // this item/window. Useful for Drag and Drop patterns.
     ImGuiHoveredFlags_AllowWhenOverlappedByItem =
-            1 << 8, // IsItemHovered() only: Return true even if the item uses AllowOverlap mode and is overlapped by
-                    // another hoverable item.
-    ImGuiHoveredFlags_AllowWhenOverlappedByWindow = 1 << 9, // IsItemHovered() only: Return true even if the position is
-                                                            // obstructed or overlapped by another window.
+            1 << 8, // IsItemHovered() only: Return true even if the item uses AllowOverlap mode and is overlapped
+                    // by another hoverable item.
+    ImGuiHoveredFlags_AllowWhenOverlappedByWindow = 1 << 9, // IsItemHovered() only: Return true even if the position
+                                                            // is obstructed or overlapped by another window.
     ImGuiHoveredFlags_AllowWhenDisabled = 1 << 10, // IsItemHovered() only: Return true even if the item is disabled
-    ImGuiHoveredFlags_NoNavOverride = 1 << 11, // IsItemHovered() only: Disable using keyboard/gamepad navigation state
-                                               // when active, always query mouse
+    ImGuiHoveredFlags_NoNavOverride     = 1 << 11, // IsItemHovered() only: Disable using keyboard/gamepad navigation
+                                                   // state when active, always query mouse
     ImGuiHoveredFlags_AllowWhenOverlapped =
             ImGuiHoveredFlags_AllowWhenOverlappedByItem | ImGuiHoveredFlags_AllowWhenOverlappedByWindow,
     ImGuiHoveredFlags_RectOnly = ImGuiHoveredFlags_AllowWhenBlockedByPopup |
@@ -2104,30 +2150,30 @@ enum ImGuiHoveredFlags_
     // where you can reconfigure desired behavior.
     //   e.g. 'HoverFlagsForTooltipMouse' defaults to 'ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayShort |
     //   ImGuiHoveredFlags_AllowWhenDisabled'.
-    // - for frequently actioned or hovered items providing a tooltip, you want may to use ImGuiHoveredFlags_ForTooltip
-    // (stationary + delay) so the tooltip doesn't show too often.
-    // - for items which main purpose is to be hovered, or items with low affordance, or in less consistent apps, prefer
-    // no delay or shorter delay.
+    // - for frequently actioned or hovered items providing a tooltip, you want may to use
+    // ImGuiHoveredFlags_ForTooltip (stationary + delay) so the tooltip doesn't show too often.
+    // - for items which main purpose is to be hovered, or items with low affordance, or in less consistent apps,
+    // prefer no delay or shorter delay.
     ImGuiHoveredFlags_ForTooltip =
             1 << 12, // Shortcut for standard flags when using IsItemHovered() + SetTooltip() sequence.
 
     // (Advanced) Mouse Hovering delays.
     // - generally you can use ImGuiHoveredFlags_ForTooltip to use application-standardized flags.
     // - use those if you need specific overrides.
-    ImGuiHoveredFlags_Stationary = 1 << 13, // Require mouse to be stationary for style.HoverStationaryDelay (~0.15 sec)
-                                            // _at least one time_. After this, can move on same item/window. Using the
-                                            // stationary test tends to reduces the need for a long delay.
-    ImGuiHoveredFlags_DelayNone = 1 << 14,  // IsItemHovered() only: Return true immediately (default). As this is the
-                                            // default you generally ignore this.
-    ImGuiHoveredFlags_DelayShort =
-            1 << 15, // IsItemHovered() only: Return true after style.HoverDelayShort elapsed (~0.15 sec) (shared
-                     // between items) + requires mouse to be stationary for style.HoverStationaryDelay (once per item).
-    ImGuiHoveredFlags_DelayNormal =
-            1 << 16, // IsItemHovered() only: Return true after style.HoverDelayNormal elapsed (~0.40 sec) (shared
-                     // between items) + requires mouse to be stationary for style.HoverStationaryDelay (once per item).
+    ImGuiHoveredFlags_Stationary = 1 << 13,  // Require mouse to be stationary for style.HoverStationaryDelay (~0.15
+                                             // sec) _at least one time_. After this, can move on same item/window.
+                                             // Using the stationary test tends to reduces the need for a long delay.
+    ImGuiHoveredFlags_DelayNone = 1 << 14,   // IsItemHovered() only: Return true immediately (default). As this is
+                                             // the default you generally ignore this.
+    ImGuiHoveredFlags_DelayShort = 1 << 15,  // IsItemHovered() only: Return true after style.HoverDelayShort elapsed
+                                             // (~0.15 sec) (shared between items) + requires mouse to be stationary
+                                             // for style.HoverStationaryDelay (once per item).
+    ImGuiHoveredFlags_DelayNormal = 1 << 16, // IsItemHovered() only: Return true after style.HoverDelayNormal
+                                             // elapsed (~0.40 sec) (shared between items) + requires mouse to be
+                                             // stationary for style.HoverStationaryDelay (once per item).
     ImGuiHoveredFlags_NoSharedDelay =
-            1 << 17, // IsItemHovered() only: Disable shared delay system where moving from one item to the next keeps
-                     // the previous timer for a short time (standard for tooltips with long delays)
+            1 << 17, // IsItemHovered() only: Disable shared delay system where moving from one item to the next
+                     // keeps the previous timer for a short time (standard for tooltips with long delays)
 };
 
 // Flags for ImGui::DockSpace(), shared/inherited by child nodes.
@@ -2136,21 +2182,21 @@ enum ImGuiHoveredFlags_
 enum ImGuiDockNodeFlags_
 {
     ImGuiDockNodeFlags_None          = 0,
-    ImGuiDockNodeFlags_KeepAliveOnly = 1 << 0, //       // Don't display the dockspace node but keep it alive. Windows
-                                               //       docked into this dockspace node won't be undocked.
-    // ImGuiDockNodeFlags_NoCentralNode              = 1 << 1,   //       // Disable Central Node (the node which can
-    // stay empty)
+    ImGuiDockNodeFlags_KeepAliveOnly = 1 << 0, //       // Don't display the dockspace node but keep it alive.
+                                               //       Windows docked into this dockspace node won't be undocked.
+    // ImGuiDockNodeFlags_NoCentralNode              = 1 << 1,   //       // Disable Central Node (the node which
+    // can stay empty)
     ImGuiDockNodeFlags_NoDockingOverCentralNode =
             1 << 2, //       // Disable docking over the Central Node, which will be always kept empty.
     ImGuiDockNodeFlags_PassthruCentralNode =
             1 << 3, //       // Enable passthru dockspace: 1) DockSpace() will render a ImGuiCol_WindowBg background
-                    //       covering everything excepted the Central Node when empty. Meaning the host window should
-                    //       probably use SetNextWindowBgAlpha(0.0f) prior to Begin() when using this. 2) When Central
-                    //       Node is empty: let inputs pass-through + won't display a DockingEmptyBg background. See
-                    //       demo for details.
+                    //       covering everything excepted the Central Node when empty. Meaning the host window
+                    //       should probably use SetNextWindowBgAlpha(0.0f) prior to Begin() when using this. 2)
+                    //       When Central Node is empty: let inputs pass-through + won't display a DockingEmptyBg
+                    //       background. See demo for details.
     ImGuiDockNodeFlags_NoDockingSplit = 1 << 4, //       // Disable other windows/nodes from splitting this node.
-    ImGuiDockNodeFlags_NoResize = 1 << 5, // Saved // Disable resizing node using the splitter/separators. Useful with
-                                          // programmatically setup dockspaces.
+    ImGuiDockNodeFlags_NoResize       = 1 << 5, // Saved // Disable resizing node using the splitter/separators. Useful
+                                                // with programmatically setup dockspaces.
     ImGuiDockNodeFlags_AutoHideTabBar =
             1 << 6, //       // Tab bar will automatically hide when there is a single window in the dock node.
     ImGuiDockNodeFlags_NoUndocking = 1 << 7, //       // Disable undocking this node.
@@ -2162,20 +2208,20 @@ enum ImGuiDragDropFlags_
     ImGuiDragDropFlags_None = 0,
     // BeginDragDropSource() flags
     ImGuiDragDropFlags_SourceNoPreviewTooltip =
-            1
-            << 0, // Disable preview tooltip. By default, a successful call to BeginDragDropSource opens a tooltip so
-                  // you can display a preview or description of the source contents. This flag disables this behavior.
+            1 << 0, // Disable preview tooltip. By default, a successful call to BeginDragDropSource opens a tooltip
+                    // so you can display a preview or description of the source contents. This flag disables this
+                    // behavior.
     ImGuiDragDropFlags_SourceNoDisableHover =
             1 << 1, // By default, when dragging we clear data so that IsItemHovered() will return false, to avoid
-                    // subsequent user code submitting tooltips. This flag disables this behavior so you can still call
-                    // IsItemHovered() on the source item.
+                    // subsequent user code submitting tooltips. This flag disables this behavior so you can still
+                    // call IsItemHovered() on the source item.
     ImGuiDragDropFlags_SourceNoHoldToOpenOthers =
-            1 << 2, // Disable the behavior that allows to open tree nodes and collapsing header by holding over them
-                    // while dragging a source item.
+            1 << 2, // Disable the behavior that allows to open tree nodes and collapsing header by holding over
+                    // them while dragging a source item.
     ImGuiDragDropFlags_SourceAllowNullID =
-            1 << 3, // Allow items such as Text(), Image() that have no unique identifier to be used as drag source, by
-                    // manufacturing a temporary identifier based on their window-relative position. This is extremely
-                    // unusual within the dear imgui ecosystem and so we made it explicit.
+            1 << 3, // Allow items such as Text(), Image() that have no unique identifier to be used as drag source,
+                    // by manufacturing a temporary identifier based on their window-relative position. This is
+                    // extremely unusual within the dear imgui ecosystem and so we made it explicit.
     ImGuiDragDropFlags_SourceExtern =
             1 << 4, // External source (from outside of dear imgui), won't attempt to read current item/window info.
                     // Will always return true. Only one Extern source can be active simultaneously.
@@ -2187,17 +2233,17 @@ enum ImGuiDragDropFlags_
             1 << 7, // Hint to specify that the payload may not be copied outside current process.
     // AcceptDragDropPayload() flags
     ImGuiDragDropFlags_AcceptBeforeDelivery =
-            1 << 10, // AcceptDragDropPayload() will returns true even before the mouse button is released. You can then
-                     // call IsDelivery() to test if the payload needs to be delivered.
+            1 << 10, // AcceptDragDropPayload() will returns true even before the mouse button is released. You can
+                     // then call IsDelivery() to test if the payload needs to be delivered.
     ImGuiDragDropFlags_AcceptNoDrawDefaultRect =
             1 << 11, // Do not draw the default highlight rectangle when hovering over target.
     ImGuiDragDropFlags_AcceptNoPreviewTooltip =
             1 << 12, // Request hiding the BeginDragDropSource tooltip from the BeginDragDropTarget site.
     ImGuiDragDropFlags_AcceptDrawAsHovered =
             1 << 13, // Accepting item will render as if hovered. Useful for e.g. a Button() used as a drop target.
-    ImGuiDragDropFlags_AcceptPeekOnly =
-            ImGuiDragDropFlags_AcceptBeforeDelivery |
-            ImGuiDragDropFlags_AcceptNoDrawDefaultRect, // For peeking ahead and inspecting the payload before delivery.
+    ImGuiDragDropFlags_AcceptPeekOnly = ImGuiDragDropFlags_AcceptBeforeDelivery |
+                                        ImGuiDragDropFlags_AcceptNoDrawDefaultRect, // For peeking ahead and inspecting
+                                                                                    // the payload before delivery.
 };
 
 // Standard Drag and Drop payload types. You can define you own payload types using short strings. Types starting
@@ -2244,12 +2290,12 @@ enum ImGuiSortDirection : uint8_t
 };
 
 // A key identifier (ImGuiKey_XXX or ImGuiMod_XXX value): can represent Keyboard, Mouse and Gamepad values.
-// All our named keys are >= 512. Keys value 0 to 511 are left unused and were legacy native/opaque key values (< 1.87).
-// Support for legacy keys was completely removed in 1.91.5.
-// Read details about the 1.87+ transition : https://github.com/ocornut/imgui/issues/4921
-// Note that "Keys" related to physical keys and are not the same concept as input "Characters", the latter are
-// submitted via io.AddInputCharacter(). The keyboard key enum values are named after the keys on a standard US
-// keyboard, and on other keyboard types the keys reported may not match the keycaps.
+// All our named keys are >= 512. Keys value 0 to 511 are left unused and were legacy native/opaque key values
+// (< 1.87). Support for legacy keys was completely removed in 1.91.5. Read details about the 1.87+ transition :
+// https://github.com/ocornut/imgui/issues/4921 Note that "Keys" related to physical keys and are not the same
+// concept as input "Characters", the latter are submitted via io.AddInputCharacter(). The keyboard key enum values
+// are named after the keys on a standard US keyboard, and on other keyboard types the keys reported may not match
+// the keycaps.
 enum ImGuiKey : int
 {
     // Keyboard
@@ -2381,16 +2427,17 @@ enum ImGuiKey : int
     // (analog values are 0.0f to 1.0f)
     // (download controller mapping PNG/PSD at http://dearimgui.com/controls_sheets)
     //                              // XBOX        | SWITCH  | PLAYSTA. | -> ACTION
-    ImGuiKey_GamepadStart,     // Menu        | +       | Options  |
-    ImGuiKey_GamepadBack,      // View        | -       | Share    |
-    ImGuiKey_GamepadFaceLeft,  // X           | Y       | Square   | Toggle Menu. Hold for Windowing mode
-                               // (Focus/Move/Resize windows)
-    ImGuiKey_GamepadFaceRight, // B           | A       | Circle   | Cancel / Close / Exit
-    ImGuiKey_GamepadFaceUp,    // Y           | X       | Triangle | Open Context Menu
-    ImGuiKey_GamepadFaceDown, // A           | B       | Cross    | Activate / Open / Toggle. Hold for 0.60f to Activate
-                              // in Text Input mode (e.g. wired to an on-screen keyboard).
-    ImGuiKey_GamepadDpadLeft, // D-pad Left  | "       | "        | Move / Tweak / Resize Window (in Windowing mode)
-    ImGuiKey_GamepadDpadRight,   // D-pad Right | "       | "        | Move / Tweak / Resize Window (in Windowing mode)
+    ImGuiKey_GamepadStart,       // Menu        | +       | Options  |
+    ImGuiKey_GamepadBack,        // View        | -       | Share    |
+    ImGuiKey_GamepadFaceLeft,    // X           | Y       | Square   | Toggle Menu. Hold for Windowing mode
+                                 // (Focus/Move/Resize windows)
+    ImGuiKey_GamepadFaceRight,   // B           | A       | Circle   | Cancel / Close / Exit
+    ImGuiKey_GamepadFaceUp,      // Y           | X       | Triangle | Open Context Menu
+    ImGuiKey_GamepadFaceDown,    // A           | B       | Cross    | Activate / Open / Toggle. Hold for 0.60f to
+                                 // Activate in Text Input mode (e.g. wired to an on-screen keyboard).
+    ImGuiKey_GamepadDpadLeft,    // D-pad Left  | "       | "        | Move / Tweak / Resize Window (in Windowing mode)
+    ImGuiKey_GamepadDpadRight,   // D-pad Right | "       | "        | Move / Tweak / Resize Window (in Windowing
+                                 // mode)
     ImGuiKey_GamepadDpadUp,      // D-pad Up    | "       | "        | Move / Tweak / Resize Window (in Windowing mode)
     ImGuiKey_GamepadDpadDown,    // D-pad Down  | "       | "        | Move / Tweak / Resize Window (in Windowing mode)
     ImGuiKey_GamepadL1,          // L Bumper    | L       | L1       | Tweak Slower / Focus Previous (in Windowing mode)
@@ -2435,13 +2482,14 @@ enum ImGuiKey : int
     // Shortcut(ImGuiMod_Ctrl | ImGuiKey_S).
     // - Those are written back into io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper for convenience,
     //   but may be accessed via standard key API such as IsKeyPressed(), IsKeyReleased(), querying duration etc.
-    // - Code polling every key (e.g. an interface to detect a key press for input mapping) might want to ignore those
+    // - Code polling every key (e.g. an interface to detect a key press for input mapping) might want to ignore
+    // those
     //   and prefer using the real keys (e.g. ImGuiKey_LeftCtrl, ImGuiKey_RightCtrl instead of ImGuiMod_Ctrl).
     // - In theory the value of keyboard modifiers should be roughly equivalent to a logical or of the equivalent
     // left/right keys.
     //   In practice: it's complicated; mods are often provided from different sources. Keyboard layout, IME, sticky
-    //   keys and backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity
-    //   down to the end-user...
+    //   keys and backends tend to interfere and break that equivalence. The safer decision is to relay that
+    //   ambiguity down to the end-user...
     // - On macOS, we swap Cmd(Super) and Ctrl keys at the time of the io.AddKeyEvent() call.
     ImGuiMod_None  = 0,
     ImGuiMod_Ctrl  = 1 << 12, // Ctrl (non-macOS), Cmd (macOS)
@@ -2452,9 +2500,9 @@ enum ImGuiKey : int
 };
 
 // Flags for Shortcut(), SetNextItemShortcut(),
-// (and for upcoming extended versions of IsKeyPressed(), IsMouseClicked(), Shortcut(), SetKeyOwner(), SetItemKeyOwner()
-// that are still in imgui_internal.h) Don't mistake with ImGuiInputTextFlags! (which is for ImGui::InputText()
-// function)
+// (and for upcoming extended versions of IsKeyPressed(), IsMouseClicked(), Shortcut(), SetKeyOwner(),
+// SetItemKeyOwner() that are still in imgui_internal.h) Don't mistake with ImGuiInputTextFlags! (which is for
+// ImGui::InputText() function)
 enum ImGuiInputFlags_
 {
     ImGuiInputFlags_None   = 0,
@@ -2472,16 +2520,16 @@ enum ImGuiInputFlags_
             1 << 12, // Global route (unless a focused window or active item registered the route).
     ImGuiInputFlags_RouteAlways = 1 << 13, // Do not register route, poll keys directly.
     // - Routing options
-    ImGuiInputFlags_RouteOverFocused =
-            1 << 14, // Option: global route: higher priority than focused route (unless active item in focused route).
+    ImGuiInputFlags_RouteOverFocused = 1 << 14, // Option: global route: higher priority than focused route (unless
+                                                // active item in focused route).
     ImGuiInputFlags_RouteOverActive =
             1 << 15, // Option: global route: higher priority than active item. Unlikely you need to use that: will
                      // interfere with every active items, e.g. Ctrl+A registered by InputText will be overridden by
-                     // this. May not be fully honored as user/internal code is likely to always assume they can access
-                     // keys when active.
+                     // this. May not be fully honored as user/internal code is likely to always assume they can
+                     // access keys when active.
     ImGuiInputFlags_RouteUnlessBgFocused =
-            1 << 16, // Option: global route: will not be applied if underlying background/void is focused (== no Dear
-                     // ImGui windows are focused). Useful for overlay applications.
+            1 << 16, // Option: global route: will not be applied if underlying background/void is focused (== no
+                     // Dear ImGui windows are focused). Useful for overlay applications.
     ImGuiInputFlags_RouteFromRootWindow =
             1 << 17, // Option: route evaluated from the point of view of root window rather than current window.
 
@@ -2497,9 +2545,9 @@ enum ImGuiConfigFlags_
 {
     ImGuiConfigFlags_None = 0,
     ImGuiConfigFlags_NavEnableKeyboard =
-            1 << 0, // Master keyboard navigation enable flag. Enable full Tabbing + directional arrows + Space/Enter to
-                    // activate. Note: some features such as basic Tabbing and CtrL+Tab are enabled by regardless of
-                    // this flag (and may be disabled via other means, see #4828, #9218).
+            1 << 0, // Master keyboard navigation enable flag. Enable full Tabbing + directional arrows +
+                    // Space/Enter to activate. Note: some features such as basic Tabbing and CtrL+Tab are enabled
+                    // by regardless of this flag (and may be disabled via other means, see #4828, #9218).
     ImGuiConfigFlags_NavEnableGamepad =
             1 << 1, // Master gamepad navigation enable flag. Backend also needs to set ImGuiBackendFlags_HasGamepad.
     ImGuiConfigFlags_NoMouse = 1 << 4, // Instruct dear imgui to disable mouse inputs and interactions.
@@ -2507,8 +2555,8 @@ enum ImGuiConfigFlags_
             1 << 5, // Instruct backend to not alter mouse cursor shape and visibility. Use if the backend cursor
                     // changes are interfering with yours and you don't want to use SetMouseCursor() to change mouse
                     // cursor. You may want to honor requests from imgui by reading GetMouseCursor() yourself instead.
-    ImGuiConfigFlags_NoKeyboard = 1 << 6, // Instruct dear imgui to disable keyboard inputs and interactions. This is
-                                          // done by ignoring keyboard events and clearing existing states.
+    ImGuiConfigFlags_NoKeyboard = 1 << 6, // Instruct dear imgui to disable keyboard inputs and interactions. This
+                                          // is done by ignoring keyboard events and clearing existing states.
 
     // [BETA] Docking
     ImGuiConfigFlags_DockingEnable = 1 << 7, // Docking enable flags.
@@ -2520,8 +2568,8 @@ enum ImGuiConfigFlags_
             1 << 10, // Viewport enable flags (require both ImGuiBackendFlags_PlatformHasViewports +
                      // ImGuiBackendFlags_RendererHasViewports set by the respective backends)
 
-    // [Unused] User storage (to allow your backend/engine to communicate to code that may be shared between multiple
-    // projects. Those flags are NOT used by core Dear ImGui)
+    // [Unused] User storage (to allow your backend/engine to communicate to code that may be shared between
+    // multiple projects. Those flags are NOT used by core Dear ImGui)
     ImGuiConfigFlags_IsSRGB        = 1 << 20, // Application is SRGB-aware.
     ImGuiConfigFlags_IsTouchScreen = 1 << 21, // Application is using a touch screen instead of a mouse.
 };
@@ -2534,29 +2582,29 @@ enum ImGuiBackendFlags_
     ImGuiBackendFlags_HasMouseCursors =
             1 << 1, // Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape.
     ImGuiBackendFlags_HasSetMousePos =
-            1 << 2, // Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only
-                    // used if io.ConfigNavMoveSetMousePos is set).
+            1 << 2, // Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position
+                    // (only used if io.ConfigNavMoveSetMousePos is set).
     ImGuiBackendFlags_RendererHasVtxOffset =
             1 << 3, // Backend Renderer supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+
                     // vertices) while still using 16-bit indices.
     ImGuiBackendFlags_RendererHasTextures =
-            1 << 4, // Backend Renderer supports ImTextureData requests to create/update/destroy textures. This enables
-                    // incremental texture updates and texture reloads. See
-                    // https://github.com/ocornut/imgui/blob/master/docs/BACKENDS.md for instructions on how to upgrade
-                    // your custom backend.
+            1 << 4, // Backend Renderer supports ImTextureData requests to create/update/destroy textures. This
+                    // enables incremental texture updates and texture reloads. See
+                    // https://github.com/ocornut/imgui/blob/master/docs/BACKENDS.md for instructions on how to
+                    // upgrade your custom backend.
 
     // [BETA] Multi-Viewports
     ImGuiBackendFlags_RendererHasViewports = 1 << 10, // Backend Renderer supports multiple viewports.
     ImGuiBackendFlags_PlatformHasViewports = 1 << 11, // Backend Platform supports multiple viewports.
     ImGuiBackendFlags_HasMouseHoveredViewport =
-            1 << 12, // Backend Platform supports calling io.AddMouseViewportEvent() with the viewport under the mouse.
-                     // IF POSSIBLE, ignore viewports with the ImGuiViewportFlags_NoInputs flag (Win32 backend,
-                     // GLFW 3.30+ backend can do this, SDL backend cannot). If this cannot be done, Dear ImGui needs to
-                     // use a flawed heuristic to find the viewport under.
+            1 << 12, // Backend Platform supports calling io.AddMouseViewportEvent() with the viewport under the
+                     // mouse. IF POSSIBLE, ignore viewports with the ImGuiViewportFlags_NoInputs flag (Win32
+                     // backend, GLFW 3.30+ backend can do this, SDL backend cannot). If this cannot be done, Dear
+                     // ImGui needs to use a flawed heuristic to find the viewport under.
     ImGuiBackendFlags_HasParentViewport =
-            1 << 13, // Backend Platform supports honoring viewport->ParentViewport/ParentViewportId value, by applying
-                     // the corresponding parent/child relationship at the Platform level. Child windows always appear
-                     // in front of their parent window.
+            1 << 13, // Backend Platform supports honoring viewport->ParentViewport/ParentViewportId value, by
+                     // applying the corresponding parent/child relationship at the Platform level. Child windows
+                     // always appear in front of their parent window.
 };
 
 // Enumeration for PushStyleColor() / PopStyleColor()
@@ -2631,12 +2679,12 @@ enum ImGuiCol_
 // Enumeration for PushStyleVar() / PopStyleVar() to temporarily modify the ImGuiStyle structure.
 // - The enum only refers to fields of ImGuiStyle which makes sense to be pushed/popped inside UI code.
 //   During initialization or between frames, feel free to just poke into ImGuiStyle directly.
-// - Tip: Use your programming IDE navigation facilities on the names in the _second column_ below to find the actual
-// members and their description.
+// - Tip: Use your programming IDE navigation facilities on the names in the _second column_ below to find the
+// actual members and their description.
 //   - In Visual Studio: Ctrl+Comma ("Edit.GoToAll") can follow symbols inside comments, whereas Ctrl+F12
 //   ("Edit.GoToImplementation") cannot.
-//   - In Visual Studio w/ Visual Assist installed: Alt+G ("VAssistX.GoToImplementation") can also follow symbols inside
-//   comments.
+//   - In Visual Studio w/ Visual Assist installed: Alt+G ("VAssistX.GoToImplementation") can also follow symbols
+//   inside comments.
 //   - In VS Code, CLion, etc.: Ctrl+Click can follow symbols inside comments.
 // - When changing this enum, you need to update the associated internal table GStyleVarInfo[] accordingly. This is
 // where we link enum values to members offset/type.
@@ -2645,22 +2693,22 @@ enum ImGuiStyleVar_
     // Enum name -------------------------- // Member in ImGuiStyle structure (see ImGuiStyle for descriptions)
     ImGuiStyleVar_Alpha,                       // float     Alpha
     ImGuiStyleVar_DisabledAlpha,               // float     DisabledAlpha
-    ImGuiStyleVar_WindowPadding,               // Vec2    WindowPadding
+    ImGuiStyleVar_WindowPadding,               // ::SF::Engine::Vec2    WindowPadding
     ImGuiStyleVar_WindowRounding,              // float     WindowRounding
     ImGuiStyleVar_WindowBorderSize,            // float     WindowBorderSize
-    ImGuiStyleVar_WindowMinSize,               // Vec2    WindowMinSize
-    ImGuiStyleVar_WindowTitleAlign,            // Vec2    WindowTitleAlign
+    ImGuiStyleVar_WindowMinSize,               // ::SF::Engine::Vec2    WindowMinSize
+    ImGuiStyleVar_WindowTitleAlign,            // ::SF::Engine::Vec2    WindowTitleAlign
     ImGuiStyleVar_ChildRounding,               // float     ChildRounding
     ImGuiStyleVar_ChildBorderSize,             // float     ChildBorderSize
     ImGuiStyleVar_PopupRounding,               // float     PopupRounding
     ImGuiStyleVar_PopupBorderSize,             // float     PopupBorderSize
-    ImGuiStyleVar_FramePadding,                // Vec2    FramePadding
+    ImGuiStyleVar_FramePadding,                // ::SF::Engine::Vec2    FramePadding
     ImGuiStyleVar_FrameRounding,               // float     FrameRounding
     ImGuiStyleVar_FrameBorderSize,             // float     FrameBorderSize
-    ImGuiStyleVar_ItemSpacing,                 // Vec2    ItemSpacing
-    ImGuiStyleVar_ItemInnerSpacing,            // Vec2    ItemInnerSpacing
+    ImGuiStyleVar_ItemSpacing,                 // ::SF::Engine::Vec2    ItemSpacing
+    ImGuiStyleVar_ItemInnerSpacing,            // ::SF::Engine::Vec2    ItemInnerSpacing
     ImGuiStyleVar_IndentSpacing,               // float     IndentSpacing
-    ImGuiStyleVar_CellPadding,                 // Vec2    CellPadding
+    ImGuiStyleVar_CellPadding,                 // ::SF::Engine::Vec2    CellPadding
     ImGuiStyleVar_ScrollbarSize,               // float     ScrollbarSize
     ImGuiStyleVar_ScrollbarRounding,           // float     ScrollbarRounding
     ImGuiStyleVar_ScrollbarPadding,            // float     ScrollbarPadding
@@ -2675,18 +2723,18 @@ enum ImGuiStyleVar_
     ImGuiStyleVar_TabBarBorderSize,            // float     TabBarBorderSize
     ImGuiStyleVar_TabBarOverlineSize,          // float     TabBarOverlineSize
     ImGuiStyleVar_TableAngledHeadersAngle,     // float     TableAngledHeadersAngle
-    ImGuiStyleVar_TableAngledHeadersTextAlign, // Vec2  TableAngledHeadersTextAlign
+    ImGuiStyleVar_TableAngledHeadersTextAlign, // ::SF::Engine::Vec2  TableAngledHeadersTextAlign
     ImGuiStyleVar_TreeLinesSize,               // float     TreeLinesSize
     ImGuiStyleVar_TreeLinesRounding,           // float     TreeLinesRounding
     ImGuiStyleVar_MenuItemRounding,            // float     MenuItemRounding
     ImGuiStyleVar_SelectableRounding,          // float     SelectableRounding
     ImGuiStyleVar_DragDropTargetRounding,      // float     DragDropTargetRounding
-    ImGuiStyleVar_ButtonTextAlign,             // Vec2    ButtonTextAlign
-    ImGuiStyleVar_SelectableTextAlign,         // Vec2    SelectableTextAlign
+    ImGuiStyleVar_ButtonTextAlign,             // ::SF::Engine::Vec2    ButtonTextAlign
+    ImGuiStyleVar_SelectableTextAlign,         // ::SF::Engine::Vec2    SelectableTextAlign
     ImGuiStyleVar_SeparatorSize,               // float     SeparatorSize
     ImGuiStyleVar_SeparatorTextBorderSize,     // float     SeparatorTextBorderSize
-    ImGuiStyleVar_SeparatorTextAlign,          // Vec2    SeparatorTextAlign
-    ImGuiStyleVar_SeparatorTextPadding,        // Vec2    SeparatorTextPadding
+    ImGuiStyleVar_SeparatorTextAlign,          // ::SF::Engine::Vec2    SeparatorTextAlign
+    ImGuiStyleVar_SeparatorTextPadding,        // ::SF::Engine::Vec2    SeparatorTextPadding
     ImGuiStyleVar_DockingSeparatorSize,        // float     DockingSeparatorSize
     ImGuiStyleVar_COUNT
 };
@@ -2703,8 +2751,8 @@ enum ImGuiButtonFlags_
     ImGuiButtonFlags_EnableNav =
             1 << 3, // InvisibleButton(): do not disable navigation/tabbing. Otherwise disabled by default.
     ImGuiButtonFlags_AllowOverlap =
-            1 << 12, // Hit testing will allow subsequent widgets to overlap this one. Require previous frame HoveredId
-                     // to match before being usable. Shortcut to calling SetNextItemAllowOverlap().
+            1 << 12, // Hit testing will allow subsequent widgets to overlap this one. Require previous frame
+                     // HoveredId to match before being usable. Shortcut to calling SetNextItemAllowOverlap().
 };
 
 // Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()
@@ -2723,8 +2771,8 @@ enum ImGuiColorEditFlags_
     ImGuiColorEditFlags_NoTooltip =
             1 << 6, //              // ColorEdit, ColorPicker, ColorButton: disable tooltip when hovering the preview.
     ImGuiColorEditFlags_NoLabel =
-            1 << 7, //              // ColorEdit, ColorPicker: disable display of inline text label (the label is still
-                    //              forwarded to the tooltip and picker).
+            1 << 7, //              // ColorEdit, ColorPicker: disable display of inline text label (the label is
+                    //              still forwarded to the tooltip and picker).
     ImGuiColorEditFlags_NoSidePreview = 1
                                         << 8, //              // ColorPicker: disable bigger color preview on right side
                                               //              of the picker, use small color square preview instead.
@@ -2733,31 +2781,31 @@ enum ImGuiColorEditFlags_
     ImGuiColorEditFlags_NoBorder =
             1 << 10, //              // ColorButton: disable border (which is enforced by default)
     ImGuiColorEditFlags_NoColorMarkers =
-            1 << 11, //              // ColorEdit: disable rendering R/G/B/A color marker. May also be disabled globally
-                     //              by setting style.ColorMarkerSize = 0.
+            1 << 11, //              // ColorEdit: disable rendering R/G/B/A color marker. May also be disabled
+                     //              globally by setting style.ColorMarkerSize = 0.
 
     // Alpha preview
     // - Prior to 1.91.8 (2025/01/21): alpha was made opaque in the preview by default using old name
     // ImGuiColorEditFlags_AlphaPreview.
-    // - We now display the preview as transparent by default. You can use ImGuiColorEditFlags_AlphaOpaque to use old
-    // behavior.
+    // - We now display the preview as transparent by default. You can use ImGuiColorEditFlags_AlphaOpaque to use
+    // old behavior.
     // - The new flags may be combined better and allow finer controls.
     ImGuiColorEditFlags_AlphaOpaque =
-            1 << 12, //              // ColorEdit, ColorPicker, ColorButton: disable alpha in the preview,. Contrary to
-                     //              _NoAlpha it may still be edited when calling ColorEdit4()/ColorPicker4(). For
-                     //              ColorButton() this does the same as _NoAlpha.
-    ImGuiColorEditFlags_AlphaNoBg = 1 << 13, //              // ColorEdit, ColorPicker, ColorButton: disable rendering a
-                                             //              checkerboard background behind transparent color.
-    ImGuiColorEditFlags_AlphaPreviewHalf = 1 << 14, //              // ColorEdit, ColorPicker, ColorButton: display half
-                                                    //              opaque / half transparent preview.
+            1 << 12, //              // ColorEdit, ColorPicker, ColorButton: disable alpha in the preview,. Contrary
+                     //              to _NoAlpha it may still be edited when calling ColorEdit4()/ColorPicker4().
+                     //              For ColorButton() this does the same as _NoAlpha.
+    ImGuiColorEditFlags_AlphaNoBg = 1 << 13, //              // ColorEdit, ColorPicker, ColorButton: disable rendering
+                                             //              a checkerboard background behind transparent color.
+    ImGuiColorEditFlags_AlphaPreviewHalf = 1 << 14, //              // ColorEdit, ColorPicker, ColorButton: display
+                                                    //              half opaque / half transparent preview.
 
     // User Options (right-click on widget to change some of them)
     // Current settings are stored in style.ColorEditFlags.
     ImGuiColorEditFlags_AlphaBar =
             1 << 18, //              // ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker.
     ImGuiColorEditFlags_HDR =
-            1 << 19, //              // (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note:
-                     //              you probably want to use ImGuiColorEditFlags_Float flag as well).
+            1 << 19, //              // (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition
+                     //              (note: you probably want to use ImGuiColorEditFlags_Float flag as well).
     ImGuiColorEditFlags_DisplayRGB = 1 << 20, // [Display]    // ColorEdit: override _display_ type among RGB/HSV/Hex.
                                               // ColorPicker: select any combination using one or more of RGB/HSV/Hex.
     ImGuiColorEditFlags_DisplayHSV = 1 << 21, // [Display]    // "
@@ -2765,12 +2813,12 @@ enum ImGuiColorEditFlags_
     ImGuiColorEditFlags_Uint8 =
             1 << 23, // [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255.
     ImGuiColorEditFlags_Float =
-            1 << 24, // [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f
-                     // floats instead of 0..255 integers. No round-trip of value via integers.
+            1 << 24, // [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as
+                     // 0.0f..1.0f floats instead of 0..255 integers. No round-trip of value via integers.
     ImGuiColorEditFlags_PickerHueBar   = 1 << 25, // [Picker]     // ColorPicker: bar for Hue, rectangle for Sat/Value.
     ImGuiColorEditFlags_PickerHueWheel = 1 << 26, // [Picker]     // ColorPicker: wheel for Hue, triangle for Sat/Value.
-    ImGuiColorEditFlags_PickerNoRotate = 1 << 27, // [Picker]     // ColorPicker: disable rotating Sat/Value triangle.
-                                                  // Best set in io.ConfigColorEditFlags once.
+    ImGuiColorEditFlags_PickerNoRotate = 1 << 27, // [Picker]     // ColorPicker: disable rotating Sat/Value
+                                                  // triangle. Best set in io.ConfigColorEditFlags once.
     ImGuiColorEditFlags_InputRGB =
             1 << 28, // [Input]      // ColorEdit, ColorPicker: input and output data in RGB format.
     ImGuiColorEditFlags_InputHSV =
@@ -2794,8 +2842,8 @@ enum ImGuiColorEditFlags_
 };
 
 // Flags for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.
-// We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes it
-// easier to swap them. (Those are per-item flags. There is shared behavior flag too: ImGuiIO:
+// We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes
+// it easier to swap them. (Those are per-item flags. There is shared behavior flag too: ImGuiIO:
 // io.ConfigDragClickToInputText)
 enum ImGuiSliderFlags_
 {
@@ -2807,15 +2855,15 @@ enum ImGuiSliderFlags_
                                                // format string (e.g. %.3f values are rounded to those 3 digits).
     ImGuiSliderFlags_NoInput =
             1 << 7, // Disable Ctrl+Click or Enter key allowing to input text directly into the widget.
-    ImGuiSliderFlags_WrapAround = 1 << 8, // Enable wrapping around from max to min and from min to max. Only supported
-                                          // by DragXXX() functions for now.
+    ImGuiSliderFlags_WrapAround = 1 << 8,   // Enable wrapping around from max to min and from min to max. Only
+                                            // supported by DragXXX() functions for now.
     ImGuiSliderFlags_ClampOnInput = 1 << 9, // Clamp value to min/max bounds when input manually with Ctrl+Click. By
                                             // default Ctrl+Click allows going out of bounds.
     ImGuiSliderFlags_ClampZeroRange =
-            1 << 10, // Clamp even if min==max==0.0f. Otherwise due to legacy reason DragXXX functions don't clamp with
-                     // those values. When your clamping limits are dynamic you almost always want to use it.
-    ImGuiSliderFlags_NoSpeedTweaks = 1 << 11, // Disable keyboard modifiers altering tweak speed. Useful if you want to
-                                              // alter tweak speed yourself based on your own logic.
+            1 << 10, // Clamp even if min==max==0.0f. Otherwise due to legacy reason DragXXX functions don't clamp
+                     // with those values. When your clamping limits are dynamic you almost always want to use it.
+    ImGuiSliderFlags_NoSpeedTweaks = 1 << 11, // Disable keyboard modifiers altering tweak speed. Useful if you want
+                                              // to alter tweak speed yourself based on your own logic.
     ImGuiSliderFlags_ColorMarkers =
             1 << 12, // DragScalarN(), SliderScalarN(): Draw R/G/B/A color markers on each component.
     ImGuiSliderFlags_AlwaysClamp = ImGuiSliderFlags_ClampOnInput | ImGuiSliderFlags_ClampZeroRange,
@@ -2827,7 +2875,8 @@ enum ImGuiSliderFlags_
 };
 
 // Identify a mouse button.
-// Those values are guaranteed to be stable and we frequently use 0/1 directly. Named enums provided for convenience.
+// Those values are guaranteed to be stable and we frequently use 0/1 directly. Named enums provided for
+// convenience.
 enum ImGuiMouseButton_
 {
     ImGuiMouseButton_Left   = 0,
@@ -2837,8 +2886,8 @@ enum ImGuiMouseButton_
 };
 
 // Enumeration for GetMouseCursor()
-// User code may request backend to display given cursor by calling SetMouseCursor(), which is why we have some cursors
-// that are marked unused here
+// User code may request backend to display given cursor by calling SetMouseCursor(), which is why we have some
+// cursors that are marked unused here
 enum ImGuiMouseCursor_
 {
     ImGuiMouseCursor_None  = -1,
@@ -2865,15 +2914,15 @@ enum ImGuiMouseSource : int
     ImGuiMouseSource_Mouse = 0,   // Input is coming from an actual mouse.
     ImGuiMouseSource_TouchScreen, // Input is coming from a touch screen (no hovering prior to initial press, less
                                   // precise initial press aiming, dual-axis wheeling possible).
-    ImGuiMouseSource_Pen, // Input is coming from a pressure/magnetic pen (often used in conjunction with high-sampling
-                          // rates).
+    ImGuiMouseSource_Pen,         // Input is coming from a pressure/magnetic pen (often used in conjunction with
+                                  // high-sampling rates).
     ImGuiMouseSource_COUNT
 };
 
 // Enumeration for ImGui::SetNextWindow***(), SetWindow***(), SetNextItem***() functions
 // Represent a condition.
-// Important: Treat as a regular enum! Do NOT combine multiple values using binary operators! All the functions above
-// treat 0 as a shortcut to ImGuiCond_Always.
+// Important: Treat as a regular enum! Do NOT combine multiple values using binary operators! All the functions
+// above treat 0 as a shortcut to ImGuiCond_Always.
 enum ImGuiCond_
 {
     ImGuiCond_None   = 0,      // No condition (always set the variable), same as _Always
@@ -2881,9 +2930,8 @@ enum ImGuiCond_
     ImGuiCond_Once   = 1 << 1, // Set the variable once per runtime session (only the first call will succeed)
     ImGuiCond_FirstUseEver =
             1 << 2, // Set the variable if the object/window has no persistently saved data (no entry in .ini file)
-    ImGuiCond_Appearing =
-            1
-            << 3, // Set the variable if the object/window is appearing after being hidden/inactive (or the first time)
+    ImGuiCond_Appearing = 1 << 3, // Set the variable if the object/window is appearing after being hidden/inactive
+                                  // (or the first time)
 };
 
 //-----------------------------------------------------------------------------
@@ -2906,14 +2954,14 @@ enum ImGuiCond_
 //    - Stretch Columns will share the remaining width according to their respective weight.
 //    - Mixed Fixed/Stretch columns is possible but has various side-effects on resizing behaviors.
 //      The typical use of mixing sizing policies is: any number of LEADING Fixed columns, followed by one or two
-//      TRAILING Stretch columns. (this is because the visible order of columns have subtle but necessary effects on how
-//      they react to manual resizing).
+//      TRAILING Stretch columns. (this is because the visible order of columns have subtle but necessary effects on
+//      how they react to manual resizing).
 // - When ScrollX is on:
 //    - Table defaults to ImGuiTableFlags_SizingFixedFit -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed
 //    - Columns sizing policy allowed: Fixed/Auto mostly.
 //    - Fixed Columns can be enlarged as needed. Table will show a horizontal scrollbar if needed.
-//    - When using auto-resizing (non-resizable) fixed columns, querying the content width to use item right-alignment
-//    e.g. SetNextItemWidth(-FLT_MIN) doesn't make sense, would create a feedback loop.
+//    - When using auto-resizing (non-resizable) fixed columns, querying the content width to use item
+//    right-alignment e.g. SetNextItemWidth(-FLT_MIN) doesn't make sense, would create a feedback loop.
 //    - Using Stretch columns OFTEN DOES NOT MAKE SENSE if ScrollX is on, UNLESS you have specified a value for
 //    'inner_width' in BeginTable().
 //      If you specify a value for 'inner_width' then effectively the scrolling space is known and Stretch or mixed
@@ -2935,8 +2983,8 @@ enum ImGuiTableFlags_
     ImGuiTableFlags_ContextMenuInBody = 1 << 5, // Right-click on columns body/contents will also display table context
                                                 // menu. By default it is available in TableHeadersRow(). Decorations
     ImGuiTableFlags_RowBg =
-            1 << 6, // Set each RowBg color with ImGuiCol_TableRowBg or ImGuiCol_TableRowBgAlt (equivalent of calling
-                    // TableSetBgColor with ImGuiTableBgFlags_RowBg0 on each row manually)
+            1 << 6, // Set each RowBg color with ImGuiCol_TableRowBg or ImGuiCol_TableRowBgAlt (equivalent of
+                    // calling TableSetBgColor with ImGuiTableBgFlags_RowBg0 on each row manually)
     ImGuiTableFlags_BordersInnerH = 1 << 7,  // Draw horizontal borders between rows.
     ImGuiTableFlags_BordersOuterH = 1 << 8,  // Draw horizontal borders at the top and bottom.
     ImGuiTableFlags_BordersInnerV = 1 << 9,  // Draw vertical borders between columns.
@@ -2947,54 +2995,52 @@ enum ImGuiTableFlags_
     ImGuiTableFlags_BordersInner = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersInnerH, // Draw inner borders.
     ImGuiTableFlags_BordersOuter = ImGuiTableFlags_BordersOuterV | ImGuiTableFlags_BordersOuterH, // Draw outer borders.
     ImGuiTableFlags_Borders      = ImGuiTableFlags_BordersInner | ImGuiTableFlags_BordersOuter,   // Draw all borders.
-    ImGuiTableFlags_NoBordersInBody = 1 << 11, // [ALPHA] Disable vertical borders in columns Body (borders will always
-                                               // appear in Headers). -> May move to style
+    ImGuiTableFlags_NoBordersInBody = 1 << 11, // [ALPHA] Disable vertical borders in columns Body (borders will
+                                               // always appear in Headers). -> May move to style
     ImGuiTableFlags_NoBordersInBodyUntilResize =
-            1 << 12, // [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will always
-                     // appear in Headers). -> May move to style Sizing Policy (read above for defaults)
+            1 << 12, // [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will
+                     // always appear in Headers). -> May move to style Sizing Policy (read above for defaults)
     ImGuiTableFlags_SizingFixedFit = 1 << 13, // Columns default to _WidthFixed or _WidthAuto (if resizable or not
                                               // resizable), matching contents width.
     ImGuiTableFlags_SizingFixedSame =
             2 << 13, // Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching the
                      // maximum contents width of all columns. Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible.
-    ImGuiTableFlags_SizingStretchProp = 3 << 13, // Columns default to _WidthStretch with default weights proportional
-                                                 // to each columns contents widths.
+    ImGuiTableFlags_SizingStretchProp = 3 << 13, // Columns default to _WidthStretch with default weights
+                                                 // proportional to each columns contents widths.
     ImGuiTableFlags_SizingStretchSame = 4 << 13, // Columns default to _WidthStretch with default weights all equal,
                                                  // unless overridden by TableSetupColumn(). Sizing Extra Options
     ImGuiTableFlags_NoHostExtendX =
             1 << 16, // Make outer width auto-fit to columns, overriding outer_size.x value. Only available when
                      // ScrollX/ScrollY are disabled and Stretch columns are not used.
-    ImGuiTableFlags_NoHostExtendY =
-            1
-            << 17, // Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit). Only
-                   // available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible.
+    ImGuiTableFlags_NoHostExtendY = 1 << 17, // Make outer height stop exactly at outer_size.y (prevent auto-extending
+                                             // table past the limit). Only available when ScrollX/ScrollY are
+                                             // disabled. Data below the limit will be clipped and not visible.
     ImGuiTableFlags_NoKeepColumnsVisible = 1
                                            << 18, // Disable keeping column always minimally visible when ScrollX is off
                                                   // and table gets too small. Not recommended if columns are resizable.
     ImGuiTableFlags_PreciseWidths =
-            1 << 19, // Disable distributing remainder width to stretched columns (width allocation on a 100-wide table
-                     // with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of
-                     // columns, resizing will appear to be less smooth. Clipping
-    ImGuiTableFlags_NoClip = 1 << 20, // Disable clipping rectangle for every individual columns (reduce draw command
-                                      // count, items will be able to overflow into other columns). Generally
-                                      // incompatible with TableSetupScrollFreeze(). Padding
-    ImGuiTableFlags_PadOuterX =
-            1
-            << 21, // Default if BordersOuterV is on. Enable outermost padding. Generally desirable if you have headers.
+            1 << 19, // Disable distributing remainder width to stretched columns (width allocation on a 100-wide
+                     // table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger
+                     // number of columns, resizing will appear to be less smooth. Clipping
+    ImGuiTableFlags_NoClip = 1 << 20,      // Disable clipping rectangle for every individual columns (reduce draw
+                                           // command count, items will be able to overflow into other columns).
+                                           // Generally incompatible with TableSetupScrollFreeze(). Padding
+    ImGuiTableFlags_PadOuterX = 1 << 21,   // Default if BordersOuterV is on. Enable outermost padding. Generally
+                                           // desirable if you have headers.
     ImGuiTableFlags_NoPadOuterX = 1 << 22, // Default if BordersOuterV is off. Disable outermost padding.
     ImGuiTableFlags_NoPadInnerX =
-            1 << 23, // Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner
-                     // padding if BordersOuterV is off). Scrolling
+            1 << 23, // Disable inner padding between columns (double inner padding if BordersOuterV is on, single
+                     // inner padding if BordersOuterV is off). Scrolling
     ImGuiTableFlags_ScrollX =
             1 << 24, // Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the
-                     // container size. Changes default sizing policy. Because this creates a child window, ScrollY is
-                     // currently generally recommended when using ScrollX.
-    ImGuiTableFlags_ScrollY = 1 << 25,   // Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to
-                                         // specify the container size. Sorting
-    ImGuiTableFlags_SortMulti = 1 << 26, // Hold shift when clicking headers to sort on multiple column.
-                                         // TableGetSortSpecs() may return specs where (SpecsCount > 1).
-    ImGuiTableFlags_SortTristate = 1 << 27, // Allow no sorting, disable default sorting. TableGetSortSpecs() may return
-                                            // specs where (SpecsCount == 0). Miscellaneous
+                     // container size. Changes default sizing policy. Because this creates a child window, ScrollY
+                     // is currently generally recommended when using ScrollX.
+    ImGuiTableFlags_ScrollY = 1 << 25,      // Enable vertical scrolling. Require 'outer_size' parameter of BeginTable()
+                                            // to specify the container size. Sorting
+    ImGuiTableFlags_SortMulti = 1 << 26,    // Hold shift when clicking headers to sort on multiple column.
+                                            // TableGetSortSpecs() may return specs where (SpecsCount > 1).
+    ImGuiTableFlags_SortTristate = 1 << 27, // Allow no sorting, disable default sorting. TableGetSortSpecs() may
+                                            // return specs where (SpecsCount == 0). Miscellaneous
     ImGuiTableFlags_HighlightHoveredColumn =
             1 << 28, // Highlight column headers when hovered (may evolve into a fuller highlight)
 
@@ -3017,8 +3063,8 @@ enum ImGuiTableColumnFlags_
             1 << 3, // Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing
                     // policy is _SizingStretchSame or _SizingStretchProp).
     ImGuiTableColumnFlags_WidthFixed =
-            1 << 4, // Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing
-                    // policy is _SizingFixedFit and table is resizable).
+            1 << 4, // Column will not stretch. Preferable with horizontal scrolling enabled (default if table
+                    // sizing policy is _SizingFixedFit and table is resizable).
     ImGuiTableColumnFlags_NoResize  = 1 << 5, // Disable manual resizing.
     ImGuiTableColumnFlags_NoReorder = 1 << 6, // Disable manual reordering this column, this will also prevent other
                                               // columns from crossing over this column.
@@ -3030,9 +3076,9 @@ enum ImGuiTableColumnFlags_
     ImGuiTableColumnFlags_NoSortAscending  = 1 << 10, // Disable ability to sort in the ascending direction.
     ImGuiTableColumnFlags_NoSortDescending = 1 << 11, // Disable ability to sort in the descending direction.
     ImGuiTableColumnFlags_NoHeaderLabel =
-            1 << 12, // TableHeadersRow() will submit an empty label for this column. Convenient for some small columns.
-                     // Name will still appear in context menu or in angled headers. You may append into this cell by
-                     // calling TableSetColumnIndex() right after the TableHeadersRow() call.
+            1 << 12, // TableHeadersRow() will submit an empty label for this column. Convenient for some small
+                     // columns. Name will still appear in context menu or in angled headers. You may append into
+                     // this cell by calling TableSetColumnIndex() right after the TableHeadersRow() call.
     ImGuiTableColumnFlags_NoHeaderWidth = 1 << 13, // Disable header text width contribution to automatic column width.
     ImGuiTableColumnFlags_PreferSortAscending =
             1 << 14, // Make the initial sort direction Ascending when first sorting on this column (default).
@@ -3042,12 +3088,12 @@ enum ImGuiTableColumnFlags_
     ImGuiTableColumnFlags_IndentDisable = 1
                                           << 17,  // Ignore current Indent value when entering cell (default for columns
                                                   // > 0). Indentation changes _within_ the cell will still be honored.
-    ImGuiTableColumnFlags_AngledHeader = 1 << 18, // TableHeadersRow() will submit an angled header row for this column.
-                                                  // Note this will add an extra row.
+    ImGuiTableColumnFlags_AngledHeader = 1 << 18, // TableHeadersRow() will submit an angled header row for this
+                                                  // column. Note this will add an extra row.
 
     // Output status flags, read-only via TableGetColumnFlags()
-    ImGuiTableColumnFlags_IsEnabled = 1 << 24, // Status: is enabled == not hidden by user/api (referred to as "Hide" in
-                                               // _DefaultHide and _NoHide) flags.
+    ImGuiTableColumnFlags_IsEnabled = 1 << 24, // Status: is enabled == not hidden by user/api (referred to as
+                                               // "Hide" in _DefaultHide and _NoHide) flags.
     ImGuiTableColumnFlags_IsVisible = 1 << 25, // Status: is visible == is enabled AND not clipped by scrolling.
     ImGuiTableColumnFlags_IsSorted  = 1 << 26, // Status: is currently part of the sort specs
     ImGuiTableColumnFlags_IsHovered = 1 << 27, // Status: is hovered by mouse
@@ -3057,16 +3103,16 @@ enum ImGuiTableColumnFlags_
     ImGuiTableColumnFlags_IndentMask_ = ImGuiTableColumnFlags_IndentEnable | ImGuiTableColumnFlags_IndentDisable,
     ImGuiTableColumnFlags_StatusMask_ = ImGuiTableColumnFlags_IsEnabled | ImGuiTableColumnFlags_IsVisible |
                                         ImGuiTableColumnFlags_IsSorted | ImGuiTableColumnFlags_IsHovered,
-    ImGuiTableColumnFlags_NoDirectResize_ = 1 << 30, // [Internal] Disable user resizing this column directly (it may
-                                                     // however we resized indirectly from its left edge)
+    ImGuiTableColumnFlags_NoDirectResize_ = 1 << 30, // [Internal] Disable user resizing this column directly (it
+                                                     // may however we resized indirectly from its left edge)
 };
 
 // Flags for ImGui::TableNextRow()
 enum ImGuiTableRowFlags_
 {
     ImGuiTableRowFlags_None    = 0,
-    ImGuiTableRowFlags_Headers = 1 << 0, // Identify header row (set default background color + width of its contents
-                                         // accounted differently for auto column width)
+    ImGuiTableRowFlags_Headers = 1 << 0, // Identify header row (set default background color + width of its
+                                         // contents accounted differently for auto column width)
 };
 
 // Enum for ImGui::TableSetBgColor()
@@ -3074,31 +3120,32 @@ enum ImGuiTableRowFlags_
 //  - Layer 0: draw with RowBg0 color if set, otherwise draw with ColumnBg0 if set.
 //  - Layer 1: draw with RowBg1 color if set, otherwise draw with ColumnBg1 if set.
 //  - Layer 2: draw with CellBg color if set.
-// The purpose of the two row/columns layers is to let you decide if a background color change should override or blend
-// with the existing color. When using ImGuiTableFlags_RowBg on the table, each row has the RowBg0 color automatically
-// set for odd/even rows. If you set the color of RowBg0 target, your color will override the existing RowBg0 color. If
-// you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
+// The purpose of the two row/columns layers is to let you decide if a background color change should override or
+// blend with the existing color. When using ImGuiTableFlags_RowBg on the table, each row has the RowBg0 color
+// automatically set for odd/even rows. If you set the color of RowBg0 target, your color will override the existing
+// RowBg0 color. If you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
 enum ImGuiTableBgTarget_
 {
     ImGuiTableBgTarget_None   = 0,
-    ImGuiTableBgTarget_RowBg0 = 1, // Set row background color 0 (generally used for background, automatically set when
-                                   // ImGuiTableFlags_RowBg is used)
+    ImGuiTableBgTarget_RowBg0 = 1, // Set row background color 0 (generally used for background, automatically set
+                                   // when ImGuiTableFlags_RowBg is used)
     ImGuiTableBgTarget_RowBg1 = 2, // Set row background color 1 (generally used for selection marking)
     ImGuiTableBgTarget_CellBg = 3, // Set cell background color (top-most color)
 };
 
 // Sorting specifications for a table (often handling sort specs for a single column, occasionally more)
 // Obtained by calling TableGetSortSpecs().
-// When 'SpecsDirty == true' you can sort your data. It will be true with sorting specs have changed since last call, or
-// the first time. Make sure to set 'SpecsDirty = false' after sorting, else you may wastefully sort your data every
-// frame!
+// When 'SpecsDirty == true' you can sort your data. It will be true with sorting specs have changed since last
+// call, or the first time. Make sure to set 'SpecsDirty = false' after sorting, else you may wastefully sort your
+// data every frame!
 struct ImGuiTableSortSpecs
 {
     const ImGuiTableColumnSortSpecs *Specs; // Pointer to sort spec array.
-    int SpecsCount;  // Sort spec count. Most often 1. May be > 1 when ImGuiTableFlags_SortMulti is enabled. May be == 0
-                     // when ImGuiTableFlags_SortTristate is enabled.
+    int SpecsCount; // Sort spec count. Most often 1. May be > 1 when ImGuiTableFlags_SortMulti is enabled. May be
+                    // == 0
+    // when ImGuiTableFlags_SortTristate is enabled.
     bool SpecsDirty; // Set to true when specs have changed since last time! Use this to sort again, then clear the
-                     // flag.
+    // flag.
 
     ImGuiTableSortSpecs() { memset((void *) this, 0, sizeof(*this)); }
 };
@@ -3106,11 +3153,12 @@ struct ImGuiTableSortSpecs
 // Sorting specification for one column of a table (sizeof == 12 bytes)
 struct ImGuiTableColumnSortSpecs
 {
-    ImGuiID ColumnUserID; // User data for the column (if specified by a TableSetupColumn() call in the 'ImGuiID
-                          // user_data' field). FIXME: Should be called 'UserData'..
-    int16_t ColumnIndex;  // Index of the column
-    int16_t SortOrder; // Index within parent ImGuiTableSortSpecs (always stored in order starting from 0, tables sorted
-                       // on a single criteria will always have a 0 here)
+    IdType ColumnUserID; // User data for the column (if specified by a TableSetupColumn() call in the 'IdType
+    // user_data' field). FIXME: Should be called 'UserData'..
+    int16_t ColumnIndex; // Index of the column
+    int16_t SortOrder;   // Index within parent ImGuiTableSortSpecs (always stored in order starting from 0, tables
+                         // sorted
+    // on a single criteria will always have a 0 here)
     ImGuiSortDirection SortDirection; // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending
 
     ImGuiTableColumnSortSpecs() { memset((void *) this, 0, sizeof(*this)); }
@@ -3120,8 +3168,8 @@ struct ImGuiTableColumnSortSpecs
 //-----------------------------------------------------------------------------
 // IM_MALLOC(), IM_FREE(), IM_NEW(), IM_PLACEMENT_NEW(), IM_DELETE()
 // We call C++ constructor on own allocated memory via the placement "new(ptr) Type()" syntax.
-// Defining a custom placement new() with a custom parameter allows us to bypass including <new> which on some platforms
-// complains when user has disabled exceptions.
+// Defining a custom placement new() with a custom parameter allows us to bypass including <new> which on some
+// platforms complains when user has disabled exceptions.
 //-----------------------------------------------------------------------------
 
 struct ImNewWrapper
@@ -3149,15 +3197,15 @@ void IM_DELETE(T *p)
 // Lightweight std::vector<>-like class to avoid dragging dependencies (also, some implementations of STL with debug
 // enabled are absurdly slow, we bypass it so our code runs fast in debug).
 //-----------------------------------------------------------------------------
-// - You generally do NOT need to care or use this ever. But we need to make it available in imgui.h because some of our
-// public structures are relying on it.
+// - You generally do NOT need to care or use this ever. But we need to make it available in imgui.h because some of
+// our public structures are relying on it.
 // - We use std-like naming convention here, which is a little unusual for this codebase.
 // - Important: clear() frees memory, resize(0) keep the allocated buffer. We use resize(0) a lot to intentionally
 // recycle allocated buffers across frames and amortize our costs.
-// - Important: our implementation does NOT call C++ constructors/destructors, we treat everything as raw data! This is
-// intentional but be extra mindful of that,
-//   Do NOT use this class as a std::vector replacement in your own code! Many of the structures used by dear imgui can
-//   be safely initialized by a zero-memset.
+// - Important: our implementation does NOT call C++ constructors/destructors, we treat everything as raw data! This
+// is intentional but be extra mindful of that,
+//   Do NOT use this class as a std::vector replacement in your own code! Many of the structures used by dear imgui
+//   can be safely initialized by a zero-memset.
 //-----------------------------------------------------------------------------
 
 IM_MSVC_RUNTIME_CHECKS_OFF
@@ -3322,8 +3370,8 @@ struct ImVector
         Capacity = new_capacity;
     }
 
-    // NB: It is illegal to call push_back/push_front/insert with a reference pointing inside the ImVector data itself!
-    // e.g. v.push_back(v[10]) is forbidden.
+    // NB: It is illegal to call push_back/push_front/insert with a reference pointing inside the ImVector data
+    // itself! e.g. v.push_back(v[10]) is forbidden.
     inline void push_back(const T &v)
     {
         if (Size == Capacity)
@@ -3462,145 +3510,169 @@ struct ImGuiStyle
 {
     // Font scaling
     // - recap: ImGui::GetFontSize() == FontSizeBase * (FontScaleMain * FontScaleDpi * other_scaling_factors)
-    float FontSizeBase;  // Current base font size before external global factors are applied. Use PushFont(nullptr,
-                         // size) to modify. Use ImGui::GetFontSize() to obtain scaled value.
+    float FontSizeBase; // Current base font size before external global factors are applied. Use PushFont(nullptr,
+    // size) to modify. Use ImGui::GetFontSize() to obtain scaled value.
     float FontScaleMain; // Main global scale factor. May be set by application once, or exposed to end-user.
-    float FontScaleDpi;  // Additional global scale factor from viewport/monitor contents scale. In docking branch: when
-                         // io.ConfigDpiScaleFonts is enabled, this is automatically overwritten when changing monitor
-                         // DPI.
+    float FontScaleDpi;  // Additional global scale factor from viewport/monitor contents scale. In docking branch:
+                         // when
+    // io.ConfigDpiScaleFonts is enabled, this is automatically overwritten when changing monitor
+    // DPI.
 
-    float Alpha;            // Global alpha applies to everything in Dear ImGui.
-    float DisabledAlpha;    // Additional alpha multiplier applied by BeginDisabled(). Multiply over current value of
-                            // Alpha.
-    Vec2 WindowPadding;     // Padding within a window.
-    float WindowRounding;   // Radius of window corners rounding. Set to 0.0f to have rectangular windows. Large values
-                            // tend to lead to variety of artifacts and are not recommended.
-    float WindowBorderSize; // Thickness of border around windows. Generally set to 0.0f or 1.0f. (Other values are not
-                            // well tested and more CPU/GPU costly).
-    float WindowBorderHoverPadding; // Hit-testing extent outside/inside resizing border. Also extend determination of
-                                    // hovered window. Generally meaningfully larger than WindowBorderSize to make it
-                                    // easy to reach borders.
-    Vec2 WindowMinSize; // Minimum window size. This is a global setting. If you want to constrain individual windows,
-                        // use SetNextWindowSizeConstraints().
-    Vec2 WindowTitleAlign; // Alignment for title bar text. Defaults to (0.0f,0.5f) for left-aligned,vertically
-                           // centered.
+    float Alpha;         // Global alpha applies to everything in Dear ImGui.
+    float DisabledAlpha; // Additional alpha multiplier applied by BeginDisabled(). Multiply over current value of
+    // Alpha.
+    ::SF::Engine::Vec2 WindowPadding; // Padding within a window.
+    float WindowRounding; // Radius of window corners rounding. Set to 0.0f to have rectangular windows. Large
+                          // values
+    // tend to lead to variety of artifacts and are not recommended.
+    float WindowBorderSize; // Thickness of border around windows. Generally set to 0.0f or 1.0f. (Other values are
+                            // not
+    // well tested and more CPU/GPU costly).
+    float WindowBorderHoverPadding; // Hit-testing extent outside/inside resizing border. Also extend determination
+                                    // of
+    // hovered window. Generally meaningfully larger than WindowBorderSize to make it
+    // easy to reach borders.
+    ::SF::Engine::Vec2 WindowMinSize; // Minimum window size. This is a global setting. If you want to constrain
+                                      // individual windows,
+    // use SetNextWindowSizeConstraints().
+    ::SF::Engine::Vec2
+            WindowTitleAlign; // Alignment for title bar text. Defaults to (0.0f,0.5f) for left-aligned,vertically
+    // centered.
     ImGuiDir WindowMenuButtonPosition; // Side of the collapsing/docking button in the title bar (None/Left/Right).
-                                       // Defaults to ImGuiDir_Left.
+    // Defaults to ImGuiDir_Left.
     float ChildRounding;   // Radius of child window corners rounding. Set to 0.0f to have rectangular windows.
-    float ChildBorderSize; // Thickness of border around child windows. Generally set to 0.0f or 1.0f. (Other values are
-                           // not well tested and more CPU/GPU costly).
+    float ChildBorderSize; // Thickness of border around child windows. Generally set to 0.0f or 1.0f. (Other values
+                           // are
+    // not well tested and more CPU/GPU costly).
     float PopupRounding;   // Radius of popup window corners rounding. (Note that tooltip windows use WindowRounding)
-    float PopupBorderSize; // Thickness of border around popup/tooltip windows. Generally set to 0.0f or 1.0f. (Other
-                           // values are not well tested and more CPU/GPU costly).
-    Vec2 FramePadding;     // Padding within a framed rectangle (used by most widgets).
-    float FrameRounding;   // Radius of frame corners rounding. Set to 0.0f to have rectangular frame (used by most
-                           // widgets).
-    float FrameBorderSize; // Thickness of border around frames. Generally set to 0.0f or 1.0f. (Other values are not
-                           // well tested and more CPU/GPU costly).
-    Vec2 ItemSpacing;      // Horizontal and vertical spacing between widgets/lines.
-    Vec2 ItemInnerSpacing; // Horizontal and vertical spacing between within elements of a composed widget (e.g. a
-                           // slider and its label).
-    Vec2 CellPadding; // Padding within a table cell. Cellpadding.x is locked for entire table. CellPadding.y may be
-                      // altered between different rows.
-    Vec2 TouchExtraPadding;  // Expand reactive bounding box for touch-based system where touch position is not
-                             // accurate enough. Unfortunately we don't sort widgets so priority on overlap will always
-                             // be given to the first widget. So don't grow this too much!
-    float IndentSpacing;     // Horizontal indentation when e.g. entering a tree node. Generally == (FontSize +
-                             // FramePadding.x*2).
+    float PopupBorderSize; // Thickness of border around popup/tooltip windows. Generally set to 0.0f or 1.0f.
+                           // (Other
+    // values are not well tested and more CPU/GPU costly).
+    ::SF::Engine::Vec2 FramePadding; // Padding within a framed rectangle (used by most widgets).
+    float FrameRounding; // Radius of frame corners rounding. Set to 0.0f to have rectangular frame (used by most
+    // widgets).
+    float FrameBorderSize; // Thickness of border around frames. Generally set to 0.0f or 1.0f. (Other values are
+                           // not
+    // well tested and more CPU/GPU costly).
+    ::SF::Engine::Vec2 ItemSpacing; // Horizontal and vertical spacing between widgets/lines.
+    ::SF::Engine::Vec2
+            ItemInnerSpacing; // Horizontal and vertical spacing between within elements of a composed widget (e.g. a
+    // slider and its label).
+    ::SF::Engine::Vec2
+            CellPadding; // Padding within a table cell. Cellpadding.x is locked for entire table. CellPadding.y may be
+    // altered between different rows.
+    ::SF::Engine::Vec2
+            TouchExtraPadding; // Expand reactive bounding box for touch-based system where touch position is not
+    // accurate enough. Unfortunately we don't sort widgets so priority on overlap will always
+    // be given to the first widget. So don't grow this too much!
+    float IndentSpacing; // Horizontal indentation when e.g. entering a tree node. Generally == (FontSize +
+    // FramePadding.x*2).
     float ColumnsMinSpacing; // Minimum horizontal spacing between two columns. Preferably > (FramePadding.x + 1).
     float ScrollbarSize;     // Width of the vertical scrollbar, Height of the horizontal scrollbar.
     float ScrollbarRounding; // Radius of grab corners for scrollbar.
     float ScrollbarPadding;  // Padding of scrollbar grab within its frame (same for both axes).
     float GrabMinSize;       // Minimum width/height of a grab box for slider/scrollbar.
     float GrabRounding;      // Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs.
-    float LogSliderDeadzone; // The size in pixels of the dead-zone around zero on logarithmic sliders that cross zero.
+    float LogSliderDeadzone; // The size in pixels of the dead-zone around zero on logarithmic sliders that cross
+                             // zero.
     float ImageRounding;     // Rounding of Image() calls.
     float ImageBorderSize;   // Thickness of border around Image() calls.
     float TabRounding;       // Radius of upper corners of a tab. Set to 0.0f to have rectangular tabs.
     float TabBorderSize;     // Thickness of border around tabs.
     float TabMinWidthBase;   // Minimum tab width, to make tabs larger than their contents. TabBar buttons are not
-                             // affected.
+    // affected.
     float TabMinWidthShrink; // Minimum tab width after shrinking, when using ImGuiTabBarFlags_FittingPolicyMixed
-                             // policy.
-    float TabCloseButtonMinWidthSelected; // -1: always visible. 0.0f: visible when hovered. >0.0f: visible when hovered
-                                          // if minimum width. FLT_MAX: never shrink, will behave like
-                                          // ImGuiTabBarFlags_FittingPolicyScroll.
+    // policy.
+    float TabCloseButtonMinWidthSelected; // -1: always visible. 0.0f: visible when hovered. >0.0f: visible when
+                                          // hovered
+    // if minimum width. FLT_MAX: never shrink, will behave like
+    // ImGuiTabBarFlags_FittingPolicyScroll.
     float TabCloseButtonMinWidthUnselected; // -1: always visible. 0.0f: visible when hovered. >0.0f: visible when
-                                            // hovered if minimum width. FLT_MAX: never show close button when
-                                            // unselected.
+    // hovered if minimum width. FLT_MAX: never show close button when
+    // unselected.
     float TabBarBorderSize;   // Thickness of tab-bar separator, which takes on the tab active color to denote focus.
     float TabBarOverlineSize; // Thickness of tab-bar overline, which highlights the selected tab-bar.
-    float TableAngledHeadersAngle;    // Angle of angled headers (supported values range from -50.0f degrees to +50.0f
-                                      // degrees).
-    Vec2 TableAngledHeadersTextAlign; // Alignment of angled headers within the cell
-    ImGuiTreeNodeFlags
-            TreeLinesFlags; // Default way to draw lines connecting TreeNode hierarchy. ImGuiTreeNodeFlags_DrawLinesNone
-                            // or ImGuiTreeNodeFlags_DrawLinesFull or ImGuiTreeNodeFlags_DrawLinesToNodes.
-    float TreeLinesSize;    // Thickness of outlines when using ImGuiTreeNodeFlags_DrawLines.
-    float TreeLinesRounding;      // Radius of lines connecting child nodes to the vertical line.
-    float MenuItemRounding;       // Radius of MenuItem, BeginMenu rounding.
-    float SelectableRounding;     // Radius of Selectable rounding. MODIFYING THIS IS DISCOURAGED. CONTIGUOUS SELECTIONS
-                                  // WILL NOT LOOK RIGHT. (#7589)
-    float DragDropTargetRounding; // Radius of the drag and drop target frame. When <0.0f: use FrameRounding.
+    float TableAngledHeadersAngle; // Angle of angled headers (supported values range from -50.0f degrees to +50.0f
+    // degrees).
+    ::SF::Engine::Vec2 TableAngledHeadersTextAlign; // Alignment of angled headers within the cell
+    ImGuiTreeNodeFlags TreeLinesFlags;              // Default way to draw lines connecting TreeNode hierarchy.
+                                                    // ImGuiTreeNodeFlags_DrawLinesNone
+    // or ImGuiTreeNodeFlags_DrawLinesFull or ImGuiTreeNodeFlags_DrawLinesToNodes.
+    float TreeLinesSize;      // Thickness of outlines when using ImGuiTreeNodeFlags_DrawLines.
+    float TreeLinesRounding;  // Radius of lines connecting child nodes to the vertical line.
+    float MenuItemRounding;   // Radius of MenuItem, BeginMenu rounding.
+    float SelectableRounding; // Radius of Selectable rounding. MODIFYING THIS IS DISCOURAGED. CONTIGUOUS SELECTIONS
+    // WILL NOT LOOK RIGHT. (#7589)
+    float DragDropTargetRounding;   // Radius of the drag and drop target frame. When <0.0f: use FrameRounding.
     float DragDropTargetBorderSize; // Thickness of the drag and drop target border.
     float DragDropTargetPadding;    // Size to expand the drag and drop target from actual target item size.
     float ColorMarkerSize;          // Size of R/G/B/A color markers for ColorEdit4() and for Drags/Sliders when using
-                                    // ImGuiSliderFlags_ColorMarkers.
-    ImGuiDir ColorButtonPosition;   // Side of the color button in the ColorEdit4 widget (left/right). Defaults to
-                                    // ImGuiDir_Right.
-    Vec2 ButtonTextAlign;      // Alignment of button text when button is larger than text. Defaults to (0.5f, 0.5f)
-                               // (centered).
-    Vec2 SelectableTextAlign;  // Alignment of selectable text. Defaults to (0.0f, 0.0f) (top-left aligned). It's
-                               // generally important to keep this left-aligned if you want to lay multiple items on a
-                               // same line.
-    float InputTextCursorSize; // Thickness of cursor/caret in InputText().
-    float SeparatorSize;       // Thickness of border in Separator(). Must be >= 1.0f.
+    // ImGuiSliderFlags_ColorMarkers.
+    ImGuiDir ColorButtonPosition; // Side of the color button in the ColorEdit4 widget (left/right). Defaults to
+    // ImGuiDir_Right.
+    ::SF::Engine::Vec2
+            ButtonTextAlign; // Alignment of button text when button is larger than text. Defaults to (0.5f, 0.5f)
+    // (centered).
+    ::SF::Engine::Vec2
+            SelectableTextAlign; // Alignment of selectable text. Defaults to (0.0f, 0.0f) (top-left aligned). It's
+    // generally important to keep this left-aligned if you want to lay multiple items on a
+    // same line.
+    float InputTextCursorSize;     // Thickness of cursor/caret in InputText().
+    float SeparatorSize;           // Thickness of border in Separator(). Must be >= 1.0f.
     float SeparatorTextBorderSize; // Thickness of border in SeparatorText()
-    Vec2 SeparatorTextAlign;       // Alignment of text within the separator. Defaults to (0.0f, 0.5f) (left aligned,
-                                   // center).
-    Vec2 SeparatorTextPadding;     // Horizontal offset of text from each edge of the separator + spacing on other axis.
-                                   // Generally small values. .y is recommended to be == FramePadding.y.
-    Vec2 DisplayWindowPadding;     // Apply to regular windows: amount which we enforce to keep visible when moving near
-                                   // edges of your screen.
-    Vec2 DisplaySafeAreaPadding;   // Apply to every windows, menus, popups, tooltips: amount where we avoid displaying
-                                   // contents. Adjust if you cannot see the edges of your screen (e.g. on a TV where
-                                   // scaling has not been configured).
+    ::SF::Engine::Vec2
+            SeparatorTextAlign; // Alignment of text within the separator. Defaults to (0.0f, 0.5f) (left aligned,
+    // center).
+    ::SF::Engine::Vec2
+            SeparatorTextPadding; // Horizontal offset of text from each edge of the separator + spacing on other axis.
+    // Generally small values. .y is recommended to be == FramePadding.y.
+    ::SF::Engine::Vec2
+            DisplayWindowPadding; // Apply to regular windows: amount which we enforce to keep visible when moving near
+    // edges of your screen.
+    ::SF::Engine::Vec2 DisplaySafeAreaPadding; // Apply to every windows, menus, popups, tooltips: amount where we avoid
+                                               // displaying
+    // contents. Adjust if you cannot see the edges of your screen (e.g. on a TV where
+    // scaling has not been configured).
     bool DockingNodeHasCloseButton; // Docking node has their own CloseButton() to close all docked windows.
     float DockingSeparatorSize;     // Thickness of resizing border between docked windows
     float MouseCursorScale; // Scale software rendered mouse cursor (when io.MouseDrawCursor is enabled). We apply
-                            // per-monitor DPI scaling over this scale. May be removed later.
+    // per-monitor DPI scaling over this scale. May be removed later.
 
     // Rendering & Tesselation
-    bool AntiAliasedLines; // Enable anti-aliased lines/borders. Disable if you are really tight on CPU/GPU. Latched at
-                           // the beginning of the frame (copied to ImDrawList).
-    bool AntiAliasedLinesUseTex; // Enable anti-aliased lines/borders using textures where possible. Require backend to
-                                 // render with bilinear filtering (NOT point/nearest filtering). Latched at the
-                                 // beginning of the frame (copied to ImDrawList).
-    bool AntiAliasedFill; // Enable anti-aliased edges around filled shapes (rounded rectangles, circles, etc.). Disable
-                          // if you are really tight on CPU/GPU. Latched at the beginning of the frame (copied to
-                          // ImDrawList).
+    bool AntiAliasedLines; // Enable anti-aliased lines/borders. Disable if you are really tight on CPU/GPU. Latched
+                           // at
+    // the beginning of the frame (copied to ImDrawList).
+    bool AntiAliasedLinesUseTex; // Enable anti-aliased lines/borders using textures where possible. Require backend
+                                 // to
+    // render with bilinear filtering (NOT point/nearest filtering). Latched at the
+    // beginning of the frame (copied to ImDrawList).
+    bool AntiAliasedFill; // Enable anti-aliased edges around filled shapes (rounded rectangles, circles, etc.).
+                          // Disable
+    // if you are really tight on CPU/GPU. Latched at the beginning of the frame (copied to
+    // ImDrawList).
     float CurveTessellationMaxError; // Maximum error (in pixels) when using PathBezierCurveTo() without a specific
-                                     // number of segments. Decrease for highly tessellated curves (higher quality, more
-                                     // polygons), increase to reduce quality.
-    float CircleTessellationMaxError; // Maximum error (in pixels) allowed when using AddCircle()/AddCircleFilled() or
-                                      // drawing rounded corner rectangles with no explicit segment count specified.
-                                      // Decrease for higher quality but more geometry.
+    // number of segments. Decrease for highly tessellated curves (higher quality, more
+    // polygons), increase to reduce quality.
+    float CircleTessellationMaxError; // Maximum error (in pixels) allowed when using AddCircle()/AddCircleFilled()
+                                      // or
+    // drawing rounded corner rectangles with no explicit segment count specified.
+    // Decrease for higher quality but more geometry.
 
     // Colors
-    Vec4 Colors[ImGuiCol_COUNT];
+    ::SF::Engine::Vec4 Colors[ImGuiCol_COUNT];
 
     // Behaviors
-    // (It is possible to modify those fields mid-frame if specific behavior need it, unlike e.g. configuration fields
-    // in ImGuiIO)
+    // (It is possible to modify those fields mid-frame if specific behavior need it, unlike e.g. configuration
+    // fields in ImGuiIO)
     float HoverStationaryDelay; // Delay for IsItemHovered(ImGuiHoveredFlags_Stationary). Time required to consider
-                                // mouse stationary.
-    float HoverDelayShort;      // Delay for IsItemHovered(ImGuiHoveredFlags_DelayShort). Usually used along with
-                                // HoverStationaryDelay.
-    float HoverDelayNormal;     // Delay for IsItemHovered(ImGuiHoveredFlags_DelayNormal). "
+    // mouse stationary.
+    float HoverDelayShort; // Delay for IsItemHovered(ImGuiHoveredFlags_DelayShort). Usually used along with
+    // HoverStationaryDelay.
+    float HoverDelayNormal;                      // Delay for IsItemHovered(ImGuiHoveredFlags_DelayNormal). "
     ImGuiHoveredFlags HoverFlagsForTooltipMouse; // Default flags when using IsItemHovered(ImGuiHoveredFlags_ForTooltip)
-                                                 // or BeginItemTooltip()/SetItemTooltip() while using mouse.
-    ImGuiHoveredFlags HoverFlagsForTooltipNav;   // Default flags when using IsItemHovered(ImGuiHoveredFlags_ForTooltip)
-                                                 // or BeginItemTooltip()/SetItemTooltip() while using keyboard/gamepad.
+    // or BeginItemTooltip()/SetItemTooltip() while using mouse.
+    ImGuiHoveredFlags HoverFlagsForTooltipNav; // Default flags when using IsItemHovered(ImGuiHoveredFlags_ForTooltip)
+    // or BeginItemTooltip()/SetItemTooltip() while using keyboard/gamepad.
 
     // [Internal]
     float _MainScale; // FIXME-WIP: Reference scale, as applied by ScaleAllSizes(). PLEASE DO NOT USE THIS FOR NOW.
@@ -3610,7 +3682,7 @@ struct ImGuiStyle
     ImGuiStyle();
     void
     ScaleAllSizes(float scale_factor); // Scale all spacing/padding/thickness values. Do not scale fonts. See comments
-                                       // in definition. Consider not calling this if your initial scale factor if <1.0.
+    // in definition. Consider not calling this if your initial scale factor if <1.0.
 };
 
 //-----------------------------------------------------------------------------
@@ -3642,166 +3714,187 @@ struct ImGuiIO
     // Configuration                            // Default value
     //------------------------------------------------------------------
 
-    ImGuiConfigFlags ConfigFlags;   // = 0              // See ImGuiConfigFlags_ enum. Set by user/application.
-                                    // Keyboard/Gamepad navigation options, etc.
+    ImGuiConfigFlags ConfigFlags; // = 0              // See ImGuiConfigFlags_ enum. Set by user/application.
+    // Keyboard/Gamepad navigation options, etc.
     ImGuiBackendFlags BackendFlags; // = 0              // See ImGuiBackendFlags_ enum. Set by backend (imgui_impl_xxx
-                                    // files or custom backend) to communicate features supported by the backend.
-    Vec2 DisplaySize; // <unset>          // Main display size, in pixels (== GetMainViewport()->Size). May change
-                      // every frame.
-    Vec2 DisplayFramebufferScale; // = (1, 1)         // Main display density. For retina display where window
-                                  // coordinates are different from framebuffer coordinates. This will affect font
-                                  // density + will end up in ImDrawData::FramebufferScale.
-    float DeltaTime;     // = 1.0f/60.0f     // Time elapsed since last frame, in seconds. May change every frame.
-    float IniSavingRate; // = 5.0f           // Minimum time between saving positions/sizes to .ini file, in seconds.
+    // files or custom backend) to communicate features supported by the backend.
+    ::SF::Engine::Vec2
+            DisplaySize; // <unset>          // Main display size, in pixels (== GetMainViewport()->Size). May change
+    // every frame.
+    ::SF::Engine::Vec2
+            DisplayFramebufferScale; // = (1, 1)         // Main display density. For retina display where window
+    // coordinates are different from framebuffer coordinates. This will affect font
+    // density + will end up in ImDrawData::FramebufferScale.
+    float DeltaTime;         // = 1.0f/60.0f     // Time elapsed since last frame, in seconds. May change every frame.
+    float IniSavingRate;     // = 5.0f           // Minimum time between saving positions/sizes to .ini file, in
+                             // seconds.
     const char *IniFilename; // = "imgui.ini"    // Path to .ini file (important: default "imgui.ini" is relative to
-                             // current working dir!). Set nullptr to disable automatic .ini loading/saving or if you
-                             // want to manually call LoadIniSettingsXXX() / SaveIniSettingsXXX() functions.
+    // current working dir!). Set nullptr to disable automatic .ini loading/saving or if you
+    // want to manually call LoadIniSettingsXXX() / SaveIniSettingsXXX() functions.
     const char *LogFilename; // = "imgui_log.txt"// Path to .log file (default parameter to ImGui::LogToFile when no
-                             // file is specified).
-    void *UserData;          // = nullptr           // Store your own data.
+    // file is specified).
+    void *UserData; // = nullptr           // Store your own data.
 
     // Font system
-    ImFontAtlas
-            *Fonts; // <auto>           // Font atlas: load, rasterize and pack one or more fonts into a single texture.
-    ImFont *FontDefault;       // = nullptr           // Font to use on NewFrame(). Use nullptr to uses Fonts->Fonts[0].
+    ImFontAtlas *Fonts;  // <auto>           // Font atlas: load, rasterize and pack one or more fonts into a single
+                         // texture.
+    ImFont *FontDefault; // = nullptr           // Font to use on NewFrame(). Use nullptr to uses Fonts->Fonts[0].
     bool FontAllowUserScaling; // = false          // Allow user scaling text of individual window with Ctrl+Wheel.
 
     // Keyboard/Gamepad Navigation options
     bool ConfigNavSwapGamepadButtons; // = false          // Swap Activate<>Cancel (A<>B) buttons, matching typical
-                                      // "Nintendo/Japanese style" gamepad layout.
-    bool ConfigNavMoveSetMousePos; // = false          // Directional/tabbing navigation teleports the mouse cursor. May
-                                   // be useful on TV/console systems where moving a virtual mouse is difficult. Will
-                                   // update io.MousePos and set io.WantSetMousePos=true.
-    bool ConfigNavCaptureKeyboard; // = true           // Sets io.WantCaptureKeyboard when io.NavActive is set.
-    bool ConfigNavEscapeClearFocusItem;   // = true           // Pressing Escape can clear focused item + navigation
-                                          // id/highlight. Set to false if you want to always keep highlight on.
-    bool ConfigNavEscapeClearFocusWindow; // = false          // Pressing Escape can clear focused window as well (super
-                                          // set of io.ConfigNavEscapeClearFocusItem).
-    bool ConfigNavCursorVisibleAuto;   // = true           // Using directional navigation key makes the cursor visible.
-                                       // Mouse click hides the cursor.
+    // "Nintendo/Japanese style" gamepad layout.
+    bool ConfigNavMoveSetMousePos; // = false          // Directional/tabbing navigation teleports the mouse cursor.
+                                   // May
+    // be useful on TV/console systems where moving a virtual mouse is difficult. Will
+    // update io.MousePos and set io.WantSetMousePos=true.
+    bool ConfigNavCaptureKeyboard;      // = true           // Sets io.WantCaptureKeyboard when io.NavActive is set.
+    bool ConfigNavEscapeClearFocusItem; // = true           // Pressing Escape can clear focused item + navigation
+    // id/highlight. Set to false if you want to always keep highlight on.
+    bool ConfigNavEscapeClearFocusWindow; // = false          // Pressing Escape can clear focused window as well
+                                          // (super
+    // set of io.ConfigNavEscapeClearFocusItem).
+    bool ConfigNavCursorVisibleAuto; // = true           // Using directional navigation key makes the cursor
+                                     // visible.
+    // Mouse click hides the cursor.
     bool ConfigNavCursorVisibleAlways; // = false          // Navigation cursor is always visible.
 
     // Docking options (when ImGuiConfigFlags_DockingEnable is set)
-    bool ConfigDockingNoSplit; // = false          // Simplified docking mode: disable window splitting, so docking is
-                               // limited to merging multiple windows together into tab-bars.
-    bool ConfigDockingNoDockingOver; // = false          // Simplified docking mode: disable window merging into a same
-                                     // tab-bar, so docking is limited to splitting windows.
-    bool ConfigDockingWithShift;     // = false          // Enable docking with holding Shift key (reduce visual noise,
-                                     // allows dropping in wider space)
-    bool ConfigDockingAlwaysTabBar;  // = false          // [BETA] [FIXME: This currently creates regression with
-                                     // auto-sizing and general overhead] Make every single floating window display
-                                     // within a docking node.
-    bool ConfigDockingTransparentPayload; // = false          // [BETA] Make window or viewport transparent when docking
-                                          // and only display docking boxes on the target viewport. Useful if rendering
-                                          // of multiple viewport cannot be synced. Best used with
-                                          // ConfigViewportsNoAutoMerge.
+    bool ConfigDockingNoSplit; // = false          // Simplified docking mode: disable window splitting, so docking
+                               // is
+    // limited to merging multiple windows together into tab-bars.
+    bool ConfigDockingNoDockingOver; // = false          // Simplified docking mode: disable window merging into a
+                                     // same
+    // tab-bar, so docking is limited to splitting windows.
+    bool ConfigDockingWithShift; // = false          // Enable docking with holding Shift key (reduce visual noise,
+    // allows dropping in wider space)
+    bool ConfigDockingAlwaysTabBar; // = false          // [BETA] [FIXME: This currently creates regression with
+    // auto-sizing and general overhead] Make every single floating window display
+    // within a docking node.
+    bool ConfigDockingTransparentPayload; // = false          // [BETA] Make window or viewport transparent when
+                                          // docking
+    // and only display docking boxes on the target viewport. Useful if rendering
+    // of multiple viewport cannot be synced. Best used with
+    // ConfigViewportsNoAutoMerge.
 
     // Viewport options (when ImGuiConfigFlags_ViewportsEnable is set)
     // (sorry for the amount of "NoXXXX" flags, which may be harder to reason about! may rework someday)
-    bool ConfigViewportsNoAutoMerge;   // = false;         // Set to make all floating imgui windows always create their
-                                       // own viewport. Otherwise, they are merged into the main host viewports when
-                                       // overlapping it. May also set ImGuiViewportFlags_NoAutoMerge on individual
-                                       // viewport.
+    bool ConfigViewportsNoAutoMerge; // = false;         // Set to make all floating imgui windows always create
+                                     // their
+    // own viewport. Otherwise, they are merged into the main host viewports when
+    // overlapping it. May also set ImGuiViewportFlags_NoAutoMerge on individual
+    // viewport.
     bool ConfigViewportsNoTaskBarIcon; // = false          // Disable default OS task bar icon flag for secondary
-                                       // viewports. When a viewport doesn't want a task bar icon,
-                                       // ImGuiViewportFlags_NoTaskBarIcon will be set on it.
-    bool ConfigViewportsNoDecoration;  // = true           // Disable default OS window decoration flag for secondary
-                                       // viewports. When a viewport doesn't want window decorations,
-                                       // ImGuiViewportFlags_NoDecoration will be set on it. Enabling decoration can
-                                       // create subsequent issues at OS levels (e.g. minimum window size).
+    // viewports. When a viewport doesn't want a task bar icon,
+    // ImGuiViewportFlags_NoTaskBarIcon will be set on it.
+    bool ConfigViewportsNoDecoration; // = true           // Disable default OS window decoration flag for secondary
+    // viewports. When a viewport doesn't want window decorations,
+    // ImGuiViewportFlags_NoDecoration will be set on it. Enabling decoration can
+    // create subsequent issues at OS levels (e.g. minimum window size).
     bool ConfigViewportsNoDefaultParent; // = true           // Disable setting OS window parent to main viewport by
-                                         // default. The platform backend is expected to honor
-                                         // `viewport->ParentViewportID` to setup a parent/child relationship between
-                                         // the OS windows (supported if ImGuiBackendFlags_HasParentViewport is set).
-                                         // When parented: child windows always appear in front of their parent. Set to
-                                         // false if you want viewports to automatically be parent of main viewport,
-                                         // otherwise all viewports will be top-level OS windows. Parent/child
-                                         // relationship may be set on a per-window basis using ImGuiWindowClass.
-    bool ConfigViewportsPlatformFocusSetsImGuiFocus; //= true // When a platform window is focused (e.g. using Alt+Tab,
-                                                     // clicking Platform Title Bar), apply corresponding focus on imgui
-                                                     // windows (may clear focus/active id from imgui windows location
-                                                     // in other platform windows). In principle this is better enabled
-                                                     // but we provide an opt-out, because some Linux window managers
-                                                     // tend to eagerly focus windows (e.g. on mouse hover, or even a
-                                                     // simple window pos/size change).
+    // default. The platform backend is expected to honor
+    // `viewport->ParentViewportID` to setup a parent/child relationship between
+    // the OS windows (supported if ImGuiBackendFlags_HasParentViewport is set).
+    // When parented: child windows always appear in front of their parent. Set to
+    // false if you want viewports to automatically be parent of main viewport,
+    // otherwise all viewports will be top-level OS windows. Parent/child
+    // relationship may be set on a per-window basis using ImGuiWindowClass.
+    bool ConfigViewportsPlatformFocusSetsImGuiFocus; //= true // When a platform window is focused (e.g. using
+                                                     // Alt+Tab,
+    // clicking Platform Title Bar), apply corresponding focus on imgui
+    // windows (may clear focus/active id from imgui windows location
+    // in other platform windows). In principle this is better enabled
+    // but we provide an opt-out, because some Linux window managers
+    // tend to eagerly focus windows (e.g. on mouse hover, or even a
+    // simple window pos/size change).
 
     // DPI/Scaling options
     // This may keep evolving during 1.92.x releases. Expect some turbulence.
-    bool ConfigDpiScaleFonts;     // = false          // [EXPERIMENTAL] Automatically overwrite style.FontScaleDpi when
-                                  // Monitor DPI changes. This will scale fonts but _NOT_ scale sizes/padding for now.
+    bool ConfigDpiScaleFonts; // = false          // [EXPERIMENTAL] Automatically overwrite style.FontScaleDpi when
+    // Monitor DPI changes. This will scale fonts but _NOT_ scale sizes/padding for now.
     bool ConfigDpiScaleViewports; // = false          // [EXPERIMENTAL] Scale Dear ImGui and Platform Windows when
-                                  // Monitor DPI changes.
+    // Monitor DPI changes.
 
     // Widget options
-    bool ConfigMacOSXBehaviors; // = defined(__APPLE__) // Swap Cmd<>Ctrl keys + OS X style text editing cursor movement
-                                // using Alt instead of Ctrl, Shortcuts using Cmd/Super instead of Ctrl, Line/Text Start
-                                // and End using Cmd+Arrows instead of Home/End, Double click selects by word instead of
-                                // selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl.
+    bool ConfigMacOSXBehaviors; // = defined(__APPLE__) // Swap Cmd<>Ctrl keys + OS X style text editing cursor
+                                // movement
+    // using Alt instead of Ctrl, Shortcuts using Cmd/Super instead of Ctrl, Line/Text Start
+    // and End using Cmd+Arrows instead of Home/End, Double click selects by word instead of
+    // selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl.
     bool ConfigInputTrickleEventQueue; // = true           // Enable input queue trickling: some types of events
-                                       // submitted during the same frame (e.g. button down + up) will be spread over
-                                       // multiple frames, improving interactions with low framerates.
-    bool ConfigInputTextCursorBlink;   // = true           // Enable blinking cursor (optional as some users consider it
-                                       // to be distracting).
-    bool ConfigInputTextEnterKeepActive; // = false          // [BETA] Pressing Enter will reactivate item and select
-                                         // all text (single-line only). Ctrl+Enter or Shift+Enter will deactivate
-                                         // normally.
-    ImGuiColorEditFlags
-            ConfigColorEditFlags; // = <defaults>     // Current settings for ColorEdit/ColorPicker widgets. Must have
-                                  // one bit of ImGuiColorEditFlags_DisplayMask_, one bit of
-                                  // ImGuiColorEditFlags_DataTypeMask_, one bit of ImGuiColorEditFlags_PickerMask_, one
-                                  // bit of ImGuiColorEditFlags_InputMask_. Defaults to
-                                  // ImGuiColorEditFlags_DefaultOptions_. May be further edited by users, unless you
-                                  // also set ImGuiColorEditFlags_NoOptions.
-    bool ConfigDragClickToInputText; // = false          // [BETA] Enable turning DragXXX widgets into text input with a
-                                     // simple mouse click-release (without moving). Not desirable on devices without a
-                                     // keyboard.
-    bool ConfigWindowsResizeFromEdges; // = true           // Enable resizing of windows from their edges and from the
-                                       // lower-left corner. This requires ImGuiBackendFlags_HasMouseCursors for better
-                                       // mouse cursor feedback. (This used to be a per-window
-                                       // ImGuiWindowFlags_ResizeFromAnySide flag)
-    bool ConfigWindowsMoveFromTitleBarOnly;  // = false      // Enable allowing to move windows only when clicking on
-                                             // their title bar. Does not apply to windows without a title bar.
+    // submitted during the same frame (e.g. button down + up) will be spread over
+    // multiple frames, improving interactions with low framerates.
+    bool ConfigInputTextCursorBlink; // = true           // Enable blinking cursor (optional as some users consider
+                                     // it
+    // to be distracting).
+    bool ConfigInputTextEnterKeepActive; // = false          // [BETA] Pressing Enter will reactivate item and
+                                         // select
+    // all text (single-line only). Ctrl+Enter or Shift+Enter will deactivate
+    // normally.
+    ImGuiColorEditFlags ConfigColorEditFlags; // = <defaults>     // Current settings for ColorEdit/ColorPicker
+                                              // widgets. Must have
+    // one bit of ImGuiColorEditFlags_DisplayMask_, one bit of
+    // ImGuiColorEditFlags_DataTypeMask_, one bit of ImGuiColorEditFlags_PickerMask_, one
+    // bit of ImGuiColorEditFlags_InputMask_. Defaults to
+    // ImGuiColorEditFlags_DefaultOptions_. May be further edited by users, unless you
+    // also set ImGuiColorEditFlags_NoOptions.
+    bool ConfigDragClickToInputText; // = false          // [BETA] Enable turning DragXXX widgets into text input
+                                     // with a
+    // simple mouse click-release (without moving). Not desirable on devices without a
+    // keyboard.
+    bool ConfigWindowsResizeFromEdges; // = true           // Enable resizing of windows from their edges and from
+                                       // the
+    // lower-left corner. This requires ImGuiBackendFlags_HasMouseCursors for better
+    // mouse cursor feedback. (This used to be a per-window
+    // ImGuiWindowFlags_ResizeFromAnySide flag)
+    bool ConfigWindowsMoveFromTitleBarOnly; // = false      // Enable allowing to move windows only when clicking on
+    // their title bar. Does not apply to windows without a title bar.
     bool ConfigWindowsCopyContentsWithCtrlC; // = false      // [EXPERIMENTAL] Ctrl+C copy the contents of focused
-                                             // window into the clipboard. Experimental because: (1) has known issues
-                                             // with nested Begin/End pairs (2) text output quality varies (3) text
-                                             // output is in submission order rather than spatial order.
+    // window into the clipboard. Experimental because: (1) has known issues
+    // with nested Begin/End pairs (2) text output quality varies (3) text
+    // output is in submission order rather than spatial order.
     bool ConfigScrollbarScrollByPage; // = true           // Enable scrolling page by page when clicking outside the
-                                      // scrollbar grab. When disabled, always scroll to clicked location. When enabled,
-                                      // Shift+Click scrolls to clicked location.
+    // scrollbar grab. When disabled, always scroll to clicked location. When enabled,
+    // Shift+Click scrolls to clicked location.
 
     // Ini Settings options
-    bool ConfigIniSettingsSaveLastUsedDate; // = true         // Enable loading/saving last used day (YYYYMMDD) in some
-                                            // .ini struct, making things easier to audit and allowing custom tools to
-                                            // cleanup old data.
+    bool ConfigIniSettingsSaveLastUsedDate; // = true         // Enable loading/saving last used day (YYYYMMDD) in
+                                            // some
+    // .ini struct, making things easier to audit and allowing custom tools to
+    // cleanup old data.
     int ConfigIniSettingsAutoDiscardMonths; // = 0          // [BETA] Set number of months after which unused .ini
-                                            // entries are discarded on load. Require platform_io.Platform_SessionDate
-                                            // to be set. For systems supporting the feature, .ini entries without a
-                                            // LastUsed field will always be discarded! Please report if you are using
-                                            // this.
+    // entries are discarded on load. Require platform_io.Platform_SessionDate
+    // to be set. For systems supporting the feature, .ini entries without a
+    // LastUsed field will always be discarded! Please report if you are using
+    // this.
     bool ConfigDebugIniSettings; // = false          // Save .ini data with extra comments (particularly helpful for
-                                 // Docking, but makes saving slower)
+    // Docking, but makes saving slower)
 
     // Miscellaneous options
     // (you can visualize and interact with all options in 'Demo->Configuration')
-    bool MouseDrawCursor; // = false          // Request ImGui to draw a mouse cursor for you (if you are on a platform
-                          // without a mouse cursor). Cannot be easily renamed to 'io.ConfigXXX' because this is
-                          // frequently used by backend implementations.
-    float ConfigMemoryCompactTimer; // = 60.0f          // Timer (in seconds) to free transient windows/tables memory
-                                    // buffers when unused. Set to -1.0f to disable.
+    bool MouseDrawCursor; // = false          // Request ImGui to draw a mouse cursor for you (if you are on a
+                          // platform
+    // without a mouse cursor). Cannot be easily renamed to 'io.ConfigXXX' because this is
+    // frequently used by backend implementations.
+    float ConfigMemoryCompactTimer; // = 60.0f          // Timer (in seconds) to free transient windows/tables
+                                    // memory
+    // buffers when unused. Set to -1.0f to disable.
 
     // Inputs Behaviors
     // (other variables, ones which are expected to be tweaked within UI code, are exposed in ImGuiStyle)
-    float MouseDoubleClickTime;    // = 0.30f          // Time for consecutive clicks to account as a double-click, in
-                                   // seconds.
-    float MouseDoubleClickMaxDist; // = 6.0f           // Distance threshold to stay in to validate a double-click or
-                                   // multiple clicks, in pixels.
-    float MouseSingleClickDelay;   // = 0.60f          // Time for a delayed click when using
-                                 // GetItemClickedCountWithSingleClickDelay() or IsMouseReleasedWithDelay(), in seconds.
-                                 // Must be > io.MouseDoubleClickTime.
+    float MouseDoubleClickTime; // = 0.30f          // Time for consecutive clicks to account as a double-click, in
+    // seconds.
+    float MouseDoubleClickMaxDist; // = 6.0f           // Distance threshold to stay in to validate a double-click
+                                   // or
+    // multiple clicks, in pixels.
+    float MouseSingleClickDelay; // = 0.60f          // Time for a delayed click when using
+    // GetItemClickedCountWithSingleClickDelay() or IsMouseReleasedWithDelay(), in seconds.
+    // Must be > io.MouseDoubleClickTime.
     float MouseDragThreshold; // = 6.0f           // Distance threshold before considering we are dragging.
-    float KeyRepeatDelay; // = 0.275f         // When holding a key/button, time before it starts repeating, in seconds
-                          // (for buttons in Repeat mode, etc.).
-    float KeyRepeatRate;  // = 0.050f         // When holding a key/button, rate at which it repeats, in seconds.
+    float KeyRepeatDelay;     // = 0.275f         // When holding a key/button, time before it starts repeating, in
+                              // seconds
+    // (for buttons in Repeat mode, etc.).
+    float KeyRepeatRate; // = 0.050f         // When holding a key/button, rate at which it repeats, in seconds.
 
     //------------------------------------------------------------------
     // Debug options
@@ -3811,8 +3904,8 @@ struct ImGuiIO
     // - Error recovery is provided as a way to facilitate:
     //    - Recovery after a programming error (native code or scripting language - the latter tends to facilitate
     //    iterating on code while running).
-    //    - Recovery after running an exception handler or any error processing which may skip code after an error has
-    //    been detected.
+    //    - Recovery after running an exception handler or any error processing which may skip code after an error
+    //    has been detected.
     // - Error recovery is not perfect nor guaranteed! It is a feature to ease development.
     //   You not are not supposed to rely on it in the course of a normal application run.
     // - Functions that support error recovery are using IM_ASSERT_USER_ERROR() instead of IM_ASSERT().
@@ -3827,18 +3920,21 @@ struct ImGuiIO
     // - Recovery after error/exception: record stack sizes with ErrorRecoveryStoreState(), disable assert, set log
     // callback (to e.g. trigger high-level breakpoint), recover with ErrorRecoveryTryToRecoverState(), restore
     // settings.
-    bool ConfigErrorRecovery; // = true       // Enable error recovery support. Some errors won't be detected and lead
-                              // to direct crashes if recovery is disabled.
-    bool ConfigErrorRecoveryEnableAssert;   // = true       // Enable asserts on recoverable error. By default call
-                                            // IM_ASSERT() when returning from a failing IM_ASSERT_USER_ERROR()
+    bool ConfigErrorRecovery; // = true       // Enable error recovery support. Some errors won't be detected and
+                              // lead
+    // to direct crashes if recovery is disabled.
+    bool ConfigErrorRecoveryEnableAssert; // = true       // Enable asserts on recoverable error. By default call
+    // IM_ASSERT() when returning from a failing IM_ASSERT_USER_ERROR()
     bool ConfigErrorRecoveryEnableDebugLog; // = true       // Enable debug log output on recoverable errors.
-    bool ConfigErrorRecoveryEnableTooltip;  // = true       // Enable tooltip on recoverable errors. The tooltip include
-                                            // a way to enable asserts if they were disabled.
+    bool ConfigErrorRecoveryEnableTooltip;  // = true       // Enable tooltip on recoverable errors. The tooltip
+                                            // include
+    // a way to enable asserts if they were disabled.
 
     // Option to enable various debug tools showing buttons that will call the IM_DEBUG_BREAK() macro.
     // - The Item Picker tool will be available regardless of this being enabled, in order to maximize its
     // discoverability.
-    // - Requires a debugger being attached, otherwise IM_DEBUG_BREAK() options will appear to crash your application.
+    // - Requires a debugger being attached, otherwise IM_DEBUG_BREAK() options will appear to crash your
+    // application.
     //   e.g. io.ConfigDebugIsDebuggerPresent = ::IsDebuggerPresent() on Win32, or refer to ImOsIsDebuggerPresent()
     //   imgui_test_engine/imgui_te_utils.cpp for a Unix compatible version.
     bool ConfigDebugIsDebuggerPresent; // = false          // Enable various tools calling IM_DEBUG_BREAK().
@@ -3847,30 +3943,34 @@ struct ImGuiIO
     // - Code should use PushID()/PopID() in loops, or append "##xx" to same-label identifiers.
     // - Empty label e.g. Button("") == same ID as parent widget/node. Use Button("##xx") instead!
     // - See FAQ https://github.com/ocornut/imgui/blob/master/docs/FAQ.md#q-about-the-id-stack-system
-    bool ConfigDebugHighlightIdConflicts; // = true           // Highlight and show an error message popup when multiple
-                                          // items have conflicting identifiers.
-    bool ConfigDebugHighlightIdConflictsShowItemPicker; //=true // Show "Item Picker" button in aforementioned popup.
+    bool ConfigDebugHighlightIdConflicts; // = true           // Highlight and show an error message popup when
+                                          // multiple
+    // items have conflicting identifiers.
+    bool ConfigDebugHighlightIdConflictsShowItemPicker; //=true // Show "Item Picker" button in aforementioned
+                                                        // popup.
 
     // Tools to test correct Begin/End and BeginChild/EndChild behaviors.
-    // - Presently Begin()/End() and BeginChild()/EndChild() needs to ALWAYS be called in tandem, regardless of return
-    // value of BeginXXX()
+    // - Presently Begin()/End() and BeginChild()/EndChild() needs to ALWAYS be called in tandem, regardless of
+    // return value of BeginXXX()
     // - This is inconsistent with other BeginXXX functions and create confusion for many users.
     // - We expect to update the API eventually. In the meanwhile we provide tools to facilitate checking user-code
     // behavior.
-    bool ConfigDebugBeginReturnValueOnce; // = false          // First-time calls to Begin()/BeginChild() will return
-                                          // false. NEEDS TO BE SET AT APPLICATION BOOT TIME if you don't want to miss
-                                          // windows.
-    bool ConfigDebugBeginReturnValueLoop; // = false          // Some calls to Begin()/BeginChild() will return false.
-                                          // Will cycle through window depths then repeat. Suggested use: add
-                                          // "io.ConfigDebugBeginReturnValue = io.KeyShift" in your main loop then
-                                          // occasionally press SHIFT. Windows should be flickering while running.
+    bool ConfigDebugBeginReturnValueOnce; // = false          // First-time calls to Begin()/BeginChild() will
+                                          // return
+    // false. NEEDS TO BE SET AT APPLICATION BOOT TIME if you don't want to miss
+    // windows.
+    bool ConfigDebugBeginReturnValueLoop; // = false          // Some calls to Begin()/BeginChild() will return
+                                          // false.
+    // Will cycle through window depths then repeat. Suggested use: add
+    // "io.ConfigDebugBeginReturnValue = io.KeyShift" in your main loop then
+    // occasionally press SHIFT. Windows should be flickering while running.
 
     // Option to deactivate io.AddFocusEvent(false) handling.
     // - May facilitate interactions with a debugger when focus loss leads to clearing inputs data.
-    // - Backends may have other side-effects on focus loss, so this will reduce side-effects but not necessary remove
-    // all of them.
+    // - Backends may have other side-effects on focus loss, so this will reduce side-effects but not necessary
+    // remove all of them.
     bool ConfigDebugIgnoreFocusLoss; // = false          // Ignore io.AddFocusEvent(false), consequently not calling
-                                     // io.ClearInputKeys()/io.ClearInputMouse() in input processing.
+    // io.ClearInputKeys()/io.ClearInputMouse() in input processing.
 
     //------------------------------------------------------------------
     // Platform Identifiers
@@ -3878,8 +3978,8 @@ struct ImGuiIO
     //------------------------------------------------------------------
 
     // Nowadays those would be stored in ImGuiPlatformIO but we are leaving them here for legacy reasons.
-    // Optional: Platform/Renderer backend name (informational only! will be displayed in About Window) + User data for
-    // backend/wrappers to store their own stuff.
+    // Optional: Platform/Renderer backend name (informational only! will be displayed in About Window) + User data
+    // for backend/wrappers to store their own stuff.
     const char *BackendPlatformName; // = nullptr
     const char *BackendRendererName; // = nullptr
     void *BackendPlatformUserData;   // = nullptr           // User data for platform backend
@@ -3893,22 +3993,22 @@ struct ImGuiIO
     // Input Functions
     void AddKeyEvent(ImGuiKey key,
                      bool down); // Queue a new key down/up event. Key should be "translated" (as in, generally
-                                 // ImGuiKey_A matches the key end-user would use to emit an 'A' character)
+    // ImGuiKey_A matches the key end-user would use to emit an 'A' character)
     void AddKeyAnalogEvent(ImGuiKey key, bool down,
                            float v); // Queue a new key down/up event for analog values (e.g. ImGuiKey_Gamepad_ values).
-                                     // Dead-zones should be handled by the backend.
-    void AddMousePosEvent(float x, float y); // Queue a mouse position update. Use -FLT_MAX,-FLT_MAX to signify no mouse
-                                             // (e.g. app not focused and not hovered)
+    // Dead-zones should be handled by the backend.
+    void AddMousePosEvent(float x,
+                          float y); // Queue a mouse position update. Use -FLT_MAX,-FLT_MAX to signify no mouse
+    // (e.g. app not focused and not hovered)
     void AddMouseButtonEvent(int button, bool down); // Queue a mouse button change
     void AddMouseWheelEvent(float wheel_x,
                             float wheel_y); // Queue a mouse wheel update. wheel_y<0: scroll down, wheel_y>0: scroll up,
-                                            // wheel_x<0: scroll right, wheel_x>0: scroll left.
+    // wheel_x<0: scroll right, wheel_x>0: scroll left.
     void AddMouseSourceEvent(ImGuiMouseSource source); // Queue a mouse source change (Mouse/TouchScreen/Pen)
-    void AddMouseViewportEvent(
-            ImGuiID id); // Queue a mouse hovered viewport. Requires backend to set
-                         // ImGuiBackendFlags_HasMouseHoveredViewport to call this (for multi-viewport support).
+    void AddMouseViewportEvent(IdType id);             // Queue a mouse hovered viewport. Requires backend to set
+    // ImGuiBackendFlags_HasMouseHoveredViewport to call this (for multi-viewport support).
     void AddFocusEvent(bool focused); // Queue a gain/loss of focus for the application (generally based on OS/platform
-                                      // focus of your window)
+    // focus of your window)
     void AddInputCharacter(unsigned int c); // Queue a new character input
     void
     AddInputCharacterUTF16(ImWchar16 c); // Queue a new character input from a UTF-16 character, it can be a surrogate
@@ -3917,14 +4017,14 @@ struct ImGuiIO
     void SetKeyEventNativeData(
             ImGuiKey key, int native_keycode, int native_scancode,
             int native_legacy_index = -1); // [Optional] Specify index for legacy <1.87 IsKeyXXX() functions with native
-                                           // indices + specify native keycode, scancode.
-    void SetAppAcceptingEvents(
-            bool accepting_events); // Set master flag for accepting key/mouse/text events (default to true). Useful if
-                                    // you have native dialog boxes that are interrupting your application loop/refresh,
-                                    // and you want to disable events being queued while your app is frozen.
-    void ClearEventsQueue();        // Clear all incoming events.
-    void ClearInputKeys();  // Clear current keyboard/gamepad state + current frame text input buffer. Equivalent to
-                            // releasing all keys/buttons.
+    // indices + specify native keycode, scancode.
+    void SetAppAcceptingEvents(bool accepting_events); // Set master flag for accepting key/mouse/text events
+                                                       // (default to true). Useful if
+    // you have native dialog boxes that are interrupting your application loop/refresh,
+    // and you want to disable events being queued while your app is frozen.
+    void ClearEventsQueue(); // Clear all incoming events.
+    void ClearInputKeys();   // Clear current keyboard/gamepad state + current frame text input buffer. Equivalent to
+    // releasing all keys/buttons.
     void ClearInputMouse(); // Clear current mouse state.
 
     //------------------------------------------------------------------
@@ -3933,33 +4033,41 @@ struct ImGuiIO
     //  generally easier and more correct to use their state BEFORE calling NewFrame(). See FAQ for details!)
     //------------------------------------------------------------------
 
-    bool WantCaptureMouse; // Set when Dear ImGui will use mouse inputs, in this case do not dispatch them to your main
-                           // game/application (either way, always pass on mouse inputs to imgui). (e.g. unclicked mouse
-                           // is hovering over an imgui window, widget is active, mouse was clicked over an imgui
-                           // window, etc.).
-    bool WantCaptureKeyboard; // Set when Dear ImGui will use keyboard inputs, in this case do not dispatch them to your
-                              // main game/application (either way, always pass keyboard inputs to imgui). (e.g.
-                              // InputText active, or an imgui window is focused and navigation is enabled, etc.).
-    bool WantTextInput;   // Mobile/console: when set, you may display an on-screen keyboard. This is set by Dear ImGui
-                          // when it wants textual keyboard input to happen (e.g. when a InputText widget is active).
-    bool WantSetMousePos; // MousePos has been altered, backend should reposition mouse on next frame. Rarely used! Set
-                          // only when io.ConfigNavMoveSetMousePos is enabled.
-    bool WantSaveIniSettings; // When manual .ini load/save is active (io.IniFilename == nullptr), this will be set to
-                              // notify your application that you can call SaveIniSettingsToMemory() and save yourself.
-                              // Important: clear io.WantSaveIniSettings yourself after saving!
-    bool NavActive;  // Keyboard/Gamepad navigation is currently allowed (will handle ImGuiKey_NavXXX events) = a window
-                     // is focused and it doesn't use the ImGuiWindowFlags_NoNavInputs flag.
+    bool WantCaptureMouse; // Set when Dear ImGui will use mouse inputs, in this case do not dispatch them to your
+                           // main
+    // game/application (either way, always pass on mouse inputs to imgui). (e.g. unclicked mouse
+    // is hovering over an imgui window, widget is active, mouse was clicked over an imgui
+    // window, etc.).
+    bool WantCaptureKeyboard; // Set when Dear ImGui will use keyboard inputs, in this case do not dispatch them to
+                              // your
+    // main game/application (either way, always pass keyboard inputs to imgui). (e.g.
+    // InputText active, or an imgui window is focused and navigation is enabled, etc.).
+    bool WantTextInput; // Mobile/console: when set, you may display an on-screen keyboard. This is set by Dear
+                        // ImGui
+    // when it wants textual keyboard input to happen (e.g. when a InputText widget is active).
+    bool WantSetMousePos; // MousePos has been altered, backend should reposition mouse on next frame. Rarely used!
+                          // Set
+    // only when io.ConfigNavMoveSetMousePos is enabled.
+    bool WantSaveIniSettings; // When manual .ini load/save is active (io.IniFilename == nullptr), this will be set
+                              // to
+    // notify your application that you can call SaveIniSettingsToMemory() and save yourself.
+    // Important: clear io.WantSaveIniSettings yourself after saving!
+    bool NavActive; // Keyboard/Gamepad navigation is currently allowed (will handle ImGuiKey_NavXXX events) = a
+                    // window
+    // is focused and it doesn't use the ImGuiWindowFlags_NoNavInputs flag.
     bool NavVisible; // Keyboard/Gamepad navigation highlight is visible and allowed (will handle ImGuiKey_NavXXX
-                     // events).
-    float Framerate; // Estimate of application framerate (rolling average over 60 frames, based on io.DeltaTime), in
-                     // frame per second. Solely for convenience. Slow applications may not want to use a moving average
-                     // or may want to reset underlying buffers occasionally.
+    // events).
+    float Framerate; // Estimate of application framerate (rolling average over 60 frames, based on io.DeltaTime),
+                     // in
+    // frame per second. Solely for convenience. Slow applications may not want to use a moving average
+    // or may want to reset underlying buffers occasionally.
     int MetricsRenderVertices; // Vertices output during last call to Render()
     int MetricsRenderIndices;  // Indices output during last call to Render() = number of triangles * 3
     int MetricsRenderWindows;  // Number of visible windows
     int MetricsActiveWindows;  // Number of active windows
-    Vec2 MouseDelta;           // Mouse delta. Note that this is zero if either current or previous position are invalid
-                               // (-FLT_MAX,-FLT_MAX), so a disappearing/reappearing mouse won't have a huge delta.
+    ::SF::Engine::Vec2
+            MouseDelta; // Mouse delta. Note that this is zero if either current or previous position are invalid
+    // (-FLT_MAX,-FLT_MAX), so a disappearing/reappearing mouse won't have a huge delta.
 
     //------------------------------------------------------------------
     // [Internal] Dear ImGui will maintain those fields. Forward compatibility not guaranteed!
@@ -3968,74 +4076,85 @@ struct ImGuiIO
     ImGuiContext *Ctx; // Parent UI context (needs to be set explicitly by parent).
 
     // Main Input State
-    // (this block used to be written by backend, since 1.87 it is best to NOT write to those directly, call the AddXXX
-    // functions above instead) (reading from those variables is fair game, as they are extremely unlikely to be moving
-    // anywhere)
-    Vec2 MousePos;     // Mouse position, in pixels. Set to Vec2(-FLT_MAX, -FLT_MAX) if mouse is unavailable (on another
-                       // screen, etc.)
-    bool MouseDown[5]; // Mouse buttons: 0=left, 1=right, 2=middle + extras (ImGuiMouseButton_COUNT == 5). Dear ImGui
-                       // mostly uses left and right buttons. Other buttons allow us to track if the mouse is being used
-                       // by your application + available to user as a convenience via IsMouse** API.
-    float MouseWheel;  // Mouse wheel Vertical: 1 unit scrolls about 5 lines text. >0 scrolls Up, <0 scrolls Down. Hold
-                       // Shift to turn vertical scroll into horizontal scroll.
-    float MouseWheelH; // Mouse wheel Horizontal. >0 scrolls Left, <0 scrolls Right. Most users don't have a mouse with
-                       // a horizontal wheel, may not be filled by all backends.
+    // (this block used to be written by backend, since 1.87 it is best to NOT write to those directly, call the
+    // AddXXX functions above instead) (reading from those variables is fair game, as they are extremely unlikely to
+    // be moving anywhere)
+    ::SF::Engine::Vec2 MousePos; // Mouse position, in pixels. Set to ::SF::Engine::Vec2(-FLT_MAX, -FLT_MAX) if mouse is
+                                 // unavailable (on another
+    // screen, etc.)
+    bool MouseDown[5]; // Mouse buttons: 0=left, 1=right, 2=middle + extras (ImGuiMouseButton_COUNT == 5). Dear
+                       // ImGui
+    // mostly uses left and right buttons. Other buttons allow us to track if the mouse is being used
+    // by your application + available to user as a convenience via IsMouse** API.
+    float MouseWheel; // Mouse wheel Vertical: 1 unit scrolls about 5 lines text. >0 scrolls Up, <0 scrolls Down.
+                      // Hold
+    // Shift to turn vertical scroll into horizontal scroll.
+    float MouseWheelH; // Mouse wheel Horizontal. >0 scrolls Left, <0 scrolls Right. Most users don't have a mouse
+                       // with
+    // a horizontal wheel, may not be filled by all backends.
     ImGuiMouseSource MouseSource; // Mouse actual input peripheral (Mouse/TouchScreen/Pen).
-    ImGuiID MouseHoveredViewport; // (Optional) Modify using io.AddMouseViewportEvent(). With multi-viewports: viewport
-                                  // the OS mouse is hovering. If possible _IGNORING_ viewports with the
-                                  // ImGuiViewportFlags_NoInputs flag is much better (few backends can handle that). Set
-                                  // io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport if you can provide
-                                  // this info. If you don't imgui will infer the value using the rectangles and last
-                                  // focused time of the viewports it knows about (ignoring other OS windows).
-    bool KeyCtrl;                 // Keyboard modifier down: Ctrl (non-macOS), Cmd (macOS)
-    bool KeyShift;                // Keyboard modifier down: Shift
-    bool KeyAlt;                  // Keyboard modifier down: Alt
-    bool KeySuper;                // Keyboard modifier down: Windows/Super (non-macOS), Ctrl (macOS)
+    IdType MouseHoveredViewport;  // (Optional) Modify using io.AddMouseViewportEvent(). With multi-viewports:
+                                  // viewport
+    // the OS mouse is hovering. If possible _IGNORING_ viewports with the
+    // ImGuiViewportFlags_NoInputs flag is much better (few backends can handle that). Set
+    // io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport if you can provide
+    // this info. If you don't imgui will infer the value using the rectangles and last
+    // focused time of the viewports it knows about (ignoring other OS windows).
+    bool KeyCtrl;  // Keyboard modifier down: Ctrl (non-macOS), Cmd (macOS)
+    bool KeyShift; // Keyboard modifier down: Shift
+    bool KeyAlt;   // Keyboard modifier down: Alt
+    bool KeySuper; // Keyboard modifier down: Windows/Super (non-macOS), Ctrl (macOS)
 
     // Other state maintained from data above + IO function calls
-    ImGuiKeyChord
-            KeyMods; // Key mods flags (any of ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Alt/ImGuiMod_Super flags, same as
-                     // io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags). Read-only, updated by NewFrame()
-    ImGuiKeyData
-            KeysData[ImGuiKey_NamedKey_COUNT]; // Key state for all known keys. MUST use 'key - ImGuiKey_NamedKey_BEGIN'
-                                               // as index. Use IsKeyXXX() functions to access this.
-    bool WantCaptureMouseUnlessPopupClose;     // Alternative to WantCaptureMouse: (WantCaptureMouse == true &&
-                                               // WantCaptureMouseUnlessPopupClose == false) when a click over void is
-                                               // expected to close a popup.
-    Vec2 MousePosPrev; // Previous mouse position (note that MouseDelta is not necessary == MousePos-MousePosPrev, in
-                       // case either position is invalid)
-    Vec2 MouseClickedPos[5];           // Position at time of clicking
-    double MouseClickedTime[5];        // Time of last click (used to figure out double-click)
-    bool MouseClicked[5];              // Mouse button went from !Down to Down (same as MouseClickedCount[x] != 0)
-    bool MouseDoubleClicked[5];        // Has mouse button been double-clicked? (same as MouseClickedCount[x] == 2)
-    uint16_t MouseClickedCount[5];     // == 0 (not clicked), == 1 (same as MouseClicked[]), == 2 (double-clicked), == 3
-                                       // (triple-clicked) etc. when going from !Down to Down
+    ImGuiKeyChord KeyMods; // Key mods flags (any of ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Alt/ImGuiMod_Super flags,
+                           // same as
+    // io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags). Read-only, updated by NewFrame()
+    ImGuiKeyData KeysData[ImGuiKey_NamedKey_COUNT]; // Key state for all known keys. MUST use 'key -
+                                                    // ImGuiKey_NamedKey_BEGIN'
+    // as index. Use IsKeyXXX() functions to access this.
+    bool WantCaptureMouseUnlessPopupClose; // Alternative to WantCaptureMouse: (WantCaptureMouse == true &&
+    // WantCaptureMouseUnlessPopupClose == false) when a click over void is
+    // expected to close a popup.
+    ::SF::Engine::Vec2 MousePosPrev; // Previous mouse position (note that MouseDelta is not necessary ==
+                                     // MousePos-MousePosPrev, in
+    // case either position is invalid)
+    ::SF::Engine::Vec2 MouseClickedPos[5]; // Position at time of clicking
+    double MouseClickedTime[5];            // Time of last click (used to figure out double-click)
+    bool MouseClicked[5];                  // Mouse button went from !Down to Down (same as MouseClickedCount[x] != 0)
+    bool MouseDoubleClicked[5];            // Has mouse button been double-clicked? (same as MouseClickedCount[x] == 2)
+    uint16_t MouseClickedCount[5]; // == 0 (not clicked), == 1 (same as MouseClicked[]), == 2 (double-clicked), == 3
+    // (triple-clicked) etc. when going from !Down to Down
     uint16_t MouseClickedLastCount[5]; // Count successive number of clicks. Stays valid after mouse release. Reset
-                                       // after another click is done.
-    bool MouseReleased[5];             // Mouse button went from Down to !Down
-    double MouseReleasedTime[5]; // Time of last released (rarely used! but useful to handle delayed single-click when
-                                 // trying to disambiguate them from double-click).
-    bool MouseDownOwned[5]; // Track if button was clicked inside a dear imgui window or over void blocked by a popup.
-                            // We don't request mouse capture from the application if click started outside ImGui
-                            // bounds.
+    // after another click is done.
+    bool MouseReleased[5];       // Mouse button went from Down to !Down
+    double MouseReleasedTime[5]; // Time of last released (rarely used! but useful to handle delayed single-click
+                                 // when
+    // trying to disambiguate them from double-click).
+    bool MouseDownOwned[5]; // Track if button was clicked inside a dear imgui window or over void blocked by a
+                            // popup.
+    // We don't request mouse capture from the application if click started outside ImGui
+    // bounds.
     bool MouseDownOwnedUnlessPopupClose[5]; // Track if button was clicked inside a dear imgui window.
-    bool MouseWheelRequestAxisSwap; // On a non-Mac system, holding Shift requests WheelY to perform the equivalent of a
-                                    // WheelX event. On a Mac system this is already enforced by the system.
+    bool MouseWheelRequestAxisSwap; // On a non-Mac system, holding Shift requests WheelY to perform the equivalent
+                                    // of a
+    // WheelX event. On a Mac system this is already enforced by the system.
     bool MouseCtrlLeftAsRightClick; // (OSX) Set to true when the current click was a Ctrl+Click that spawned a
-                                    // simulated right click
-    float MouseDownDuration[5];     // Duration the mouse button has been down (0.0f == just clicked)
-    float MouseDownDurationPrev[5]; // Previous time the mouse button has been down
-    Vec2 MouseDragMaxDistanceAbs[5];  // Maximum distance, absolute, on each axis, of how much mouse has traveled from
-                                      // the clicking point
-    float MouseDragMaxDistanceSqr[5]; // Squared maximum distance of how much mouse has traveled from the clicking point
-                                      // (used for moving thresholds)
+    // simulated right click
+    float MouseDownDuration[5];                    // Duration the mouse button has been down (0.0f == just clicked)
+    float MouseDownDurationPrev[5];                // Previous time the mouse button has been down
+    ::SF::Engine::Vec2 MouseDragMaxDistanceAbs[5]; // Maximum distance, absolute, on each axis, of how much mouse has
+                                                   // traveled from
+    // the clicking point
+    float MouseDragMaxDistanceSqr[5]; // Squared maximum distance of how much mouse has traveled from the clicking
+                                      // point
+    // (used for moving thresholds)
     float PenPressure; // Touch/Pen pressure (0.0f to 1.0f, should be >0.0f only when MouseDown[0] == true). Helper
-                       // storage currently unused by Dear ImGui.
-    bool AppFocusLost; // Only modify via AddFocusEvent()
+    // storage currently unused by Dear ImGui.
+    bool AppFocusLost;                      // Only modify via AddFocusEvent()
     bool AppAcceptingEvents;                // Only modify via SetAppAcceptingEvents()
     ImWchar16 InputQueueSurrogate;          // For AddInputCharacterUTF16()
     ImVector<ImWchar> InputQueueCharacters; // Queue of _characters_ input (obtained by platform backend). Fill using
-                                            // AddInputCharacter() helper.
+    // AddInputCharacter() helper.
 
     ImGuiIO();
 };
@@ -4048,48 +4167,51 @@ struct ImGuiIO
 // used. The callback function should return 0 by default. Callbacks (follow a flag name and see comments in
 // ImGuiInputTextFlags_ declarations for more details)
 // - ImGuiInputTextFlags_CallbackEdit:        Callback on buffer edit. Note that InputText() already returns true on
-// edit + you can always use IsItemEdited(). The callback is useful to manipulate the underlying buffer while focus is
-// active.
+// edit + you can always use IsItemEdited(). The callback is useful to manipulate the underlying buffer while focus
+// is active.
 // - ImGuiInputTextFlags_CallbackAlways:      Callback on each iteration
 // - ImGuiInputTextFlags_CallbackCompletion:  Callback on pressing TAB
 // - ImGuiInputTextFlags_CallbackHistory:     Callback on pressing Up/Down arrows
 // - ImGuiInputTextFlags_CallbackCharFilter:  Callback on character inputs to replace or discard them. Modify
 // 'EventChar' to replace or discard, or return 1 in callback to discard.
-// - ImGuiInputTextFlags_CallbackResize:      Callback on buffer capacity changes request (beyond 'buf_size' parameter
-// value), allowing the string to grow.
+// - ImGuiInputTextFlags_CallbackResize:      Callback on buffer capacity changes request (beyond 'buf_size'
+// parameter value), allowing the string to grow.
 struct ImGuiInputTextCallbackData
 {
     ImGuiContext *Ctx;             // Parent UI context
     ImGuiInputTextFlags EventFlag; // One ImGuiInputTextFlags_Callback*    // Read-only
     ImGuiInputTextFlags Flags;     // What user passed to InputText()      // Read-only
     void *UserData;                // What user passed to InputText()      // Read-only
-    ImGuiID ID;                    // Widget ID                            // Read-only
+    IdType ID;                     // Widget ID                            // Read-only
 
     // Arguments for the different callback events
     // - During Resize callback, Buf will be same as your input buffer.
-    // - However, during Completion/History/Always callback, Buf always points to our own internal data (it is not the
-    // same as your buffer)! Changes to it will be reflected into your own buffer shortly after the callback.
-    // - To modify the text buffer in a callback, prefer using the InsertChars() / DeleteChars() function. InsertChars()
-    // will take care of calling the resize callback if necessary.
-    // - If you know your edits are not going to resize the underlying buffer allocation, you may modify the contents of
-    // 'Buf[]' directly. You need to update 'BufTextLen' accordingly (0 <= BufTextLen < BufSize) and set 'BufDirty'' to
-    // true so InputText can update its internal state.
-    ImGuiKey EventKey;   // Key pressed (Up/Down/TAB)            // Read-only    // [Completion,History]
-    ImWchar EventChar;   // Character input                      // Read-write   // [CharFilter] Replace character with
-                         // another one, or set to zero to drop. return 1 is equivalent to setting EventChar=0;
+    // - However, during Completion/History/Always callback, Buf always points to our own internal data (it is not
+    // the same as your buffer)! Changes to it will be reflected into your own buffer shortly after the callback.
+    // - To modify the text buffer in a callback, prefer using the InsertChars() / DeleteChars() function.
+    // InsertChars() will take care of calling the resize callback if necessary.
+    // - If you know your edits are not going to resize the underlying buffer allocation, you may modify the
+    // contents of 'Buf[]' directly. You need to update 'BufTextLen' accordingly (0 <= BufTextLen < BufSize) and set
+    // 'BufDirty'' to true so InputText can update its internal state.
+    ImGuiKey EventKey; // Key pressed (Up/Down/TAB)            // Read-only    // [Completion,History]
+    ImWchar EventChar; // Character input                      // Read-write   // [CharFilter] Replace character
+                       // with
+    // another one, or set to zero to drop. return 1 is equivalent to setting EventChar=0;
     bool EventActivated; // Input field just got activated       // Read-only    // [Always]
     bool BufDirty;       // Set if you modify Buf/BufTextLen!    // Write        // [Completion,History,Always]
     char *Buf;           // Text buffer                          // Read-write   // [Resize] Can replace pointer /
-                         // [Completion,History,Always] Only write to pointed data, don't replace the actual pointer!
-    int BufTextLen;      // Text length (in bytes)               // Read-write   // [Resize,Completion,History,Always]
-                    // Exclude zero-terminator storage. In C land: == strlen(some_text), in C++ land: string.length()
-    int BufSize;   // Buffer size (in bytes) = capacity+1  // Read-only    // [Resize,Completion,History,Always] Include
-                   // zero-terminator storage. In C land: == ARRAYSIZE(my_char_array), in C++ land: string.capacity()+1
+    // [Completion,History,Always] Only write to pointed data, don't replace the actual pointer!
+    int BufTextLen; // Text length (in bytes)               // Read-write   // [Resize,Completion,History,Always]
+    // Exclude zero-terminator storage. In C land: == strlen(some_text), in C++ land: string.length()
+    int BufSize; // Buffer size (in bytes) = capacity+1  // Read-only    // [Resize,Completion,History,Always]
+                 // Include
+    // zero-terminator storage. In C land: == ARRAYSIZE(my_char_array), in C++ land: string.capacity()+1
     int CursorPos; //                                      // Read-write   // [Completion,History,Always,CharFilter]
     int SelectionStart; //                                      // Read-write   //
-                        //                                      [Completion,History,Always,CharFilter] == to
-                        //                                      SelectionEnd when no selection
-    int SelectionEnd; //                                      // Read-write   // [Completion,History,Always,CharFilter]
+    //                                      [Completion,History,Always,CharFilter] == to
+    //                                      SelectionEnd when no selection
+    int SelectionEnd; //                                      // Read-write   //
+                      //                                      [Completion,History,Always,CharFilter]
 
     // Helper functions for text manipulation.
     // Use those function to benefit from the CallbackResize behaviors. Calling those function reset the selection.
@@ -4112,17 +4234,19 @@ struct ImGuiInputTextCallbackData
     bool HasSelection() const { return SelectionStart != SelectionEnd; }
 };
 
-// Resizing callback data to apply custom constraint. As enabled by SetNextWindowSizeConstraints(). Callback is called
-// during the next Begin(). NB: For basic min/max size constraint on each axis you don't need to use the callback! The
-// SetNextWindowSizeConstraints() parameters are enough.
+// Resizing callback data to apply custom constraint. As enabled by SetNextWindowSizeConstraints(). Callback is
+// called during the next Begin(). NB: For basic min/max size constraint on each axis you don't need to use the
+// callback! The SetNextWindowSizeConstraints() parameters are enough.
 struct ImGuiSizeCallbackData
 {
-    void *UserData;   // Read-only.   What user passed to SetNextWindowSizeConstraints(). Generally store an integer or
-                      // float in here (need reinterpret_cast<>).
-    Vec2 Pos;         // Read-only.   Window position, for reference.
-    Vec2 CurrentSize; // Read-only.   Current window size.
-    Vec2 DesiredSize; // Read-write.  Desired size, based on user's mouse position. Write to this field to restrain
-                      // resizing.
+    void *UserData; // Read-only.   What user passed to SetNextWindowSizeConstraints(). Generally store an integer
+                    // or
+    // float in here (need reinterpret_cast<>).
+    ::SF::Engine::Vec2 Pos;         // Read-only.   Window position, for reference.
+    ::SF::Engine::Vec2 CurrentSize; // Read-only.   Current window size.
+    ::SF::Engine::Vec2
+            DesiredSize; // Read-write.  Desired size, based on user's mouse position. Write to this field to restrain
+    // resizing.
 };
 
 // [ALPHA] Rarely used / very advanced uses only. Use with SetNextWindowClass() and DockSpace() functions.
@@ -4130,40 +4254,42 @@ struct ImGuiSizeCallbackData
 // before we stabilize Docking features. Please be mindful if using this.
 // Provide hints:
 // - To the platform backend via altered viewport flags (enable/disable OS decoration, OS task bar icons, etc.)
-// - To the platform backend for OS level parent/child relationships of viewport (otherwise: default is configured via
-// io.ConfigViewportsNoDefaultParent)
+// - To the platform backend for OS level parent/child relationships of viewport (otherwise: default is configured
+// via io.ConfigViewportsNoDefaultParent)
 // - To the docking system for various options and filtering.
 struct ImGuiWindowClass
 {
-    ImGuiID ClassId; // User data. 0 = Default class (unclassed). Windows of different classes cannot be docked with
-                     // each others.
-    ImGuiID ParentViewportId; // Hint for the platform backend. -1: use default. 0: request platform backend to not
-                              // parent the platform. != 0: request platform backend to create a parent<>child
-                              // relationship between the platform windows. Not conforming backends are free to e.g.
-                              // parent every viewport to the main viewport or not.
-    ImGuiID FocusRouteParentWindowId; // ID of parent window for shortcut focus route evaluation, e.g. Shortcut() call
-                                      // from Parent Window will succeed when this window is focused.
+    IdType ClassId; // User data. 0 = Default class (unclassed). Windows of different classes cannot be docked with
+    // each others.
+    IdType ParentViewportId; // Hint for the platform backend. -1: use default. 0: request platform backend to not
+    // parent the platform. != 0: request platform backend to create a parent<>child
+    // relationship between the platform windows. Not conforming backends are free to e.g.
+    // parent every viewport to the main viewport or not.
+    IdType FocusRouteParentWindowId; // ID of parent window for shortcut focus route evaluation, e.g. Shortcut()
+                                     // call
+    // from Parent Window will succeed when this window is focused.
     ImGuiViewportFlags ViewportFlagsOverrideSet; // Viewport flags to set when a window of this class owns a viewport.
-                                                 // This allows you to enforce OS decoration or task bar icon, override
-                                                 // the defaults on a per-window basis.
+    // This allows you to enforce OS decoration or task bar icon, override
+    // the defaults on a per-window basis.
     ImGuiViewportFlags ViewportFlagsOverrideClear; // Viewport flags to clear when a window of this class owns a
-                                                   // viewport. This allows you to enforce OS decoration or task bar
-                                                   // icon, override the defaults on a per-window basis.
-    ImGuiTabItemFlags TabItemFlagsOverrideSet;   // [EXPERIMENTAL] TabItem flags to set when a window of this class gets
-                                                 // submitted into a dock node tab bar. May use with
-                                                 // ImGuiTabItemFlags_Leading or ImGuiTabItemFlags_Trailing.
+    // viewport. This allows you to enforce OS decoration or task bar
+    // icon, override the defaults on a per-window basis.
+    ImGuiTabItemFlags TabItemFlagsOverrideSet; // [EXPERIMENTAL] TabItem flags to set when a window of this class gets
+    // submitted into a dock node tab bar. May use with
+    // ImGuiTabItemFlags_Leading or ImGuiTabItemFlags_Trailing.
     ImGuiDockNodeFlags DockNodeFlagsOverrideSet; // [EXPERIMENTAL] Dock node flags to set when a window of this class is
-                                                 // hosted by a dock node (it doesn't have to be selected!)
-    bool DockingAlwaysTabBar;   // Set to true to enforce single floating windows of this class always having their own
-                                // docking node (equivalent of setting the global io.ConfigDockingAlwaysTabBar)
+    // hosted by a dock node (it doesn't have to be selected!)
+    bool DockingAlwaysTabBar; // Set to true to enforce single floating windows of this class always having their
+                              // own
+    // docking node (equivalent of setting the global io.ConfigDockingAlwaysTabBar)
     bool DockingAllowUnclassed; // Set to true to allow windows of this class to be docked/merged with an unclassed
-                                // window. // FIXME-DOCK: Move to DockNodeFlags override?
-    void *PlatformIconData;     // [EXPERIMENTAL] Pass opaque data for Platform backend to handle.
+    // window. // FIXME-DOCK: Move to DockNodeFlags override?
+    void *PlatformIconData; // [EXPERIMENTAL] Pass opaque data for Platform backend to handle.
 
     ImGuiWindowClass()
     {
         memset((void *) this, 0, sizeof(*this));
-        ParentViewportId      = (ImGuiID) -1;
+        ParentViewportId      = (IdType) -1;
         DockingAllowUnclassed = true;
     }
 };
@@ -4176,12 +4302,13 @@ struct ImGuiPayload
     int DataSize; // Data size
 
     // [Internal]
-    ImGuiID SourceId;       // Source item id
-    ImGuiID SourceParentId; // Source parent id (if available)
-    int DataFrameCount;     // Data timestamp
-    char DataType[32 + 1];  // Data type tag (short user-supplied string, 32 characters max)
-    bool Preview; // Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle
-                  // overlapping drag targets)
+    IdType SourceId;       // Source item id
+    IdType SourceParentId; // Source parent id (if available)
+    int DataFrameCount;    // Data timestamp
+    char DataType[32 + 1]; // Data type tag (short user-supplied string, 32 characters max)
+    bool Preview; // Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb:
+                  // handle
+    // overlapping drag targets)
     bool Delivery; // Set when AcceptDragDropPayload() was called and mouse button is released over the target item.
 
     ImGuiPayload() { Clear(); }
@@ -4198,11 +4325,6 @@ struct ImGuiPayload
     bool IsPreview() const { return Preview; }
     bool IsDelivery() const { return Delivery; }
 };
-
-//-----------------------------------------------------------------------------
-// [SECTION] Helpers (ImGuiOnceUponAFrame, ImGuiTextFilter, ImGuiTextBuffer, ImGuiStorage, ImGuiListClipper, Math
-// Operators, ImColor)
-//-----------------------------------------------------------------------------
 
 // Helper: Unicode defines
 #define IM_UNICODE_CODEPOINT_INVALID 0xFFFD // Invalid Unicode code point (standard value).
@@ -4300,24 +4422,24 @@ struct ImGuiTextBuffer
 // [Internal] Key+Value for ImGuiStorage
 struct ImGuiStoragePair
 {
-    ImGuiID key;
+    IdType key;
     union
     {
         int val_i;
         float val_f;
         void *val_p;
     };
-    ImGuiStoragePair(ImGuiID _key, int _val)
+    ImGuiStoragePair(IdType _key, int _val)
     {
         key   = _key;
         val_i = _val;
     }
-    ImGuiStoragePair(ImGuiID _key, float _val)
+    ImGuiStoragePair(IdType _key, float _val)
     {
         key   = _key;
         val_f = _val;
     }
-    ImGuiStoragePair(ImGuiID _key, void *_val)
+    ImGuiStoragePair(IdType _key, void *_val)
     {
         key   = _key;
         val_p = _val;
@@ -4328,10 +4450,10 @@ struct ImGuiStoragePair
 // Typically you don't have to worry about this since a storage is held within each Window.
 // We use it to e.g. store collapse state for a tree (Int 0/1)
 // This is optimized for efficient lookup (dichotomy into a contiguous buffer) and rare insertion (typically tied to
-// user interactions aka max once a frame) You can use it as custom user storage for temporary values. Declare your own
-// storage if, for example:
-// - You want to manipulate the open/close state of a particular sub-tree in your interface (tree node uses Int 0/1 to
-// store their state).
+// user interactions aka max once a frame) You can use it as custom user storage for temporary values. Declare your
+// own storage if, for example:
+// - You want to manipulate the open/close state of a particular sub-tree in your interface (tree node uses Int 0/1
+// to store their state).
 // - You want to store custom debug data easily without adding or editing structures in your code (probably not
 // efficient, but convenient) Types are NOT stored, so it is up to you to make sure your Key don't collide with
 // different types.
@@ -4344,14 +4466,14 @@ struct ImGuiStorage
     // - Set***() functions find pair, insertion on demand if missing.
     // - Sorted insertion is costly, paid once. A typical frame shouldn't need to insert any new pair.
     void Clear() { Data.clear(); }
-    int GetInt(ImGuiID key, int default_val = 0) const;
-    void SetInt(ImGuiID key, int val);
-    bool GetBool(ImGuiID key, bool default_val = false) const;
-    void SetBool(ImGuiID key, bool val);
-    float GetFloat(ImGuiID key, float default_val = 0.0f) const;
-    void SetFloat(ImGuiID key, float val);
-    void *GetVoidPtr(ImGuiID key) const; // default_val is nullptr
-    void SetVoidPtr(ImGuiID key, void *val);
+    int GetInt(IdType key, int default_val = 0) const;
+    void SetInt(IdType key, int val);
+    bool GetBool(IdType key, bool default_val = false) const;
+    void SetBool(IdType key, bool val);
+    float GetFloat(IdType key, float default_val = 0.0f) const;
+    void SetFloat(IdType key, float val);
+    void *GetVoidPtr(IdType key) const; // default_val is nullptr
+    void SetVoidPtr(IdType key, void *val);
 
     // - Get***Ref() functions finds pair, insert on demand if missing, return pointer. Useful if you intend to do
     // Get+Set.
@@ -4360,20 +4482,20 @@ struct ImGuiStorage
     // - A typical use case where this is convenient for quick hacking (e.g. add storage during a live Edit&Continue
     // session if you can't modify existing struct)
     //      float* pvar = ImGui::GetFloatRef(key); ImGui::SliderFloat("var", pvar, 0, 100.0f); some_var += *pvar;
-    int *GetIntRef(ImGuiID key, int default_val = 0);
-    bool *GetBoolRef(ImGuiID key, bool default_val = false);
-    float *GetFloatRef(ImGuiID key, float default_val = 0.0f);
-    void **GetVoidPtrRef(ImGuiID key, void *default_val = nullptr);
+    int *GetIntRef(IdType key, int default_val = 0);
+    bool *GetBoolRef(IdType key, bool default_val = false);
+    float *GetFloatRef(IdType key, float default_val = 0.0f);
+    void **GetVoidPtrRef(IdType key, void *default_val = nullptr);
 
-    // Advanced: for quicker full rebuild of a storage (instead of an incremental one), you may add all your contents
-    // and then sort once.
+    // Advanced: for quicker full rebuild of a storage (instead of an incremental one), you may add all your
+    // contents and then sort once.
     void BuildSortByKey();
     // Obsolete: use on your own storage if you know only integer are being stored (open/close all tree nodes)
     void SetAllInt(int val);
 };
 
-// Flags for ImGuiListClipper (currently not fully exposed in function calls: a future refactor will likely add this to
-// ImGuiListClipper::Begin function equivalent)
+// Flags for ImGuiListClipper (currently not fully exposed in function calls: a future refactor will likely add this
+// to ImGuiListClipper::Begin function equivalent)
 enum ImGuiListClipperFlags_
 {
     ImGuiListClipperFlags_None                  = 0,
@@ -4407,47 +4529,6 @@ enum ImGuiListClipperFlags_
 #define IM_COL32_BLACK IM_COL32(0, 0, 0, 255)       // Opaque black
 #define IM_COL32_BLACK_TRANS IM_COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
-// Helper: ImColor() implicitly converts colors to either uint32_t (packed 4x1 byte) or Vec4 (4x1 float)
-// Prefer using IM_COL32() macros if you want a guaranteed compile-time uint32_t for usage with ImDrawList API.
-// **Avoid storing ImColor! Store either u32 of Vec4. This is not a full-featured color class. MAY OBSOLETE.
-// **None of the ImGui API are using ImColor directly but you can use it as a convenience to pass colors in either
-// uint32_t or Vec4 formats. Explicitly cast to uint32_t or Vec4 if needed.
-struct ImColor
-{
-    Vec4 Value;
-
-    constexpr ImColor() {}
-    constexpr ImColor(float r, float g, float b, float a = 1.0f) : Value(r, g, b, a) {}
-    constexpr ImColor(const Vec4 &col) : Value(col) {}
-    constexpr ImColor(int r, int g, int b, int a = 255) :
-        Value((float) r * (1.0f / 255.0f), (float) g * (1.0f / 255.0f), (float) b * (1.0f / 255.0f),
-              (float) a * (1.0f / 255.0f))
-    {
-    }
-    constexpr ImColor(uint32_t rgba) :
-        Value((float) ((rgba >> IM_COL32_R_SHIFT) & 0xFF) * (1.0f / 255.0f),
-              (float) ((rgba >> IM_COL32_G_SHIFT) & 0xFF) * (1.0f / 255.0f),
-              (float) ((rgba >> IM_COL32_B_SHIFT) & 0xFF) * (1.0f / 255.0f),
-              (float) ((rgba >> IM_COL32_A_SHIFT) & 0xFF) * (1.0f / 255.0f))
-    {
-    }
-    inline operator uint32_t() const { return ImGui::ColorConvertFloat4ToU32(Value); }
-    inline operator Vec4() const { return Value; }
-
-    // FIXME-OBSOLETE: May need to obsolete/cleanup those helpers.
-    inline void SetHSV(float h, float s, float v, float a = 1.0f)
-    {
-        ImGui::ColorConvertHSVtoRGB(h, s, v, Value.x, Value.y, Value.z);
-        Value.w = a;
-    }
-    static ImColor HSV(float h, float s, float v, float a = 1.0f)
-    {
-        float r, g, b;
-        ImGui::ColorConvertHSVtoRGB(h, s, v, r, g, b);
-        return ImColor(r, g, b, a);
-    }
-};
-
 //-----------------------------------------------------------------------------
 // [SECTION] Multi-Select API flags and structures (ImGuiMultiSelectFlags, ImGuiSelectionRequestType,
 // ImGuiSelectionRequest, ImGuiMultiSelectIO, ImGuiSelectionBasicStorage)
@@ -4461,8 +4542,8 @@ struct ImColor
 // - Selectable(), Checkbox() are supported but custom widgets may use it as well.
 // - TreeNode() is technically supported but... using this correctly is more complicated: you need some sort of
 // linear/random access to your tree,
-//   which is suited to advanced trees setups also implementing filters and clipper. We will work toward simplifying and
-//   demoing it.
+//   which is suited to advanced trees setups also implementing filters and clipper. We will work toward simplifying
+//   and demoing it.
 // - In the spirit of Dear ImGui design, your code owns actual selection data.
 //   This is designed to allow all kinds of selection storage you may use in your application e.g. set/map/hash.
 // About ImGuiSelectionBasicStorage:
@@ -4474,27 +4555,33 @@ struct ImColor
 // - Store and maintain actual selection data using persistent object identifiers.
 // - Usage flow:
 //     BEGIN - (1) Call BeginMultiSelect() and retrieve the ImGuiMultiSelectIO* result.
-//           - (2) Honor request list (SetAll/SetRange requests) by updating your selection data. Same code as Step 6.
-//           - (3) [If using clipper] You need to make sure RangeSrcItem is always submitted. Calculate its index and
-//           pass to clipper.IncludeItemByIndex(). If storing indices in ImGuiSelectionUserData, a simple
+//           - (2) Honor request list (SetAll/SetRange requests) by updating your selection data. Same code as
+//           Step 6.
+//           - (3) [If using clipper] You need to make sure RangeSrcItem is always submitted. Calculate its index
+//           and pass to clipper.IncludeItemByIndex(). If storing indices in ImGuiSelectionUserData, a simple
 //           clipper.IncludeItemByIndex(ms_io->RangeSrcItem) call will work.
 //     LOOP  - (4) Submit your items with SetNextItemSelectionUserData() + Selectable()/TreeNode() calls.
 //     END   - (5) Call EndMultiSelect() and retrieve the ImGuiMultiSelectIO* result.
-//           - (6) Honor request list (SetAll/SetRange requests) by updating your selection data. Same code as Step 2.
-//     If you submit all items (no clipper), Step 2 and 3 are optional and will be handled by each item themselves. It
-//     is fine to always honor those steps.
+//           - (6) Honor request list (SetAll/SetRange requests) by updating your selection data. Same code as
+//           Step 2.
+//     If you submit all items (no clipper), Step 2 and 3 are optional and will be handled by each item themselves.
+//     It is fine to always honor those steps.
 // About ImGuiSelectionUserData:
 // - This can store an application-defined identifier (e.g. index or pointer) submitted via
 // SetNextItemSelectionUserData().
 // - In return we store them into RangeSrcItem/RangeFirstItem/RangeLastItem and other fields in ImGuiMultiSelectIO.
-// - Most applications will store an object INDEX, hence the chosen name and type. Storing an index is natural, because
-//   SetRange requests will give you two end-points and you will need to iterate/interpolate between them to update your
-//   selection.
+// - Most applications will store an object INDEX, hence the chosen name and type. Storing an index is natural,
+// because
+//   SetRange requests will give you two end-points and you will need to iterate/interpolate between them to update
+//   your selection.
 // - However it is perfectly possible to store a POINTER or another IDENTIFIER inside ImGuiSelectionUserData.
-//   Our system never assume that you identify items by indices, it never attempts to interpolate between two values.
+//   Our system never assume that you identify items by indices, it never attempts to interpolate between two
+//   values.
 // - If you enable ImGuiMultiSelectFlags_NoRangeSelect then it is guaranteed that you will never have to interpolate
-//   between two ImGuiSelectionUserData, which may be a convenient way to use part of the feature with less code work.
-// - As most users will want to store an index, for convenience and to reduce confusion we use int64_t instead of void*,
+//   between two ImGuiSelectionUserData, which may be a convenient way to use part of the feature with less code
+//   work.
+// - As most users will want to store an index, for convenience and to reduce confusion we use int64_t instead of
+// void*,
 //   being syntactically easier to downcast. Feel free to reinterpret_cast and store a pointer inside.
 
 // Flags for BeginMultiSelect()
@@ -4507,19 +4594,19 @@ enum ImGuiMultiSelectFlags_
     ImGuiMultiSelectFlags_NoSelectAll = 1 << 1, // Disable Ctrl+A shortcut to select all.
     ImGuiMultiSelectFlags_NoRangeSelect =
             1 << 2, // Disable Shift+selection mouse/keyboard support (useful for unordered 2D selection). With
-                    // BoxSelect is also ensure contiguous SetRange requests are not combined into one. This allows not
-                    // handling interpolation in SetRange requests.
-    ImGuiMultiSelectFlags_NoAutoSelect = 1 << 3, // Disable selecting items when navigating (useful for e.g. supporting
-                                                 // range-select in a list of checkboxes).
-    ImGuiMultiSelectFlags_NoAutoClear = 1 << 4,  // Disable clearing selection when navigating or selecting another one
-                                                 // (generally used with ImGuiMultiSelectFlags_NoAutoSelect. useful for
-                                                 // e.g. supporting range-select in a list of checkboxes).
+                    // BoxSelect is also ensure contiguous SetRange requests are not combined into one. This allows
+                    // not handling interpolation in SetRange requests.
+    ImGuiMultiSelectFlags_NoAutoSelect = 1 << 3, // Disable selecting items when navigating (useful for e.g.
+                                                 // supporting range-select in a list of checkboxes).
+    ImGuiMultiSelectFlags_NoAutoClear = 1 << 4,  // Disable clearing selection when navigating or selecting another
+                                                 // one (generally used with ImGuiMultiSelectFlags_NoAutoSelect.
+    // useful for e.g. supporting range-select in a list of checkboxes).
     ImGuiMultiSelectFlags_NoAutoClearOnReselect =
             1 << 5, // Disable clearing selection when clicking/selecting an already selected item.
     ImGuiMultiSelectFlags_BoxSelect1d =
             1 << 6, // Enable box-selection with same width and same x pos items (e.g. full row Selectable()).
-                    // Box-selection works better with little bit of spacing between items hit-box in order to be able
-                    // to aim at empty space.
+                    // Box-selection works better with little bit of spacing between items hit-box in order to be
+                    // able to aim at empty space.
     ImGuiMultiSelectFlags_BoxSelect2d =
             1 << 7, // Enable box-selection with varying width or varying x pos items support (e.g. different width
                     // labels, or 2D layout/grid). This is slower: alters clipping logic so that e.g. horizontal
@@ -4529,28 +4616,28 @@ enum ImGuiMultiSelectFlags_
     ImGuiMultiSelectFlags_ClearOnEscape    = 1 << 9,  // Clear selection when pressing Escape while scope is focused.
     ImGuiMultiSelectFlags_ClearOnClickVoid = 1 << 10, // Clear selection when clicking on empty location within scope.
     ImGuiMultiSelectFlags_ScopeWindow =
-            1 << 11, // Scope for _BoxSelect and _ClearOnClickVoid is whole window (Default). Use if BeginMultiSelect()
-                     // covers a whole window or used a single time in same window.
-    ImGuiMultiSelectFlags_ScopeRect = 1 << 12, // Scope for _BoxSelect and _ClearOnClickVoid is rectangle encompassing
-                                               // BeginMultiSelect()/EndMultiSelect(). Use if BeginMultiSelect() is
-                                               // called multiple times in same window.
-    ImGuiMultiSelectFlags_SelectOnAuto = 1 << 13, // Apply selection on mouse down when clicking on unselected item, on
-                                                  // mouse up when clicking on selected item. (Default)
+            1 << 11, // Scope for _BoxSelect and _ClearOnClickVoid is whole window (Default). Use if
+                     // BeginMultiSelect() covers a whole window or used a single time in same window.
+    ImGuiMultiSelectFlags_ScopeRect = 1 << 12,    // Scope for _BoxSelect and _ClearOnClickVoid is rectangle
+                                                  // encompassing BeginMultiSelect()/EndMultiSelect(). Use if
+                                                  // BeginMultiSelect() is called multiple times in same window.
+    ImGuiMultiSelectFlags_SelectOnAuto = 1 << 13, // Apply selection on mouse down when clicking on unselected item,
+                                                  // on mouse up when clicking on selected item. (Default)
     ImGuiMultiSelectFlags_SelectOnClickAlways =
-            1 << 14, // Apply selection on mouse down when clicking on any items. Prevents Drag and Drop from being used
-                     // on multiple-selection, but allows e.g. BoxSelect to always reselect even when clicking inside an
-                     // existing selection. (Excel style behavior)
+            1 << 14, // Apply selection on mouse down when clicking on any items. Prevents Drag and Drop from being
+                     // used on multiple-selection, but allows e.g. BoxSelect to always reselect even when clicking
+                     // inside an existing selection. (Excel style behavior)
     ImGuiMultiSelectFlags_SelectOnClickRelease =
-            1 << 15, // Apply selection on mouse release when clicking an unselected item. Allow dragging an unselected
-                     // item without altering selection.
+            1 << 15, // Apply selection on mouse release when clicking an unselected item. Allow dragging an
+                     // unselected item without altering selection.
     // ImGuiMultiSelectFlags_RangeSelect2d       = 1 << 15,  // Shift+Selection uses 2d geometry instead of linear
     // sequence, so possible to use Shift+up/down to select vertically in grid. Analogous to what BoxSelect does.
     ImGuiMultiSelectFlags_NavWrapX =
             1 << 16, // [Temporary] Enable navigation wrapping on X axis. Provided as a convenience because we don't
-                     // have a design for the general Nav API for this yet. When the more general feature be public we
-                     // may obsolete this flag in favor of new one.
-    ImGuiMultiSelectFlags_NoSelectOnRightClick = 1 << 17, // Disable default right-click processing, which selects item
-                                                          // on mouse down, and is designed for context-menus.
+                     // have a design for the general Nav API for this yet. When the more general feature be public
+                     // we may obsolete this flag in favor of new one.
+    ImGuiMultiSelectFlags_NoSelectOnRightClick = 1 << 17, // Disable default right-click processing, which selects
+                                                          // item on mouse down, and is designed for context-menus.
     ImGuiMultiSelectFlags_SelectOnMask_ = ImGuiMultiSelectFlags_SelectOnAuto |
                                           ImGuiMultiSelectFlags_SelectOnClickAlways |
                                           ImGuiMultiSelectFlags_SelectOnClickRelease,
@@ -4560,8 +4647,8 @@ enum ImGuiMultiSelectFlags_
 // Main IO structure returned by BeginMultiSelect()/EndMultiSelect().
 // This mainly contains a list of selection requests.
 // - Use 'Demo->Tools->Debug Log->Selection' to see requests as they happen.
-// - Some fields are only useful if your list is dynamic and allows deletion (getting post-deletion focus/state right is
-// shown in the demo)
+// - Some fields are only useful if your list is dynamic and allows deletion (getting post-deletion focus/state
+// right is shown in the demo)
 // - Below: who reads/writes each fields? 'r'=read, 'w'=write, 'ms'=multi-select code, 'app'=application/user code.
 struct ImGuiMultiSelectIO
 {
@@ -4569,28 +4656,32 @@ struct ImGuiMultiSelectIO
     ImVector<ImGuiSelectionRequest>
             Requests; //  ms:w, app:r     /  ms:w  app:r   // Requests to apply to your selection data.
     ImGuiSelectionUserData RangeSrcItem; //  ms:w  app:r     /                // (If using clipper) Begin: Source item
-                                         //  (often the first selected item) must never be clipped: use
-                                         //  clipper.IncludeItemByIndex() to ensure it is submitted.
-    ImGuiSelectionUserData NavIdItem;    //  ms:w, app:r     /                // (If using deletion) Last known
-                                      //  SetNextItemSelectionUserData() value for NavId (if part of submitted items).
-    bool NavIdSelected; //  ms:w, app:r     /        app:r   // (If using deletion) Last known selection state for NavId
-                        //  (if part of submitted items).
-    bool RangeSrcReset; //        app:w     /  ms:r          // (If using deletion) Set before EndMultiSelect() to reset
-                        //        ResetSrcItem (e.g. if deleted selection).
-    int ItemsCount; //  ms:w, app:r     /        app:r   // 'int items_count' parameter to BeginMultiSelect() is copied
-                    //  here for convenience, allowing simpler calls to your ApplyRequests handler. Not used internally.
+    //  (often the first selected item) must never be clipped: use
+    //  clipper.IncludeItemByIndex() to ensure it is submitted.
+    ImGuiSelectionUserData NavIdItem; //  ms:w, app:r     /                // (If using deletion) Last known
+    //  SetNextItemSelectionUserData() value for NavId (if part of submitted items).
+    bool NavIdSelected; //  ms:w, app:r     /        app:r   // (If using deletion) Last known selection state for
+                        //  NavId
+    //  (if part of submitted items).
+    bool RangeSrcReset; //        app:w     /  ms:r          // (If using deletion) Set before EndMultiSelect() to
+                        //        reset
+    //        ResetSrcItem (e.g. if deleted selection).
+    int ItemsCount; //  ms:w, app:r     /        app:r   // 'int items_count' parameter to BeginMultiSelect() is
+                    //  copied
+    //  here for convenience, allowing simpler calls to your ApplyRequests handler. Not used internally.
 };
 
 // Selection request type
 enum ImGuiSelectionRequestType
 {
     ImGuiSelectionRequestType_None = 0,
-    ImGuiSelectionRequestType_SetAll, // Request app to clear selection (if Selected==false) or select all items (if
-                                      // Selected==true). We cannot set RangeFirstItem/RangeLastItem as its contents is
-                                      // entirely up to user (not necessarily an index)
+    ImGuiSelectionRequestType_SetAll,   // Request app to clear selection (if Selected==false) or select all items (if
+                                        // Selected==true). We cannot set RangeFirstItem/RangeLastItem as its contents
+                                        // is entirely up to user (not necessarily an index)
     ImGuiSelectionRequestType_SetRange, // Request app to select/unselect [RangeFirstItem..RangeLastItem] items
-                                        // (inclusive) based on value of Selected. Only EndMultiSelect() request this,
-                                        // app code can read after BeginMultiSelect() and it will always be false.
+                                        // (inclusive) based on value of Selected. Only EndMultiSelect() request
+                                        // this, app code can read after BeginMultiSelect() and it will always be
+                                        // false.
 };
 
 // Selection request item
@@ -4598,33 +4689,36 @@ struct ImGuiSelectionRequest
 {
     //------------------------------------------// BeginMultiSelect / EndMultiSelect
     ImGuiSelectionRequestType Type; //  ms:w, app:r     /  ms:w, app:r   // Request type. You'll most often receive 1
-                                    //  Clear + 1 SetRange with a single-item range.
-    bool Selected; //  ms:w, app:r     /  ms:w, app:r   // Parameter for SetAll/SetRange requests (true = select, false
-                   //  = unselect)
+    //  Clear + 1 SetRange with a single-item range.
+    bool Selected; //  ms:w, app:r     /  ms:w, app:r   // Parameter for SetAll/SetRange requests (true = select,
+                   //  false
+    //  = unselect)
     int8_t RangeDirection; //                  /  ms:w  app:r   // Parameter for SetRange request: +1 when
-                           //                  RangeFirstItem comes before RangeLastItem, -1 otherwise. Useful if you
-                           //                  want to preserve selection order on a backward Shift+Click.
-    ImGuiSelectionUserData
-            RangeFirstItem; //                  /  ms:w, app:r   // Parameter for SetRange request (this is generally ==
-                            //                  RangeSrcItem when shift selecting from top to bottom).
-    ImGuiSelectionUserData
-            RangeLastItem; //                  /  ms:w, app:r   // Parameter for SetRange request (this is generally ==
-                           //                  RangeSrcItem when shift selecting from bottom to top). Inclusive!
+    //                  RangeFirstItem comes before RangeLastItem, -1 otherwise. Useful if you
+    //                  want to preserve selection order on a backward Shift+Click.
+    ImGuiSelectionUserData RangeFirstItem; //                  /  ms:w, app:r   // Parameter for SetRange request
+                                           //                  (this is generally ==
+    //                  RangeSrcItem when shift selecting from top to bottom).
+    ImGuiSelectionUserData RangeLastItem; //                  /  ms:w, app:r   // Parameter for SetRange request
+                                          //                  (this is generally ==
+    //                  RangeSrcItem when shift selecting from bottom to top). Inclusive!
 };
 
 // Optional helper to store multi-selection state + apply multi-selection requests.
 // - Used by our demos and provided as a convenience to easily implement basic multi-selection.
-// - Iterate selection with 'void* it = nullptr; ImGuiID id; while (selection.GetNextSelectedItem(&it, &id)) { ... }'
-//   Or you can check 'if (Contains(id)) { ... }' for each possible object if their number is not too high to iterate.
+// - Iterate selection with 'void* it = nullptr; IdType id; while (selection.GetNextSelectedItem(&it, &id)) { ...
+// }'
+//   Or you can check 'if (Contains(id)) { ... }' for each possible object if their number is not too high to
+//   iterate.
 // - USING THIS IS NOT MANDATORY. This is only a helper and not a required API.
 // To store a multi-selection, in your application you could:
-// - Use this helper as a convenience. We use our simple key->value ImGuiStorage as a std::set<ImGuiID> replacement.
+// - Use this helper as a convenience. We use our simple key->value ImGuiStorage as a std::set<IdType> replacement.
 // - Use your own external storage: e.g. std::set<MyObjectId>, std::vector<MyObjectId>, interval trees, intrusively
 // stored selection etc. In ImGuiSelectionBasicStorage we:
 // - always use indices in the multi-selection API (passed to SetNextItemSelectionUserData(), retrieved in
 // ImGuiMultiSelectIO)
-// - use the AdapterIndexToStorageId() indirection layer to abstract how persistent selection data is derived from an
-// index.
+// - use the AdapterIndexToStorageId() indirection layer to abstract how persistent selection data is derived from
+// an index.
 // - use decently optimized logic to allow queries and insertion of very large selection sets.
 // - do not preserve selection order.
 // Many combinations are possible depending on how you prefer to store your items and how you prefer to store your
@@ -4634,50 +4728,52 @@ struct ImGuiSelectionBasicStorage
 {
     // Members
     int Size;           //          // Number of selected items, maintained by this helper.
-    bool PreserveOrder; // = false  // GetNextSelectedItem() will return ordered selection (currently implemented by two
-                        // additional sorts of selection. Could be improved)
-    void *UserData;     // = nullptr   // User data for use by adapter function        // e.g. selection.UserData =
-                        // (void*)my_items;
-    ImGuiID (*AdapterIndexToStorageId)(
-            ImGuiSelectionBasicStorage *self,
-            int idx); // e.g. selection.AdapterIndexToStorageId = [](ImGuiSelectionBasicStorage* self, int idx) { return
-                      // ((MyItems**)self->UserData)[idx]->ID; };
+    bool PreserveOrder; // = false  // GetNextSelectedItem() will return ordered selection (currently implemented by
+                        // two
+    // additional sorts of selection. Could be improved)
+    void *UserData; // = nullptr   // User data for use by adapter function        // e.g. selection.UserData =
+    // (void*)my_items;
+    IdType (*AdapterIndexToStorageId)(ImGuiSelectionBasicStorage *self,
+                                      int idx); // e.g. selection.AdapterIndexToStorageId =
+                                                // [](ImGuiSelectionBasicStorage* self, int idx) { return
+    // ((MyItems**)self->UserData)[idx]->ID; };
     int _SelectionOrder;   // [Internal] Increasing counter to store selection order
-    ImGuiStorage _Storage; // [Internal] Selection set. Think of this as similar to e.g. std::set<ImGuiID>. Prefer not
-                           // accessing directly: iterate with GetNextSelectedItem().
+    ImGuiStorage _Storage; // [Internal] Selection set. Think of this as similar to e.g. std::set<IdType>. Prefer not
+    // accessing directly: iterate with GetNextSelectedItem().
 
     // Methods
     ImGuiSelectionBasicStorage();
-    void ApplyRequests(
-            ImGuiMultiSelectIO *ms_io); // Apply selection requests coming from BeginMultiSelect() and EndMultiSelect()
-                                        // functions. It uses 'items_count' passed to BeginMultiSelect()
-    bool Contains(ImGuiID id) const;    // Query if an item id is in selection.
-    void Clear();                       // Clear selection
+    void ApplyRequests(ImGuiMultiSelectIO *ms_io); // Apply selection requests coming from BeginMultiSelect() and
+                                                   // EndMultiSelect()
+    // functions. It uses 'items_count' passed to BeginMultiSelect()
+    bool Contains(IdType id) const;           // Query if an item id is in selection.
+    void Clear();                             // Clear selection
     void Swap(ImGuiSelectionBasicStorage &r); // Swap two selections
     void
-    SetItemSelected(ImGuiID id,
+    SetItemSelected(IdType id,
                     bool selected); // Add/remove an item from selection (generally done by ApplyRequests() function)
     bool GetNextSelectedItem(void **opaque_it,
-                             ImGuiID *out_id); // Iterate selection with 'void* it = nullptr; ImGuiID id; while
-                                               // (selection.GetNextSelectedItem(&it, &id)) { ... }'
-    inline ImGuiID GetStorageIdFromIndex(int idx)
+                             IdType *out_id); // Iterate selection with 'void* it = nullptr; IdType id; while
+    // (selection.GetNextSelectedItem(&it, &id)) { ... }'
+    inline IdType GetStorageIdFromIndex(int idx)
     {
         return AdapterIndexToStorageId(this, idx);
     } // Convert index to item id based on provided adapter.
 };
 
 // Optional helper to apply multi-selection requests to existing randomly accessible storage.
-// Convenient if you want to quickly wire multi-select API on e.g. an array of bool or items storing their own selection
-// state.
+// Convenient if you want to quickly wire multi-select API on e.g. an array of bool or items storing their own
+// selection state.
 struct ImGuiSelectionExternalStorage
 {
     // Members
-    void *UserData; // User data for use by adapter function                                // e.g. selection.UserData =
-                    // (void*)my_items;
+    void *UserData; // User data for use by adapter function                                // e.g.
+                    // selection.UserData =
+    // (void*)my_items;
     void (*AdapterSetItemSelected)(
             ImGuiSelectionExternalStorage *self, int idx,
             bool selected); // e.g. AdapterSetItemSelected = [](ImGuiSelectionExternalStorage* self, int idx, bool
-                            // selected) { ((MyItems**)self->UserData)[idx]->Selected = selected; }
+    // selected) { ((MyItems**)self->UserData)[idx]->Selected = selected; }
 
     // Methods
     ImGuiSelectionExternalStorage();
@@ -4724,23 +4820,25 @@ typedef void (*ImDrawCallback)(const ImDrawList *parent_list, const ImDrawCmd *c
 // - The ClipRect/TexRef/VtxOffset fields must be contiguous as we memcmp() them together (this is asserted for).
 struct ImDrawCmd
 {
-    Vec4 ClipRect;       // 4*4  // Clipping rectangle (x1, y1, x2, y2). Subtract ImDrawData->DisplayPos to get clipping
-                         // rectangle in "viewport" coordinates
+    ::SF::Engine::Vec4
+            ClipRect; // 4*4  // Clipping rectangle (x1, y1, x2, y2). Subtract ImDrawData->DisplayPos to get clipping
+    // rectangle in "viewport" coordinates
     ImTextureRef TexRef; // 16   // Reference to a font/texture atlas (where backend called ImTextureData::SetTexID())
-                         // or to a user-provided texture ID (via e.g. ImGui::Image() calls). Both will lead to a
-                         // ImTextureID value.
+    // or to a user-provided texture ID (via e.g. ImGui::Image() calls). Both will lead to a
+    // ImTextureID value.
     unsigned int VtxOffset; // 4    // Start offset in vertex buffer. ImGuiBackendFlags_RendererHasVtxOffset: always 0,
-                            // otherwise may be >0 to support meshes larger than 64K vertices with 16-bit indices.
+    // otherwise may be >0 to support meshes larger than 64K vertices with 16-bit indices.
     unsigned int IdxOffset; // 4    // Start offset in index buffer.
     unsigned int ElemCount; // 4    // Number of indices (multiple of 3) to be rendered as triangles. Vertices are
-                            // stored in the callee ImDrawList's vtx_buffer[] array, indices in idx_buffer[].
+    // stored in the callee ImDrawList's vtx_buffer[] array, indices in idx_buffer[].
     ImDrawCallback UserCallback; // 4-8  // If != nullptr, call the function instead of rendering the vertices.
-                                 // clip_rect and texture_id will be set normally.
-    void *UserCallbackData;   // 4-8  // Callback user data (when UserCallback != nullptr). If called AddCallback() with
-                              // size
-                              // == 0, this is a copy of the AddCallback() argument. If called AddCallback() with size >
-                              // 0, this is pointing to a buffer where data is stored.
-    int UserCallbackDataSize; // 4 // Size of callback user data when using storage, otherwise 0.
+    // clip_rect and texture_id will be set normally.
+    void *UserCallbackData; // 4-8  // Callback user data (when UserCallback != nullptr). If called AddCallback()
+                            // with
+    // size
+    // == 0, this is a copy of the AddCallback() argument. If called AddCallback() with size >
+    // 0, this is pointing to a buffer where data is stored.
+    int UserCallbackDataSize;   // 4 // Size of callback user data when using storage, otherwise 0.
     int UserCallbackDataOffset; // 4 // [Internal] Offset of callback user data when using storage, otherwise -1.
 
     ImDrawCmd() { memset((void *) this, 0, sizeof(*this)); } // Also ensure our padding fields are zeroed
@@ -4751,29 +4849,17 @@ struct ImDrawCmd
     inline ImTextureID GetTexID() const; // == (TexRef._TexData ? TexRef._TexData->TexID : TexRef._TexID)
 };
 
-// Vertex layout
-#ifndef IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT
 struct ImDrawVert
 {
-    Vec2 pos;
-    Vec2 uv;
+    ::SF::Engine::Vec2 pos;
+    ::SF::Engine::Vec2 uv;
     uint32_t col;
 };
-#else
-// You can override the vertex format layout by defining IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT in imconfig.h
-// The code expect Vec2 pos (8 bytes), Vec2 uv (8 bytes), uint32_t col (4 bytes), but you can re-order them or add
-// other fields as needed to simplify integration in your engine. The type has to be described within the macro (you can
-// either declare the struct or use a typedef). This is because Vec2/uint32_t are likely not declared at the time you'd
-// want to set your type up. NOTE: IMGUI DOESN'T CLEAR THE STRUCTURE AND DOESN'T CALL A CONSTRUCTOR SO ANY CUSTOM FIELD
-// WILL BE UNINITIALIZED. IF YOU ADD EXTRA FIELDS (SUCH AS A 'Z' COORDINATES) YOU WILL NEED TO CLEAR THEM DURING RENDER
-// OR TO IGNORE THEM.
-IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT;
-#endif
 
 // [Internal] For use by ImDrawList
 struct ImDrawCmdHeader
 {
-    Vec4 ClipRect;
+    ::SF::Engine::Vec4 ClipRect;
     ImTextureRef TexRef;
     unsigned int VtxOffset;
 };
@@ -4812,8 +4898,8 @@ enum ImDrawFlags_
     ImDrawFlags_None = 0,
 
     // Rounding for AddRect(), AddRectFilled(), PathRect()
-    // - When not specified, we defaults to ImDrawFlags_RoundCornersAll! So you only need to use those flags if you want
-    // another configuration.
+    // - When not specified, we defaults to ImDrawFlags_RoundCornersAll! So you only need to use those flags if you
+    // want another configuration.
     ImDrawFlags_RoundCornersTopLeft =
             1 << 4, // Round top-left corner only (when rounding > 0.0f, we default to all corners).
     ImDrawFlags_RoundCornersTopRight =
@@ -4827,8 +4913,8 @@ enum ImDrawFlags_
     ImDrawFlags_RoundCornersAll = ImDrawFlags_RoundCornersTopLeft | ImDrawFlags_RoundCornersTopRight |
                                   ImDrawFlags_RoundCornersBottomLeft |
                                   ImDrawFlags_RoundCornersBottomRight, // (Default!!)
-    ImDrawFlags_RoundCornersDefault_ =
-            ImDrawFlags_RoundCornersAll, // Default to ALL corners if none of the _RoundCornersXX flags are specified!
+    ImDrawFlags_RoundCornersDefault_ = ImDrawFlags_RoundCornersAll,    // Default to ALL corners if none of the
+                                                                       // _RoundCornersXX flags are specified!
     ImDrawFlags_RoundCornersTop    = ImDrawFlags_RoundCornersTopLeft | ImDrawFlags_RoundCornersTopRight,
     ImDrawFlags_RoundCornersBottom = ImDrawFlags_RoundCornersBottomLeft | ImDrawFlags_RoundCornersBottomRight,
     ImDrawFlags_RoundCornersLeft   = ImDrawFlags_RoundCornersBottomLeft | ImDrawFlags_RoundCornersTopLeft,
@@ -4837,23 +4923,24 @@ enum ImDrawFlags_
 
     // Stroke options
     ImDrawFlags_Closed = 1 << 9, // PathStroke(), AddPolyline(): specify that shape should be closed.
-    // ImDrawFlags_Closed                    = 1,      // Prior to 1.92.8 (May 2026), ImDrawFlags_Closed was guaranteed
-    // to be == 1<<0 == 1 for legacy compatibility reason. Hardcoded use of 1 or true should be replaced.
+    // ImDrawFlags_Closed                    = 1,      // Prior to 1.92.8 (May 2026), ImDrawFlags_Closed was
+    // guaranteed to be == 1<<0 == 1 for legacy compatibility reason. Hardcoded use of 1 or true should be replaced.
 
     ImDrawFlags_InvalidMask_ = ~0x7FFFFFF0, // == 0x8000000F,
 };
 
-// Flags for ImDrawList instance. Those are set automatically by ImGui:: functions from ImGuiIO settings, and generally
-// not manipulated directly. It is however possible to temporarily alter flags between calls to ImDrawList:: functions.
+// Flags for ImDrawList instance. Those are set automatically by ImGui:: functions from ImGuiIO settings, and
+// generally not manipulated directly. It is however possible to temporarily alter flags between calls to
+// ImDrawList:: functions.
 enum ImDrawListFlags_
 {
     ImDrawListFlags_None = 0,
     ImDrawListFlags_AntiAliasedLines =
-            1 << 0, // Enable anti-aliased lines/borders (*2 the number of triangles for 1.0f wide line or lines thin
-                    // enough to be drawn using textures, otherwise *3 the number of triangles)
+            1 << 0, // Enable anti-aliased lines/borders (*2 the number of triangles for 1.0f wide line or lines
+                    // thin enough to be drawn using textures, otherwise *3 the number of triangles)
     ImDrawListFlags_AntiAliasedLinesUseTex =
-            1 << 1, // Enable anti-aliased lines/borders using textures when possible. Require backend to render with
-                    // bilinear filtering (NOT point/nearest filtering).
+            1 << 1, // Enable anti-aliased lines/borders using textures when possible. Require backend to render
+                    // with bilinear filtering (NOT point/nearest filtering).
     ImDrawListFlags_AntiAliasedFill =
             1 << 2, // Enable anti-aliased edge around filled shapes (rounded rectangles, circles).
     ImDrawListFlags_AllowVtxOffset = 1 << 3,  // Can emit 'VtxOffset > 0' to allow large meshes. Set when
@@ -4868,10 +4955,10 @@ enum ImDrawListFlags_
 // access the current window draw list and draw custom primitives.
 // You can interleave normal ImGui:: calls and adding primitives to the current draw list.
 // In single viewport mode, top-left is == GetMainViewport()->Pos (generally 0,0), bottom-right is ==
-// GetMainViewport()->Pos+Size (generally io.DisplaySize). You are totally free to apply whatever transformation matrix
-// you want to the data (depending on the use of the transformation you may want to apply it to ClipRect as well!)
-// Important: Primitives are always added to the list and not culled (culling is done at higher-level by ImGui::
-// functions), if you use this API a lot consider coarse culling your drawn objects.
+// GetMainViewport()->Pos+Size (generally io.DisplaySize). You are totally free to apply whatever transformation
+// matrix you want to the data (depending on the use of the transformation you may want to apply it to ClipRect as
+// well!) Important: Primitives are always added to the list and not culled (culling is done at higher-level by
+// ImGui:: functions), if you use this API a lot consider coarse culling your drawn objects.
 struct ImDrawList
 {
     // This is what you have to render
@@ -4883,23 +4970,24 @@ struct ImDrawList
 
     // [Internal, used while building lists]
     unsigned int _VtxCurrentIdx; // [Internal] generally == VtxBuffer.Size unless we are past 64K vertices, in which
-                                 // case this gets reset to 0.
+    // case this gets reset to 0.
     ImDrawListSharedData *_Data; // Pointer to shared draw data (you can use ImGui::GetDrawListSharedData() to get the
-                                 // one from current ImGui context)
-    ImDrawVert *_VtxWritePtr;    // [Internal] point within VtxBuffer.Data after each add command (to avoid using the
-                                 // ImVector<> operators too much)
-    ImDrawIdx *_IdxWritePtr;     // [Internal] point within IdxBuffer.Data after each add command (to avoid using the
-                                 // ImVector<> operators too much)
-    ImVector<Vec2> _Path;        // [Internal] current path building
+    // one from current ImGui context)
+    ImDrawVert *_VtxWritePtr; // [Internal] point within VtxBuffer.Data after each add command (to avoid using the
+    // ImVector<> operators too much)
+    ImDrawIdx *_IdxWritePtr; // [Internal] point within IdxBuffer.Data after each add command (to avoid using the
+    // ImVector<> operators too much)
+    ImVector<::SF::Engine::Vec2> _Path; // [Internal] current path building
     ImDrawCmdHeader
             _CmdHeader; // [Internal] template of active commands. Fields should match those of CmdBuffer.back().
-    ImDrawListSplitter _Splitter;  // [Internal] for channels api (note: prefer using your own persistent instance of
-                                   // ImDrawListSplitter!)
-    ImVector<Vec4> _ClipRectStack; // [Internal]
-    ImVector<ImTextureRef> _TextureStack; // [Internal]
-    ImVector<uint8_t> _CallbacksDataBuf;  // [Internal]
-    float _FringeScale; // [Internal] anti-alias fringe is scaled by this value, this helps to keep things sharp while
-                        // zooming at vertex buffer content.
+    ImDrawListSplitter _Splitter; // [Internal] for channels api (note: prefer using your own persistent instance of
+    // ImDrawListSplitter!)
+    ImVector<::SF::Engine::Vec4> _ClipRectStack; // [Internal]
+    ImVector<ImTextureRef> _TextureStack;        // [Internal]
+    ImVector<uint8_t> _CallbacksDataBuf;         // [Internal]
+    float _FringeScale; // [Internal] anti-alias fringe is scaled by this value, this helps to keep things sharp
+                        // while
+    // zooming at vertex buffer content.
     float _InvFringeScale;  // [internal] 1.0 / _FringeScale // FIXME: Consider renaming to _PixelDensity.
     const char *_OwnerName; // Pointer to owner window's name for debugging
 
@@ -4909,24 +4997,24 @@ struct ImDrawList
     ImDrawList(ImDrawListSharedData *shared_data);
     ~ImDrawList();
 
-    void PushClipRect(const Vec2 &clip_rect_min, const Vec2 &clip_rect_max,
+    void PushClipRect(const ::SF::Engine::Vec2 &clip_rect_min, const ::SF::Engine::Vec2 &clip_rect_max,
                       bool intersect_with_current_clip_rect =
                               false); // Render-level scissoring. This is passed down to your render function but not
-                                      // used for CPU-side coarse clipping. Prefer using higher-level
-                                      // ImGui::PushClipRect() to affect logic (hit-testing and widget culling)
+    // used for CPU-side coarse clipping. Prefer using higher-level
+    // ImGui::PushClipRect() to affect logic (hit-testing and widget culling)
     void PushClipRectFullScreen();
     void PopClipRect();
     void PushTexture(ImTextureRef tex_ref);
     void PopTexture();
-    inline Vec2 GetClipRectMin() const
+    inline ::SF::Engine::Vec2 GetClipRectMin() const
     {
-        const Vec4 &cr = _ClipRectStack.back();
-        return Vec2(cr.x, cr.y);
+        const ::SF::Engine::Vec4 &cr = _ClipRectStack.back();
+        return ::SF::Engine::Vec2(cr.x, cr.y);
     }
-    inline Vec2 GetClipRectMax() const
+    inline ::SF::Engine::Vec2 GetClipRectMax() const
     {
-        const Vec4 &cr = _ClipRectStack.back();
-        return Vec2(cr.z, cr.w);
+        const ::SF::Engine::Vec4 &cr = _ClipRectStack.back();
+        return ::SF::Engine::Vec2(cr.z, cr.w);
     }
 
     // Primitives
@@ -4937,63 +5025,82 @@ struct ImDrawList
     //   In older versions (until Dear ImGui 1.77) the AddCircle functions defaulted to num_segments == 12.
     //   In future versions we will use textures to provide cheaper and higher-quality circles.
     //   Use AddNgon() and AddNgonFilled() functions if you need to guarantee a specific number of sides.
-    void AddLine(const Vec2 &p1, const Vec2 &p2, uint32_t col, float thickness = 1.0f);
+    void AddLine(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, uint32_t col, float thickness = 1.0f);
     void AddLineH(float min_x, float max_x, float y, uint32_t col, float thickness = 1.0f);
     void AddLineV(float x, float min_y, float max_y, uint32_t col, float thickness = 1.0f);
-    void AddRect(const Vec2 &p_min, const Vec2 &p_max, uint32_t col, float rounding = 0.0f, float thickness = 1.0f,
+    void AddRect(const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max, uint32_t col, float rounding = 0.0f,
+                 float thickness   = 1.0f,
                  ImDrawFlags flags = 0); // a: upper-left, b: lower-right (== upper-left + size)
-    void AddRectFilled(const Vec2 &p_min, const Vec2 &p_max, uint32_t col, float rounding = 0.0f,
+    void AddRectFilled(const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max, uint32_t col,
+                       float rounding    = 0.0f,
                        ImDrawFlags flags = 0); // a: upper-left, b: lower-right (== upper-left + size)
-    void AddRectFilledMultiColor(const Vec2 &p_min, const Vec2 &p_max, uint32_t col_upr_left, uint32_t col_upr_right,
-                                 uint32_t col_bot_right, uint32_t col_bot_left);
-    void AddQuad(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, uint32_t col, float thickness = 1.0f);
-    void AddQuadFilled(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, uint32_t col);
-    void AddTriangle(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, uint32_t col, float thickness = 1.0f);
-    void AddTriangleFilled(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, uint32_t col);
-    void AddCircle(const Vec2 &center, float radius, uint32_t col, int num_segments = 0, float thickness = 1.0f);
-    void AddCircleFilled(const Vec2 &center, float radius, uint32_t col, int num_segments = 0);
-    void AddNgon(const Vec2 &center, float radius, uint32_t col, int num_segments, float thickness = 1.0f);
-    void AddNgonFilled(const Vec2 &center, float radius, uint32_t col, int num_segments);
-    void AddEllipse(const Vec2 &center, const Vec2 &radius, uint32_t col, float rot = 0.0f, int num_segments = 0,
-                    float thickness = 1.0f);
-    void AddEllipseFilled(const Vec2 &center, const Vec2 &radius, uint32_t col, float rot = 0.0f, int num_segments = 0);
-    void AddText(const Vec2 &pos, uint32_t col, const char *text_begin, const char *text_end = nullptr);
-    void AddText(ImFont *font, float font_size, const Vec2 &pos, uint32_t col, const char *text_begin,
-                 const char *text_end = nullptr, float wrap_width = 0.0f, const Vec4 *cpu_fine_clip_rect = nullptr);
-    void AddBezierCubic(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, uint32_t col, float thickness,
+    void AddRectFilledMultiColor(const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max,
+                                 uint32_t col_upr_left, uint32_t col_upr_right, uint32_t col_bot_right,
+                                 uint32_t col_bot_left);
+    void AddQuad(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                 const ::SF::Engine::Vec2 &p4, uint32_t col, float thickness = 1.0f);
+    void AddQuadFilled(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                       const ::SF::Engine::Vec2 &p4, uint32_t col);
+    void AddTriangle(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                     uint32_t col, float thickness = 1.0f);
+    void AddTriangleFilled(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                           uint32_t col);
+    void AddCircle(const ::SF::Engine::Vec2 &center, float radius, uint32_t col, int num_segments = 0,
+                   float thickness = 1.0f);
+    void AddCircleFilled(const ::SF::Engine::Vec2 &center, float radius, uint32_t col, int num_segments = 0);
+    void AddNgon(const ::SF::Engine::Vec2 &center, float radius, uint32_t col, int num_segments,
+                 float thickness = 1.0f);
+    void AddNgonFilled(const ::SF::Engine::Vec2 &center, float radius, uint32_t col, int num_segments);
+    void AddEllipse(const ::SF::Engine::Vec2 &center, const ::SF::Engine::Vec2 &radius, uint32_t col, float rot = 0.0f,
+                    int num_segments = 0, float thickness = 1.0f);
+    void AddEllipseFilled(const ::SF::Engine::Vec2 &center, const ::SF::Engine::Vec2 &radius, uint32_t col,
+                          float rot = 0.0f, int num_segments = 0);
+    void AddText(const ::SF::Engine::Vec2 &pos, uint32_t col, const char *text_begin, const char *text_end = nullptr);
+    void AddText(ImFont *font, float font_size, const ::SF::Engine::Vec2 &pos, uint32_t col, const char *text_begin,
+                 const char *text_end = nullptr, float wrap_width = 0.0f,
+                 const ::SF::Engine::Vec4 *cpu_fine_clip_rect = nullptr);
+    void AddBezierCubic(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                        const ::SF::Engine::Vec2 &p4, uint32_t col, float thickness,
                         int num_segments = 0); // Cubic Bezier (4 control points)
-    void AddBezierQuadratic(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, uint32_t col, float thickness,
+    void AddBezierQuadratic(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                            uint32_t col, float thickness,
                             int num_segments = 0); // Quadratic Bezier (3 control points)
 
     // General polygon
     // - Only simple polygons are supported by filling functions (no self-intersections, no holes).
-    // - Concave polygon fill is more expensive than convex one: it has O(N^2) complexity. Provided as a convenience for
-    // the user but not used by the main library.
-    void AddPolyline(const Vec2 *points, int num_points, uint32_t col, float thickness, ImDrawFlags flags = 0);
-    void AddConvexPolyFilled(const Vec2 *points, int num_points, uint32_t col);
-    void AddConcavePolyFilled(const Vec2 *points, int num_points, uint32_t col);
+    // - Concave polygon fill is more expensive than convex one: it has O(N^2) complexity. Provided as a convenience
+    // for the user but not used by the main library.
+    void AddPolyline(const ::SF::Engine::Vec2 *points, int num_points, uint32_t col, float thickness,
+                     ImDrawFlags flags = 0);
+    void AddConvexPolyFilled(const ::SF::Engine::Vec2 *points, int num_points, uint32_t col);
+    void AddConcavePolyFilled(const ::SF::Engine::Vec2 *points, int num_points, uint32_t col);
 
     // Image primitives
     // - Read FAQ to understand what ImTextureID/ImTextureRef are.
     // - "p_min" and "p_max" represent the upper-left and lower-right corners of the rectangle.
-    // - "uv_min" and "uv_max" represent the normalized texture coordinates to use for those corners. Using (0,0)->(1,1)
-    // texture coordinates will generally display the entire texture.
-    void AddImage(ImTextureRef tex_ref, const Vec2 &p_min, const Vec2 &p_max, const Vec2 &uv_min = Vec2(0, 0),
-                  const Vec2 &uv_max = Vec2(1, 1), uint32_t col = IM_COL32_WHITE);
-    void AddImageQuad(ImTextureRef tex_ref, const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4,
-                      const Vec2 &uv1 = Vec2(0, 0), const Vec2 &uv2 = Vec2(1, 0), const Vec2 &uv3 = Vec2(1, 1),
-                      const Vec2 &uv4 = Vec2(0, 1), uint32_t col = IM_COL32_WHITE);
-    void AddImageRounded(ImTextureRef tex_ref, const Vec2 &p_min, const Vec2 &p_max, const Vec2 &uv_min,
-                         const Vec2 &uv_max, uint32_t col, float rounding, ImDrawFlags flags = 0);
+    // - "uv_min" and "uv_max" represent the normalized texture coordinates to use for those corners. Using
+    // (0,0)->(1,1) texture coordinates will generally display the entire texture.
+    void AddImage(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max,
+                  const ::SF::Engine::Vec2 &uv_min = ::SF::Engine::Vec2(0, 0),
+                  const ::SF::Engine::Vec2 &uv_max = ::SF::Engine::Vec2(1, 1), uint32_t col = IM_COL32_WHITE);
+    void AddImageQuad(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                      const ::SF::Engine::Vec2 &p3, const ::SF::Engine::Vec2 &p4,
+                      const ::SF::Engine::Vec2 &uv1 = ::SF::Engine::Vec2(0, 0),
+                      const ::SF::Engine::Vec2 &uv2 = ::SF::Engine::Vec2(1, 0),
+                      const ::SF::Engine::Vec2 &uv3 = ::SF::Engine::Vec2(1, 1),
+                      const ::SF::Engine::Vec2 &uv4 = ::SF::Engine::Vec2(0, 1), uint32_t col = IM_COL32_WHITE);
+    void AddImageRounded(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max,
+                         const ::SF::Engine::Vec2 &uv_min, const ::SF::Engine::Vec2 &uv_max, uint32_t col,
+                         float rounding, ImDrawFlags flags = 0);
 
     // Stateful path API, add points then finish with PathFillConvex() or PathStroke()
     // - Important: filled shapes must always use clockwise winding order! The anti-aliasing fringe depends on it.
     // Counter-clockwise shapes will have "inward" anti-aliasing.
-    //   so e.g. 'PathArcTo(center, radius, PI * -0.5f, PI)' is ok, whereas 'PathArcTo(center, radius, PI, PI * -0.5f)'
-    //   won't have correct anti-aliasing when followed by PathFillConvex().
+    //   so e.g. 'PathArcTo(center, radius, PI * -0.5f, PI)' is ok, whereas 'PathArcTo(center, radius, PI, PI *
+    //   -0.5f)' won't have correct anti-aliasing when followed by PathFillConvex().
     inline void PathClear() { _Path.Size = 0; }
-    inline void PathLineTo(const Vec2 &pos) { _Path.push_back(pos); }
-    inline void PathLineToMergeDuplicate(const Vec2 &pos)
+    inline void PathLineTo(const ::SF::Engine::Vec2 &pos) { _Path.push_back(pos); }
+    inline void PathLineToMergeDuplicate(const ::SF::Engine::Vec2 &pos)
     {
         if (_Path.Size == 0 || memcmp(&_Path.Data[_Path.Size - 1], &pos, 8) != 0)
             _Path.push_back(pos);
@@ -5013,16 +5120,19 @@ struct ImDrawList
         AddPolyline(_Path.Data, _Path.Size, col, thickness, flags);
         _Path.Size = 0;
     }
-    void PathArcTo(const Vec2 &center, float radius, float a_min, float a_max, int num_segments = 0);
-    void PathArcToFast(const Vec2 &center, float radius, int a_min_of_12,
+    void PathArcTo(const ::SF::Engine::Vec2 &center, float radius, float a_min, float a_max, int num_segments = 0);
+    void PathArcToFast(const ::SF::Engine::Vec2 &center, float radius, int a_min_of_12,
                        int a_max_of_12); // Use precomputed angles for a 12 steps circle
-    void PathEllipticalArcTo(const Vec2 &center, const Vec2 &radius, float rot, float a_min, float a_max,
+    void PathEllipticalArcTo(const ::SF::Engine::Vec2 &center, const ::SF::Engine::Vec2 &radius, float rot, float a_min,
+                             float a_max,
                              int num_segments = 0); // Ellipse
-    void PathBezierCubicCurveTo(const Vec2 &p2, const Vec2 &p3, const Vec2 &p4,
+    void PathBezierCubicCurveTo(const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                                const ::SF::Engine::Vec2 &p4,
                                 int num_segments = 0); // Cubic Bezier (4 control points)
-    void PathBezierQuadraticCurveTo(const Vec2 &p2, const Vec2 &p3,
+    void PathBezierQuadraticCurveTo(const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
                                     int num_segments = 0); // Quadratic Bezier (3 control points)
-    void PathRect(const Vec2 &rect_min, const Vec2 &rect_max, float rounding = 0.0f, ImDrawFlags flags = 0);
+    void PathRect(const ::SF::Engine::Vec2 &rect_min, const ::SF::Engine::Vec2 &rect_max, float rounding = 0.0f,
+                  ImDrawFlags flags = 0);
 
     // Advanced: Draw Callbacks
     // - May be used to alter render state (change sampler, blending, current shader). May be used to emit custom
@@ -5034,8 +5144,8 @@ struct ImDrawList
     // triangles. All standard backends are honoring this.
     // - For some backends, the callback may access selected render-states exposed by the backend in a
     // ImGui_ImplXXXX_RenderState structure pointed to by platform_io.Renderer_RenderState.
-    // - IMPORTANT: please be mindful of the different level of indirection between using size==0 (copying argument) and
-    // using size>0 (copying pointed data into a buffer).
+    // - IMPORTANT: please be mindful of the different level of indirection between using size==0 (copying argument)
+    // and using size>0 (copying pointed data into a buffer).
     //   - If userdata_size == 0: we copy/store the 'userdata' argument as-is. It will be available unmodified in
     //   ImDrawCmd::UserCallbackData during render.
     //   - If userdata_size > 0,  we copy/store 'userdata_size' bytes pointed to by 'userdata'. We store them in a
@@ -5047,18 +5157,18 @@ struct ImDrawList
     void AddCallback(ImDrawCallback callback, void *userdata = nullptr, size_t userdata_size = 0);
 
     // Advanced: Miscellaneous
-    void
-    AddDrawCmd(); // This is useful if you need to forcefully create a new draw call (to allow for dependent rendering /
-                  // blending). Otherwise primitives are merged into the same draw-call as much as possible
+    void AddDrawCmd(); // This is useful if you need to forcefully create a new draw call (to allow for dependent
+                       // rendering /
+    // blending). Otherwise primitives are merged into the same draw-call as much as possible
     ImDrawList *
     CloneOutput() const; // Create a clone of the CmdBuffer/IdxBuffer/VtxBuffer. For multi-threaded rendering, consider
-                         // using `imgui_threaded_rendering` from https://github.com/ocornut/imgui_club instead.
+    // using `imgui_threaded_rendering` from https://github.com/ocornut/imgui_club instead.
 
     // Advanced: Channels
-    // - Use to split render into layers. By switching channels to can render out-of-order (e.g. submit FG primitives
-    // before BG primitives)
-    // - Use to minimize draw calls (e.g. if going back-and-forth between multiple clipping rectangles, prefer to append
-    // into separate channels then merge at the end)
+    // - Use to split render into layers. By switching channels to can render out-of-order (e.g. submit FG
+    // primitives before BG primitives)
+    // - Use to minimize draw calls (e.g. if going back-and-forth between multiple clipping rectangles, prefer to
+    // append into separate channels then merge at the end)
     // - This API shouldn't have been in ImDrawList in the first place!
     //   Prefer using your own persistent instance of ImDrawListSplitter as you can stack them.
     //   Using the ImDrawList::ChannelsXXXX you cannot stack a split over another.
@@ -5071,11 +5181,14 @@ struct ImDrawList
     // - All primitives needs to be reserved via PrimReserve() beforehand.
     void PrimReserve(int idx_count, int vtx_count);
     void PrimUnreserve(int idx_count, int vtx_count);
-    void PrimRect(const Vec2 &a, const Vec2 &b, uint32_t col); // Axis aligned rectangle (composed of two triangles)
-    void PrimRectUV(const Vec2 &a, const Vec2 &b, const Vec2 &uv_a, const Vec2 &uv_b, uint32_t col);
-    void PrimQuadUV(const Vec2 &a, const Vec2 &b, const Vec2 &c, const Vec2 &d, const Vec2 &uv_a, const Vec2 &uv_b,
-                    const Vec2 &uv_c, const Vec2 &uv_d, uint32_t col);
-    inline void PrimWriteVtx(const Vec2 &pos, const Vec2 &uv, uint32_t col)
+    void PrimRect(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b,
+                  uint32_t col); // Axis aligned rectangle (composed of two triangles)
+    void PrimRectUV(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &uv_a,
+                    const ::SF::Engine::Vec2 &uv_b, uint32_t col);
+    void PrimQuadUV(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &c,
+                    const ::SF::Engine::Vec2 &d, const ::SF::Engine::Vec2 &uv_a, const ::SF::Engine::Vec2 &uv_b,
+                    const ::SF::Engine::Vec2 &uv_c, const ::SF::Engine::Vec2 &uv_d, uint32_t col);
+    inline void PrimWriteVtx(const ::SF::Engine::Vec2 &pos, const ::SF::Engine::Vec2 &uv, uint32_t col)
     {
         _VtxWritePtr->pos = pos;
         _VtxWritePtr->uv  = uv;
@@ -5088,16 +5201,17 @@ struct ImDrawList
         *_IdxWritePtr = idx;
         _IdxWritePtr++;
     }
-    inline void PrimVtx(const Vec2 &pos, const Vec2 &uv, uint32_t col)
+    inline void PrimVtx(const ::SF::Engine::Vec2 &pos, const ::SF::Engine::Vec2 &uv, uint32_t col)
     {
         PrimWriteIdx((ImDrawIdx) _VtxCurrentIdx);
         PrimWriteVtx(pos, uv, col);
     } // Write vertex with unique index
 
-    void AddRect(const Vec2 &p_min, const Vec2 &p_max, uint32_t col, float rounding /*= 0.0f*/,
-                 ImDrawFlags flags /*= 0*/, float thickness /*= 1.0f*/)                                    = delete;
-    void AddPolyline(const Vec2 *points, int num_points, uint32_t col, ImDrawFlags flags, float thickness) = delete;
-    inline void PathStroke(uint32_t col, ImDrawFlags flags /*= 0*/, float thickness /*= 1.0f*/)            = delete;
+    void AddRect(const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max, uint32_t col,
+                 float rounding /*= 0.0f*/, ImDrawFlags flags /*= 0*/, float thickness /*= 1.0f*/) = delete;
+    void AddPolyline(const ::SF::Engine::Vec2 *points, int num_points, uint32_t col, ImDrawFlags flags,
+                     float thickness)                                                              = delete;
+    inline void PathStroke(uint32_t col, ImDrawFlags flags /*= 0*/, float thickness /*= 1.0f*/)    = delete;
 
     // [Internal helpers]
     void _SetDrawListSharedData(ImDrawListSharedData *data);
@@ -5111,8 +5225,9 @@ struct ImDrawList
     void _OnChangedVtxOffset();
     void _SetTexture(ImTextureRef tex_ref);
     int _CalcCircleAutoSegmentCount(float radius) const;
-    void _PathArcToFastEx(const Vec2 &center, float radius, int a_min_sample, int a_max_sample, int a_step);
-    void _PathArcToN(const Vec2 &center, float radius, float a_min, float a_max, int num_segments);
+    void _PathArcToFastEx(const ::SF::Engine::Vec2 &center, float radius, int a_min_sample, int a_max_sample,
+                          int a_step);
+    void _PathArcToN(const ::SF::Engine::Vec2 &center, float radius, float a_min, float a_max, int num_segments);
 };
 
 // All draw data to render a Dear ImGui frame
@@ -5126,48 +5241,52 @@ struct ImDrawData
     int TotalIdxCount{};             // For convenience, sum of all ImDrawList's IdxBuffer.Size
     int TotalVtxCount{};             // For convenience, sum of all ImDrawList's VtxBuffer.Size
     ImVector<ImDrawList *> CmdLists; // Array of ImDrawList* to render. The ImDrawLists are owned by ImGuiContext and
-                                     // only pointed to from here.
-    Vec2 DisplayPos{};  // Top-left position of the viewport to render (== top-left of the orthogonal projection matrix
-                        // to use) (== GetMainViewport()->Pos for the main viewport, == (0.0) in most single-viewport
-                        // applications)
-    Vec2 DisplaySize{}; // Size of the viewport to render (== GetMainViewport()->Size for the main viewport, ==
-                        // io.DisplaySize in most single-viewport applications)
-    Vec2 FramebufferScale{}; // Amount of pixels for each unit of DisplaySize. Copied from viewport->FramebufferScale
-                             // (== io.DisplayFramebufferScale for main viewport). Generally (1,1) on normal display,
-                             // (2,2) on OSX with Retina display.
-    ImGuiViewport *OwnerViewport{};        // Viewport carrying the ImDrawData instance, might be of use to the renderer
-                                           // (generally not).
+    // only pointed to from here.
+    ::SF::Engine::Vec2 DisplayPos{}; // Top-left position of the viewport to render (== top-left of the orthogonal
+                                     // projection matrix
+    // to use) (== GetMainViewport()->Pos for the main viewport, == (0.0) in most single-viewport
+    // applications)
+    ::SF::Engine::Vec2
+            DisplaySize{}; // Size of the viewport to render (== GetMainViewport()->Size for the main viewport, ==
+    // io.DisplaySize in most single-viewport applications)
+    ::SF::Engine::Vec2 FramebufferScale{}; // Amount of pixels for each unit of DisplaySize. Copied from
+                                           // viewport->FramebufferScale
+    // (== io.DisplayFramebufferScale for main viewport). Generally (1,1) on normal display,
+    // (2,2) on OSX with Retina display.
+    ImGuiViewport *OwnerViewport{}; // Viewport carrying the ImDrawData instance, might be of use to the renderer
+    // (generally not).
     ImVector<ImTextureData *> *Textures{}; // List of textures to update. Most of the times the list is shared by all
-                                           // ImDrawData, has only 1 texture and it doesn't need any update. This almost
-                                           // always points to ImGui::GetPlatformIO().Textures[]. May be overridden or
-                                           // set to nullptr if you want to manually update textures.
+    // ImDrawData, has only 1 texture and it doesn't need any update. This almost
+    // always points to ImGui::GetPlatformIO().Textures[]. May be overridden or
+    // set to nullptr if you want to manually update textures.
 
     // Functions
     ImDrawData() { Clear(); }
     void Clear();
     void AddDrawList(ImDrawList *draw_list); // Helper to add an external draw list into an existing ImDrawData.
     void DeIndexAllBuffers(); // Helper to convert all buffers from indexed to non-indexed, in case you cannot render
-                              // indexed. Note: this is slow and most likely a waste of resources. Always prefer indexed
-                              // rendering!
-    void
-    ScaleClipRects(const Vec2 &fb_scale); // Helper to scale the ClipRect field of each ImDrawCmd. Use if your final
-                                          // output buffer is at a different scale than Dear ImGui expects, or if there
-                                          // is a difference between your window resolution and framebuffer resolution.
+    // indexed. Note: this is slow and most likely a waste of resources. Always prefer indexed
+    // rendering!
+    void ScaleClipRects(const ::SF::Engine::Vec2
+                                &fb_scale); // Helper to scale the ClipRect field of each ImDrawCmd. Use if your final
+    // output buffer is at a different scale than Dear ImGui expects, or if there
+    // is a difference between your window resolution and framebuffer resolution.
 };
 
 //-----------------------------------------------------------------------------
 // [SECTION] Texture API (ImTextureFormat, ImTextureStatus, ImTextureRect, ImTextureData)
 //-----------------------------------------------------------------------------
-// In principle, the only data types that user/application code should care about are 'ImTextureRef' and 'ImTextureID'.
-// They are defined above in this header file. Read their description to the difference between ImTextureRef and
-// ImTextureID. FOR ALL OTHER ImTextureXXXX TYPES: ONLY CORE LIBRARY AND RENDERER BACKENDS NEED TO KNOW AND CARE ABOUT
-// THEM.
+// In principle, the only data types that user/application code should care about are 'ImTextureRef' and
+// 'ImTextureID'. They are defined above in this header file. Read their description to the difference between
+// ImTextureRef and ImTextureID. FOR ALL OTHER ImTextureXXXX TYPES: ONLY CORE LIBRARY AND RENDERER BACKENDS NEED TO
+// KNOW AND CARE ABOUT THEM.
 //-----------------------------------------------------------------------------
 
 #undef Status // X11 headers are leaking this.
 
 // We intentionally support a limited amount of texture formats to limit burden on CPU-side code and extension.
-// Most standard backends only support RGBA32 but we provide a single channel option for low-resource/embedded systems.
+// Most standard backends only support RGBA32 but we provide a single channel option for low-resource/embedded
+// systems.
 enum ImTextureFormat
 {
     ImTextureFormat_RGBA32, // 4 components per pixel, each is unsigned 8-bit. Total size = TexWidth * TexHeight * 4
@@ -5180,15 +5299,15 @@ enum ImTextureStatus
     ImTextureStatus_OK,
     ImTextureStatus_Destroyed,   // Backend destroyed the texture.
     ImTextureStatus_WantCreate,  // Requesting backend to create the texture. Set status OK when done.
-    ImTextureStatus_WantUpdates, // Requesting backend to update specific blocks of pixels (write to texture portions
-                                 // which have never been used before). Set status OK when done.
+    ImTextureStatus_WantUpdates, // Requesting backend to update specific blocks of pixels (write to texture
+                                 // portions which have never been used before). Set status OK when done.
     ImTextureStatus_WantDestroy, // Requesting backend to destroy the texture. Set status to Destroyed when done.
 };
 
 // Coordinates of a rectangle within a texture.
 // When a texture is in ImTextureStatus_WantUpdates state, we provide a list of individual rectangles to copy to the
-// graphics system. You may use ImTextureData::Updates[] for the list, or ImTextureData::UpdateBox for a single bounding
-// box.
+// graphics system. You may use ImTextureData::Updates[] for the list, or ImTextureData::UpdateBox for a single
+// bounding box.
 struct ImTextureRect
 {
     unsigned short x, y; // Upper-left coordinates of rectangle to update, within the parent Pixels[] array.
@@ -5199,41 +5318,45 @@ struct ImTextureRect
 // This is only useful for (1) core library and (2) backends. End-user/applications do not need to care about this.
 // Renderer Backends will create a GPU-side version of this.
 // Why does we store two identifiers: TexID and BackendUserData?
-// - ImTextureID    TexID           = lower-level identifier stored in ImDrawCmd. ImDrawCmd can refer to textures not
-// created by the backend, and for which there's no ImTextureData.
-// - void*          BackendUserData = higher-level opaque storage for backend own book-keeping. Some backends may have
-// enough with TexID and not need both. In columns below: who reads/writes each fields? 'r'=read, 'w'=write, 'core'=main
-// library, 'backend'=renderer backend
+// - ImTextureID    TexID           = lower-level identifier stored in ImDrawCmd. ImDrawCmd can refer to textures
+// not created by the backend, and for which there's no ImTextureData.
+// - void*          BackendUserData = higher-level opaque storage for backend own book-keeping. Some backends may
+// have enough with TexID and not need both. In columns below: who reads/writes each fields? 'r'=read, 'w'=write,
+// 'core'=main library, 'backend'=renderer backend
 struct ImTextureData
 {
     //------------------------------------------ core / backend ---------------------------------------
-    int UniqueID{}; // w    -   // [DEBUG] Sequential index to facilitate identifying a texture when debugging/printing.
-                    // Unique per atlas.
-    ImTextureStatus Status;  // rw   rw  // ImTextureStatus_OK/_WantCreate/_WantUpdates/_WantDestroy. Always use
-                             // SetStatus() to modify!
-    void *BackendUserData{}; // -    rw  // Convenience storage for backend. Some backends may have enough with TexID.
-    void *QueueUserData{}; // r    -   // Convenience storage for a staged/multi-threaded rendering texture queue (e.g.
-                           // imgui_threaded_rendering.h. See #8597). When != nullptr, core assumes the texture is
-                           // referenced by the queue.
-    ImTextureID
-            TexID; // r    w   // Backend-specific texture identifier. Always use SetTexID() to modify! The identifier
-                   // will stored in ImDrawCmd::GetTexID() and passed to backend's RenderDrawData function.
-    ImTextureFormat Format{};        // w    r   // ImTextureFormat_RGBA32 (default) or ImTextureFormat_Alpha8
-    int Width{};                     // w    r   // Texture width
-    int Height{};                    // w    r   // Texture height
-    int BytesPerPixel{};             // w    r   // 4 or 1
-    unsigned char *Pixels{};         // w    r   // Pointer to whole texture buffer holding 'Width*Height' pixels and
-                                     // 'Width*Height*BytesPerPixels' bytes.
+    int UniqueID{}; // w    -   // [DEBUG] Sequential index to facilitate identifying a texture when
+                    // debugging/printing.
+    // Unique per atlas.
+    ImTextureStatus Status; // rw   rw  // ImTextureStatus_OK/_WantCreate/_WantUpdates/_WantDestroy. Always use
+    // SetStatus() to modify!
+    void *BackendUserData{}; // -    rw  // Convenience storage for backend. Some backends may have enough with
+                             // TexID.
+    void *QueueUserData{};   // r    -   // Convenience storage for a staged/multi-threaded rendering texture queue
+                             // (e.g.
+    // imgui_threaded_rendering.h. See #8597). When != nullptr, core assumes the texture is
+    // referenced by the queue.
+    ImTextureID TexID; // r    w   // Backend-specific texture identifier. Always use SetTexID() to modify! The
+                       // identifier
+    // will stored in ImDrawCmd::GetTexID() and passed to backend's RenderDrawData function.
+    ImTextureFormat Format{}; // w    r   // ImTextureFormat_RGBA32 (default) or ImTextureFormat_Alpha8
+    int Width{};              // w    r   // Texture width
+    int Height{};             // w    r   // Texture height
+    int BytesPerPixel{};      // w    r   // 4 or 1
+    unsigned char *Pixels{};  // w    r   // Pointer to whole texture buffer holding 'Width*Height' pixels and
+    // 'Width*Height*BytesPerPixels' bytes.
     ImTextureRect UsedRect{};        // w    r   // Bounding box encompassing all past and queued Updates[].
     ImTextureRect UpdateRect{};      // w    r   // Bounding box encompassing all queued Updates[].
     ImVector<ImTextureRect> Updates; // w    r   // Array of individual updates.
-    int UnusedFrames{}; // w    r   // In order to facilitate handling Status==WantDestroy in some backend: this is a
-                        // count successive frames where the texture was not used. Always >0 when Status==WantDestroy.
+    int UnusedFrames{}; // w    r   // In order to facilitate handling Status==WantDestroy in some backend: this is
+                        // a
+    // count successive frames where the texture was not used. Always >0 when Status==WantDestroy.
     unsigned short RefCount{}; // w    r   // Number of contexts using this texture. Used during backend shutdown.
     bool UseColors{}; // w    r   // Tell whether our texture data is known to use colors (rather than just white +
-                      // alpha).
+    // alpha).
     bool WantDestroyNextFrame{}; // rw   -   // [Internal] Queued to set ImTextureStatus_WantDestroy next frame. May
-                                 // still be used in the current frame.
+    // still be used in the current frame.
 
     // Functions
     // - If GetPixels() functions asserts while being called by your render loop, it could be caused by calling
@@ -5292,59 +5415,67 @@ struct ImFontConfig
     char Name[40];             // <auto>   // Name (strictly to ease debugging, hence limited size buffer)
     void *FontData;            //          // TTF/OTF data
     int FontDataSize;          //          // TTF/OTF data size
-    bool FontDataOwnedByAtlas; // true     // TTF/OTF data ownership taken by the owner ImFontAtlas (will delete memory
-                               // itself). SINCE 1.92, THE DATA NEEDS TO PERSIST FOR WHOLE DURATION OF ATLAS.
+    bool FontDataOwnedByAtlas; // true     // TTF/OTF data ownership taken by the owner ImFontAtlas (will delete
+                               // memory
+    // itself). SINCE 1.92, THE DATA NEEDS TO PERSIST FOR WHOLE DURATION OF ATLAS.
 
     // Options
-    bool MergeMode; // false    // Merge into previous ImFont, so you can combine multiple inputs font into one ImFont
-                    // (e.g. ASCII font + icons + Japanese glyphs). You may want to use GlyphOffset.y when merge font of
-                    // different heights.
-    bool PixelSnapH; // false    // Align every glyph AdvanceX to pixel boundaries. Prevents fractional font size from
-                     // working correctly! Useful e.g. if you are merging a non-pixel aligned font with the default
-                     // font. If enabled, OversampleH/V will default to 1.
-    int8_t OversampleH;   // 0 (2)    // Rasterize at higher quality for sub-pixel positioning. 0 == auto == 1 or 2
-                          // depending on size. Note the difference between 2 and 3 is minimal. You can reduce this to 1
-                          // for large glyphs save memory. Read
-                          // https://github.com/nothings/stb/blob/master/tests/oversample/README.md for details.
-    int8_t OversampleV;   // 0 (1)    // Rasterize at higher quality for sub-pixel positioning. 0 == auto == 1. This is
-                          // not really useful as we don't use sub-pixel positions on the Y axis.
+    bool MergeMode; // false    // Merge into previous ImFont, so you can combine multiple inputs font into one
+                    // ImFont
+    // (e.g. ASCII font + icons + Japanese glyphs). You may want to use GlyphOffset.y when merge font of
+    // different heights.
+    bool PixelSnapH; // false    // Align every glyph AdvanceX to pixel boundaries. Prevents fractional font size
+                     // from
+    // working correctly! Useful e.g. if you are merging a non-pixel aligned font with the default
+    // font. If enabled, OversampleH/V will default to 1.
+    int8_t OversampleH; // 0 (2)    // Rasterize at higher quality for sub-pixel positioning. 0 == auto == 1 or 2
+    // depending on size. Note the difference between 2 and 3 is minimal. You can reduce this to 1
+    // for large glyphs save memory. Read
+    // https://github.com/nothings/stb/blob/master/tests/oversample/README.md for details.
+    int8_t OversampleV; // 0 (1)    // Rasterize at higher quality for sub-pixel positioning. 0 == auto == 1. This
+                        // is
+    // not really useful as we don't use sub-pixel positions on the Y axis.
     ImWchar EllipsisChar; // 0        // Explicitly specify Unicode codepoint of ellipsis character. When fonts are
-                          // being merged first specified ellipsis will be used.
-    float SizePixels;     //          // Output size in pixels for rasterizer (more or less maps to the resulting font
-                          //          height).
+    // being merged first specified ellipsis will be used.
+    float SizePixels; //          // Output size in pixels for rasterizer (more or less maps to the resulting font
+    //          height).
     const ImWchar *GlyphRanges; // nullptr     // *LEGACY* THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.
-                                // Pointer to a user-provided list of Unicode range (2 value per range, values are
-                                // inclusive, zero-terminated list).
+    // Pointer to a user-provided list of Unicode range (2 value per range, values are
+    // inclusive, zero-terminated list).
     const ImWchar *GlyphExcludeRanges; // nullptr     // Pointer to a small user-provided list of Unicode ranges (2
-                                       // value per range, values are inclusive, zero-terminated list). This is very
-                                       // close to GlyphRanges[] but designed to exclude ranges from a font source, when
-                                       // merging fonts with overlapping glyphs. Use "Input Glyphs Overlap Detection
-                                       // Tool" to find about your overlapping ranges.
-    // Vec2        GlyphExtraSpacing;      // 0, 0     // (REMOVED AT IT SEEMS LARGELY OBSOLETE. PLEASE REPORT IF YOU
-    // WERE USING THIS). Extra spacing (in pixels) between glyphs when rendered: essentially add to glyph->AdvanceX.
-    // Only X axis is supported for now.
-    Vec2 GlyphOffset; // 0, 0     // Offset (in pixels) all glyphs from this font input. Absolute value for default
-                      // size, other sizes will scale this value.
-    float GlyphMinAdvanceX; // 0        // Minimum AdvanceX for glyphs, set Min to align font icons, set both Min/Max to
-                            // enforce mono-space font. Absolute value for default size, other sizes will scale this
-                            // value.
-    float GlyphMaxAdvanceX; // FLT_MAX  // Maximum AdvanceX for glyphs
-    float GlyphExtraAdvanceX;     // 0        // Extra spacing (in pixels) between glyphs. Please contact us if you are
-                                  // using this. // FIXME-NEWATLAS: Intentionally unscaled
+    // value per range, values are inclusive, zero-terminated list). This is very
+    // close to GlyphRanges[] but designed to exclude ranges from a font source, when
+    // merging fonts with overlapping glyphs. Use "Input Glyphs Overlap Detection
+    // Tool" to find about your overlapping ranges.
+    // ::SF::Engine::Vec2        GlyphExtraSpacing;      // 0, 0     // (REMOVED AT IT SEEMS LARGELY OBSOLETE. PLEASE
+    // REPORT IF YOU WERE USING THIS). Extra spacing (in pixels) between glyphs when rendered: essentially add to
+    // glyph->AdvanceX. Only X axis is supported for now.
+    ::SF::Engine::Vec2
+            GlyphOffset; // 0, 0     // Offset (in pixels) all glyphs from this font input. Absolute value for default
+    // size, other sizes will scale this value.
+    float GlyphMinAdvanceX; // 0        // Minimum AdvanceX for glyphs, set Min to align font icons, set both
+                            // Min/Max to
+    // enforce mono-space font. Absolute value for default size, other sizes will scale this
+    // value.
+    float GlyphMaxAdvanceX;   // FLT_MAX  // Maximum AdvanceX for glyphs
+    float GlyphExtraAdvanceX; // 0        // Extra spacing (in pixels) between glyphs. Please contact us if you are
+    // using this. // FIXME-NEWATLAS: Intentionally unscaled
     uint32_t FontNo;              // 0        // Index of font within TTF/OTF file
     unsigned int FontLoaderFlags; // 0        // Settings for custom font builder. THIS IS BUILDER IMPLEMENTATION
-                                  // DEPENDENT. Leave as zero if unsure.
+    // DEPENDENT. Leave as zero if unsure.
     // unsigned int  FontBuilderFlags;       // --       // [Renamed in 1.92] Use FontLoaderFlags.
-    float RasterizerMultiply; // 1.0f     // Linearly brighten (>1.0f) or darken (<1.0f) font output. Brightening small
-                              // fonts may be a good workaround to make them more readable. This is a silly thing we may
-                              // remove in the future.
-    float RasterizerDensity; // 1.0f     // [LEGACY: this only makes sense when ImGuiBackendFlags_RendererHasTextures is
-                             // not supported] DPI scale multiplier for rasterization. Not altering other font metrics:
-                             // makes it easy to swap between e.g. a 100% and a 400% fonts for a zooming display, or
-                             // handle Retina screen. IMPORTANT: If you change this it is expected that you
-                             // increase/decrease font scale roughly to the inverse of this, otherwise quality may look
-                             // lowered.
-    float ExtraSizeScale;    // 1.0f     // Extra rasterizer scale over SizePixels.
+    float RasterizerMultiply; // 1.0f     // Linearly brighten (>1.0f) or darken (<1.0f) font output. Brightening
+                              // small
+    // fonts may be a good workaround to make them more readable. This is a silly thing we may
+    // remove in the future.
+    float RasterizerDensity; // 1.0f     // [LEGACY: this only makes sense when
+                             // ImGuiBackendFlags_RendererHasTextures is
+    // not supported] DPI scale multiplier for rasterization. Not altering other font metrics:
+    // makes it easy to swap between e.g. a 100% and a 400% fonts for a zooming display, or
+    // handle Retina screen. IMPORTANT: If you change this it is expected that you
+    // increase/decrease font scale roughly to the inverse of this, otherwise quality may look
+    // lowered.
+    float ExtraSizeScale; // 1.0f     // Extra rasterizer scale over SizePixels.
 
     // [Internal]
     ImFontFlags Flags; // Font flags (don't use just yet, will be exposed in upcoming 1.92.X updates)
@@ -5356,12 +5487,12 @@ struct ImFontConfig
 };
 
 // Hold rendering data for one glyph.
-// (Note: some language parsers may fail to convert the bitfield members, in this case maybe drop store a single u32 or
-// we can rework this)
+// (Note: some language parsers may fail to convert the bitfield members, in this case maybe drop store a single u32
+// or we can rework this)
 struct ImFontGlyph
 {
     unsigned int Colored : 1 {}; // Flag to indicate glyph is colored and should generally ignore tinting (make it
-                                 // usable with no shift on little-endian as this is used in loops)
+    // usable with no shift on little-endian as this is used in loops)
     unsigned int Visible
             : 1 {}; // Flag to indicate glyph has no visible pixels (e.g. space). Allow early out when rendering.
     unsigned int SourceIdx : 4 {};  // Index of source in parent font
@@ -5369,7 +5500,7 @@ struct ImFontGlyph
     float AdvanceX{};               // Horizontal distance to advance cursor/layout position.
     float X0{}, Y0{}, X1{}, Y1{};   // Glyph corners. Offsets from current cursor/layout position.
     float U0{}, V0{}, U1{}, V1{}; // Texture coordinates for the current value of ImFontAtlas->TexRef. Cached equivalent
-                                  // of calling GetCustomRect() with PackId.
+    // of calling GetCustomRect() with PackId.
     int PackId; // [Internal] ImFontAtlasRectId value (FIXME: Cold data, could be moved elsewhere?)
 
     ImFontGlyph()
@@ -5408,7 +5539,7 @@ struct ImFontGlyphRangesBuilder
     void AddText(const char *text,
                  const char *text_end = nullptr); // Add string (each character of the UTF-8 string are added)
     void AddRanges(const ImWchar *ranges); // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault())
-                                           // to force add all of ASCII/Latin+Ext
+    // to force add all of ASCII/Latin+Ext
     void BuildRanges(ImVector<ImWchar> *out_ranges); // Output new ranges
 };
 
@@ -5422,9 +5553,9 @@ typedef int ImFontAtlasRectId;
 // (this is in theory derived from ImTextureRect but we use separate structures for reasons)
 struct ImFontAtlasRect
 {
-    unsigned short x{}, y{}; // Position (in current texture)
-    unsigned short w{}, h{}; // Size
-    Vec2 uv0{}, uv1{};       // UV coordinates (in current texture)
+    unsigned short x{}, y{};         // Position (in current texture)
+    unsigned short w{}, h{};         // Size
+    ::SF::Engine::Vec2 uv0{}, uv1{}; // UV coordinates (in current texture)
 
     ImFontAtlasRect() { memset((void *) this, 0, sizeof(*this)); }
 };
@@ -5437,20 +5568,21 @@ enum ImFontAtlasFlags_
     ImFontAtlasFlags_NoMouseCursors =
             1 << 1, // Don't build software mouse cursors into the atlas (save a little texture memory)
     ImFontAtlasFlags_NoBakedLines =
-            1 << 2, // Don't build thick line textures into the atlas (save a little texture memory, allow support for
-                    // point/nearest filtering). The AntiAliasedLinesUseTex features uses them, otherwise they will be
-                    // rendered using polygons (more expensive for CPU/GPU).
+            1 << 2, // Don't build thick line textures into the atlas (save a little texture memory, allow support
+                    // for point/nearest filtering). The AntiAliasedLinesUseTex features uses them, otherwise they
+                    // will be rendered using polygons (more expensive for CPU/GPU).
 };
 
-// Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture holding:
+// Load and rasterize multiple TTF/OTF fonts into a same texture. The font atlas will build a single texture
+// holding:
 //  - One or more fonts.
 //  - Custom graphics data needed to render the shapes needed by Dear ImGui.
-//  - Mouse cursor shapes for software cursor rendering (unless setting 'Flags |= ImFontAtlasFlags_NoMouseCursors' in
-//  the font atlas).
+//  - Mouse cursor shapes for software cursor rendering (unless setting 'Flags |= ImFontAtlasFlags_NoMouseCursors'
+//  in the font atlas).
 //  - If you don't call any AddFont*** functions, the default font embedded in the code will be loaded for you.
 // It is the rendering backend responsibility to upload texture into your graphics API:
-//  - ImGui_ImplXXXX_RenderDrawData() functions generally iterate platform_io->Textures[] to create/update/destroy each
-//  ImTextureData instance.
+//  - ImGui_ImplXXXX_RenderDrawData() functions generally iterate platform_io->Textures[] to create/update/destroy
+//  each ImTextureData instance.
 //  - Backend then set ImTextureData's TexID and BackendUserData.
 //  - Texture id are passed back to you during rendering to identify the texture. Read FAQ entry about
 //  ImTextureID/ImTextureRef for more details.
@@ -5459,11 +5591,11 @@ enum ImFontAtlasFlags_
 //  - Call SetTexID(my_tex_id); and pass the pointer/identifier to your texture in a format natural to your graphics
 //  API.
 // Common pitfalls:
-// - If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persists up until
-// the
+// - If you pass a 'glyph_ranges' array to AddFont*** functions, you need to make sure that your array persists up
+// until the
 //   atlas is build (when calling GetTexData*** or Build()). We only copy the pointer, not the data.
-// - Important: By default, AddFontFromMemoryTTF() takes ownership of the data. Even though we are not writing to it, we
-// will free the pointer on destruction.
+// - Important: By default, AddFontFromMemoryTTF() takes ownership of the data. Even though we are not writing to
+// it, we will free the pointer on destruction.
 //   You can set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed,
 // - Even though many functions are suffixed with "TTF", OTF data is supported just as well.
 // - This is an old API and it is currently awkward for those and various other reasons! We will address them in the
@@ -5478,7 +5610,7 @@ struct ImFontAtlas
     ImFont *AddFontDefaultVector(
             const ImFontConfig *font_cfg = nullptr); // Embedded scalable font. Recommended at any higher size.
     ImFont *AddFontDefaultBitmap(const ImFontConfig *font_cfg = nullptr); // Embedded classic pixel-clean font.
-                                                                          // Recommended at Size 13px with no scaling.
+    // Recommended at Size 13px with no scaling.
     ImFont *AddFontFromFileTTF(const char *filename, float size_pixels = 0.0f, const ImFontConfig *font_cfg = nullptr,
                                const ImWchar *glyph_ranges = nullptr);
     ImFont *
@@ -5486,19 +5618,19 @@ struct ImFontAtlas
                          const ImFontConfig *font_cfg = nullptr,
                          const ImWchar *glyph_ranges =
                                  nullptr); // Note: Transfer ownership of 'ttf_data' to ImFontAtlas! Will be deleted
-                                           // after destruction of the atlas. Set font_cfg->FontDataOwnedByAtlas=false
-                                           // to keep ownership of your data and it won't be freed.
+    // after destruction of the atlas. Set font_cfg->FontDataOwnedByAtlas=false
+    // to keep ownership of your data and it won't be freed.
     ImFont *AddFontFromMemoryCompressedTTF(
             const void *compressed_font_data, int compressed_font_data_size, float size_pixels = 0.0f,
             const ImFontConfig *font_cfg = nullptr,
-            const ImWchar *glyph_ranges =
-                    nullptr); // 'compressed_font_data' still owned by caller. Compress with binary_to_compressed_c.cpp.
+            const ImWchar *glyph_ranges  = nullptr); // 'compressed_font_data' still owned by caller. Compress with
+                                                    // binary_to_compressed_c.cpp.
     ImFont *AddFontFromMemoryCompressedBase85TTF(
             const char *compressed_font_data_base85, float size_pixels = 0.0f, const ImFontConfig *font_cfg = nullptr,
             const ImWchar *glyph_ranges = nullptr); // 'compressed_font_data_base85' still owned by caller. Compress
-                                                    // with binary_to_compressed_c.cpp with -base85 parameter.
-    void RemoveFont(ImFont *font);                  // Remove a font
-    void CompactCache();                            // Compact cached glyphs and texture.
+    // with binary_to_compressed_c.cpp with -base85 parameter.
+    void RemoveFont(ImFont *font);                       // Remove a font
+    void CompactCache();                                 // Compact cached glyphs and texture.
     void SetFontLoader(const ImFontLoader *font_loader); // Change font loader at runtime.
 
     // Clearing the atlas/fonts has little use nowadays, unless you want to batch remove all fonts.
@@ -5509,9 +5641,9 @@ struct ImFontAtlas
     void Clear();          // Clear everything (fonts + textures). Don't call mid-frame!
     void ClearFonts();     // Clear input+output font data/glyphs. New fonts and textures will be recreated afterwards.
     void ClearInputData(); // [OBSOLETE] Clear input data (all ImFontConfig structures including sizes, TTF data, glyph
-                           // ranges, etc.) = all the data used to build the texture and fonts.
-    void ClearTexData();   // [OBSOLETE] Clear CPU-side copy of the texture data. Saves RAM once the texture has been
-                           // copied to graphics memory.
+    // ranges, etc.) = all the data used to build the texture and fonts.
+    void ClearTexData(); // [OBSOLETE] Clear CPU-side copy of the texture data. Saves RAM once the texture has been
+    // copied to graphics memory.
 
     //-------------------------------------------
     // Glyph Ranges
@@ -5527,16 +5659,16 @@ struct ImFontAtlas
 
     // Register and retrieve custom rectangles
     // - You can request arbitrary rectangles to be packed into the atlas, for your own purpose.
-    // - Since 1.92.0, packing is done immediately in the function call (previously packing was done during the Build
-    // call)
+    // - Since 1.92.0, packing is done immediately in the function call (previously packing was done during the
+    // Build call)
     // - You can render your pixels into the texture right after calling the AddCustomRect() functions.
     // - VERY IMPORTANT:
     //   - Texture may be created/resized at any time when calling ImGui or ImFontAtlas functions.
     //   - IT WILL INVALIDATE RECTANGLE DATA SUCH AS UV COORDINATES. Always use latest values from GetCustomRect().
     //   - UV coordinates are associated to the current texture identifier aka 'atlas->TexRef'. Both TexRef and UV
     //   coordinates are typically changed at the same time.
-    // - If you render colored output into your custom rectangles: set 'atlas->TexPixelsUseColors = true' as this may
-    // help some backends decide of preferred texture format.
+    // - If you render colored output into your custom rectangles: set 'atlas->TexPixelsUseColors = true' as this
+    // may help some backends decide of preferred texture format.
     // - Read docs/FONTS.md for more details about using colorful icons.
     // - Note: this API may be reworked further in order to facilitate supporting e.g. multi-monitor, varying DPI
     // settings.
@@ -5550,9 +5682,10 @@ struct ImFontAtlas
             int width, int height,
             ImFontAtlasRect *out_r = nullptr); // Register a rectangle. Return -1 (ImFontAtlasRectId_Invalid) on error.
     void RemoveCustomRect(ImFontAtlasRectId id); // Unregister a rectangle. Existing pixels will stay in texture until
-                                                 // resized / garbage collected.
-    bool GetCustomRect(ImFontAtlasRectId id, ImFontAtlasRect *out_r)
-            const; // Get rectangle coordinates for current texture. Valid immediately, never store this (read above)!
+    // resized / garbage collected.
+    bool GetCustomRect(ImFontAtlasRectId id,
+                       ImFontAtlasRect *out_r) const; // Get rectangle coordinates for current texture. Valid
+                                                      // immediately, never store this (read above)!
 
     //-------------------------------------------
     // Members
@@ -5561,21 +5694,22 @@ struct ImFontAtlas
     // Input
     ImFontAtlasFlags Flags;           // Build flags (see ImFontAtlasFlags_)
     ImTextureFormat TexDesiredFormat; // Desired texture format (default to ImTextureFormat_RGBA32 but may be changed to
-                                      // ImTextureFormat_Alpha8).
-    int TexGlyphPadding; // FIXME: Should be called "TexPackPadding". Padding between glyphs within texture in pixels.
-                         // Defaults to 1. If your rendering method doesn't rely on bilinear filtering you may set this
-                         // to 0 (will also need to set AntiAliasedLinesUseTex = false).
-    int TexMinWidth;     // Minimum desired texture width. Must be a power of two. Default to 512.
-    int TexMinHeight;    // Minimum desired texture height. Must be a power of two. Default to 128.
-    int TexMaxWidth;     // Maximum desired texture width. Must be a power of two. Default to 8192.
-    int TexMaxHeight;    // Maximum desired texture height. Must be a power of two. Default to 8192.
-    void *UserData;      // Store your own atlas related user-data (if e.g. you have multiple font atlas).
+    // ImTextureFormat_Alpha8).
+    int TexGlyphPadding; // FIXME: Should be called "TexPackPadding". Padding between glyphs within texture in
+                         // pixels.
+    // Defaults to 1. If your rendering method doesn't rely on bilinear filtering you may set this
+    // to 0 (will also need to set AntiAliasedLinesUseTex = false).
+    int TexMinWidth;  // Minimum desired texture width. Must be a power of two. Default to 512.
+    int TexMinHeight; // Minimum desired texture height. Must be a power of two. Default to 128.
+    int TexMaxWidth;  // Maximum desired texture width. Must be a power of two. Default to 8192.
+    int TexMaxHeight; // Maximum desired texture height. Must be a power of two. Default to 8192.
+    void *UserData;   // Store your own atlas related user-data (if e.g. you have multiple font atlas).
 
-// Output
-// - Because textures are dynamically created/resized, the current texture identifier may changed at *ANY TIME*
-// during the frame.
-// - This should not affect you as you can always use the latest value. But note that any precomputed UV coordinates
-// are only valid for the current TexRef.
+    // Output
+    // - Because textures are dynamically created/resized, the current texture identifier may changed at *ANY TIME*
+    // during the frame.
+    // - This should not affect you as you can always use the latest value. But note that any precomputed UV
+    // coordinates are only valid for the current TexRef.
     union
     {
         ImTextureRef TexRef;
@@ -5587,34 +5721,38 @@ struct ImFontAtlas
     // [Internal]
     ImVector<ImTextureData *>
             TexList; // Texture list (most often TexList.Size == 1). TexData is always == TexList.back(). DO NOT USE
-                     // DIRECTLY, USE GetDrawData().Textures[]/GetPlatformIO().Textures[] instead!
-    bool Locked;     // Marked as locked during ImGui::NewFrame()..EndFrame() scope if TexUpdates are not supported. Any
-                     // attempt to modify the atlas will assert.
-    bool RendererHasTextures; // Copy of (BackendFlags & ImGuiBackendFlags_RendererHasTextures) from supporting context.
-    bool TexIsBuilt; // Set when texture was built matching current font input. Mostly useful for legacy IsBuilt() call.
-    bool TexPixelsUseColors; // Tell whether our texture data is known to use colors (rather than just alpha channel),
-                             // in order to help backend select a format or conversion process.
-    Vec2 TexUvScale; // = (1.0f/TexData->TexWidth, 1.0f/TexData->TexHeight). May change as new texture gets created.
-    Vec2 TexUvWhitePixel;     // Texture coordinates to a white pixel. May change as new texture gets created.
+    // DIRECTLY, USE GetDrawData().Textures[]/GetPlatformIO().Textures[] instead!
+    bool Locked; // Marked as locked during ImGui::NewFrame()..EndFrame() scope if TexUpdates are not supported. Any
+    // attempt to modify the atlas will assert.
+    bool RendererHasTextures; // Copy of (BackendFlags & ImGuiBackendFlags_RendererHasTextures) from supporting
+                              // context.
+    bool TexIsBuilt; // Set when texture was built matching current font input. Mostly useful for legacy IsBuilt()
+                     // call.
+    bool TexPixelsUseColors; // Tell whether our texture data is known to use colors (rather than just alpha
+                             // channel),
+    // in order to help backend select a format or conversion process.
+    ::SF::Engine::Vec2
+            TexUvScale; // = (1.0f/TexData->TexWidth, 1.0f/TexData->TexHeight). May change as new texture gets created.
+    ::SF::Engine::Vec2 TexUvWhitePixel; // Texture coordinates to a white pixel. May change as new texture gets created.
     ImVector<ImFont *> Fonts; // Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling
-                              // ImGui::NewFrame(), use ImGui::PushFont()/PopFont() to change the current font.
-    ImVector<ImFontConfig> Sources;                       // Source/configuration data
-    Vec4 TexUvLines[IM_DRAWLIST_TEX_LINES_WIDTH_MAX + 1]; // UVs for baked anti-aliased lines
-    int TexNextUniqueID;                                  // Next value to be stored in TexData->UniqueID
-    int FontNextUniqueID;                                 // Next value to be stored in ImFont->FontID
+    // ImGui::NewFrame(), use ImGui::PushFont()/PopFont() to change the current font.
+    ImVector<ImFontConfig> Sources;                                     // Source/configuration data
+    ::SF::Engine::Vec4 TexUvLines[IM_DRAWLIST_TEX_LINES_WIDTH_MAX + 1]; // UVs for baked anti-aliased lines
+    int TexNextUniqueID;                                                // Next value to be stored in TexData->UniqueID
+    int FontNextUniqueID;                                               // Next value to be stored in ImFont->FontID
     ImVector<ImDrawListSharedData *>
             DrawListSharedDatas; // List of users for this atlas. Typically one per Dear ImGui context.
     ImFontAtlasBuilder *Builder; // Opaque interface to our data that doesn't need to be public and may be discarded
-                                 // when rebuilding.
-    const ImFontLoader
-            *FontLoader; // Font loader opaque interface (default to use FreeType when IMGUI_ENABLE_FREETYPE is defined,
-                         // otherwise default to use stb_truetype). Use SetFontLoader() to change this at runtime.
+    // when rebuilding.
+    const ImFontLoader *FontLoader; // Font loader opaque interface (default to use FreeType when
+                                    // IMGUI_ENABLE_FREETYPE is defined,
+    // otherwise default to use stb_truetype). Use SetFontLoader() to change this at runtime.
     const char *FontLoaderName;   // Font loader name (for display e.g. in About box) == FontLoader->Name
     void *FontLoaderData;         // Font backend opaque storage
     unsigned int FontLoaderFlags; // Shared flags (for all fonts) for font loader. THIS IS BUILD IMPLEMENTATION
-                                  // DEPENDENT (e.g. Per-font override is also available in ImFontConfig).
-    int RefCount;                 // Number of contexts using this atlas
-    ImGuiContext *OwnerContext;   // Context which own the atlas will be in charge of updating and destroying it.
+    // DEPENDENT (e.g. Per-font override is also available in ImFontConfig).
+    int RefCount;               // Number of contexts using this atlas
+    ImGuiContext *OwnerContext; // Context which own the atlas will be in charge of updating and destroying it.
 };
 
 // Font runtime data for a given size
@@ -5622,9 +5760,9 @@ struct ImFontAtlas
 struct ImFontBaked
 {
     // [Internal] Members: Hot ~20/24 bytes (for CalcTextSize)
-    ImVector<float>
-            IndexAdvanceX;  // 12-16 // out // Sparse. Glyphs->AdvanceX in a directly indexable way (cache-friendly for
-                            // CalcTextSize functions which only this info, and are often bottleneck in large UI).
+    ImVector<float> IndexAdvanceX; // 12-16 // out // Sparse. Glyphs->AdvanceX in a directly indexable way
+                                   // (cache-friendly for
+    // CalcTextSize functions which only this info, and are often bottleneck in large UI).
     float FallbackAdvanceX; // 4     // out // FindGlyph(FallbackChar)->AdvanceX
     float Size; // 4     // in  // Height of characters/line, set during loading (doesn't change after loading)
     float RasterizerDensity; // 4     // in  // Density this is baked at
@@ -5635,22 +5773,24 @@ struct ImFontBaked
     int FallbackGlyphIndex;         // 4     // out // Index of FontFallbackChar
 
     // [Internal] Members: Cold
-    float Ascent, Descent; // 4+4   // out // Ascent: distance from top to bottom of e.g. 'A' [0..FontSize] (unscaled)
+    float Ascent,
+            Descent; // 4+4   // out // Ascent: distance from top to bottom of e.g. 'A' [0..FontSize] (unscaled)
     unsigned int MetricsTotalSurface
             : 26; // 3  // out // Total surface in pixels to get an idea of the font rasterization/texture cost (not
-                  // exact, we approximate the cost of padding between glyphs)
+    // exact, we approximate the cost of padding between glyphs)
     unsigned int WantDestroy : 1;    // 0  //     // Queued for destroy
     unsigned int LoadNoFallback : 1; // 0  //     // Disable loading fallback in lower-level calls.
     unsigned int LoadNoRenderOnLayout
             : 1; // 0  //     // Enable a two-steps mode where CalcTextSize() calls will load AdvanceX *without*
-                 // Rendering/packing glyphs. Only advantageous if you know that the glyph is unlikely to actually be
-                 // rendered, otherwise it is slower because we'd do one query on the first CalcTextSize and one query
-                 // on the first Draw.
+    // Rendering/packing glyphs. Only advantageous if you know that the glyph is unlikely to actually be
+    // rendered, otherwise it is slower because we'd do one query on the first CalcTextSize and one query
+    // on the first Draw.
     int LastUsedFrame;     // 4  //     // Record of that time this was bounds
-    ImGuiID BakedId;       // 4     //     // Unique ID for this baked storage
+    IdType BakedId;        // 4     //     // Unique ID for this baked storage
     ImFont *OwnerFont;     // 4-8   // in  // Parent font
-    void *FontLoaderDatas; // 4-8   //     // Font loader opaque storage (per baked font * sources): single contiguous
-                           // buffer allocated by imgui, passed to loader.
+    void *FontLoaderDatas; // 4-8   //     // Font loader opaque storage (per baked font * sources): single
+                           // contiguous
+    // buffer allocated by imgui, passed to loader.
 
     // Functions
     ImFontBaked();
@@ -5662,8 +5802,8 @@ struct ImFontBaked
 };
 
 // Font flags
-// (in future versions as we redesign font loading API, this will become more important and better documented. for now
-// please consider this as internal/advanced use)
+// (in future versions as we redesign font loading API, this will become more important and better documented. for
+// now please consider this as internal/advanced use)
 enum ImFontFlags_
 {
     ImFontFlags_None        = 0,
@@ -5671,9 +5811,9 @@ enum ImFontFlags_
                                        // file/data. Calling code is expected to check AddFontXXX() return value.
     ImFontFlags_NoLoadGlyphs = 1 << 2, // [Internal] Disable loading new glyphs.
     ImFontFlags_LockBakedSizes =
-            1 << 3, // [Internal] Disable loading new baked sizes, disable garbage collecting current ones. e.g. if you
-                    // want to lock a font to a single size. Important: if you use this to preload given sizes, consider
-                    // the possibility of multiple font density used on Retina display.
+            1 << 3, // [Internal] Disable loading new baked sizes, disable garbage collecting current ones. e.g. if
+                    // you want to lock a font to a single size. Important: if you use this to preload given sizes,
+                    // consider the possibility of multiple font density used on Retina display.
     ImFontFlags_ImplicitRefSize = 1 << 4, // [Internal] Reference size was not set explicitly.
 };
 
@@ -5681,8 +5821,8 @@ enum ImFontFlags_
 // - ImFontAtlas automatically loads a default embedded font for you if you didn't load one manually.
 // - Since 1.92.0 a font may be rendered as any size! Therefore a font doesn't have one specific size.
 // - Use 'font->GetFontBaked(size)' to retrieve the ImFontBaked* corresponding to a given size.
-// - If you used g.Font + g.FontSize (which is frequent from the ImGui layer), you can use g.FontBaked as a shortcut, as
-// g.FontBaked == g.Font->GetFontBaked(g.FontSize).
+// - If you used g.Font + g.FontSize (which is frequent from the ImGui layer), you can use g.FontBaked as a
+// shortcut, as g.FontBaked == g.Font->GetFontBaked(g.FontSize).
 struct ImFont
 {
     // [Internal] Members: Hot ~12-20 bytes
@@ -5693,20 +5833,21 @@ struct ImFont
 
     // [Internal] Members: Cold ~24-52 bytes
     // Conceptually Sources[] is the list of font sources merged to create this font.
-    ImGuiID FontId;   // Unique identifier for the font
-    float LegacySize; // 4     // in  // Font size passed to AddFont(). Use for old code calling PushFont() expecting to
-                      // use that size. (use ImGui::GetFontBaked() to get font baked at current bound size).
+    IdType FontId;    // Unique identifier for the font
+    float LegacySize; // 4     // in  // Font size passed to AddFont(). Use for old code calling PushFont()
+                      // expecting to
+    // use that size. (use ImGui::GetFontBaked() to get font baked at current bound size).
     ImVector<ImFontConfig *> Sources; // 16    // in  // List of sources. Pointers within OwnerAtlas->Sources[]
     ImWchar EllipsisChar; // 2-4   // out // Character used for ellipsis rendering ('...'). If you ever want to
-                          // temporarily swap this for an alternative/dummy char, make sure to clear EllipsisAutoBake.
+    // temporarily swap this for an alternative/dummy char, make sure to clear EllipsisAutoBake.
     ImWchar FallbackChar; // 2-4   // out // Character used if a glyph isn't found (U+FFFD, '?')
     uint8_t Used8kPagesMap[(IM_UNICODE_CODEPOINT_MAX + 1) / 8192 /
                            8]; // 1 bytes if ImWchar=ImWchar16, 17 bytes if ImWchar==ImWchar32. Store 1-bit for each
-                               // block of 8K codepoints that has one active glyph. This is mainly used to facilitate
-                               // iterations across all used codepoints.
-    bool EllipsisAutoBake;     // 1     //     // Mark when the "..." glyph (== EllipsisChar) needs to be generated by
-                               // combining multiple '.'.
-    ImGuiStorage RemapPairs;   // 16    //     // Remapping pairs when using AddRemapChar(), otherwise empty.
+    // block of 8K codepoints that has one active glyph. This is mainly used to facilitate
+    // iterations across all used codepoints.
+    bool EllipsisAutoBake; // 1     //     // Mark when the "..." glyph (== EllipsisChar) needs to be generated by
+    // combining multiple '.'.
+    ImGuiStorage RemapPairs; // 16    //     // Remapping pairs when using AddRemapChar(), otherwise empty.
 
     // Methods
     ImFont();
@@ -5722,13 +5863,14 @@ struct ImFont
     // 'max_width' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
     // 'wrap_width' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable.
     ImFontBaked *GetFontBaked(float font_size, float density = -1.0f); // Get or create baked data for given size
-    Vec2 CalcTextSizeA(float size, float max_width, float wrap_width, const char *text_begin,
-                       const char *text_end = nullptr, const char **out_remaining = nullptr);
+    ::SF::Engine::Vec2 CalcTextSizeA(float size, float max_width, float wrap_width, const char *text_begin,
+                                     const char *text_end = nullptr, const char **out_remaining = nullptr);
     const char *CalcWordWrapPosition(float size, const char *text, const char *text_end, float wrap_width);
-    void RenderChar(ImDrawList *draw_list, float size, const Vec2 &pos, uint32_t col, ImWchar c,
-                    const Vec4 *cpu_fine_clip = nullptr);
-    void RenderText(ImDrawList *draw_list, float size, const Vec2 &pos, uint32_t col, const Vec4 &clip_rect,
-                    const char *text_begin, const char *text_end, float wrap_width = 0.0f, ImDrawTextFlags flags = 0);
+    void RenderChar(ImDrawList *draw_list, float size, const ::SF::Engine::Vec2 &pos, uint32_t col, ImWchar c,
+                    const ::SF::Engine::Vec4 *cpu_fine_clip = nullptr);
+    void RenderText(ImDrawList *draw_list, float size, const ::SF::Engine::Vec2 &pos, uint32_t col,
+                    const ::SF::Engine::Vec4 &clip_rect, const char *text_begin, const char *text_end,
+                    float wrap_width = 0.0f, ImDrawTextFlags flags = 0);
 
     // [Internal] Don't use!
     void ClearOutputData();
@@ -5744,12 +5886,12 @@ inline ImTextureID ImTextureRef::GetTexID() const
     return _TexData ? _TexData->TexID : _TexID;
 }
 
-// Using an indirection to avoid patching ImDrawCmd after a SetTexID() call (but this could be an alternative solution
-// too)
+// Using an indirection to avoid patching ImDrawCmd after a SetTexID() call (but this could be an alternative
+// solution too)
 inline ImTextureID ImDrawCmd::GetTexID() const
 {
-    // If you are getting this assert with ImTextureID_Invalid == 0 and your ImTextureID is used to store an index or an
-    // offset:
+    // If you are getting this assert with ImTextureID_Invalid == 0 and your ImTextureID is used to store an index
+    // or an offset:
     // - You can add '#define ImTextureID_Invalid ((ImTextureID)-1)' in your imconfig.h file.
     // If you are getting this assert with a renderer backend with support for ImGuiBackendFlags_RendererHasTextures
     // (1.92+):
@@ -5758,7 +5900,8 @@ inline ImTextureID ImDrawCmd::GetTexID() const
     ImTextureID tex_id = TexRef._TexData ? TexRef._TexData->TexID : TexRef._TexID; // == TexRef.GetTexID() above.
     if (TexRef._TexData != nullptr)
         IM_ASSERT(tex_id != ImTextureID_Invalid &&
-                  "ImDrawCmd is referring to ImTextureData that wasn't uploaded to graphics system. Backend must call "
+                  "ImDrawCmd is referring to ImTextureData that wasn't uploaded to graphics system. Backend must "
+                  "call "
                   "ImTextureData::SetTexID() after handling ImTextureStatus_WantCreate request!");
     return tex_id;
 }
@@ -5775,12 +5918,12 @@ enum ImGuiViewportFlags_
     ImGuiViewportFlags_IsPlatformMonitor = 1 << 1, // Represent a Platform Monitor (unused yet)
     ImGuiViewportFlags_OwnedByApp =
             1 << 2, // Platform Window: Is created/managed by the user application? (rather than our backend)
-    ImGuiViewportFlags_NoDecoration =
-            1 << 3, // Platform Window: Disable platform decorations: title bar, borders, etc. (generally set all
-                    // windows, but if ImGuiConfigFlags_ViewportsDecoration is set we only set this on popups/tooltips)
+    ImGuiViewportFlags_NoDecoration = 1 << 3, // Platform Window: Disable platform decorations: title bar, borders, etc.
+                                              // (generally set all windows, but if ImGuiConfigFlags_ViewportsDecoration
+                                              // is set we only set this on popups/tooltips)
     ImGuiViewportFlags_NoTaskBarIcon =
-            1 << 4, // Platform Window: Disable platform task bar icon (generally set on popups/tooltips, or all windows
-                    // if ImGuiConfigFlags_ViewportsNoTaskBarIcon is set)
+            1 << 4, // Platform Window: Disable platform task bar icon (generally set on popups/tooltips, or all
+                    // windows if ImGuiConfigFlags_ViewportsNoTaskBarIcon is set)
     ImGuiViewportFlags_NoFocusOnAppearing = 1 << 5, // Platform Window: Don't take focus when created.
     ImGuiViewportFlags_NoFocusOnClick     = 1 << 6, // Platform Window: Don't take focus when clicked on.
     ImGuiViewportFlags_NoInputs =
@@ -5789,18 +5932,18 @@ enum ImGuiViewportFlags_
                                                  // ahead (because we will fill it entirely).
     ImGuiViewportFlags_NoAutoMerge =
             1 << 9, // Platform Window: Avoid merging this window into another host window. This can only be set via
-                    // ImGuiWindowClass viewport flags override (because we need to now ahead if we are going to create
-                    // a viewport in the first place!).
+                    // ImGuiWindowClass viewport flags override (because we need to now ahead if we are going to
+                    // create a viewport in the first place!).
     ImGuiViewportFlags_TopMost = 1 << 10, // Platform Window: Display on top (for tooltips only).
     ImGuiViewportFlags_CanHostOtherWindows =
             1 << 11, // Viewport can host multiple imgui windows (secondary viewports are associated to a single
-                     // window). // FIXME: In practice there's still probably code making the assumption that this is
-                     // always and only on the MainViewport. Will fix once we add support for "no main viewport".
+                     // window). // FIXME: In practice there's still probably code making the assumption that this
+                     // is always and only on the MainViewport. Will fix once we add support for "no main viewport".
 
     // Output status flags (from Platform)
     ImGuiViewportFlags_IsMinimized =
-            1 << 12, // Platform Window: Window is minimized, can skip render. When minimized we tend to avoid using the
-                     // viewport pos/size for clipping window or testing if they are contained in the viewport.
+            1 << 12, // Platform Window: Window is minimized, can skip render. When minimized we tend to avoid using
+                     // the viewport pos/size for clipping window or testing if they are contained in the viewport.
     ImGuiViewportFlags_IsFocused =
             1 << 13, // Platform Window: Window is focused (last call to Platform_GetWindowFocus() returned true)
 };
@@ -5816,53 +5959,64 @@ enum ImGuiViewportFlags_
 //   - Windows are generally trying to stay within the Work Area of their host viewport.
 struct ImGuiViewport
 {
-    ImGuiID ID{};               // Unique identifier for the viewport
+    IdType ID{};                // Unique identifier for the viewport
     ImGuiViewportFlags Flags{}; // See ImGuiViewportFlags_
-    Vec2 Pos{};  // Main Area: Position of the viewport (Dear ImGui coordinates are the same as OS desktop/native
-                 // coordinates)
-    Vec2 Size{}; // Main Area: Size of the viewport.
-    Vec2 FramebufferScale{};    // Density of the viewport for Retina display (always 1,1 on Windows, may be 2,2 etc on
-                                // macOS/iOS). This will affect font rasterizer density.
-    Vec2 WorkPos{};             // Work Area: Position of the viewport minus task bars, menus bars, status bars (>= Pos)
-    Vec2 WorkSize{};            // Work Area: Size of the viewport minus task bars, menu bars, status bars (<= Size)
-    float DpiScale{};           // 1.0f = 96 DPI = No extra scale.
-    ImGuiID ParentViewportId{}; // (Advanced) 0: no parent. Instruct the platform backend to setup a parent/child
-                                // relationship between platform windows.
+    ::SF::Engine::Vec2
+            Pos{}; // Main Area: Position of the viewport (Dear ImGui coordinates are the same as OS desktop/native
+    // coordinates)
+    ::SF::Engine::Vec2 Size{}; // Main Area: Size of the viewport.
+    ::SF::Engine::Vec2
+            FramebufferScale{}; // Density of the viewport for Retina display (always 1,1 on Windows, may be 2,2 etc on
+    // macOS/iOS). This will affect font rasterizer density.
+    ::SF::Engine::Vec2
+            WorkPos{}; // Work Area: Position of the viewport minus task bars, menus bars, status bars (>= Pos)
+    ::SF::Engine::Vec2 WorkSize{}; // Work Area: Size of the viewport minus task bars, menu bars, status bars (<= Size)
+    float DpiScale{};              // 1.0f = 96 DPI = No extra scale.
+    IdType ParentViewportId{};     // (Advanced) 0: no parent. Instruct the platform backend to setup a parent/child
+    // relationship between platform windows.
     ImGuiViewport *ParentViewport{}; // (Advanced) Direct shortcut to ImGui::FindViewportByID(ParentViewportId).
-                                     // nullptr: no parent.
+    // nullptr: no parent.
     ImDrawData *DrawData{}; // The ImDrawData corresponding to this viewport. Valid after Render() and until the next
-                            // call to NewFrame().
+    // call to NewFrame().
 
     // Platform/Backend Dependent Data
-    // Our design separate the Renderer and Platform backends to facilitate combining default backends with each others.
-    // When our create your own backend for a custom engine, it is possible that both Renderer and Platform will be
-    // handled by the same system and you may not need to use all the UserData/Handle fields. The library never uses
-    // those fields, they are merely storage to facilitate backend implementation.
+    // Our design separate the Renderer and Platform backends to facilitate combining default backends with each
+    // others. When our create your own backend for a custom engine, it is possible that both Renderer and Platform
+    // will be handled by the same system and you may not need to use all the UserData/Handle fields. The library
+    // never uses those fields, they are merely storage to facilitate backend implementation.
     void *RendererUserData{}; // void* to hold custom data structure for the renderer (e.g. swap chain, framebuffers
-                              // etc.). generally set by your Renderer_CreateWindow function.
-    void *PlatformUserData{}; // void* to hold custom data structure for the OS / platform (e.g. windowing info, render
-                              // context). generally set by your Platform_CreateWindow function.
-    void *PlatformIconData{}; // void* to hold custom data structure for the OS / platform to specify an icon. Currently
-                              // unused for exposed to allow experiments.
-    void *PlatformHandle{};   // void* to hold higher-level, platform window handle (e.g. HWND for Win32 backend, Uint32
-                              // WindowID for SDL, GLFWWindow* for GLFW), for FindViewportByPlatformHandle().
+    // etc.). generally set by your Renderer_CreateWindow function.
+    void *PlatformUserData{}; // void* to hold custom data structure for the OS / platform (e.g. windowing info,
+                              // render
+    // context). generally set by your Platform_CreateWindow function.
+    void *PlatformIconData{}; // void* to hold custom data structure for the OS / platform to specify an icon.
+                              // Currently
+    // unused for exposed to allow experiments.
+    void *PlatformHandle{}; // void* to hold higher-level, platform window handle (e.g. HWND for Win32 backend,
+                            // Uint32
+    // WindowID for SDL, GLFWWindow* for GLFW), for FindViewportByPlatformHandle().
     void *PlatformHandleRaw{}; // void* to hold lower-level, platform-native window handle (always HWND on Win32
-                               // platform, unused for other platforms).
-    bool PlatformWindowCreated{}; // Platform window has been created (Platform_CreateWindow() has been called). This is
-                                  // false during the first frame where a viewport is being created.
-    bool PlatformRequestMove{};   // Platform window requested move (e.g. window was moved by the OS / host window
-                                // manager, authoritative position will be OS window position)
-    bool PlatformRequestResize{}; // Platform window requested resize (e.g. window was resized by the OS / host window
-                                  // manager, authoritative size will be OS window size)
-    bool PlatformRequestClose{};  // Platform window requested closure (e.g. window was moved by the OS / host window
-                                  // manager, e.g. pressing ALT-F4)
+    // platform, unused for other platforms).
+    bool PlatformWindowCreated{}; // Platform window has been created (Platform_CreateWindow() has been called).
+                                  // This is
+    // false during the first frame where a viewport is being created.
+    bool PlatformRequestMove{}; // Platform window requested move (e.g. window was moved by the OS / host window
+    // manager, authoritative position will be OS window position)
+    bool PlatformRequestResize{}; // Platform window requested resize (e.g. window was resized by the OS / host
+                                  // window
+    // manager, authoritative size will be OS window size)
+    bool PlatformRequestClose{}; // Platform window requested closure (e.g. window was moved by the OS / host window
+    // manager, e.g. pressing ALT-F4)
 
     ImGuiViewport() { memset((void *) this, 0, sizeof(*this)); }
     ~ImGuiViewport() { IM_ASSERT(PlatformUserData == nullptr && RendererUserData == nullptr); }
 
     // Helpers
-    [[nodiscard]] Vec2 GetCenter() const { return {Pos.x + Size.x * 0.5f, Pos.y + Size.y * 0.5f}; }
-    [[nodiscard]] Vec2 GetWorkCenter() const { return {WorkPos.x + WorkSize.x * 0.5f, WorkPos.y + WorkSize.y * 0.5f}; }
+    [[nodiscard]] ::SF::Engine::Vec2 GetCenter() const { return {Pos.x + Size.x * 0.5f, Pos.y + Size.y * 0.5f}; }
+    [[nodiscard]] ::SF::Engine::Vec2 GetWorkCenter() const
+    {
+        return {WorkPos.x + WorkSize.x * 0.5f, WorkPos.y + WorkSize.y * 0.5f};
+    }
     [[nodiscard]] const char *GetDebugName() const;
 };
 
@@ -5875,24 +6029,25 @@ struct ImGuiViewport
 //
 // This feature allows you to seamlessly drag Dear ImGui windows outside of your application viewport.
 // This is achieved by creating new Platform/OS windows on the fly, and rendering into them.
-// Dear ImGui manages the viewport structures, and the backend create and maintain one Platform/OS window for each of
-// those viewports.
+// Dear ImGui manages the viewport structures, and the backend create and maintain one Platform/OS window for each
+// of those viewports.
 //
 // See Recap:   https://github.com/ocornut/imgui/wiki/Multi-Viewports
 // See Glossary https://github.com/ocornut/imgui/wiki/Glossary for details about some of the terminology.
 //
 // About the coordinates system:
-// - When multi-viewports are enabled, all Dear ImGui coordinates become absolute coordinates (same as OS coordinates!)
-// - So e.g. ImGui::SetNextWindowPos(Vec2(0,0)) will position a window relative to your primary monitor!
-// - If you want to position windows relative to your main application viewport, use ImGui::GetMainViewport()->Pos as a
-// base position.
+// - When multi-viewports are enabled, all Dear ImGui coordinates become absolute coordinates (same as OS
+// coordinates!)
+// - So e.g. ImGui::SetNextWindowPos(::SF::Engine::Vec2(0,0)) will position a window relative to your primary monitor!
+// - If you want to position windows relative to your main application viewport, use ImGui::GetMainViewport()->Pos
+// as a base position.
 //
 // Steps to use multi-viewports in your application, when using a default backend from the examples/ folder:
 // - Application:  Enable feature with 'io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable'.
-// - Backend:      The backend initialization will setup all necessary ImGuiPlatformIO's functions and update monitors
-// info every frame.
-// - Application:  In your main loop, call ImGui::UpdatePlatformWindows(), ImGui::RenderPlatformWindowsDefault() after
-// EndFrame() or Render().
+// - Backend:      The backend initialization will setup all necessary ImGuiPlatformIO's functions and update
+// monitors info every frame.
+// - Application:  In your main loop, call ImGui::UpdatePlatformWindows(), ImGui::RenderPlatformWindowsDefault()
+// after EndFrame() or Render().
 // - Application:  Fix absolute coordinates used in ImGui::SetWindowPos() or ImGui::SetNextWindowPos() calls.
 //
 // Steps to use multi-viewports in your application, when using a custom backend:
@@ -5903,12 +6058,12 @@ struct ImGuiViewport
 // - Application:  Enable feature with 'io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable'.
 // - Backend:      Hook ImGuiPlatformIO's Platform_* and Renderer_* callbacks (see below).
 //                 Set 'io.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports' and 'io.BackendFlags |=
-//                 ImGuiBackendFlags_PlatformHasViewports'. Update ImGuiPlatformIO's Monitors list every frame. Update
-//                 MousePos every frame, in absolute coordinates.
-// - Application:  In your main loop, call ImGui::UpdatePlatformWindows(), ImGui::RenderPlatformWindowsDefault() after
-// EndFrame() or Render().
-//                 You may skip calling RenderPlatformWindowsDefault() if its API is not convenient for your needs. Read
-//                 comments below.
+//                 ImGuiBackendFlags_PlatformHasViewports'. Update ImGuiPlatformIO's Monitors list every frame.
+//                 Update MousePos every frame, in absolute coordinates.
+// - Application:  In your main loop, call ImGui::UpdatePlatformWindows(), ImGui::RenderPlatformWindowsDefault()
+// after EndFrame() or Render().
+//                 You may skip calling RenderPlatformWindowsDefault() if its API is not convenient for your needs.
+//                 Read comments below.
 // - Application:  Fix absolute coordinates used in ImGui::SetWindowPos() or ImGui::SetNextWindowPos() calls.
 //
 // About ImGui::RenderPlatformWindowsDefault():
@@ -5917,12 +6072,12 @@ struct ImGuiViewport
 //   It basically iterates secondary viewports and call 4 functions that are setup in ImGuiPlatformIO, if available:
 //     Platform_RenderWindow(), Renderer_RenderWindow(), Platform_SwapBuffers(), Renderer_SwapBuffers()
 //   Those functions pointers exists only for the benefit of RenderPlatformWindowsDefault().
-// - If you have very specific rendering needs (e.g. flipping multiple swap-chain simultaneously, unusual sync/threading
-// issues, etc.),
-//   you may be tempted to ignore RenderPlatformWindowsDefault() and write customized code to perform your renderingg.
-//   You may decide to setup the platform_io's *RenderWindow and *SwapBuffers pointers and call your functions through
-//   those pointers, or you may decide to never setup those pointers and call your code directly. They are a
-//   convenience, not an obligatory interface.
+// - If you have very specific rendering needs (e.g. flipping multiple swap-chain simultaneously, unusual
+// sync/threading issues, etc.),
+//   you may be tempted to ignore RenderPlatformWindowsDefault() and write customized code to perform your
+//   renderingg. You may decide to setup the platform_io's *RenderWindow and *SwapBuffers pointers and call your
+//   functions through those pointers, or you may decide to never setup those pointers and call your code directly.
+//   They are a convenience, not an obligatory interface.
 //-----------------------------------------------------------------------------
 
 // Access via ImGui::GetPlatformIO()
@@ -5943,28 +6098,29 @@ struct ImGuiPlatformIO
     void *Platform_ClipboardUserData;
 
     // Optional: Open link/folder/file in OS Shell
-    // (default to use ShellExecuteW() on Windows, system() on Linux/Mac. expected to return false on failure, but some
-    // platforms may always return true)
+    // (default to use ShellExecuteW() on Windows, system() on Linux/Mac. expected to return false on failure, but
+    // some platforms may always return true)
     bool (*Platform_OpenInShellFn)(ImGuiContext *ctx, const char *path);
     void *Platform_OpenInShellUserData;
 
-    // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when
-    // using Japanese/Chinese IME on Windows) (default to use native imm32 api on Windows)
+    // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g.
+    // when using Japanese/Chinese IME on Windows) (default to use native imm32 api on Windows)
     void (*Platform_SetImeDataFn)(ImGuiContext *ctx, ImGuiViewport *viewport, ImGuiPlatformImeData *data);
     void *Platform_ImeUserData;
     // void      (*SetPlatformImeDataFn)(ImGuiViewport* viewport, ImGuiPlatformImeData* data); // [Renamed to
     // platform_io.PlatformSetImeDataFn in 1.91.1]
 
     // Optional: Platform locale
-    // [Experimental] Configure decimal point e.g. '.' or ',' useful for some languages (e.g. German), generally pulled
-    // from *localeconv()->decimal_point
+    // [Experimental] Configure decimal point e.g. '.' or ',' useful for some languages (e.g. German), generally
+    // pulled from *localeconv()->decimal_point
     ImWchar Platform_LocaleDecimalPoint; // '.'
 
     // Optional: Platform time/date
     // This is automatically filled on startup. Used to store a "last used date" in some .ini structures. Facilitate
     // creating tools to clean up old/unused data.
-    int Platform_SessionDate; // Integer storing YYYYMMDD e.g. 20261231 corresponding to the beginning of application
-                              // session.
+    int Platform_SessionDate; // Integer storing YYYYMMDD e.g. 20261231 corresponding to the beginning of
+                              // application
+    // session.
 
     //------------------------------------------------------------------
     // Input - Interface with Renderer Backend
@@ -5990,89 +6146,91 @@ struct ImGuiPlatformIO
     //------------------------------------------------------------------
 
     // For reference, the second column shows which function are generally calling the Platform Functions:
-    //   N = ImGui::NewFrame()                        ~ beginning of the dear imgui frame: read info from platform/OS
-    //   windows (latest size/position) F = ImGui::Begin(), ImGui::EndFrame()        ~ during the dear imgui frame U =
-    //   ImGui::UpdatePlatformWindows()           ~ after the dear imgui frame: create and update all platform/OS
-    //   windows R = ImGui::RenderPlatformWindowsDefault()    ~ render D = ImGui::DestroyPlatformWindows()          ~
-    //   shutdown
-    // The general idea is that NewFrame() we will read the current Platform/OS state, and UpdatePlatformWindows() will
-    // write to it.
+    //   N = ImGui::NewFrame()                        ~ beginning of the dear imgui frame: read info from
+    //   platform/OS windows (latest size/position) F = ImGui::Begin(), ImGui::EndFrame()        ~ during the dear
+    //   imgui frame U = ImGui::UpdatePlatformWindows()           ~ after the dear imgui frame: create and update
+    //   all platform/OS windows R = ImGui::RenderPlatformWindowsDefault()    ~ render D =
+    //   ImGui::DestroyPlatformWindows()          ~ shutdown
+    // The general idea is that NewFrame() we will read the current Platform/OS state, and UpdatePlatformWindows()
+    // will write to it.
 
     // The handlers are designed so we can mix and match two imgui_impl_xxxx files, one Platform backend and one
-    // Renderer backend. Custom engine backends will often provide both Platform and Renderer interfaces together and so
-    // may not need to use all functions. Platform functions are typically called _before_ their Renderer counterpart,
-    // apart from Destroy which are called the other way.
+    // Renderer backend. Custom engine backends will often provide both Platform and Renderer interfaces together
+    // and so may not need to use all functions. Platform functions are typically called _before_ their Renderer
+    // counterpart, apart from Destroy which are called the other way.
 
     // Platform Backend functions (e.g. Win32, GLFW, SDL) ------------------- Called by -----
     void (*Platform_CreateWindow)(
             ImGuiViewport *vp); // . . U . .  // Create a new platform window for the given viewport
     void (*Platform_DestroyWindow)(ImGuiViewport *vp); // N . U . D  //
-    void (*Platform_ShowWindow)(
-            ImGuiViewport *vp); // . . U . .  // Newly created windows are initially hidden so SetWindowPos/Size/Title
-                                // can be called on them before showing the window
-    void (*Platform_SetWindowPos)(
+    void (*Platform_ShowWindow)(ImGuiViewport *vp);    // . . U . .  // Newly created windows are initially hidden so
+                                                       // SetWindowPos/Size/Title
+    // can be called on them before showing the window
+    void (*Platform_SetWindowPos)(ImGuiViewport *vp,
+                                  ::SF::Engine::Vec2 pos); // . . U . .  // Set platform window position (given the
+                                                           // upper-left corner of client area)
+    ::SF::Engine::Vec2 (*Platform_GetWindowPos)(ImGuiViewport *vp); // N . . . .  //
+    void (*Platform_SetWindowSize)(
             ImGuiViewport *vp,
-            Vec2 pos); // . . U . .  // Set platform window position (given the upper-left corner of client area)
-    Vec2 (*Platform_GetWindowPos)(ImGuiViewport *vp); // N . . . .  //
-    void (*Platform_SetWindowSize)(ImGuiViewport *vp,
-                                   Vec2 size); // . . U . .  // Set platform window client area size (ignoring OS
-                                               // decorations such as OS title bar etc.)
-    Vec2 (*Platform_GetWindowSize)(ImGuiViewport *vp); // N . . . .  // Get platform window client area size
-    Vec2 (*Platform_GetWindowFramebufferScale)(
+            ::SF::Engine::Vec2 size); // . . U . .  // Set platform window client area size (ignoring OS
+    // decorations such as OS title bar etc.)
+    ::SF::Engine::Vec2 (*Platform_GetWindowSize)(
+            ImGuiViewport *vp); // N . . . .  // Get platform window client area size
+    ::SF::Engine::Vec2 (*Platform_GetWindowFramebufferScale)(
             ImGuiViewport *vp); // N . . . .  // Return viewport density. Always 1,1 on Windows, often 2,2 on Retina
-                                // display on macOS/iOS. MUST BE INTEGER VALUES.
-    void (*Platform_SetWindowFocus)(ImGuiViewport *vp); // N . . . .  // Move window to front and set input focus
-    bool (*Platform_GetWindowFocus)(ImGuiViewport *vp); // . . U . .  //
-    bool (*Platform_GetWindowMinimized)(
-            ImGuiViewport *vp); // N . . . .  // Get platform window minimized state. When minimized, we generally won't
-                                // attempt to get/set size and contents will be culled more easily
+    // display on macOS/iOS. MUST BE INTEGER VALUES.
+    void (*Platform_SetWindowFocus)(ImGuiViewport *vp);     // N . . . .  // Move window to front and set input focus
+    bool (*Platform_GetWindowFocus)(ImGuiViewport *vp);     // . . U . .  //
+    bool (*Platform_GetWindowMinimized)(ImGuiViewport *vp); // N . . . .  // Get platform window minimized state.
+                                                            // When minimized, we generally won't
+    // attempt to get/set size and contents will be culled more easily
     void (*Platform_SetWindowTitle)(ImGuiViewport *vp,
                                     const char *str); // . . U . .  // Set platform window title (given an UTF-8 string)
     void (*Platform_SetWindowAlpha)(
             ImGuiViewport *vp,
             float alpha); // . . U . .  // (Optional) Setup global transparency (not per-pixel transparency)
-    void (*Platform_UpdateWindow)(
-            ImGuiViewport *vp); // . . U . .  // (Optional) Called by UpdatePlatformWindows(). Optional hook to allow
-                                // the platform backend from doing general book-keeping every frame.
-    void (*Platform_RenderWindow)(
-            ImGuiViewport *vp,
-            void *render_arg); // . . . R .  // (Optional) Main rendering (platform side! This is often unused, or just
-                               // setting a "current" context for OpenGL bindings). 'render_arg' is the value passed to
-                               // RenderPlatformWindowsDefault().
+    void (*Platform_UpdateWindow)(ImGuiViewport *vp); // . . U . .  // (Optional) Called by UpdatePlatformWindows().
+                                                      // Optional hook to allow
+    // the platform backend from doing general book-keeping every frame.
+    void (*Platform_RenderWindow)(ImGuiViewport *vp,
+                                  void *render_arg); // . . . R .  // (Optional) Main rendering (platform side! This
+                                                     // is often unused, or just
+    // setting a "current" context for OpenGL bindings). 'render_arg' is the value passed to
+    // RenderPlatformWindowsDefault().
     void (*Platform_SwapBuffers)(
             ImGuiViewport *vp,
             void *render_arg); // . . . R .  // (Optional) Call Present/SwapBuffers (platform side! This is often
-                               // unused!). 'render_arg' is the value passed to RenderPlatformWindowsDefault().
+    // unused!). 'render_arg' is the value passed to RenderPlatformWindowsDefault().
     float (*Platform_GetWindowDpiScale)(ImGuiViewport *vp); // N . . . .  // (Optional) [BETA] FIXME-DPI: DPI handling:
-                                                            // Return DPI scale for this viewport. 1.0f = 96 DPI.
-    void (*Platform_OnChangedViewport)(
-            ImGuiViewport *vp); // . F . . .  // (Optional) [BETA] FIXME-DPI: DPI handling: Called during Begin() every
-                                // time the viewport we are outputting into changes, so backend has a chance to swap
-                                // fonts to adjust style.
-    Vec4 (*Platform_GetWindowWorkAreaInsets)(
-            ImGuiViewport *vp); // N . . . .  // (Optional) [BETA] Get initial work area inset for the viewport (won't
-                                // be covered by main menu bar, dockspace over viewport etc.). Default to (0,0),(0,0).
-                                // 'safeAreaInsets' in iOS land, 'DisplayCutout' in Android land.
-    int (*Platform_CreateVkSurface)(
-            ImGuiViewport *vp, uint64_t vk_inst, const void *vk_allocators,
-            uint64_t *out_vk_surface); // (Optional) For a Vulkan Renderer to call into Platform
-                                       // code (since the surface creation needs to tie them both).
+    // Return DPI scale for this viewport. 1.0f = 96 DPI.
+    void (*Platform_OnChangedViewport)(ImGuiViewport *vp); // . F . . .  // (Optional) [BETA] FIXME-DPI: DPI
+                                                           // handling: Called during Begin() every
+    // time the viewport we are outputting into changes, so backend has a chance to swap
+    // fonts to adjust style.
+    ::SF::Engine::Vec4 (*Platform_GetWindowWorkAreaInsets)(
+            ImGuiViewport *vp); // N . . . .  // (Optional) [BETA] Get initial work
+                                // area inset for the viewport (won't
+    // be covered by main menu bar, dockspace over viewport etc.). Default to (0,0),(0,0).
+    // 'safeAreaInsets' in iOS land, 'DisplayCutout' in Android land.
+    int (*Platform_CreateVkSurface)(ImGuiViewport *vp, uint64_t vk_inst, const void *vk_allocators,
+                                    uint64_t *out_vk_surface); // (Optional) For a Vulkan Renderer to call into Platform
+    // code (since the surface creation needs to tie them both).
 
     // Renderer Backend functions (e.g. DirectX, OpenGL, Vulkan) ------------ Called by -----
-    void (*Renderer_CreateWindow)(ImGuiViewport *vp);  // . . U . .  // Create swap chain, frame buffers etc. (called
-                                                       // after Platform_CreateWindow)
+    void (*Renderer_CreateWindow)(ImGuiViewport *vp); // . . U . .  // Create swap chain, frame buffers etc. (called
+    // after Platform_CreateWindow)
     void (*Renderer_DestroyWindow)(ImGuiViewport *vp); // N . U . D  // Destroy swap chain, frame buffers etc. (called
-                                                       // before Platform_DestroyWindow)
-    void (*Renderer_SetWindowSize)(
-            ImGuiViewport *vp,
-            Vec2 size); // . . U . .  // Resize swap chain, frame buffers etc. (called after Platform_SetWindowSize)
+    // before Platform_DestroyWindow)
+    void (*Renderer_SetWindowSize)(ImGuiViewport *vp,
+                                   ::SF::Engine::Vec2 size); // . . U . .  // Resize swap chain, frame buffers etc.
+                                                             // (called after Platform_SetWindowSize)
     void (*Renderer_RenderWindow)(ImGuiViewport *vp,
                                   void *render_arg); // . . . R .  // (Optional) Clear framebuffer, setup render target,
-                                                     // then render the viewport->DrawData. 'render_arg' is the value
-                                                     // passed to RenderPlatformWindowsDefault().
+    // then render the viewport->DrawData. 'render_arg' is the value
+    // passed to RenderPlatformWindowsDefault().
     void (*Renderer_SwapBuffers)(ImGuiViewport *vp,
                                  void *render_arg); // . . . R .  // (Optional) Call Present/SwapBuffers. 'render_arg'
-                                                    // is the value passed to RenderPlatformWindowsDefault().
+    // is the value passed to RenderPlatformWindowsDefault().
 
     // (Optional) Monitor list
     // - Updated by: app/backend. Update every frame to dynamically support changing monitor or DPI configuration.
@@ -6085,10 +6243,11 @@ struct ImGuiPlatformIO
     //------------------------------------------------------------------
 
     // Textures list (the list is updated by calling ImGui::EndFrame or ImGui::Render)
-    // The ImGui_ImplXXXX_RenderDrawData() function of each backend generally access this via ImDrawData::Textures which
-    // points to this. The array is available here mostly because backends will want to destroy textures on shutdown.
+    // The ImGui_ImplXXXX_RenderDrawData() function of each backend generally access this via ImDrawData::Textures
+    // which points to this. The array is available here mostly because backends will want to destroy textures on
+    // shutdown.
     ImVector<ImTextureData *> Textures; // List of textures used by Dear ImGui (most often 1) + contents of external
-                                        // texture list is automatically appended into this.
+    // texture list is automatically appended into this.
 
     // Viewports list (the list is updated by calling ImGui::EndFrame or ImGui::Render)
     // (in the future we will attempt to organize this feature to remove the need for a "main viewport")
@@ -6102,21 +6261,22 @@ struct ImGuiPlatformIO
     void ClearRendererHandlers(); // Clear all Renderer_XXX fields. Typically called on Renderer Backend shutdown.
 };
 
-// (Optional) This is required when enabling multi-viewport. Represent the bounds of each connected monitor/display and
-// their DPI. We use this information for multiple DPI support + clamping the position of popups and tooltips so they
-// don't straddle multiple monitors.
+// (Optional) This is required when enabling multi-viewport. Represent the bounds of each connected monitor/display
+// and their DPI. We use this information for multiple DPI support + clamping the position of popups and tooltips so
+// they don't straddle multiple monitors.
 struct ImGuiPlatformMonitor
 {
-    Vec2 MainPos{},
+    ::SF::Engine::Vec2 MainPos{},
             MainSize{}; // Coordinates of the area displayed on this monitor (Min = upper left, Max = bottom right)
-    Vec2 WorkPos{}, WorkSize{}; // Coordinates without task bars / side bars / menu bars. Used to avoid positioning
-                                // popups/tooltips inside this region. If you don't have this info, please copy the
-                                // value for MainPos/MainSize.
+    ::SF::Engine::Vec2 WorkPos{},
+            WorkSize{}; // Coordinates without task bars / side bars / menu bars. Used to avoid positioning
+    // popups/tooltips inside this region. If you don't have this info, please copy the
+    // value for MainPos/MainSize.
     float DpiScale;       // 1.0f = 96 DPI
     void *PlatformHandle; // Backend dependant data (e.g. HMONITOR, GLFWmonitor*, SDL Display Index, NSScreen*)
     ImGuiPlatformMonitor()
     {
-        MainPos = MainSize = WorkPos = WorkSize = Vec2(0, 0);
+        MainPos = MainSize = WorkPos = WorkSize = ::SF::Engine::Vec2(0, 0);
         DpiScale                                = 1.0f;
         PlatformHandle                          = nullptr;
     }
@@ -6127,11 +6287,12 @@ struct ImGuiPlatformMonitor
 struct ImGuiPlatformImeData
 {
     bool WantVisible{};   // A widget wants the IME to be visible.
-    bool WantTextInput{}; // A widget wants text input, not necessarily IME to be visible. This is automatically set to
-                          // the upcoming value of io.WantTextInput.
-    Vec2 InputPos{};      // Position of input cursor (for IME).
-    float InputLineHeight{}; // Line height (for IME).
-    ImGuiID ViewportId{};    // ID of platform window/viewport.
+    bool WantTextInput{}; // A widget wants text input, not necessarily IME to be visible. This is automatically set
+                          // to
+    // the upcoming value of io.WantTextInput.
+    ::SF::Engine::Vec2 InputPos{}; // Position of input cursor (for IME).
+    float InputLineHeight{};       // Line height (for IME).
+    IdType ViewportId{};           // ID of platform window/viewport.
 
     ImGuiPlatformImeData() { memset((void *) this, 0, sizeof(*this)); }
 };
@@ -6144,26 +6305,27 @@ struct ImGuiListClipper
     int ItemsCount;    // [Internal] Number of items
     float ItemsHeight; // [Internal] Height of item after a first step and item submission can calculate it
     ImGuiListClipperFlags Flags; // [Internal] Flags, currently not yet well exposed.
-    double StartPosY; // [Internal] Cursor position at the time of Begin() or after table frozen rows are all processed
-    double StartSeekOffsetY; // [Internal] Account for frozen rows in a table and initial loss of precision in very
-                             // large windows.
-    ImGuiContext *Ctx;       // [Internal] Parent UI context
-    void *TempData;          // [Internal] Internal data
+    double StartPosY;            // [Internal] Cursor position at the time of Begin() or after table frozen rows are all
+                                 // processed
+    double StartSeekOffsetY;     // [Internal] Account for frozen rows in a table and initial loss of precision in very
+    // large windows.
+    ImGuiContext *Ctx; // [Internal] Parent UI context
+    void *TempData;    // [Internal] Internal data
 
-    // items_count: Use INT_MAX if you don't know how many items you have (in which case the cursor won't be advanced in
-    // the final step, and you can call SeekCursorForItem() manually if you need) items_height: Use -1.0f to be
-    // calculated automatically on first step. Otherwise pass in the distance between your items, typically
-    // GetTextLineHeightWithSpacing() or GetFrameHeightWithSpacing().
+    // items_count: Use INT_MAX if you don't know how many items you have (in which case the cursor won't be
+    // advanced in the final step, and you can call SeekCursorForItem() manually if you need) items_height: Use
+    // -1.0f to be calculated automatically on first step. Otherwise pass in the distance between your items,
+    // typically GetTextLineHeightWithSpacing() or GetFrameHeightWithSpacing().
     ImGuiListClipper();
     ~ImGuiListClipper();
     void Begin(int items_count, float items_height = -1.0f);
     void End();  // Automatically called on the last call of Step() that returns false.
     bool Step(); // Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw
-                 // those items.
+    // those items.
 
-    // Call IncludeItemByIndex() or IncludeItemsByIndex() *BEFORE* first call to Step() if you need a range of items to
-    // not be clipped, regardless of their visibility. (Due to alignment / padding of certain items it is possible that
-    // an extra item may be included on either end of the display range).
+    // Call IncludeItemByIndex() or IncludeItemsByIndex() *BEFORE* first call to Step() if you need a range of items
+    // to not be clipped, regardless of their visibility. (Due to alignment / padding of certain items it is
+    // possible that an extra item may be included on either end of the display range).
     inline void IncludeItemByIndex(int item_index) { IncludeItemsByIndex(item_index, item_index + 1); }
     void IncludeItemsByIndex(int item_begin,
                              int item_end); // item_end is exclusive e.g. use (42, 42+1) to make item 42 never clipped.
@@ -6181,53 +6343,10 @@ struct ImGuiListClipper
 // - ImFontAtlasCustomRect::X,Y          --> ImTextureRect::x,y
 // - ImFontAtlasCustomRect::Width,Height --> ImTextureRect::w,h
 // - ImFontAtlasCustomRect::GlyphColored --> if you need to write to this, instead you can write to
-// 'font->Glyphs.back()->Colored' after calling AddCustomRectFontGlyph() We could make ImTextureRect an union to use old
-// names, but 1) this would be confusing 2) the fix is easy 3) ImFontAtlasCustomRect was always a rather esoteric api.
+// 'font->Glyphs.back()->Colored' after calling AddCustomRectFontGlyph() We could make ImTextureRect an union to use
+// old names, but 1) this would be confusing 2) the fix is easy 3) ImFontAtlasCustomRect was always a rather
+// esoteric api.
 typedef ImFontAtlasRect ImFontAtlasCustomRect;
-/*struct ImFontAtlasCustomRect
-{
-    unsigned short  X, Y;           // Output   // Packed position in Atlas
-    unsigned short  Width, Height;  // Input    // [Internal] Desired rectangle dimension
-    unsigned int    GlyphID:31;     // Input    // [Internal] For custom font glyphs only (ID < 0x110000)
-    unsigned int    GlyphColored:1; // Input    // [Internal] For custom font glyphs only: glyph is colored, removed
-tinting. float           GlyphAdvanceX;  // Input    // [Internal] For custom font glyphs only: glyph xadvance
-    Vec2          GlyphOffset;    // Input    // [Internal] For custom font glyphs only: glyph display offset
-    ImFont*         Font;           // Input    // [Internal] For custom font glyphs only: target font
-    ImFontAtlasCustomRect()         { X = Y = 0xFFFF; Width = Height = 0; GlyphID = 0; GlyphColored = 0;
-GlyphAdvanceX = 0.0f; GlyphOffset = Vec2(0, 0); Font = nullptr; } bool IsPacked() const           { return X !=
-0xFFFF; }
-};*/
-
-//-- OBSOLETED in 1.82 (from Mars 2021): flags for AddRect(), AddRectFilled(), AddImageRounded(), PathRect()
-// typedef ImDrawFlags ImDrawCornerFlags;
-// enum ImDrawCornerFlags_
-//{
-//    ImDrawCornerFlags_None      = ImDrawFlags_RoundCornersNone,         // Was == 0 prior to 1.82, this is now ==
-//    ImDrawFlags_RoundCornersNone which is != 0 and not implicit ImDrawCornerFlags_TopLeft   =
-//    ImDrawFlags_RoundCornersTopLeft,      // Was == 0x01 (1 << 0) prior to 1.82. Order matches
-//    ImDrawFlags_NoRoundCorner* flag (we exploit this internally). ImDrawCornerFlags_TopRight  =
-//    ImDrawFlags_RoundCornersTopRight,     // Was == 0x02 (1 << 1) prior to 1.82. ImDrawCornerFlags_BotLeft   =
-//    ImDrawFlags_RoundCornersBottomLeft,   // Was == 0x04 (1 << 2) prior to 1.82. ImDrawCornerFlags_BotRight  =
-//    ImDrawFlags_RoundCornersBottomRight,  // Was == 0x08 (1 << 3) prior to 1.82. ImDrawCornerFlags_All       =
-//    ImDrawFlags_RoundCornersAll,          // Was == 0x0F prior to 1.82 ImDrawCornerFlags_Top       =
-//    ImDrawCornerFlags_TopLeft | ImDrawCornerFlags_TopRight, ImDrawCornerFlags_Bot       =
-//    ImDrawCornerFlags_BotLeft | ImDrawCornerFlags_BotRight, ImDrawCornerFlags_Left      =
-//    ImDrawCornerFlags_TopLeft | ImDrawCornerFlags_BotLeft, ImDrawCornerFlags_Right     =
-//    ImDrawCornerFlags_TopRight | ImDrawCornerFlags_BotRight,
-//};
-
-// RENAMED and MERGED both ImGuiKey_ModXXX and ImGuiModFlags_XXX into ImGuiMod_XXX (from September 2022)
-// RENAMED ImGuiKeyModFlags -> ImGuiModFlags in 1.88 (from April 2022). Exceptionally commented out ahead of
-// obsolescence schedule to reduce confusion and because they were not meant to be used in the first place.
-// typedef ImGuiKeyChord ImGuiModFlags;      // == int. We generally use ImGuiKeyChord to mean "a ImGuiKey or-ed
-// with any number of ImGuiMod_XXX value", so you may store mods in there. enum ImGuiModFlags_ { ImGuiModFlags_None
-// = 0, ImGuiModFlags_Ctrl = ImGuiMod_Ctrl, ImGuiModFlags_Shift = ImGuiMod_Shift, ImGuiModFlags_Alt = ImGuiMod_Alt,
-// ImGuiModFlags_Super = ImGuiMod_Super }; typedef ImGuiKeyChord ImGuiKeyModFlags; // == int enum ImGuiKeyModFlags_
-// { ImGuiKeyModFlags_None = 0, ImGuiKeyModFlags_Ctrl = ImGuiMod_Ctrl, ImGuiKeyModFlags_Shift = ImGuiMod_Shift,
-// ImGuiKeyModFlags_Alt = ImGuiMod_Alt, ImGuiKeyModFlags_Super = ImGuiMod_Super };
-
-// #define IM_OFFSETOF(_TYPE,_MEMBER)  offsetof(_TYPE, _MEMBER)  // OBSOLETED IN 1.90 (now using C++11 standard
-// version)
 
 
 #define IM_ARRAYSIZE IM_COUNTOF // RENAMED IN 1.92.6: IM_ARRAYSIZE -> IM_COUNTOF

@@ -18,24 +18,27 @@ namespace SF::Engine
     {
     public:
         Camera() :
-            nearPlane(0.1f), farPlane(1000.0f), fieldOfView(Mathematics::Radians(45.0f)), viewRay(false, {0.5f, 0.5f}),
-            inverseZ(true), infiniteFarPlane(true)
+            nearPlane(0.1f), farPlane(1000.0f), fieldOfView(Mathematics::Radians(45.0f)), inverseZ(true),
+            infiniteFarPlane(true), viewRay(false, {0.5f, 0.5f})
         {
         }
 
         Camera(bool inverseZ) :
-            nearPlane(0.1f), farPlane(1000.0f), fieldOfView(Mathematics::Radians(45.0f)), viewRay(false, {0.5f, 0.5f}),
-            inverseZ(inverseZ)
+            nearPlane(0.1f), farPlane(1000.0f), fieldOfView(Mathematics::Radians(45.0f)), inverseZ(inverseZ),
+            viewRay(false, {0.5f, 0.5f})
         {
         }
         Camera(bool inverseZ, bool infFarPlane) :
-            nearPlane(0.1f), farPlane(1000.0f), fieldOfView(Mathematics::Radians(45.0f)), viewRay(false, {0.5f, 0.5f}),
-            inverseZ(inverseZ), infiniteFarPlane(infFarPlane)
+            nearPlane(0.1f), farPlane(1000.0f), fieldOfView(Mathematics::Radians(45.0f)), inverseZ(inverseZ),
+            infiniteFarPlane(infFarPlane), viewRay(false, {0.5f, 0.5f})
         {
         }
-        TypeId GetTypeId() const override { return TypeInformation<Component>::GetTypeId<Camera>(); }
+        [[nodiscard]] TypeId GetTypeId() const override { return TypeInformation<Component>::GetTypeId<Camera>(); }
 
-        std::string_view GetTypeName() const override { return TypeInformation<Component>::GetTypeName<Camera>(); }
+        [[nodiscard]] std::string_view GetTypeName() const override
+        {
+            return TypeInformation<Component>::GetTypeName<Camera>();
+        }
 
         virtual void Update(Window *window, float /*DeltaTime*/, bool /*imguiWantsMouse*/, bool /*imguiWantsKeyboard*/)
         {
@@ -73,7 +76,7 @@ namespace SF::Engine
          * Gets the view matrix created by the current camera position and rotation.
          * @return The view matrix created by the current camera position and rotation.
          */
-        const Mat4 &GetViewMatrix() const { return viewMatrix; }
+        [[nodiscard]] const Mat4 &GetViewMatrix() const { return viewMatrix; }
 
         /**
          * Gets the projection matrix used in the current scene render.
@@ -119,14 +122,14 @@ namespace SF::Engine
         float nearPlane, farPlane;
         float fieldOfView;
         bool inverseZ;
-        bool infiniteFarPlane;
+        bool infiniteFarPlane{};
 
-        Vec3 position;
-        Vec3 rotation;
-        Vec3 velocity;
+        Vec3 position{};
+        Vec3 rotation{};
+        Vec3 velocity{};
 
-        Mat4 viewMatrix;
-        Mat4 projectionMatrix;
+        Mat4 viewMatrix{};
+        Mat4 projectionMatrix{};
         Mat4 prevViewProjection{1.0f}; // last frame's VP, snapshotted before this frame's update
 
         Frustum viewFrustum;
@@ -220,7 +223,7 @@ namespace SF::Engine
         float maxFov = 120.0f;
     };
 
-    struct /*std140*/ CameraUBO
+    Std140 struct CameraUBO
     {
         // 16 bytes
         float aspectRatio;

@@ -10,26 +10,38 @@ namespace ImVectorEditor
 
         static constexpr float kMinZoom = 0.0001f;
 
-        static Vec2 add(const Vec2 &a, const Vec2 &b) { return Vec2(a.x + b.x, a.y + b.y); }
+        static ::SF::Engine::Vec2 add(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b)
+        {
+            return ::SF::Engine::Vec2(a.x + b.x, a.y + b.y);
+        }
 
-        static Vec2 sub(const Vec2 &a, const Vec2 &b) { return Vec2(a.x - b.x, a.y - b.y); }
+        static ::SF::Engine::Vec2 sub(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b)
+        {
+            return ::SF::Engine::Vec2(a.x - b.x, a.y - b.y);
+        }
 
-        static Vec2 mul(const Vec2 &a, float s) { return Vec2(a.x * s, a.y * s); }
+        static ::SF::Engine::Vec2 mul(const ::SF::Engine::Vec2 &a, float s)
+        {
+            return ::SF::Engine::Vec2(a.x * s, a.y * s);
+        }
 
-        static Vec2 mul(const Vec2 &a, const Vec2 &b) { return Vec2(a.x * b.x, a.y * b.y); }
+        static ::SF::Engine::Vec2 mul(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b)
+        {
+            return ::SF::Engine::Vec2(a.x * b.x, a.y * b.y);
+        }
 
-        static float lengthSq(const Vec2 &v) { return v.x * v.x + v.y * v.y; }
+        static float lengthSq(const ::SF::Engine::Vec2 &v) { return v.x * v.x + v.y * v.y; }
 
-        static float length(const Vec2 &v) { return std::sqrt(lengthSq(v)); }
+        static float length(const ::SF::Engine::Vec2 &v) { return std::sqrt(lengthSq(v)); }
 
-        static Vec2 rotate(const Vec2 &p, float radians)
+        static ::SF::Engine::Vec2 rotate(const ::SF::Engine::Vec2 &p, float radians)
         {
             const float c = std::cos(radians);
             const float s = std::sin(radians);
-            return Vec2(p.x * c - p.y * s, p.x * s + p.y * c);
+            return ::SF::Engine::Vec2(p.x * c - p.y * s, p.x * s + p.y * c);
         }
 
-        static Vec2 snapToAngleIncrement(const Vec2 &v, float incrementRadians)
+        static ::SF::Engine::Vec2 snapToAngleIncrement(const ::SF::Engine::Vec2 &v, float incrementRadians)
         {
             const float len = length(v);
             if (len <= kMinZoom)
@@ -39,7 +51,7 @@ namespace ImVectorEditor
 
             const float angle        = std::atan2(v.y, v.x);
             const float snappedAngle = std::round(angle / incrementRadians) * incrementRadians;
-            return Vec2(std::cos(snappedAngle) * len, std::sin(snappedAngle) * len);
+            return ::SF::Engine::Vec2(std::cos(snappedAngle) * len, std::sin(snappedAngle) * len);
         }
 
         static bool isShiftDown()
@@ -74,28 +86,28 @@ namespace ImVectorEditor
                 return true;
             }
 
-            const float inLength  = length(anchor.handleIn);
-            const float outLength = length(anchor.handleOut);
-            Vec2 direction        = outLength >= inLength ? anchor.handleOut : mul(anchor.handleIn, -1.0f);
-            float directionLength = length(direction);
+            const float inLength         = length(anchor.handleIn);
+            const float outLength        = length(anchor.handleOut);
+            ::SF::Engine::Vec2 direction = outLength >= inLength ? anchor.handleOut : mul(anchor.handleIn, -1.0f);
+            float directionLength        = length(direction);
             if (directionLength <= kMinZoom)
             {
                 return false;
             }
 
-            const Vec2 unit   = mul(direction, 1.0f / directionLength);
-            anchor.handleOut  = mul(unit, outLength);
-            anchor.handleIn   = mul(unit, -inLength);
-            anchor.handleMode = HandleMode::Aligned;
+            const ::SF::Engine::Vec2 unit = mul(direction, 1.0f / directionLength);
+            anchor.handleOut              = mul(unit, outLength);
+            anchor.handleIn               = mul(unit, -inLength);
+            anchor.handleMode             = HandleMode::Aligned;
             return true;
         }
 
-        static Vec2 alignedOppositeHandle(const Vec2 &handle, float oppositeLength)
+        static ::SF::Engine::Vec2 alignedOppositeHandle(const ::SF::Engine::Vec2 &handle, float oppositeLength)
         {
             const float handleLength = length(handle);
             if (handleLength <= kMinZoom)
             {
-                return Vec2(0.0f, 0.0f);
+                return ::SF::Engine::Vec2(0.0f, 0.0f);
             }
 
             return mul(handle, -oppositeLength / handleLength);
@@ -103,8 +115,8 @@ namespace ImVectorEditor
 
         static bool hasCurveBetween(const Anchor &a, const Anchor &b) { return a.hasHandleOut || b.hasHandleIn; }
 
-        static void drawControlPoint(ImDrawList *drawList, const Vec2 &center, float radius, ControlPointShape shape,
-                                     uint32_t color)
+        static void drawControlPoint(ImDrawList *drawList, const ::SF::Engine::Vec2 &center, float radius,
+                                     ControlPointShape shape, uint32_t color)
         {
             switch (shape)
             {
@@ -112,22 +124,23 @@ namespace ImVectorEditor
                     drawList->AddCircleFilled(center, radius, color);
                     break;
                 case ControlPointShape::Square:
-                    drawList->AddRectFilled(sub(center, Vec2(radius, radius)), add(center, Vec2(radius, radius)),
-                                            color);
+                    drawList->AddRectFilled(sub(center, ::SF::Engine::Vec2(radius, radius)),
+                                            add(center, ::SF::Engine::Vec2(radius, radius)), color);
                     break;
                 case ControlPointShape::Diamond:
-                    drawList->AddQuadFilled(Vec2(center.x, center.y - radius), Vec2(center.x + radius, center.y),
-                                            Vec2(center.x, center.y + radius), Vec2(center.x - radius, center.y),
-                                            color);
+                    drawList->AddQuadFilled(::SF::Engine::Vec2(center.x, center.y - radius),
+                                            ::SF::Engine::Vec2(center.x + radius, center.y),
+                                            ::SF::Engine::Vec2(center.x, center.y + radius),
+                                            ::SF::Engine::Vec2(center.x - radius, center.y), color);
                     break;
             }
         }
 
-        static void drawSegment(ImDrawList *drawList, const Config &config, const Vec2 &origin, const Anchor &a,
-                                const Anchor &b, uint32_t color, float thickness)
+        static void drawSegment(ImDrawList *drawList, const Config &config, const ::SF::Engine::Vec2 &origin,
+                                const Anchor &a, const Anchor &b, uint32_t color, float thickness)
         {
-            const Vec2 p0 = add(origin, config.transform.LocalToCanvas(a.position));
-            const Vec2 p3 = add(origin, config.transform.LocalToCanvas(b.position));
+            const ::SF::Engine::Vec2 p0 = add(origin, config.transform.LocalToCanvas(a.position));
+            const ::SF::Engine::Vec2 p3 = add(origin, config.transform.LocalToCanvas(b.position));
 
             if (!hasCurveBetween(a, b))
             {
@@ -135,10 +148,12 @@ namespace ImVectorEditor
                 return;
             }
 
-            const Vec2 cp1Local = add(a.position, a.hasHandleOut ? a.handleOut : Vec2(0.0f, 0.0f));
-            const Vec2 cp2Local = add(b.position, b.hasHandleIn ? b.handleIn : Vec2(0.0f, 0.0f));
-            const Vec2 cp1      = add(origin, config.transform.LocalToCanvas(cp1Local));
-            const Vec2 cp2      = add(origin, config.transform.LocalToCanvas(cp2Local));
+            const ::SF::Engine::Vec2 cp1Local =
+                    add(a.position, a.hasHandleOut ? a.handleOut : ::SF::Engine::Vec2(0.0f, 0.0f));
+            const ::SF::Engine::Vec2 cp2Local =
+                    add(b.position, b.hasHandleIn ? b.handleIn : ::SF::Engine::Vec2(0.0f, 0.0f));
+            const ::SF::Engine::Vec2 cp1 = add(origin, config.transform.LocalToCanvas(cp1Local));
+            const ::SF::Engine::Vec2 cp2 = add(origin, config.transform.LocalToCanvas(cp2Local));
             drawList->AddBezierCubic(p0, cp1, cp2, p3, color, thickness, 32);
         }
 
@@ -162,8 +177,8 @@ namespace ImVectorEditor
             return changed;
         }
 
-        Vec2 direction        = anchor.hasHandleOut ? anchor.handleOut : mul(anchor.handleIn, -1.0f);
-        float directionLength = length(direction);
+        ::SF::Engine::Vec2 direction = anchor.hasHandleOut ? anchor.handleOut : mul(anchor.handleIn, -1.0f);
+        float directionLength        = length(direction);
         if (directionLength <= kMinZoom)
         {
             direction       = anchor.hasHandleIn ? mul(anchor.handleIn, -1.0f) : anchor.handleOut;
@@ -174,15 +189,15 @@ namespace ImVectorEditor
             return false;
         }
 
-        const float inLength       = anchor.hasHandleIn ? length(anchor.handleIn) : 0.0f;
-        const float outLength      = anchor.hasHandleOut ? length(anchor.handleOut) : 0.0f;
-        const float mirroredLength = std::max(inLength, outLength);
-        const Vec2 unit            = mul(direction, 1.0f / directionLength);
-        anchor.handleOut           = mul(unit, mirroredLength);
-        anchor.handleIn            = mul(unit, -mirroredLength);
-        anchor.hasHandleIn         = true;
-        anchor.hasHandleOut        = true;
-        anchor.handleMode          = HandleMode::Mirrored;
+        const float inLength          = anchor.hasHandleIn ? length(anchor.handleIn) : 0.0f;
+        const float outLength         = anchor.hasHandleOut ? length(anchor.handleOut) : 0.0f;
+        const float mirroredLength    = std::max(inLength, outLength);
+        const ::SF::Engine::Vec2 unit = mul(direction, 1.0f / directionLength);
+        anchor.handleOut              = mul(unit, mirroredLength);
+        anchor.handleIn               = mul(unit, -mirroredLength);
+        anchor.hasHandleIn            = true;
+        anchor.hasHandleOut           = true;
+        anchor.handleMode             = HandleMode::Mirrored;
         return true;
     }
 
@@ -195,18 +210,18 @@ namespace ImVectorEditor
 
         if (anchor.hasHandleIn)
         {
-            const float inLength = std::max(length(anchor.handleIn), handleLength);
-            const Vec2 out       = alignedOppositeHandle(anchor.handleIn, inLength);
-            anchor.handleOut     = lengthSq(out) > 0.0f ? out : Vec2(handleLength, 0.0f);
+            const float inLength         = std::max(length(anchor.handleIn), handleLength);
+            const ::SF::Engine::Vec2 out = alignedOppositeHandle(anchor.handleIn, inLength);
+            anchor.handleOut             = lengthSq(out) > 0.0f ? out : ::SF::Engine::Vec2(handleLength, 0.0f);
         } else if (anchor.hasHandleOut)
         {
-            const float outLength = std::max(length(anchor.handleOut), handleLength);
-            const Vec2 in         = alignedOppositeHandle(anchor.handleOut, outLength);
-            anchor.handleIn       = lengthSq(in) > 0.0f ? in : Vec2(-handleLength, 0.0f);
+            const float outLength       = std::max(length(anchor.handleOut), handleLength);
+            const ::SF::Engine::Vec2 in = alignedOppositeHandle(anchor.handleOut, outLength);
+            anchor.handleIn             = lengthSq(in) > 0.0f ? in : ::SF::Engine::Vec2(-handleLength, 0.0f);
         } else
         {
-            anchor.handleIn  = Vec2(-handleLength, 0.0f);
-            anchor.handleOut = Vec2(handleLength, 0.0f);
+            anchor.handleIn  = ::SF::Engine::Vec2(-handleLength, 0.0f);
+            anchor.handleOut = ::SF::Engine::Vec2(handleLength, 0.0f);
         }
 
         anchor.hasHandleIn  = true;
@@ -222,8 +237,8 @@ namespace ImVectorEditor
             return false;
         }
 
-        anchor.handleIn     = Vec2(0.0f, 0.0f);
-        anchor.handleOut    = Vec2(0.0f, 0.0f);
+        anchor.handleIn     = ::SF::Engine::Vec2(0.0f, 0.0f);
+        anchor.handleOut    = ::SF::Engine::Vec2(0.0f, 0.0f);
         anchor.hasHandleIn  = false;
         anchor.hasHandleOut = false;
         anchor.handleMode   = HandleMode::Corner;
@@ -240,10 +255,10 @@ namespace ImVectorEditor
         }
     }
 
-    Vec2 Transform::LocalToCanvas(const Vec2 &local) const
+    ::SF::Engine::Vec2 Transform::LocalToCanvas(const ::SF::Engine::Vec2 &local) const
     {
         const float safeZoom = std::max(zoom, kMinZoom);
-        Vec2 p               = sub(local, objectPivot);
+        ::SF::Engine::Vec2 p = sub(local, objectPivot);
         p                    = mul(p, objectScale);
         p                    = rotate(p, objectRotationRadians);
         p                    = add(p, objectPivot);
@@ -252,24 +267,24 @@ namespace ImVectorEditor
         return add(p, pan);
     }
 
-    Vec2 Transform::CanvasToLocal(const Vec2 &canvas) const
+    ::SF::Engine::Vec2 Transform::CanvasToLocal(const ::SF::Engine::Vec2 &canvas) const
     {
         const float safeZoom = std::max(zoom, kMinZoom);
-        Vec2 p               = sub(canvas, pan);
+        ::SF::Engine::Vec2 p = sub(canvas, pan);
         p                    = mul(p, 1.0f / safeZoom);
         p                    = sub(p, objectTranslation);
         p                    = sub(p, objectPivot);
         p                    = rotate(p, -objectRotationRadians);
         const float sx       = std::abs(objectScale.x) < kMinZoom ? kMinZoom : objectScale.x;
         const float sy       = std::abs(objectScale.y) < kMinZoom ? kMinZoom : objectScale.y;
-        return add(Vec2(p.x / sx, p.y / sy), objectPivot);
+        return add(::SF::Engine::Vec2(p.x / sx, p.y / sy), objectPivot);
     }
 
     Result Editor::Draw(const char *id, Path &path, const Config &config)
     {
         Result result;
 
-        Vec2 canvasSize = config.canvasSize;
+        ::SF::Engine::Vec2 canvasSize = config.canvasSize;
         if (canvasSize.x <= 0.0f)
         {
             canvasSize.x = ImGui::GetContentRegionAvail().x;
@@ -281,14 +296,14 @@ namespace ImVectorEditor
         canvasSize.x = std::max(canvasSize.x, 64.0f);
         canvasSize.y = std::max(canvasSize.y, 64.0f);
 
-        const Vec2 canvasOrigin = ImGui::GetCursorScreenPos();
+        const ::SF::Engine::Vec2 canvasOrigin = ImGui::GetCursorScreenPos();
         ImGui::InvisibleButton(id, canvasSize,
                                ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle |
                                        ImGuiButtonFlags_MouseButtonRight);
 
-        hovered_               = ImGui::IsItemHovered();
-        const Vec2 mouseScreen = ImGui::GetIO().MousePos;
-        const Hit inputHit     = HitTest(path, config, canvasOrigin, mouseScreen);
+        hovered_                             = ImGui::IsItemHovered();
+        const ::SF::Engine::Vec2 mouseScreen = ImGui::GetIO().MousePos;
+        const Hit inputHit                   = HitTest(path, config, canvasOrigin, mouseScreen);
 
         if (!config.readOnly)
         {
@@ -302,8 +317,8 @@ namespace ImVectorEditor
         result.hovered         = hovered_;
         result.active          = active_;
 
-        ImDrawList *drawList = ImGui::GetWindowDrawList();
-        const Vec2 canvasEnd = add(canvasOrigin, canvasSize);
+        ImDrawList *drawList               = ImGui::GetWindowDrawList();
+        const ::SF::Engine::Vec2 canvasEnd = add(canvasOrigin, canvasSize);
         drawList->AddRectFilled(canvasOrigin, canvasEnd, config.style.backgroundColor, 3.0f);
 
         drawList->PushClipRect(canvasOrigin, canvasEnd, true);
@@ -409,7 +424,7 @@ namespace ImVectorEditor
         ClearSelection();
     }
 
-    void Editor::BeginAnchorDrag(const Path &path, const Vec2 &mouseLocal)
+    void Editor::BeginAnchorDrag(const Path &path, const ::SF::Engine::Vec2 &mouseLocal)
     {
         dragStartLocal_ = mouseLocal;
         dragStartAnchorPositions_.clear();
@@ -422,7 +437,8 @@ namespace ImVectorEditor
         }
     }
 
-    void Editor::UpdateBoxSelection(Path &path, const Config &config, const Vec2 &canvasOrigin, bool addToSelection)
+    void Editor::UpdateBoxSelection(Path &path, const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                                    bool addToSelection)
     {
         const float minX = std::min(boxSelectStartScreen_.x, boxSelectCurrentScreen_.x);
         const float maxX = std::max(boxSelectStartScreen_.x, boxSelectCurrentScreen_.x);
@@ -435,7 +451,7 @@ namespace ImVectorEditor
         }
         for (int i = 0; i < static_cast<int>(path.anchors.size()); ++i)
         {
-            const Vec2 anchorScreen = LocalToScreen(config, canvasOrigin, path.anchors[i].position);
+            const ::SF::Engine::Vec2 anchorScreen = LocalToScreen(config, canvasOrigin, path.anchors[i].position);
             if (anchorScreen.x >= minX && anchorScreen.x <= maxX && anchorScreen.y >= minY && anchorScreen.y <= maxY &&
                 !IsAnchorSelected(i))
             {
@@ -475,17 +491,17 @@ namespace ImVectorEditor
         }
     }
 
-    Editor::Hit Editor::HitTest(const Path &path, const Config &config, const Vec2 &canvasOrigin,
-                                const Vec2 &mouseScreen) const
+    Editor::Hit Editor::HitTest(const Path &path, const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                                const ::SF::Engine::Vec2 &mouseScreen) const
     {
         Hit best;
         best.distance = config.style.hitRadius;
 
         for (int i = 0; i < static_cast<int>(path.anchors.size()); ++i)
         {
-            const Anchor &anchor       = path.anchors[i];
-            const Vec2 anchorScreen    = LocalToScreen(config, canvasOrigin, anchor.position);
-            const float anchorDistance = length(sub(mouseScreen, anchorScreen));
+            const Anchor &anchor                  = path.anchors[i];
+            const ::SF::Engine::Vec2 anchorScreen = LocalToScreen(config, canvasOrigin, anchor.position);
+            const float anchorDistance            = length(sub(mouseScreen, anchorScreen));
             if (anchorDistance <= best.distance)
             {
                 best = {i, HitPart::Anchor, anchorDistance};
@@ -493,7 +509,8 @@ namespace ImVectorEditor
 
             if (anchor.hasHandleIn)
             {
-                const Vec2 handleScreen    = LocalToScreen(config, canvasOrigin, add(anchor.position, anchor.handleIn));
+                const ::SF::Engine::Vec2 handleScreen =
+                        LocalToScreen(config, canvasOrigin, add(anchor.position, anchor.handleIn));
                 const float handleDistance = length(sub(mouseScreen, handleScreen));
                 if (handleDistance <= best.distance)
                 {
@@ -503,7 +520,8 @@ namespace ImVectorEditor
 
             if (anchor.hasHandleOut)
             {
-                const Vec2 handleScreen = LocalToScreen(config, canvasOrigin, add(anchor.position, anchor.handleOut));
+                const ::SF::Engine::Vec2 handleScreen =
+                        LocalToScreen(config, canvasOrigin, add(anchor.position, anchor.handleOut));
                 const float handleDistance = length(sub(mouseScreen, handleScreen));
                 if (handleDistance <= best.distance)
                 {
@@ -515,34 +533,38 @@ namespace ImVectorEditor
         return best;
     }
 
-    Vec2 Editor::LocalToScreen(const Config &config, const Vec2 &canvasOrigin, const Vec2 &local) const
+    ::SF::Engine::Vec2 Editor::LocalToScreen(const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                                             const ::SF::Engine::Vec2 &local) const
     {
         return add(canvasOrigin, config.transform.LocalToCanvas(local));
     }
 
-    Vec2 Editor::ScreenToLocal(const Config &config, const Vec2 &canvasOrigin, const Vec2 &screen) const
+    ::SF::Engine::Vec2 Editor::ScreenToLocal(const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                                             const ::SF::Engine::Vec2 &screen) const
     {
         return config.transform.CanvasToLocal(sub(screen, canvasOrigin));
     }
 
-    void Editor::DrawGrid(ImDrawList *drawList, const Vec2 &origin, const Vec2 &size, const Config &config) const
+    void Editor::DrawGrid(ImDrawList *drawList, const ::SF::Engine::Vec2 &origin, const ::SF::Engine::Vec2 &size,
+                          const Config &config) const
     {
-        const float step   = std::max(4.0f, config.style.gridStep * config.transform.zoom);
-        const Vec2 end     = add(origin, size);
-        const float startX = origin.x + std::fmod(config.transform.pan.x, step);
-        const float startY = origin.y + std::fmod(config.transform.pan.y, step);
+        const float step             = std::max(4.0f, config.style.gridStep * config.transform.zoom);
+        const ::SF::Engine::Vec2 end = add(origin, size);
+        const float startX           = origin.x + std::fmod(config.transform.pan.x, step);
+        const float startY           = origin.y + std::fmod(config.transform.pan.y, step);
 
         for (float x = startX; x < end.x; x += step)
         {
-            drawList->AddLine(Vec2(x, origin.y), Vec2(x, end.y), config.style.gridColor);
+            drawList->AddLine(::SF::Engine::Vec2(x, origin.y), ::SF::Engine::Vec2(x, end.y), config.style.gridColor);
         }
         for (float y = startY; y < end.y; y += step)
         {
-            drawList->AddLine(Vec2(origin.x, y), Vec2(end.x, y), config.style.gridColor);
+            drawList->AddLine(::SF::Engine::Vec2(origin.x, y), ::SF::Engine::Vec2(end.x, y), config.style.gridColor);
         }
     }
 
-    void Editor::DrawPath(ImDrawList *drawList, const Path &path, const Config &config, const Vec2 &canvasOrigin) const
+    void Editor::DrawPath(ImDrawList *drawList, const Path &path, const Config &config,
+                          const ::SF::Engine::Vec2 &canvasOrigin) const
     {
         if (path.anchors.empty())
         {
@@ -564,8 +586,8 @@ namespace ImVectorEditor
         }
     }
 
-    void Editor::DrawControls(ImDrawList *drawList, const Path &path, const Config &config, const Vec2 &canvasOrigin,
-                              const Hit &hoveredHit) const
+    void Editor::DrawControls(ImDrawList *drawList, const Path &path, const Config &config,
+                              const ::SF::Engine::Vec2 &canvasOrigin, const Hit &hoveredHit) const
     {
         for (int i = 0; i < static_cast<int>(path.anchors.size()); ++i)
         {
@@ -573,11 +595,12 @@ namespace ImVectorEditor
             const bool selected    = IsAnchorSelected(i);
             const bool closeTarget = i == 0 && hoveredHit.anchor == 0 && hoveredHit.part == HitPart::Anchor &&
                                      path.anchors.size() >= 3 && !path.closed;
-            const Vec2 anchorScreen = LocalToScreen(config, canvasOrigin, anchor.position);
+            const ::SF::Engine::Vec2 anchorScreen = LocalToScreen(config, canvasOrigin, anchor.position);
 
             if (anchor.hasHandleIn)
             {
-                const Vec2 handle = LocalToScreen(config, canvasOrigin, add(anchor.position, anchor.handleIn));
+                const ::SF::Engine::Vec2 handle =
+                        LocalToScreen(config, canvasOrigin, add(anchor.position, anchor.handleIn));
                 drawList->AddLine(anchorScreen, handle, config.style.handleLineColor, config.style.handleLineThickness);
                 drawControlPoint(drawList, handle, config.style.handleRadius, config.style.handleShape,
                                  selected && selectedPart_ == HitPart::HandleIn ? config.style.anchorSelectedColor
@@ -586,7 +609,8 @@ namespace ImVectorEditor
 
             if (anchor.hasHandleOut)
             {
-                const Vec2 handle = LocalToScreen(config, canvasOrigin, add(anchor.position, anchor.handleOut));
+                const ::SF::Engine::Vec2 handle =
+                        LocalToScreen(config, canvasOrigin, add(anchor.position, anchor.handleOut));
                 drawList->AddLine(anchorScreen, handle, config.style.handleLineColor, config.style.handleLineThickness);
                 drawControlPoint(drawList, handle, config.style.handleRadius, config.style.handleShape,
                                  selected && selectedPart_ == HitPart::HandleOut ? config.style.anchorSelectedColor
@@ -670,12 +694,12 @@ namespace ImVectorEditor
         return changed;
     }
 
-    bool Editor::HandleMouse(Path &path, const Config &config, const Vec2 &canvasOrigin, const Hit &hoveredHit,
-                             Result &result)
+    bool Editor::HandleMouse(Path &path, const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                             const Hit &hoveredHit, Result &result)
     {
-        bool changed          = false;
-        const ImGuiIO &io     = ImGui::GetIO();
-        const Vec2 mouseLocal = ScreenToLocal(config, canvasOrigin, io.MousePos);
+        bool changed                        = false;
+        const ImGuiIO &io                   = ImGui::GetIO();
+        const ::SF::Engine::Vec2 mouseLocal = ScreenToLocal(config, canvasOrigin, io.MousePos);
 
         if (hovered_ && io.MouseWheel != 0.0f)
         {
@@ -788,7 +812,7 @@ namespace ImVectorEditor
             {
                 if (newAnchorDrag_)
                 {
-                    Vec2 delta = sub(mouseLocal, dragStartLocal_);
+                    ::SF::Engine::Vec2 delta = sub(mouseLocal, dragStartLocal_);
                     if (isShiftDown())
                     {
                         delta = snapToAngleIncrement(delta, 3.14159265358979323846f / 4.0f);
@@ -810,7 +834,7 @@ namespace ImVectorEditor
                         BeginEdit(config, EditKind::MoveAnchor, selectedAnchor_);
                         dragEditStarted_ = true;
                     }
-                    const Vec2 delta = sub(mouseLocal, dragStartLocal_);
+                    const ::SF::Engine::Vec2 delta = sub(mouseLocal, dragStartLocal_);
                     for (int i = 0; i < static_cast<int>(selectedAnchors_.size()); ++i)
                     {
                         const int anchorIndex = selectedAnchors_[i];

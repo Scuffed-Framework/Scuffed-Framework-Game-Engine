@@ -50,16 +50,16 @@ namespace SF::Engine
 
     namespace WidgetTheme
     {
-        inline constexpr Vec4 kAccent      = {0.00f, 0.54f, 1.00f, 1.00f};
-        inline constexpr Vec4 kAccentDim   = {0.00f, 0.54f, 1.00f, 1.00f};
-        inline constexpr Vec4 kRed         = {0.86f, 0.20f, 0.20f, 1.00f};
-        inline constexpr Vec4 kRedDim      = {0.86f, 0.20f, 0.20f, 1.00f};
-        inline constexpr Vec4 kGreen       = {0.20f, 0.80f, 0.20f, 1.00f};
-        inline constexpr Vec4 kGreenDim    = {0.20f, 0.80f, 0.20f, 1.00f};
-        inline constexpr Vec4 kBlue        = {0.20f, 0.40f, 1.00f, 1.00f};
-        inline constexpr Vec4 kBlueDim     = {0.20f, 0.40f, 1.00f, 1.00f};
-        inline constexpr Vec4 kComponentBg = {0.08f, 0.08f, 0.08f, 1.00f};
-        inline constexpr Vec4 kHeaderBg    = {0.12f, 0.12f, 0.14f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kAccent      = {0.00f, 0.54f, 1.00f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kAccentDim   = {0.00f, 0.54f, 1.00f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kRed         = {0.86f, 0.20f, 0.20f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kRedDim      = {0.86f, 0.20f, 0.20f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kGreen       = {0.20f, 0.80f, 0.20f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kGreenDim    = {0.20f, 0.80f, 0.20f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kBlue        = {0.20f, 0.40f, 1.00f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kBlueDim     = {0.20f, 0.40f, 1.00f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kComponentBg = {0.08f, 0.08f, 0.08f, 1.00f};
+        inline constexpr ::SF::Engine::Vec4 kHeaderBg    = {0.12f, 0.12f, 0.14f, 1.00f};
     } // namespace WidgetTheme
 
     class WidgetBuilder
@@ -75,14 +75,14 @@ namespace SF::Engine
         {
             ImGui::PushID(uniqueId);
             ImGui::PushStyleColor(ImGuiCol_ChildBg, WidgetTheme::kComponentBg);
-            ImGui::BeginChild(m_childId, Vec2(0, 0), ImGuiChildFlags_AutoResizeY);
+            ImGui::BeginChild(m_childId, ::SF::Engine::Vec2(0, 0), ImGuiChildFlags_AutoResizeY);
 
             m_open = DrawSectionHeader(sectionLabel);
 
             if (m_open)
             {
                 ImGui::Spacing();
-                ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, Vec2(4, 3));
+                ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ::SF::Engine::Vec2(4, 3));
                 m_tableOpen = ImGui::BeginTable(m_tableId, 2, ImGuiTableFlags_SizingStretchProp);
                 if (m_tableOpen)
                 {
@@ -118,7 +118,7 @@ namespace SF::Engine
             char lbl[64];
             std::snprintf(lbl, sizeof(lbl), "%s##Rst_%s", label, m_sectionLabel);
             ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 52.0f + ImGui::GetCursorPosX());
-            ImGui::PushStyleColor(ImGuiCol_Button, Vec4(0.2f, 0.2f, 0.2f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Button, ::SF::Engine::Vec4(0.2f, 0.2f, 0.2f, 1.0f));
             ImGui::SmallButton(lbl);
             ImGui::PopStyleColor();
             ImGui::Spacing();
@@ -139,14 +139,15 @@ namespace SF::Engine
         {
             const float btnW = ImGui::GetFrameHeight();
 
-            auto xyzButton = [&](const char *axis, Vec4 dimCol, Vec4 hovCol, float &component, float resetVal)
+            auto xyzButton = [&](const char *axis, ::SF::Engine::Vec4 dimCol, ::SF::Engine::Vec4 hovCol,
+                                 float &component, float resetVal)
             {
                 ImGui::PushStyleColor(ImGuiCol_Button, dimCol);
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hovCol);
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, hovCol);
                 char bid[32];
                 std::snprintf(bid, sizeof(bid), "%s##%s", axis, id);
-                if (ImGui::Button(bid, Vec2(btnW, 0)))
+                if (ImGui::Button(bid, ::SF::Engine::Vec2(btnW, 0)))
                     component = resetVal;
                 ImGui::PopStyleColor(3);
             };
@@ -186,12 +187,12 @@ namespace SF::Engine
             }
         }
 
-        void ColorSwatch(const Vec4 &c) const
+        void ColorSwatch(const ::SF::Engine::Vec4 &c) const
         {
-            Vec2 sz{ImGui::GetContentRegionAvail().x, 8.0f};
-            Vec2 cp      = ImGui::GetCursorScreenPos();
-            uint32_t col = IM_COL32(int(c.r * 255), int(c.g * 255), int(c.b * 255), 255);
-            ImGui::GetWindowDrawList()->AddRectFilled(cp, Vec2(cp.x + sz.x, cp.y + sz.y), col);
+            ::SF::Engine::Vec2 sz{ImGui::GetContentRegionAvail().x, 8.0f};
+            ::SF::Engine::Vec2 cp = ImGui::GetCursorScreenPos();
+            uint32_t col          = IM_COL32(int(c.r * 255), int(c.g * 255), int(c.b * 255), 255);
+            ImGui::GetWindowDrawList()->AddRectFilled(cp, ::SF::Engine::Vec2(cp.x + sz.x, cp.y + sz.y), col);
             ImGui::Dummy(sz);
             ImGui::Spacing();
         }
@@ -199,14 +200,15 @@ namespace SF::Engine
         // Draws a full-width intensity bar (e.g. light intensity preview).
         void IntensityBar(float value, float maxValue, const Vec3 &colour) const
         {
-            Vec2 cp     = ImGui::GetCursorScreenPos();
-            float barW  = ImGui::GetContentRegionAvail().x;
-            float fillW = barW * glm::clamp(value / maxValue, 0.0f, 1.0f);
-            ImGui::GetWindowDrawList()->AddRectFilled(cp, Vec2(cp.x + barW, cp.y + 4), IM_COL32(30, 30, 30, 255), 2);
+            ::SF::Engine::Vec2 cp = ImGui::GetCursorScreenPos();
+            float barW            = ImGui::GetContentRegionAvail().x;
+            float fillW           = barW * glm::clamp(value / maxValue, 0.0f, 1.0f);
+            ImGui::GetWindowDrawList()->AddRectFilled(cp, ::SF::Engine::Vec2(cp.x + barW, cp.y + 4),
+                                                      IM_COL32(30, 30, 30, 255), 2);
             ImGui::GetWindowDrawList()->AddRectFilled(
-                    cp, Vec2(cp.x + fillW, cp.y + 4),
+                    cp, ::SF::Engine::Vec2(cp.x + fillW, cp.y + 4),
                     IM_COL32(int(colour.r * 220), int(colour.g * 220), int(colour.b * 220), 200), 2);
-            ImGui::Dummy(Vec2(barW, 4));
+            ImGui::Dummy(::SF::Engine::Vec2(barW, 4));
             ImGui::Spacing();
         }
 
@@ -222,8 +224,8 @@ namespace SF::Engine
             ImGui::TableSetColumnIndex(1);
             float y = ImGui::GetCursorScreenPos().y + ImGui::GetTextLineHeight() * 0.5f;
             ImGui::GetWindowDrawList()->AddLine(
-                    Vec2(ImGui::GetCursorScreenPos().x, y),
-                    Vec2(ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x, y),
+                    ::SF::Engine::Vec2(ImGui::GetCursorScreenPos().x, y),
+                    ::SF::Engine::Vec2(ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x, y),
                     IM_COL32(255, 255, 255, 30), 1.0f);
             ImGui::Spacing();
         }
@@ -232,15 +234,16 @@ namespace SF::Engine
         static bool DrawSectionHeader(const char *label)
         {
             ImGui::PushStyleColor(ImGuiCol_Header, WidgetTheme::kHeaderBg);
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, Vec4(0.18f, 0.18f, 0.22f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_HeaderActive, Vec4(0.22f, 0.22f, 0.28f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ::SF::Engine::Vec4(0.18f, 0.18f, 0.22f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_HeaderActive, ::SF::Engine::Vec4(0.22f, 0.22f, 0.28f, 1.0f));
 
-            Vec2 p  = ImGui::GetCursorScreenPos();
-            float h = ImGui::GetFrameHeight();
-            ImGui::GetWindowDrawList()->AddRectFilled(p, Vec2(p.x + 3.0f, p.y + h), IM_COL32(0, 138, 255, 200));
-            ImGui::SetCursorScreenPos(Vec2(p.x + 6.0f, p.y));
+            ::SF::Engine::Vec2 p = ImGui::GetCursorScreenPos();
+            float h              = ImGui::GetFrameHeight();
+            ImGui::GetWindowDrawList()->AddRectFilled(p, ::SF::Engine::Vec2(p.x + 3.0f, p.y + h),
+                                                      IM_COL32(0, 138, 255, 200));
+            ImGui::SetCursorScreenPos(::SF::Engine::Vec2(p.x + 6.0f, p.y));
 
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, Vec2(4, 4));
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ::SF::Engine::Vec2(4, 4));
             bool open = ImGui::CollapsingHeader(label);
             ImGui::PopStyleVar();
             ImGui::PopStyleColor(3);
@@ -303,7 +306,7 @@ namespace SF::Engine
     }
 
 /// RGBA colour picker (swatch + picker).
-/// @param ref  Vec4 l-value
+/// @param ref  ::SF::Engine::Vec4 l-value
 #define SF_WIDGET_COLOR(label, ref)                                                                                    \
     if (_wb.IsOpen())                                                                                                  \
     {                                                                                                                  \
@@ -343,7 +346,7 @@ namespace SF::Engine
     }
 
 /// Typically used below a colour property for a preview.
-/// @param vec4ref  const Vec4&
+/// @param vec4ref  const ::SF::Engine::Vec4&
 #define SF_WIDGET_SWATCH(vec4ref)                                                                                      \
     if (_wb.IsOpen())                                                                                                  \
     {                                                                                                                  \
@@ -381,7 +384,7 @@ namespace SF::Engine
         {                                                                                                              \
         }                                                                                                              \
         ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 52.0f + ImGui::GetCursorPosX());                       \
-        ImGui::PushStyleColor(ImGuiCol_Button, Vec4(0.2f, 0.2f, 0.2f, 1.0f));                                          \
+        ImGui::PushStyleColor(ImGuiCol_Button, ::SF::Engine::Vec4(0.2f, 0.2f, 0.2f, 1.0f));                            \
         if (ImGui::SmallButton("Reset##_wb_rst"))                                                                      \
         {                                                                                                              \
             expr;                                                                                                      \

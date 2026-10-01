@@ -228,42 +228,42 @@ using namespace IMGUI_STB_NAMESPACE;
 void ImGui::StyleColorsDark(ImGuiStyle *dst)
 {
     ImGuiStyle *style = dst ? dst : &ImGui::GetStyle();
-    Vec4 *colors      = style->Colors;
+    ::SF::Engine::Vec4 *colors      = style->Colors;
 
-    colors[ImGuiCol_Text]                 = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-    colors[ImGuiCol_TextDisabled]         = Vec4(0.50f, 0.50f, 0.50f, 1.00f);
-    colors[ImGuiCol_WindowBg]             = Vec4(0.06f, 0.06f, 0.06f, 0.94f);
-    colors[ImGuiCol_ChildBg]              = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_PopupBg]              = Vec4(0.08f, 0.08f, 0.08f, 0.94f);
-    colors[ImGuiCol_Border]               = Vec4(0.43f, 0.43f, 0.50f, 0.50f);
-    colors[ImGuiCol_BorderShadow]         = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_FrameBg]              = Vec4(0.16f, 0.29f, 0.48f, 0.54f);
-    colors[ImGuiCol_FrameBgHovered]       = Vec4(0.26f, 0.59f, 0.98f, 0.40f);
-    colors[ImGuiCol_FrameBgActive]        = Vec4(0.26f, 0.59f, 0.98f, 0.67f);
-    colors[ImGuiCol_TitleBg]              = Vec4(0.04f, 0.04f, 0.04f, 1.00f);
-    colors[ImGuiCol_TitleBgActive]        = Vec4(0.16f, 0.29f, 0.48f, 1.00f);
-    colors[ImGuiCol_TitleBgCollapsed]     = Vec4(0.00f, 0.00f, 0.00f, 0.51f);
-    colors[ImGuiCol_MenuBarBg]            = Vec4(0.14f, 0.14f, 0.14f, 1.00f);
-    colors[ImGuiCol_ScrollbarBg]          = Vec4(0.02f, 0.02f, 0.02f, 0.53f);
-    colors[ImGuiCol_ScrollbarGrab]        = Vec4(0.31f, 0.31f, 0.31f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabHovered] = Vec4(0.41f, 0.41f, 0.41f, 1.00f);
-    colors[ImGuiCol_ScrollbarGrabActive]  = Vec4(0.51f, 0.51f, 0.51f, 1.00f);
-    colors[ImGuiCol_CheckMark]            = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Text]                 = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TextDisabled]         = ::SF::Engine::Vec4(0.50f, 0.50f, 0.50f, 1.00f);
+    colors[ImGuiCol_WindowBg]             = ::SF::Engine::Vec4(0.06f, 0.06f, 0.06f, 0.94f);
+    colors[ImGuiCol_ChildBg]              = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_PopupBg]              = ::SF::Engine::Vec4(0.08f, 0.08f, 0.08f, 0.94f);
+    colors[ImGuiCol_Border]               = ::SF::Engine::Vec4(0.43f, 0.43f, 0.50f, 0.50f);
+    colors[ImGuiCol_BorderShadow]         = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_FrameBg]              = ::SF::Engine::Vec4(0.16f, 0.29f, 0.48f, 0.54f);
+    colors[ImGuiCol_FrameBgHovered]       = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_FrameBgActive]        = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_TitleBg]              = ::SF::Engine::Vec4(0.04f, 0.04f, 0.04f, 1.00f);
+    colors[ImGuiCol_TitleBgActive]        = ::SF::Engine::Vec4(0.16f, 0.29f, 0.48f, 1.00f);
+    colors[ImGuiCol_TitleBgCollapsed]     = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.51f);
+    colors[ImGuiCol_MenuBarBg]            = ::SF::Engine::Vec4(0.14f, 0.14f, 0.14f, 1.00f);
+    colors[ImGuiCol_ScrollbarBg]          = ::SF::Engine::Vec4(0.02f, 0.02f, 0.02f, 0.53f);
+    colors[ImGuiCol_ScrollbarGrab]        = ::SF::Engine::Vec4(0.31f, 0.31f, 0.31f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ::SF::Engine::Vec4(0.41f, 0.41f, 0.41f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive]  = ::SF::Engine::Vec4(0.51f, 0.51f, 0.51f, 1.00f);
+    colors[ImGuiCol_CheckMark]            = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 1.00f);
     colors[ImGuiCol_CheckboxSelectedBg]   = ImLerp(colors[ImGuiCol_FrameBg], colors[ImGuiCol_FrameBgHovered], 0.65f);
-    colors[ImGuiCol_SliderGrab]           = Vec4(0.24f, 0.52f, 0.88f, 1.00f);
-    colors[ImGuiCol_SliderGrabActive]     = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_Button]               = Vec4(0.26f, 0.59f, 0.98f, 0.40f);
-    colors[ImGuiCol_ButtonHovered]        = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_ButtonActive]         = Vec4(0.06f, 0.53f, 0.98f, 1.00f);
-    colors[ImGuiCol_Header]               = Vec4(0.26f, 0.59f, 0.98f, 0.31f);
-    colors[ImGuiCol_HeaderHovered]        = Vec4(0.26f, 0.59f, 0.98f, 0.80f);
-    colors[ImGuiCol_HeaderActive]         = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_SliderGrab]           = ::SF::Engine::Vec4(0.24f, 0.52f, 0.88f, 1.00f);
+    colors[ImGuiCol_SliderGrabActive]     = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Button]               = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_ButtonHovered]        = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_ButtonActive]         = ::SF::Engine::Vec4(0.06f, 0.53f, 0.98f, 1.00f);
+    colors[ImGuiCol_Header]               = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.31f);
+    colors[ImGuiCol_HeaderHovered]        = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.80f);
+    colors[ImGuiCol_HeaderActive]         = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 1.00f);
     colors[ImGuiCol_Separator]            = colors[ImGuiCol_Border];
-    colors[ImGuiCol_SeparatorHovered]     = Vec4(0.10f, 0.40f, 0.75f, 0.78f);
-    colors[ImGuiCol_SeparatorActive]      = Vec4(0.10f, 0.40f, 0.75f, 1.00f);
-    colors[ImGuiCol_ResizeGrip]           = Vec4(0.26f, 0.59f, 0.98f, 0.20f);
-    colors[ImGuiCol_ResizeGripHovered]    = Vec4(0.26f, 0.59f, 0.98f, 0.67f);
-    colors[ImGuiCol_ResizeGripActive]     = Vec4(0.26f, 0.59f, 0.98f, 0.95f);
+    colors[ImGuiCol_SeparatorHovered]     = ::SF::Engine::Vec4(0.10f, 0.40f, 0.75f, 0.78f);
+    colors[ImGuiCol_SeparatorActive]      = ::SF::Engine::Vec4(0.10f, 0.40f, 0.75f, 1.00f);
+    colors[ImGuiCol_ResizeGrip]           = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.20f);
+    colors[ImGuiCol_ResizeGripHovered]    = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_ResizeGripActive]     = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.95f);
     colors[ImGuiCol_InputTextCursor]      = colors[ImGuiCol_Text];
     colors[ImGuiCol_TabHovered]           = colors[ImGuiCol_HeaderHovered];
     colors[ImGuiCol_Tab]                  = ImLerp(colors[ImGuiCol_Header], colors[ImGuiCol_TitleBgActive], 0.80f);
@@ -271,69 +271,69 @@ void ImGui::StyleColorsDark(ImGuiStyle *dst)
     colors[ImGuiCol_TabSelectedOverline] = colors[ImGuiCol_HeaderActive];
     colors[ImGuiCol_TabDimmed]           = ImLerp(colors[ImGuiCol_Tab], colors[ImGuiCol_TitleBg], 0.80f);
     colors[ImGuiCol_TabDimmedSelected]   = ImLerp(colors[ImGuiCol_TabSelected], colors[ImGuiCol_TitleBg], 0.40f);
-    colors[ImGuiCol_TabDimmedSelectedOverline] = Vec4(0.50f, 0.50f, 0.50f, 0.00f);
-    colors[ImGuiCol_DockingPreview]            = colors[ImGuiCol_HeaderActive] * Vec4(1.0f, 1.0f, 1.0f, 0.7f);
-    colors[ImGuiCol_DockingEmptyBg]            = Vec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_PlotLines]                 = Vec4(0.61f, 0.61f, 0.61f, 1.00f);
-    colors[ImGuiCol_PlotLinesHovered]          = Vec4(1.00f, 0.43f, 0.35f, 1.00f);
-    colors[ImGuiCol_PlotHistogram]             = Vec4(0.90f, 0.70f, 0.00f, 1.00f);
-    colors[ImGuiCol_PlotHistogramHovered]      = Vec4(1.00f, 0.60f, 0.00f, 1.00f);
-    colors[ImGuiCol_TableHeaderBg]             = Vec4(0.19f, 0.19f, 0.20f, 1.00f);
-    colors[ImGuiCol_TableBorderStrong]         = Vec4(0.31f, 0.31f, 0.35f, 1.00f); // Prefer using Alpha=1.0 here
-    colors[ImGuiCol_TableBorderLight]          = Vec4(0.23f, 0.23f, 0.25f, 1.00f); // Prefer using Alpha=1.0 here
-    colors[ImGuiCol_TableRowBg]                = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_TableRowBgAlt]             = Vec4(1.00f, 1.00f, 1.00f, 0.06f);
+    colors[ImGuiCol_TabDimmedSelectedOverline] = ::SF::Engine::Vec4(0.50f, 0.50f, 0.50f, 0.00f);
+    colors[ImGuiCol_DockingPreview]            = colors[ImGuiCol_HeaderActive] * ::SF::Engine::Vec4(1.0f, 1.0f, 1.0f, 0.7f);
+    colors[ImGuiCol_DockingEmptyBg]            = ::SF::Engine::Vec4(0.20f, 0.20f, 0.20f, 1.00f);
+    colors[ImGuiCol_PlotLines]                 = ::SF::Engine::Vec4(0.61f, 0.61f, 0.61f, 1.00f);
+    colors[ImGuiCol_PlotLinesHovered]          = ::SF::Engine::Vec4(1.00f, 0.43f, 0.35f, 1.00f);
+    colors[ImGuiCol_PlotHistogram]             = ::SF::Engine::Vec4(0.90f, 0.70f, 0.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogramHovered]      = ::SF::Engine::Vec4(1.00f, 0.60f, 0.00f, 1.00f);
+    colors[ImGuiCol_TableHeaderBg]             = ::SF::Engine::Vec4(0.19f, 0.19f, 0.20f, 1.00f);
+    colors[ImGuiCol_TableBorderStrong]         = ::SF::Engine::Vec4(0.31f, 0.31f, 0.35f, 1.00f); // Prefer using Alpha=1.0 here
+    colors[ImGuiCol_TableBorderLight]          = ::SF::Engine::Vec4(0.23f, 0.23f, 0.25f, 1.00f); // Prefer using Alpha=1.0 here
+    colors[ImGuiCol_TableRowBg]                = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_TableRowBgAlt]             = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.06f);
     colors[ImGuiCol_TextLink]                  = colors[ImGuiCol_HeaderActive];
-    colors[ImGuiCol_TextSelectedBg]            = Vec4(0.26f, 0.59f, 0.98f, 0.35f);
+    colors[ImGuiCol_TextSelectedBg]            = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.35f);
     colors[ImGuiCol_TreeLines]                 = colors[ImGuiCol_Border];
-    colors[ImGuiCol_DragDropTarget]            = Vec4(1.00f, 1.00f, 0.00f, 0.90f);
-    colors[ImGuiCol_DragDropTargetBg]          = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_UnsavedMarker]             = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-    colors[ImGuiCol_NavCursor]                 = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_NavWindowingHighlight]     = Vec4(1.00f, 1.00f, 1.00f, 0.70f);
-    colors[ImGuiCol_NavWindowingDimBg]         = Vec4(0.80f, 0.80f, 0.80f, 0.20f);
-    colors[ImGuiCol_ModalWindowDimBg]          = Vec4(0.80f, 0.80f, 0.80f, 0.35f);
+    colors[ImGuiCol_DragDropTarget]            = ::SF::Engine::Vec4(1.00f, 1.00f, 0.00f, 0.90f);
+    colors[ImGuiCol_DragDropTargetBg]          = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_UnsavedMarker]             = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_NavCursor]                 = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_NavWindowingHighlight]     = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg]         = ::SF::Engine::Vec4(0.80f, 0.80f, 0.80f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg]          = ::SF::Engine::Vec4(0.80f, 0.80f, 0.80f, 0.35f);
 }
 
 void ImGui::StyleColorsClassic(ImGuiStyle *dst)
 {
     ImGuiStyle *style = dst ? dst : &ImGui::GetStyle();
-    Vec4 *colors      = style->Colors;
+    ::SF::Engine::Vec4 *colors      = style->Colors;
 
-    colors[ImGuiCol_Text]                 = Vec4(0.90f, 0.90f, 0.90f, 1.00f);
-    colors[ImGuiCol_TextDisabled]         = Vec4(0.60f, 0.60f, 0.60f, 1.00f);
-    colors[ImGuiCol_WindowBg]             = Vec4(0.00f, 0.00f, 0.00f, 0.85f);
-    colors[ImGuiCol_ChildBg]              = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_PopupBg]              = Vec4(0.11f, 0.11f, 0.14f, 0.92f);
-    colors[ImGuiCol_Border]               = Vec4(0.50f, 0.50f, 0.50f, 0.50f);
-    colors[ImGuiCol_BorderShadow]         = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_FrameBg]              = Vec4(0.43f, 0.43f, 0.43f, 0.39f);
-    colors[ImGuiCol_FrameBgHovered]       = Vec4(0.47f, 0.47f, 0.69f, 0.40f);
-    colors[ImGuiCol_FrameBgActive]        = Vec4(0.42f, 0.41f, 0.64f, 0.69f);
-    colors[ImGuiCol_TitleBg]              = Vec4(0.27f, 0.27f, 0.54f, 0.83f);
-    colors[ImGuiCol_TitleBgActive]        = Vec4(0.32f, 0.32f, 0.63f, 0.87f);
-    colors[ImGuiCol_TitleBgCollapsed]     = Vec4(0.40f, 0.40f, 0.80f, 0.20f);
-    colors[ImGuiCol_MenuBarBg]            = Vec4(0.40f, 0.40f, 0.55f, 0.80f);
-    colors[ImGuiCol_ScrollbarBg]          = Vec4(0.20f, 0.25f, 0.30f, 0.60f);
-    colors[ImGuiCol_ScrollbarGrab]        = Vec4(0.40f, 0.40f, 0.80f, 0.30f);
-    colors[ImGuiCol_ScrollbarGrabHovered] = Vec4(0.40f, 0.40f, 0.80f, 0.40f);
-    colors[ImGuiCol_ScrollbarGrabActive]  = Vec4(0.41f, 0.39f, 0.80f, 0.60f);
-    colors[ImGuiCol_CheckMark]            = Vec4(0.90f, 0.90f, 0.90f, 0.50f);
+    colors[ImGuiCol_Text]                 = ::SF::Engine::Vec4(0.90f, 0.90f, 0.90f, 1.00f);
+    colors[ImGuiCol_TextDisabled]         = ::SF::Engine::Vec4(0.60f, 0.60f, 0.60f, 1.00f);
+    colors[ImGuiCol_WindowBg]             = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.85f);
+    colors[ImGuiCol_ChildBg]              = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_PopupBg]              = ::SF::Engine::Vec4(0.11f, 0.11f, 0.14f, 0.92f);
+    colors[ImGuiCol_Border]               = ::SF::Engine::Vec4(0.50f, 0.50f, 0.50f, 0.50f);
+    colors[ImGuiCol_BorderShadow]         = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_FrameBg]              = ::SF::Engine::Vec4(0.43f, 0.43f, 0.43f, 0.39f);
+    colors[ImGuiCol_FrameBgHovered]       = ::SF::Engine::Vec4(0.47f, 0.47f, 0.69f, 0.40f);
+    colors[ImGuiCol_FrameBgActive]        = ::SF::Engine::Vec4(0.42f, 0.41f, 0.64f, 0.69f);
+    colors[ImGuiCol_TitleBg]              = ::SF::Engine::Vec4(0.27f, 0.27f, 0.54f, 0.83f);
+    colors[ImGuiCol_TitleBgActive]        = ::SF::Engine::Vec4(0.32f, 0.32f, 0.63f, 0.87f);
+    colors[ImGuiCol_TitleBgCollapsed]     = ::SF::Engine::Vec4(0.40f, 0.40f, 0.80f, 0.20f);
+    colors[ImGuiCol_MenuBarBg]            = ::SF::Engine::Vec4(0.40f, 0.40f, 0.55f, 0.80f);
+    colors[ImGuiCol_ScrollbarBg]          = ::SF::Engine::Vec4(0.20f, 0.25f, 0.30f, 0.60f);
+    colors[ImGuiCol_ScrollbarGrab]        = ::SF::Engine::Vec4(0.40f, 0.40f, 0.80f, 0.30f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ::SF::Engine::Vec4(0.40f, 0.40f, 0.80f, 0.40f);
+    colors[ImGuiCol_ScrollbarGrabActive]  = ::SF::Engine::Vec4(0.41f, 0.39f, 0.80f, 0.60f);
+    colors[ImGuiCol_CheckMark]            = ::SF::Engine::Vec4(0.90f, 0.90f, 0.90f, 0.50f);
     colors[ImGuiCol_CheckboxSelectedBg]   = ImLerp(colors[ImGuiCol_FrameBg], colors[ImGuiCol_FrameBgActive], 0.65f);
-    colors[ImGuiCol_SliderGrab]           = Vec4(1.00f, 1.00f, 1.00f, 0.30f);
-    colors[ImGuiCol_SliderGrabActive]     = Vec4(0.41f, 0.39f, 0.80f, 0.60f);
-    colors[ImGuiCol_Button]               = Vec4(0.35f, 0.40f, 0.61f, 0.62f);
-    colors[ImGuiCol_ButtonHovered]        = Vec4(0.40f, 0.48f, 0.71f, 0.79f);
-    colors[ImGuiCol_ButtonActive]         = Vec4(0.46f, 0.54f, 0.80f, 1.00f);
-    colors[ImGuiCol_Header]               = Vec4(0.40f, 0.40f, 0.90f, 0.45f);
-    colors[ImGuiCol_HeaderHovered]        = Vec4(0.45f, 0.45f, 0.90f, 0.80f);
-    colors[ImGuiCol_HeaderActive]         = Vec4(0.53f, 0.53f, 0.87f, 0.80f);
-    colors[ImGuiCol_Separator]            = Vec4(0.50f, 0.50f, 0.50f, 0.60f);
-    colors[ImGuiCol_SeparatorHovered]     = Vec4(0.60f, 0.60f, 0.70f, 1.00f);
-    colors[ImGuiCol_SeparatorActive]      = Vec4(0.70f, 0.70f, 0.90f, 1.00f);
-    colors[ImGuiCol_ResizeGrip]           = Vec4(1.00f, 1.00f, 1.00f, 0.10f);
-    colors[ImGuiCol_ResizeGripHovered]    = Vec4(0.78f, 0.82f, 1.00f, 0.60f);
-    colors[ImGuiCol_ResizeGripActive]     = Vec4(0.78f, 0.82f, 1.00f, 0.90f);
+    colors[ImGuiCol_SliderGrab]           = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.30f);
+    colors[ImGuiCol_SliderGrabActive]     = ::SF::Engine::Vec4(0.41f, 0.39f, 0.80f, 0.60f);
+    colors[ImGuiCol_Button]               = ::SF::Engine::Vec4(0.35f, 0.40f, 0.61f, 0.62f);
+    colors[ImGuiCol_ButtonHovered]        = ::SF::Engine::Vec4(0.40f, 0.48f, 0.71f, 0.79f);
+    colors[ImGuiCol_ButtonActive]         = ::SF::Engine::Vec4(0.46f, 0.54f, 0.80f, 1.00f);
+    colors[ImGuiCol_Header]               = ::SF::Engine::Vec4(0.40f, 0.40f, 0.90f, 0.45f);
+    colors[ImGuiCol_HeaderHovered]        = ::SF::Engine::Vec4(0.45f, 0.45f, 0.90f, 0.80f);
+    colors[ImGuiCol_HeaderActive]         = ::SF::Engine::Vec4(0.53f, 0.53f, 0.87f, 0.80f);
+    colors[ImGuiCol_Separator]            = ::SF::Engine::Vec4(0.50f, 0.50f, 0.50f, 0.60f);
+    colors[ImGuiCol_SeparatorHovered]     = ::SF::Engine::Vec4(0.60f, 0.60f, 0.70f, 1.00f);
+    colors[ImGuiCol_SeparatorActive]      = ::SF::Engine::Vec4(0.70f, 0.70f, 0.90f, 1.00f);
+    colors[ImGuiCol_ResizeGrip]           = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.10f);
+    colors[ImGuiCol_ResizeGripHovered]    = ::SF::Engine::Vec4(0.78f, 0.82f, 1.00f, 0.60f);
+    colors[ImGuiCol_ResizeGripActive]     = ::SF::Engine::Vec4(0.78f, 0.82f, 1.00f, 0.90f);
     colors[ImGuiCol_InputTextCursor]      = colors[ImGuiCol_Text];
     colors[ImGuiCol_TabHovered]           = colors[ImGuiCol_HeaderHovered];
     colors[ImGuiCol_Tab]                  = ImLerp(colors[ImGuiCol_Header], colors[ImGuiCol_TitleBgActive], 0.80f);
@@ -341,70 +341,70 @@ void ImGui::StyleColorsClassic(ImGuiStyle *dst)
     colors[ImGuiCol_TabSelectedOverline] = colors[ImGuiCol_HeaderActive];
     colors[ImGuiCol_TabDimmed]           = ImLerp(colors[ImGuiCol_Tab], colors[ImGuiCol_TitleBg], 0.80f);
     colors[ImGuiCol_TabDimmedSelected]   = ImLerp(colors[ImGuiCol_TabSelected], colors[ImGuiCol_TitleBg], 0.40f);
-    colors[ImGuiCol_TabDimmedSelectedOverline] = Vec4(0.53f, 0.53f, 0.87f, 0.00f);
-    colors[ImGuiCol_DockingPreview]            = colors[ImGuiCol_Header] * Vec4(1.0f, 1.0f, 1.0f, 0.7f);
-    colors[ImGuiCol_DockingEmptyBg]            = Vec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_PlotLines]                 = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-    colors[ImGuiCol_PlotLinesHovered]          = Vec4(0.90f, 0.70f, 0.00f, 1.00f);
-    colors[ImGuiCol_PlotHistogram]             = Vec4(0.90f, 0.70f, 0.00f, 1.00f);
-    colors[ImGuiCol_PlotHistogramHovered]      = Vec4(1.00f, 0.60f, 0.00f, 1.00f);
-    colors[ImGuiCol_TableHeaderBg]             = Vec4(0.27f, 0.27f, 0.38f, 1.00f);
-    colors[ImGuiCol_TableBorderStrong]         = Vec4(0.31f, 0.31f, 0.45f, 1.00f); // Prefer using Alpha=1.0 here
-    colors[ImGuiCol_TableBorderLight]          = Vec4(0.26f, 0.26f, 0.28f, 1.00f); // Prefer using Alpha=1.0 here
-    colors[ImGuiCol_TableRowBg]                = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_TableRowBgAlt]             = Vec4(1.00f, 1.00f, 1.00f, 0.07f);
+    colors[ImGuiCol_TabDimmedSelectedOverline] = ::SF::Engine::Vec4(0.53f, 0.53f, 0.87f, 0.00f);
+    colors[ImGuiCol_DockingPreview]            = colors[ImGuiCol_Header] * ::SF::Engine::Vec4(1.0f, 1.0f, 1.0f, 0.7f);
+    colors[ImGuiCol_DockingEmptyBg]            = ::SF::Engine::Vec4(0.20f, 0.20f, 0.20f, 1.00f);
+    colors[ImGuiCol_PlotLines]                 = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_PlotLinesHovered]          = ::SF::Engine::Vec4(0.90f, 0.70f, 0.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogram]             = ::SF::Engine::Vec4(0.90f, 0.70f, 0.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogramHovered]      = ::SF::Engine::Vec4(1.00f, 0.60f, 0.00f, 1.00f);
+    colors[ImGuiCol_TableHeaderBg]             = ::SF::Engine::Vec4(0.27f, 0.27f, 0.38f, 1.00f);
+    colors[ImGuiCol_TableBorderStrong]         = ::SF::Engine::Vec4(0.31f, 0.31f, 0.45f, 1.00f); // Prefer using Alpha=1.0 here
+    colors[ImGuiCol_TableBorderLight]          = ::SF::Engine::Vec4(0.26f, 0.26f, 0.28f, 1.00f); // Prefer using Alpha=1.0 here
+    colors[ImGuiCol_TableRowBg]                = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_TableRowBgAlt]             = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.07f);
     colors[ImGuiCol_TextLink]                  = colors[ImGuiCol_HeaderActive];
-    colors[ImGuiCol_TextSelectedBg]            = Vec4(0.00f, 0.00f, 1.00f, 0.35f);
+    colors[ImGuiCol_TextSelectedBg]            = ::SF::Engine::Vec4(0.00f, 0.00f, 1.00f, 0.35f);
     colors[ImGuiCol_TreeLines]                 = colors[ImGuiCol_Border];
-    colors[ImGuiCol_DragDropTarget]            = Vec4(1.00f, 1.00f, 0.00f, 0.90f);
-    colors[ImGuiCol_DragDropTargetBg]          = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_UnsavedMarker]             = Vec4(0.90f, 0.90f, 0.90f, 1.00f);
+    colors[ImGuiCol_DragDropTarget]            = ::SF::Engine::Vec4(1.00f, 1.00f, 0.00f, 0.90f);
+    colors[ImGuiCol_DragDropTargetBg]          = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_UnsavedMarker]             = ::SF::Engine::Vec4(0.90f, 0.90f, 0.90f, 1.00f);
     colors[ImGuiCol_NavCursor]                 = colors[ImGuiCol_HeaderHovered];
-    colors[ImGuiCol_NavWindowingHighlight]     = Vec4(1.00f, 1.00f, 1.00f, 0.70f);
-    colors[ImGuiCol_NavWindowingDimBg]         = Vec4(0.80f, 0.80f, 0.80f, 0.20f);
-    colors[ImGuiCol_ModalWindowDimBg]          = Vec4(0.20f, 0.20f, 0.20f, 0.35f);
+    colors[ImGuiCol_NavWindowingHighlight]     = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg]         = ::SF::Engine::Vec4(0.80f, 0.80f, 0.80f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg]          = ::SF::Engine::Vec4(0.20f, 0.20f, 0.20f, 0.35f);
 }
 
 // Those light colors are better suited with a thicker font than the default one + FrameBorder
 void ImGui::StyleColorsLight(ImGuiStyle *dst)
 {
     ImGuiStyle *style = dst ? dst : &ImGui::GetStyle();
-    Vec4 *colors      = style->Colors;
+    ::SF::Engine::Vec4 *colors      = style->Colors;
 
-    colors[ImGuiCol_Text]                 = Vec4(0.00f, 0.00f, 0.00f, 1.00f);
-    colors[ImGuiCol_TextDisabled]         = Vec4(0.60f, 0.60f, 0.60f, 1.00f);
-    colors[ImGuiCol_WindowBg]             = Vec4(0.94f, 0.94f, 0.94f, 1.00f);
-    colors[ImGuiCol_ChildBg]              = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_PopupBg]              = Vec4(1.00f, 1.00f, 1.00f, 0.98f);
-    colors[ImGuiCol_Border]               = Vec4(0.00f, 0.00f, 0.00f, 0.30f);
-    colors[ImGuiCol_BorderShadow]         = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_FrameBg]              = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-    colors[ImGuiCol_FrameBgHovered]       = Vec4(0.26f, 0.59f, 0.98f, 0.40f);
-    colors[ImGuiCol_FrameBgActive]        = Vec4(0.26f, 0.59f, 0.98f, 0.67f);
-    colors[ImGuiCol_TitleBg]              = Vec4(0.96f, 0.96f, 0.96f, 1.00f);
-    colors[ImGuiCol_TitleBgActive]        = Vec4(0.82f, 0.82f, 0.82f, 1.00f);
-    colors[ImGuiCol_TitleBgCollapsed]     = Vec4(1.00f, 1.00f, 1.00f, 0.51f);
-    colors[ImGuiCol_MenuBarBg]            = Vec4(0.86f, 0.86f, 0.86f, 1.00f);
-    colors[ImGuiCol_ScrollbarBg]          = Vec4(0.98f, 0.98f, 0.98f, 0.53f);
-    colors[ImGuiCol_ScrollbarGrab]        = Vec4(0.69f, 0.69f, 0.69f, 0.80f);
-    colors[ImGuiCol_ScrollbarGrabHovered] = Vec4(0.49f, 0.49f, 0.49f, 0.80f);
-    colors[ImGuiCol_ScrollbarGrabActive]  = Vec4(0.49f, 0.49f, 0.49f, 1.00f);
-    colors[ImGuiCol_CheckMark]            = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_CheckboxSelectedBg]   = Vec4(0.95f, 0.97f, 1.00f, 1.00f);
-    colors[ImGuiCol_SliderGrab]           = Vec4(0.26f, 0.59f, 0.98f, 0.78f);
-    colors[ImGuiCol_SliderGrabActive]     = Vec4(0.46f, 0.54f, 0.80f, 0.60f);
-    colors[ImGuiCol_Button]               = Vec4(0.26f, 0.59f, 0.98f, 0.40f);
-    colors[ImGuiCol_ButtonHovered]        = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_ButtonActive]         = Vec4(0.06f, 0.53f, 0.98f, 1.00f);
-    colors[ImGuiCol_Header]               = Vec4(0.26f, 0.59f, 0.98f, 0.31f);
-    colors[ImGuiCol_HeaderHovered]        = Vec4(0.26f, 0.59f, 0.98f, 0.80f);
-    colors[ImGuiCol_HeaderActive]         = Vec4(0.26f, 0.59f, 0.98f, 1.00f);
-    colors[ImGuiCol_Separator]            = Vec4(0.39f, 0.39f, 0.39f, 0.62f);
-    colors[ImGuiCol_SeparatorHovered]     = Vec4(0.14f, 0.44f, 0.80f, 0.78f);
-    colors[ImGuiCol_SeparatorActive]      = Vec4(0.14f, 0.44f, 0.80f, 1.00f);
-    colors[ImGuiCol_ResizeGrip]           = Vec4(0.35f, 0.35f, 0.35f, 0.17f);
-    colors[ImGuiCol_ResizeGripHovered]    = Vec4(0.26f, 0.59f, 0.98f, 0.67f);
-    colors[ImGuiCol_ResizeGripActive]     = Vec4(0.26f, 0.59f, 0.98f, 0.95f);
+    colors[ImGuiCol_Text]                 = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 1.00f);
+    colors[ImGuiCol_TextDisabled]         = ::SF::Engine::Vec4(0.60f, 0.60f, 0.60f, 1.00f);
+    colors[ImGuiCol_WindowBg]             = ::SF::Engine::Vec4(0.94f, 0.94f, 0.94f, 1.00f);
+    colors[ImGuiCol_ChildBg]              = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_PopupBg]              = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.98f);
+    colors[ImGuiCol_Border]               = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.30f);
+    colors[ImGuiCol_BorderShadow]         = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_FrameBg]              = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_FrameBgHovered]       = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_FrameBgActive]        = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_TitleBg]              = ::SF::Engine::Vec4(0.96f, 0.96f, 0.96f, 1.00f);
+    colors[ImGuiCol_TitleBgActive]        = ::SF::Engine::Vec4(0.82f, 0.82f, 0.82f, 1.00f);
+    colors[ImGuiCol_TitleBgCollapsed]     = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.51f);
+    colors[ImGuiCol_MenuBarBg]            = ::SF::Engine::Vec4(0.86f, 0.86f, 0.86f, 1.00f);
+    colors[ImGuiCol_ScrollbarBg]          = ::SF::Engine::Vec4(0.98f, 0.98f, 0.98f, 0.53f);
+    colors[ImGuiCol_ScrollbarGrab]        = ::SF::Engine::Vec4(0.69f, 0.69f, 0.69f, 0.80f);
+    colors[ImGuiCol_ScrollbarGrabHovered] = ::SF::Engine::Vec4(0.49f, 0.49f, 0.49f, 0.80f);
+    colors[ImGuiCol_ScrollbarGrabActive]  = ::SF::Engine::Vec4(0.49f, 0.49f, 0.49f, 1.00f);
+    colors[ImGuiCol_CheckMark]            = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_CheckboxSelectedBg]   = ::SF::Engine::Vec4(0.95f, 0.97f, 1.00f, 1.00f);
+    colors[ImGuiCol_SliderGrab]           = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.78f);
+    colors[ImGuiCol_SliderGrabActive]     = ::SF::Engine::Vec4(0.46f, 0.54f, 0.80f, 0.60f);
+    colors[ImGuiCol_Button]               = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.40f);
+    colors[ImGuiCol_ButtonHovered]        = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_ButtonActive]         = ::SF::Engine::Vec4(0.06f, 0.53f, 0.98f, 1.00f);
+    colors[ImGuiCol_Header]               = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.31f);
+    colors[ImGuiCol_HeaderHovered]        = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.80f);
+    colors[ImGuiCol_HeaderActive]         = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 1.00f);
+    colors[ImGuiCol_Separator]            = ::SF::Engine::Vec4(0.39f, 0.39f, 0.39f, 0.62f);
+    colors[ImGuiCol_SeparatorHovered]     = ::SF::Engine::Vec4(0.14f, 0.44f, 0.80f, 0.78f);
+    colors[ImGuiCol_SeparatorActive]      = ::SF::Engine::Vec4(0.14f, 0.44f, 0.80f, 1.00f);
+    colors[ImGuiCol_ResizeGrip]           = ::SF::Engine::Vec4(0.35f, 0.35f, 0.35f, 0.17f);
+    colors[ImGuiCol_ResizeGripHovered]    = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.67f);
+    colors[ImGuiCol_ResizeGripActive]     = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.95f);
     colors[ImGuiCol_InputTextCursor]      = colors[ImGuiCol_Text];
     colors[ImGuiCol_TabHovered]           = colors[ImGuiCol_HeaderHovered];
     colors[ImGuiCol_Tab]                  = ImLerp(colors[ImGuiCol_Header], colors[ImGuiCol_TitleBgActive], 0.90f);
@@ -412,28 +412,28 @@ void ImGui::StyleColorsLight(ImGuiStyle *dst)
     colors[ImGuiCol_TabSelectedOverline] = colors[ImGuiCol_HeaderActive];
     colors[ImGuiCol_TabDimmed]           = ImLerp(colors[ImGuiCol_Tab], colors[ImGuiCol_TitleBg], 0.80f);
     colors[ImGuiCol_TabDimmedSelected]   = ImLerp(colors[ImGuiCol_TabSelected], colors[ImGuiCol_TitleBg], 0.40f);
-    colors[ImGuiCol_TabDimmedSelectedOverline] = Vec4(0.26f, 0.59f, 1.00f, 0.00f);
-    colors[ImGuiCol_DockingPreview]            = colors[ImGuiCol_Header] * Vec4(1.0f, 1.0f, 1.0f, 0.7f);
-    colors[ImGuiCol_DockingEmptyBg]            = Vec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_PlotLines]                 = Vec4(0.39f, 0.39f, 0.39f, 1.00f);
-    colors[ImGuiCol_PlotLinesHovered]          = Vec4(1.00f, 0.43f, 0.35f, 1.00f);
-    colors[ImGuiCol_PlotHistogram]             = Vec4(0.90f, 0.70f, 0.00f, 1.00f);
-    colors[ImGuiCol_PlotHistogramHovered]      = Vec4(1.00f, 0.45f, 0.00f, 1.00f);
-    colors[ImGuiCol_TableHeaderBg]             = Vec4(0.78f, 0.87f, 0.98f, 1.00f);
-    colors[ImGuiCol_TableBorderStrong]         = Vec4(0.57f, 0.57f, 0.64f, 1.00f); // Prefer using Alpha=1.0 here
-    colors[ImGuiCol_TableBorderLight]          = Vec4(0.68f, 0.68f, 0.74f, 1.00f); // Prefer using Alpha=1.0 here
-    colors[ImGuiCol_TableRowBg]                = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_TableRowBgAlt]             = Vec4(0.30f, 0.30f, 0.30f, 0.09f);
+    colors[ImGuiCol_TabDimmedSelectedOverline] = ::SF::Engine::Vec4(0.26f, 0.59f, 1.00f, 0.00f);
+    colors[ImGuiCol_DockingPreview]            = colors[ImGuiCol_Header] * ::SF::Engine::Vec4(1.0f, 1.0f, 1.0f, 0.7f);
+    colors[ImGuiCol_DockingEmptyBg]            = ::SF::Engine::Vec4(0.20f, 0.20f, 0.20f, 1.00f);
+    colors[ImGuiCol_PlotLines]                 = ::SF::Engine::Vec4(0.39f, 0.39f, 0.39f, 1.00f);
+    colors[ImGuiCol_PlotLinesHovered]          = ::SF::Engine::Vec4(1.00f, 0.43f, 0.35f, 1.00f);
+    colors[ImGuiCol_PlotHistogram]             = ::SF::Engine::Vec4(0.90f, 0.70f, 0.00f, 1.00f);
+    colors[ImGuiCol_PlotHistogramHovered]      = ::SF::Engine::Vec4(1.00f, 0.45f, 0.00f, 1.00f);
+    colors[ImGuiCol_TableHeaderBg]             = ::SF::Engine::Vec4(0.78f, 0.87f, 0.98f, 1.00f);
+    colors[ImGuiCol_TableBorderStrong]         = ::SF::Engine::Vec4(0.57f, 0.57f, 0.64f, 1.00f); // Prefer using Alpha=1.0 here
+    colors[ImGuiCol_TableBorderLight]          = ::SF::Engine::Vec4(0.68f, 0.68f, 0.74f, 1.00f); // Prefer using Alpha=1.0 here
+    colors[ImGuiCol_TableRowBg]                = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_TableRowBgAlt]             = ::SF::Engine::Vec4(0.30f, 0.30f, 0.30f, 0.09f);
     colors[ImGuiCol_TextLink]                  = colors[ImGuiCol_HeaderActive];
-    colors[ImGuiCol_TextSelectedBg]            = Vec4(0.26f, 0.59f, 0.98f, 0.35f);
+    colors[ImGuiCol_TextSelectedBg]            = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.35f);
     colors[ImGuiCol_TreeLines]                 = colors[ImGuiCol_Border];
-    colors[ImGuiCol_DragDropTarget]            = Vec4(0.26f, 0.59f, 0.98f, 0.95f);
-    colors[ImGuiCol_DragDropTargetBg]          = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-    colors[ImGuiCol_UnsavedMarker]             = Vec4(0.00f, 0.00f, 0.00f, 1.00f);
+    colors[ImGuiCol_DragDropTarget]            = ::SF::Engine::Vec4(0.26f, 0.59f, 0.98f, 0.95f);
+    colors[ImGuiCol_DragDropTargetBg]          = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_UnsavedMarker]             = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 1.00f);
     colors[ImGuiCol_NavCursor]                 = colors[ImGuiCol_HeaderHovered];
-    colors[ImGuiCol_NavWindowingHighlight]     = Vec4(0.70f, 0.70f, 0.70f, 0.70f);
-    colors[ImGuiCol_NavWindowingDimBg]         = Vec4(0.20f, 0.20f, 0.20f, 0.20f);
-    colors[ImGuiCol_ModalWindowDimBg]          = Vec4(0.20f, 0.20f, 0.20f, 0.35f);
+    colors[ImGuiCol_NavWindowingHighlight]     = ::SF::Engine::Vec4(0.70f, 0.70f, 0.70f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg]         = ::SF::Engine::Vec4(0.20f, 0.20f, 0.20f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg]          = ::SF::Engine::Vec4(0.20f, 0.20f, 0.20f, 0.35f);
 }
 
 //-----------------------------------------------------------------------------
@@ -446,7 +446,7 @@ ImDrawListSharedData::ImDrawListSharedData()
     for (int i = 0; i < IM_COUNTOF(ArcFastVtx); i++)
     {
         const float a = ((float) i * 2 * IM_PI) / (float) IM_COUNTOF(ArcFastVtx);
-        ArcFastVtx[i] = Vec2(ImCos(a), ImSin(a));
+        ArcFastVtx[i] = ::SF::Engine::Vec2(ImCos(a), ImSin(a));
     }
 }
 
@@ -497,8 +497,8 @@ void ImDrawList::_ResetForNewFrame()
 {
     // Verify that the ImDrawCmd fields we want to memcmp() are contiguous in memory to match ImDrawCmdHeader.
     IM_STATIC_ASSERT(offsetof(ImDrawCmd, ClipRect) == 0);
-    IM_STATIC_ASSERT(offsetof(ImDrawCmd, TexRef) == sizeof(Vec4));
-    IM_STATIC_ASSERT(offsetof(ImDrawCmd, VtxOffset) == sizeof(Vec4) + sizeof(ImTextureRef));
+    IM_STATIC_ASSERT(offsetof(ImDrawCmd, TexRef) == sizeof(::SF::Engine::Vec4));
+    IM_STATIC_ASSERT(offsetof(ImDrawCmd, VtxOffset) == sizeof(::SF::Engine::Vec4) + sizeof(ImTextureRef));
     IM_STATIC_ASSERT(offsetof(ImDrawCmd, ClipRect) == offsetof(ImDrawCmdHeader, ClipRect));
     IM_STATIC_ASSERT(offsetof(ImDrawCmd, TexRef) == offsetof(ImDrawCmdHeader, TexRef));
     IM_STATIC_ASSERT(offsetof(ImDrawCmd, VtxOffset) == offsetof(ImDrawCmdHeader, VtxOffset));
@@ -641,7 +641,7 @@ void ImDrawList::_OnChangedClipRect()
     // If current command is used with different settings we need to add a new command
     IM_ASSERT_PARANOID(CmdBuffer.Size > 0);
     ImDrawCmd *curr_cmd = &CmdBuffer.Data[CmdBuffer.Size - 1];
-    if (curr_cmd->ElemCount != 0 && memcmp(&curr_cmd->ClipRect, &_CmdHeader.ClipRect, sizeof(Vec4)) != 0)
+    if (curr_cmd->ElemCount != 0 && memcmp(&curr_cmd->ClipRect, &_CmdHeader.ClipRect, sizeof(::SF::Engine::Vec4)) != 0)
     {
         AddDrawCmd();
         return;
@@ -716,12 +716,13 @@ int ImDrawList::_CalcCircleAutoSegmentCount(float radius) const
 
 // Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
 // Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)
-void ImDrawList::PushClipRect(const Vec2 &cr_min, const Vec2 &cr_max, bool intersect_with_current_clip_rect)
+void ImDrawList::PushClipRect(const ::SF::Engine::Vec2 &cr_min, const ::SF::Engine::Vec2 &cr_max,
+                              bool intersect_with_current_clip_rect)
 {
-    Vec4 cr(cr_min.x, cr_min.y, cr_max.x, cr_max.y);
+    ::SF::Engine::Vec4 cr(cr_min.x, cr_min.y, cr_max.x, cr_max.y);
     if (intersect_with_current_clip_rect)
     {
-        Vec4 current = _CmdHeader.ClipRect;
+        ::SF::Engine::Vec4 current = _CmdHeader.ClipRect;
         if (cr.x < current.x)
             cr.x = current.x; // = ClipWith(). Note that passing inverted range wouldn't be fixed here.
         if (cr.y < current.y)
@@ -741,8 +742,8 @@ void ImDrawList::PushClipRect(const Vec2 &cr_min, const Vec2 &cr_max, bool inter
 
 void ImDrawList::PushClipRectFullScreen()
 {
-    PushClipRect(Vec2(_Data->ClipRectFullscreen.x, _Data->ClipRectFullscreen.y),
-                 Vec2(_Data->ClipRectFullscreen.z, _Data->ClipRectFullscreen.w));
+    PushClipRect(::SF::Engine::Vec2(_Data->ClipRectFullscreen.x, _Data->ClipRectFullscreen.y),
+                 ::SF::Engine::Vec2(_Data->ClipRectFullscreen.z, _Data->ClipRectFullscreen.w));
 }
 
 void ImDrawList::PopClipRect()
@@ -828,9 +829,9 @@ void ImDrawList::PrimUnreserve(int idx_count, int vtx_count)
 }
 
 // Fully unrolled with inline call to keep our debug builds decently fast.
-void ImDrawList::PrimRect(const Vec2 &a, const Vec2 &c, uint32_t col)
+void ImDrawList::PrimRect(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &c, uint32_t col)
 {
-    Vec2 b(c.x, a.y), d(a.x, c.y), uv(_Data->TexUvWhitePixel);
+    ::SF::Engine::Vec2 b(c.x, a.y), d(a.x, c.y), uv(_Data->TexUvWhitePixel);
     ImDrawIdx idx       = (ImDrawIdx) _VtxCurrentIdx;
     _IdxWritePtr[0]     = idx;
     _IdxWritePtr[1]     = (ImDrawIdx) (idx + 1);
@@ -855,9 +856,10 @@ void ImDrawList::PrimRect(const Vec2 &a, const Vec2 &c, uint32_t col)
     _IdxWritePtr += 6;
 }
 
-void ImDrawList::PrimRectUV(const Vec2 &a, const Vec2 &c, const Vec2 &uv_a, const Vec2 &uv_c, uint32_t col)
+void ImDrawList::PrimRectUV(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &c, const ::SF::Engine::Vec2 &uv_a,
+                            const ::SF::Engine::Vec2 &uv_c, uint32_t col)
 {
-    Vec2 b(c.x, a.y), d(a.x, c.y), uv_b(uv_c.x, uv_a.y), uv_d(uv_a.x, uv_c.y);
+    ::SF::Engine::Vec2 b(c.x, a.y), d(a.x, c.y), uv_b(uv_c.x, uv_a.y), uv_d(uv_a.x, uv_c.y);
     ImDrawIdx idx       = (ImDrawIdx) _VtxCurrentIdx;
     _IdxWritePtr[0]     = idx;
     _IdxWritePtr[1]     = (ImDrawIdx) (idx + 1);
@@ -882,8 +884,9 @@ void ImDrawList::PrimRectUV(const Vec2 &a, const Vec2 &c, const Vec2 &uv_a, cons
     _IdxWritePtr += 6;
 }
 
-void ImDrawList::PrimQuadUV(const Vec2 &a, const Vec2 &b, const Vec2 &c, const Vec2 &d, const Vec2 &uv_a,
-                            const Vec2 &uv_b, const Vec2 &uv_c, const Vec2 &uv_d, uint32_t col)
+void ImDrawList::PrimQuadUV(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &c,
+                            const ::SF::Engine::Vec2 &d, const ::SF::Engine::Vec2 &uv_a, const ::SF::Engine::Vec2 &uv_b,
+                            const ::SF::Engine::Vec2 &uv_c, const ::SF::Engine::Vec2 &uv_d, uint32_t col)
 {
     ImDrawIdx idx       = (ImDrawIdx) _VtxCurrentIdx;
     _IdxWritePtr[0]     = idx;
@@ -909,8 +912,8 @@ void ImDrawList::PrimQuadUV(const Vec2 &a, const Vec2 &b, const Vec2 &c, const V
     _IdxWritePtr += 6;
 }
 
-    // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using Vec2 and superfluous function calls to
-    // optimize debug/non-inlined builds.
+    // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ::SF::Engine::Vec2 and superfluous
+    // function calls to optimize debug/non-inlined builds.
     // - Those macros expects l-values and need to be used as their own statement.
     // - Those macros are intentionally not surrounded by the 'do {} while (0)' idiom because even that translates to
     // runtime with debug compilers.
@@ -941,15 +944,15 @@ void ImDrawList::PrimQuadUV(const Vec2 &a, const Vec2 &b, const Vec2 &c, const V
         (void) 0
 
 // TODO: Thickness anti-aliased lines cap are missing their AA fringe.
-// We avoid using the Vec2 math operators here to reduce cost to a minimum for debug/non-inlined builds.
-void ImDrawList::AddPolyline(const Vec2 *points, const int points_count, uint32_t col, float thickness,
+// We avoid using the ::SF::Engine::Vec2 math operators here to reduce cost to a minimum for debug/non-inlined builds.
+void ImDrawList::AddPolyline(const ::SF::Engine::Vec2 *points, const int points_count, uint32_t col, float thickness,
                              ImDrawFlags flags)
 {
     if (points_count < 2 || (col & IM_COL32_A_MASK) == 0)
         return;
 
-    const bool closed     = (flags & ImDrawFlags_Closed) != 0;
-    const Vec2 opaque_uv  = _Data->TexUvWhitePixel;
+    const bool closed                  = (flags & ImDrawFlags_Closed) != 0;
+    const ::SF::Engine::Vec2 opaque_uv = _Data->TexUvWhitePixel;
     const int count       = closed ? points_count : points_count - 1; // The number of line segments we need to draw
     const bool thick_line = (thickness > _FringeScale);
 
@@ -993,8 +996,8 @@ void ImDrawList::AddPolyline(const Vec2 *points, const int points_count, uint32_
         // The first <points_count> items are normals at each line point, then after that there are either 2 or 4 temp
         // points for each line point
         _Data->TempBuffer.reserve_discard(points_count * ((use_texture || !thick_line) ? 3 : 5));
-        Vec2 *temp_normals = _Data->TempBuffer.Data;
-        Vec2 *temp_points  = temp_normals + points_count;
+        ::SF::Engine::Vec2 *temp_normals = _Data->TempBuffer.Data;
+        ::SF::Engine::Vec2 *temp_points  = temp_normals + points_count;
 
         // Calculate normals (tangents) for each line segment
         for (int i1 = 0; i1 < count; i1++)
@@ -1058,11 +1061,11 @@ void ImDrawList::AddPolyline(const Vec2 *points, const int points_count, uint32_
                 dm_y *= half_draw_size;
 
                 // Add temporary vertices for the outer edges
-                Vec2 *out_vtx = &temp_points[i2 * 2];
-                out_vtx[0].x  = points[i2].x + dm_x;
-                out_vtx[0].y  = points[i2].y + dm_y;
-                out_vtx[1].x  = points[i2].x - dm_x;
-                out_vtx[1].y  = points[i2].y - dm_y;
+                ::SF::Engine::Vec2 *out_vtx = &temp_points[i2 * 2];
+                out_vtx[0].x                = points[i2].x + dm_x;
+                out_vtx[0].y                = points[i2].y + dm_y;
+                out_vtx[1].x                = points[i2].x - dm_x;
+                out_vtx[1].y                = points[i2].y - dm_y;
 
                 if (use_texture)
                 {
@@ -1099,17 +1102,17 @@ void ImDrawList::AddPolyline(const Vec2 *points, const int points_count, uint32_
             if (use_texture)
             {
                 // If we're using textures we only need to emit the left/right edge vertices
-                Vec4 tex_uvs = _Data->TexUvLines[integer_thickness];
+                ::SF::Engine::Vec4 tex_uvs = _Data->TexUvLines[integer_thickness];
                 /*if (fractional_thickness != 0.0f) // Currently always zero when use_texture==false!
                 {
-                    const Vec4 tex_uvs_1 = _Data->TexUvLines[integer_thickness + 1];
+                    const ::SF::Engine::Vec4 tex_uvs_1 = _Data->TexUvLines[integer_thickness + 1];
                     tex_uvs.x = tex_uvs.x + (tex_uvs_1.x - tex_uvs.x) * fractional_thickness; // inlined ImLerp()
                     tex_uvs.y = tex_uvs.y + (tex_uvs_1.y - tex_uvs.y) * fractional_thickness;
                     tex_uvs.z = tex_uvs.z + (tex_uvs_1.z - tex_uvs.z) * fractional_thickness;
                     tex_uvs.w = tex_uvs.w + (tex_uvs_1.w - tex_uvs.w) * fractional_thickness;
                 }*/
-                Vec2 tex_uv0(tex_uvs.x, tex_uvs.y);
-                Vec2 tex_uv1(tex_uvs.z, tex_uvs.w);
+                ::SF::Engine::Vec2 tex_uv0(tex_uvs.x, tex_uvs.y);
+                ::SF::Engine::Vec2 tex_uv1(tex_uvs.z, tex_uvs.w);
                 for (int i = 0; i < points_count; i++)
                 {
                     _VtxWritePtr[0].pos = temp_points[i * 2 + 0];
@@ -1183,15 +1186,15 @@ void ImDrawList::AddPolyline(const Vec2 *points, const int points_count, uint32_
                 float dm_in_y  = dm_y * half_inner_thickness;
 
                 // Add temporary vertices
-                Vec2 *out_vtx = &temp_points[i2 * 4];
-                out_vtx[0].x  = points[i2].x + dm_out_x;
-                out_vtx[0].y  = points[i2].y + dm_out_y;
-                out_vtx[1].x  = points[i2].x + dm_in_x;
-                out_vtx[1].y  = points[i2].y + dm_in_y;
-                out_vtx[2].x  = points[i2].x - dm_in_x;
-                out_vtx[2].y  = points[i2].y - dm_in_y;
-                out_vtx[3].x  = points[i2].x - dm_out_x;
-                out_vtx[3].y  = points[i2].y - dm_out_y;
+                ::SF::Engine::Vec2 *out_vtx = &temp_points[i2 * 4];
+                out_vtx[0].x                = points[i2].x + dm_out_x;
+                out_vtx[0].y                = points[i2].y + dm_out_y;
+                out_vtx[1].x                = points[i2].x + dm_in_x;
+                out_vtx[1].y                = points[i2].y + dm_in_y;
+                out_vtx[2].x                = points[i2].x - dm_in_x;
+                out_vtx[2].y                = points[i2].y - dm_in_y;
+                out_vtx[3].x                = points[i2].x - dm_out_x;
+                out_vtx[3].y                = points[i2].y - dm_out_y;
 
                 // Add indexes
                 _IdxWritePtr[0]  = (ImDrawIdx) (idx2 + 1);
@@ -1245,9 +1248,9 @@ void ImDrawList::AddPolyline(const Vec2 *points, const int points_count, uint32_
 
         for (int i1 = 0; i1 < count; i1++)
         {
-            const int i2   = (i1 + 1) == points_count ? 0 : i1 + 1;
-            const Vec2 &p1 = points[i1];
-            const Vec2 &p2 = points[i2];
+            const int i2                 = (i1 + 1) == points_count ? 0 : i1 + 1;
+            const ::SF::Engine::Vec2 &p1 = points[i1];
+            const ::SF::Engine::Vec2 &p2 = points[i2];
 
             float dx = p2.x - p1.x;
             float dy = p2.y - p1.y;
@@ -1285,16 +1288,16 @@ void ImDrawList::AddPolyline(const Vec2 *points, const int points_count, uint32_
     }
 }
 
-// - We intentionally avoid using Vec2 and its math operators here to reduce cost to a minimum for debug/non-inlined
-// builds.
+// - We intentionally avoid using ::SF::Engine::Vec2 and its math operators here to reduce cost to a minimum for
+// debug/non-inlined builds.
 // - Filled shapes must always use clockwise winding order. The anti-aliasing fringe depends on it. Counter-clockwise
 // shapes will have "inward" anti-aliasing.
-void ImDrawList::AddConvexPolyFilled(const Vec2 *points, const int points_count, uint32_t col)
+void ImDrawList::AddConvexPolyFilled(const ::SF::Engine::Vec2 *points, const int points_count, uint32_t col)
 {
     if (points_count < 3 || (col & IM_COL32_A_MASK) == 0)
         return;
 
-    const Vec2 uv = _Data->TexUvWhitePixel;
+    const ::SF::Engine::Vec2 uv = _Data->TexUvWhitePixel;
 
     if (Flags & ImDrawListFlags_AntiAliasedFill)
     {
@@ -1318,13 +1321,13 @@ void ImDrawList::AddConvexPolyFilled(const Vec2 *points, const int points_count,
 
         // Compute normals
         _Data->TempBuffer.reserve_discard(points_count);
-        Vec2 *temp_normals = _Data->TempBuffer.Data;
+        ::SF::Engine::Vec2 *temp_normals = _Data->TempBuffer.Data;
         for (int i0 = points_count - 1, i1 = 0; i1 < points_count; i0 = i1++)
         {
-            const Vec2 &p0 = points[i0];
-            const Vec2 &p1 = points[i1];
-            float dx       = p1.x - p0.x;
-            float dy       = p1.y - p0.y;
+            const ::SF::Engine::Vec2 &p0 = points[i0];
+            const ::SF::Engine::Vec2 &p1 = points[i1];
+            float dx                     = p1.x - p0.x;
+            float dy                     = p1.y - p0.y;
             IM_NORMALIZE2F_OVER_ZERO(dx, dy);
             temp_normals[i0].x = dy;
             temp_normals[i0].y = -dx;
@@ -1333,10 +1336,10 @@ void ImDrawList::AddConvexPolyFilled(const Vec2 *points, const int points_count,
         for (int i0 = points_count - 1, i1 = 0; i1 < points_count; i0 = i1++)
         {
             // Average normals
-            const Vec2 &n0 = temp_normals[i0];
-            const Vec2 &n1 = temp_normals[i1];
-            float dm_x     = (n0.x + n1.x) * 0.5f;
-            float dm_y     = (n0.y + n1.y) * 0.5f;
+            const ::SF::Engine::Vec2 &n0 = temp_normals[i0];
+            const ::SF::Engine::Vec2 &n1 = temp_normals[i1];
+            float dm_x                   = (n0.x + n1.x) * 0.5f;
+            float dm_y                   = (n0.y + n1.y) * 0.5f;
             IM_FIXNORMAL2F(dm_x, dm_y);
             dm_x *= AA_SIZE * 0.5f;
             dm_y *= AA_SIZE * 0.5f;
@@ -1386,7 +1389,8 @@ void ImDrawList::AddConvexPolyFilled(const Vec2 *points, const int points_count,
     }
 }
 
-void ImDrawList::_PathArcToFastEx(const Vec2 &center, float radius, int a_min_sample, int a_max_sample, int a_step)
+void ImDrawList::_PathArcToFastEx(const ::SF::Engine::Vec2 &center, float radius, int a_min_sample, int a_max_sample,
+                                  int a_step)
 {
     if (radius < 0.5f)
     {
@@ -1424,7 +1428,7 @@ void ImDrawList::_PathArcToFastEx(const Vec2 &center, float radius, int a_min_sa
     }
 
     _Path.resize(_Path.Size + samples);
-    Vec2 *out_ptr = _Path.Data + (_Path.Size - samples);
+    ::SF::Engine::Vec2 *out_ptr = _Path.Data + (_Path.Size - samples);
 
     int sample_index = a_min_sample;
     if (sample_index < 0 || sample_index >= IM_DRAWLIST_ARCFAST_SAMPLE_MAX)
@@ -1443,9 +1447,9 @@ void ImDrawList::_PathArcToFastEx(const Vec2 &center, float radius, int a_min_sa
             if (sample_index >= IM_DRAWLIST_ARCFAST_SAMPLE_MAX)
                 sample_index -= IM_DRAWLIST_ARCFAST_SAMPLE_MAX;
 
-            const Vec2 s = _Data->ArcFastVtx[sample_index];
-            out_ptr->x   = center.x + s.x * radius;
-            out_ptr->y   = center.y + s.y * radius;
+            const ::SF::Engine::Vec2 s = _Data->ArcFastVtx[sample_index];
+            out_ptr->x                 = center.x + s.x * radius;
+            out_ptr->y                 = center.y + s.y * radius;
             out_ptr++;
         }
     } else
@@ -1457,9 +1461,9 @@ void ImDrawList::_PathArcToFastEx(const Vec2 &center, float radius, int a_min_sa
             if (sample_index < 0)
                 sample_index += IM_DRAWLIST_ARCFAST_SAMPLE_MAX;
 
-            const Vec2 s = _Data->ArcFastVtx[sample_index];
-            out_ptr->x   = center.x + s.x * radius;
-            out_ptr->y   = center.y + s.y * radius;
+            const ::SF::Engine::Vec2 s = _Data->ArcFastVtx[sample_index];
+            out_ptr->x                 = center.x + s.x * radius;
+            out_ptr->y                 = center.y + s.y * radius;
             out_ptr++;
         }
     }
@@ -1470,16 +1474,16 @@ void ImDrawList::_PathArcToFastEx(const Vec2 &center, float radius, int a_min_sa
         if (normalized_max_sample < 0)
             normalized_max_sample += IM_DRAWLIST_ARCFAST_SAMPLE_MAX;
 
-        const Vec2 s = _Data->ArcFastVtx[normalized_max_sample];
-        out_ptr->x   = center.x + s.x * radius;
-        out_ptr->y   = center.y + s.y * radius;
+        const ::SF::Engine::Vec2 s = _Data->ArcFastVtx[normalized_max_sample];
+        out_ptr->x                 = center.x + s.x * radius;
+        out_ptr->y                 = center.y + s.y * radius;
         out_ptr++;
     }
 
     IM_ASSERT_PARANOID(_Path.Data + _Path.Size == out_ptr);
 }
 
-void ImDrawList::_PathArcToN(const Vec2 &center, float radius, float a_min, float a_max, int num_segments)
+void ImDrawList::_PathArcToN(const ::SF::Engine::Vec2 &center, float radius, float a_min, float a_max, int num_segments)
 {
     if (radius < 0.5f)
     {
@@ -1493,12 +1497,12 @@ void ImDrawList::_PathArcToN(const Vec2 &center, float radius, float a_min, floa
     for (int i = 0; i <= num_segments; i++)
     {
         const float a = a_min + ((float) i / (float) num_segments) * (a_max - a_min);
-        _Path.push_back(Vec2(center.x + ImCos(a) * radius, center.y + ImSin(a) * radius));
+        _Path.push_back(::SF::Engine::Vec2(center.x + ImCos(a) * radius, center.y + ImSin(a) * radius));
     }
 }
 
 // 0: East, 3: South, 6: West, 9: North, 12: East
-void ImDrawList::PathArcToFast(const Vec2 &center, float radius, int a_min_of_12, int a_max_of_12)
+void ImDrawList::PathArcToFast(const ::SF::Engine::Vec2 &center, float radius, int a_min_of_12, int a_max_of_12)
 {
     if (radius < 0.5f)
     {
@@ -1509,7 +1513,7 @@ void ImDrawList::PathArcToFast(const Vec2 &center, float radius, int a_min_of_12
                      a_max_of_12 * IM_DRAWLIST_ARCFAST_SAMPLE_MAX / 12, 0);
 }
 
-void ImDrawList::PathArcTo(const Vec2 &center, float radius, float a_min, float a_max, int num_segments)
+void ImDrawList::PathArcTo(const ::SF::Engine::Vec2 &center, float radius, float a_min, float a_max, int num_segments)
 {
     if (radius < 0.5f)
     {
@@ -1545,11 +1549,11 @@ void ImDrawList::PathArcTo(const Vec2 &center, float radius, float a_min, float 
 
         _Path.reserve(_Path.Size + (a_mid_samples + 1 + (a_emit_start ? 1 : 0) + (a_emit_end ? 1 : 0)));
         if (a_emit_start)
-            _Path.push_back(Vec2(center.x + ImCos(a_min) * radius, center.y + ImSin(a_min) * radius));
+            _Path.push_back(::SF::Engine::Vec2(center.x + ImCos(a_min) * radius, center.y + ImSin(a_min) * radius));
         if (a_mid_samples > 0)
             _PathArcToFastEx(center, radius, a_min_sample, a_max_sample, 0);
         if (a_emit_end)
-            _Path.push_back(Vec2(center.x + ImCos(a_max) * radius, center.y + ImSin(a_max) * radius));
+            _Path.push_back(::SF::Engine::Vec2(center.x + ImCos(a_max) * radius, center.y + ImSin(a_max) * radius));
     } else
     {
         const float arc_length         = ImAbs(a_max - a_min);
@@ -1559,8 +1563,8 @@ void ImDrawList::PathArcTo(const Vec2 &center, float radius, float a_min, float 
     }
 }
 
-void ImDrawList::PathEllipticalArcTo(const Vec2 &center, const Vec2 &radius, float rot, float a_min, float a_max,
-                                     int num_segments)
+void ImDrawList::PathEllipticalArcTo(const ::SF::Engine::Vec2 &center, const ::SF::Engine::Vec2 &radius, float rot,
+                                     float a_min, float a_max, int num_segments)
 {
     if (num_segments <= 0)
         num_segments = _CalcCircleAutoSegmentCount(
@@ -1573,36 +1577,40 @@ void ImDrawList::PathEllipticalArcTo(const Vec2 &center, const Vec2 &radius, flo
     for (int i = 0; i <= num_segments; i++)
     {
         const float a = a_min + ((float) i / (float) num_segments) * (a_max - a_min);
-        Vec2 point(ImCos(a) * radius.x, ImSin(a) * radius.y);
-        const Vec2 rel((point.x * cos_rot) - (point.y * sin_rot), (point.x * sin_rot) + (point.y * cos_rot));
+        ::SF::Engine::Vec2 point(ImCos(a) * radius.x, ImSin(a) * radius.y);
+        const ::SF::Engine::Vec2 rel((point.x * cos_rot) - (point.y * sin_rot),
+                                     (point.x * sin_rot) + (point.y * cos_rot));
         point.x = rel.x + center.x;
         point.y = rel.y + center.y;
         _Path.push_back(point);
     }
 }
 
-Vec2 ImBezierCubicCalc(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, float t)
+::SF::Engine::Vec2 ImBezierCubicCalc(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                                     const ::SF::Engine::Vec2 &p3, const ::SF::Engine::Vec2 &p4, float t)
 {
     float u  = 1.0f - t;
     float w1 = u * u * u;
     float w2 = 3 * u * u * t;
     float w3 = 3 * u * t * t;
     float w4 = t * t * t;
-    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x, w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y);
+    return ::SF::Engine::Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x,
+                              w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y);
 }
 
-Vec2 ImBezierQuadraticCalc(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, float t)
+::SF::Engine::Vec2 ImBezierQuadraticCalc(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                                         const ::SF::Engine::Vec2 &p3, float t)
 {
     float u  = 1.0f - t;
     float w1 = u * u;
     float w2 = 2 * u * t;
     float w3 = t * t;
-    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y);
+    return ::SF::Engine::Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y);
 }
 
 // Closely mimics ImBezierCubicClosestPointCasteljau() in imgui.cpp
-static void PathBezierCubicCurveToCasteljau(ImVector<Vec2> *path, float x1, float y1, float x2, float y2, float x3,
-                                            float y3, float x4, float y4, float max_error_sqr, int level)
+static void PathBezierCubicCurveToCasteljau(ImVector<::SF::Engine::Vec2> *path, float x1, float y1, float x2, float y2,
+                                            float x3, float y3, float x4, float y4, float max_error_sqr, int level)
 {
     float dx = x4 - x1;
     float dy = y4 - y1;
@@ -1612,7 +1620,7 @@ static void PathBezierCubicCurveToCasteljau(ImVector<Vec2> *path, float x1, floa
     d3       = (d3 >= 0) ? d3 : -d3;
     if ((d2 + d3) * (d2 + d3) < max_error_sqr * (dx * dx + dy * dy))
     {
-        path->push_back(Vec2(x4, y4));
+        path->push_back(::SF::Engine::Vec2(x4, y4));
     } else if (level < 10)
     {
         float x12 = (x1 + x2) * 0.5f, y12 = (y1 + y2) * 0.5f;
@@ -1626,14 +1634,14 @@ static void PathBezierCubicCurveToCasteljau(ImVector<Vec2> *path, float x1, floa
     }
 }
 
-static void PathBezierQuadraticCurveToCasteljau(ImVector<Vec2> *path, float x1, float y1, float x2, float y2, float x3,
-                                                float y3, float max_error_sqr, int level)
+static void PathBezierQuadraticCurveToCasteljau(ImVector<::SF::Engine::Vec2> *path, float x1, float y1, float x2,
+                                                float y2, float x3, float y3, float max_error_sqr, int level)
 {
     float dx = x3 - x1, dy = y3 - y1;
     float det = (x2 - x3) * dy - (y2 - y3) * dx;
     if (det * det * 4.0f < max_error_sqr * (dx * dx + dy * dy))
     {
-        path->push_back(Vec2(x3, y3));
+        path->push_back(::SF::Engine::Vec2(x3, y3));
     } else if (level < 10)
     {
         float x12 = (x1 + x2) * 0.5f, y12 = (y1 + y2) * 0.5f;
@@ -1644,9 +1652,10 @@ static void PathBezierQuadraticCurveToCasteljau(ImVector<Vec2> *path, float x1, 
     }
 }
 
-void ImDrawList::PathBezierCubicCurveTo(const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, int num_segments)
+void ImDrawList::PathBezierCubicCurveTo(const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                                        const ::SF::Engine::Vec2 &p4, int num_segments)
 {
-    Vec2 p1 = _Path.back();
+    ::SF::Engine::Vec2 p1 = _Path.back();
     if (num_segments == 0)
     {
         IM_ASSERT(_Data->CurveTessellationMaxError > 0.0f);
@@ -1662,9 +1671,10 @@ void ImDrawList::PathBezierCubicCurveTo(const Vec2 &p2, const Vec2 &p3, const Ve
     }
 }
 
-void ImDrawList::PathBezierQuadraticCurveTo(const Vec2 &p2, const Vec2 &p3, int num_segments)
+void ImDrawList::PathBezierQuadraticCurveTo(const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                                            int num_segments)
 {
-    Vec2 p1 = _Path.back();
+    ::SF::Engine::Vec2 p1 = _Path.back();
     if (num_segments == 0)
     {
         IM_ASSERT(_Data->CurveTessellationMaxError > 0.0f);
@@ -1680,7 +1690,7 @@ void ImDrawList::PathBezierQuadraticCurveTo(const Vec2 &p2, const Vec2 &p3, int 
     }
 }
 
-void ImDrawList::PathRect(const Vec2 &a, const Vec2 &b, float rounding, ImDrawFlags flags)
+void ImDrawList::PathRect(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, float rounding, ImDrawFlags flags)
 {
     if (rounding >= 0.5f)
     {
@@ -1706,27 +1716,28 @@ void ImDrawList::PathRect(const Vec2 &a, const Vec2 &b, float rounding, ImDrawFl
     if (rounding < 0.5f || (flags & ImDrawFlags_RoundCornersMask_) == ImDrawFlags_RoundCornersNone)
     {
         PathLineTo(a);
-        PathLineTo(Vec2(b.x, a.y));
+        PathLineTo(::SF::Engine::Vec2(b.x, a.y));
         PathLineTo(b);
-        PathLineTo(Vec2(a.x, b.y));
+        PathLineTo(::SF::Engine::Vec2(a.x, b.y));
     } else
     {
         const float rounding_tl = (flags & ImDrawFlags_RoundCornersTopLeft) ? rounding : 0.0f;
         const float rounding_tr = (flags & ImDrawFlags_RoundCornersTopRight) ? rounding : 0.0f;
         const float rounding_br = (flags & ImDrawFlags_RoundCornersBottomRight) ? rounding : 0.0f;
         const float rounding_bl = (flags & ImDrawFlags_RoundCornersBottomLeft) ? rounding : 0.0f;
-        PathArcToFast(Vec2(a.x + rounding_tl, a.y + rounding_tl), rounding_tl, 6, 9);
-        PathArcToFast(Vec2(b.x - rounding_tr, a.y + rounding_tr), rounding_tr, 9, 12);
-        PathArcToFast(Vec2(b.x - rounding_br, b.y - rounding_br), rounding_br, 0, 3);
-        PathArcToFast(Vec2(a.x + rounding_bl, b.y - rounding_bl), rounding_bl, 3, 6);
+        PathArcToFast(::SF::Engine::Vec2(a.x + rounding_tl, a.y + rounding_tl), rounding_tl, 6, 9);
+        PathArcToFast(::SF::Engine::Vec2(b.x - rounding_tr, a.y + rounding_tr), rounding_tr, 9, 12);
+        PathArcToFast(::SF::Engine::Vec2(b.x - rounding_br, b.y - rounding_br), rounding_br, 0, 3);
+        PathArcToFast(::SF::Engine::Vec2(a.x + rounding_bl, b.y - rounding_bl), rounding_bl, 3, 6);
     }
 }
 
-void ImDrawList::AddLine(const Vec2 &p1, const Vec2 &p2, uint32_t col, float thickness)
+void ImDrawList::AddLine(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, uint32_t col, float thickness)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
-    const Vec2 points[2] = {Vec2(p1.x + 0.5f, p1.y + 0.5f), Vec2(p2.x + 0.5f, p2.y + 0.5f)};
+    const ::SF::Engine::Vec2 points[2] = {::SF::Engine::Vec2(p1.x + 0.5f, p1.y + 0.5f),
+                                          ::SF::Engine::Vec2(p2.x + 0.5f, p2.y + 0.5f)};
     AddPolyline(points, 2, col, thickness);
 }
 
@@ -1734,7 +1745,8 @@ void ImDrawList::AddLineH(float min_x, float max_x, float y, uint32_t col, float
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
-    const Vec2 points[2] = {Vec2(min_x + 0.5f, y + 0.5f), Vec2(max_x + 0.5f, y + 0.5f)}; // Same as AddLine() above.
+    const ::SF::Engine::Vec2 points[2] = {::SF::Engine::Vec2(min_x + 0.5f, y + 0.5f),
+                                          ::SF::Engine::Vec2(max_x + 0.5f, y + 0.5f)}; // Same as AddLine() above.
     AddPolyline(points, 2, col, thickness);
 }
 
@@ -1742,14 +1754,15 @@ void ImDrawList::AddLineV(float x, float min_y, float max_y, uint32_t col, float
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
-    const Vec2 points[2] = {Vec2(x + 0.5f, min_y + 0.5f), Vec2(x + 0.5f, max_y + 0.5f)}; // Same as AddLine() above.
+    const ::SF::Engine::Vec2 points[2] = {::SF::Engine::Vec2(x + 0.5f, min_y + 0.5f),
+                                          ::SF::Engine::Vec2(x + 0.5f, max_y + 0.5f)}; // Same as AddLine() above.
     AddPolyline(points, 2, col, thickness);
 }
 
 // p_min = upper-left, p_max = lower-right
 // Note we don't render 1 pixels sized rectangles properly.
-void ImDrawList::AddRect(const Vec2 &p_min, const Vec2 &p_max, uint32_t col, float rounding, float thickness,
-                         ImDrawFlags flags)
+void ImDrawList::AddRect(const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max, uint32_t col, float rounding,
+                         float thickness, ImDrawFlags flags)
 {
     // If this assert triggers on legacy code:
     // - 1.92.8 (2025/05): swapped two last parameters order: flags, thickness --> thickness, flags. This should
@@ -1771,14 +1784,15 @@ void ImDrawList::AddRect(const Vec2 &p_min, const Vec2 &p_max, uint32_t col, flo
     if ((col & IM_COL32_A_MASK) == 0)
         return;
     if (Flags & ImDrawListFlags_AntiAliasedLines)
-        PathRect(p_min + Vec2(0.50f, 0.50f), p_max - Vec2(0.50f, 0.50f), rounding, flags);
+        PathRect(p_min + ::SF::Engine::Vec2(0.50f, 0.50f), p_max - ::SF::Engine::Vec2(0.50f, 0.50f), rounding, flags);
     else
-        PathRect(p_min + Vec2(0.50f, 0.50f), p_max - Vec2(0.49f, 0.49f), rounding,
+        PathRect(p_min + ::SF::Engine::Vec2(0.50f, 0.50f), p_max - ::SF::Engine::Vec2(0.49f, 0.49f), rounding,
                  flags); // Better looking lower-right corner and rounded non-AA shapes.
     PathStroke(col, thickness, ImDrawFlags_Closed);
 }
 
-void ImDrawList::AddRectFilled(const Vec2 &p_min, const Vec2 &p_max, uint32_t col, float rounding, ImDrawFlags flags)
+void ImDrawList::AddRectFilled(const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max, uint32_t col,
+                               float rounding, ImDrawFlags flags)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -1794,13 +1808,14 @@ void ImDrawList::AddRectFilled(const Vec2 &p_min, const Vec2 &p_max, uint32_t co
 }
 
 // p_min = upper-left, p_max = lower-right
-void ImDrawList::AddRectFilledMultiColor(const Vec2 &p_min, const Vec2 &p_max, uint32_t col_upr_left,
-                                         uint32_t col_upr_right, uint32_t col_bot_right, uint32_t col_bot_left)
+void ImDrawList::AddRectFilledMultiColor(const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max,
+                                         uint32_t col_upr_left, uint32_t col_upr_right, uint32_t col_bot_right,
+                                         uint32_t col_bot_left)
 {
     if (((col_upr_left | col_upr_right | col_bot_right | col_bot_left) & IM_COL32_A_MASK) == 0)
         return;
 
-    const Vec2 uv = _Data->TexUvWhitePixel;
+    const ::SF::Engine::Vec2 uv = _Data->TexUvWhitePixel;
     PrimReserve(6, 4);
     PrimWriteIdx((ImDrawIdx) (_VtxCurrentIdx));
     PrimWriteIdx((ImDrawIdx) (_VtxCurrentIdx + 1));
@@ -1809,12 +1824,13 @@ void ImDrawList::AddRectFilledMultiColor(const Vec2 &p_min, const Vec2 &p_max, u
     PrimWriteIdx((ImDrawIdx) (_VtxCurrentIdx + 2));
     PrimWriteIdx((ImDrawIdx) (_VtxCurrentIdx + 3));
     PrimWriteVtx(p_min, uv, col_upr_left);
-    PrimWriteVtx(Vec2(p_max.x, p_min.y), uv, col_upr_right);
+    PrimWriteVtx(::SF::Engine::Vec2(p_max.x, p_min.y), uv, col_upr_right);
     PrimWriteVtx(p_max, uv, col_bot_right);
-    PrimWriteVtx(Vec2(p_min.x, p_max.y), uv, col_bot_left);
+    PrimWriteVtx(::SF::Engine::Vec2(p_min.x, p_max.y), uv, col_bot_left);
 }
 
-void ImDrawList::AddQuad(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, uint32_t col, float thickness)
+void ImDrawList::AddQuad(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                         const ::SF::Engine::Vec2 &p4, uint32_t col, float thickness)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -1826,7 +1842,8 @@ void ImDrawList::AddQuad(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const V
     PathStroke(col, thickness, ImDrawFlags_Closed);
 }
 
-void ImDrawList::AddQuadFilled(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, uint32_t col)
+void ImDrawList::AddQuadFilled(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                               const ::SF::Engine::Vec2 &p4, uint32_t col)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -1838,7 +1855,8 @@ void ImDrawList::AddQuadFilled(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, c
     PathFillConvex(col);
 }
 
-void ImDrawList::AddTriangle(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, uint32_t col, float thickness)
+void ImDrawList::AddTriangle(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+                             uint32_t col, float thickness)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -1849,7 +1867,8 @@ void ImDrawList::AddTriangle(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, uin
     PathStroke(col, thickness, ImDrawFlags_Closed);
 }
 
-void ImDrawList::AddTriangleFilled(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, uint32_t col)
+void ImDrawList::AddTriangleFilled(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                                   const ::SF::Engine::Vec2 &p3, uint32_t col)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -1860,7 +1879,8 @@ void ImDrawList::AddTriangleFilled(const Vec2 &p1, const Vec2 &p2, const Vec2 &p
     PathFillConvex(col);
 }
 
-void ImDrawList::AddCircle(const Vec2 &center, float radius, uint32_t col, int num_segments, float thickness)
+void ImDrawList::AddCircle(const ::SF::Engine::Vec2 &center, float radius, uint32_t col, int num_segments,
+                           float thickness)
 {
     if ((col & IM_COL32_A_MASK) == 0 || radius < 0.5f)
         return;
@@ -1883,7 +1903,7 @@ void ImDrawList::AddCircle(const Vec2 &center, float radius, uint32_t col, int n
     PathStroke(col, thickness, ImDrawFlags_Closed);
 }
 
-void ImDrawList::AddCircleFilled(const Vec2 &center, float radius, uint32_t col, int num_segments)
+void ImDrawList::AddCircleFilled(const ::SF::Engine::Vec2 &center, float radius, uint32_t col, int num_segments)
 {
     if ((col & IM_COL32_A_MASK) == 0 || radius < 0.5f)
         return;
@@ -1907,7 +1927,8 @@ void ImDrawList::AddCircleFilled(const Vec2 &center, float radius, uint32_t col,
 }
 
 // Guaranteed to honor 'num_segments'
-void ImDrawList::AddNgon(const Vec2 &center, float radius, uint32_t col, int num_segments, float thickness)
+void ImDrawList::AddNgon(const ::SF::Engine::Vec2 &center, float radius, uint32_t col, int num_segments,
+                         float thickness)
 {
     if ((col & IM_COL32_A_MASK) == 0 || num_segments <= 2)
         return;
@@ -1919,7 +1940,7 @@ void ImDrawList::AddNgon(const Vec2 &center, float radius, uint32_t col, int num
 }
 
 // Guaranteed to honor 'num_segments'
-void ImDrawList::AddNgonFilled(const Vec2 &center, float radius, uint32_t col, int num_segments)
+void ImDrawList::AddNgonFilled(const ::SF::Engine::Vec2 &center, float radius, uint32_t col, int num_segments)
 {
     if ((col & IM_COL32_A_MASK) == 0 || num_segments <= 2)
         return;
@@ -1931,8 +1952,8 @@ void ImDrawList::AddNgonFilled(const Vec2 &center, float radius, uint32_t col, i
 }
 
 // Ellipse
-void ImDrawList::AddEllipse(const Vec2 &center, const Vec2 &radius, uint32_t col, float rot, int num_segments,
-                            float thickness)
+void ImDrawList::AddEllipse(const ::SF::Engine::Vec2 &center, const ::SF::Engine::Vec2 &radius, uint32_t col, float rot,
+                            int num_segments, float thickness)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -1947,7 +1968,8 @@ void ImDrawList::AddEllipse(const Vec2 &center, const Vec2 &radius, uint32_t col
     PathStroke(col, thickness, ImDrawFlags_Closed);
 }
 
-void ImDrawList::AddEllipseFilled(const Vec2 &center, const Vec2 &radius, uint32_t col, float rot, int num_segments)
+void ImDrawList::AddEllipseFilled(const ::SF::Engine::Vec2 &center, const ::SF::Engine::Vec2 &radius, uint32_t col,
+                                  float rot, int num_segments)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -1963,7 +1985,8 @@ void ImDrawList::AddEllipseFilled(const Vec2 &center, const Vec2 &radius, uint32
 }
 
 // Cubic Bezier takes 4 controls points
-void ImDrawList::AddBezierCubic(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, uint32_t col,
+void ImDrawList::AddBezierCubic(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                                const ::SF::Engine::Vec2 &p3, const ::SF::Engine::Vec2 &p4, uint32_t col,
                                 float thickness, int num_segments)
 {
     if ((col & IM_COL32_A_MASK) == 0)
@@ -1975,8 +1998,8 @@ void ImDrawList::AddBezierCubic(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, 
 }
 
 // Quadratic Bezier takes 3 controls points
-void ImDrawList::AddBezierQuadratic(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, uint32_t col, float thickness,
-                                    int num_segments)
+void ImDrawList::AddBezierQuadratic(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                                    const ::SF::Engine::Vec2 &p3, uint32_t col, float thickness, int num_segments)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -1986,8 +2009,8 @@ void ImDrawList::AddBezierQuadratic(const Vec2 &p1, const Vec2 &p2, const Vec2 &
     PathStroke(col, thickness);
 }
 
-void ImDrawList::AddText(ImFont *font, float font_size, const Vec2 &pos, uint32_t col, const char *text_begin,
-                         const char *text_end, float wrap_width, const Vec4 *cpu_fine_clip_rect)
+void ImDrawList::AddText(ImFont *font, float font_size, const ::SF::Engine::Vec2 &pos, uint32_t col,
+                         const char *text_begin, const char *text_end, float wrap_width, const ::SF::Engine::Vec4 *cpu_fine_clip_rect)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -2003,7 +2026,7 @@ void ImDrawList::AddText(ImFont *font, float font_size, const Vec2 &pos, uint32_
     if (font_size == 0.0f)
         font_size = _Data->FontSize;
 
-    Vec4 clip_rect = _CmdHeader.ClipRect;
+    ::SF::Engine::Vec4 clip_rect = _CmdHeader.ClipRect;
     if (cpu_fine_clip_rect)
     {
         clip_rect.x = ImMax(clip_rect.x, cpu_fine_clip_rect->x);
@@ -2015,13 +2038,13 @@ void ImDrawList::AddText(ImFont *font, float font_size, const Vec2 &pos, uint32_
                      (cpu_fine_clip_rect != nullptr) ? ImDrawTextFlags_CpuFineClip : ImDrawTextFlags_None);
 }
 
-void ImDrawList::AddText(const Vec2 &pos, uint32_t col, const char *text_begin, const char *text_end)
+void ImDrawList::AddText(const ::SF::Engine::Vec2 &pos, uint32_t col, const char *text_begin, const char *text_end)
 {
     AddText(_Data->Font, _Data->FontSize, pos, col, text_begin, text_end);
 }
 
-void ImDrawList::AddImage(ImTextureRef tex_ref, const Vec2 &p_min, const Vec2 &p_max, const Vec2 &uv_min,
-                          const Vec2 &uv_max, uint32_t col)
+void ImDrawList::AddImage(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max,
+                          const ::SF::Engine::Vec2 &uv_min, const ::SF::Engine::Vec2 &uv_max, uint32_t col)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -2037,8 +2060,10 @@ void ImDrawList::AddImage(ImTextureRef tex_ref, const Vec2 &p_min, const Vec2 &p
         PopTexture();
 }
 
-void ImDrawList::AddImageQuad(ImTextureRef tex_ref, const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4,
-                              const Vec2 &uv1, const Vec2 &uv2, const Vec2 &uv3, const Vec2 &uv4, uint32_t col)
+void ImDrawList::AddImageQuad(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                              const ::SF::Engine::Vec2 &p3, const ::SF::Engine::Vec2 &p4, const ::SF::Engine::Vec2 &uv1,
+                              const ::SF::Engine::Vec2 &uv2, const ::SF::Engine::Vec2 &uv3,
+                              const ::SF::Engine::Vec2 &uv4, uint32_t col)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -2054,8 +2079,9 @@ void ImDrawList::AddImageQuad(ImTextureRef tex_ref, const Vec2 &p1, const Vec2 &
         PopTexture();
 }
 
-void ImDrawList::AddImageRounded(ImTextureRef tex_ref, const Vec2 &p_min, const Vec2 &p_max, const Vec2 &uv_min,
-                                 const Vec2 &uv_max, uint32_t col, float rounding, ImDrawFlags flags)
+void ImDrawList::AddImageRounded(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &p_min, const ::SF::Engine::Vec2 &p_max,
+                                 const ::SF::Engine::Vec2 &uv_min, const ::SF::Engine::Vec2 &uv_max, uint32_t col,
+                                 float rounding, ImDrawFlags flags)
 {
     if ((col & IM_COL32_A_MASK) == 0)
         return;
@@ -2108,7 +2134,7 @@ struct ImTriangulatorNode
 {
     ImTriangulatorNodeType Type;
     int Index;
-    Vec2 Pos;
+    ::SF::Engine::Vec2 Pos;
     ImTriangulatorNode *Next;
     ImTriangulatorNode *Prev;
 
@@ -2145,15 +2171,16 @@ struct ImTriangulator
         return sizeof(ImTriangulatorNode) * points_count + sizeof(ImTriangulatorNode *) * points_count * 2;
     }
 
-    void Init(const Vec2 *points, int points_count, void *scratch_buffer);
+    void Init(const ::SF::Engine::Vec2 *points, int points_count, void *scratch_buffer);
     void GetNextTriangle(unsigned int out_triangle[3]); // Return relative indexes for next triangle
 
     // Internal functions
-    void BuildNodes(const Vec2 *points, int points_count);
+    void BuildNodes(const ::SF::Engine::Vec2 *points, int points_count);
     void BuildReflexes();
     void BuildEars();
     void FlipNodeList();
-    bool IsEar(int i0, int i1, int i2, const Vec2 &v0, const Vec2 &v1, const Vec2 &v2) const;
+    bool IsEar(int i0, int i1, int i2, const ::SF::Engine::Vec2 &v0, const ::SF::Engine::Vec2 &v1,
+               const ::SF::Engine::Vec2 &v2) const;
     void ReclassifyNode(ImTriangulatorNode *node);
 
     // Internal members
@@ -2166,7 +2193,7 @@ struct ImTriangulator
 // Distribute storage for nodes, ears and reflexes.
 // FIXME-OPT: if everything is convex, we could report it to caller and let it switch to an convex renderer
 // (this would require first building reflexes to bail to convex if empty, without even building nodes)
-void ImTriangulator::Init(const Vec2 *points, int points_count, void *scratch_buffer)
+void ImTriangulator::Init(const ::SF::Engine::Vec2 *points, int points_count, void *scratch_buffer)
 {
     IM_ASSERT(scratch_buffer != nullptr && points_count >= 3);
     _TrianglesLeft = EstimateTriangleCount(points_count);
@@ -2178,7 +2205,7 @@ void ImTriangulator::Init(const Vec2 *points, int points_count, void *scratch_bu
     BuildEars();
 }
 
-void ImTriangulator::BuildNodes(const Vec2 *points, int points_count)
+void ImTriangulator::BuildNodes(const ::SF::Engine::Vec2 *points, int points_count)
 {
     for (int i = 0; i < points_count; i++)
     {
@@ -2278,7 +2305,8 @@ void ImTriangulator::FlipNodeList()
 }
 
 // A triangle is an ear is no other vertex is inside it. We can test reflexes vertices only (see reference algorithm)
-bool ImTriangulator::IsEar(int i0, int i1, int i2, const Vec2 &v0, const Vec2 &v1, const Vec2 &v2) const
+bool ImTriangulator::IsEar(int i0, int i1, int i2, const ::SF::Engine::Vec2 &v0, const ::SF::Engine::Vec2 &v1,
+                           const ::SF::Engine::Vec2 &v2) const
 {
     ImTriangulatorNode **p_end = _Reflexes.Data + _Reflexes.Size;
     for (ImTriangulatorNode **p = _Reflexes.Data; p < p_end; p++)
@@ -2323,12 +2351,12 @@ void ImTriangulator::ReclassifyNode(ImTriangulatorNode *n1)
 // It is up to caller to ensure not making costly calls that will be outside of visible area.
 // As concave fill is noticeably more expensive than other primitives, be mindful of this...
 // Caller can build AABB of points, and avoid filling if 'draw_list->_CmdHeader.ClipRect.Overlays(points_bb) == false')
-void ImDrawList::AddConcavePolyFilled(const Vec2 *points, const int points_count, uint32_t col)
+void ImDrawList::AddConcavePolyFilled(const ::SF::Engine::Vec2 *points, const int points_count, uint32_t col)
 {
     if (points_count < 3 || (col & IM_COL32_A_MASK) == 0)
         return;
 
-    const Vec2 uv = _Data->TexUvWhitePixel;
+    const ::SF::Engine::Vec2 uv = _Data->TexUvWhitePixel;
     ImTriangulator triangulator;
     unsigned int triangle[3];
     if (Flags & ImDrawListFlags_AntiAliasedFill)
@@ -2344,8 +2372,9 @@ void ImDrawList::AddConcavePolyFilled(const Vec2 *points, const int points_count
         unsigned int vtx_inner_idx = _VtxCurrentIdx;
         unsigned int vtx_outer_idx = _VtxCurrentIdx + 1;
 
-        _Data->TempBuffer.reserve_discard((ImTriangulator::EstimateScratchBufferSize(points_count) + sizeof(Vec2)) /
-                                          sizeof(Vec2));
+        _Data->TempBuffer.reserve_discard(
+                (ImTriangulator::EstimateScratchBufferSize(points_count) + sizeof(::SF::Engine::Vec2)) /
+                sizeof(::SF::Engine::Vec2));
         triangulator.Init(points, points_count, _Data->TempBuffer.Data);
         while (triangulator._TrianglesLeft > 0)
         {
@@ -2358,13 +2387,13 @@ void ImDrawList::AddConcavePolyFilled(const Vec2 *points, const int points_count
 
         // Compute normals
         _Data->TempBuffer.reserve_discard(points_count);
-        Vec2 *temp_normals = _Data->TempBuffer.Data;
+        ::SF::Engine::Vec2 *temp_normals = _Data->TempBuffer.Data;
         for (int i0 = points_count - 1, i1 = 0; i1 < points_count; i0 = i1++)
         {
-            const Vec2 &p0 = points[i0];
-            const Vec2 &p1 = points[i1];
-            float dx       = p1.x - p0.x;
-            float dy       = p1.y - p0.y;
+            const ::SF::Engine::Vec2 &p0 = points[i0];
+            const ::SF::Engine::Vec2 &p1 = points[i1];
+            float dx                     = p1.x - p0.x;
+            float dy                     = p1.y - p0.y;
             IM_NORMALIZE2F_OVER_ZERO(dx, dy);
             temp_normals[i0].x = dy;
             temp_normals[i0].y = -dx;
@@ -2373,10 +2402,10 @@ void ImDrawList::AddConcavePolyFilled(const Vec2 *points, const int points_count
         for (int i0 = points_count - 1, i1 = 0; i1 < points_count; i0 = i1++)
         {
             // Average normals
-            const Vec2 &n0 = temp_normals[i0];
-            const Vec2 &n1 = temp_normals[i1];
-            float dm_x     = (n0.x + n1.x) * 0.5f;
-            float dm_y     = (n0.y + n1.y) * 0.5f;
+            const ::SF::Engine::Vec2 &n0 = temp_normals[i0];
+            const ::SF::Engine::Vec2 &n1 = temp_normals[i1];
+            float dm_x                   = (n0.x + n1.x) * 0.5f;
+            float dm_y                   = (n0.y + n1.y) * 0.5f;
             IM_FIXNORMAL2F(dm_x, dm_y);
             dm_x *= AA_SIZE * 0.5f;
             dm_y *= AA_SIZE * 0.5f;
@@ -2415,8 +2444,9 @@ void ImDrawList::AddConcavePolyFilled(const Vec2 *points, const int points_count
             _VtxWritePtr[0].col = col;
             _VtxWritePtr++;
         }
-        _Data->TempBuffer.reserve_discard((ImTriangulator::EstimateScratchBufferSize(points_count) + sizeof(Vec2)) /
-                                          sizeof(Vec2));
+        _Data->TempBuffer.reserve_discard(
+                (ImTriangulator::EstimateScratchBufferSize(points_count) + sizeof(::SF::Engine::Vec2)) /
+                sizeof(::SF::Engine::Vec2));
         triangulator.Init(points, points_count, _Data->TempBuffer.Data);
         while (triangulator._TrianglesLeft > 0)
         {
@@ -2600,7 +2630,7 @@ void ImDrawData::Clear()
     Valid      = false;
     FrameCount = TotalIdxCount = TotalVtxCount = 0;
     CmdLists.resize(0); // The ImDrawList are NOT owned by ImDrawData but e.g. by ImGuiContext, so we don't clear them.
-    DisplayPos = DisplaySize = FramebufferScale = Vec2(0.0f, 0.0f);
+    DisplayPos = DisplaySize = FramebufferScale = ::SF::Engine::Vec2(0.0f, 0.0f);
     OwnerViewport                               = nullptr;
     Textures                                    = nullptr;
 }
@@ -2690,11 +2720,11 @@ void ImDrawData::DeIndexAllBuffers()
 // Helper to scale the ClipRect field of each ImDrawCmd.
 // Use if your final output buffer is at a different scale than draw_data->DisplaySize,
 // or if there is a difference between your window resolution and framebuffer resolution.
-void ImDrawData::ScaleClipRects(const Vec2 &fb_scale)
+void ImDrawData::ScaleClipRects(const ::SF::Engine::Vec2 &fb_scale)
 {
     for (ImDrawList *draw_list: CmdLists)
         for (ImDrawCmd &cmd: draw_list->CmdBuffer)
-            cmd.ClipRect = Vec4(cmd.ClipRect.x * fb_scale.x, cmd.ClipRect.y * fb_scale.y, cmd.ClipRect.z * fb_scale.x,
+            cmd.ClipRect = ::SF::Engine::Vec4(cmd.ClipRect.x * fb_scale.x, cmd.ClipRect.y * fb_scale.y, cmd.ClipRect.z * fb_scale.x,
                                 cmd.ClipRect.w * fb_scale.y);
 }
 
@@ -2704,18 +2734,19 @@ void ImDrawData::ScaleClipRects(const Vec2 &fb_scale)
 
 // Generic linear color gradient, write to RGB fields, leave A untouched.
 void ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx,
-                                                   Vec2 gradient_p0, Vec2 gradient_p1, uint32_t col0, uint32_t col1)
+                                                   ::SF::Engine::Vec2 gradient_p0, ::SF::Engine::Vec2 gradient_p1,
+                                                   uint32_t col0, uint32_t col1)
 {
-    Vec2 gradient_extent       = gradient_p1 - gradient_p0;
-    float gradient_inv_length2 = 1.0f / ImLengthSqr(gradient_extent);
-    ImDrawVert *vert_start     = draw_list->VtxBuffer.Data + vert_start_idx;
-    ImDrawVert *vert_end       = draw_list->VtxBuffer.Data + vert_end_idx;
-    const int col0_r           = (int) (col0 >> IM_COL32_R_SHIFT) & 0xFF;
-    const int col0_g           = (int) (col0 >> IM_COL32_G_SHIFT) & 0xFF;
-    const int col0_b           = (int) (col0 >> IM_COL32_B_SHIFT) & 0xFF;
-    const int col_delta_r      = ((int) (col1 >> IM_COL32_R_SHIFT) & 0xFF) - col0_r;
-    const int col_delta_g      = ((int) (col1 >> IM_COL32_G_SHIFT) & 0xFF) - col0_g;
-    const int col_delta_b      = ((int) (col1 >> IM_COL32_B_SHIFT) & 0xFF) - col0_b;
+    ::SF::Engine::Vec2 gradient_extent = gradient_p1 - gradient_p0;
+    float gradient_inv_length2         = 1.0f / ImLengthSqr(gradient_extent);
+    ImDrawVert *vert_start             = draw_list->VtxBuffer.Data + vert_start_idx;
+    ImDrawVert *vert_end               = draw_list->VtxBuffer.Data + vert_end_idx;
+    const int col0_r                   = (int) (col0 >> IM_COL32_R_SHIFT) & 0xFF;
+    const int col0_g                   = (int) (col0 >> IM_COL32_G_SHIFT) & 0xFF;
+    const int col0_b                   = (int) (col0 >> IM_COL32_B_SHIFT) & 0xFF;
+    const int col_delta_r              = ((int) (col1 >> IM_COL32_R_SHIFT) & 0xFF) - col0_r;
+    const int col_delta_g              = ((int) (col1 >> IM_COL32_G_SHIFT) & 0xFF) - col0_g;
+    const int col_delta_b              = ((int) (col1 >> IM_COL32_B_SHIFT) & 0xFF) - col0_b;
     for (ImDrawVert *vert = vert_start; vert < vert_end; vert++)
     {
         float d   = ImDot(vert->pos - gradient_p0, gradient_extent);
@@ -2729,30 +2760,33 @@ void ImGui::ShadeVertsLinearColorGradientKeepAlpha(ImDrawList *draw_list, int ve
 }
 
 // Distribute UV over (a, b) rectangle
-void ImGui::ShadeVertsLinearUV(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx, const Vec2 &a,
-                               const Vec2 &b, const Vec2 &uv_a, const Vec2 &uv_b, bool clamp)
+void ImGui::ShadeVertsLinearUV(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx, const ::SF::Engine::Vec2 &a,
+                               const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &uv_a,
+                               const ::SF::Engine::Vec2 &uv_b, bool clamp)
 {
-    const Vec2 size    = b - a;
-    const Vec2 uv_size = uv_b - uv_a;
-    const Vec2 scale = Vec2(size.x != 0.0f ? (uv_size.x / size.x) : 0.0f, size.y != 0.0f ? (uv_size.y / size.y) : 0.0f);
+    const ::SF::Engine::Vec2 size    = b - a;
+    const ::SF::Engine::Vec2 uv_size = uv_b - uv_a;
+    const ::SF::Engine::Vec2 scale   = ::SF::Engine::Vec2(size.x != 0.0f ? (uv_size.x / size.x) : 0.0f,
+                                                        size.y != 0.0f ? (uv_size.y / size.y) : 0.0f);
 
     ImDrawVert *vert_start = draw_list->VtxBuffer.Data + vert_start_idx;
     ImDrawVert *vert_end   = draw_list->VtxBuffer.Data + vert_end_idx;
     if (clamp)
     {
-        const Vec2 min = ImMin(uv_a, uv_b);
-        const Vec2 max = ImMax(uv_a, uv_b);
+        const ::SF::Engine::Vec2 min = ImMin(uv_a, uv_b);
+        const ::SF::Engine::Vec2 max = ImMax(uv_a, uv_b);
         for (ImDrawVert *vertex = vert_start; vertex < vert_end; ++vertex)
-            vertex->uv = ImClamp(uv_a + ImMul(Vec2(vertex->pos.x, vertex->pos.y) - a, scale), min, max);
+            vertex->uv = ImClamp(uv_a + ImMul(::SF::Engine::Vec2(vertex->pos.x, vertex->pos.y) - a, scale), min, max);
     } else
     {
         for (ImDrawVert *vertex = vert_start; vertex < vert_end; ++vertex)
-            vertex->uv = uv_a + ImMul(Vec2(vertex->pos.x, vertex->pos.y) - a, scale);
+            vertex->uv = uv_a + ImMul(::SF::Engine::Vec2(vertex->pos.x, vertex->pos.y) - a, scale);
     }
 }
 
-void ImGui::ShadeVertsTransformPos(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx, const Vec2 &pivot_in,
-                                   float cos_a, float sin_a, const Vec2 &pivot_out)
+void ImGui::ShadeVertsTransformPos(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx,
+                                   const ::SF::Engine::Vec2 &pivot_in, float cos_a, float sin_a,
+                                   const ::SF::Engine::Vec2 &pivot_out)
 {
     ImDrawVert *vert_start = draw_list->VtxBuffer.Data + vert_start_idx;
     ImDrawVert *vert_end   = draw_list->VtxBuffer.Data + vert_end_idx;
@@ -3005,21 +3039,25 @@ static const char
                 "                                                      -    XX           XX    -                       "
                 "                    "};
 
-static const Vec2 FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[ImGuiMouseCursor_COUNT][3] = {
+static const ::SF::Engine::Vec2 FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[ImGuiMouseCursor_COUNT][3] = {
         // Pos ........ Size ......... Offset ......
-        {Vec2(0, 3), Vec2(12, 19), Vec2(0, 0)},    // ImGuiMouseCursor_Arrow
-        {Vec2(13, 0), Vec2(7, 16), Vec2(1, 8)},    // ImGuiMouseCursor_TextInput
-        {Vec2(31, 0), Vec2(23, 23), Vec2(11, 11)}, // ImGuiMouseCursor_ResizeAll
-        {Vec2(21, 0), Vec2(9, 23), Vec2(4, 11)},   // ImGuiMouseCursor_ResizeNS
-        {Vec2(55, 18), Vec2(23, 9), Vec2(11, 4)},  // ImGuiMouseCursor_ResizeEW
-        {Vec2(73, 0), Vec2(17, 17), Vec2(8, 8)},   // ImGuiMouseCursor_ResizeNESW
-        {Vec2(55, 0), Vec2(17, 17), Vec2(8, 8)},   // ImGuiMouseCursor_ResizeNWSE
-        {Vec2(91, 0), Vec2(17, 22), Vec2(5, 0)},   // ImGuiMouseCursor_Hand
-        {Vec2(0, 3), Vec2(12, 19),
-         Vec2(0, 0)}, // ImGuiMouseCursor_Wait       // Arrow + custom code in ImGui::RenderMouseCursor()
-        {Vec2(0, 3), Vec2(12, 19),
-         Vec2(0, 0)}, // ImGuiMouseCursor_Progress   // Arrow + custom code in ImGui::RenderMouseCursor()
-        {Vec2(109, 0), Vec2(13, 15), Vec2(6, 7)}, // ImGuiMouseCursor_NotAllowed
+        {::SF::Engine::Vec2(0, 3), ::SF::Engine::Vec2(12, 19), ::SF::Engine::Vec2(0, 0)}, // ImGuiMouseCursor_Arrow
+        {::SF::Engine::Vec2(13, 0), ::SF::Engine::Vec2(7, 16), ::SF::Engine::Vec2(1, 8)}, // ImGuiMouseCursor_TextInput
+        {::SF::Engine::Vec2(31, 0), ::SF::Engine::Vec2(23, 23),
+         ::SF::Engine::Vec2(11, 11)},                                                      // ImGuiMouseCursor_ResizeAll
+        {::SF::Engine::Vec2(21, 0), ::SF::Engine::Vec2(9, 23), ::SF::Engine::Vec2(4, 11)}, // ImGuiMouseCursor_ResizeNS
+        {::SF::Engine::Vec2(55, 18), ::SF::Engine::Vec2(23, 9), ::SF::Engine::Vec2(11, 4)}, // ImGuiMouseCursor_ResizeEW
+        {::SF::Engine::Vec2(73, 0), ::SF::Engine::Vec2(17, 17),
+         ::SF::Engine::Vec2(8, 8)}, // ImGuiMouseCursor_ResizeNESW
+        {::SF::Engine::Vec2(55, 0), ::SF::Engine::Vec2(17, 17),
+         ::SF::Engine::Vec2(8, 8)}, // ImGuiMouseCursor_ResizeNWSE
+        {::SF::Engine::Vec2(91, 0), ::SF::Engine::Vec2(17, 22), ::SF::Engine::Vec2(5, 0)}, // ImGuiMouseCursor_Hand
+        {::SF::Engine::Vec2(0, 3), ::SF::Engine::Vec2(12, 19),
+         ::SF::Engine::Vec2(0, 0)}, // ImGuiMouseCursor_Wait       // Arrow + custom code in ImGui::RenderMouseCursor()
+        {::SF::Engine::Vec2(0, 3), ::SF::Engine::Vec2(12, 19),
+         ::SF::Engine::Vec2(0, 0)}, // ImGuiMouseCursor_Progress   // Arrow + custom code in ImGui::RenderMouseCursor()
+        {::SF::Engine::Vec2(109, 0), ::SF::Engine::Vec2(13, 15),
+         ::SF::Engine::Vec2(6, 7)}, // ImGuiMouseCursor_NotAllowed
 };
 
     #define IM_FONTGLYPH_INDEX_UNUSED ((uint16_t) -1)    // 0xFFFF
@@ -3788,13 +3826,14 @@ bool ImFontAtlas::GetCustomRect(ImFontAtlasRectId id, ImFontAtlasRect *out_r) co
     out_r->y   = r->y;
     out_r->w   = r->w;
     out_r->h   = r->h;
-    out_r->uv0 = Vec2((float) (r->x), (float) (r->y)) * TexUvScale;
-    out_r->uv1 = Vec2((float) (r->x + r->w), (float) (r->y + r->h)) * TexUvScale;
+    out_r->uv0 = ::SF::Engine::Vec2((float) (r->x), (float) (r->y)) * TexUvScale;
+    out_r->uv1 = ::SF::Engine::Vec2((float) (r->x + r->w), (float) (r->y + r->h)) * TexUvScale;
     return true;
 }
 
-bool ImFontAtlasGetMouseCursorTexData(ImFontAtlas *atlas, ImGuiMouseCursor cursor_type, Vec2 *out_offset,
-                                      Vec2 *out_size, Vec2 out_uv_border[2], Vec2 out_uv_fill[2])
+bool ImFontAtlasGetMouseCursorTexData(ImFontAtlas *atlas, ImGuiMouseCursor cursor_type, ::SF::Engine::Vec2 *out_offset,
+                                      ::SF::Engine::Vec2 *out_size, ::SF::Engine::Vec2 out_uv_border[2],
+                                      ::SF::Engine::Vec2 out_uv_fill[2])
 {
     if (cursor_type <= ImGuiMouseCursor_None || cursor_type >= ImGuiMouseCursor_COUNT)
         return false;
@@ -3802,12 +3841,13 @@ bool ImFontAtlasGetMouseCursorTexData(ImFontAtlas *atlas, ImGuiMouseCursor curso
         return false;
 
     ImTextureRect *r = ImFontAtlasPackGetRect(atlas, atlas->Builder->PackIdMouseCursors);
-    Vec2 pos         = FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[cursor_type][0] + Vec2((float) r->x, (float) r->y);
-    Vec2 size        = FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[cursor_type][1];
-    *out_size        = size;
-    *out_offset      = FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[cursor_type][2];
-    out_uv_border[0] = (pos) *atlas->TexUvScale;
-    out_uv_border[1] = (pos + size) * atlas->TexUvScale;
+    ::SF::Engine::Vec2 pos =
+            FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[cursor_type][0] + ::SF::Engine::Vec2((float) r->x, (float) r->y);
+    ::SF::Engine::Vec2 size = FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[cursor_type][1];
+    *out_size               = size;
+    *out_offset             = FONT_ATLAS_DEFAULT_TEX_CURSOR_DATA[cursor_type][2];
+    out_uv_border[0]        = (pos) *atlas->TexUvScale;
+    out_uv_border[1]        = (pos + size) * atlas->TexUvScale;
     pos.x += FONT_ATLAS_DEFAULT_TEX_DATA_W + 1;
     out_uv_fill[0] = (pos) *atlas->TexUvScale;
     out_uv_fill[1] = (pos + size) * atlas->TexUvScale;
@@ -3970,7 +4010,7 @@ static void ImFontAtlasBuildUpdateTexDataBasic(ImFontAtlas *atlas)
     }
 
     // Refresh UV coordinates
-    atlas->TexUvWhitePixel = Vec2((r.x + 0.5f) * atlas->TexUvScale.x, (r.y + 0.5f) * atlas->TexUvScale.y);
+    atlas->TexUvWhitePixel = ::SF::Engine::Vec2((r.x + 0.5f) * atlas->TexUvScale.x, (r.y + 0.5f) * atlas->TexUvScale.y);
 }
 
 static void ImFontAtlasBuildUpdateTexDataLines(ImFontAtlas *atlas)
@@ -4031,11 +4071,13 @@ static void ImFontAtlasBuildUpdateTexDataLines(ImFontAtlas *atlas)
         }
 
         // Refresh UV coordinates
-        Vec2 uv0 = Vec2((float) (r.x + pad_left - 1), (float) (r.y + y)) * atlas->TexUvScale;
-        Vec2 uv1 = Vec2((float) (r.x + pad_left + line_width + 1), (float) (r.y + y + 1)) * atlas->TexUvScale;
+        ::SF::Engine::Vec2 uv0 =
+                ::SF::Engine::Vec2((float) (r.x + pad_left - 1), (float) (r.y + y)) * atlas->TexUvScale;
+        ::SF::Engine::Vec2 uv1 = ::SF::Engine::Vec2((float) (r.x + pad_left + line_width + 1), (float) (r.y + y + 1)) *
+                                 atlas->TexUvScale;
         float half_v =
                 (uv0.y + uv1.y) * 0.5f; // Calculate a constant V in the middle of the row to avoid sampling artifacts
-        atlas->TexUvLines[n] = Vec4(uv0.x, half_v, uv1.x, half_v);
+        atlas->TexUvLines[n] = ::SF::Engine::Vec4(uv0.x, half_v, uv1.x, half_v);
     }
 }
 
@@ -4258,7 +4300,7 @@ void ImFontAtlasBakedDiscardFontGlyph(ImFontAtlas *atlas, ImFont *font, ImFontBa
 }
 
 ImFontBaked *ImFontAtlasBakedAdd(ImFontAtlas *atlas, ImFont *font, float font_size, float font_rasterizer_density,
-                                 ImGuiID baked_id)
+                                 IdType baked_id)
 {
     ImFontBaked *baked       = atlas->Builder->BakedPool.push_back(ImFontBaked());
     baked->Size              = font_size;
@@ -4437,7 +4479,7 @@ static void ImFontAtlasBuildSetTexture(ImFontAtlas *atlas, ImTextureData *tex)
 {
     ImTextureRef old_tex_ref = atlas->TexRef;
     atlas->TexData           = tex;
-    atlas->TexUvScale        = Vec2(1.0f / tex->Width, 1.0f / tex->Height);
+    atlas->TexUvScale        = ::SF::Engine::Vec2(1.0f / tex->Width, 1.0f / tex->Height);
     atlas->TexRef._TexData   = tex;
     // atlas->TexRef._TexID = tex->TexID; // <-- We intentionally don't do that. It would be misleading and betray
     // promise that both fields aren't set.
@@ -4919,7 +4961,7 @@ static void ImFontAtlas_FontHookRemapCodepoint(ImFontAtlas *atlas, ImFont *font,
 {
     IM_UNUSED(atlas);
     if (font->RemapPairs.Data.Size != 0)
-        *c = (ImWchar) font->RemapPairs.GetInt((ImGuiID) *c, (int) *c);
+        *c = (ImWchar) font->RemapPairs.GetInt((IdType) *c, (int) *c);
 }
 
 static ImFontGlyph *ImFontBaked_BuildLoadGlyph(ImFontBaked *baked, ImWchar codepoint, float *only_load_advance_x)
@@ -5295,10 +5337,7 @@ void ImFontBaked::ClearOutputData()
     MetricsTotalSurface = 0;
 }
 
-ImFont::ImFont()
-{
-    memset((void *) this, 0, sizeof(*this));
-}
+ImFont::ImFont() { memset((void *) this, 0, sizeof(*this)); }
 
 ImFont::~ImFont() { ClearOutputData(); }
 
@@ -5427,7 +5466,7 @@ void ImFontAtlasBakedSetFontGlyphBitmap(ImFontAtlas *atlas, ImFontBaked *baked, 
 
 void ImFont::AddRemapChar(ImWchar from_codepoint, ImWchar to_codepoint)
 {
-    RemapPairs.SetInt((ImGuiID) from_codepoint, (int) to_codepoint);
+    RemapPairs.SetInt((IdType) from_codepoint, (int) to_codepoint);
 }
 
 // Find glyph, load if necessary, return fallback if missing
@@ -5509,11 +5548,11 @@ float ImFontBaked::GetCharAdvance(ImWchar c)
 }
 IM_MSVC_RUNTIME_CHECKS_RESTORE
 
-ImGuiID ImFontAtlasBakedGetId(ImGuiID font_id, float baked_size, float rasterizer_density)
+IdType ImFontAtlasBakedGetId(IdType font_id, float baked_size, float rasterizer_density)
 {
     struct
     {
-        ImGuiID FontId;
+        IdType FontId;
         float BakedSize;
         float RasterizerDensity;
     } hashed_data;
@@ -5553,7 +5592,7 @@ ImFontBaked *ImFontAtlasBakedGetOrAdd(ImFontAtlas *atlas, ImFont *font, float fo
     // FIXME-NEWATLAS: Design for picking a nearest size based on some criteria?
     // FIXME-NEWATLAS: Altering font density won't work right away.
     IM_ASSERT(font_size > 0.0f && font_rasterizer_density > 0.0f);
-    ImGuiID baked_id             = ImFontAtlasBakedGetId(font->FontId, font_size, font_rasterizer_density);
+    IdType baked_id              = ImFontAtlasBakedGetId(font->FontId, font_size, font_rasterizer_density);
     ImFontAtlasBuilder *builder  = atlas->Builder;
     ImFontBaked **p_baked_in_map = (ImFontBaked **) builder->BakedMap.GetVoidPtrRef(baked_id);
     ImFontBaked *baked           = *p_baked_in_map;
@@ -5777,9 +5816,10 @@ const char *ImFont::CalcWordWrapPosition(float size, const char *text, const cha
     return ImFontCalcWordWrapPositionEx(this, size, text, text_end, wrap_width, ImDrawTextFlags_None);
 }
 
-Vec2 ImFontCalcTextSizeEx(ImFont *font, float size, float max_width, float wrap_width, const char *text_begin,
-                          const char *text_end_display, const char *text_end, const char **out_remaining,
-                          Vec2 *out_offset, ImDrawTextFlags flags)
+::SF::Engine::Vec2 ImFontCalcTextSizeEx(ImFont *font, float size, float max_width, float wrap_width,
+                                        const char *text_begin, const char *text_end_display, const char *text_end,
+                                        const char **out_remaining, ::SF::Engine::Vec2 *out_offset,
+                                        ImDrawTextFlags flags)
 {
     if (!text_end)
         text_end = text_begin + ImStrlen(text_begin); // FIXME-OPT: Need to avoid this.
@@ -5790,8 +5830,8 @@ Vec2 ImFontCalcTextSizeEx(ImFont *font, float size, float max_width, float wrap_
     const float line_height = size;
     const float scale       = line_height / baked->Size;
 
-    Vec2 text_size   = Vec2(0, 0);
-    float line_width = 0.0f;
+    ::SF::Engine::Vec2 text_size = ::SF::Engine::Vec2(0, 0);
+    float line_width             = 0.0f;
 
     const bool word_wrap_enabled = (wrap_width > 0.0f);
     const char *word_wrap_eol    = nullptr;
@@ -5860,9 +5900,9 @@ Vec2 ImFontCalcTextSizeEx(ImFont *font, float size, float max_width, float wrap_
         text_size.x = line_width;
 
     if (out_offset != nullptr)
-        *out_offset =
-                Vec2(line_width,
-                     text_size.y + line_height); // offset allow for the possibility of sitting after a trailing \n
+        *out_offset = ::SF::Engine::Vec2(
+                line_width,
+                text_size.y + line_height); // offset allow for the possibility of sitting after a trailing \n
 
     if (line_width > 0 || text_size.y == 0.0f) // whereas size.y will ignore the trailing \n
         text_size.y += line_height;
@@ -5873,16 +5913,16 @@ Vec2 ImFontCalcTextSizeEx(ImFont *font, float size, float max_width, float wrap_
     return text_size;
 }
 
-Vec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, const char *text_begin, const char *text_end,
-                           const char **out_remaining)
+::SF::Engine::Vec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, const char *text_begin,
+                                         const char *text_end, const char **out_remaining)
 {
     return ImFontCalcTextSizeEx(this, size, max_width, wrap_width, text_begin, text_end, text_end, out_remaining,
                                 nullptr, ImDrawTextFlags_None);
 }
 
 // Note: as with every ImDrawList drawing function, this expects that the font atlas texture is bound.
-void ImFont::RenderChar(ImDrawList *draw_list, float size, const Vec2 &pos, uint32_t col, ImWchar c,
-                        const Vec4 *cpu_fine_clip)
+void ImFont::RenderChar(ImDrawList *draw_list, float size, const ::SF::Engine::Vec2 &pos, uint32_t col, ImWchar c,
+                        const ::SF::Engine::Vec4 *cpu_fine_clip)
 {
     ImFontBaked *baked       = GetFontBaked(size);
     const ImFontGlyph *glyph = baked->FindGlyph(c);
@@ -5939,13 +5979,15 @@ void ImFont::RenderChar(ImDrawList *draw_list, float size, const Vec2 &pos, uint
             return;
     }
     draw_list->PrimReserve(6, 4);
-    draw_list->PrimRectUV(Vec2(x1, y1), Vec2(x2, y2), Vec2(u1, v1), Vec2(u2, v2), col);
+    draw_list->PrimRectUV(::SF::Engine::Vec2(x1, y1), ::SF::Engine::Vec2(x2, y2), ::SF::Engine::Vec2(u1, v1),
+                          ::SF::Engine::Vec2(u2, v2), col);
 }
 
 // Note: as with every ImDrawList drawing function, this expects that the font atlas texture is bound.
 // DO NOT CALL DIRECTLY THIS WILL CHANGE WILDLY IN 2026. Use ImDrawList::AddText().
-void ImFont::RenderText(ImDrawList *draw_list, float size, const Vec2 &pos, uint32_t col, const Vec4 &clip_rect,
-                        const char *text_begin, const char *text_end, float wrap_width, ImDrawTextFlags flags)
+void ImFont::RenderText(ImDrawList *draw_list, float size, const ::SF::Engine::Vec2 &pos, uint32_t col,
+                        const ::SF::Engine::Vec4 &clip_rect, const char *text_begin, const char *text_end, float wrap_width,
+                        ImDrawTextFlags flags)
 {
 begin:
     // Align to be pixel perfect
@@ -6198,30 +6240,30 @@ begin:
 
 // Render an arrow aimed to be aligned with text (p_min is a position in the same space text would be positioned). To
 // e.g. denote expanded/collapsed state
-void ImGui::RenderArrow(ImDrawList *draw_list, Vec2 pos, uint32_t col, ImGuiDir dir, float scale)
+void ImGui::RenderArrow(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, uint32_t col, ImGuiDir dir, float scale)
 {
-    const float h = draw_list->_Data->FontSize * 1.00f;
-    float r       = h * 0.40f * scale;
-    Vec2 center   = pos + Vec2(h * 0.50f, h * 0.50f * scale);
+    const float h             = draw_list->_Data->FontSize * 1.00f;
+    float r                   = h * 0.40f * scale;
+    ::SF::Engine::Vec2 center = pos + ::SF::Engine::Vec2(h * 0.50f, h * 0.50f * scale);
 
-    Vec2 a, b, c;
+    ::SF::Engine::Vec2 a, b, c;
     switch (dir)
     {
         case ImGuiDir_Up:
         case ImGuiDir_Down:
             if (dir == ImGuiDir_Up)
                 r = -r;
-            a = Vec2(+0.000f, +0.750f) * r;
-            b = Vec2(-0.866f, -0.750f) * r;
-            c = Vec2(+0.866f, -0.750f) * r;
+            a = ::SF::Engine::Vec2(+0.000f, +0.750f) * r;
+            b = ::SF::Engine::Vec2(-0.866f, -0.750f) * r;
+            c = ::SF::Engine::Vec2(+0.866f, -0.750f) * r;
             break;
         case ImGuiDir_Left:
         case ImGuiDir_Right:
             if (dir == ImGuiDir_Left)
                 r = -r;
-            a = Vec2(+0.750f, +0.000f) * r;
-            b = Vec2(-0.750f, +0.866f) * r;
-            c = Vec2(-0.750f, -0.866f) * r;
+            a = ::SF::Engine::Vec2(+0.750f, +0.000f) * r;
+            b = ::SF::Engine::Vec2(-0.750f, +0.866f) * r;
+            c = ::SF::Engine::Vec2(-0.750f, -0.866f) * r;
             break;
         case ImGuiDir_None:
         case ImGuiDir_COUNT:
@@ -6231,7 +6273,7 @@ void ImGui::RenderArrow(ImDrawList *draw_list, Vec2 pos, uint32_t col, ImGuiDir 
     draw_list->AddTriangleFilled(center + a, center + b, center + c, col);
 }
 
-void ImGui::RenderBullet(ImDrawList *draw_list, Vec2 pos, uint32_t col)
+void ImGui::RenderBullet(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, uint32_t col)
 {
     // FIXME-OPT: This should be baked in font now that it's easier.
     float font_size = draw_list->_Data->FontSize;
@@ -6241,42 +6283,43 @@ void ImGui::RenderBullet(ImDrawList *draw_list, Vec2 pos, uint32_t col)
                                                   : 0); // Hardcode optimal/nice tessellation threshold
 }
 
-void ImGui::RenderCheckMark(ImDrawList *draw_list, Vec2 pos, uint32_t col, float sz)
+void ImGui::RenderCheckMark(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, uint32_t col, float sz)
 {
     float thickness = ImMax(sz / 5.0f, 1.0f);
     sz -= thickness * 0.5f;
-    pos += Vec2(thickness * 0.25f, thickness * 0.25f);
+    pos += ::SF::Engine::Vec2(thickness * 0.25f, thickness * 0.25f);
 
     float third = sz / 3.0f;
     float bx    = pos.x + third;
     float by    = pos.y + sz - third * 0.5f;
-    draw_list->PathLineTo(Vec2(bx - third, by - third));
-    draw_list->PathLineTo(Vec2(bx, by));
-    draw_list->PathLineTo(Vec2(bx + third * 2.0f, by - third * 2.0f));
+    draw_list->PathLineTo(::SF::Engine::Vec2(bx - third, by - third));
+    draw_list->PathLineTo(::SF::Engine::Vec2(bx, by));
+    draw_list->PathLineTo(::SF::Engine::Vec2(bx + third * 2.0f, by - third * 2.0f));
     draw_list->PathStroke(col, thickness);
 }
 
 // Render an arrow. 'pos' is position of the arrow tip. half_sz.x is length from base to tip. half_sz.y is length on
 // each side.
-void ImGui::RenderArrowPointingAt(ImDrawList *draw_list, Vec2 pos, Vec2 half_sz, ImGuiDir direction, uint32_t col)
+void ImGui::RenderArrowPointingAt(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, ::SF::Engine::Vec2 half_sz,
+                                  ImGuiDir direction, uint32_t col)
 {
     switch (direction)
     {
         case ImGuiDir_Left:
-            draw_list->AddTriangleFilled(Vec2(pos.x + half_sz.x, pos.y - half_sz.y),
-                                         Vec2(pos.x + half_sz.x, pos.y + half_sz.y), pos, col);
+            draw_list->AddTriangleFilled(::SF::Engine::Vec2(pos.x + half_sz.x, pos.y - half_sz.y),
+                                         ::SF::Engine::Vec2(pos.x + half_sz.x, pos.y + half_sz.y), pos, col);
             return;
         case ImGuiDir_Right:
-            draw_list->AddTriangleFilled(Vec2(pos.x - half_sz.x, pos.y + half_sz.y),
-                                         Vec2(pos.x - half_sz.x, pos.y - half_sz.y), pos, col);
+            draw_list->AddTriangleFilled(::SF::Engine::Vec2(pos.x - half_sz.x, pos.y + half_sz.y),
+                                         ::SF::Engine::Vec2(pos.x - half_sz.x, pos.y - half_sz.y), pos, col);
             return;
         case ImGuiDir_Up:
-            draw_list->AddTriangleFilled(Vec2(pos.x + half_sz.x, pos.y + half_sz.y),
-                                         Vec2(pos.x - half_sz.x, pos.y + half_sz.y), pos, col);
+            draw_list->AddTriangleFilled(::SF::Engine::Vec2(pos.x + half_sz.x, pos.y + half_sz.y),
+                                         ::SF::Engine::Vec2(pos.x - half_sz.x, pos.y + half_sz.y), pos, col);
             return;
         case ImGuiDir_Down:
-            draw_list->AddTriangleFilled(Vec2(pos.x - half_sz.x, pos.y - half_sz.y),
-                                         Vec2(pos.x + half_sz.x, pos.y - half_sz.y), pos, col);
+            draw_list->AddTriangleFilled(::SF::Engine::Vec2(pos.x - half_sz.x, pos.y - half_sz.y),
+                                         ::SF::Engine::Vec2(pos.x + half_sz.x, pos.y - half_sz.y), pos, col);
             return;
         case ImGuiDir_None:
         case ImGuiDir_COUNT:
@@ -6287,11 +6330,12 @@ void ImGui::RenderArrowPointingAt(ImDrawList *draw_list, Vec2 pos, Vec2 half_sz,
 // This is less wide than RenderArrow() and we use in dock nodes instead of the regular RenderArrow() to denote a change
 // of functionality, and because the saved space means that the left-most tab label can stay at exactly the same
 // position as the label of a loose window.
-void ImGui::RenderArrowDockMenu(ImDrawList *draw_list, Vec2 p_min, float sz, uint32_t col)
+void ImGui::RenderArrowDockMenu(ImDrawList *draw_list, ::SF::Engine::Vec2 p_min, float sz, uint32_t col)
 {
-    draw_list->AddRectFilled(p_min + Vec2(sz * 0.20f, sz * 0.15f), p_min + Vec2(sz * 0.80f, sz * 0.30f), col);
-    RenderArrowPointingAt(draw_list, p_min + Vec2(sz * 0.50f, sz * 0.85f), Vec2(sz * 0.30f, sz * 0.40f), ImGuiDir_Down,
-                          col);
+    draw_list->AddRectFilled(p_min + ::SF::Engine::Vec2(sz * 0.20f, sz * 0.15f),
+                             p_min + ::SF::Engine::Vec2(sz * 0.80f, sz * 0.30f), col);
+    RenderArrowPointingAt(draw_list, p_min + ::SF::Engine::Vec2(sz * 0.50f, sz * 0.85f),
+                          ::SF::Engine::Vec2(sz * 0.30f, sz * 0.40f), ImGuiDir_Down, col);
 }
 
 static inline float ImAcos01(float x)
@@ -6314,8 +6358,8 @@ void ImGui::RenderRectFilledInRangeH(ImDrawList *draw_list, const ImRect &rect, 
     if (fill_x0 > fill_x1)
         return;
 
-    Vec2 p0 = Vec2(fill_x0, rect.Min.y);
-    Vec2 p1 = Vec2(fill_x1, rect.Max.y);
+    ::SF::Engine::Vec2 p0 = ::SF::Engine::Vec2(fill_x0, rect.Min.y);
+    ::SF::Engine::Vec2 p1 = ::SF::Engine::Vec2(fill_x1, rect.Max.y);
     if (rounding == 0.0f)
     {
         draw_list->AddRectFilled(p0, p1, col, 0.0f);
@@ -6332,16 +6376,16 @@ void ImGui::RenderRectFilledInRangeH(ImDrawList *draw_list, const ImRect &rect, 
     const float x0 = ImMax(p0.x, rect.Min.x + rounding);
     if (arc0_b == arc0_e)
     {
-        draw_list->PathLineTo(Vec2(x0, p1.y));
-        draw_list->PathLineTo(Vec2(x0, p0.y));
+        draw_list->PathLineTo(::SF::Engine::Vec2(x0, p1.y));
+        draw_list->PathLineTo(::SF::Engine::Vec2(x0, p0.y));
     } else if (arc0_b == 0.0f && arc0_e == half_pi)
     {
-        draw_list->PathArcToFast(Vec2(x0, p1.y - rounding), rounding, 3, 6); // BL
-        draw_list->PathArcToFast(Vec2(x0, p0.y + rounding), rounding, 6, 9); // TR
+        draw_list->PathArcToFast(::SF::Engine::Vec2(x0, p1.y - rounding), rounding, 3, 6); // BL
+        draw_list->PathArcToFast(::SF::Engine::Vec2(x0, p0.y + rounding), rounding, 6, 9); // TR
     } else
     {
-        draw_list->PathArcTo(Vec2(x0, p1.y - rounding), rounding, IM_PI - arc0_e, IM_PI - arc0_b); // BL
-        draw_list->PathArcTo(Vec2(x0, p0.y + rounding), rounding, IM_PI + arc0_b, IM_PI + arc0_e); // TR
+        draw_list->PathArcTo(::SF::Engine::Vec2(x0, p1.y - rounding), rounding, IM_PI - arc0_e, IM_PI - arc0_b); // BL
+        draw_list->PathArcTo(::SF::Engine::Vec2(x0, p0.y + rounding), rounding, IM_PI + arc0_b, IM_PI + arc0_e); // TR
     }
     if (p1.x > rect.Min.x + rounding)
     {
@@ -6350,16 +6394,16 @@ void ImGui::RenderRectFilledInRangeH(ImDrawList *draw_list, const ImRect &rect, 
         const float x1     = ImMin(p1.x, rect.Max.x - rounding);
         if (arc1_b == arc1_e)
         {
-            draw_list->PathLineTo(Vec2(x1, p0.y));
-            draw_list->PathLineTo(Vec2(x1, p1.y));
+            draw_list->PathLineTo(::SF::Engine::Vec2(x1, p0.y));
+            draw_list->PathLineTo(::SF::Engine::Vec2(x1, p1.y));
         } else if (arc1_b == 0.0f && arc1_e == half_pi)
         {
-            draw_list->PathArcToFast(Vec2(x1, p0.y + rounding), rounding, 9, 12); // TR
-            draw_list->PathArcToFast(Vec2(x1, p1.y - rounding), rounding, 0, 3);  // BR
+            draw_list->PathArcToFast(::SF::Engine::Vec2(x1, p0.y + rounding), rounding, 9, 12); // TR
+            draw_list->PathArcToFast(::SF::Engine::Vec2(x1, p1.y - rounding), rounding, 0, 3);  // BR
         } else
         {
-            draw_list->PathArcTo(Vec2(x1, p0.y + rounding), rounding, -arc1_e, -arc1_b); // TR
-            draw_list->PathArcTo(Vec2(x1, p1.y - rounding), rounding, +arc1_b, +arc1_e); // BR
+            draw_list->PathArcTo(::SF::Engine::Vec2(x1, p0.y + rounding), rounding, -arc1_e, -arc1_b); // TR
+            draw_list->PathArcTo(::SF::Engine::Vec2(x1, p1.y - rounding), rounding, +arc1_b, +arc1_e); // BR
         }
     }
     draw_list->PathFillConvex(col);
@@ -6373,32 +6417,40 @@ void ImGui::RenderRectFilledWithHole(ImDrawList *draw_list, const ImRect &outer,
     const bool fill_U = (inner.Min.y > outer.Min.y);
     const bool fill_D = (inner.Max.y < outer.Max.y);
     if (fill_L)
-        draw_list->AddRectFilled(Vec2(outer.Min.x, inner.Min.y), Vec2(inner.Min.x, inner.Max.y), col, rounding,
+        draw_list->AddRectFilled(::SF::Engine::Vec2(outer.Min.x, inner.Min.y),
+                                 ::SF::Engine::Vec2(inner.Min.x, inner.Max.y), col, rounding,
                                  ImDrawFlags_RoundCornersNone | (fill_U ? 0 : ImDrawFlags_RoundCornersTopLeft) |
                                          (fill_D ? 0 : ImDrawFlags_RoundCornersBottomLeft));
     if (fill_R)
-        draw_list->AddRectFilled(Vec2(inner.Max.x, inner.Min.y), Vec2(outer.Max.x, inner.Max.y), col, rounding,
+        draw_list->AddRectFilled(::SF::Engine::Vec2(inner.Max.x, inner.Min.y),
+                                 ::SF::Engine::Vec2(outer.Max.x, inner.Max.y), col, rounding,
                                  ImDrawFlags_RoundCornersNone | (fill_U ? 0 : ImDrawFlags_RoundCornersTopRight) |
                                          (fill_D ? 0 : ImDrawFlags_RoundCornersBottomRight));
     if (fill_U)
-        draw_list->AddRectFilled(Vec2(inner.Min.x, outer.Min.y), Vec2(inner.Max.x, inner.Min.y), col, rounding,
+        draw_list->AddRectFilled(::SF::Engine::Vec2(inner.Min.x, outer.Min.y),
+                                 ::SF::Engine::Vec2(inner.Max.x, inner.Min.y), col, rounding,
                                  ImDrawFlags_RoundCornersNone | (fill_L ? 0 : ImDrawFlags_RoundCornersTopLeft) |
                                          (fill_R ? 0 : ImDrawFlags_RoundCornersTopRight));
     if (fill_D)
-        draw_list->AddRectFilled(Vec2(inner.Min.x, inner.Max.y), Vec2(inner.Max.x, outer.Max.y), col, rounding,
+        draw_list->AddRectFilled(::SF::Engine::Vec2(inner.Min.x, inner.Max.y),
+                                 ::SF::Engine::Vec2(inner.Max.x, outer.Max.y), col, rounding,
                                  ImDrawFlags_RoundCornersNone | (fill_L ? 0 : ImDrawFlags_RoundCornersBottomLeft) |
                                          (fill_R ? 0 : ImDrawFlags_RoundCornersBottomRight));
     if (fill_L && fill_U)
-        draw_list->AddRectFilled(Vec2(outer.Min.x, outer.Min.y), Vec2(inner.Min.x, inner.Min.y), col, rounding,
+        draw_list->AddRectFilled(::SF::Engine::Vec2(outer.Min.x, outer.Min.y),
+                                 ::SF::Engine::Vec2(inner.Min.x, inner.Min.y), col, rounding,
                                  ImDrawFlags_RoundCornersTopLeft);
     if (fill_R && fill_U)
-        draw_list->AddRectFilled(Vec2(inner.Max.x, outer.Min.y), Vec2(outer.Max.x, inner.Min.y), col, rounding,
+        draw_list->AddRectFilled(::SF::Engine::Vec2(inner.Max.x, outer.Min.y),
+                                 ::SF::Engine::Vec2(outer.Max.x, inner.Min.y), col, rounding,
                                  ImDrawFlags_RoundCornersTopRight);
     if (fill_L && fill_D)
-        draw_list->AddRectFilled(Vec2(outer.Min.x, inner.Max.y), Vec2(inner.Min.x, outer.Max.y), col, rounding,
+        draw_list->AddRectFilled(::SF::Engine::Vec2(outer.Min.x, inner.Max.y),
+                                 ::SF::Engine::Vec2(inner.Min.x, outer.Max.y), col, rounding,
                                  ImDrawFlags_RoundCornersBottomLeft);
     if (fill_R && fill_D)
-        draw_list->AddRectFilled(Vec2(inner.Max.x, inner.Max.y), Vec2(outer.Max.x, outer.Max.y), col, rounding,
+        draw_list->AddRectFilled(::SF::Engine::Vec2(inner.Max.x, inner.Max.y),
+                                 ::SF::Engine::Vec2(outer.Max.x, outer.Max.y), col, rounding,
                                  ImDrawFlags_RoundCornersBottomRight);
 }
 
@@ -6420,8 +6472,9 @@ ImDrawFlags ImGui::CalcRoundingFlagsForRectInRect(const ImRect &r_in, const ImRe
 // right for ColorButton with rounding+anti-aliasing+ImGuiColorEditFlags_HalfAlphaPreview flag + various grid sizes and
 // offsets, and eventually gave up... probably more reasonable to disable rounding altogether.
 // FIXME: uses ImGui::GetColorU32
-void ImGui::RenderColorRectWithAlphaCheckerboard(ImDrawList *draw_list, Vec2 p_min, Vec2 p_max, uint32_t col,
-                                                 float grid_step, Vec2 grid_off, float rounding, ImDrawFlags flags)
+void ImGui::RenderColorRectWithAlphaCheckerboard(ImDrawList *draw_list, ::SF::Engine::Vec2 p_min,
+                                                 ::SF::Engine::Vec2 p_max, uint32_t col, float grid_step,
+                                                 ::SF::Engine::Vec2 grid_off, float rounding, ImDrawFlags flags)
 {
     if ((flags & ImDrawFlags_RoundCornersMask_) == 0)
         flags = ImDrawFlags_RoundCornersDefault_;
@@ -6463,7 +6516,8 @@ void ImGui::RenderColorRectWithAlphaCheckerboard(ImDrawList *draw_list, Vec2 p_m
                 cell_flags = (flags == ImDrawFlags_RoundCornersNone || cell_flags == ImDrawFlags_RoundCornersNone)
                                      ? ImDrawFlags_RoundCornersNone
                                      : (cell_flags & flags);
-                draw_list->AddRectFilled(Vec2(x1, y1), Vec2(x2, y2), col_bg2, rounding, cell_flags);
+                draw_list->AddRectFilled(::SF::Engine::Vec2(x1, y1), ::SF::Engine::Vec2(x2, y2), col_bg2, rounding,
+                                         cell_flags);
             }
         }
     } else

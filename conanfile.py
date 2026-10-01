@@ -51,9 +51,6 @@ class SfEngineConan(ConanFile):
         # Math Library
         self.requires("glm/cci.20230113")
 
-        # ImGui Extensions
-        self.requires("implot/0.16")
-
         # XML Parsing
         self.requires("libxml2/2.12.5")
         self.requires("utfcpp/4.0.1", override=True)

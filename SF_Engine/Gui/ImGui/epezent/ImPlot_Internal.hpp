@@ -438,8 +438,8 @@ struct ImPlotColormapData
         TextOffsets.push_back(Text.size());
         Text.append(name, name + strlen(name) + 1);
         Quals.push_back(qual);
-        ImGuiID id = ImHashStr(name);
-        int idx    = Count++;
+        IdType id = ImHashStr(name);
+        int idx   = Count++;
         Map.SetInt(id, idx);
         _AppendTable(idx);
         return idx;
@@ -504,7 +504,7 @@ struct ImPlotColormapData
     }
     inline ImPlotColormap GetIndex(const char *name) const
     {
-        ImGuiID key = ImHashStr(name);
+        IdType key = ImHashStr(name);
         return Map.GetInt(key, -1);
     }
 
@@ -553,8 +553,8 @@ struct ImPlotPointError
 // Interior plot label/annotation
 struct ImPlotAnnotation
 {
-    Vec2 Pos;
-    Vec2 Offset;
+    ::SF::Engine::Vec2 Pos;
+    ::SF::Engine::Vec2 Offset;
     uint32_t ColorBg;
     uint32_t ColorFg;
     int TextOffset;
@@ -577,8 +577,8 @@ struct ImPlotAnnotationCollection
 
     ImPlotAnnotationCollection() { Reset(); }
 
-    void AppendV(const Vec2 &pos, const Vec2 &off, uint32_t bg, uint32_t fg, bool clamp, const char *fmt, va_list args)
-            IM_FMTLIST(7)
+    void AppendV(const ::SF::Engine::Vec2 &pos, const ::SF::Engine::Vec2 &off, uint32_t bg, uint32_t fg, bool clamp,
+                 const char *fmt, va_list args) IM_FMTLIST(7)
     {
         ImPlotAnnotation an;
         an.Pos        = pos;
@@ -594,8 +594,8 @@ struct ImPlotAnnotationCollection
         Size++;
     }
 
-    void Append(const Vec2 &pos, const Vec2 &off, uint32_t bg, uint32_t fg, bool clamp, const char *fmt, ...)
-            IM_FMTARGS(7)
+    void Append(const ::SF::Engine::Vec2 &pos, const ::SF::Engine::Vec2 &off, uint32_t bg, uint32_t fg, bool clamp,
+                const char *fmt, ...) IM_FMTARGS(7)
     {
         va_list args;
         va_start(args, fmt);
@@ -678,7 +678,7 @@ struct ImPlotTick
 {
     double PlotPos;
     float PixelPos;
-    Vec2 LabelSize;
+    ::SF::Engine::Vec2 LabelSize;
     int TextOffset;
     bool Major;
     bool ShowLabel;
@@ -689,7 +689,7 @@ struct ImPlotTick
     {
         PlotPos    = 0;
         PixelPos   = 0;
-        LabelSize  = Vec2(0, 0);
+        LabelSize  = ::SF::Engine::Vec2(0, 0);
         TextOffset = -1;
         Major      = false;
         ShowLabel  = false;
@@ -713,8 +713,8 @@ struct ImPlotTicker
 {
     ImVector<ImPlotTick> Ticks;
     ImGuiTextBuffer TextBuffer;
-    Vec2 MaxSize;
-    Vec2 LateSize;
+    ::SF::Engine::Vec2 MaxSize;
+    ::SF::Engine::Vec2 LateSize;
     int Levels;
 
     ImPlotTicker() { Reset(); }
@@ -761,7 +761,7 @@ struct ImPlotTicker
 
     const char *GetText(const ImPlotTick &tick) { return GetText(tick.Idx); }
 
-    void OverrideSizeLate(const Vec2 &size)
+    void OverrideSizeLate(const ::SF::Engine::Vec2 &size)
     {
         LateSize.x = size.x > LateSize.x ? size.x : LateSize.x;
         LateSize.y = size.y > LateSize.y ? size.y : LateSize.y;
@@ -772,7 +772,7 @@ struct ImPlotTicker
         Ticks.shrink(0);
         TextBuffer.Buf.shrink(0);
         MaxSize  = LateSize;
-        LateSize = Vec2(0, 0);
+        LateSize = ::SF::Engine::Vec2(0, 0);
         Levels   = 1;
     }
 
@@ -782,7 +782,7 @@ struct ImPlotTicker
 // Axis state information that must persist after EndPlot
 struct ImPlotAxis
 {
-    ImGuiID ID;
+    IdType ID;
     ImPlotAxisFlags Flags;
     ImPlotAxisFlags PreviousFlags;
     ImPlotRange Range;
@@ -1165,7 +1165,7 @@ struct ImPlotAlignmentData
 // State information for Plot items
 struct ImPlotItem
 {
-    ImGuiID ID;
+    IdType ID;
     uint32_t Color;
     ImPlotMarker Marker;
     ImRect LegendHoverRect;
@@ -1195,7 +1195,7 @@ struct ImPlotLegend
     ImPlotLegendFlags PreviousFlags;
     ImPlotLocation Location;
     ImPlotLocation PreviousLocation;
-    Vec2 Scroll;
+    ::SF::Engine::Vec2 Scroll;
     ImVector<int> Indices;
     ImGuiTextBuffer Labels;
     ImRect Rect;
@@ -1210,7 +1210,7 @@ struct ImPlotLegend
         CanGoInside           = true;
         Hovered = Held = false;
         Location = PreviousLocation = ImPlotLocation_NorthWest;
-        Scroll                      = Vec2(0, 0);
+        Scroll                      = ::SF::Engine::Vec2(0, 0);
     }
 
     void Reset()
@@ -1223,7 +1223,7 @@ struct ImPlotLegend
 // Holds Items and Legend data
 struct ImPlotItemGroup
 {
-    ImGuiID ID;
+    IdType ID;
     ImPlotLegend Legend;
     ImPool<ImPlotItem> ItemPool;
     int ColormapIdx;
@@ -1237,10 +1237,10 @@ struct ImPlotItemGroup
     }
 
     int GetItemCount() const { return ItemPool.GetBufSize(); }
-    ImGuiID GetItemID(const char *label_id) { return ImGui::GetID(label_id); /* GetIDWithSeed */ }
-    ImPlotItem *GetItem(ImGuiID id) { return ItemPool.GetByKey(id); }
+    IdType GetItemID(const char *label_id) { return ImGui::GetID(label_id); /* GetIDWithSeed */ }
+    ImPlotItem *GetItem(IdType id) { return ItemPool.GetByKey(id); }
     ImPlotItem *GetItem(const char *label_id) { return GetItem(GetItemID(label_id)); }
-    ImPlotItem *GetOrAddItem(ImGuiID id) { return ItemPool.GetOrAddByKey(id); }
+    ImPlotItem *GetOrAddItem(IdType id) { return ItemPool.GetOrAddByKey(id); }
     ImPlotItem *GetItemByIndex(int i) { return ItemPool.GetByIndex(i); }
     int GetItemIndex(ImPlotItem *item) { return ItemPool.GetIndex(item); }
     int GetLegendCount() const { return Legend.Indices.size(); }
@@ -1257,7 +1257,7 @@ struct ImPlotItemGroup
 // Holds Plot state information that must persist after EndPlot
 struct ImPlotPlot
 {
-    ImGuiID ID;
+    IdType ID;
     ImPlotFlags Flags;
     ImPlotFlags PreviousFlags;
     ImPlotLocation MouseTextLocation;
@@ -1272,7 +1272,7 @@ struct ImPlotPlot
     ImRect PlotRect;
     ImRect AxesRect;
     ImRect SelectRect;
-    Vec2 SelectStart;
+    ::SF::Engine::Vec2 SelectStart;
     int TitleOffset;
     bool JustCreated;
     bool Initialized;
@@ -1291,7 +1291,7 @@ struct ImPlotPlot
             XAxis(i).Vertical = false;
         for (int i = 0; i < IMPLOT_NUM_Y_AXES; ++i)
             YAxis(i).Vertical = true;
-        SelectStart       = Vec2(0, 0);
+        SelectStart       = ::SF::Engine::Vec2(0, 0);
         CurrentX          = ImAxis_X1;
         CurrentY          = ImAxis_Y1;
         MouseTextLocation = ImPlotLocation_South | ImPlotLocation_East;
@@ -1372,7 +1372,7 @@ struct ImPlotPlot
 // Holds subplot data that must persist after EndSubplot
 struct ImPlotSubplot
 {
-    ImGuiID ID;
+    IdType ID;
     ImPlotSubplotFlags Flags;
     ImPlotSubplotFlags PreviousFlags;
     ImPlotItemGroup Items;
@@ -1381,7 +1381,7 @@ struct ImPlotSubplot
     int CurrentIdx;
     ImRect FrameRect;
     ImRect GridRect;
-    Vec2 CellSize;
+    ::SF::Engine::Vec2 CellSize;
     ImVector<ImPlotAlignmentData> RowAlignmentData;
     ImVector<ImPlotAlignmentData> ColAlignmentData;
     ImVector<float> RowRatios;
@@ -1563,12 +1563,13 @@ namespace ImPlot
 
     // Begins a new item. Returns false if the item should not be plotted. Pushes PlotClipRect.
     IMPLOT_API bool BeginItem(const char *label_id, const ImPlotSpec &spec = ImPlotSpec(),
-                              const Vec4 &item_col = IMPLOT_AUTO_COL, ImPlotMarker item_mkr = ImPlotMarker_Invalid);
+                              const ::SF::Engine::Vec4 &item_col = IMPLOT_AUTO_COL,
+                              ImPlotMarker item_mkr              = ImPlotMarker_Invalid);
 
     // Same as above but with fitting functionality.
     template<typename _Fitter>
     bool BeginItemEx(const char *label_id, const _Fitter &fitter, const ImPlotSpec &spec,
-                     const Vec4 &item_col = IMPLOT_AUTO_COL, ImPlotMarker item_mkr = ImPlotMarker_Invalid)
+                     const ::SF::Engine::Vec4 &item_col = IMPLOT_AUTO_COL, ImPlotMarker item_mkr = ImPlotMarker_Invalid)
     {
         if (BeginItem(label_id, spec, item_col, item_mkr))
         {
@@ -1682,20 +1683,23 @@ namespace ImPlot
 
     // Gets the position of an inner rect that is located inside of an outer rect according to an ImPlotLocation and
     // padding amount.
-    IMPLOT_API Vec2 GetLocationPos(const ImRect &outer_rect, const Vec2 &inner_size, ImPlotLocation location,
-                                   const Vec2 &pad = Vec2(0, 0));
+    IMPLOT_API ::SF::Engine::Vec2 GetLocationPos(const ImRect &outer_rect, const ::SF::Engine::Vec2 &inner_size,
+                                                 ImPlotLocation location,
+                                                 const ::SF::Engine::Vec2 &pad = ::SF::Engine::Vec2(0, 0));
     // Calculates the bounding box size of a legend _before_ clipping.
-    IMPLOT_API Vec2 CalcLegendSize(ImPlotItemGroup &items, const Vec2 &pad, const Vec2 &spacing, bool vertical);
+    IMPLOT_API ::SF::Engine::Vec2 CalcLegendSize(ImPlotItemGroup &items, const ::SF::Engine::Vec2 &pad,
+                                                 const ::SF::Engine::Vec2 &spacing, bool vertical);
     // Clips calculated legend size
-    IMPLOT_API bool ClampLegendRect(ImRect &legend_rect, const ImRect &outer_rect, const Vec2 &pad);
+    IMPLOT_API bool ClampLegendRect(ImRect &legend_rect, const ImRect &outer_rect, const ::SF::Engine::Vec2 &pad);
     // Renders legend entries into a bounding box
     IMPLOT_API bool ShowLegendEntries(ImPlotItemGroup &items, const ImRect &legend_bb, bool interactable,
-                                      const Vec2 &pad, const Vec2 &spacing, bool vertical, ImDrawList &DrawList);
+                                      const ::SF::Engine::Vec2 &pad, const ::SF::Engine::Vec2 &spacing, bool vertical,
+                                      ImDrawList &DrawList);
     // Shows an alternate legend for the plot identified by #title_id, outside of the plot frame (can be called before
     // or after of Begin/EndPlot but must occur in the same ImGui window! This is not thoroughly tested nor
     // scrollable!).
-    IMPLOT_API void ShowAltLegend(const char *title_id, bool vertical = true, const Vec2 size = Vec2(0, 0),
-                                  bool interactable = true);
+    IMPLOT_API void ShowAltLegend(const char *title_id, bool vertical = true,
+                                  const ::SF::Engine::Vec2 size = ::SF::Engine::Vec2(0, 0), bool interactable = true);
     // Shows a legend's context menu.
     IMPLOT_API bool ShowLegendContextMenu(ImPlotLegend &legend, bool visible);
 
@@ -1714,14 +1718,14 @@ namespace ImPlot
     static inline const ImPlotNextItemData &GetItemData() { return GImPlot->NextItemData; }
 
     // Returns true if a color is set to be automatically determined
-    static inline bool IsColorAuto(const Vec4 &col) { return col.w == -1; }
+    static inline bool IsColorAuto(const ::SF::Engine::Vec4 &col) { return col.w == -1; }
     // Returns true if a style color is set to be automatically determined
     static inline bool IsColorAuto(ImPlotCol idx) { return IsColorAuto(GImPlot->Style.Colors[idx]); }
     // Returns the automatically deduced style color
-    IMPLOT_API Vec4 GetAutoColor(ImPlotCol idx);
+    IMPLOT_API ::SF::Engine::Vec4 GetAutoColor(ImPlotCol idx);
 
     // Returns the style color whether it is automatic or custom set
-    static inline Vec4 GetStyleColorVec4(ImPlotCol idx)
+    static inline ::SF::Engine::Vec4 GetStyleColorVec4(ImPlotCol idx)
     {
         return IsColorAuto(idx) ? GetAutoColor(idx) : GImPlot->Style.Colors[idx];
     }
@@ -1731,19 +1735,19 @@ namespace ImPlot
     }
 
     // Draws vertical text. The position is the bottom left of the text rect.
-    IMPLOT_API void AddTextVertical(ImDrawList *DrawList, Vec2 pos, uint32_t col, const char *text_begin,
+    IMPLOT_API void AddTextVertical(ImDrawList *DrawList, ::SF::Engine::Vec2 pos, uint32_t col, const char *text_begin,
                                     const char *text_end = nullptr);
     // Draws multiline horizontal text centered.
-    IMPLOT_API void AddTextCentered(ImDrawList *DrawList, Vec2 top_center, uint32_t col, const char *text_begin,
-                                    const char *text_end = nullptr);
+    IMPLOT_API void AddTextCentered(ImDrawList *DrawList, ::SF::Engine::Vec2 top_center, uint32_t col,
+                                    const char *text_begin, const char *text_end = nullptr);
     // Calculates the size of vertical text
-    static inline Vec2 CalcTextSizeVertical(const char *text)
+    static inline ::SF::Engine::Vec2 CalcTextSizeVertical(const char *text)
     {
-        Vec2 sz = ImGui::CalcTextSize(text);
-        return Vec2(sz.y, sz.x);
+        ::SF::Engine::Vec2 sz = ImGui::CalcTextSize(text);
+        return ::SF::Engine::Vec2(sz.y, sz.x);
     }
     // Returns white or black text given background color
-    static inline uint32_t CalcTextColor(const Vec4 &bg)
+    static inline uint32_t CalcTextColor(const ::SF::Engine::Vec4 &bg)
     {
         return (bg.x * 0.299f + bg.y * 0.587f + bg.z * 0.114f) > 0.5f ? IM_COL32_BLACK : IM_COL32_WHITE;
     }
@@ -1752,7 +1756,8 @@ namespace ImPlot
     static inline uint32_t CalcHoverColor(uint32_t col) { return ImMixU32(col, CalcTextColor(col), 32); }
 
     // Clamps a label position so that it fits a rect defined by Min/Max
-    static inline Vec2 ClampLabelPos(Vec2 pos, const Vec2 &size, const Vec2 &Min, const Vec2 &Max)
+    static inline ::SF::Engine::Vec2 ClampLabelPos(::SF::Engine::Vec2 pos, const ::SF::Engine::Vec2 &size,
+                                                   const ::SF::Engine::Vec2 &Min, const ::SF::Engine::Vec2 &Max)
     {
         if (pos.x < Min.x)
             pos.x = Min.x;
@@ -1781,12 +1786,12 @@ namespace ImPlot
     static inline void AddLineH(ImDrawList *draw_list, float x1, float x2, float y, uint32_t col,
                                 float thickness = 1.0f)
     {
-        draw_list->AddLine(Vec2(x1, y), Vec2(x2, y), col, thickness);
+        draw_list->AddLine(::SF::Engine::Vec2(x1, y), ::SF::Engine::Vec2(x2, y), col, thickness);
     }
     static inline void AddLineV(ImDrawList *draw_list, float x, float y1, float y2, uint32_t col,
                                 float thickness = 1.0f)
     {
-        draw_list->AddLine(Vec2(x, y1), Vec2(x, y2), col, thickness);
+        draw_list->AddLine(::SF::Engine::Vec2(x, y1), ::SF::Engine::Vec2(x, y2), col, thickness);
     }
     #else
     static inline void AddLineH(ImDrawList *draw_list, float x1, float x2, float y, uint32_t col,
@@ -1821,12 +1826,14 @@ namespace ImPlot
     }
 
     // Returns the intersection point of two lines A and B (assumes they are not parallel!)
-    static inline Vec2 Intersection(const Vec2 &a1, const Vec2 &a2, const Vec2 &b1, const Vec2 &b2)
+    static inline ::SF::Engine::Vec2 Intersection(const ::SF::Engine::Vec2 &a1, const ::SF::Engine::Vec2 &a2,
+                                                  const ::SF::Engine::Vec2 &b1, const ::SF::Engine::Vec2 &b2)
     {
         float v1 = (a1.x * a2.y - a1.y * a2.x);
         float v2 = (b1.x * b2.y - b1.y * b2.x);
         float v3 = ((a1.x - a2.x) * (b1.y - b2.y) - (a1.y - a2.y) * (b1.x - b2.x));
-        return Vec2((v1 * (b1.x - b2.x) - v2 * (a1.x - a2.x)) / v3, (v1 * (b1.y - b2.y) - v2 * (a1.y - a2.y)) / v3);
+        return ::SF::Engine::Vec2((v1 * (b1.x - b2.x) - v2 * (a1.x - a2.x)) / v3,
+                                  (v1 * (b1.y - b2.y) - v2 * (a1.y - a2.y)) / v3);
     }
 
     // Fills a buffer with n samples linear interpolated from vmin to vmax

@@ -31,12 +31,12 @@
 namespace ImSequencer
 {
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
-    static Vec2 operator+(const Vec2 &a, const Vec2 &b) { return Vec2(a.x + b.x, a.y + b.y); }
+    static ::SF::Engine::Vec2 operator+(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b) { return ::SF::Engine::Vec2(a.x + b.x, a.y + b.y); }
 #endif
-    static bool SequencerAddDelButton(ImDrawList *draw_list, Vec2 pos, bool add = true)
+    static bool SequencerAddDelButton(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, bool add = true)
     {
         ImGuiIO &io = ImGui::GetIO();
-        ImRect btnRect(pos, Vec2(pos.x + 16, pos.y + 16));
+        ImRect btnRect(pos, ::SF::Engine::Vec2(pos.x + 16, pos.y + 16));
         bool overBtn        = btnRect.Contains(io.MousePos);
         bool containedClick = overBtn && btnRect.Contains(io.MouseClickedPos[0]);
         bool clickedBtn     = containedClick && io.MouseReleased[0];
@@ -47,9 +47,9 @@ namespace ImSequencer
         float midy = pos.y + 16 / 2 - 0.5f;
         float midx = pos.x + 16 / 2 - 0.5f;
         draw_list->AddRect(btnRect.Min, btnRect.Max, btnColor, 4);
-        draw_list->AddLine(Vec2(btnRect.Min.x + 3, midy), Vec2(btnRect.Max.x - 3, midy), btnColor, 2);
+        draw_list->AddLine(::SF::Engine::Vec2(btnRect.Min.x + 3, midy), ::SF::Engine::Vec2(btnRect.Max.x - 3, midy), btnColor, 2);
         if (add)
-            draw_list->AddLine(Vec2(midx, btnRect.Min.y + 3), Vec2(midx, btnRect.Max.y - 3), btnColor, 2);
+            draw_list->AddLine(::SF::Engine::Vec2(midx, btnRect.Min.y + 3), ::SF::Engine::Vec2(midx, btnRect.Max.y - 3), btnColor, 2);
         return clickedBtn;
     }
 
@@ -78,8 +78,8 @@ namespace ImSequencer
         ImGui::BeginGroup();
 
         ImDrawList *draw_list = ImGui::GetWindowDrawList();
-        Vec2 canvas_pos       = ImGui::GetCursorScreenPos();    // ImDrawList API uses screen coordinates!
-        Vec2 canvas_size      = ImGui::GetContentRegionAvail(); // Resize canvas to what's available
+        ::SF::Engine::Vec2 canvas_pos       = ImGui::GetCursorScreenPos();    // ImDrawList API uses screen coordinates!
+        ::SF::Engine::Vec2 canvas_size      = ImGui::GetContentRegionAvail(); // Resize canvas to what's available
         int firstFrameUsed    = firstFrame ? *firstFrame : 0;
 
 
@@ -108,7 +108,7 @@ namespace ImSequencer
         ImRect regionRect(canvas_pos, canvas_pos + canvas_size);
 
         static bool panningView = false;
-        static Vec2 panningViewSource;
+        static ::SF::Engine::Vec2 panningViewSource;
         static int panningViewFrame;
         if (ImGui::IsWindowFocused() && io.KeyAlt && io.MouseDown[2])
         {
@@ -137,12 +137,12 @@ namespace ImSequencer
         // --
         if (expanded && !*expanded)
         {
-            ImGui::InvisibleButton("canvas", Vec2(canvas_size.x - canvas_pos.x, (float) ItemHeight));
-            draw_list->AddRectFilled(canvas_pos, Vec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight),
+            ImGui::InvisibleButton("canvas", ::SF::Engine::Vec2(canvas_size.x - canvas_pos.x, (float) ItemHeight));
+            draw_list->AddRectFilled(canvas_pos, ::SF::Engine::Vec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight),
                                      0xFF3D3837, 0);
             char tmps[512];
             ImFormatString(tmps, IM_ARRAYSIZE(tmps), sequence->GetCollapseFmt(), frameCount, sequenceCount);
-            draw_list->AddText(Vec2(canvas_pos.x + 26, canvas_pos.y + 2), 0xFFFFFFFF, tmps);
+            draw_list->AddText(::SF::Engine::Vec2(canvas_pos.x + 26, canvas_pos.y + 2), 0xFFFFFFFF, tmps);
         } else
         {
             bool hasScrollBar(true);
@@ -154,19 +154,19 @@ namespace ImSequencer
             }
             */
             // test scroll area
-            Vec2 headerSize(canvas_size.x, (float) ItemHeight);
-            Vec2 scrollBarSize(canvas_size.x, 14.f);
+            ::SF::Engine::Vec2 headerSize(canvas_size.x, (float) ItemHeight);
+            ::SF::Engine::Vec2 scrollBarSize(canvas_size.x, 14.f);
             ImGui::InvisibleButton("topBar", headerSize);
             draw_list->AddRectFilled(canvas_pos, canvas_pos + headerSize, 0xFFFF0000, 0);
-            Vec2 childFramePos = ImGui::GetCursorScreenPos();
-            Vec2 childFrameSize(canvas_size.x,
+            ::SF::Engine::Vec2 childFramePos = ImGui::GetCursorScreenPos();
+            ::SF::Engine::Vec2 childFrameSize(canvas_size.x,
                                 canvas_size.y - 8.f - headerSize.y - (hasScrollBar ? scrollBarSize.y : 0));
             ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
             ImGui::BeginChild(889, childFrameSize, ImGuiChildFlags_FrameStyle);
             sequence->focused = ImGui::IsWindowFocused();
-            ImGui::InvisibleButton("contentBar", Vec2(canvas_size.x, float(controlHeight)));
-            const Vec2 contentMin = ImGui::GetItemRectMin();
-            const Vec2 contentMax = ImGui::GetItemRectMax();
+            ImGui::InvisibleButton("contentBar", ::SF::Engine::Vec2(canvas_size.x, float(controlHeight)));
+            const ::SF::Engine::Vec2 contentMin = ImGui::GetItemRectMin();
+            const ::SF::Engine::Vec2 contentMax = ImGui::GetItemRectMax();
             const ImRect contentRect(contentMin, contentMax);
             const float contentHeight = contentMax.y - contentMin.y;
 
@@ -174,8 +174,8 @@ namespace ImSequencer
             draw_list->AddRectFilled(canvas_pos, canvas_pos + canvas_size, 0xFF242424, 0);
 
             // current frame top
-            ImRect topRect(Vec2(canvas_pos.x + legendWidth, canvas_pos.y),
-                           Vec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
+            ImRect topRect(::SF::Engine::Vec2(canvas_pos.x + legendWidth, canvas_pos.y),
+                           ::SF::Engine::Vec2(canvas_pos.x + canvas_size.x, canvas_pos.y + ItemHeight));
 
             if (!MovingCurrentFrame && !MovingScrollBar && movingEntry == -1 &&
                 sequenceOptions & SEQUENCER_CHANGE_FRAME && currentFrame && *currentFrame >= 0 &&
@@ -198,11 +198,11 @@ namespace ImSequencer
             }
 
             // header
-            draw_list->AddRectFilled(canvas_pos, Vec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight),
+            draw_list->AddRectFilled(canvas_pos, ::SF::Engine::Vec2(canvas_size.x + canvas_pos.x, canvas_pos.y + ItemHeight),
                                      0xFF3D3837, 0);
             if (sequenceOptions & SEQUENCER_ADD)
             {
-                if (SequencerAddDelButton(draw_list, Vec2(canvas_pos.x + legendWidth - ItemHeight, canvas_pos.y + 2),
+                if (SequencerAddDelButton(draw_list, ::SF::Engine::Vec2(canvas_pos.x + legendWidth - ItemHeight, canvas_pos.y + 2),
                                           true))
                     ImGui::OpenPopup("addEntry");
 
@@ -242,18 +242,18 @@ namespace ImSequencer
 
                 if (px <= (canvas_size.x + canvas_pos.x) && px >= (canvas_pos.x + legendWidth))
                 {
-                    draw_list->AddLine(Vec2((float) px, canvas_pos.y + (float) tiretStart),
-                                       Vec2((float) px, canvas_pos.y + (float) tiretEnd - 1), 0xFF606060, 1);
+                    draw_list->AddLine(::SF::Engine::Vec2((float) px, canvas_pos.y + (float) tiretStart),
+                                       ::SF::Engine::Vec2((float) px, canvas_pos.y + (float) tiretEnd - 1), 0xFF606060, 1);
 
-                    draw_list->AddLine(Vec2((float) px, canvas_pos.y + (float) ItemHeight),
-                                       Vec2((float) px, canvas_pos.y + (float) regionHeight - 1), 0x30606060, 1);
+                    draw_list->AddLine(::SF::Engine::Vec2((float) px, canvas_pos.y + (float) ItemHeight),
+                                       ::SF::Engine::Vec2((float) px, canvas_pos.y + (float) regionHeight - 1), 0x30606060, 1);
                 }
 
                 if (baseIndex && px > (canvas_pos.x + legendWidth))
                 {
                     char tmps[512];
                     ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", i);
-                    draw_list->AddText(Vec2((float) px + 3.f, canvas_pos.y), 0xFFBBBBBB, tmps);
+                    draw_list->AddText(::SF::Engine::Vec2((float) px + 3.f, canvas_pos.y), 0xFFBBBBBB, tmps);
                 }
             };
 
@@ -266,10 +266,10 @@ namespace ImSequencer
 
                 if (px <= (canvas_size.x + canvas_pos.x) && px >= (canvas_pos.x + legendWidth))
                 {
-                    // draw_list->AddLine(Vec2((float)px, canvas_pos.y + (float)tiretStart), Vec2((float)px,
+                    // draw_list->AddLine(::SF::Engine::Vec2((float)px, canvas_pos.y + (float)tiretStart), ::SF::Engine::Vec2((float)px,
                     // canvas_pos.y + (float)tiretEnd - 1), 0xFF606060, 1);
 
-                    draw_list->AddLine(Vec2(float(px), float(tiretStart)), Vec2(float(px), float(tiretEnd)), 0x30606060,
+                    draw_list->AddLine(::SF::Engine::Vec2(float(px), float(tiretStart)), ::SF::Engine::Vec2(float(px), float(tiretEnd)), 0x30606060,
                                        1);
                 }
             };
@@ -280,8 +280,8 @@ namespace ImSequencer
             drawLine(sequence->GetFrameMin(), ItemHeight);
             drawLine(sequence->GetFrameMax(), ItemHeight);
             /*
-                     draw_list->AddLine(canvas_pos, Vec2(canvas_pos.x, canvas_pos.y + controlHeight), 0xFF000000, 1);
-                     draw_list->AddLine(Vec2(canvas_pos.x, canvas_pos.y + ItemHeight), Vec2(canvas_size.x,
+                     draw_list->AddLine(canvas_pos, ::SF::Engine::Vec2(canvas_pos.x, canvas_pos.y + controlHeight), 0xFF000000, 1);
+                     draw_list->AddLine(::SF::Engine::Vec2(canvas_pos.x, canvas_pos.y + ItemHeight), ::SF::Engine::Vec2(canvas_size.x,
                canvas_pos.y + ItemHeight), 0xFF000000, 1);
                      */
             // clip content
@@ -294,18 +294,18 @@ namespace ImSequencer
             {
                 int type;
                 sequence->Get(i, nullptr, nullptr, &type, nullptr);
-                Vec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2 + customHeight);
+                ::SF::Engine::Vec2 tpos(contentMin.x + 3, contentMin.y + i * ItemHeight + 2 + customHeight);
                 draw_list->AddText(tpos, 0xFFFFFFFF, sequence->GetItemLabel(i));
 
                 if (sequenceOptions & SEQUENCER_DEL)
                 {
                     if (SequencerAddDelButton(
-                                draw_list, Vec2(contentMin.x + legendWidth - ItemHeight + 2 - 10, tpos.y + 2), false))
+                                draw_list, ::SF::Engine::Vec2(contentMin.x + legendWidth - ItemHeight + 2 - 10, tpos.y + 2), false))
                         delEntry = i;
 
                     if (SequencerAddDelButton(
                                 draw_list,
-                                Vec2(contentMin.x + legendWidth - ItemHeight - ItemHeight + 2 - 10, tpos.y + 2), true))
+                                ::SF::Engine::Vec2(contentMin.x + legendWidth - ItemHeight - ItemHeight + 2 - 10, tpos.y + 2), true))
                         dupEntry = i;
                 }
                 customHeight += sequence->GetCustomHeight(i);
@@ -318,8 +318,8 @@ namespace ImSequencer
                 unsigned int col = (i & 1) ? 0xFF3A3636 : 0xFF413D3D;
 
                 size_t localCustomHeight = sequence->GetCustomHeight(i);
-                Vec2 pos = Vec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1 + customHeight);
-                Vec2 sz  = Vec2(canvas_size.x + canvas_pos.x, pos.y + ItemHeight - 1 + localCustomHeight);
+                ::SF::Engine::Vec2 pos = ::SF::Engine::Vec2(contentMin.x + legendWidth, contentMin.y + ItemHeight * i + 1 + customHeight);
+                ::SF::Engine::Vec2 sz  = ::SF::Engine::Vec2(canvas_size.x + canvas_pos.x, pos.y + ItemHeight - 1 + localCustomHeight);
                 if (!popupOpened && cy >= pos.y && cy < pos.y + (ItemHeight + localCustomHeight) && movingEntry == -1 &&
                     cx > contentMin.x && cx < contentMin.x + canvas_size.x)
                 {
@@ -330,7 +330,7 @@ namespace ImSequencer
                 customHeight += localCustomHeight;
             }
 
-            draw_list->PushClipRect(childFramePos + Vec2(float(legendWidth), 0.f), childFramePos + childFrameSize,
+            draw_list->PushClipRect(childFramePos + ::SF::Engine::Vec2(float(legendWidth), 0.f), childFramePos + childFrameSize,
                                     true);
 
             // vertical frame lines in content area
@@ -348,8 +348,8 @@ namespace ImSequencer
                 customHeight = 0;
                 for (int i = 0; i < *selectedEntry; i++)
                     customHeight += sequence->GetCustomHeight(i);
-                draw_list->AddRectFilled(Vec2(contentMin.x, contentMin.y + ItemHeight * *selectedEntry + customHeight),
-                                         Vec2(contentMin.x + canvas_size.x,
+                draw_list->AddRectFilled(::SF::Engine::Vec2(contentMin.x, contentMin.y + ItemHeight * *selectedEntry + customHeight),
+                                         ::SF::Engine::Vec2(contentMin.x + canvas_size.x,
                                               contentMin.y + ItemHeight * (*selectedEntry + 1) + customHeight),
                                          0x801080FF, 1.f);
             }
@@ -363,11 +363,11 @@ namespace ImSequencer
                 sequence->Get(i, &start, &end, nullptr, &color);
                 size_t localCustomHeight = sequence->GetCustomHeight(i);
 
-                Vec2 pos = Vec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth,
+                ::SF::Engine::Vec2 pos = ::SF::Engine::Vec2(contentMin.x + legendWidth - firstFrameUsed * framePixelWidth,
                                 contentMin.y + ItemHeight * i + 1 + customHeight);
-                Vec2 slotP1(pos.x + *start * framePixelWidth, pos.y + 2);
-                Vec2 slotP2(pos.x + *end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
-                Vec2 slotP3(pos.x + *end * framePixelWidth + framePixelWidth,
+                ::SF::Engine::Vec2 slotP1(pos.x + *start * framePixelWidth, pos.y + 2);
+                ::SF::Engine::Vec2 slotP2(pos.x + *end * framePixelWidth + framePixelWidth, pos.y + ItemHeight - 2);
+                ::SF::Engine::Vec2 slotP3(pos.x + *end * framePixelWidth + framePixelWidth,
                             pos.y + ItemHeight - 2 + localCustomHeight);
                 unsigned int slotColor     = color | 0xFF000000;
                 unsigned int slotColorHalf = (color & 0xFFFFFF) | 0x40000000;
@@ -385,8 +385,8 @@ namespace ImSequencer
                 const float max_handle_width = slotP2.x - slotP1.x / 3.0f;
                 const float min_handle_width = ImMin(10.0f, max_handle_width);
                 const float handle_width     = ImClamp(framePixelWidth / 2.0f, min_handle_width, max_handle_width);
-                ImRect rects[3]              = {ImRect(slotP1, Vec2(slotP1.x + handle_width, slotP2.y)),
-                                                ImRect(Vec2(slotP2.x - handle_width, slotP1.y), slotP2), ImRect(slotP1, slotP2)};
+                ImRect rects[3]              = {ImRect(slotP1, ::SF::Engine::Vec2(slotP1.x + handle_width, slotP2.y)),
+                                                ImRect(::SF::Engine::Vec2(slotP2.x - handle_width, slotP1.y), slotP2), ImRect(slotP1, slotP2)};
 
                 const unsigned int quadColor[] = {0xFFFFFFFF, 0xFFFFFFFF, slotColor + (selected ? 0 : 0x202020)};
                 if (movingEntry == -1 &&
@@ -421,33 +421,33 @@ namespace ImSequencer
                 // custom draw
                 if (localCustomHeight > 0)
                 {
-                    Vec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i + 1 + customHeight);
+                    ::SF::Engine::Vec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i + 1 + customHeight);
                     ImRect customRect(
-                            rp + Vec2(legendWidth - (firstFrameUsed - sequence->GetFrameMin() - 0.5f) * framePixelWidth,
+                            rp + ::SF::Engine::Vec2(legendWidth - (firstFrameUsed - sequence->GetFrameMin() - 0.5f) * framePixelWidth,
                                       float(ItemHeight)),
-                            rp + Vec2(legendWidth +
+                            rp + ::SF::Engine::Vec2(legendWidth +
                                               (sequence->GetFrameMax() - firstFrameUsed - 0.5f + 2.f) * framePixelWidth,
                                       float(localCustomHeight + ItemHeight)));
-                    ImRect clippingRect(rp + Vec2(float(legendWidth), float(ItemHeight)),
-                                        rp + Vec2(canvas_size.x, float(localCustomHeight + ItemHeight)));
+                    ImRect clippingRect(rp + ::SF::Engine::Vec2(float(legendWidth), float(ItemHeight)),
+                                        rp + ::SF::Engine::Vec2(canvas_size.x, float(localCustomHeight + ItemHeight)));
 
-                    ImRect legendRect(rp + Vec2(0.f, float(ItemHeight)),
-                                      rp + Vec2(float(legendWidth), float(localCustomHeight)));
-                    ImRect legendClippingRect(canvas_pos + Vec2(0.f, float(ItemHeight)),
+                    ImRect legendRect(rp + ::SF::Engine::Vec2(0.f, float(ItemHeight)),
+                                      rp + ::SF::Engine::Vec2(float(legendWidth), float(localCustomHeight)));
+                    ImRect legendClippingRect(canvas_pos + ::SF::Engine::Vec2(0.f, float(ItemHeight)),
                                               canvas_pos +
-                                                      Vec2(float(legendWidth), float(localCustomHeight + ItemHeight)));
+                                                      ::SF::Engine::Vec2(float(legendWidth), float(localCustomHeight + ItemHeight)));
                     customDraws.push_back({i, customRect, legendRect, clippingRect, legendClippingRect});
                 } else
                 {
-                    Vec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i + customHeight);
+                    ::SF::Engine::Vec2 rp(canvas_pos.x, contentMin.y + ItemHeight * i + customHeight);
                     ImRect customRect(
-                            rp + Vec2(legendWidth - (firstFrameUsed - sequence->GetFrameMin() - 0.5f) * framePixelWidth,
+                            rp + ::SF::Engine::Vec2(legendWidth - (firstFrameUsed - sequence->GetFrameMin() - 0.5f) * framePixelWidth,
                                       float(0.f)),
-                            rp + Vec2(legendWidth +
+                            rp + ::SF::Engine::Vec2(legendWidth +
                                               (sequence->GetFrameMax() - firstFrameUsed - 0.5f + 2.f) * framePixelWidth,
                                       float(ItemHeight)));
-                    ImRect clippingRect(rp + Vec2(float(legendWidth), float(0.f)),
-                                        rp + Vec2(canvas_size.x, float(ItemHeight)));
+                    ImRect clippingRect(rp + ::SF::Engine::Vec2(float(legendWidth), float(0.f)),
+                                        rp + ::SF::Engine::Vec2(canvas_size.x, float(ItemHeight)));
 
                     compactCustomDraws.push_back({i, customRect, ImRect(), clippingRect, ImRect()});
                 }
@@ -508,11 +508,11 @@ namespace ImSequencer
                 static const float cursorWidth = 8.f;
                 float cursorOffset = contentMin.x + legendWidth + (*currentFrame - firstFrameUsed) * framePixelWidth +
                                      framePixelWidth / 2 - cursorWidth * 0.5f;
-                draw_list->AddLine(Vec2(cursorOffset, canvas_pos.y), Vec2(cursorOffset, contentMax.y), 0xA02A2AFF,
+                draw_list->AddLine(::SF::Engine::Vec2(cursorOffset, canvas_pos.y), ::SF::Engine::Vec2(cursorOffset, contentMax.y), 0xA02A2AFF,
                                    cursorWidth);
                 char tmps[512];
                 ImFormatString(tmps, IM_ARRAYSIZE(tmps), "%d", *currentFrame);
-                draw_list->AddText(Vec2(cursorOffset + 10, canvas_pos.y + 2), 0xFF2A2AFF, tmps);
+                draw_list->AddText(::SF::Engine::Vec2(cursorOffset + 10, canvas_pos.y + 2), 0xFF2A2AFF, tmps);
             }
 
             draw_list->PopClipRect();
@@ -528,14 +528,14 @@ namespace ImSequencer
             // copy paste
             if (sequenceOptions & SEQUENCER_COPYPASTE)
             {
-                ImRect rectCopy(Vec2(contentMin.x + 100, canvas_pos.y + 2),
-                                Vec2(contentMin.x + 100 + 30, canvas_pos.y + ItemHeight - 2));
+                ImRect rectCopy(::SF::Engine::Vec2(contentMin.x + 100, canvas_pos.y + 2),
+                                ::SF::Engine::Vec2(contentMin.x + 100 + 30, canvas_pos.y + ItemHeight - 2));
                 bool inRectCopy        = rectCopy.Contains(io.MousePos);
                 unsigned int copyColor = inRectCopy ? 0xFF1080FF : 0xFF000000;
                 draw_list->AddText(rectCopy.Min, copyColor, "Copy");
 
-                ImRect rectPaste(Vec2(contentMin.x + 140, canvas_pos.y + 2),
-                                 Vec2(contentMin.x + 140 + 30, canvas_pos.y + ItemHeight - 2));
+                ImRect rectPaste(::SF::Engine::Vec2(contentMin.x + 140, canvas_pos.y + 2),
+                                 ::SF::Engine::Vec2(contentMin.x + 140 + 30, canvas_pos.y + ItemHeight - 2));
                 bool inRectPaste        = rectPaste.Contains(io.MousePos);
                 unsigned int pasteColor = inRectPaste ? 0xFF1080FF : 0xFF000000;
                 draw_list->AddText(rectPaste.Min, pasteColor, "Paste");
@@ -556,15 +556,15 @@ namespace ImSequencer
             if (hasScrollBar)
             {
                 ImGui::InvisibleButton("scrollBar", scrollBarSize);
-                Vec2 scrollBarMin = ImGui::GetItemRectMin();
-                Vec2 scrollBarMax = ImGui::GetItemRectMax();
+                ::SF::Engine::Vec2 scrollBarMin = ImGui::GetItemRectMin();
+                ::SF::Engine::Vec2 scrollBarMax = ImGui::GetItemRectMax();
 
                 // ratio = number of frames visible in control / number to total frames
 
                 float startFrameOffset = ((float) (firstFrameUsed - sequence->GetFrameMin()) / (float) frameCount) *
                                          (canvas_size.x - legendWidth);
-                Vec2 scrollBarA(scrollBarMin.x + legendWidth, scrollBarMin.y - 2);
-                Vec2 scrollBarB(scrollBarMin.x + canvas_size.x, scrollBarMax.y - 1);
+                ::SF::Engine::Vec2 scrollBarA(scrollBarMin.x + legendWidth, scrollBarMin.y - 2);
+                ::SF::Engine::Vec2 scrollBarB(scrollBarMin.x + canvas_size.x, scrollBarMax.y - 1);
                 draw_list->AddRectFilled(scrollBarA, scrollBarB, 0xFF222222, 0);
 
                 ImRect scrollBarRect(scrollBarA, scrollBarB);
@@ -573,13 +573,13 @@ namespace ImSequencer
                 draw_list->AddRectFilled(scrollBarA, scrollBarB, 0xFF101010, 8);
 
 
-                Vec2 scrollBarC(scrollBarMin.x + legendWidth + startFrameOffset, scrollBarMin.y);
-                Vec2 scrollBarD(scrollBarMin.x + legendWidth + barWidthInPixels + startFrameOffset, scrollBarMax.y - 2);
+                ::SF::Engine::Vec2 scrollBarC(scrollBarMin.x + legendWidth + startFrameOffset, scrollBarMin.y);
+                ::SF::Engine::Vec2 scrollBarD(scrollBarMin.x + legendWidth + barWidthInPixels + startFrameOffset, scrollBarMax.y - 2);
                 draw_list->AddRectFilled(scrollBarC, scrollBarD,
                                          (inScrollBar || MovingScrollBar) ? 0xFF606060 : 0xFF505050, 6);
 
-                ImRect barHandleLeft(scrollBarC, Vec2(scrollBarC.x + 14, scrollBarD.y));
-                ImRect barHandleRight(Vec2(scrollBarD.x - 14, scrollBarC.y), scrollBarD);
+                ImRect barHandleLeft(scrollBarC, ::SF::Engine::Vec2(scrollBarC.x + 14, scrollBarD.y));
+                ImRect barHandleRight(::SF::Engine::Vec2(scrollBarD.x - 14, scrollBarC.y), scrollBarD);
 
                 bool onLeft  = barHandleLeft.Contains(io.MousePos);
                 bool onRight = barHandleRight.Contains(io.MousePos);
@@ -717,7 +717,7 @@ namespace ImSequencer
 
         if (expanded)
         {
-            if (SequencerAddDelButton(draw_list, Vec2(canvas_pos.x + 2, canvas_pos.y + 2), !*expanded))
+            if (SequencerAddDelButton(draw_list, ::SF::Engine::Vec2(canvas_pos.x + 2, canvas_pos.y + 2), !*expanded))
                 *expanded = !*expanded;
         }
 

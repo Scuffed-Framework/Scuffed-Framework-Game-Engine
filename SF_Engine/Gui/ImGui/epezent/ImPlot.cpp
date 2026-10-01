@@ -165,10 +165,10 @@ to style individual axes)
                       - BeginPlot (original signature)            -> use simplified signature + Setup API
 - 2021/07/30 (0.12) - The offset argument of `PlotXG` functions was been removed. Implement offsetting in your getter
 callback instead.
-- 2021/03/08 (0.9)  - SetColormap and PushColormap(Vec4*) were removed. Use AddColormap for custom colormap support.
-LerpColormap was changed to SampleColormap. ShowColormapScale was changed to ColormapScale and requires additional
-arguments.
-- 2021/03/07 (0.9)  - The signature of ShowColormapScale was modified to accept a Vec2 size.
+- 2021/03/08 (0.9)  - SetColormap and PushColormap(::SF::Engine::Vec4*) were removed. Use AddColormap for custom
+colormap support. LerpColormap was changed to SampleColormap. ShowColormapScale was changed to ColormapScale and
+requires additional arguments.
+- 2021/03/07 (0.9)  - The signature of ShowColormapScale was modified to accept a ::SF::Engine::Vec2 size.
 - 2021/02/28 (0.9)  - BeginLegendDragDropSource was changed to BeginDragDropSourceItem with a number of other drag and
 drop improvements.
 - 2021/01/18 (0.9)  - The default behavior for opening context menus was change from double right-click to single
@@ -193,9 +193,10 @@ internally by default.
 optionally be normalized. The label format can now be specified as well.
 - 2020/06/01 (0.3)  - SetPalette was changed to `SetColormap` for consistency with other plotting libraries.
 `RestorePalette` was removed. Use `SetColormap(ImPlotColormap_Default)`.
-- 2020/05/31 (0.3)  - Plot functions taking custom Vec2* getters were removed. Use the ImPlotPoint* getter versions
-instead.
-- 2020/05/29 (0.3)  - The signature of ImPlotLimits::Contains was changed to take two doubles instead of Vec2
+- 2020/05/31 (0.3)  - Plot functions taking custom ::SF::Engine::Vec2* getters were removed. Use the ImPlotPoint* getter
+versions instead.
+- 2020/05/29 (0.3)  - The signature of ImPlotLimits::Contains was changed to take two doubles instead of
+::SF::Engine::Vec2
 - 2020/05/16 (0.2)  - All plotting functions were reverted to being prefixed with "Plot" to maintain a consistent
 VerbNoun style. `Plot` was split into `PlotLine` and `PlotScatter` (however, `PlotLine` can still be used to plot
 scatter points as `Plot` did before.). `Bar` is not `PlotBars`, to indicate that multiple bars will be plotted.
@@ -277,24 +278,24 @@ ImPlotInputMap::ImPlotInputMap() { ImPlot::MapInputDefault(this); }
 
 ImPlotStyle::ImPlotStyle()
 {
-    PlotDefaultSize    = Vec2(400, 300);
-    PlotMinSize        = Vec2(200, 150);
+    PlotDefaultSize    = ::SF::Engine::Vec2(400, 300);
+    PlotMinSize        = ::SF::Engine::Vec2(200, 150);
     PlotBorderSize     = 1;
     MinorAlpha         = 0.25f;
-    MajorTickLen       = Vec2(10, 10);
-    MinorTickLen       = Vec2(5, 5);
-    MajorTickSize      = Vec2(1, 1);
-    MinorTickSize      = Vec2(1, 1);
-    MajorGridSize      = Vec2(1, 1);
-    MinorGridSize      = Vec2(1, 1);
-    PlotPadding        = Vec2(10, 10);
-    LabelPadding       = Vec2(5, 5);
-    LegendPadding      = Vec2(10, 10);
-    LegendInnerPadding = Vec2(5, 5);
-    LegendSpacing      = Vec2(5, 0);
-    MousePosPadding    = Vec2(10, 10);
-    AnnotationPadding  = Vec2(2, 2);
-    FitPadding         = Vec2(0, 0);
+    MajorTickLen       = ::SF::Engine::Vec2(10, 10);
+    MinorTickLen       = ::SF::Engine::Vec2(5, 5);
+    MajorTickSize      = ::SF::Engine::Vec2(1, 1);
+    MinorTickSize      = ::SF::Engine::Vec2(1, 1);
+    MajorGridSize      = ::SF::Engine::Vec2(1, 1);
+    MinorGridSize      = ::SF::Engine::Vec2(1, 1);
+    PlotPadding        = ::SF::Engine::Vec2(10, 10);
+    LabelPadding       = ::SF::Engine::Vec2(5, 5);
+    LegendPadding      = ::SF::Engine::Vec2(10, 10);
+    LegendInnerPadding = ::SF::Engine::Vec2(5, 5);
+    LegendSpacing      = ::SF::Engine::Vec2(5, 0);
+    MousePosPadding    = ::SF::Engine::Vec2(10, 10);
+    AnnotationPadding  = ::SF::Engine::Vec2(2, 2);
+    FitPadding         = ::SF::Engine::Vec2(0, 0);
     DigitalPadding     = 20;
     DigitalSpacing     = 4;
 
@@ -360,9 +361,9 @@ namespace ImPlot
         }
     }
 
-    Vec4 GetAutoColor(ImPlotCol idx)
+    ::SF::Engine::Vec4 GetAutoColor(ImPlotCol idx)
     {
-        Vec4 col(0, 0, 0, 1);
+        ::SF::Engine::Vec4 col(0, 0, 0, 1);
         switch (idx)
         {
             case ImPlotCol_FrameBg:
@@ -384,17 +385,17 @@ namespace ImPlot
             case ImPlotCol_AxisText:
                 return ImGui::GetStyleColorVec4(ImGuiCol_Text);
             case ImPlotCol_AxisGrid:
-                return GetStyleColorVec4(ImPlotCol_AxisText) * Vec4(1, 1, 1, 0.25f);
+                return GetStyleColorVec4(ImPlotCol_AxisText) * ::SF::Engine::Vec4(1, 1, 1, 0.25f);
             case ImPlotCol_AxisTick:
                 return GetStyleColorVec4(ImPlotCol_AxisGrid);
             case ImPlotCol_AxisBg:
-                return Vec4(0, 0, 0, 0);
+                return ::SF::Engine::Vec4(0, 0, 0, 0);
             case ImPlotCol_AxisBgHovered:
                 return ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
             case ImPlotCol_AxisBgActive:
                 return ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
             case ImPlotCol_Selection:
-                return Vec4(1, 1, 0, 1);
+                return ::SF::Engine::Vec4(1, 1, 0, 1);
             case ImPlotCol_Crosshairs:
                 return GetStyleColorVec4(ImPlotCol_PlotBorder);
             default:
@@ -448,7 +449,8 @@ namespace ImPlot
     // Generic Helpers
     //-----------------------------------------------------------------------------
 
-    void AddTextVertical(ImDrawList *DrawList, Vec2 pos, uint32_t col, const char *text_begin, const char *text_end)
+    void AddTextVertical(ImDrawList *DrawList, ::SF::Engine::Vec2 pos, uint32_t col, const char *text_begin,
+                         const char *text_end)
     {
         // the code below is based loosely on ImFont::RenderText
         if (!text_end)
@@ -483,10 +485,13 @@ namespace ImPlot
             {
                 continue;
             }
-            DrawList->PrimQuadUV(pos + Vec2(glyph->Y0, -glyph->X0) * scale, pos + Vec2(glyph->Y0, -glyph->X1) * scale,
-                                 pos + Vec2(glyph->Y1, -glyph->X1) * scale, pos + Vec2(glyph->Y1, -glyph->X0) * scale,
-                                 Vec2(glyph->U0, glyph->V0), Vec2(glyph->U1, glyph->V0), Vec2(glyph->U1, glyph->V1),
-                                 Vec2(glyph->U0, glyph->V1), col);
+            DrawList->PrimQuadUV(pos + ::SF::Engine::Vec2(glyph->Y0, -glyph->X0) * scale,
+                                 pos + ::SF::Engine::Vec2(glyph->Y0, -glyph->X1) * scale,
+                                 pos + ::SF::Engine::Vec2(glyph->Y1, -glyph->X1) * scale,
+                                 pos + ::SF::Engine::Vec2(glyph->Y1, -glyph->X0) * scale,
+                                 ::SF::Engine::Vec2(glyph->U0, glyph->V0), ::SF::Engine::Vec2(glyph->U1, glyph->V0),
+                                 ::SF::Engine::Vec2(glyph->U1, glyph->V1), ::SF::Engine::Vec2(glyph->U0, glyph->V1),
+                                 col);
             pos.y -= glyph->AdvanceX * scale;
             chars_rnd++;
         }
@@ -495,22 +500,24 @@ namespace ImPlot
         DrawList->PrimUnreserve(chars_skp * 6, chars_skp * 4);
     }
 
-    void AddTextCentered(ImDrawList *DrawList, Vec2 top_center, uint32_t col, const char *text_begin,
+    void AddTextCentered(ImDrawList *DrawList, ::SF::Engine::Vec2 top_center, uint32_t col, const char *text_begin,
                          const char *text_end)
     {
         float txt_ht          = ImGui::GetTextLineHeight();
         const char *title_end = ImGui::FindRenderedTextEnd(text_begin, text_end);
-        Vec2 text_size;
+        ::SF::Engine::Vec2 text_size;
         float y = 0;
         while (const char *tmp = (const char *) memchr(text_begin, '\n', title_end - text_begin))
         {
             text_size = ImGui::CalcTextSize(text_begin, tmp, true);
-            DrawList->AddText(Vec2(top_center.x - text_size.x * 0.5f, top_center.y + y), col, text_begin, tmp);
+            DrawList->AddText(::SF::Engine::Vec2(top_center.x - text_size.x * 0.5f, top_center.y + y), col, text_begin,
+                              tmp);
             text_begin = tmp + 1;
             y += txt_ht;
         }
         text_size = ImGui::CalcTextSize(text_begin, title_end, true);
-        DrawList->AddText(Vec2(top_center.x - text_size.x * 0.5f, top_center.y + y), col, text_begin, title_end);
+        DrawList->AddText(::SF::Engine::Vec2(top_center.x - text_size.x * 0.5f, top_center.y + y), col, text_begin,
+                          title_end);
     }
 
     double NiceNum(double x, bool round)
@@ -691,7 +698,7 @@ namespace ImPlot
     ImPlotPlot *GetPlot(const char *title)
     {
         ImGuiWindow *Window = GImGui->CurrentWindow;
-        const ImGuiID ID    = Window->GetID(title);
+        const IdType ID     = Window->GetID(title);
         return GImPlot->Plots.GetByKey(ID);
     }
 
@@ -708,9 +715,10 @@ namespace ImPlot
     // Legend Utils
     //-----------------------------------------------------------------------------
 
-    Vec2 GetLocationPos(const ImRect &outer_rect, const Vec2 &inner_size, ImPlotLocation loc, const Vec2 &pad)
+    ::SF::Engine::Vec2 GetLocationPos(const ImRect &outer_rect, const ::SF::Engine::Vec2 &inner_size,
+                                      ImPlotLocation loc, const ::SF::Engine::Vec2 &pad)
     {
-        Vec2 pos;
+        ::SF::Engine::Vec2 pos;
         if (ImHasFlag(loc, ImPlotLocation_West) && !ImHasFlag(loc, ImPlotLocation_East))
             pos.x = outer_rect.Min.x + pad.x;
         else if (!ImHasFlag(loc, ImPlotLocation_West) && ImHasFlag(loc, ImPlotLocation_East))
@@ -729,7 +737,8 @@ namespace ImPlot
         return pos;
     }
 
-    Vec2 CalcLegendSize(ImPlotItemGroup &items, const Vec2 &pad, const Vec2 &spacing, bool vertical)
+    ::SF::Engine::Vec2 CalcLegendSize(ImPlotItemGroup &items, const ::SF::Engine::Vec2 &pad,
+                                      const ::SF::Engine::Vec2 &spacing, bool vertical)
     {
         // vars
         const int nItems      = items.GetLegendCount();
@@ -746,15 +755,16 @@ namespace ImPlot
             sum_label_width += label_width;
         }
         // calc legend size
-        const Vec2 legend_size =
-                vertical ? Vec2(pad.x * 2 + icon_size + max_label_width,
-                                pad.y * 2 + nItems * txt_ht + (nItems - 1) * spacing.y)
-                         : Vec2(pad.x * 2 + icon_size * nItems + sum_label_width + (nItems - 1) * spacing.x,
-                                pad.y * 2 + txt_ht);
+        const ::SF::Engine::Vec2 legend_size =
+                vertical ? ::SF::Engine::Vec2(pad.x * 2 + icon_size + max_label_width,
+                                              pad.y * 2 + nItems * txt_ht + (nItems - 1) * spacing.y)
+                         : ::SF::Engine::Vec2(pad.x * 2 + icon_size * nItems + sum_label_width +
+                                                      (nItems - 1) * spacing.x,
+                                              pad.y * 2 + txt_ht);
         return legend_size;
     }
 
-    bool ClampLegendRect(ImRect &legend_rect, const ImRect &outer_rect, const Vec2 &pad)
+    bool ClampLegendRect(ImRect &legend_rect, const ImRect &outer_rect, const ::SF::Engine::Vec2 &pad)
     {
         bool clamped = false;
         ImRect outer_rect_pad(outer_rect.Min + pad, outer_rect.Max - pad);
@@ -791,8 +801,8 @@ namespace ImPlot
         return strcmp(label_a, label_b);
     }
 
-    bool ShowLegendEntries(ImPlotItemGroup &items, const ImRect &legend_bb, bool hovered, const Vec2 &pad,
-                           const Vec2 &spacing, bool vertical, ImDrawList &DrawList)
+    bool ShowLegendEntries(ImPlotItemGroup &items, const ImRect &legend_bb, bool hovered, const ::SF::Engine::Vec2 &pad,
+                           const ::SF::Engine::Vec2 &spacing, bool vertical, ImDrawList &DrawList)
     {
         // vars
         const float txt_ht      = ImGui::GetTextLineHeight();
@@ -826,16 +836,17 @@ namespace ImPlot
             ImPlotItem *item        = items.GetLegendItem(idx);
             const char *label       = items.GetLegendLabel(idx);
             const float label_width = ImGui::CalcTextSize(label, nullptr, true).x;
-            const Vec2 top_left =
-                    vertical ? legend_bb.Min + pad + Vec2(0, i * (txt_ht + spacing.y))
-                             : legend_bb.Min + pad + Vec2(i * (icon_size + spacing.x) + sum_label_width, 0);
+            const ::SF::Engine::Vec2 top_left =
+                    vertical ? legend_bb.Min + pad + ::SF::Engine::Vec2(0, i * (txt_ht + spacing.y))
+                             : legend_bb.Min + pad +
+                                       ::SF::Engine::Vec2(i * (icon_size + spacing.x) + sum_label_width, 0);
             sum_label_width += label_width;
             ImRect icon_bb;
-            icon_bb.Min = top_left + Vec2(icon_shrink, icon_shrink);
-            icon_bb.Max = top_left + Vec2(icon_size - icon_shrink, icon_size - icon_shrink);
+            icon_bb.Min = top_left + ::SF::Engine::Vec2(icon_shrink, icon_shrink);
+            icon_bb.Max = top_left + ::SF::Engine::Vec2(icon_size - icon_shrink, icon_size - icon_shrink);
             ImRect label_bb;
             label_bb.Min = top_left;
-            label_bb.Max = top_left + Vec2(label_width + icon_size, icon_size);
+            label_bb.Max = top_left + ::SF::Engine::Vec2(label_width + icon_size, icon_size);
             uint32_t col_txt_hl;
             uint32_t col_item = ImAlphaU32(item->Color, 1);
 
@@ -878,8 +889,8 @@ namespace ImPlot
             DrawList.AddRectFilled(icon_bb.Min, icon_bb.Max, col_icon);
             const char *text_display_end = ImGui::FindRenderedTextEnd(label, nullptr);
             if (label != text_display_end)
-                DrawList.AddText(top_left + Vec2(icon_size, 0), item->Show ? col_txt_hl : col_txt_dis, label,
-                                 text_display_end);
+                DrawList.AddText(top_left + ::SF::Engine::Vec2(icon_size, 0), item->Show ? col_txt_hl : col_txt_dis,
+                                 label, text_display_end);
         }
         return hovered && !any_item_hovered;
     }
@@ -905,7 +916,7 @@ namespace ImPlot
         bool first_major_set    = false;
         int first_major_idx     = 0;
         const int idx0          = ticker.TickCount(); // ticker may have user custom ticks
-        Vec2 total_size(0, 0);
+        ::SF::Engine::Vec2 total_size(0, 0);
         for (double major = graphmin; major < graphmax + 0.5 * interval; major += interval)
         {
             // is this zero? combat zero formatting issues
@@ -1796,45 +1807,45 @@ namespace ImPlot
         ImGui::SameLine();
         if (ImGui::RadioButton("V", !ImHasFlag(legend.Flags, ImPlotLegendFlags_Horizontal)))
             legend.Flags &= ~ImPlotLegendFlags_Horizontal;
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, Vec2(2, 2));
-        if (ImGui::Button("NW", Vec2(1.5f * s, s)))
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ::SF::Engine::Vec2(2, 2));
+        if (ImGui::Button("NW", ::SF::Engine::Vec2(1.5f * s, s)))
         {
             legend.Location = ImPlotLocation_NorthWest;
         }
         ImGui::SameLine();
-        if (ImGui::Button("N", Vec2(1.5f * s, s)))
+        if (ImGui::Button("N", ::SF::Engine::Vec2(1.5f * s, s)))
         {
             legend.Location = ImPlotLocation_North;
         }
         ImGui::SameLine();
-        if (ImGui::Button("NE", Vec2(1.5f * s, s)))
+        if (ImGui::Button("NE", ::SF::Engine::Vec2(1.5f * s, s)))
         {
             legend.Location = ImPlotLocation_NorthEast;
         }
-        if (ImGui::Button("W", Vec2(1.5f * s, s)))
+        if (ImGui::Button("W", ::SF::Engine::Vec2(1.5f * s, s)))
         {
             legend.Location = ImPlotLocation_West;
         }
         ImGui::SameLine();
-        if (ImGui::InvisibleButton("C", Vec2(1.5f * s, s)))
+        if (ImGui::InvisibleButton("C", ::SF::Engine::Vec2(1.5f * s, s)))
         {
         }
         ImGui::SameLine();
-        if (ImGui::Button("E", Vec2(1.5f * s, s)))
+        if (ImGui::Button("E", ::SF::Engine::Vec2(1.5f * s, s)))
         {
             legend.Location = ImPlotLocation_East;
         }
-        if (ImGui::Button("SW", Vec2(1.5f * s, s)))
+        if (ImGui::Button("SW", ::SF::Engine::Vec2(1.5f * s, s)))
         {
             legend.Location = ImPlotLocation_SouthWest;
         }
         ImGui::SameLine();
-        if (ImGui::Button("S", Vec2(1.5f * s, s)))
+        if (ImGui::Button("S", ::SF::Engine::Vec2(1.5f * s, s)))
         {
             legend.Location = ImPlotLocation_South;
         }
         ImGui::SameLine();
-        if (ImGui::Button("SE", Vec2(1.5f * s, s)))
+        if (ImGui::Button("SE", ::SF::Engine::Vec2(1.5f * s, s)))
         {
             legend.Location = ImPlotLocation_SouthEast;
         }
@@ -1996,14 +2007,14 @@ namespace ImPlot
 
     void UpdateAxisColors(ImPlotAxis &axis)
     {
-        const Vec4 col_grid = GetStyleColorVec4(ImPlotCol_AxisGrid);
-        axis.ColorMaj       = ImGui::GetColorU32(col_grid);
-        axis.ColorMin       = ImGui::GetColorU32(col_grid * Vec4(1, 1, 1, GImPlot->Style.MinorAlpha));
-        axis.ColorTick      = GetStyleColorU32(ImPlotCol_AxisTick);
-        axis.ColorTxt       = GetStyleColorU32(ImPlotCol_AxisText);
-        axis.ColorBg        = GetStyleColorU32(ImPlotCol_AxisBg);
-        axis.ColorHov       = GetStyleColorU32(ImPlotCol_AxisBgHovered);
-        axis.ColorAct       = GetStyleColorU32(ImPlotCol_AxisBgActive);
+        const ::SF::Engine::Vec4 col_grid = GetStyleColorVec4(ImPlotCol_AxisGrid);
+        axis.ColorMaj                     = ImGui::GetColorU32(col_grid);
+        axis.ColorMin  = ImGui::GetColorU32(col_grid * ::SF::Engine::Vec4(1, 1, 1, GImPlot->Style.MinorAlpha));
+        axis.ColorTick = GetStyleColorU32(ImPlotCol_AxisTick);
+        axis.ColorTxt  = GetStyleColorU32(ImPlotCol_AxisText);
+        axis.ColorBg   = GetStyleColorU32(ImPlotCol_AxisBg);
+        axis.ColorHov  = GetStyleColorU32(ImPlotCol_AxisBgHovered);
+        axis.ColorAct  = GetStyleColorU32(ImPlotCol_AxisBgActive);
         // axis.ColorHiLi     = IM_COL32_BLACK_TRANS;
     }
 
@@ -2036,7 +2047,7 @@ namespace ImPlot
                     pad_T += K + P;
                 if (label)
                 {
-                    Vec2 label_size = ImGui::CalcTextSize(plot.GetAxisLabel(axis));
+                    ::SF::Engine::Vec2 label_size = ImGui::CalcTextSize(plot.GetAxisLabel(axis));
                     pad_T += label_size.y + P;
                 }
                 if (ticks)
@@ -2050,7 +2061,7 @@ namespace ImPlot
                     pad_B += K + P;
                 if (label)
                 {
-                    Vec2 label_size = ImGui::CalcTextSize(plot.GetAxisLabel(axis));
+                    ::SF::Engine::Vec2 label_size = ImGui::CalcTextSize(plot.GetAxisLabel(axis));
                     pad_B += label_size.y + P;
                 }
                 if (ticks)
@@ -2179,8 +2190,8 @@ namespace ImPlot
     static inline void RenderGridLinesX(ImDrawList &DrawList, const ImPlotTicker &ticker, const ImRect &rect,
                                         uint32_t col_maj, uint32_t col_min, float size_maj, float size_min)
     {
-        const float density = ticker.TickCount() / rect.GetWidth();
-        Vec4 col_min4       = ImGui::ColorConvertU32ToFloat4(col_min);
+        const float density         = ticker.TickCount() / rect.GetWidth();
+        ::SF::Engine::Vec4 col_min4 = ImGui::ColorConvertU32ToFloat4(col_min);
         col_min4.w *= ImClamp(ImRemap(density, 0.1f, 0.2f, 1.0f, 0.0f), 0.0f, 1.0f);
         col_min = ImGui::ColorConvertFloat4ToU32(col_min4);
         for (int t = 0; t < ticker.TickCount(); t++)
@@ -2201,8 +2212,8 @@ namespace ImPlot
     static inline void RenderGridLinesY(ImDrawList &DrawList, const ImPlotTicker &ticker, const ImRect &rect,
                                         uint32_t col_maj, uint32_t col_min, float size_maj, float size_min)
     {
-        const float density = ticker.TickCount() / rect.GetHeight();
-        Vec4 col_min4       = ImGui::ColorConvertU32ToFloat4(col_min);
+        const float density         = ticker.TickCount() / rect.GetHeight();
+        ::SF::Engine::Vec4 col_min4 = ImGui::ColorConvertU32ToFloat4(col_min);
         col_min4.w *= ImClamp(ImRemap(density, 0.1f, 0.2f, 1.0f, 0.0f), 0.0f, 1.0f);
         col_min = ImGui::ColorConvertFloat4ToU32(col_min4);
         for (int t = 0; t < ticker.TickCount(); t++)
@@ -2217,9 +2228,10 @@ namespace ImPlot
         }
     }
 
-    static inline void RenderSelectionRect(ImDrawList &DrawList, const Vec2 &p_min, const Vec2 &p_max, const Vec4 &col)
+    static inline void RenderSelectionRect(ImDrawList &DrawList, const ::SF::Engine::Vec2 &p_min,
+                                           const ::SF::Engine::Vec2 &p_max, const ::SF::Engine::Vec4 &col)
     {
-        const uint32_t col_bg = ImGui::GetColorU32(col * Vec4(1, 1, 1, 0.25f));
+        const uint32_t col_bg = ImGui::GetColorU32(col * ::SF::Engine::Vec4(1, 1, 1, 0.25f));
         const uint32_t col_bd = ImGui::GetColorU32(col);
         DrawList.AddRectFilled(p_min, p_max, col_bg);
         DrawList.AddRect(p_min, p_max, col_bd);
@@ -2328,12 +2340,12 @@ namespace ImPlot
         const bool any_hov    = any_x_hov || any_y_hov;
         const bool any_held   = any_x_held || any_y_held;
 
-        const Vec2 select_drag     = ImGui::GetMouseDragDelta(gp.InputMap.Select);
-        const Vec2 pan_drag        = ImGui::GetMouseDragDelta(gp.InputMap.Pan);
-        const float select_drag_sq = ImLengthSqr(select_drag);
-        const float pan_drag_sq    = ImLengthSqr(pan_drag);
-        const bool selecting       = plot.Selecting && select_drag_sq > MOUSE_CURSOR_DRAG_THRESHOLD;
-        const bool panning         = any_held && pan_drag_sq > MOUSE_CURSOR_DRAG_THRESHOLD;
+        const ::SF::Engine::Vec2 select_drag = ImGui::GetMouseDragDelta(gp.InputMap.Select);
+        const ::SF::Engine::Vec2 pan_drag    = ImGui::GetMouseDragDelta(gp.InputMap.Pan);
+        const float select_drag_sq           = ImLengthSqr(select_drag);
+        const float pan_drag_sq              = ImLengthSqr(pan_drag);
+        const bool selecting                 = plot.Selecting && select_drag_sq > MOUSE_CURSOR_DRAG_THRESHOLD;
+        const bool panning                   = any_held && pan_drag_sq > MOUSE_CURSOR_DRAG_THRESHOLD;
 
         // CONTEXT MENU -----------------------------------------------------------
 
@@ -2418,9 +2430,9 @@ namespace ImPlot
                 zoom_rate = 0;
             else if (IO.MouseWheel > 0)
                 zoom_rate = (-zoom_rate) / (1.0f + (2.0f * zoom_rate));
-            Vec2 rect_size = plot.PlotRect.GetSize();
-            float tx       = ImRemap(IO.MousePos.x, plot.PlotRect.Min.x, plot.PlotRect.Max.x, 0.0f, 1.0f);
-            float ty       = ImRemap(IO.MousePos.y, plot.PlotRect.Min.y, plot.PlotRect.Max.y, 0.0f, 1.0f);
+            ::SF::Engine::Vec2 rect_size = plot.PlotRect.GetSize();
+            float tx                     = ImRemap(IO.MousePos.x, plot.PlotRect.Min.x, plot.PlotRect.Max.x, 0.0f, 1.0f);
+            float ty                     = ImRemap(IO.MousePos.y, plot.PlotRect.Min.y, plot.PlotRect.Max.y, 0.0f, 1.0f);
 
             // Track which axis to use as reference for equal aspect
             ImPlotAxis *equal_ref_axis = nullptr;
@@ -2479,9 +2491,9 @@ namespace ImPlot
 
         if (plot.Selecting)
         {
-            const Vec2 d            = plot.SelectStart - IO.MousePos;
-            const bool x_can_change = !ImHasFlag(IO.KeyMods, gp.InputMap.SelectHorzMod) && ImFabs(d.x) > 2;
-            const bool y_can_change = !ImHasFlag(IO.KeyMods, gp.InputMap.SelectVertMod) && ImFabs(d.y) > 2;
+            const ::SF::Engine::Vec2 d = plot.SelectStart - IO.MousePos;
+            const bool x_can_change    = !ImHasFlag(IO.KeyMods, gp.InputMap.SelectHorzMod) && ImFabs(d.x) > 2;
+            const bool y_can_change    = !ImHasFlag(IO.KeyMods, gp.InputMap.SelectVertMod) && ImFabs(d.y) > 2;
             // confirm
             if (IO.MouseReleased[gp.InputMap.Select])
             {
@@ -2869,7 +2881,7 @@ namespace ImPlot
     // BeginPlot
     //-----------------------------------------------------------------------------
 
-    bool BeginPlot(const char *title_id, const Vec2 &size, ImPlotFlags flags)
+    bool BeginPlot(const char *title_id, const ::SF::Engine::Vec2 &size, ImPlotFlags flags)
     {
         IM_ASSERT_USER_ERROR(
                 GImPlot != nullptr,
@@ -2894,7 +2906,7 @@ namespace ImPlot
         }
 
         // ID and age (TODO: keep track of plot age in frames)
-        const ImGuiID ID        = Window->GetID(title_id);
+        const IdType ID         = Window->GetID(title_id);
         const bool just_created = gp.Plots.GetByKey(ID) == nullptr;
         gp.CurrentPlot          = gp.Plots.GetOrAddByKey(ID);
 
@@ -2940,7 +2952,7 @@ namespace ImPlot
         plot.SetTitle(title_id);
 
         // set frame size
-        Vec2 frame_size;
+        ::SF::Engine::Vec2 frame_size;
         if (gp.CurrentSubplot != nullptr)
             frame_size = gp.CurrentSubplot->CellSize;
         else
@@ -3044,7 +3056,7 @@ namespace ImPlot
         {
             ImPlotLegend &legend = plot.Items.Legend;
             const bool horz      = ImHasFlag(legend.Flags, ImPlotLegendFlags_Horizontal);
-            const Vec2 legend_size =
+            const ::SF::Engine::Vec2 legend_size =
                     CalcLegendSize(plot.Items, gp.Style.LegendInnerPadding, gp.Style.LegendSpacing, !horz);
             const bool west =
                     ImHasFlag(legend.Location, ImPlotLocation_West) && !ImHasFlag(legend.Location, ImPlotLocation_East);
@@ -3080,7 +3092,7 @@ namespace ImPlot
         float pad_top = 0, pad_bot = 0, pad_left = 0, pad_right = 0;
 
         // (0) calc top padding form title
-        Vec2 title_size(0.0f, 0.0f);
+        ::SF::Engine::Vec2 title_size(0.0f, 0.0f);
         if (plot.HasTitle())
             title_size = ImGui::CalcTextSize(plot.GetTitle(), nullptr, true);
         if (title_size.x > 0)
@@ -3132,8 +3144,8 @@ namespace ImPlot
         }
 
         // (5) calc plot bb
-        plot.PlotRect =
-                ImRect(plot.CanvasRect.Min + Vec2(pad_left, pad_top), plot.CanvasRect.Max - Vec2(pad_right, pad_bot));
+        plot.PlotRect = ImRect(plot.CanvasRect.Min + ::SF::Engine::Vec2(pad_left, pad_top),
+                               plot.CanvasRect.Max - ::SF::Engine::Vec2(pad_right, pad_bot));
 
         // HOVER------------------------------------------------------------
 
@@ -3141,8 +3153,8 @@ namespace ImPlot
         for (int i = 0; i < IMPLOT_NUM_X_AXES; ++i)
         {
             ImPlotAxis &xax = plot.XAxis(i);
-            xax.HoverRect   = ImRect(Vec2(plot.PlotRect.Min.x, ImMin(xax.Datum1, xax.Datum2)),
-                                     Vec2(plot.PlotRect.Max.x, ImMax(xax.Datum1, xax.Datum2)));
+            xax.HoverRect   = ImRect(::SF::Engine::Vec2(plot.PlotRect.Min.x, ImMin(xax.Datum1, xax.Datum2)),
+                                     ::SF::Engine::Vec2(plot.PlotRect.Max.x, ImMax(xax.Datum1, xax.Datum2)));
             xax.PixelMin    = xax.IsInverted() ? plot.PlotRect.Max.x : plot.PlotRect.Min.x;
             xax.PixelMax    = xax.IsInverted() ? plot.PlotRect.Min.x : plot.PlotRect.Max.x;
             xax.UpdateTransformCache();
@@ -3151,8 +3163,8 @@ namespace ImPlot
         for (int i = 0; i < IMPLOT_NUM_Y_AXES; ++i)
         {
             ImPlotAxis &yax = plot.YAxis(i);
-            yax.HoverRect   = ImRect(Vec2(ImMin(yax.Datum1, yax.Datum2), plot.PlotRect.Min.y),
-                                     Vec2(ImMax(yax.Datum1, yax.Datum2), plot.PlotRect.Max.y));
+            yax.HoverRect   = ImRect(::SF::Engine::Vec2(ImMin(yax.Datum1, yax.Datum2), plot.PlotRect.Min.y),
+                                     ::SF::Engine::Vec2(ImMax(yax.Datum1, yax.Datum2), plot.PlotRect.Max.y));
             yax.PixelMin    = yax.IsInverted() ? plot.PlotRect.Min.y : plot.PlotRect.Max.y;
             yax.PixelMax    = yax.IsInverted() ? plot.PlotRect.Max.y : plot.PlotRect.Min.y;
             yax.UpdateTransformCache();
@@ -3254,13 +3266,14 @@ namespace ImPlot
             const bool opp          = ax.IsOpposite();
             if (ax.HasLabel())
             {
-                const char *label        = plot.GetAxisLabel(ax);
-                const Vec2 label_size    = ImGui::CalcTextSize(label);
+                const char *label                   = plot.GetAxisLabel(ax);
+                const ::SF::Engine::Vec2 label_size = ImGui::CalcTextSize(label);
                 const float label_offset = (ax.HasTickLabels() ? tkr.MaxSize.y + gp.Style.LabelPadding.y : 0.0f) +
                                            (tkr.Levels - 1) * (txt_height + gp.Style.LabelPadding.y) +
                                            gp.Style.LabelPadding.y;
-                const Vec2 label_pos(plot.PlotRect.GetCenter().x - label_size.x * 0.5f,
-                                     opp ? ax.Datum1 - label_offset - label_size.y : ax.Datum1 + label_offset);
+                const ::SF::Engine::Vec2 label_pos(plot.PlotRect.GetCenter().x - label_size.x * 0.5f,
+                                                   opp ? ax.Datum1 - label_offset - label_size.y
+                                                       : ax.Datum1 + label_offset);
                 DrawList.AddText(label_pos, ax.ColorTxt, label);
             }
             if (ax.HasTickLabels())
@@ -3275,7 +3288,7 @@ namespace ImPlot
                     if (tk.ShowLabel && tk.PixelPos >= plot.PlotRect.Min.x - 1 &&
                         tk.PixelPos <= plot.PlotRect.Max.x + 1)
                     {
-                        Vec2 start(tk.PixelPos - 0.5f * tk.LabelSize.x, datum);
+                        ::SF::Engine::Vec2 start(tk.PixelPos - 0.5f * tk.LabelSize.x, datum);
                         DrawList.AddText(start, ax.ColorTxt, tkr.GetText(j));
                     }
                 }
@@ -3302,12 +3315,13 @@ namespace ImPlot
             const bool opp          = ax.IsOpposite();
             if (ax.HasLabel())
             {
-                const char *label     = plot.GetAxisLabel(ax);
-                const Vec2 label_size = CalcTextSizeVertical(label);
+                const char *label                   = plot.GetAxisLabel(ax);
+                const ::SF::Engine::Vec2 label_size = CalcTextSizeVertical(label);
                 const float label_offset =
                         (ax.HasTickLabels() ? tkr.MaxSize.x + gp.Style.LabelPadding.x : 0.0f) + gp.Style.LabelPadding.x;
-                const Vec2 label_pos(opp ? ax.Datum1 + label_offset : ax.Datum1 - label_offset - label_size.x,
-                                     plot.PlotRect.GetCenter().y + label_size.y * 0.5f);
+                const ::SF::Engine::Vec2 label_pos(opp ? ax.Datum1 + label_offset
+                                                       : ax.Datum1 - label_offset - label_size.x,
+                                                   plot.PlotRect.GetCenter().y + label_size.y * 0.5f);
                 AddTextVertical(&DrawList, label_pos, ax.ColorTxt, label);
             }
             if (ax.HasTickLabels())
@@ -3320,7 +3334,7 @@ namespace ImPlot
                     if (tk.ShowLabel && tk.PixelPos >= plot.PlotRect.Min.y - 1 &&
                         tk.PixelPos <= plot.PlotRect.Max.y + 1)
                     {
-                        Vec2 start(datum, tk.PixelPos - 0.5f * tk.LabelSize.y);
+                        ::SF::Engine::Vec2 start(datum, tk.PixelPos - 0.5f * tk.LabelSize.y);
                         DrawList.AddText(start, ax.ColorTxt, tkr.GetText(j));
                     }
                 }
@@ -3383,7 +3397,8 @@ namespace ImPlot
         if (plot.HasTitle())
         {
             uint32_t col = GetStyleColorU32(ImPlotCol_TitleText);
-            AddTextCentered(&DrawList, Vec2(plot.PlotRect.GetCenter().x, plot.CanvasRect.Min.y), col, plot.GetTitle());
+            AddTextCentered(&DrawList, ::SF::Engine::Vec2(plot.PlotRect.GetCenter().x, plot.CanvasRect.Min.y), col,
+                            plot.GetTitle());
         }
 
         // render x ticks
@@ -3404,7 +3419,7 @@ namespace ImPlot
                     const ImPlotTick &tk = tkr.Ticks[j];
                     if (tk.Level != 0 || tk.PixelPos < plot.PlotRect.Min.x || tk.PixelPos > plot.PlotRect.Max.x)
                         continue;
-                    const Vec2 start(tk.PixelPos, ax.Datum1);
+                    const ::SF::Engine::Vec2 start(tk.PixelPos, ax.Datum1);
                     const float len = (!aux && tk.Major) ? gp.Style.MajorTickLen.x : gp.Style.MinorTickLen.x;
                     const float thk = (!aux && tk.Major) ? gp.Style.MajorTickSize.x : gp.Style.MinorTickSize.x;
                     AddLineV(&DrawList, start.x, start.y, start.y + direction * len, ax.ColorTick, thk);
@@ -3435,7 +3450,7 @@ namespace ImPlot
                     const ImPlotTick &tk = tkr.Ticks[j];
                     if (tk.Level != 0 || tk.PixelPos < plot.PlotRect.Min.y || tk.PixelPos > plot.PlotRect.Max.y)
                         continue;
-                    const Vec2 start(ax.Datum1, tk.PixelPos);
+                    const ::SF::Engine::Vec2 start(ax.Datum1, tk.PixelPos);
                     const float len = (!aux && tk.Major) ? gp.Style.MajorTickLen.y : gp.Style.MinorTickLen.y;
                     const float thk = (!aux && tk.Major) ? gp.Style.MajorTickSize.y : gp.Style.MinorTickSize.y;
                     AddLineH(&DrawList, start.x, start.x + direction * len, start.y, ax.ColorTick, thk);
@@ -3453,11 +3468,11 @@ namespace ImPlot
         PushPlotClipRect();
         for (int i = 0; i < gp.Annotations.Size; ++i)
         {
-            const char *txt      = gp.Annotations.GetText(i);
-            ImPlotAnnotation &an = gp.Annotations.Annotations[i];
-            const Vec2 txt_size  = ImGui::CalcTextSize(txt);
-            const Vec2 size      = txt_size + gp.Style.AnnotationPadding * 2;
-            Vec2 pos             = an.Pos;
+            const char *txt                   = gp.Annotations.GetText(i);
+            ImPlotAnnotation &an              = gp.Annotations.Annotations[i];
+            const ::SF::Engine::Vec2 txt_size = ImGui::CalcTextSize(txt);
+            const ::SF::Engine::Vec2 size     = txt_size + gp.Style.AnnotationPadding * ::SF::Engine::Vec2{2};
+            ::SF::Engine::Vec2 pos            = an.Pos;
             if (an.Offset.x == 0)
                 pos.x -= size.x / 2;
             else if (an.Offset.x > 0)
@@ -3475,9 +3490,9 @@ namespace ImPlot
             ImRect rect(pos, pos + size);
             if (an.Offset.x != 0 || an.Offset.y != 0)
             {
-                Vec2 corners[4] = {rect.GetTL(), rect.GetTR(), rect.GetBR(), rect.GetBL()};
-                int min_corner  = 0;
-                float min_len   = FLT_MAX;
+                ::SF::Engine::Vec2 corners[4] = {rect.GetTL(), rect.GetTR(), rect.GetBR(), rect.GetBL()};
+                int min_corner                = 0;
+                float min_len                 = FLT_MAX;
                 for (int c = 0; c < 4; ++c)
                 {
                     float len = ImLengthSqr(an.Pos - corners[c]);
@@ -3503,8 +3518,8 @@ namespace ImPlot
             !plot.Selecting && !plot.Items.Legend.Hovered)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_None);
-            Vec2 xy      = IO.MousePos;
-            uint32_t col = GetStyleColorU32(ImPlotCol_Crosshairs);
+            ::SF::Engine::Vec2 xy = IO.MousePos;
+            uint32_t col          = GetStyleColorU32(ImPlotCol_Crosshairs);
             AddLineH(&DrawList, plot.PlotRect.Min.x, xy.x - 5, xy.y, col);
             AddLineH(&DrawList, xy.x + 5, plot.PlotRect.Max.x, xy.y, col);
             AddLineV(&DrawList, xy.x, plot.PlotRect.Min.y, xy.y - 5, col);
@@ -3561,8 +3576,9 @@ namespace ImPlot
 
             if (!builder.empty())
             {
-                const Vec2 size = ImGui::CalcTextSize(builder.c_str());
-                const Vec2 pos  = GetLocationPos(plot.PlotRect, size, plot.MouseTextLocation, gp.Style.MousePosPadding);
+                const ::SF::Engine::Vec2 size = ImGui::CalcTextSize(builder.c_str());
+                const ::SF::Engine::Vec2 pos =
+                        GetLocationPos(plot.PlotRect, size, plot.MouseTextLocation, gp.Style.MousePosPadding);
                 DrawList.AddText(pos, GetStyleColorU32(ImPlotCol_InlayText), builder.c_str());
             }
         }
@@ -3571,8 +3587,8 @@ namespace ImPlot
         // axis side switch
         if (!plot.Held)
         {
-            Vec2 mouse_pos      = ImGui::GetIO().MousePos;
-            ImRect trigger_rect = plot.PlotRect;
+            ::SF::Engine::Vec2 mouse_pos = ImGui::GetIO().MousePos;
+            ImRect trigger_rect          = plot.PlotRect;
             trigger_rect.Expand(-10);
             for (int i = 0; i < IMPLOT_NUM_X_AXES; ++i)
             {
@@ -3640,9 +3656,9 @@ namespace ImPlot
             ImPlotLegend &legend   = plot.Items.Legend;
             const bool legend_out  = ImHasFlag(legend.Flags, ImPlotLegendFlags_Outside);
             const bool legend_horz = ImHasFlag(legend.Flags, ImPlotLegendFlags_Horizontal);
-            const Vec2 legend_size =
+            const ::SF::Engine::Vec2 legend_size =
                     CalcLegendSize(plot.Items, gp.Style.LegendInnerPadding, gp.Style.LegendSpacing, !legend_horz);
-            const Vec2 legend_pos =
+            const ::SF::Engine::Vec2 legend_pos =
                     GetLocationPos(legend_out ? plot.FrameRect : plot.PlotRect, legend_size, legend.Location,
                                    legend_out ? gp.Style.PlotPadding : gp.Style.LegendPadding);
             legend.Rect        = ImRect(legend_pos, legend_pos + legend_size);
@@ -3667,7 +3683,7 @@ namespace ImPlot
                     ImGui::SetKeyOwner(ImGuiKey_MouseWheelY, plot.Items.ID);
                     if (IO.MouseWheel != 0.0f)
                     {
-                        Vec2 max_step = legend.Rect.GetSize() * 0.67f;
+                        ::SF::Engine::Vec2 max_step = legend.Rect.GetSize() * 0.67f;
 #if IMGUI_VERSION_NUM < 19172
                         float font_size = ImGui::GetCurrentWindow()->CalcFontSize();
 #else
@@ -3678,16 +3694,17 @@ namespace ImPlot
                         legend.Scroll.y += scroll_step * IO.MouseWheel;
                     }
                 }
-                const Vec2 min_scroll_offset = legend.RectClamped.GetSize() - legend.Rect.GetSize();
-                legend.Scroll.x              = ImClamp(legend.Scroll.x, min_scroll_offset.x, 0.0f);
-                legend.Scroll.y              = ImClamp(legend.Scroll.y, min_scroll_offset.y, 0.0f);
-                const Vec2 scroll_offset     = legend_horz ? Vec2(legend.Scroll.x, 0) : Vec2(0, legend.Scroll.y);
-                Vec2 legend_offset           = legend.RectClamped.Min - legend.Rect.Min + scroll_offset;
+                const ::SF::Engine::Vec2 min_scroll_offset = legend.RectClamped.GetSize() - legend.Rect.GetSize();
+                legend.Scroll.x                            = ImClamp(legend.Scroll.x, min_scroll_offset.x, 0.0f);
+                legend.Scroll.y                            = ImClamp(legend.Scroll.y, min_scroll_offset.y, 0.0f);
+                const ::SF::Engine::Vec2 scroll_offset =
+                        legend_horz ? ::SF::Engine::Vec2(legend.Scroll.x, 0) : ::SF::Engine::Vec2(0, legend.Scroll.y);
+                ::SF::Engine::Vec2 legend_offset = legend.RectClamped.Min - legend.Rect.Min + scroll_offset;
                 legend.Rect.Min += legend_offset;
                 legend.Rect.Max += legend_offset;
             } else
             {
-                legend.Scroll = Vec2(0, 0);
+                legend.Scroll = ::SF::Engine::Vec2(0, 0);
             }
 
             const uint32_t col_bg = GetStyleColorU32(ImPlotCol_LegendBg);
@@ -3736,33 +3753,37 @@ namespace ImPlot
             ImPlotAxis &axis = plot.Axes[tag.Axis];
             if (!axis.Enabled || !axis.Range.Contains(tag.Value))
                 continue;
-            const char *txt = gp.Tags.GetText(i);
-            Vec2 text_size  = ImGui::CalcTextSize(txt);
-            Vec2 size       = text_size + gp.Style.AnnotationPadding * 2;
-            Vec2 pos;
+            const char *txt              = gp.Tags.GetText(i);
+            ::SF::Engine::Vec2 text_size = ImGui::CalcTextSize(txt);
+            ::SF::Engine::Vec2 size      = text_size + gp.Style.AnnotationPadding * ::SF::Engine::Vec2{2};
+            ::SF::Engine::Vec2 pos;
             axis.Ticker.OverrideSizeLate(size);
             float pix = IM_ROUND(axis.PlotToPixels(tag.Value));
             if (axis.Vertical)
             {
                 if (axis.IsOpposite())
                 {
-                    pos = Vec2(axis.Datum1 + gp.Style.LabelPadding.x, pix - size.y * 0.5f);
-                    DrawList.AddTriangleFilled(Vec2(axis.Datum1, pix), pos, pos + Vec2(0, size.y), tag.ColorBg);
+                    pos = ::SF::Engine::Vec2(axis.Datum1 + gp.Style.LabelPadding.x, pix - size.y * 0.5f);
+                    DrawList.AddTriangleFilled(::SF::Engine::Vec2(axis.Datum1, pix), pos,
+                                               pos + ::SF::Engine::Vec2(0, size.y), tag.ColorBg);
                 } else
                 {
-                    pos = Vec2(axis.Datum1 - size.x - gp.Style.LabelPadding.x, pix - size.y * 0.5f);
-                    DrawList.AddTriangleFilled(pos + Vec2(size.x, 0), Vec2(axis.Datum1, pix), pos + size, tag.ColorBg);
+                    pos = ::SF::Engine::Vec2(axis.Datum1 - size.x - gp.Style.LabelPadding.x, pix - size.y * 0.5f);
+                    DrawList.AddTriangleFilled(pos + ::SF::Engine::Vec2(size.x, 0),
+                                               ::SF::Engine::Vec2(axis.Datum1, pix), pos + size, tag.ColorBg);
                 }
             } else
             {
                 if (axis.IsOpposite())
                 {
-                    pos = Vec2(pix - size.x * 0.5f, axis.Datum1 - size.y - gp.Style.LabelPadding.y);
-                    DrawList.AddTriangleFilled(pos + Vec2(0, size.y), pos + size, Vec2(pix, axis.Datum1), tag.ColorBg);
+                    pos = ::SF::Engine::Vec2(pix - size.x * 0.5f, axis.Datum1 - size.y - gp.Style.LabelPadding.y);
+                    DrawList.AddTriangleFilled(pos + ::SF::Engine::Vec2(0, size.y), pos + size,
+                                               ::SF::Engine::Vec2(pix, axis.Datum1), tag.ColorBg);
                 } else
                 {
-                    pos = Vec2(pix - size.x * 0.5f, axis.Datum1 + gp.Style.LabelPadding.y);
-                    DrawList.AddTriangleFilled(pos, Vec2(pix, axis.Datum1), pos + Vec2(size.x, 0), tag.ColorBg);
+                    pos = ::SF::Engine::Vec2(pix - size.x * 0.5f, axis.Datum1 + gp.Style.LabelPadding.y);
+                    DrawList.AddTriangleFilled(pos, ::SF::Engine::Vec2(pix, axis.Datum1),
+                                               pos + ::SF::Engine::Vec2(size.x, 0), tag.ColorBg);
                 }
             }
             DrawList.AddRectFilled(pos, pos + size, tag.ColorBg);
@@ -3920,10 +3941,10 @@ namespace ImPlot
             xoff += subplot.ColRatios[c];
         for (int r = 0; r < row; ++r)
             yoff += subplot.RowRatios[r];
-        const Vec2 grid_size                    = subplot.GridRect.GetSize();
-        Vec2 cpos                               = subplot.GridRect.Min + Vec2(xoff * grid_size.x, yoff * grid_size.y);
-        cpos.x                                  = IM_ROUND(cpos.x);
-        cpos.y                                  = IM_ROUND(cpos.y);
+        const ::SF::Engine::Vec2 grid_size = subplot.GridRect.GetSize();
+        ::SF::Engine::Vec2 cpos = subplot.GridRect.Min + ::SF::Engine::Vec2(xoff * grid_size.x, yoff * grid_size.y);
+        cpos.x                  = IM_ROUND(cpos.x);
+        cpos.y                  = IM_ROUND(cpos.y);
         ImGui::GetCurrentWindow()->DC.CursorPos = cpos;
         // set cell size
         subplot.CellSize.x = IM_ROUND(subplot.GridRect.GetWidth() * subplot.ColRatios[col]);
@@ -3987,7 +4008,7 @@ namespace ImPlot
         SubplotSetCell(++subplot.CurrentIdx);
     }
 
-    bool BeginSubplots(const char *title, int rows, int cols, const Vec2 &size, ImPlotSubplotFlags flags,
+    bool BeginSubplots(const char *title, int rows, int cols, const ::SF::Engine::Vec2 &size, ImPlotSubplotFlags flags,
                        float *row_sizes, float *col_sizes)
     {
         IM_ASSERT_USER_ERROR(rows > 0 && cols > 0, "Invalid sizing arguments!");
@@ -4000,7 +4021,7 @@ namespace ImPlot
         ImGuiWindow *Window = G.CurrentWindow;
         if (Window->SkipItems)
             return false;
-        const ImGuiID ID       = Window->GetID(title);
+        const IdType ID        = Window->GetID(title);
         bool just_created      = gp.Subplots.GetByKey(ID) == nullptr;
         gp.CurrentSubplot      = gp.Subplots.GetOrAddByKey(ID);
         ImPlotSubplot &subplot = *gp.CurrentSubplot;
@@ -4056,15 +4077,16 @@ namespace ImPlot
         subplot.Cols = cols;
 
         // calc plot frame sizes
-        Vec2 title_size(0.0f, 0.0f);
+        ::SF::Engine::Vec2 title_size(0.0f, 0.0f);
         if (!ImHasFlag(subplot.Flags, ImPlotSubplotFlags_NoTitle))
             title_size = ImGui::CalcTextSize(title, nullptr, true);
-        const float pad_top   = title_size.x > 0.0f ? title_size.y + gp.Style.LabelPadding.y : 0;
-        const Vec2 half_pad   = gp.Style.PlotPadding / 2;
-        const Vec2 frame_size = ImGui::CalcItemSize(size, gp.Style.PlotDefaultSize.x, gp.Style.PlotDefaultSize.y);
-        subplot.FrameRect     = ImRect(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
-        subplot.GridRect.Min  = subplot.FrameRect.Min + half_pad + Vec2(0, pad_top);
-        subplot.GridRect.Max  = subplot.FrameRect.Max - half_pad;
+        const float pad_top               = title_size.x > 0.0f ? title_size.y + gp.Style.LabelPadding.y : 0;
+        const ::SF::Engine::Vec2 half_pad = gp.Style.PlotPadding / ::SF::Engine::Vec2{2};
+        const ::SF::Engine::Vec2 frame_size =
+                ImGui::CalcItemSize(size, gp.Style.PlotDefaultSize.x, gp.Style.PlotDefaultSize.y);
+        subplot.FrameRect    = ImRect(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
+        subplot.GridRect.Min = subplot.FrameRect.Min + half_pad + ::SF::Engine::Vec2(0, pad_top);
+        subplot.GridRect.Max = subplot.FrameRect.Max - half_pad;
         subplot.FrameHovered =
                 subplot.FrameRect.Contains(ImGui::GetMousePos()) &&
                 ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
@@ -4077,7 +4099,7 @@ namespace ImPlot
         {
             ImPlotLegend &legend = subplot.Items.Legend;
             const bool horz      = ImHasFlag(legend.Flags, ImPlotLegendFlags_Horizontal);
-            const Vec2 legend_size =
+            const ::SF::Engine::Vec2 legend_size =
                     CalcLegendSize(subplot.Items, gp.Style.LegendInnerPadding, gp.Style.LegendSpacing, !horz);
             const bool west =
                     ImHasFlag(legend.Location, ImPlotLocation_West) && !ImHasFlag(legend.Location, ImPlotLocation_East);
@@ -4104,9 +4126,10 @@ namespace ImPlot
         if (title_size.x > 0.0f && !ImHasFlag(subplot.Flags, ImPlotFlags_NoTitle))
         {
             const uint32_t col = GetStyleColorU32(ImPlotCol_TitleText);
-            AddTextCentered(ImGui::GetWindowDrawList(),
-                            Vec2(subplot.GridRect.GetCenter().x, subplot.GridRect.Min.y - pad_top + half_pad.y), col,
-                            title);
+            AddTextCentered(
+                    ImGui::GetWindowDrawList(),
+                    ::SF::Engine::Vec2(subplot.GridRect.GetCenter().x, subplot.GridRect.Min.y - pad_top + half_pad.y),
+                    col, title);
         }
 
         // render splitters
@@ -4122,7 +4145,7 @@ namespace ImPlot
             for (int r = 0; r < subplot.Rows - 1; ++r)
             {
                 ypos += subplot.RowRatios[r] * subplot.GridRect.GetHeight();
-                const ImGuiID sep_id = subplot.ID + separator;
+                const IdType sep_id = subplot.ID + separator;
                 ImGui::KeepAliveID(sep_id);
                 const ImRect sep_bb = ImRect(subplot.GridRect.Min.x, ypos - SUBPLOT_SPLITTER_HALF_THICKNESS,
                                              subplot.GridRect.Max.x, ypos + SUBPLOT_SPLITTER_HALF_THICKNESS);
@@ -4161,7 +4184,7 @@ namespace ImPlot
             for (int c = 0; c < subplot.Cols - 1; ++c)
             {
                 xpos += subplot.ColRatios[c] * subplot.GridRect.GetWidth();
-                const ImGuiID sep_id = subplot.ID + separator;
+                const IdType sep_id = subplot.ID + separator;
                 ImGui::KeepAliveID(sep_id);
                 const ImRect sep_bb = ImRect(xpos - SUBPLOT_SPLITTER_HALF_THICKNESS, subplot.GridRect.Min.y,
                                              xpos + SUBPLOT_SPLITTER_HALF_THICKNESS, subplot.GridRect.Max.y);
@@ -4214,7 +4237,7 @@ namespace ImPlot
         // push styling
         PushStyleColor(ImPlotCol_FrameBg, IM_COL32_BLACK_TRANS);
         PushStyleVar(ImPlotStyleVar_PlotPadding, half_pad);
-        PushStyleVar(ImPlotStyleVar_PlotMinSize, Vec2(0, 0));
+        PushStyleVar(ImPlotStyleVar_PlotMinSize, ::SF::Engine::Vec2(0, 0));
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
 
         // set initial cursor pos
@@ -4261,9 +4284,9 @@ namespace ImPlot
         {
             ImPlotLegend &legend   = subplot.Items.Legend;
             const bool legend_horz = ImHasFlag(legend.Flags, ImPlotLegendFlags_Horizontal);
-            const Vec2 legend_size =
+            const ::SF::Engine::Vec2 legend_size =
                     CalcLegendSize(subplot.Items, gp.Style.LegendInnerPadding, gp.Style.LegendSpacing, !legend_horz);
-            const Vec2 legend_pos =
+            const ::SF::Engine::Vec2 legend_pos =
                     GetLocationPos(subplot.FrameRect, legend_size, legend.Location, gp.Style.PlotPadding);
             legend.Rect                  = ImRect(legend_pos, legend_pos + legend_size);
             legend.RectClamped           = legend.Rect;
@@ -4286,7 +4309,7 @@ namespace ImPlot
                     ImGui::SetKeyOwner(ImGuiKey_MouseWheelY, subplot.Items.ID);
                     if (IO.MouseWheel != 0.0f)
                     {
-                        Vec2 max_step = legend.Rect.GetSize() * 0.67f;
+                        ::SF::Engine::Vec2 max_step = legend.Rect.GetSize() * 0.67f;
 #if IMGUI_VERSION_NUM < 19172
                         float font_size = ImGui::GetCurrentWindow()->CalcFontSize();
 #else
@@ -4297,16 +4320,17 @@ namespace ImPlot
                         legend.Scroll.y += scroll_step * IO.MouseWheel;
                     }
                 }
-                const Vec2 min_scroll_offset = legend.RectClamped.GetSize() - legend.Rect.GetSize();
-                legend.Scroll.x              = ImClamp(legend.Scroll.x, min_scroll_offset.x, 0.0f);
-                legend.Scroll.y              = ImClamp(legend.Scroll.y, min_scroll_offset.y, 0.0f);
-                const Vec2 scroll_offset     = legend_horz ? Vec2(legend.Scroll.x, 0) : Vec2(0, legend.Scroll.y);
-                Vec2 legend_offset           = legend.RectClamped.Min - legend.Rect.Min + scroll_offset;
+                const ::SF::Engine::Vec2 min_scroll_offset = legend.RectClamped.GetSize() - legend.Rect.GetSize();
+                legend.Scroll.x                            = ImClamp(legend.Scroll.x, min_scroll_offset.x, 0.0f);
+                legend.Scroll.y                            = ImClamp(legend.Scroll.y, min_scroll_offset.y, 0.0f);
+                const ::SF::Engine::Vec2 scroll_offset =
+                        legend_horz ? ::SF::Engine::Vec2(legend.Scroll.x, 0) : ::SF::Engine::Vec2(0, legend.Scroll.y);
+                ::SF::Engine::Vec2 legend_offset = legend.RectClamped.Min - legend.Rect.Min + scroll_offset;
                 legend.Rect.Min += legend_offset;
                 legend.Rect.Max += legend_offset;
             } else
             {
-                legend.Scroll = Vec2(0, 0);
+                legend.Scroll = ::SF::Engine::Vec2(0, 0);
             }
 
             const uint32_t col_bg = GetStyleColorU32(ImPlotCol_LegendBg);
@@ -4402,12 +4426,12 @@ namespace ImPlot
         return ImPlotPoint(x_axis.PixelsToPlot(x), y_axis.PixelsToPlot(y));
     }
 
-    ImPlotPoint PixelsToPlot(const Vec2 &pix, ImAxis x_idx, ImAxis y_idx)
+    ImPlotPoint PixelsToPlot(const ::SF::Engine::Vec2 &pix, ImAxis x_idx, ImAxis y_idx)
     {
         return PixelsToPlot(pix.x, pix.y, x_idx, y_idx);
     }
 
-    Vec2 PlotToPixels(double x, double y, ImAxis x_idx, ImAxis y_idx)
+    ::SF::Engine::Vec2 PlotToPixels(double x, double y, ImAxis x_idx, ImAxis y_idx)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr,
@@ -4420,15 +4444,15 @@ namespace ImPlot
         ImPlotPlot &plot   = *gp.CurrentPlot;
         ImPlotAxis &x_axis = x_idx == IMPLOT_AUTO ? plot.Axes[plot.CurrentX] : plot.Axes[x_idx];
         ImPlotAxis &y_axis = y_idx == IMPLOT_AUTO ? plot.Axes[plot.CurrentY] : plot.Axes[y_idx];
-        return Vec2(x_axis.PlotToPixels(x), y_axis.PlotToPixels(y));
+        return ::SF::Engine::Vec2(x_axis.PlotToPixels(x), y_axis.PlotToPixels(y));
     }
 
-    Vec2 PlotToPixels(const ImPlotPoint &plt, ImAxis x_idx, ImAxis y_idx)
+    ::SF::Engine::Vec2 PlotToPixels(const ImPlotPoint &plt, ImAxis x_idx, ImAxis y_idx)
     {
         return PlotToPixels(plt.x, plt.y, x_idx, y_idx);
     }
 
-    Vec2 GetPlotPos()
+    ::SF::Engine::Vec2 GetPlotPos()
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr,
@@ -4437,7 +4461,7 @@ namespace ImPlot
         return gp.CurrentPlot->PlotRect.Min;
     }
 
-    Vec2 GetPlotSize()
+    ::SF::Engine::Vec2 GetPlotSize()
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr,
@@ -4550,7 +4574,8 @@ namespace ImPlot
     // [SECTION] Plot Tools
     //-----------------------------------------------------------------------------
 
-    void Annotation(double x, double y, const Vec4 &col, const Vec2 &offset, bool clamp, bool round)
+    void Annotation(double x, double y, const ::SF::Engine::Vec4 &col, const ::SF::Engine::Vec2 &offset, bool clamp,
+                    bool round)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr,
@@ -4565,19 +4590,21 @@ namespace ImPlot
         Annotation(x, y, col, offset, clamp, "%s, %s", x_buff, y_buff);
     }
 
-    void AnnotationV(double x, double y, const Vec4 &col, const Vec2 &offset, bool clamp, const char *fmt, va_list args)
+    void AnnotationV(double x, double y, const ::SF::Engine::Vec4 &col, const ::SF::Engine::Vec2 &offset, bool clamp,
+                     const char *fmt, va_list args)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr,
                              "Annotation() needs to be called between BeginPlot() and EndPlot()!");
         SetupLock();
-        Vec2 pos    = PlotToPixels(x, y, IMPLOT_AUTO, IMPLOT_AUTO);
-        uint32_t bg = ImGui::GetColorU32(col);
-        uint32_t fg = col.w == 0 ? GetStyleColorU32(ImPlotCol_InlayText) : CalcTextColor(col);
+        ::SF::Engine::Vec2 pos = PlotToPixels(x, y, IMPLOT_AUTO, IMPLOT_AUTO);
+        uint32_t bg            = ImGui::GetColorU32(col);
+        uint32_t fg            = col.w == 0 ? GetStyleColorU32(ImPlotCol_InlayText) : CalcTextColor(col);
         gp.Annotations.AppendV(pos, offset, bg, fg, clamp, fmt, args);
     }
 
-    void Annotation(double x, double y, const Vec4 &col, const Vec2 &offset, bool clamp, const char *fmt, ...)
+    void Annotation(double x, double y, const ::SF::Engine::Vec4 &col, const ::SF::Engine::Vec2 &offset, bool clamp,
+                    const char *fmt, ...)
     {
         va_list args;
         va_start(args, fmt);
@@ -4585,7 +4612,7 @@ namespace ImPlot
         va_end(args);
     }
 
-    void TagV(ImAxis axis, double v, const Vec4 &col, const char *fmt, va_list args)
+    void TagV(ImAxis axis, double v, const ::SF::Engine::Vec4 &col, const char *fmt, va_list args)
     {
         ImPlotContext &gp = *GImPlot;
         SetupLock();
@@ -4594,7 +4621,7 @@ namespace ImPlot
         gp.Tags.AppendV(axis, v, bg, fg, fmt, args);
     }
 
-    void Tag(ImAxis axis, double v, const Vec4 &col, const char *fmt, ...)
+    void Tag(ImAxis axis, double v, const ::SF::Engine::Vec4 &col, const char *fmt, ...)
     {
         va_list args;
         va_start(args, fmt);
@@ -4602,7 +4629,7 @@ namespace ImPlot
         va_end(args);
     }
 
-    void Tag(ImAxis axis, double v, const Vec4 &color, bool round)
+    void Tag(ImAxis axis, double v, const ::SF::Engine::Vec4 &color, bool round)
     {
         ImPlotContext &gp = *GImPlot;
         SetupLock();
@@ -4612,14 +4639,14 @@ namespace ImPlot
         Tag(axis, v, color, "%s", buff);
     }
 
-    IMPLOT_API void TagX(double x, const Vec4 &color, bool round)
+    IMPLOT_API void TagX(double x, const ::SF::Engine::Vec4 &color, bool round)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr, "TagX() needs to be called between BeginPlot() and EndPlot()!");
         Tag(gp.CurrentPlot->CurrentX, x, color, round);
     }
 
-    IMPLOT_API void TagX(double x, const Vec4 &color, const char *fmt, ...)
+    IMPLOT_API void TagX(double x, const ::SF::Engine::Vec4 &color, const char *fmt, ...)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr, "TagX() needs to be called between BeginPlot() and EndPlot()!");
@@ -4629,21 +4656,21 @@ namespace ImPlot
         va_end(args);
     }
 
-    IMPLOT_API void TagXV(double x, const Vec4 &color, const char *fmt, va_list args)
+    IMPLOT_API void TagXV(double x, const ::SF::Engine::Vec4 &color, const char *fmt, va_list args)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr, "TagX() needs to be called between BeginPlot() and EndPlot()!");
         TagV(gp.CurrentPlot->CurrentX, x, color, fmt, args);
     }
 
-    IMPLOT_API void TagY(double y, const Vec4 &color, bool round)
+    IMPLOT_API void TagY(double y, const ::SF::Engine::Vec4 &color, bool round)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr, "TagY() needs to be called between BeginPlot() and EndPlot()!");
         Tag(gp.CurrentPlot->CurrentY, y, color, round);
     }
 
-    IMPLOT_API void TagY(double y, const Vec4 &color, const char *fmt, ...)
+    IMPLOT_API void TagY(double y, const ::SF::Engine::Vec4 &color, const char *fmt, ...)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr, "TagY() needs to be called between BeginPlot() and EndPlot()!");
@@ -4653,7 +4680,7 @@ namespace ImPlot
         va_end(args);
     }
 
-    IMPLOT_API void TagYV(double y, const Vec4 &color, const char *fmt, va_list args)
+    IMPLOT_API void TagYV(double y, const ::SF::Engine::Vec4 &color, const char *fmt, va_list args)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentPlot != nullptr, "TagY() needs to be called between BeginPlot() and EndPlot()!");
@@ -4662,8 +4689,8 @@ namespace ImPlot
 
     constexpr float DRAG_GRAB_HALF_SIZE = 4.0f;
 
-    bool DragPoint(int n_id, double *x, double *y, const Vec4 &col, float radius, ImPlotDragToolFlags flags,
-                   bool *out_clicked, bool *out_hovered, bool *out_held)
+    bool DragPoint(int n_id, double *x, double *y, const ::SF::Engine::Vec4 &col, float radius,
+                   ImPlotDragToolFlags flags, bool *out_clicked, bool *out_hovered, bool *out_held)
     {
         ImGui::PushID("#IMPLOT_DRAG_POINT");
         IM_ASSERT_USER_ERROR(GImPlot->CurrentPlot != nullptr,
@@ -4675,15 +4702,15 @@ namespace ImPlot
             FitPoint(ImPlotPoint(*x, *y));
         }
 
-        const bool input           = !ImHasFlag(flags, ImPlotDragToolFlags_NoInputs);
-        const bool show_curs       = !ImHasFlag(flags, ImPlotDragToolFlags_NoCursors);
-        const bool no_delay        = !ImHasFlag(flags, ImPlotDragToolFlags_Delayed);
-        const float grab_half_size = ImMax(DRAG_GRAB_HALF_SIZE, radius);
-        const Vec4 color           = IsColorAuto(col) ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : col;
-        const uint32_t col32       = ImGui::ColorConvertFloat4ToU32(color);
+        const bool input               = !ImHasFlag(flags, ImPlotDragToolFlags_NoInputs);
+        const bool show_curs           = !ImHasFlag(flags, ImPlotDragToolFlags_NoCursors);
+        const bool no_delay            = !ImHasFlag(flags, ImPlotDragToolFlags_Delayed);
+        const float grab_half_size     = ImMax(DRAG_GRAB_HALF_SIZE, radius);
+        const ::SF::Engine::Vec4 color = IsColorAuto(col) ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : col;
+        const uint32_t col32           = ImGui::ColorConvertFloat4ToU32(color);
 
-        Vec2 pos         = PlotToPixels(*x, *y, IMPLOT_AUTO, IMPLOT_AUTO);
-        const ImGuiID id = ImGui::GetCurrentWindow()->GetID(n_id);
+        ::SF::Engine::Vec2 pos = PlotToPixels(*x, *y, IMPLOT_AUTO, IMPLOT_AUTO);
+        const IdType id        = ImGui::GetCurrentWindow()->GetID(n_id);
         ImRect rect(pos.x - grab_half_size, pos.y - grab_half_size, pos.x + grab_half_size, pos.y + grab_half_size);
         bool hovered = false, held = false;
 
@@ -4720,7 +4747,7 @@ namespace ImPlot
         return modified;
     }
 
-    bool DragLineX(int n_id, double *value, const Vec4 &col, float thickness, ImPlotDragToolFlags flags,
+    bool DragLineX(int n_id, double *value, const ::SF::Engine::Vec4 &col, float thickness, ImPlotDragToolFlags flags,
                    bool *out_clicked, bool *out_hovered, bool *out_held)
     {
         // ImGui::PushID("#IMPLOT_DRAG_LINE_X");
@@ -4741,7 +4768,7 @@ namespace ImPlot
         float yt                   = gp.CurrentPlot->PlotRect.Min.y;
         float yb                   = gp.CurrentPlot->PlotRect.Max.y;
         float x                    = IM_ROUND(PlotToPixels(*value, 0, IMPLOT_AUTO, IMPLOT_AUTO).x);
-        const ImGuiID id           = ImGui::GetCurrentWindow()->GetID(n_id);
+        const IdType id            = ImGui::GetCurrentWindow()->GetID(n_id);
         ImRect rect(x - grab_half_size, yt, x + grab_half_size, yb);
         bool hovered = false, held = false;
 
@@ -4760,9 +4787,9 @@ namespace ImPlot
         if ((hovered || held) && show_curs)
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
 
-        float len      = gp.Style.MajorTickLen.x;
-        Vec4 color     = IsColorAuto(col) ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : col;
-        uint32_t col32 = ImGui::ColorConvertFloat4ToU32(color);
+        float len                = gp.Style.MajorTickLen.x;
+        ::SF::Engine::Vec4 color = IsColorAuto(col) ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : col;
+        uint32_t col32           = ImGui::ColorConvertFloat4ToU32(color);
 
         bool modified = false;
         if (held && ImGui::IsMouseDragging(0))
@@ -4784,7 +4811,7 @@ namespace ImPlot
         return modified;
     }
 
-    bool DragLineY(int n_id, double *value, const Vec4 &col, float thickness, ImPlotDragToolFlags flags,
+    bool DragLineY(int n_id, double *value, const ::SF::Engine::Vec4 &col, float thickness, ImPlotDragToolFlags flags,
                    bool *out_clicked, bool *out_hovered, bool *out_held)
     {
         ImGui::PushID("#IMPLOT_DRAG_LINE_Y");
@@ -4806,7 +4833,7 @@ namespace ImPlot
         float xr                   = gp.CurrentPlot->PlotRect.Max.x;
         float y                    = IM_ROUND(PlotToPixels(0, *value, IMPLOT_AUTO, IMPLOT_AUTO).y);
 
-        const ImGuiID id = ImGui::GetCurrentWindow()->GetID(n_id);
+        const IdType id = ImGui::GetCurrentWindow()->GetID(n_id);
         ImRect rect(xl, y - grab_half_size, xr, y + grab_half_size);
         bool hovered = false, held = false;
 
@@ -4825,9 +4852,9 @@ namespace ImPlot
         if ((hovered || held) && show_curs)
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
 
-        float len      = gp.Style.MajorTickLen.y;
-        Vec4 color     = IsColorAuto(col) ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : col;
-        uint32_t col32 = ImGui::ColorConvertFloat4ToU32(color);
+        float len                = gp.Style.MajorTickLen.y;
+        ::SF::Engine::Vec4 color = IsColorAuto(col) ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : col;
+        uint32_t col32           = ImGui::ColorConvertFloat4ToU32(color);
 
         bool modified = false;
         if (held && ImGui::IsMouseDragging(0))
@@ -4849,7 +4876,7 @@ namespace ImPlot
         return modified;
     }
 
-    bool DragRect(int n_id, double *x_min, double *y_min, double *x_max, double *y_max, const Vec4 &col,
+    bool DragRect(int n_id, double *x_min, double *y_min, double *x_max, double *y_max, const ::SF::Engine::Vec4 &col,
                   ImPlotDragToolFlags flags, bool *out_clicked, bool *out_hovered, bool *out_held)
     {
         ImGui::PushID("#IMPLOT_DRAG_RECT");
@@ -4869,10 +4896,10 @@ namespace ImPlot
         bool h[]             = {true, false, true, false};
         double *x[]          = {x_min, x_max, x_max, x_min};
         double *y[]          = {y_min, y_min, y_max, y_max};
-        Vec2 p[4];
+        ::SF::Engine::Vec2 p[4];
         for (int i = 0; i < 4; ++i)
             p[i] = PlotToPixels(*x[i], *y[i], IMPLOT_AUTO, IMPLOT_AUTO);
-        Vec2 pc = PlotToPixels((*x_min + *x_max) / 2, (*y_min + *y_max) / 2, IMPLOT_AUTO, IMPLOT_AUTO);
+        ::SF::Engine::Vec2 pc = PlotToPixels((*x_min + *x_max) / 2, (*y_min + *y_max) / 2, IMPLOT_AUTO, IMPLOT_AUTO);
         ImRect rect(ImMin(p[0], p[2]), ImMax(p[0], p[2]));
         ImRect rect_grab = rect;
         rect_grab.Expand(DRAG_GRAB_HALF_SIZE);
@@ -4888,11 +4915,11 @@ namespace ImPlot
             cur[3] = cur[2] == ImGuiMouseCursor_ResizeNWSE ? ImGuiMouseCursor_ResizeNESW : ImGuiMouseCursor_ResizeNWSE;
         }
 
-        Vec4 color     = IsColorAuto(col) ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : col;
-        uint32_t col32 = ImGui::ColorConvertFloat4ToU32(color);
+        ::SF::Engine::Vec4 color = IsColorAuto(col) ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : col;
+        uint32_t col32           = ImGui::ColorConvertFloat4ToU32(color);
         color.w *= 0.25f;
         uint32_t col32_a = ImGui::ColorConvertFloat4ToU32(color);
-        const ImGuiID id = ImGui::GetCurrentWindow()->GetID(n_id);
+        const IdType id  = ImGui::GetCurrentWindow()->GetID(n_id);
 
         bool modified = false;
         bool clicked = false, hovered = false, held = false;
@@ -4934,7 +4961,7 @@ namespace ImPlot
             // points
             ImRect b_rect(p[i].x - DRAG_GRAB_HALF_SIZE, p[i].y - DRAG_GRAB_HALF_SIZE, p[i].x + DRAG_GRAB_HALF_SIZE,
                           p[i].y + DRAG_GRAB_HALF_SIZE);
-            ImGuiID p_id = id + i + 1;
+            IdType p_id = id + i + 1;
             ImGui::KeepAliveID(p_id);
             if (input)
             {
@@ -4957,13 +4984,13 @@ namespace ImPlot
             }
 
             // edges
-            Vec2 e_min   = ImMin(p[i], p[(i + 1) % 4]);
-            Vec2 e_max   = ImMax(p[i], p[(i + 1) % 4]);
-            b_rect       = h[i] ? ImRect(e_min.x + DRAG_GRAB_HALF_SIZE, e_min.y - DRAG_GRAB_HALF_SIZE,
-                                         e_max.x - DRAG_GRAB_HALF_SIZE, e_max.y + DRAG_GRAB_HALF_SIZE)
-                                : ImRect(e_min.x - DRAG_GRAB_HALF_SIZE, e_min.y + DRAG_GRAB_HALF_SIZE,
-                                         e_max.x + DRAG_GRAB_HALF_SIZE, e_max.y - DRAG_GRAB_HALF_SIZE);
-            ImGuiID e_id = id + i + 5;
+            ::SF::Engine::Vec2 e_min = ImMin(p[i], p[(i + 1) % 4]);
+            ::SF::Engine::Vec2 e_max = ImMax(p[i], p[(i + 1) % 4]);
+            b_rect                   = h[i] ? ImRect(e_min.x + DRAG_GRAB_HALF_SIZE, e_min.y - DRAG_GRAB_HALF_SIZE,
+                                                     e_max.x - DRAG_GRAB_HALF_SIZE, e_max.y + DRAG_GRAB_HALF_SIZE)
+                                            : ImRect(e_min.x - DRAG_GRAB_HALF_SIZE, e_min.y + DRAG_GRAB_HALF_SIZE,
+                                                     e_max.x + DRAG_GRAB_HALF_SIZE, e_max.y - DRAG_GRAB_HALF_SIZE);
+            IdType e_id              = id + i + 5;
             ImGui::KeepAliveID(e_id);
             if (input)
             {
@@ -5034,8 +5061,8 @@ namespace ImPlot
         return modified;
     }
 
-    bool DragRect(int id, ImPlotRect *bounds, const Vec4 &col, ImPlotDragToolFlags flags, bool *out_clicked,
-                  bool *out_hovered, bool *out_held)
+    bool DragRect(int id, ImPlotRect *bounds, const ::SF::Engine::Vec4 &col, ImPlotDragToolFlags flags,
+                  bool *out_clicked, bool *out_hovered, bool *out_held)
     {
         return DragRect(id, &bounds->X.Min, &bounds->Y.Min, &bounds->X.Max, &bounds->Y.Max, col, flags, out_clicked,
                         out_hovered, out_held);
@@ -5051,7 +5078,7 @@ namespace ImPlot
         IM_ASSERT_USER_ERROR(gp.CurrentItems != nullptr,
                              "IsPlotItemHighlight() needs to be called within an itemized context!");
         SetupLock();
-        ImGuiID id       = ImGui::GetIDWithSeed(label_id, nullptr, gp.CurrentItems->ID);
+        IdType id        = ImGui::GetIDWithSeed(label_id, nullptr, gp.CurrentItems->ID);
         ImPlotItem *item = gp.CurrentItems->GetItem(id);
         return item && item->LegendHovered;
     }
@@ -5065,7 +5092,7 @@ namespace ImPlot
         ImGuiWindow *window = GImGui->CurrentWindow;
         if (window->SkipItems)
             return false;
-        ImGuiID id = ImGui::GetIDWithSeed(label_id, nullptr, gp.CurrentItems->ID);
+        IdType id = ImGui::GetIDWithSeed(label_id, nullptr, gp.CurrentItems->ID);
         if (ImGui::IsMouseReleased(mouse_button))
         {
             ImPlotItem *item = gp.CurrentItems->GetItem(id);
@@ -5082,7 +5109,7 @@ namespace ImPlot
         ImGui::EndPopup();
     }
 
-    void ShowAltLegend(const char *title_id, bool vertical, const Vec2 size, bool interactable)
+    void ShowAltLegend(const char *title_id, bool vertical, const ::SF::Engine::Vec2 size, bool interactable)
     {
         ImPlotContext &gp   = *GImPlot;
         ImGuiContext &G     = *GImGui;
@@ -5091,15 +5118,15 @@ namespace ImPlot
             return;
         ImDrawList &DrawList = *Window->DrawList;
         ImPlotPlot *plot     = GetPlot(title_id);
-        Vec2 legend_size;
-        Vec2 default_size = gp.Style.LegendPadding * 2;
+        ::SF::Engine::Vec2 legend_size;
+        ::SF::Engine::Vec2 default_size = gp.Style.LegendPadding * ::SF::Engine::Vec2{2};
         if (plot != nullptr)
         {
             legend_size  = CalcLegendSize(plot->Items, gp.Style.LegendInnerPadding, gp.Style.LegendSpacing, vertical);
-            default_size = legend_size + gp.Style.LegendPadding * 2;
+            default_size = legend_size + gp.Style.LegendPadding * ::SF::Engine::Vec2{2};
         }
-        Vec2 frame_size = ImGui::CalcItemSize(size, default_size.x, default_size.y);
-        ImRect bb_frame = ImRect(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
+        ::SF::Engine::Vec2 frame_size = ImGui::CalcItemSize(size, default_size.x, default_size.y);
+        ImRect bb_frame               = ImRect(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
         ImGui::ItemSize(bb_frame);
         if (!ImGui::ItemAdd(bb_frame, 0, &bb_frame))
             return;
@@ -5108,7 +5135,7 @@ namespace ImPlot
         DrawList.PushClipRect(bb_frame.Min, bb_frame.Max, true);
         if (plot != nullptr)
         {
-            const Vec2 legend_pos = GetLocationPos(bb_frame, legend_size, 0, gp.Style.LegendPadding);
+            const ::SF::Engine::Vec2 legend_pos = GetLocationPos(bb_frame, legend_size, 0, gp.Style.LegendPadding);
             const ImRect legend_bb(legend_pos, legend_pos + legend_size);
             interactable = interactable && bb_frame.Contains(ImGui::GetIO().MousePos);
             // render legend box
@@ -5185,7 +5212,7 @@ namespace ImPlot
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(gp.CurrentItems != nullptr,
                              "BeginDragDropSourceItem() needs to be called within an itemized context!");
-        ImGuiID item_id  = ImGui::GetIDWithSeed(label_id, nullptr, gp.CurrentItems->ID);
+        IdType item_id   = ImGui::GetIDWithSeed(label_id, nullptr, gp.CurrentItems->ID);
         ImPlotItem *item = gp.CurrentItems->GetItem(item_id);
         if (item != nullptr)
         {
@@ -5216,7 +5243,7 @@ namespace ImPlot
         ImGuiWindow *Window = G.CurrentWindow;
         if (Window->SkipItems)
             return false;
-        const ImGuiID ID               = Window->GetID(group_id);
+        const IdType ID                = Window->GetID(group_id);
         ImPlotAlignmentData *alignment = gp.AlignmentData.GetOrAddByKey(ID);
         if (vertical)
             gp.CurrentAlignmentV = alignment;
@@ -5268,7 +5295,7 @@ namespace ImPlot
         gp.Style.Colors[idx] = ImGui::ColorConvertU32ToFloat4(col);
     }
 
-    void PushStyleColor(ImPlotCol idx, const Vec4 &col)
+    void PushStyleColor(ImPlotCol idx, const ::SF::Engine::Vec4 &col)
     {
         ImPlotContext &gp = *GImPlot;
         ImGuiColorMod backup;
@@ -5325,18 +5352,18 @@ namespace ImPlot
         IM_ASSERT(0 && "Called PushStyleVar() int variant but variable is not a int!");
     }
 
-    void PushStyleVar(ImPlotStyleVar idx, const Vec2 &val)
+    void PushStyleVar(ImPlotStyleVar idx, const ::SF::Engine::Vec2 &val)
     {
         ImPlotContext &gp                  = *GImPlot;
         const ImPlotStyleVarInfo *var_info = GetPlotStyleVarInfo(idx);
         if (var_info->Type == ImGuiDataType_Float && var_info->Count == 2)
         {
-            Vec2 *pvar = (Vec2 *) var_info->GetVarPtr(&gp.Style);
+            ::SF::Engine::Vec2 *pvar = (::SF::Engine::Vec2 *) var_info->GetVarPtr(&gp.Style);
             gp.StyleModifiers.push_back(ImGuiStyleMod((ImGuiStyleVar) idx, *pvar));
             *pvar = val;
             return;
         }
-        IM_ASSERT(0 && "Called PushStyleVar() Vec2 variant but variable is not a Vec2!");
+        IM_ASSERT(0 && "Called PushStyleVar() ::SF::Engine::Vec2 variant but variable is not a ::SF::Engine::Vec2!");
     }
 
     void PopStyleVar(int count)
@@ -5378,7 +5405,7 @@ namespace ImPlot
     // [Section] Colormaps
     //------------------------------------------------------------------------------
 
-    ImPlotColormap AddColormap(const char *name, const Vec4 *colormap, int size, bool qual)
+    ImPlotColormap AddColormap(const char *name, const ::SF::Engine::Vec4 *colormap, int size, bool qual)
     {
         ImPlotContext &gp = *GImPlot;
         IM_ASSERT_USER_ERROR(size > 1, "The colormap size must be greater than 1!");
@@ -5456,7 +5483,7 @@ namespace ImPlot
         return col;
     }
 
-    Vec4 NextColormapColor() { return ImGui::ColorConvertU32ToFloat4(NextColormapColorU32()); }
+    ::SF::Engine::Vec4 NextColormapColor() { return ImGui::ColorConvertU32ToFloat4(NextColormapColorU32()); }
 
     int GetColormapSize(ImPlotColormap cmap)
     {
@@ -5475,7 +5502,7 @@ namespace ImPlot
         return gp.ColormapData.GetKeyColor(cmap, idx);
     }
 
-    Vec4 GetColormapColor(int idx, ImPlotColormap cmap)
+    ::SF::Engine::Vec4 GetColormapColor(int idx, ImPlotColormap cmap)
     {
         return ImGui::ColorConvertU32ToFloat4(GetColormapColorU32(idx, cmap));
     }
@@ -5488,7 +5515,7 @@ namespace ImPlot
         return gp.ColormapData.LerpTable(cmap, t);
     }
 
-    Vec4 SampleColormap(float t, ImPlotColormap cmap)
+    ::SF::Engine::Vec4 SampleColormap(float t, ImPlotColormap cmap)
     {
         return ImGui::ColorConvertU32ToFloat4(SampleColormapU32(t, cmap));
     }
@@ -5537,16 +5564,16 @@ namespace ImPlot
         }
     }
 
-    void ColormapScale(const char *label, double scale_min, double scale_max, const Vec2 &size, const char *format,
-                       ImPlotColormapScaleFlags flags, ImPlotColormap cmap)
+    void ColormapScale(const char *label, double scale_min, double scale_max, const ::SF::Engine::Vec2 &size,
+                       const char *format, ImPlotColormapScaleFlags flags, ImPlotColormap cmap)
     {
         ImGuiContext &G     = *GImGui;
         ImGuiWindow *Window = G.CurrentWindow;
         if (Window->SkipItems)
             return;
 
-        const ImGuiID ID = Window->GetID(label);
-        Vec2 label_size(0, 0);
+        const IdType ID = Window->GetID(label);
+        ::SF::Engine::Vec2 label_size(0, 0);
         if (!ImHasFlag(flags, ImPlotColormapScaleFlags_NoLabel))
         {
             label_size = ImGui::CalcTextSize(label, nullptr, true);
@@ -5556,7 +5583,7 @@ namespace ImPlot
         cmap              = cmap == IMPLOT_AUTO ? gp.Style.Colormap : cmap;
         IM_ASSERT_USER_ERROR(cmap >= 0 && cmap < gp.ColormapData.Count, "Invalid colormap index!");
 
-        Vec2 frame_size = ImGui::CalcItemSize(size, 0, gp.Style.PlotDefaultSize.y);
+        ::SF::Engine::Vec2 frame_size = ImGui::CalcItemSize(size, 0, gp.Style.PlotDefaultSize.y);
         if (frame_size.y < gp.Style.PlotMinSize.y && size.y < 0.0f)
             frame_size.y = gp.Style.PlotMinSize.y;
 
@@ -5591,9 +5618,9 @@ namespace ImPlot
         const bool reversed = scale_min > scale_max;
 
         float bb_grad_shift = opposite ? pad : 0;
-        ImRect bb_grad(bb_frame.Min + gp.Style.PlotPadding + Vec2(bb_grad_shift, 0),
-                       bb_frame.Min + Vec2(bar_w + gp.Style.PlotPadding.x + bb_grad_shift,
-                                           frame_size.y - gp.Style.PlotPadding.y));
+        ImRect bb_grad(bb_frame.Min + gp.Style.PlotPadding + ::SF::Engine::Vec2(bb_grad_shift, 0),
+                       bb_frame.Min + ::SF::Engine::Vec2(bar_w + gp.Style.PlotPadding.x + bb_grad_shift,
+                                                         frame_size.y - gp.Style.PlotPadding.y));
 
         ImGui::PushClipRect(bb_frame.Min, bb_frame.Max, true);
         const uint32_t col_text = ImGui::GetColorU32(ImGuiCol_Text);
@@ -5621,7 +5648,7 @@ namespace ImPlot
             const float txt_x =
                     opposite ? bb_grad.Min.x - txt_off - gp.CTicker.Ticks[i].LabelSize.x : bb_grad.Max.x + txt_off;
             const float txt_y = y_pos - gp.CTicker.Ticks[i].LabelSize.y * 0.5f;
-            DrawList.AddText(Vec2(txt_x, txt_y), col_text, gp.CTicker.GetText(i));
+            DrawList.AddText(::SF::Engine::Vec2(txt_x, txt_y), col_text, gp.CTicker.GetText(i));
         }
 
         if (rend_label)
@@ -5630,13 +5657,13 @@ namespace ImPlot
                                              : bb_grad.Max.x + 2 * txt_off + gp.CTicker.MaxSize.x;
             const float pos_y     = bb_grad.GetCenter().y + label_size.x * 0.5f;
             const char *label_end = ImGui::FindRenderedTextEnd(label);
-            AddTextVertical(&DrawList, Vec2(pos_x, pos_y), col_text, label, label_end);
+            AddTextVertical(&DrawList, ::SF::Engine::Vec2(pos_x, pos_y), col_text, label, label_end);
         }
         DrawList.AddRect(bb_grad.Min, bb_grad.Max, GetStyleColorU32(ImPlotCol_PlotBorder));
         ImGui::PopClipRect();
     }
 
-    bool ColormapSlider(const char *label, float *t, Vec4 *out, const char *format, ImPlotColormap cmap)
+    bool ColormapSlider(const char *label, float *t, ::SF::Engine::Vec4 *out, const char *format, ImPlotColormap cmap)
     {
         *t                  = ImClamp(*t, 0.0f, 1.0f);
         ImGuiContext &G     = *GImGui;
@@ -5646,19 +5673,19 @@ namespace ImPlot
         ImPlotContext &gp = *GImPlot;
         cmap              = cmap == IMPLOT_AUTO ? gp.Style.Colormap : cmap;
         IM_ASSERT_USER_ERROR(cmap >= 0 && cmap < gp.ColormapData.Count, "Invalid colormap index!");
-        const uint32_t *keys = gp.ColormapData.GetKeys(cmap);
-        const int count      = gp.ColormapData.GetKeyCount(cmap);
-        const bool qual      = gp.ColormapData.IsQual(cmap);
-        const Vec2 pos       = ImGui::GetCurrentWindow()->DC.CursorPos;
-        const float w        = ImGui::CalcItemWidth();
-        const float h        = ImGui::GetFrameHeight();
-        const ImRect rect    = ImRect(pos.x, pos.y, pos.x + w, pos.y + h);
+        const uint32_t *keys         = gp.ColormapData.GetKeys(cmap);
+        const int count              = gp.ColormapData.GetKeyCount(cmap);
+        const bool qual              = gp.ColormapData.IsQual(cmap);
+        const ::SF::Engine::Vec2 pos = ImGui::GetCurrentWindow()->DC.CursorPos;
+        const float w                = ImGui::CalcItemWidth();
+        const float h                = ImGui::GetFrameHeight();
+        const ImRect rect            = ImRect(pos.x, pos.y, pos.x + w, pos.y + h);
         RenderColorBar(keys, count, *ImGui::GetWindowDrawList(), rect, false, false, !qual);
         const uint32_t grab = CalcTextColor(gp.ColormapData.LerpTable(cmap, *t));
         // const uint32_t text = CalcTextColor(gp.ColormapData.LerpTable(cmap,0.5f));
         ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32_BLACK_TRANS);
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, IM_COL32_BLACK_TRANS);
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, Vec4(1, 1, 1, 0.1f));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ::SF::Engine::Vec4(1, 1, 1, 0.1f));
         ImGui::PushStyleColor(ImGuiCol_SliderGrab, grab);
         ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, grab);
         ImGui::PushStyleVar(ImGuiStyleVar_GrabMinSize, 2);
@@ -5671,7 +5698,7 @@ namespace ImPlot
         return changed;
     }
 
-    bool ColormapButton(const char *label, const Vec2 &size_arg, ImPlotColormap cmap)
+    bool ColormapButton(const char *label, const ::SF::Engine::Vec2 &size_arg, ImPlotColormap cmap)
     {
         ImGuiContext &G         = *GImGui;
         const ImGuiStyle &style = G.Style;
@@ -5681,19 +5708,19 @@ namespace ImPlot
         ImPlotContext &gp = *GImPlot;
         cmap              = cmap == IMPLOT_AUTO ? gp.Style.Colormap : cmap;
         IM_ASSERT_USER_ERROR(cmap >= 0 && cmap < gp.ColormapData.Count, "Invalid colormap index!");
-        const uint32_t *keys  = gp.ColormapData.GetKeys(cmap);
-        const int count       = gp.ColormapData.GetKeyCount(cmap);
-        const bool qual       = gp.ColormapData.IsQual(cmap);
-        const Vec2 pos        = ImGui::GetCurrentWindow()->DC.CursorPos;
-        const Vec2 label_size = ImGui::CalcTextSize(label, nullptr, true);
-        Vec2 size             = ImGui::CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f,
-                                                    label_size.y + style.FramePadding.y * 2.0f);
-        const ImRect rect     = ImRect(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
+        const uint32_t *keys                = gp.ColormapData.GetKeys(cmap);
+        const int count                     = gp.ColormapData.GetKeyCount(cmap);
+        const bool qual                     = gp.ColormapData.IsQual(cmap);
+        const ::SF::Engine::Vec2 pos        = ImGui::GetCurrentWindow()->DC.CursorPos;
+        const ::SF::Engine::Vec2 label_size = ImGui::CalcTextSize(label, nullptr, true);
+        ::SF::Engine::Vec2 size             = ImGui::CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f,
+                                                                  label_size.y + style.FramePadding.y * 2.0f);
+        const ImRect rect                   = ImRect(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
         RenderColorBar(keys, count, *ImGui::GetWindowDrawList(), rect, false, false, !qual);
         const uint32_t text = CalcTextColor(gp.ColormapData.LerpTable(cmap, G.Style.ButtonTextAlign.x));
         ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32_BLACK_TRANS);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Vec4(1, 1, 1, 0.1f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, Vec4(1, 1, 1, 0.2f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ::SF::Engine::Vec4(1, 1, 1, 0.1f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ::SF::Engine::Vec4(1, 1, 1, 0.2f));
         ImGui::PushStyleColor(ImGuiCol_Text, text);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0);
         const bool pressed = ImGui::Button(label, size);
@@ -5753,15 +5780,16 @@ namespace ImPlot
     // [Section] Miscellaneous
     //-----------------------------------------------------------------------------
 
-    void ItemIcon(const Vec4 &col) { ItemIcon(ImGui::ColorConvertFloat4ToU32(col)); }
+    void ItemIcon(const ::SF::Engine::Vec4 &col) { ItemIcon(ImGui::ColorConvertFloat4ToU32(col)); }
 
     void ItemIcon(uint32_t col)
     {
         const float txt_size = ImGui::GetTextLineHeight();
-        Vec2 size(txt_size - 4, txt_size);
-        ImGuiWindow *window = ImGui::GetCurrentWindow();
-        Vec2 pos            = window->DC.CursorPos;
-        ImGui::GetWindowDrawList()->AddRectFilled(pos + Vec2(0, 2), pos + size - Vec2(0, 2), col);
+        ::SF::Engine::Vec2 size(txt_size - 4, txt_size);
+        ImGuiWindow *window    = ImGui::GetCurrentWindow();
+        ::SF::Engine::Vec2 pos = window->DC.CursorPos;
+        ImGui::GetWindowDrawList()->AddRectFilled(pos + ::SF::Engine::Vec2(0, 2), pos + size - ::SF::Engine::Vec2(0, 2),
+                                                  col);
         ImGui::Dummy(size);
     }
 
@@ -5769,10 +5797,10 @@ namespace ImPlot
     {
         ImPlotContext &gp    = *GImPlot;
         const float txt_size = ImGui::GetTextLineHeight();
-        Vec2 size(txt_size - 4, txt_size);
-        ImGuiWindow *window = ImGui::GetCurrentWindow();
-        Vec2 pos            = window->DC.CursorPos;
-        ImRect rect(pos + Vec2(0, 2), pos + size - Vec2(0, 2));
+        ::SF::Engine::Vec2 size(txt_size - 4, txt_size);
+        ImGuiWindow *window    = ImGui::GetCurrentWindow();
+        ::SF::Engine::Vec2 pos = window->DC.CursorPos;
+        ImRect rect(pos + ::SF::Engine::Vec2(0, 2), pos + size - ::SF::Engine::Vec2(0, 2));
         ImDrawList &DrawList = *ImGui::GetWindowDrawList();
         RenderColorBar(gp.ColormapData.GetKeys(cmap), gp.ColormapData.GetKeyCount(cmap), DrawList, rect, false, false,
                        !gp.ColormapData.IsQual(cmap));
@@ -5935,25 +5963,26 @@ namespace ImPlot
                 static int output_dest           = 0;
                 static bool output_only_modified = false;
 
-                if (ImGui::Button("Export", Vec2(75, 0)))
+                if (ImGui::Button("Export", ::SF::Engine::Vec2(75, 0)))
                 {
                     if (output_dest == 0)
                         ImGui::LogToClipboard();
                     else
                         ImGui::LogToTTY();
-                    ImGui::LogText("Vec4* colors = ImPlot::GetStyle().Colors;\n");
+                    ImGui::LogText("::SF::Engine::Vec4* colors = ImPlot::GetStyle().Colors;\n");
                     for (int i = 0; i < ImPlotCol_COUNT; i++)
                     {
-                        const Vec4 &col  = style.Colors[i];
-                        const char *name = ImPlot::GetStyleColorName(i);
-                        if (!output_only_modified || memcmp(&col, &ref->Colors[i], sizeof(Vec4)) != 0)
+                        const ::SF::Engine::Vec4 &col = style.Colors[i];
+                        const char *name              = ImPlot::GetStyleColorName(i);
+                        if (!output_only_modified || memcmp(&col, &ref->Colors[i], sizeof(::SF::Engine::Vec4)) != 0)
                         {
                             if (IsColorAuto(i))
                                 ImGui::LogText("colors[ImPlotCol_%s]%*s= IMPLOT_AUTO_COL;\n", name,
                                                14 - (int) strlen(name), "");
                             else
-                                ImGui::LogText("colors[ImPlotCol_%s]%*s= Vec4(%.2ff, %.2ff, %.2ff, %.2ff);\n", name,
-                                               14 - (int) strlen(name), "", col.x, col.y, col.z, col.w);
+                                ImGui::LogText(
+                                        "colors[ImPlotCol_%s]%*s= ::SF::Engine::Vec4(%.2ff, %.2ff, %.2ff, %.2ff);\n",
+                                        name, 14 - (int) strlen(name), "", col.x, col.y, col.z, col.w);
                         }
                     }
                     ImGui::LogFinish();
@@ -6012,8 +6041,8 @@ namespace ImPlot
                     if (!filter.PassFilter(name))
                         continue;
                     ImGui::PushID(i);
-                    Vec4 temp          = GetStyleColorVec4(i);
-                    const bool is_auto = IsColorAuto(i);
+                    ::SF::Engine::Vec4 temp = GetStyleColorVec4(i);
+                    const bool is_auto      = IsColorAuto(i);
                     if (!is_auto)
                         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.25f);
                     if (ImGui::Button("Auto"))
@@ -6032,7 +6061,7 @@ namespace ImPlot
                         style.Colors[i] = temp;
                         BustItemCache();
                     }
-                    if (memcmp(&style.Colors[i], &ref->Colors[i], sizeof(Vec4)) != 0)
+                    if (memcmp(&style.Colors[i], &ref->Colors[i], sizeof(::SF::Engine::Vec4)) != 0)
                     {
                         ImGui::SameLine(175);
                         if (ImGui::Button("Save"))
@@ -6057,7 +6086,7 @@ namespace ImPlot
             if (ImGui::BeginTabItem("Colormaps"))
             {
                 static int output_dest = 0;
-                if (ImGui::Button("Export", Vec2(75, 0)))
+                if (ImGui::Button("Export", ::SF::Engine::Vec2(75, 0)))
                 {
                     if (output_dest == 0)
                         ImGui::LogToClipboard();
@@ -6093,7 +6122,7 @@ namespace ImPlot
                     const char *name = GetColormapName(i);
                     if (!selected)
                         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.25f);
-                    if (ImGui::Button(name, Vec2(100, 0)))
+                    if (ImGui::Button(name, ::SF::Engine::Vec2(100, 0)))
                     {
                         gp.Style.Colormap = i;
                         BustItemCache();
@@ -6107,7 +6136,7 @@ namespace ImPlot
                         for (int c = 0; c < size; ++c)
                         {
                             ImGui::PushID(c);
-                            Vec4 col4 = ImGui::ColorConvertU32ToFloat4(gp.ColormapData.GetKeyColor(i, c));
+                            ::SF::Engine::Vec4 col4 = ImGui::ColorConvertU32ToFloat4(gp.ColormapData.GetKeyColor(i, c));
                             if (ImGui::ColorEdit4("", &col4.x, ImGuiColorEditFlags_NoInputs))
                             {
                                 uint32_t col32 = ImGui::ColorConvertFloat4ToU32(col4);
@@ -6120,7 +6149,7 @@ namespace ImPlot
                         }
                     } else
                     {
-                        if (ImPlot::ColormapButton("##", Vec2(-1, 0), i))
+                        if (ImPlot::ColormapButton("##", ::SF::Engine::Vec2(-1, 0), i))
                             edit = true;
                     }
                     ImGui::EndGroup();
@@ -6128,28 +6157,29 @@ namespace ImPlot
                 }
 
 
-                static ImVector<Vec4> custom;
+                static ImVector<::SF::Engine::Vec4> custom;
                 if (custom.Size == 0)
                 {
-                    custom.push_back(Vec4(1, 0, 0, 1));
-                    custom.push_back(Vec4(0, 1, 0, 1));
-                    custom.push_back(Vec4(0, 0, 1, 1));
+                    custom.push_back(::SF::Engine::Vec4(1, 0, 0, 1));
+                    custom.push_back(::SF::Engine::Vec4(0, 1, 0, 1));
+                    custom.push_back(::SF::Engine::Vec4(0, 0, 1, 1));
                 }
                 ImGui::Separator();
                 ImGui::BeginGroup();
                 static char name[16] = "MyColormap";
 
 
-                if (ImGui::Button("+", Vec2((100 - ImGui::GetStyle().ItemSpacing.x) / 2, 0)))
-                    custom.push_back(Vec4(0, 0, 0, 1));
+                if (ImGui::Button("+", ::SF::Engine::Vec2((100 - ImGui::GetStyle().ItemSpacing.x) / 2, 0)))
+                    custom.push_back(::SF::Engine::Vec4(0, 0, 0, 1));
                 ImGui::SameLine();
-                if (ImGui::Button("-", Vec2((100 - ImGui::GetStyle().ItemSpacing.x) / 2, 0)) && custom.Size > 2)
+                if (ImGui::Button("-", ::SF::Engine::Vec2((100 - ImGui::GetStyle().ItemSpacing.x) / 2, 0)) &&
+                    custom.Size > 2)
                     custom.pop_back();
                 ImGui::SetNextItemWidth(100);
                 ImGui::InputText("##Name", name, 16, ImGuiInputTextFlags_CharsNoBlank);
                 static bool qual = true;
                 ImGui::Checkbox("Qualitative", &qual);
-                if (ImGui::Button("Add", Vec2(100, 0)) && gp.ColormapData.GetIndex(name) == -1)
+                if (ImGui::Button("Add", ::SF::Engine::Vec2(100, 0)) && gp.ColormapData.GetIndex(name) == -1)
                     AddColormap(name, custom.Data, custom.Size, qual);
 
                 ImGui::EndGroup();
@@ -6340,7 +6370,7 @@ namespace ImPlot
                                 ImGui::Bullet();
                                 ImGui::Checkbox("Show", &item->Show);
                                 ImGui::Bullet();
-                                Vec4 temp = ImGui::ColorConvertU32ToFloat4(item->Color);
+                                ::SF::Engine::Vec4 temp = ImGui::ColorConvertU32ToFloat4(item->Color);
                                 if (ImGui::ColorEdit4("Color", &temp.x, ImGuiColorEditFlags_NoInputs))
                                     item->Color = ImGui::ColorConvertFloat4ToU32(temp);
                                 ImGui::BulletText("Marker: %s", GetMarkerName(item->Marker));
@@ -6414,7 +6444,7 @@ namespace ImPlot
                                 ImGui::Bullet();
                                 ImGui::Checkbox("Show", &item->Show);
                                 ImGui::Bullet();
-                                Vec4 temp = ImGui::ColorConvertU32ToFloat4(item->Color);
+                                ::SF::Engine::Vec4 temp = ImGui::ColorConvertU32ToFloat4(item->Color);
                                 if (ImGui::ColorEdit4("Color", &temp.x, ImGuiColorEditFlags_NoInputs))
                                     item->Color = ImGui::ColorConvertFloat4ToU32(temp);
 
@@ -6458,19 +6488,20 @@ namespace ImPlot
                         ImGui::Indent();
 
                         static float t = 0.5;
-                        Vec4 samp;
+                        ::SF::Engine::Vec4 samp;
                         float wid = 32 * 10 - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.x;
                         ImGui::SetNextItemWidth(wid);
                         ImPlot::ColormapSlider("##Sample", &t, &samp, "%.3f", m);
                         ImGui::SameLine();
                         ImGui::ColorButton("Sampler", samp);
-                        ImGui::PushStyleColor(ImGuiCol_FrameBg, Vec4(0, 0, 0, 0));
-                        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, Vec2(0, 0));
+                        ImGui::PushStyleColor(ImGuiCol_FrameBg, ::SF::Engine::Vec4(0, 0, 0, 0));
+                        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ::SF::Engine::Vec2(0, 0));
                         for (int c = 0; c < size; ++c)
                         {
-                            Vec4 col = ImGui::ColorConvertU32ToFloat4(gp.ColormapData.GetTableColor(m, c));
+                            ::SF::Engine::Vec4 col =
+                                    ImGui::ColorConvertU32ToFloat4(gp.ColormapData.GetTableColor(m, c));
                             ImGui::PushID(m * 1000 + c);
-                            ImGui::ColorButton("", col, 0, Vec2(10, 10));
+                            ImGui::ColorButton("", col, 0, ::SF::Engine::Vec2(10, 10));
                             ImGui::PopID();
                             if ((c + 1) % 32 != 0 && c != size - 1)
                                 ImGui::SameLine();
@@ -6494,15 +6525,15 @@ namespace ImPlot
         ImGui::PushID(id);
         ImGui::BeginGroup();
 
-        ImGuiStyle &style = ImGui::GetStyle();
-        Vec4 col_txt      = style.Colors[ImGuiCol_Text];
-        Vec4 col_dis      = style.Colors[ImGuiCol_TextDisabled];
-        Vec4 col_btn      = style.Colors[ImGuiCol_Button];
-        ImGui::PushStyleColor(ImGuiCol_Button, Vec4(0, 0, 0, 0));
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, Vec2(0, 0));
+        ImGuiStyle &style          = ImGui::GetStyle();
+        ::SF::Engine::Vec4 col_txt = style.Colors[ImGuiCol_Text];
+        ::SF::Engine::Vec4 col_dis = style.Colors[ImGuiCol_TextDisabled];
+        ::SF::Engine::Vec4 col_btn = style.Colors[ImGuiCol_Button];
+        ImGui::PushStyleColor(ImGuiCol_Button, ::SF::Engine::Vec4(0, 0, 0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ::SF::Engine::Vec2(0, 0));
 
         const float ht = ImGui::GetFrameHeight();
-        Vec2 cell_size(ht * 1.25f, ht);
+        ::SF::Engine::Vec2 cell_size(ht * 1.25f, ht);
         char buff[32];
         bool clk = false;
         tm &Tm   = GImPlot->Tm;
@@ -6749,15 +6780,15 @@ namespace ImPlot
 
         bool changed = false;
 
-        Vec2 spacing = ImGui::GetStyle().ItemSpacing;
-        spacing.x    = 0;
-        float width  = ImGui::CalcTextSize("888").x;
-        float height = ImGui::GetFrameHeight();
+        ::SF::Engine::Vec2 spacing = ImGui::GetStyle().ItemSpacing;
+        spacing.x                  = 0;
+        float width                = ImGui::CalcTextSize("888").x;
+        float height               = ImGui::GetFrameHeight();
 
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, spacing);
         ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 2.0f);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, Vec4(0, 0, 0, 0));
-        ImGui::PushStyleColor(ImGuiCol_Button, Vec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ::SF::Engine::Vec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_Button, ::SF::Engine::Vec4(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
 
         ImGui::SetNextItemWidth(width);
@@ -6810,7 +6841,7 @@ namespace ImPlot
         if (!hour24)
         {
             ImGui::SameLine();
-            if (ImGui::Button(am_pm[ap], Vec2(0, height)))
+            if (ImGui::Button(am_pm[ap], ::SF::Engine::Vec2(0, height)))
             {
                 ap      = 1 - ap;
                 changed = true;
@@ -6836,8 +6867,8 @@ namespace ImPlot
 
     void StyleColorsAuto(ImPlotStyle *dst)
     {
-        ImPlotStyle *style = dst ? dst : &ImPlot::GetStyle();
-        Vec4 *colors       = style->Colors;
+        ImPlotStyle *style         = dst ? dst : &ImPlot::GetStyle();
+        ::SF::Engine::Vec4 *colors = style->Colors;
 
         style->MinorAlpha = 0.25f;
 
@@ -6862,77 +6893,77 @@ namespace ImPlot
 
     void StyleColorsClassic(ImPlotStyle *dst)
     {
-        ImPlotStyle *style = dst ? dst : &ImPlot::GetStyle();
-        Vec4 *colors       = style->Colors;
+        ImPlotStyle *style         = dst ? dst : &ImPlot::GetStyle();
+        ::SF::Engine::Vec4 *colors = style->Colors;
 
         style->MinorAlpha = 0.5f;
 
-        colors[ImPlotCol_FrameBg]       = Vec4(0.43f, 0.43f, 0.43f, 0.39f);
-        colors[ImPlotCol_PlotBg]        = Vec4(0.00f, 0.00f, 0.00f, 0.35f);
-        colors[ImPlotCol_PlotBorder]    = Vec4(0.50f, 0.50f, 0.50f, 0.50f);
-        colors[ImPlotCol_LegendBg]      = Vec4(0.11f, 0.11f, 0.14f, 0.92f);
-        colors[ImPlotCol_LegendBorder]  = Vec4(0.50f, 0.50f, 0.50f, 0.50f);
-        colors[ImPlotCol_LegendText]    = Vec4(0.90f, 0.90f, 0.90f, 1.00f);
-        colors[ImPlotCol_TitleText]     = Vec4(0.90f, 0.90f, 0.90f, 1.00f);
-        colors[ImPlotCol_InlayText]     = Vec4(0.90f, 0.90f, 0.90f, 1.00f);
-        colors[ImPlotCol_AxisText]      = Vec4(0.90f, 0.90f, 0.90f, 1.00f);
-        colors[ImPlotCol_AxisGrid]      = Vec4(0.90f, 0.90f, 0.90f, 0.25f);
+        colors[ImPlotCol_FrameBg]       = ::SF::Engine::Vec4(0.43f, 0.43f, 0.43f, 0.39f);
+        colors[ImPlotCol_PlotBg]        = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.35f);
+        colors[ImPlotCol_PlotBorder]    = ::SF::Engine::Vec4(0.50f, 0.50f, 0.50f, 0.50f);
+        colors[ImPlotCol_LegendBg]      = ::SF::Engine::Vec4(0.11f, 0.11f, 0.14f, 0.92f);
+        colors[ImPlotCol_LegendBorder]  = ::SF::Engine::Vec4(0.50f, 0.50f, 0.50f, 0.50f);
+        colors[ImPlotCol_LegendText]    = ::SF::Engine::Vec4(0.90f, 0.90f, 0.90f, 1.00f);
+        colors[ImPlotCol_TitleText]     = ::SF::Engine::Vec4(0.90f, 0.90f, 0.90f, 1.00f);
+        colors[ImPlotCol_InlayText]     = ::SF::Engine::Vec4(0.90f, 0.90f, 0.90f, 1.00f);
+        colors[ImPlotCol_AxisText]      = ::SF::Engine::Vec4(0.90f, 0.90f, 0.90f, 1.00f);
+        colors[ImPlotCol_AxisGrid]      = ::SF::Engine::Vec4(0.90f, 0.90f, 0.90f, 0.25f);
         colors[ImPlotCol_AxisTick]      = IMPLOT_AUTO_COL; // TODO
         colors[ImPlotCol_AxisBg]        = IMPLOT_AUTO_COL; // TODO
         colors[ImPlotCol_AxisBgHovered] = IMPLOT_AUTO_COL; // TODO
         colors[ImPlotCol_AxisBgActive]  = IMPLOT_AUTO_COL; // TODO
-        colors[ImPlotCol_Selection]     = Vec4(0.97f, 0.97f, 0.39f, 1.00f);
-        colors[ImPlotCol_Crosshairs]    = Vec4(0.50f, 0.50f, 0.50f, 0.75f);
+        colors[ImPlotCol_Selection]     = ::SF::Engine::Vec4(0.97f, 0.97f, 0.39f, 1.00f);
+        colors[ImPlotCol_Crosshairs]    = ::SF::Engine::Vec4(0.50f, 0.50f, 0.50f, 0.75f);
     }
 
     void StyleColorsDark(ImPlotStyle *dst)
     {
-        ImPlotStyle *style = dst ? dst : &ImPlot::GetStyle();
-        Vec4 *colors       = style->Colors;
+        ImPlotStyle *style         = dst ? dst : &ImPlot::GetStyle();
+        ::SF::Engine::Vec4 *colors = style->Colors;
 
         style->MinorAlpha = 0.25f;
 
-        colors[ImPlotCol_FrameBg]       = Vec4(1.00f, 1.00f, 1.00f, 0.07f);
-        colors[ImPlotCol_PlotBg]        = Vec4(0.00f, 0.00f, 0.00f, 0.50f);
-        colors[ImPlotCol_PlotBorder]    = Vec4(0.43f, 0.43f, 0.50f, 0.50f);
-        colors[ImPlotCol_LegendBg]      = Vec4(0.08f, 0.08f, 0.08f, 0.94f);
-        colors[ImPlotCol_LegendBorder]  = Vec4(0.43f, 0.43f, 0.50f, 0.50f);
-        colors[ImPlotCol_LegendText]    = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-        colors[ImPlotCol_TitleText]     = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-        colors[ImPlotCol_InlayText]     = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-        colors[ImPlotCol_AxisText]      = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-        colors[ImPlotCol_AxisGrid]      = Vec4(1.00f, 1.00f, 1.00f, 0.25f);
+        colors[ImPlotCol_FrameBg]       = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.07f);
+        colors[ImPlotCol_PlotBg]        = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.50f);
+        colors[ImPlotCol_PlotBorder]    = ::SF::Engine::Vec4(0.43f, 0.43f, 0.50f, 0.50f);
+        colors[ImPlotCol_LegendBg]      = ::SF::Engine::Vec4(0.08f, 0.08f, 0.08f, 0.94f);
+        colors[ImPlotCol_LegendBorder]  = ::SF::Engine::Vec4(0.43f, 0.43f, 0.50f, 0.50f);
+        colors[ImPlotCol_LegendText]    = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+        colors[ImPlotCol_TitleText]     = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+        colors[ImPlotCol_InlayText]     = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+        colors[ImPlotCol_AxisText]      = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+        colors[ImPlotCol_AxisGrid]      = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.25f);
         colors[ImPlotCol_AxisTick]      = IMPLOT_AUTO_COL; // TODO
         colors[ImPlotCol_AxisBg]        = IMPLOT_AUTO_COL; // TODO
         colors[ImPlotCol_AxisBgHovered] = IMPLOT_AUTO_COL; // TODO
         colors[ImPlotCol_AxisBgActive]  = IMPLOT_AUTO_COL; // TODO
-        colors[ImPlotCol_Selection]     = Vec4(1.00f, 0.60f, 0.00f, 1.00f);
-        colors[ImPlotCol_Crosshairs]    = Vec4(1.00f, 1.00f, 1.00f, 0.50f);
+        colors[ImPlotCol_Selection]     = ::SF::Engine::Vec4(1.00f, 0.60f, 0.00f, 1.00f);
+        colors[ImPlotCol_Crosshairs]    = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.50f);
     }
 
     void StyleColorsLight(ImPlotStyle *dst)
     {
-        ImPlotStyle *style = dst ? dst : &ImPlot::GetStyle();
-        Vec4 *colors       = style->Colors;
+        ImPlotStyle *style         = dst ? dst : &ImPlot::GetStyle();
+        ::SF::Engine::Vec4 *colors = style->Colors;
 
         style->MinorAlpha = 1.0f;
 
-        colors[ImPlotCol_FrameBg]       = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-        colors[ImPlotCol_PlotBg]        = Vec4(0.42f, 0.57f, 1.00f, 0.13f);
-        colors[ImPlotCol_PlotBorder]    = Vec4(0.00f, 0.00f, 0.00f, 0.00f);
-        colors[ImPlotCol_LegendBg]      = Vec4(1.00f, 1.00f, 1.00f, 0.98f);
-        colors[ImPlotCol_LegendBorder]  = Vec4(0.82f, 0.82f, 0.82f, 0.80f);
-        colors[ImPlotCol_LegendText]    = Vec4(0.00f, 0.00f, 0.00f, 1.00f);
-        colors[ImPlotCol_TitleText]     = Vec4(0.00f, 0.00f, 0.00f, 1.00f);
-        colors[ImPlotCol_InlayText]     = Vec4(0.00f, 0.00f, 0.00f, 1.00f);
-        colors[ImPlotCol_AxisText]      = Vec4(0.00f, 0.00f, 0.00f, 1.00f);
-        colors[ImPlotCol_AxisGrid]      = Vec4(1.00f, 1.00f, 1.00f, 1.00f);
-        colors[ImPlotCol_AxisTick]      = Vec4(0.00f, 0.00f, 0.00f, 0.25f);
+        colors[ImPlotCol_FrameBg]       = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+        colors[ImPlotCol_PlotBg]        = ::SF::Engine::Vec4(0.42f, 0.57f, 1.00f, 0.13f);
+        colors[ImPlotCol_PlotBorder]    = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.00f);
+        colors[ImPlotCol_LegendBg]      = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 0.98f);
+        colors[ImPlotCol_LegendBorder]  = ::SF::Engine::Vec4(0.82f, 0.82f, 0.82f, 0.80f);
+        colors[ImPlotCol_LegendText]    = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 1.00f);
+        colors[ImPlotCol_TitleText]     = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 1.00f);
+        colors[ImPlotCol_InlayText]     = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 1.00f);
+        colors[ImPlotCol_AxisText]      = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 1.00f);
+        colors[ImPlotCol_AxisGrid]      = ::SF::Engine::Vec4(1.00f, 1.00f, 1.00f, 1.00f);
+        colors[ImPlotCol_AxisTick]      = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.25f);
         colors[ImPlotCol_AxisBg]        = IMPLOT_AUTO_COL; // TODO
         colors[ImPlotCol_AxisBgHovered] = IMPLOT_AUTO_COL; // TODO
         colors[ImPlotCol_AxisBgActive]  = IMPLOT_AUTO_COL; // TODO
-        colors[ImPlotCol_Selection]     = Vec4(0.82f, 0.64f, 0.03f, 1.00f);
-        colors[ImPlotCol_Crosshairs]    = Vec4(0.00f, 0.00f, 0.00f, 0.50f);
+        colors[ImPlotCol_Selection]     = ::SF::Engine::Vec4(0.82f, 0.64f, 0.03f, 1.00f);
+        colors[ImPlotCol_Crosshairs]    = ::SF::Engine::Vec4(0.00f, 0.00f, 0.00f, 0.50f);
     }
 
     //-----------------------------------------------------------------------------

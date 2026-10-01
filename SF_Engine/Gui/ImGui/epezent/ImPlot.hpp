@@ -73,7 +73,7 @@
 // Indicates variable should deduced automatically.
 constexpr int IMPLOT_AUTO = -1;
 // Special color used to indicate that a color should be deduced automatically.
-constexpr Vec4 IMPLOT_AUTO_COL = Vec4(0, 0, 0, -1);
+constexpr ::SF::Engine::Vec4 IMPLOT_AUTO_COL = ::SF::Engine::Vec4(0, 0, 0, -1);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Enums and Types
@@ -470,28 +470,29 @@ enum ImPlotCol_
 // Plot styling variables.
 enum ImPlotStyleVar_
 {
-    ImPlotStyleVar_PlotDefaultSize, // Vec2, default size used when Vec2(0,0) is passed to BeginPlot
-    ImPlotStyleVar_PlotMinSize,     // Vec2, minimum size plot frame can be when shrunk
+    ImPlotStyleVar_PlotDefaultSize, // ::SF::Engine::Vec2, default size used when ::SF::Engine::Vec2(0,0) is passed to
+                                    // BeginPlot
+    ImPlotStyleVar_PlotMinSize,     // ::SF::Engine::Vec2, minimum size plot frame can be when shrunk
     ImPlotStyleVar_PlotBorderSize,  // float,  thickness of border around plot area
     ImPlotStyleVar_MinorAlpha,      // float,  alpha multiplier applied to minor axis grid lines
-    ImPlotStyleVar_MajorTickLen,    // Vec2, major tick lengths for X and Y axes
-    ImPlotStyleVar_MinorTickLen,    // Vec2, minor tick lengths for X and Y axes
-    ImPlotStyleVar_MajorTickSize,   // Vec2, line thickness of major ticks
-    ImPlotStyleVar_MinorTickSize,   // Vec2, line thickness of minor ticks
-    ImPlotStyleVar_MajorGridSize,   // Vec2, line thickness of major grid lines
-    ImPlotStyleVar_MinorGridSize,   // Vec2, line thickness of minor grid lines
-    ImPlotStyleVar_PlotPadding,   // Vec2, padding between widget frame and plot area, labels, or outside legends (i.e.
-                                  // main padding)
-    ImPlotStyleVar_LabelPadding,  // Vec2, padding between axes labels, tick labels, and plot edge
-    ImPlotStyleVar_LegendPadding, // Vec2, legend padding from plot edges
-    ImPlotStyleVar_LegendInnerPadding, // Vec2, legend inner padding from legend edges
-    ImPlotStyleVar_LegendSpacing,      // Vec2, spacing between legend entries
-    ImPlotStyleVar_MousePosPadding,    // Vec2, padding between plot edge and interior info text
-    ImPlotStyleVar_AnnotationPadding,  // Vec2, text padding around annotation labels
-    ImPlotStyleVar_FitPadding,         // Vec2, additional fit padding as a percentage of the fit extents (e.g.
-                                       // Vec2(0.1f,0.1f) adds 10% to the fit extents of X and Y)
-    ImPlotStyleVar_DigitalPadding,     // float,  digital plot padding from bottom in pixels
-    ImPlotStyleVar_DigitalSpacing,     // float,  digital plot spacing gap in pixels
+    ImPlotStyleVar_MajorTickLen,    // ::SF::Engine::Vec2, major tick lengths for X and Y axes
+    ImPlotStyleVar_MinorTickLen,    // ::SF::Engine::Vec2, minor tick lengths for X and Y axes
+    ImPlotStyleVar_MajorTickSize,   // ::SF::Engine::Vec2, line thickness of major ticks
+    ImPlotStyleVar_MinorTickSize,   // ::SF::Engine::Vec2, line thickness of minor ticks
+    ImPlotStyleVar_MajorGridSize,   // ::SF::Engine::Vec2, line thickness of major grid lines
+    ImPlotStyleVar_MinorGridSize,   // ::SF::Engine::Vec2, line thickness of minor grid lines
+    ImPlotStyleVar_PlotPadding,   // ::SF::Engine::Vec2, padding between widget frame and plot area, labels, or outside
+                                  // legends (i.e. main padding)
+    ImPlotStyleVar_LabelPadding,  // ::SF::Engine::Vec2, padding between axes labels, tick labels, and plot edge
+    ImPlotStyleVar_LegendPadding, // ::SF::Engine::Vec2, legend padding from plot edges
+    ImPlotStyleVar_LegendInnerPadding, // ::SF::Engine::Vec2, legend inner padding from legend edges
+    ImPlotStyleVar_LegendSpacing,      // ::SF::Engine::Vec2, spacing between legend entries
+    ImPlotStyleVar_MousePosPadding,    // ::SF::Engine::Vec2, padding between plot edge and interior info text
+    ImPlotStyleVar_AnnotationPadding,  // ::SF::Engine::Vec2, text padding around annotation labels
+    ImPlotStyleVar_FitPadding, // ::SF::Engine::Vec2, additional fit padding as a percentage of the fit extents (e.g.
+                               // ::SF::Engine::Vec2(0.1f,0.1f) adds 10% to the fit extents of X and Y)
+    ImPlotStyleVar_DigitalPadding, // float,  digital plot padding from bottom in pixels
+    ImPlotStyleVar_DigitalSpacing, // float,  digital plot spacing gap in pixels
     ImPlotStyleVar_COUNT
 };
 
@@ -574,7 +575,7 @@ enum ImPlotBin_
 // 1. By declaring and defining a struct instance:
 //
 //    ImPlotSpec spec;
-//    spec.LineColor = Vec4(1,0,0,1);
+//    spec.LineColor = ::SF::Engine::Vec4(1,0,0,1);
 //    spec.LineWeight = 2.0f;
 //    spec.Marker = ImPlotMarker_Circle;
 //    spec.Flags = ImPlotItemFlags_NoLegend | ImPlotLineFlags_Segments;
@@ -583,29 +584,30 @@ enum ImPlotBin_
 // 2. Inline using (ImPlotProp,value) pairs (order does NOT matter):
 //
 //    ImPlot::PlotLine("MyLine", xs, ys, 100, {
-//      ImPlotProp_LineColor, Vec4(1,0,0,1),
+//      ImPlotProp_LineColor, ::SF::Engine::Vec4(1,0,0,1),
 //      ImPlotProp_LineWeight, 2.0f,
 //      ImPlotProp_Marker, ImPlotMarker_Circle,
 //      ImPlotProp_Flags, ImPlotItemFlags_NoLegend | ImPlotLineFlags_Segments
 //    });
 struct ImPlotSpec
 {
-    Vec4 LineColor = IMPLOT_AUTO_COL; // line color (applies to lines, bar edges); IMPLOT_AUTO_COL will use next
-                                      // Colormap color or current item color
-    uint32_t *LineColors = nullptr;   // array of colors for each line; if nullptr, use LineColor for all lines
-    float LineWeight     = 1.0f;      // line weight in pixels (applies to lines, bar edges, marker edges)
-    Vec4 FillColor = IMPLOT_AUTO_COL; // fill color (applies to shaded regions, bar faces); IMPLOT_AUTO_COL will use
-                                      // next Colormap color or current item color
-    uint32_t *FillColors = nullptr;   // array of colors for each fill; if nullptr, use FillColor for all fills
+    ::SF::Engine::Vec4 LineColor = IMPLOT_AUTO_COL; // line color (applies to lines, bar edges); IMPLOT_AUTO_COL will
+                                                    // use next Colormap color or current item color
+    uint32_t *LineColors = nullptr; // array of colors for each line; if nullptr, use LineColor for all lines
+    float LineWeight     = 1.0f;    // line weight in pixels (applies to lines, bar edges, marker edges)
+    ::SF::Engine::Vec4 FillColor =
+            IMPLOT_AUTO_COL;        // fill color (applies to shaded regions, bar faces); IMPLOT_AUTO_COL will use
+                                    // next Colormap color or current item color
+    uint32_t *FillColors = nullptr; // array of colors for each fill; if nullptr, use FillColor for all fills
     float FillAlpha =
             1.0f; // alpha multiplier (applies to FillColor, FillColors, MarkerFillColor, and MarkerFillColors)
-    ImPlotMarker Marker  = ImPlotMarker_None; // marker type; specify ImPlotMarker_Auto to use the next unused marker
-    float MarkerSize     = 4;                 // size of markers (radius) *in pixels*
-    float *MarkerSizes   = nullptr; // array of sizes for each marker; if nullptr, use MarkerSize for all markers
-    Vec4 MarkerLineColor = IMPLOT_AUTO_COL; // marker edge color; IMPLOT_AUTO_COL will use LineColor
+    ImPlotMarker Marker = ImPlotMarker_None; // marker type; specify ImPlotMarker_Auto to use the next unused marker
+    float MarkerSize    = 4;                 // size of markers (radius) *in pixels*
+    float *MarkerSizes  = nullptr; // array of sizes for each marker; if nullptr, use MarkerSize for all markers
+    ::SF::Engine::Vec4 MarkerLineColor = IMPLOT_AUTO_COL; // marker edge color; IMPLOT_AUTO_COL will use LineColor
     uint32_t *MarkerLineColors =
             nullptr; // array of colors for each marker edge; if nullptr, use MarkerLineColor for all markers
-    Vec4 MarkerFillColor = IMPLOT_AUTO_COL; // marker face color; IMPLOT_AUTO_COL will use LineColor
+    ::SF::Engine::Vec4 MarkerFillColor = IMPLOT_AUTO_COL; // marker face color; IMPLOT_AUTO_COL will use LineColor
     uint32_t *MarkerFillColors =
             nullptr;          // array of colors for each marker face; if nullptr, use MarkerFillColor for all markers
     float Size = 4;           // size of error bar whiskers (width or height), and digital bars (height) *in pixels*
@@ -723,8 +725,8 @@ struct ImPlotSpec
         IM_ASSERT(0 && "User provided an ImPlotProp which cannot be set from float pointer value!");
     }
 
-    // Set a property from an Vec4 value.
-    void SetProp(ImPlotProp prop, const Vec4 &v)
+    // Set a property from an ::SF::Engine::Vec4 value.
+    void SetProp(ImPlotProp prop, const ::SF::Engine::Vec4 &v)
     {
         switch (prop)
         {
@@ -743,18 +745,18 @@ struct ImPlotSpec
             default:
                 break;
         }
-        IM_ASSERT(0 && "User provided an ImPlotProp which cannot be set from Vec4 value!");
+        IM_ASSERT(0 && "User provided an ImPlotProp which cannot be set from ::SF::Engine::Vec4 value!");
     }
 };
 
-// Double precision version of Vec2 used by ImPlot. Extensible by end users.
+// Double precision version of ::SF::Engine::Vec2 used by ImPlot. Extensible by end users.
 IM_MSVC_RUNTIME_CHECKS_OFF
 struct ImPlotPoint
 {
     double x, y;
     IMPLOT_API constexpr ImPlotPoint() : x(0.0), y(0.0) {}
     IMPLOT_API constexpr ImPlotPoint(double _x, double _y) : x(_x), y(_y) {}
-    IMPLOT_API constexpr ImPlotPoint(const Vec2 &p) : x((double) p.x), y((double) p.y) {}
+    IMPLOT_API constexpr ImPlotPoint(const ::SF::Engine::Vec2 &p) : x((double) p.x), y((double) p.y) {}
     IMPLOT_API double &operator[](size_t idx)
     {
         IM_ASSERT(idx == 0 || idx == 1);
@@ -805,31 +807,32 @@ struct ImPlotRect
 struct ImPlotStyle
 {
     // plot styling
-    Vec2 PlotDefaultSize; // = 400,300 default size used when Vec2(0,0) is passed to BeginPlot
-    Vec2 PlotMinSize;     // = 200,150 minimum size plot frame can be when shrunk
-    float PlotBorderSize; // = 1,      line thickness of border around plot area
-    float MinorAlpha;     // = 0.25    alpha multiplier applied to minor axis grid lines
-    Vec2 MajorTickLen;    // = 10,10   major tick lengths for X and Y axes
-    Vec2 MinorTickLen;    // = 5,5     minor tick lengths for X and Y axes
-    Vec2 MajorTickSize;   // = 1,1     line thickness of major ticks
-    Vec2 MinorTickSize;   // = 1,1     line thickness of minor ticks
-    Vec2 MajorGridSize;   // = 1,1     line thickness of major grid lines
-    Vec2 MinorGridSize;   // = 1,1     line thickness of minor grid lines
+    ::SF::Engine::Vec2
+            PlotDefaultSize;          // = 400,300 default size used when ::SF::Engine::Vec2(0,0) is passed to BeginPlot
+    ::SF::Engine::Vec2 PlotMinSize;   // = 200,150 minimum size plot frame can be when shrunk
+    float PlotBorderSize;             // = 1,      line thickness of border around plot area
+    float MinorAlpha;                 // = 0.25    alpha multiplier applied to minor axis grid lines
+    ::SF::Engine::Vec2 MajorTickLen;  // = 10,10   major tick lengths for X and Y axes
+    ::SF::Engine::Vec2 MinorTickLen;  // = 5,5     minor tick lengths for X and Y axes
+    ::SF::Engine::Vec2 MajorTickSize; // = 1,1     line thickness of major ticks
+    ::SF::Engine::Vec2 MinorTickSize; // = 1,1     line thickness of minor ticks
+    ::SF::Engine::Vec2 MajorGridSize; // = 1,1     line thickness of major grid lines
+    ::SF::Engine::Vec2 MinorGridSize; // = 1,1     line thickness of minor grid lines
     // plot padding
-    Vec2 PlotPadding;   // = 10,10   padding between widget frame and plot area, labels, or outside legends (i.e. main
-                        // padding)
-    Vec2 LabelPadding;  // = 5,5     padding between axes labels, tick labels, and plot edge
-    Vec2 LegendPadding; // = 10,10   legend padding from plot edges
-    Vec2 LegendInnerPadding; // = 5,5     legend inner padding from legend edges
-    Vec2 LegendSpacing;      // = 5,0     spacing between legend entries
-    Vec2 MousePosPadding;    // = 10,10   padding between plot edge and interior mouse location text
-    Vec2 AnnotationPadding;  // = 2,2     text padding around annotation labels
-    Vec2 FitPadding;      // = 0,0     additional fit padding as a percentage of the fit extents (e.g. Vec2(0.1f,0.1f)
-                          // adds 10% to the fit extents of X and Y)
-    float DigitalPadding; // = 20,     digital plot padding from bottom in pixels
-    float DigitalSpacing; // = 4,      digital plot spacing gap in pixels
+    ::SF::Engine::Vec2 PlotPadding;  // = 10,10   padding between widget frame and plot area, labels, or outside legends
+                                     // (i.e. main padding)
+    ::SF::Engine::Vec2 LabelPadding; // = 5,5     padding between axes labels, tick labels, and plot edge
+    ::SF::Engine::Vec2 LegendPadding;      // = 10,10   legend padding from plot edges
+    ::SF::Engine::Vec2 LegendInnerPadding; // = 5,5     legend inner padding from legend edges
+    ::SF::Engine::Vec2 LegendSpacing;      // = 5,0     spacing between legend entries
+    ::SF::Engine::Vec2 MousePosPadding;    // = 10,10   padding between plot edge and interior mouse location text
+    ::SF::Engine::Vec2 AnnotationPadding;  // = 2,2     text padding around annotation labels
+    ::SF::Engine::Vec2 FitPadding;         // = 0,0     additional fit padding as a percentage of the fit extents (e.g.
+                                           // ::SF::Engine::Vec2(0.1f,0.1f) adds 10% to the fit extents of X and Y)
+    float DigitalPadding;                  // = 20,     digital plot padding from bottom in pixels
+    float DigitalSpacing;                  // = 4,      digital plot spacing gap in pixels
     // style colors
-    Vec4 Colors[ImPlotCol_COUNT]; // Array of styling colors. Indexable with ImPlotCol_ enums.
+    ::SF::Engine::Vec4 Colors[ImPlotCol_COUNT]; // Array of styling colors. Indexable with ImPlotCol_ enums.
     // colormap
     ImPlotColormap Colormap; // The current colormap. Set this to either an ImPlotColormap_ enum or an index returned by
                              // AddColormap.
@@ -929,8 +932,9 @@ namespace ImPlot
     //   collisions or don't want to display a title in the plot, use double hashes
     //   (e.g. "MyPlot##HiddenIdText" or "##NoTitle").
     // - #size is the **frame** size of the plot widget, not the plot area. The default
-    //   size of plots (i.e. when Vec2(0,0)) can be modified in your ImPlotStyle.
-    IMPLOT_API bool BeginPlot(const char *title_id, const Vec2 &size = Vec2(-1, 0), ImPlotFlags flags = 0);
+    //   size of plots (i.e. when ::SF::Engine::Vec2(0,0)) can be modified in your ImPlotStyle.
+    IMPLOT_API bool BeginPlot(const char *title_id, const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(-1, 0),
+                              ImPlotFlags flags = 0);
 
     // Only call EndPlot() if BeginPlot() returns true! Typically called at the end
     // of an if statement conditioned on BeginPlot(). See example above.
@@ -947,7 +951,7 @@ namespace ImPlot
     //
     // Example:
     //
-    // if (BeginSubplots("My Subplot",2,3,Vec2(800,400)) {
+    // if (BeginSubplots("My Subplot",2,3,::SF::Engine::Vec2(800,400)) {
     //     for (int i = 0; i < 6; ++i) {
     //         if (BeginPlot(...)) {
     //             ImPlot::PlotLine(...);
@@ -986,7 +990,7 @@ namespace ImPlot
     //   subplot context. The actual size of the subplot will be based on the
     //   #size value you pass to _BeginSubplots_ and #row/#col_ratios if provided.
 
-    IMPLOT_API bool BeginSubplots(const char *title_id, int rows, int cols, const Vec2 &size,
+    IMPLOT_API bool BeginSubplots(const char *title_id, int rows, int cols, const ::SF::Engine::Vec2 &size,
                                   ImPlotSubplotFlags flags = 0, float *row_ratios = nullptr,
                                   float *col_ratios = nullptr);
 
@@ -1277,14 +1281,17 @@ namespace ImPlot
     // Plots an axis-aligned image. #bounds_min/bounds_max are in plot coordinates (y-up) and #uv0/uv1 are in texture
     // coordinates (y-down).
     IMPLOT_API void PlotImage(const char *label_id, ImTextureRef tex_ref, const ImPlotPoint &bounds_min,
-                              const ImPlotPoint &bounds_max, const Vec2 &uv0 = Vec2(0, 0), const Vec2 &uv1 = Vec2(1, 1),
-                              const Vec4 &tint_col = Vec4(1, 1, 1, 1), const ImPlotSpec &spec = ImPlotSpec());
+                              const ImPlotPoint &bounds_max, const ::SF::Engine::Vec2 &uv0 = ::SF::Engine::Vec2(0, 0),
+                              const ::SF::Engine::Vec2 &uv1      = ::SF::Engine::Vec2(1, 1),
+                              const ::SF::Engine::Vec4 &tint_col = ::SF::Engine::Vec4(1, 1, 1, 1),
+                              const ImPlotSpec &spec             = ImPlotSpec());
 
 
     // Plots a centered text label at point x,y with an optional pixel offset. Text color can be changed with
     // ImPlot::PushStyleColor(ImPlotCol_InlayText, ...).
-    IMPLOT_API void PlotText(const char *text, double x, double y, const Vec2 &pix_offset = Vec2(0, 0),
-                             const ImPlotSpec &spec = ImPlotSpec());
+    IMPLOT_API void PlotText(const char *text, double x, double y,
+                             const ::SF::Engine::Vec2 &pix_offset = ::SF::Engine::Vec2(0, 0),
+                             const ImPlotSpec &spec               = ImPlotSpec());
 
     // Plots a dummy item (i.e. adds a legend entry colored by ImPlotCol_Line)
     IMPLOT_API void PlotDummy(const char *label_id, const ImPlotSpec &spec = ImPlotSpec());
@@ -1300,38 +1307,40 @@ namespace ImPlot
     // user interactions can be retrieved through the optional output parameters.
 
     // Shows a draggable point at x,y. #col defaults to ImGuiCol_Text.
-    IMPLOT_API bool DragPoint(int id, double *x, double *y, const Vec4 &col, float size = 4,
+    IMPLOT_API bool DragPoint(int id, double *x, double *y, const ::SF::Engine::Vec4 &col, float size = 4,
                               ImPlotDragToolFlags flags = 0, bool *out_clicked = nullptr, bool *out_hovered = nullptr,
                               bool *out_held = nullptr);
     // Shows a draggable vertical guide line at an x-value. #col defaults to ImGuiCol_Text.
-    IMPLOT_API bool DragLineX(int id, double *x, const Vec4 &col, float thickness = 1, ImPlotDragToolFlags flags = 0,
-                              bool *out_clicked = nullptr, bool *out_hovered = nullptr, bool *out_held = nullptr);
+    IMPLOT_API bool DragLineX(int id, double *x, const ::SF::Engine::Vec4 &col, float thickness = 1,
+                              ImPlotDragToolFlags flags = 0, bool *out_clicked = nullptr, bool *out_hovered = nullptr,
+                              bool *out_held = nullptr);
     // Shows a draggable horizontal guide line at a y-value. #col defaults to ImGuiCol_Text.
-    IMPLOT_API bool DragLineY(int id, double *y, const Vec4 &col, float thickness = 1, ImPlotDragToolFlags flags = 0,
-                              bool *out_clicked = nullptr, bool *out_hovered = nullptr, bool *out_held = nullptr);
+    IMPLOT_API bool DragLineY(int id, double *y, const ::SF::Engine::Vec4 &col, float thickness = 1,
+                              ImPlotDragToolFlags flags = 0, bool *out_clicked = nullptr, bool *out_hovered = nullptr,
+                              bool *out_held = nullptr);
     // Shows a draggable and resizeable rectangle.
-    IMPLOT_API bool DragRect(int id, double *x1, double *y1, double *x2, double *y2, const Vec4 &col,
+    IMPLOT_API bool DragRect(int id, double *x1, double *y1, double *x2, double *y2, const ::SF::Engine::Vec4 &col,
                              ImPlotDragToolFlags flags = 0, bool *out_clicked = nullptr, bool *out_hovered = nullptr,
                              bool *out_held = nullptr);
 
     // Shows an annotation callout at a chosen point. Clamping keeps annotations in the plot area. Annotations are
     // always rendered on top.
-    IMPLOT_API void Annotation(double x, double y, const Vec4 &col, const Vec2 &pix_offset, bool clamp,
-                               bool round = false);
-    IMPLOT_API void Annotation(double x, double y, const Vec4 &col, const Vec2 &pix_offset, bool clamp, const char *fmt,
-                               ...) IM_FMTARGS(6);
-    IMPLOT_API void AnnotationV(double x, double y, const Vec4 &col, const Vec2 &pix_offset, bool clamp,
-                                const char *fmt, va_list args) IM_FMTLIST(6);
+    IMPLOT_API void Annotation(double x, double y, const ::SF::Engine::Vec4 &col, const ::SF::Engine::Vec2 &pix_offset,
+                               bool clamp, bool round = false);
+    IMPLOT_API void Annotation(double x, double y, const ::SF::Engine::Vec4 &col, const ::SF::Engine::Vec2 &pix_offset,
+                               bool clamp, const char *fmt, ...) IM_FMTARGS(6);
+    IMPLOT_API void AnnotationV(double x, double y, const ::SF::Engine::Vec4 &col, const ::SF::Engine::Vec2 &pix_offset,
+                                bool clamp, const char *fmt, va_list args) IM_FMTLIST(6);
 
     // Shows a x-axis tag at the specified coordinate value.
-    IMPLOT_API void TagX(double x, const Vec4 &col, bool round = false);
-    IMPLOT_API void TagX(double x, const Vec4 &col, const char *fmt, ...) IM_FMTARGS(3);
-    IMPLOT_API void TagXV(double x, const Vec4 &col, const char *fmt, va_list args) IM_FMTLIST(3);
+    IMPLOT_API void TagX(double x, const ::SF::Engine::Vec4 &col, bool round = false);
+    IMPLOT_API void TagX(double x, const ::SF::Engine::Vec4 &col, const char *fmt, ...) IM_FMTARGS(3);
+    IMPLOT_API void TagXV(double x, const ::SF::Engine::Vec4 &col, const char *fmt, va_list args) IM_FMTLIST(3);
 
     // Shows a y-axis tag at the specified coordinate value.
-    IMPLOT_API void TagY(double y, const Vec4 &col, bool round = false);
-    IMPLOT_API void TagY(double y, const Vec4 &col, const char *fmt, ...) IM_FMTARGS(3);
-    IMPLOT_API void TagYV(double y, const Vec4 &col, const char *fmt, va_list args) IM_FMTLIST(3);
+    IMPLOT_API void TagY(double y, const ::SF::Engine::Vec4 &col, bool round = false);
+    IMPLOT_API void TagY(double y, const ::SF::Engine::Vec4 &col, const char *fmt, ...) IM_FMTARGS(3);
+    IMPLOT_API void TagYV(double y, const ::SF::Engine::Vec4 &col, const char *fmt, va_list args) IM_FMTLIST(3);
 
     //-----------------------------------------------------------------------------
     // [SECTION] Plot Utils
@@ -1342,17 +1351,20 @@ namespace ImPlot
     IMPLOT_API void SetAxes(ImAxis x_axis, ImAxis y_axis);
 
     // Convert pixels to a position in the current plot's coordinate system. Passing IMPLOT_AUTO uses the current axes.
-    IMPLOT_API ImPlotPoint PixelsToPlot(const Vec2 &pix, ImAxis x_axis = IMPLOT_AUTO, ImAxis y_axis = IMPLOT_AUTO);
+    IMPLOT_API ImPlotPoint PixelsToPlot(const ::SF::Engine::Vec2 &pix, ImAxis x_axis = IMPLOT_AUTO,
+                                        ImAxis y_axis = IMPLOT_AUTO);
     IMPLOT_API ImPlotPoint PixelsToPlot(float x, float y, ImAxis x_axis = IMPLOT_AUTO, ImAxis y_axis = IMPLOT_AUTO);
 
     // Convert a position in the current plot's coordinate system to pixels. Passing IMPLOT_AUTO uses the current axes.
-    IMPLOT_API Vec2 PlotToPixels(const ImPlotPoint &plt, ImAxis x_axis = IMPLOT_AUTO, ImAxis y_axis = IMPLOT_AUTO);
-    IMPLOT_API Vec2 PlotToPixels(double x, double y, ImAxis x_axis = IMPLOT_AUTO, ImAxis y_axis = IMPLOT_AUTO);
+    IMPLOT_API ::SF::Engine::Vec2 PlotToPixels(const ImPlotPoint &plt, ImAxis x_axis = IMPLOT_AUTO,
+                                               ImAxis y_axis = IMPLOT_AUTO);
+    IMPLOT_API ::SF::Engine::Vec2 PlotToPixels(double x, double y, ImAxis x_axis = IMPLOT_AUTO,
+                                               ImAxis y_axis = IMPLOT_AUTO);
 
     // Get the current Plot position (top-left) in pixels.
-    IMPLOT_API Vec2 GetPlotPos();
+    IMPLOT_API ::SF::Engine::Vec2 GetPlotPos();
     // Get the current Plot size in pixels.
-    IMPLOT_API Vec2 GetPlotSize();
+    IMPLOT_API ::SF::Engine::Vec2 GetPlotSize();
 
     // Returns the mouse position in x,y coordinates of the current plot. Passing IMPLOT_AUTO uses the current axes.
     IMPLOT_API ImPlotPoint GetPlotMousePos(ImAxis x_axis = IMPLOT_AUTO, ImAxis y_axis = IMPLOT_AUTO);
@@ -1460,7 +1472,7 @@ namespace ImPlot
 
     // Temporarily modify a style color. Don't forget to call PopStyleColor!
     IMPLOT_API void PushStyleColor(ImPlotCol idx, uint32_t col);
-    IMPLOT_API void PushStyleColor(ImPlotCol idx, const Vec4 &col);
+    IMPLOT_API void PushStyleColor(ImPlotCol idx, const ::SF::Engine::Vec4 &col);
     // Undo temporary style color modification(s). Undo multiple pushes at once by increasing count.
     IMPLOT_API void PopStyleColor(int count = 1);
 
@@ -1468,13 +1480,13 @@ namespace ImPlot
     IMPLOT_API void PushStyleVar(ImPlotStyleVar idx, float val);
     // Temporarily modify a style variable of int type. Don't forget to call PopStyleVar!
     IMPLOT_API void PushStyleVar(ImPlotStyleVar idx, int val);
-    // Temporarily modify a style variable of Vec2 type. Don't forget to call PopStyleVar!
-    IMPLOT_API void PushStyleVar(ImPlotStyleVar idx, const Vec2 &val);
+    // Temporarily modify a style variable of ::SF::Engine::Vec2 type. Don't forget to call PopStyleVar!
+    IMPLOT_API void PushStyleVar(ImPlotStyleVar idx, const ::SF::Engine::Vec2 &val);
     // Undo temporary style variable modification(s). Undo multiple pushes at once by increasing count.
     IMPLOT_API void PopStyleVar(int count = 1);
 
     // Gets the last item primary color (i.e. its legend icon color)
-    IMPLOT_API Vec4 GetLastItemColor();
+    IMPLOT_API ::SF::Engine::Vec4 GetLastItemColor();
 
     // Returns the null terminated string name for an ImPlotCol.
     IMPLOT_API const char *GetStyleColorName(ImPlotCol idx);
@@ -1505,7 +1517,7 @@ namespace ImPlot
     // want to create a continuous colormap, set #qual=false. This will treat the colors you provide as keys, and ImPlot
     // will build a linearly interpolated lookup table. The memory footprint of this table will be exactly
     // ((size-1)*255+1)*4 bytes.
-    IMPLOT_API ImPlotColormap AddColormap(const char *name, const Vec4 *cols, int size, bool qual = true);
+    IMPLOT_API ImPlotColormap AddColormap(const char *name, const ::SF::Engine::Vec4 *cols, int size, bool qual = true);
     IMPLOT_API ImPlotColormap AddColormap(const char *name, const uint32_t *cols, int size, bool qual = true);
 
     // Returns the number of available colormaps (i.e. the built-in + user-added count).
@@ -1526,7 +1538,7 @@ namespace ImPlot
 
     // Returns the next color from the current colormap and advances the colormap for the current plot.
     // Can also be used with no return value to skip colors if desired. You need to call this between Begin/EndPlot!
-    IMPLOT_API Vec4 NextColormapColor();
+    IMPLOT_API ::SF::Engine::Vec4 NextColormapColor();
 
     // Colormap utils. If cmap = IMPLOT_AUTO (default), the current colormap is assumed.
     // Pass an explicit colormap index (built-in or user-added) to specify otherwise.
@@ -1534,21 +1546,22 @@ namespace ImPlot
     // Returns the size of a colormap.
     IMPLOT_API int GetColormapSize(ImPlotColormap cmap = IMPLOT_AUTO);
     // Returns a color from a colormap given an index >= 0 (modulo will be performed).
-    IMPLOT_API Vec4 GetColormapColor(int idx, ImPlotColormap cmap = IMPLOT_AUTO);
+    IMPLOT_API ::SF::Engine::Vec4 GetColormapColor(int idx, ImPlotColormap cmap = IMPLOT_AUTO);
     // Sample a color from the current colormap given t between 0 and 1.
-    IMPLOT_API Vec4 SampleColormap(float t, ImPlotColormap cmap = IMPLOT_AUTO);
+    IMPLOT_API ::SF::Engine::Vec4 SampleColormap(float t, ImPlotColormap cmap = IMPLOT_AUTO);
 
     // Shows a vertical color scale with linear spaced ticks using the specified color map. Use double hashes to hide
     // label (e.g. "##NoLabel"). If scale_min > scale_max, the scale to color mapping will be reversed.
-    IMPLOT_API void ColormapScale(const char *label, double scale_min, double scale_max, const Vec2 &size = Vec2(0, 0),
-                                  const char *format = "%g", ImPlotColormapScaleFlags flags = 0,
-                                  ImPlotColormap cmap = IMPLOT_AUTO);
+    IMPLOT_API void ColormapScale(const char *label, double scale_min, double scale_max,
+                                  const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0), const char *format = "%g",
+                                  ImPlotColormapScaleFlags flags = 0, ImPlotColormap cmap = IMPLOT_AUTO);
     // Shows a horizontal slider with a colormap gradient background. Optionally returns the color sampled at t in [0
     // 1].
-    IMPLOT_API bool ColormapSlider(const char *label, float *t, Vec4 *out = nullptr, const char *format = "",
-                                   ImPlotColormap cmap = IMPLOT_AUTO);
+    IMPLOT_API bool ColormapSlider(const char *label, float *t, ::SF::Engine::Vec4 *out = nullptr,
+                                   const char *format = "", ImPlotColormap cmap = IMPLOT_AUTO);
     // Shows a button with a colormap gradient background.
-    IMPLOT_API bool ColormapButton(const char *label, const Vec2 &size = Vec2(0, 0), ImPlotColormap cmap = IMPLOT_AUTO);
+    IMPLOT_API bool ColormapButton(const char *label, const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(0, 0),
+                                   ImPlotColormap cmap = IMPLOT_AUTO);
 
     // When items in a plot sample their color from a colormap, the color is cached and does not change
     // unless explicitly overridden. Therefore, if you change the colormap after the item has already been plotted,
@@ -1579,7 +1592,7 @@ namespace ImPlot
     //-----------------------------------------------------------------------------
 
     // Render icons similar to those that appear in legends (nifty for data lists).
-    IMPLOT_API void ItemIcon(const Vec4 &col);
+    IMPLOT_API void ItemIcon(const ::SF::Engine::Vec4 &col);
     IMPLOT_API void ItemIcon(uint32_t col);
     IMPLOT_API void ColormapIcon(ImPlotColormap cmap);
 
@@ -1643,23 +1656,24 @@ namespace ImPlot
 {
 
     // OBSOLETED in v1.0 (from February 2026)
-    // IMPLOT_API void SetNextLineStyle(const Vec4& col = IMPLOT_AUTO_COL, float weight = IMPLOT_AUTO); // OBSOLETED
-    // IN v1.0 // Set ImPlotSpec.LineColor/LineWeight or construct ImPlotSpec with { ImPlotSpec_LineColor, color,
-    // ImPlotSpec_LineWeight, weight }.
+    // IMPLOT_API void SetNextLineStyle(const ::SF::Engine::Vec4& col = IMPLOT_AUTO_COL, float weight = IMPLOT_AUTO); //
+    // OBSOLETED IN v1.0 // Set ImPlotSpec.LineColor/LineWeight or construct ImPlotSpec with { ImPlotSpec_LineColor,
+    // color, ImPlotSpec_LineWeight, weight }.
 
-    // IMPLOT_API void SetNextFillStyle(const Vec4& col = IMPLOT_AUTO_COL, float alpha_mod = IMPLOT_AUTO);// OBSOLETED
-    // IN v1.0 // Set ImPlotSpec.FillColor/FillAlpha or construct ImPlotSpec with { ImPlotSpec_FillColor, color,
-    // ImPlotSpec_FillAlpha, alpha }.
+    // IMPLOT_API void SetNextFillStyle(const ::SF::Engine::Vec4& col = IMPLOT_AUTO_COL, float alpha_mod =
+    // IMPLOT_AUTO);// OBSOLETED IN v1.0 // Set ImPlotSpec.FillColor/FillAlpha or construct ImPlotSpec with {
+    // ImPlotSpec_FillColor, color, ImPlotSpec_FillAlpha, alpha }.
 
-    // IMPLOT_API void SetNextMarkerStyle(ImPlotMarker marker = IMPLOT_AUTO, float size = IMPLOT_AUTO, const Vec4&
-    // fill = IMPLOT_AUTO_COL, float weight = IMPLOT_AUTO, const Vec4& outline = IMPLOT_AUTO_COL); // OBSOLETED IN
-    // v1.0 // Set ImPlotSpec.Marker/MarkerSize/MarkerFillColor/LineWeight/MarkerLineColor or construct ImPlotSpec with
-    // { ImPlotSpec_Marker, marker, ImPlotSpec_MarkerSize, size, ImPlotSpec_MarkerFillColor, fill_color,
+    // IMPLOT_API void SetNextMarkerStyle(ImPlotMarker marker = IMPLOT_AUTO, float size = IMPLOT_AUTO, const
+    // ::SF::Engine::Vec4& fill = IMPLOT_AUTO_COL, float weight = IMPLOT_AUTO, const ::SF::Engine::Vec4& outline =
+    // IMPLOT_AUTO_COL); // OBSOLETED IN v1.0 // Set
+    // ImPlotSpec.Marker/MarkerSize/MarkerFillColor/LineWeight/MarkerLineColor or construct ImPlotSpec with {
+    // ImPlotSpec_Marker, marker, ImPlotSpec_MarkerSize, size, ImPlotSpec_MarkerFillColor, fill_color,
     // ImPlotSpec_LineWeight, weight, ImPlotSpec_MarkerLineColor, outline }.
 
-    // IMPLOT_API void SetNextErrorBarStyle(const Vec4& col = IMPLOT_AUTO_COL, float size = IMPLOT_AUTO, float weight
-    // = IMPLOT_AUTO); // OBSOLETED IN v1.0 // Set ImPlotSpec.LineColor/Size/LineWeight or construct ImPlotSpec with {
-    // ImPlotSpec_LineColor, col, ImPlotSpec_Size, size, ImPlotSpec_LineWeight, weight }.
+    // IMPLOT_API void SetNextErrorBarStyle(const ::SF::Engine::Vec4& col = IMPLOT_AUTO_COL, float size = IMPLOT_AUTO,
+    // float weight = IMPLOT_AUTO); // OBSOLETED IN v1.0 // Set ImPlotSpec.LineColor/Size/LineWeight or construct
+    // ImPlotSpec with { ImPlotSpec_LineColor, col, ImPlotSpec_Size, size, ImPlotSpec_LineWeight, weight }.
 
 
 } // namespace ImPlot

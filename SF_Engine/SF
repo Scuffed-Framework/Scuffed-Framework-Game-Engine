@@ -22,10 +22,10 @@ namespace SF::Engine
         return static_cast<T&&>(t);
     }
 }
-#infdef NODISCARD
+#if not defined NODISCARD
 #define NODISCARD [[nodiscard]]
 #endif
 
-#ifndef DEPRECATED
+#if not defined DEPRECATED
 #define DEPRECATED(x) __attribute__ ((__deprecated__("use '" x "' instead")))
 #endif

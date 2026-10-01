@@ -1,8 +1,8 @@
 #include "HierarchyPanel.hpp"
 #include <Entity/Entity.hpp>
 #include <Gui/ImGui/ocornut/imgui_internal.h>
-#include "Panels.hpp"
 #include <Scene/SceneManager.hpp>
+#include "Panels.hpp"
 
 namespace SF::Engine
 {
@@ -10,7 +10,7 @@ namespace SF::Engine
     void HierarchyPanel::Draw()
     {
         EntityRegistry &registry = SceneManager::Get()->GetScene()->GetEntities()->GetRegistry();
-        Scene *scene = SceneManager::Get()->GetScene();
+        Scene *scene             = SceneManager::Get()->GetScene();
         ImGui::Begin("Hierarchy", &ShowHierarchy);
 
         // Search filter
@@ -28,7 +28,7 @@ namespace SF::Engine
         std::vector<SF::Engine::Entity *> visibleEntities;
         std::string searchStr(searchBuffer);
 
-        for (auto &root : registry.GetRoots())
+        for (auto &root: registry.GetRoots())
         {
             CollectVisibleEntities(root.get(), visibleEntities);
         }
@@ -36,33 +36,26 @@ namespace SF::Engine
         // Filter entities based on search
         if (!searchStr.empty())
         {
-            visibleEntities.erase(
-                std::remove_if(visibleEntities.begin(), visibleEntities.end(),
-                               [&searchStr](SF::Engine::Entity *e)
-                               {
-                                   return e->GetName().find(searchStr) == std::string::npos;
-                               }),
-                visibleEntities.end());
+            visibleEntities.erase(std::remove_if(visibleEntities.begin(), visibleEntities.end(),
+                                                 [&searchStr](SF::Engine::Entity *e)
+                                                 { return e->GetName().find(searchStr) == std::string::npos; }),
+                                  visibleEntities.end());
         }
 
         // Draw alternating row backgrounds
         ImDrawList *drawList = ImGui::GetWindowDrawList();
-        float rowHeight = ImGui::GetTextLineHeightWithSpacing();
-        Vec2 contentMin = ImGui::GetWindowContentRegionMin();
-        Vec2 contentMax = ImGui::GetWindowContentRegionMax();
-        Vec2 windowPos = ImGui::GetWindowPos();
+        float rowHeight      = ImGui::GetTextLineHeightWithSpacing();
+        Vec2 contentMin      = ImGui::GetContentRegionAvail();
+        Vec2 contentMax      = ImGui::GetContentRegionAvail();
+        Vec2 windowPos       = ImGui::GetWindowPos();
 
-        ImU32 colEven = ImGui::GetColorU32(ImGuiCol_TableRowBg, 0.3f);
-        ImU32 colOdd = ImGui::GetColorU32(ImGuiCol_TableRowBgAlt, 0.3f);
+        uint32_t colEven = ImGui::GetColorU32(ImGuiCol_TableRowBg, 0.3f);
+        uint32_t colOdd  = ImGui::GetColorU32(ImGuiCol_TableRowBgAlt, 0.3f);
 
         for (size_t i = 0; i < visibleEntities.size(); i++)
         {
-            Vec2 rowMin = Vec2(
-                windowPos.x + contentMin.x,
-                ImGui::GetCursorScreenPos().y + i * rowHeight);
-            Vec2 rowMax = Vec2(
-                windowPos.x + contentMax.x,
-                rowMin.y + rowHeight);
+            Vec2 rowMin = Vec2(windowPos.x + contentMin.x, ImGui::GetCursorScreenPos().y + i * rowHeight);
+            Vec2 rowMax = Vec2(windowPos.x + contentMax.x, rowMin.y + rowHeight);
 
             drawList->AddRectFilled(rowMin, rowMax, (i % 2 == 0) ? colEven : colOdd);
         }
@@ -70,13 +63,14 @@ namespace SF::Engine
         // Draw entity nodes
         ImGui::BeginChild("HierarchyTree", Vec2(0, 0), false, ImGuiWindowFlags_NoBackground);
 
-        for (auto &root : registry.GetRoots())
+        for (auto &root: registry.GetRoots())
         {
             DrawEntityNode(root.get());
         }
 
         // Handle right-click context menu
-        if (ImGui::BeginPopupContextWindow("HierarchyContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+        if (ImGui::BeginPopupContextWindow("HierarchyContext",
+                                           ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
         {
             DrawCreateOptions();
             ImGui::EndPopup();
@@ -91,8 +85,7 @@ namespace SF::Engine
         if (!entity)
             return;
 
-        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
-                                   ImGuiTreeNodeFlags_SpanFullWidth |
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth |
                                    ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
         // Handle leaf nodes
@@ -111,7 +104,8 @@ namespace SF::Engine
         ImGui::PushID(static_cast<int>(entity->GetId()));
 
         // Entity active state indicator
-        ImGui::PushStyleColor(ImGuiCol_Text, entity->IsActive() ? ImGui::GetStyleColorVec4(ImGuiCol_Text) : Vec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, entity->IsActive() ? ImGui::GetStyleColorVec4(ImGuiCol_Text)
+                                                                : Vec4(0.5f, 0.5f, 0.5f, 1.0f));
 
         bool opened = ImGui::TreeNodeEx("##EntityNode", flags, "%s", entity->GetName().c_str());
 
@@ -120,7 +114,7 @@ namespace SF::Engine
         // Handle selection
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
         {
-            m_selectedId = entity->GetId();
+            m_selectedId     = entity->GetId();
             m_selectedEntity = entity;
             if (m_onEntitySelected)
             {
@@ -133,10 +127,7 @@ namespace SF::Engine
         {
             const EntityId entityId = entity->GetId();
 
-            ImGui::SetDragDropPayload(
-                "ENTITY",
-                &entityId,
-                sizeof(EntityId));
+            ImGui::SetDragDropPayload("ENTITY", &entityId, sizeof(EntityId));
             ImGui::Text("%s", entity->GetName().c_str());
             ImGui::EndDragDropSource();
         }
@@ -173,7 +164,7 @@ namespace SF::Engine
                 entity->MarkForRemoval();
                 if (entity->GetId() == m_selectedId)
                 {
-                    m_selectedId = 0;
+                    m_selectedId     = 0;
                     m_selectedEntity = nullptr;
                 }
                 m_needsRefresh = true;
@@ -184,7 +175,7 @@ namespace SF::Engine
 
         if (opened)
         {
-            for (auto &child : entity->GetChildren())
+            for (auto &child: entity->GetChildren())
             {
                 DrawEntityNode(child.get());
             }
@@ -197,26 +188,23 @@ namespace SF::Engine
     void HierarchyPanel::DrawRowBackground(float height)
     {
         ImGuiWindow *window = ImGui::GetCurrentWindow();
-        ImRect rowRect(
-            window->WorkRect.Min.x,
-            window->DC.CursorPos.y - height,
-            window->WorkRect.Max.x,
-            window->DC.CursorPos.y);
+        ImRect rowRect(window->WorkRect.Min.x, window->DC.CursorPos.y - height, window->WorkRect.Max.x,
+                       window->DC.CursorPos.y);
 
         static int rowCount = 0;
-        ImU32 bgColor = (rowCount++ % 2 == 0)
-                            ? ImGui::GetColorU32(Vec4(0.15f, 0.15f, 0.18f, 1.0f))
-                            : ImGui::GetColorU32(Vec4(0.18f, 0.18f, 0.22f, 1.0f));
+        uint32_t bgColor    = (rowCount++ % 2 == 0) ? ImGui::GetColorU32(Vec4(0.15f, 0.15f, 0.18f, 1.0f))
+                                                    : ImGui::GetColorU32(Vec4(0.18f, 0.18f, 0.22f, 1.0f));
 
         window->DrawList->AddRectFilled(rowRect.Min, rowRect.Max, bgColor);
     }
 
-    void HierarchyPanel::CollectVisibleEntities(SF::Engine::Entity *entity, std::vector<SF::Engine::Entity *> &outEntities)
+    void HierarchyPanel::CollectVisibleEntities(SF::Engine::Entity *entity,
+                                                std::vector<SF::Engine::Entity *> &outEntities)
     {
         if (entity)
         {
             outEntities.push_back(entity);
-            for (auto &child : entity->GetChildren())
+            for (auto &child: entity->GetChildren())
             {
                 CollectVisibleEntities(child.get(), outEntities);
             }
@@ -233,19 +221,18 @@ namespace SF::Engine
         if (entity)
         {
             m_selectedEntity = entity;
-            m_selectedId = entity->GetId();
-        }
-        else
+            m_selectedId     = entity->GetId();
+        } else
         {
             m_selectedEntity = nullptr;
-            m_selectedId = 0;
+            m_selectedId     = 0;
         }
     }
 
     void HierarchyPanel::DrawCreateOptions()
     {
         EntityRegistry &registry = SceneManager::Get()->GetScene()->GetEntities()->GetRegistry();
-        Scene *scene = SceneManager::Get()->GetScene();
+        Scene *scene             = SceneManager::Get()->GetScene();
         if (ImGui::BeginMenu("Create"))
         {
             if (ImGui::BeginMenu("Object"))
@@ -257,9 +244,9 @@ namespace SF::Engine
                 }
                 if (ImGui::MenuItem("Cube"))
                 {
-                    SceneObject *cube = scene->AddObject("Cube");
+                    SceneObject *cube    = scene->AddObject("Cube");
                     cube->meshSourcePath = "__cube__";
-                    m_needsRefresh = true;
+                    m_needsRefresh       = true;
                 }
                 // add more, also add more __mesh__ stuff
                 ImGui::EndMenu();
@@ -268,7 +255,8 @@ namespace SF::Engine
             {
                 if (ImGui::MenuItem("Directional Light"))
                 {
-                    scene->AddLight("Directional Light", Lighting::LightType::Directional, {1, 1, 1}, 10, {0, 0, 0}, {0, 0, 0});
+                    scene->AddLight("Directional Light", Lighting::LightType::Directional, {1, 1, 1}, 10, {0, 0, 0},
+                                    {0, 0, 0});
                     m_needsRefresh = true;
                 }
                 if (ImGui::MenuItem("Point Light"))
@@ -286,4 +274,4 @@ namespace SF::Engine
             ImGui::EndMenu();
         }
     }
-}
+} // namespace SF::Engine

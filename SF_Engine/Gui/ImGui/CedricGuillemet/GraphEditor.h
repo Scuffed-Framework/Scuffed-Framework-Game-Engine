@@ -82,9 +82,9 @@ namespace GraphEditor
     // View state: scroll position and zoom factor
     struct ViewState
     {
-        Vec2 mPosition{0.0f, 0.0f}; // scroll position
-        float mFactor{1.0f};        // current zoom factor
-        float mFactorTarget{1.0f};  // targeted zoom factor interpolated using Options.mZoomLerpFactor
+        ::SF::Engine::Vec2 mPosition{0.0f, 0.0f}; // scroll position
+        float mFactor{1.0f};                      // current zoom factor
+        float mFactorTarget{1.0f};                // targeted zoom factor interpolated using Options.mZoomLerpFactor
     };
 
     struct Template
@@ -120,8 +120,8 @@ namespace GraphEditor
     {
         virtual bool AllowedLink(NodeIndex from, NodeIndex to) = 0;
 
-        virtual void SelectNode(NodeIndex nodeIndex, bool selected) = 0;
-        virtual void MoveSelectedNodes(const Vec2 delta)            = 0;
+        virtual void SelectNode(NodeIndex nodeIndex, bool selected)    = 0;
+        virtual void MoveSelectedNodes(const ::SF::Engine::Vec2 delta) = 0;
 
         virtual void AddLink(NodeIndex inputNodeIndex, SlotIndex inputSlotIndex, NodeIndex outputNodeIndex,
                              SlotIndex outputSlotIndex) = 0;

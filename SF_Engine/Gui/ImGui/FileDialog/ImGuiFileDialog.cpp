@@ -325,8 +325,8 @@ inline bool inRadioButton(const char *vLabel, bool vToggled)
     bool pressed = false;
     if (vToggled)
     {
-        Vec4 bua = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
-        Vec4 te  = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+        ::SF::Engine::Vec4 bua = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+        ::SF::Engine::Vec4 te  = ImGui::GetStyleColorVec4(ImGuiCol_Text);
     }
     pressed = IMGUI_BUTTON(vLabel);
     if (vToggled)
@@ -393,10 +393,10 @@ inline bool inToggleButton(const char *vLabel, bool *vToggled)
 
     if (vToggled && *vToggled)
     {
-        Vec4 bua = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
-        // Vec4 buh = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
-        // Vec4 bu = ImGui::GetStyleColorVec4(ImGuiCol_Button);
-        Vec4 te = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+        ::SF::Engine::Vec4 bua = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+        // ::SF::Engine::Vec4 buh = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
+        // ::SF::Engine::Vec4 bu = ImGui::GetStyleColorVec4(ImGuiCol_Button);
+        ::SF::Engine::Vec4 te = ImGui::GetStyleColorVec4(ImGuiCol_Text);
     }
 
     pressed = IMGUI_BUTTON(vLabel);
@@ -985,11 +985,12 @@ bool IGFD::Utils::ImSplitter(bool split_vertically, float thickness, float *size
                              float min_size2, float splitter_long_axis_size)
 {
     auto *window = ImGui::GetCurrentWindow();
-    ImGuiID id   = window->GetID("##Splitter");
+    IdType id    = window->GetID("##Splitter");
     ImRect bb;
-    bb.Min = window->DC.CursorPos + (split_vertically ? Vec2(*size1, 0.0f) : Vec2(0.0f, *size1));
-    bb.Max = bb.Min + ImGui::CalcItemSize(split_vertically ? Vec2(thickness, splitter_long_axis_size)
-                                                           : Vec2(splitter_long_axis_size, thickness),
+    bb.Min = window->DC.CursorPos +
+             (split_vertically ? ::SF::Engine::Vec2(*size1, 0.0f) : ::SF::Engine::Vec2(0.0f, *size1));
+    bb.Max = bb.Min + ImGui::CalcItemSize(split_vertically ? ::SF::Engine::Vec2(thickness, splitter_long_axis_size)
+                                                           : ::SF::Engine::Vec2(splitter_long_axis_size, thickness),
                                           0.0f, 0.0f);
     return ImGui::SplitterBehavior(bb, id, split_vertically ? ImGuiAxis_X : ImGuiAxis_Y, size1, size2, min_size1,
                                    min_size2, 1.0f, 0.0, ImGui::GetColorU32(ImGuiCol_FrameBg));
@@ -1351,7 +1352,7 @@ IGFD::FileStyle::FileStyle(const FileStyle &vStyle)
     flags = vStyle.flags;
 }
 
-IGFD::FileStyle::FileStyle(const Vec4 &vColor, const std::string &vIcon, ImFont *vFont) :
+IGFD::FileStyle::FileStyle(const ::SF::Engine::Vec4 &vColor, const std::string &vIcon, ImFont *vFont) :
     color(vColor), icon(vIcon), font(vFont)
 {
 }
@@ -1831,8 +1832,8 @@ bool IGFD::FilterManager::FillFileStyle(std::shared_ptr<FileInfos> vFileInfos) c
     return false;
 }
 
-void IGFD::FilterManager::SetFileStyle(const IGFD_FileStyleFlags &vFlags, const char *vCriteria, const Vec4 &vColor,
-                                       const std::string &vIcon, ImFont *vFont)
+void IGFD::FilterManager::SetFileStyle(const IGFD_FileStyleFlags &vFlags, const char *vCriteria,
+                                       const ::SF::Engine::Vec4 &vColor, const std::string &vIcon, ImFont *vFont)
 {
     std::string _criteria;
     if (vCriteria)
@@ -1849,8 +1850,8 @@ void IGFD::FilterManager::SetFileStyle(FileStyle::FileStyleFunctor vFunctor)
     }
 }
 
-bool IGFD::FilterManager::GetFileStyle(const IGFD_FileStyleFlags &vFlags, const std::string &vCriteria, Vec4 *vOutColor,
-                                       std::string *vOutIcon, ImFont **vOutFont)
+bool IGFD::FilterManager::GetFileStyle(const IGFD_FileStyleFlags &vFlags, const std::string &vCriteria,
+                                       ::SF::Engine::Vec4 *vOutColor, std::string *vOutIcon, ImFont **vOutFont)
 {
     if (vOutColor)
     {
@@ -3649,7 +3650,8 @@ void IGFD::ThumbnailFeature::m_ThreadThumbnailFileDatasExtractionFunc()
     }
 }
 
-void IGFD::ThumbnailFeature::m_VariadicProgressBar(float fraction, const Vec2 &size_arg, const char *fmt, ...)
+void IGFD::ThumbnailFeature::m_VariadicProgressBar(float fraction, const ::SF::Engine::Vec2 &size_arg, const char *fmt,
+                                                   ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -3671,7 +3673,7 @@ void IGFD::ThumbnailFeature::m_DrawThumbnailGenerationProgress()
         {
             const auto p = (float) ((double) m_CountFiles /
                                     (double) m_ThumbnailFileDatasToGet.size()); // read => no thread concurency issues
-            m_VariadicProgressBar(p, Vec2(50, 0), "%u/%u", m_CountFiles,
+            m_VariadicProgressBar(p, ::SF::Engine::Vec2(50, 0), "%u/%u", m_CountFiles,
                                   (uint32_t) m_ThumbnailFileDatasToGet.size()); // read => no thread concurency issues
             ImGui::SameLine();
         }
@@ -3853,7 +3855,7 @@ void IGFD::PlacesFeature::m_DrawPlacesButton()
         ImGui::SetTooltip(placesButtonHelpString);
 }
 
-bool IGFD::PlacesFeature::m_DrawPlacesPane(FileDialogInternal &vFileDialogInternal, const Vec2 &vSize)
+bool IGFD::PlacesFeature::m_DrawPlacesPane(FileDialogInternal &vFileDialogInternal, const ::SF::Engine::Vec2 &vSize)
 {
     bool res = false;
     ImGui::BeginChild("##placespane", vSize);
@@ -3864,7 +3866,7 @@ bool IGFD::PlacesFeature::m_DrawPlacesPane(FileDialogInternal &vFileDialogIntern
         {
             if (ImGui::CollapsingHeader(group_ptr->name.c_str(), group_ptr->collapsingHeaderFlag))
             {
-                ImGui::BeginChild(group_ptr->name.c_str(), Vec2(0, 0), ImGuiChildFlags_AutoResizeY);
+                ImGui::BeginChild(group_ptr->name.c_str(), ::SF::Engine::Vec2(0, 0), ImGuiChildFlags_AutoResizeY);
                 if (group_ptr->canBeEdited)
                 {
                     ImGui::PushID(group_ptr.get());
@@ -3938,7 +3940,7 @@ bool IGFD::PlacesFeature::m_DrawPlacesPane(FileDialogInternal &vFileDialogIntern
                                 }
                                 if (group_ptr->canBeEdited)
                                 {
-                                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, Vec2(0, 0));
+                                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ::SF::Engine::Vec2(0, 0));
                                     if (ImGui::SmallButton(editPlaceButtonString "##ImGuiFileDialogPlaceEditButton"))
                                     {
                                         group_ptr->selectedPlaceForEdition = i;
@@ -4208,7 +4210,7 @@ void IGFD::KeyExplorerFeature::m_LocateByInputKey(FileDialogInternal &vFileDialo
     }
 }
 
-void IGFD::KeyExplorerFeature::m_ExploreWithkeys(FileDialogInternal &vFileDialogInternal, ImGuiID vListViewID)
+void IGFD::KeyExplorerFeature::m_ExploreWithkeys(FileDialogInternal &vFileDialogInternal, IdType vListViewID)
 {
     auto &fdi = vFileDialogInternal.fileManager;
     if (!fdi.IsFilteredListEmpty())
@@ -4350,7 +4352,7 @@ void IGFD::KeyExplorerFeature::m_ExploreWithkeys(FileDialogInternal &vFileDialog
 }
 
 bool IGFD::KeyExplorerFeature::m_FlashableSelectable(const char *label, bool selected, ImGuiSelectableFlags flags,
-                                                     bool vFlashing, const Vec2 &size_arg)
+                                                     bool vFlashing, const ::SF::Engine::Vec2 &size_arg)
 {
     using namespace ImGui;
 
@@ -4362,10 +4364,11 @@ bool IGFD::KeyExplorerFeature::m_FlashableSelectable(const char *label, bool sel
     const ImGuiStyle &style = g.Style;
 
     // Submit label or explicit size to ItemSize(), whereas ItemAdd() will submit a larger/spanning rectangle.
-    ImGuiID id      = window->GetID(label);
-    Vec2 label_size = CalcTextSize(label, nullptr, true);
-    Vec2 size(size_arg.x != 0.0f ? size_arg.x : label_size.x, size_arg.y != 0.0f ? size_arg.y : label_size.y);
-    Vec2 pos = window->DC.CursorPos;
+    IdType id                     = window->GetID(label);
+    ::SF::Engine::Vec2 label_size = CalcTextSize(label, nullptr, true);
+    ::SF::Engine::Vec2 size(size_arg.x != 0.0f ? size_arg.x : label_size.x,
+                            size_arg.y != 0.0f ? size_arg.y : label_size.y);
+    ::SF::Engine::Vec2 pos = window->DC.CursorPos;
     pos.y += window->DC.CurrLineTextBaseOffset;
     ItemSize(size, 0.0f);
 
@@ -4379,8 +4382,8 @@ bool IGFD::KeyExplorerFeature::m_FlashableSelectable(const char *label, bool sel
         size.x = ImMax(label_size.x, max_x - min_x);
 
     // Text stays at the submission position, but bounding box may be extended on both sides
-    const Vec2 text_min = pos;
-    const Vec2 text_max(min_x + size.x, pos.y + size.y);
+    const ::SF::Engine::Vec2 text_min = pos;
+    const ::SF::Engine::Vec2 text_max(min_x + size.x, pos.y + size.y);
 
     // Selectables are meant to be tightly packed together with no click-gap, so we extend their box to cover spacing
     // between selectable.
@@ -4591,9 +4594,9 @@ bool IGFD::KeyExplorerFeature::m_BeginFlashItem(size_t vIdx)
         if (m_FlashAlpha < 0.0f)
             m_FlashAlpha = 0.0f;
 
-        Vec4 hov = ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered);
-        hov.w    = m_FlashAlpha;
-        res      = true;
+        ::SF::Engine::Vec4 hov = ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered);
+        hov.w                  = m_FlashAlpha;
+        res                    = true;
     }
 
     return res;
@@ -4630,7 +4633,8 @@ void IGFD::FileDialog::OpenDialog(const std::string &vKey, const std::string &vT
 ///// FILE DIALOG DISPLAY FUNCTION ///////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool IGFD::FileDialog::Display(const std::string &vKey, ImGuiWindowFlags vFlags, Vec2 vMinSize, Vec2 vMaxSize)
+bool IGFD::FileDialog::Display(const std::string &vKey, ImGuiWindowFlags vFlags, ::SF::Engine::Vec2 vMinSize,
+                               ::SF::Engine::Vec2 vMaxSize)
 {
     bool res = false;
 
@@ -4668,8 +4672,8 @@ bool IGFD::FileDialog::Display(const std::string &vKey, ImGuiWindowFlags vFlags,
             ImGui::SetNextWindowClass(&window_class);
         }
 
-        bool beg       = false;
-        Vec2 frameSize = Vec2(0, 0);
+        bool beg                     = false;
+        ::SF::Engine::Vec2 frameSize = ::SF::Engine::Vec2(0, 0);
         if (m_FileDialogInternal.getDialogConfig().flags & ImGuiFileDialogFlags_NoDialog)
         { // disable our own dialog system (standard or modal)
             frameSize = vMinSize;
@@ -4828,7 +4832,8 @@ void IGFD::FileDialog::m_DrawHeader()
 
 void IGFD::FileDialog::m_DrawContent()
 {
-    Vec2 size = ImGui::GetContentRegionAvail() - Vec2(0.0f, m_FileDialogInternal.footerHeight);
+    ::SF::Engine::Vec2 size =
+            ImGui::GetContentRegionAvail() - ::SF::Engine::Vec2(0.0f, m_FileDialogInternal.footerHeight);
 
     #ifdef USE_PLACES_FEATURE
     if (!(m_FileDialogInternal.getDialogConfig().flags & ImGuiFileDialogFlags_DisablePlaceMode))
@@ -4890,9 +4895,9 @@ void IGFD::FileDialog::m_DrawContent()
     }
 }
 
-void IGFD::FileDialog::m_DisplayPathPopup(Vec2 vSize)
+void IGFD::FileDialog::m_DisplayPathPopup(::SF::Engine::Vec2 vSize)
 {
-    Vec2 size = Vec2(vSize.x * 0.5f, vSize.y * 0.5f);
+    ::SF::Engine::Vec2 size = ::SF::Engine::Vec2(vSize.x * 0.5f, vSize.y * 0.5f);
     if (ImGui::BeginPopup("IGFD_Path_Popup"))
     {
         auto &fdi = m_FileDialogInternal.fileManager;
@@ -4971,7 +4976,8 @@ bool IGFD::FileDialog::m_DrawOkButton()
     if ((m_FileDialogInternal.canWeContinue && strlen(fdFile.fileNameBuffer)) || //
         (m_FileDialogInternal.getDialogConfig().flags & ImGuiFileDialogFlags_OptionalFileName))
     { // optional
-        if (IMGUI_BUTTON(okButtonString "##validationdialog", Vec2(okButtonWidth, 0.0f)) || m_FileDialogInternal.isOk)
+        if (IMGUI_BUTTON(okButtonString "##validationdialog", ::SF::Engine::Vec2(okButtonWidth, 0.0f)) ||
+            m_FileDialogInternal.isOk)
         {
             m_FileDialogInternal.isOk = true;
             return true;
@@ -4987,7 +4993,7 @@ bool IGFD::FileDialog::m_DrawOkButton()
 
 bool IGFD::FileDialog::m_DrawCancelButton()
 {
-    if (IMGUI_BUTTON(cancelButtonString "##validationdialog", Vec2(cancelButtonWidth, 0.0f)) ||
+    if (IMGUI_BUTTON(cancelButtonString "##validationdialog", ::SF::Engine::Vec2(cancelButtonWidth, 0.0f)) ||
         m_FileDialogInternal.needToExitDialog) // dialog exit asked
     {
         m_FileDialogInternal.isOk = false;
@@ -5070,7 +5076,7 @@ bool IGFD::FileDialog::m_DrawFooter()
 }
 
 bool IGFD::FileDialog::m_Selectable(int vRowIdx, const char *vLabel, bool vSelected, ImGuiSelectableFlags vFlags,
-                                    const Vec2 &vSizeArg)
+                                    const ::SF::Engine::Vec2 &vSizeArg)
 {
     bool res = false;
     #ifdef USE_EXPLORATION_BY_KEYS
@@ -5112,7 +5118,7 @@ void IGFD::FileDialog::m_SelectableItem(int vRowIdx, std::shared_ptr<FileInfos> 
         h = DisplayMode_ThumbailsList_ImageHeight;
     }
     #endif // USE_THUMBNAILS
-    if (m_Selectable(vRowIdx, fdi.variadicBuffer, vSelected, selectableFlags, Vec2(-1.0f, h)))
+    if (m_Selectable(vRowIdx, fdi.variadicBuffer, vSelected, selectableFlags, ::SF::Engine::Vec2(-1.0f, h)))
     {
         if (vInfos->fileType.isDir())
         {
@@ -5232,7 +5238,7 @@ void IGFD::FileDialog::m_rightAlignText(const char *text, const char *maxWidthTe
     ImGui::TextUnformatted(text);
 }
 
-void IGFD::FileDialog::m_DrawFileListView(Vec2 vSize)
+void IGFD::FileDialog::m_DrawFileListView(::SF::Engine::Vec2 vSize)
 {
     auto &fdi = m_FileDialogInternal.fileManager;
 
@@ -5461,7 +5467,7 @@ void IGFD::FileDialog::m_DrawFileListView(Vec2 vSize)
 }
 
     #ifdef USE_THUMBNAILS
-void IGFD::FileDialog::m_DrawThumbnailsListView(Vec2 vSize)
+void IGFD::FileDialog::m_DrawThumbnailsListView(::SF::Engine::Vec2 vSize)
 {
     auto &fdi = m_FileDialogInternal.fileManager;
 
@@ -5689,7 +5695,7 @@ void IGFD::FileDialog::m_DrawThumbnailsListView(Vec2 vSize)
                         if (th->isReadyToDisplay && th->textureID)
                         {
                             ImGui::Image((ImTextureID) th->textureID,
-                                         Vec2((float) th->textureWidth, (float) th->textureHeight));
+                                         ::SF::Engine::Vec2((float) th->textureWidth, (float) th->textureHeight));
                         }
                         m_DisplayFileInfosTooltip(i, column_id, pInfos);
                     }
@@ -5720,7 +5726,7 @@ void IGFD::FileDialog::m_DrawThumbnailsListView(Vec2 vSize)
     ImGui::PopID();
 }
 
-void IGFD::FileDialog::m_DrawThumbnailsGridView(Vec2 vSize)
+void IGFD::FileDialog::m_DrawThumbnailsGridView(::SF::Engine::Vec2 vSize)
 {
     if (ImGui::BeginChild("##thumbnailsGridsFiles", vSize))
     {
@@ -5736,7 +5742,7 @@ void IGFD::FileDialog::m_DrawSidePane(float vHeight)
 {
     ImGui::SameLine();
 
-    ImGui::BeginChild("##FileTypes", Vec2(0, vHeight));
+    ImGui::BeginChild("##FileTypes", ::SF::Engine::Vec2(0, vHeight));
 
     m_FileDialogInternal.getDialogConfig().sidePane(
             m_FileDialogInternal.filterManager.GetSelectedFilter().getFirstFilter().c_str(),
@@ -5819,8 +5825,8 @@ void IGFD::FileDialog::SetFileStyle(const IGFD_FileStyleFlags &vFlags, const cha
     m_FileDialogInternal.filterManager.SetFileStyle(vFlags, vCriteria, vInfos);
 }
 
-void IGFD::FileDialog::SetFileStyle(const IGFD_FileStyleFlags &vFlags, const char *vCriteria, const Vec4 &vColor,
-                                    const std::string &vIcon, ImFont *vFont)
+void IGFD::FileDialog::SetFileStyle(const IGFD_FileStyleFlags &vFlags, const char *vCriteria,
+                                    const ::SF::Engine::Vec4 &vColor, const std::string &vIcon, ImFont *vFont)
 {
     m_FileDialogInternal.filterManager.SetFileStyle(vFlags, vCriteria, vColor, vIcon, vFont);
 }
@@ -5830,8 +5836,8 @@ void IGFD::FileDialog::SetFileStyle(FileStyle::FileStyleFunctor vFunctor)
     m_FileDialogInternal.filterManager.SetFileStyle(vFunctor);
 }
 
-bool IGFD::FileDialog::GetFileStyle(const IGFD_FileStyleFlags &vFlags, const std::string &vCriteria, Vec4 *vOutColor,
-                                    std::string *vOutIcon, ImFont **vOutFont)
+bool IGFD::FileDialog::GetFileStyle(const IGFD_FileStyleFlags &vFlags, const std::string &vCriteria,
+                                    ::SF::Engine::Vec4 *vOutColor, std::string *vOutIcon, ImFont **vOutFont)
 {
     return m_FileDialogInternal.filterManager.GetFileStyle(vFlags, vCriteria, vOutColor, vOutIcon, vOutFont);
 }
@@ -6026,7 +6032,7 @@ IGFD_C_API void IGFD_OpenDialog(      // open a standard dialog
 }
 
 IGFD_C_API bool IGFD_DisplayDialog(ImGuiFileDialog *vContextPtr, const char *vKey, ImGuiWindowFlags vFlags,
-                                   Vec2 vMinSize, Vec2 vMaxSize)
+                                   ::SF::Engine::Vec2 vMinSize, ::SF::Engine::Vec2 vMaxSize)
 {
     if (vContextPtr != nullptr)
     {
@@ -6256,7 +6262,7 @@ IGFD_C_API void *IGFD_GetUserDatas(ImGuiFileDialog *vContextPtr)
 }
 
 IGFD_C_API void IGFD_SetFileStyle(ImGuiFileDialog *vContextPtr, IGFD_FileStyleFlags vFlags, const char *vCriteria,
-                                  Vec4 vColor, const char *vIcon,
+                                  ::SF::Engine::Vec4 vColor, const char *vIcon,
                                   ImFont *vFont) //-V813
 {
     if (vContextPtr != nullptr)
@@ -6270,12 +6276,12 @@ IGFD_C_API void IGFD_SetFileStyle2(ImGuiFileDialog *vContextPtr, IGFD_FileStyleF
 {
     if (vContextPtr != nullptr)
     {
-        vContextPtr->SetFileStyle(vFlags, vCriteria, Vec4(vR, vG, vB, vA), vIcon, vFont);
+        vContextPtr->SetFileStyle(vFlags, vCriteria, ::SF::Engine::Vec4(vR, vG, vB, vA), vIcon, vFont);
     }
 }
 
 IGFD_C_API bool IGFD_GetFileStyle(ImGuiFileDialog *vContextPtr, IGFD_FileStyleFlags vFlags, const char *vCriteria,
-                                  Vec4 *vOutColor, char **vOutIconText, ImFont **vOutFont)
+                                  ::SF::Engine::Vec4 *vOutColor, char **vOutIconText, ImFont **vOutFont)
 {
     if (vContextPtr != nullptr)
     {

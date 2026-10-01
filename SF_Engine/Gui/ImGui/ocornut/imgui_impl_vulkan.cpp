@@ -636,8 +636,9 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data, VkCommandBuffer comm
     ImGui_ImplVulkan_SetupRenderState(draw_data, pipeline, command_buffer, rb, fb_width, fb_height);
 
     // Will project scissor/clipping rectangles into framebuffer space
-    Vec2 clip_off   = draw_data->DisplayPos;       // (0,0) unless using multi-viewports
-    Vec2 clip_scale = draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
+    ::SF::Engine::Vec2 clip_off = draw_data->DisplayPos; // (0,0) unless using multi-viewports
+    ::SF::Engine::Vec2 clip_scale =
+            draw_data->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
 
     // Render command lists
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
@@ -661,10 +662,10 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data, VkCommandBuffer comm
             } else
             {
                 // Project scissor/clipping rectangles into framebuffer space
-                Vec2 clip_min((pcmd->ClipRect.x - clip_off.x) * clip_scale.x,
-                              (pcmd->ClipRect.y - clip_off.y) * clip_scale.y);
-                Vec2 clip_max((pcmd->ClipRect.z - clip_off.x) * clip_scale.x,
-                              (pcmd->ClipRect.w - clip_off.y) * clip_scale.y);
+                ::SF::Engine::Vec2 clip_min((pcmd->ClipRect.x - clip_off.x) * clip_scale.x,
+                                            (pcmd->ClipRect.y - clip_off.y) * clip_scale.y);
+                ::SF::Engine::Vec2 clip_max((pcmd->ClipRect.z - clip_off.x) * clip_scale.x,
+                                            (pcmd->ClipRect.w - clip_off.y) * clip_scale.y);
 
                 // Clamp to viewport as vkCmdSetScissor() won't accept values that are off bounds
                 if (clip_min.x < 0.0f)
@@ -2256,7 +2257,7 @@ static void ImGui_ImplVulkan_DestroyWindow(ImGuiViewport *viewport)
     viewport->RendererUserData = nullptr;
 }
 
-static void ImGui_ImplVulkan_SetWindowSize(ImGuiViewport *viewport, Vec2 size)
+static void ImGui_ImplVulkan_SetWindowSize(ImGuiViewport *viewport, ::SF::Engine::Vec2 size)
 {
     ImGui_ImplVulkan_Data *bd         = ImGui_ImplVulkan_GetBackendData();
     ImGui_ImplVulkan_ViewportData *vd = (ImGui_ImplVulkan_ViewportData *) viewport->RendererUserData;
@@ -2326,7 +2327,7 @@ static void ImGui_ImplVulkan_RenderWindow(ImGuiViewport *viewport, void *)
             check_vk_result(err);
         }
         {
-            Vec4 clear_color = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            ::SF::Engine::Vec4 clear_color = ::SF::Engine::Vec4(0.0f, 0.0f, 0.0f, 1.0f);
             memcpy(&wd->ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
         }
     #ifdef IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING

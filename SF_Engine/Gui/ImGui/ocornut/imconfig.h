@@ -125,15 +125,16 @@
 // backend.
 // #define IMGUI_ENABLE_STB_TRUETYPE
 
-//---- Define constructor and implicit cast operators to convert back<>forth between your math types and Vec2/Vec4.
-// This will be inlined as part of Vec2 and Vec4 class declarations.
+//---- Define constructor and implicit cast operators to convert back<>forth between your math types and
+//::SF::Engine::Vec2/::SF::Engine::Vec4.
+// This will be inlined as part of ::SF::Engine::Vec2 and ::SF::Engine::Vec4 class declarations.
 /*
 #define IM_VEC2_CLASS_EXTRA                                                     \
-        constexpr Vec2(const MyVec2& f) : x(f.x), y(f.y) {}                   \
+        constexpr ::SF::Engine::Vec2(const MyVec2& f) : x(f.x), y(f.y) {}                   \
         operator MyVec2() const { return MyVec2(x,y); }
 
 #define IM_VEC4_CLASS_EXTRA                                                     \
-        constexpr Vec4(const MyVec4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {}   \
+        constexpr ::SF::Engine::Vec4(const MyVec4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {}   \
         operator MyVec4() const { return MyVec4(x,y,z,w); }
 */
 //---- ...Or use Dear ImGui's own very basic math operators.

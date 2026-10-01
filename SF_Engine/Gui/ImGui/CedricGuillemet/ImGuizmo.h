@@ -231,11 +231,12 @@ namespace IMGUIZMO_NAMESPACE
     // It seems to be a defensive patent in the US. I don't think it will bring troubles using it as
     // other software are using the same mechanics. But just in case, you are now warned!
     //
-    void ViewManipulate(float *view, float length, Vec2 position, Vec2 size, uint32_t backgroundColor);
+    void ViewManipulate(float *view, float length, ::SF::Engine::Vec2 position, ::SF::Engine::Vec2 size,
+                        uint32_t backgroundColor);
 
     // use this version if you did not call Manipulate before and you are just using ViewManipulate
     void ViewManipulate(float *view, const float *projection, OPERATION operation, MODE mode, float *matrix,
-                        float length, Vec2 position, Vec2 size, uint32_t backgroundColor);
+                        float length, ::SF::Engine::Vec2 position, ::SF::Engine::Vec2 size, uint32_t backgroundColor);
 
     void SetAlternativeWindow(ImGuiWindow *window);
 
@@ -256,13 +257,13 @@ namespace IMGUIZMO_NAMESPACE
     //   whereas "str_id" denote a string that is only used as an ID and not normally displayed.
     void PushID(const char *str_id);                               // push string into the ID stack (will hash string).
     void PushID(const char *str_id_begin, const char *str_id_end); // push string into the ID stack (will hash string).
-    void PushID(const void *ptr_id);   // push pointer into the ID stack (will hash pointer).
-    void PushID(int int_id);           // push integer into the ID stack (will hash integer).
-    void PopID();                      // pop from the ID stack.
-    ImGuiID GetID(const char *str_id); // calculate unique ID (hash of whole ID stack + given parameter). e.g. if you
-                                       // want to query into ImGuiStorage yourself
-    ImGuiID GetID(const char *str_id_begin, const char *str_id_end);
-    ImGuiID GetID(const void *ptr_id);
+    void PushID(const void *ptr_id);  // push pointer into the ID stack (will hash pointer).
+    void PushID(int int_id);          // push integer into the ID stack (will hash integer).
+    void PopID();                     // pop from the ID stack.
+    IdType GetID(const char *str_id); // calculate unique ID (hash of whole ID stack + given parameter). e.g. if you
+                                      // want to query into ImGuiStorage yourself
+    IdType GetID(const char *str_id_begin, const char *str_id_end);
+    IdType GetID(const void *ptr_id);
 
     // return true if the cursor is over the operation's gizmo
     bool IsOver(OPERATION op);
@@ -315,8 +316,9 @@ namespace IMGUIZMO_NAMESPACE
     // Compute the world-space mouse picking ray from explicit inputs, without reading ImGui IO.
     // Useful for tests/headless usage. view and projection are column-major float[16] (same
     // layout as Manipulate). rayOrigin and rayDirection receive a float[3] each.
-    void ComputeMouseRay(const float *view, const float *projection, const Vec2 &mousePosition,
-                         const Vec2 &rectPosition, const Vec2 &rectSize, float *rayOrigin, float *rayDirection);
+    void ComputeMouseRay(const float *view, const float *projection, const ::SF::Engine::Vec2 &mousePosition,
+                         const ::SF::Engine::Vec2 &rectPosition, const ::SF::Engine::Vec2 &rectSize, float *rayOrigin,
+                         float *rayDirection);
 
     enum COLOR
     {
@@ -351,7 +353,7 @@ namespace IMGUIZMO_NAMESPACE
         float HatchedAxisLineThickness;   // Thickness of hatched axis lines
         float CenterCircleSize;           // Size of circle at the center of the translate/scale gizmo
 
-        Vec4 Colors[COLOR::COUNT];
+        ::SF::Engine::Vec4 Colors[COLOR::COUNT];
     };
 
     Style &GetStyle();

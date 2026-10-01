@@ -179,9 +179,9 @@ static const uint64_t IM_U64_MAX = (2ULL * 9223372036854775807LL + 1);
 static bool InputTextFilterCharacter(ImGuiContext *ctx, ImGuiInputTextState *state, unsigned int *p_char,
                                      ImGuiInputTextCallback callback, void *user_data,
                                      bool input_source_is_clipboard = false);
-static Vec2 InputTextCalcTextSize(ImGuiContext *ctx, const char *text_begin, const char *text_end_display,
-                                  const char *text_end, const char **out_remaining = nullptr,
-                                  Vec2 *out_offset = nullptr, ImDrawTextFlags flags = 0);
+static ::SF::Engine::Vec2 InputTextCalcTextSize(ImGuiContext *ctx, const char *text_begin, const char *text_end_display,
+                                                const char *text_end, const char **out_remaining = nullptr,
+                                                ::SF::Engine::Vec2 *out_offset = nullptr, ImDrawTextFlags flags = 0);
 
 //-------------------------------------------------------------------------
 // [SECTION] Widgets: Text, etc.
@@ -218,14 +218,15 @@ void ImGui::TextEx(const char *text, const char *text_end, ImGuiTextFlags flags)
     if (text_end == nullptr)
         text_end = text + ImStrlen(text); // FIXME-OPT
 
-    const Vec2 text_pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
+    const ::SF::Engine::Vec2 text_pos(window->DC.CursorPos.x,
+                                      window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
     const float wrap_pos_x  = window->DC.TextWrapPos;
     const bool wrap_enabled = (wrap_pos_x >= 0.0f);
     if (text_end - text <= 2000 || wrap_enabled)
     {
         // Common case
         const float wrap_width = wrap_enabled ? CalcWrapWidthForPos(window->DC.CursorPos, wrap_pos_x) : 0.0f;
-        const Vec2 text_size   = CalcTextSize(text_begin, text_end, false, wrap_width);
+        const ::SF::Engine::Vec2 text_size = CalcTextSize(text_begin, text_end, false, wrap_width);
 
         ImRect bb(text_pos, text_pos + text_size);
         ItemSize(text_size, 0.0f);
@@ -246,10 +247,10 @@ void ImGui::TextEx(const char *text, const char *text_end, ImGuiTextFlags flags)
         // a casually written loop.
         const char *line        = text;
         const float line_height = GetTextLineHeight();
-        Vec2 text_size(0, 0);
+        ::SF::Engine::Vec2 text_size(0, 0);
 
         // Lines to skip (can't skip when logging text)
-        Vec2 pos = text_pos;
+        ::SF::Engine::Vec2 pos = text_pos;
         if (!g.LogEnabled)
         {
             int lines_skippable = (int) ((window->ClipRect.Min.y - text_pos.y) / line_height);
@@ -273,7 +274,7 @@ void ImGui::TextEx(const char *text, const char *text_end, ImGuiTextFlags flags)
         // Lines to render
         if (line < text_end)
         {
-            ImRect line_rect(pos, pos + Vec2(FLT_MAX, line_height));
+            ImRect line_rect(pos, pos + ::SF::Engine::Vec2(FLT_MAX, line_height));
             while (line < text_end)
             {
                 if (IsClippedEx(line_rect, 0))
@@ -338,7 +339,7 @@ void ImGui::TextV(const char *fmt, va_list args)
     TextEx(text, text_end, ImGuiTextFlags_NoWidthForLargeClippedText);
 }
 
-void ImGui::TextColored(const Vec4 &col, const char *fmt, ...)
+void ImGui::TextColored(const ::SF::Engine::Vec4 &col, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -346,7 +347,7 @@ void ImGui::TextColored(const Vec4 &col, const char *fmt, ...)
     va_end(args);
 }
 
-void ImGui::TextColoredV(const Vec4 &col, const char *fmt, va_list args)
+void ImGui::TextColoredV(const ::SF::Engine::Vec4 &col, const char *fmt, va_list args)
 {
     PushStyleColor(ImGuiCol_Text, col);
     TextV(fmt, args);
@@ -408,19 +409,19 @@ void ImGui::TextAlignedV(float align_x, float size_x, const char *fmt, va_list a
 
     const char *text, *text_end;
     ImFormatStringToTempBufferV(&text, &text_end, fmt, args);
-    const Vec2 text_size = CalcTextSize(text, text_end);
-    size_x               = CalcItemSize(Vec2(size_x, 0.0f), 0.0f, text_size.y).x;
+    const ::SF::Engine::Vec2 text_size = CalcTextSize(text, text_end);
+    size_x                             = CalcItemSize(::SF::Engine::Vec2(size_x, 0.0f), 0.0f, text_size.y).x;
 
-    Vec2 pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
-    Vec2 pos_max(pos.x + size_x, window->ClipRect.Max.y);
-    Vec2 size(ImMin(size_x, text_size.x), text_size.y);
+    ::SF::Engine::Vec2 pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
+    ::SF::Engine::Vec2 pos_max(pos.x + size_x, window->ClipRect.Max.y);
+    ::SF::Engine::Vec2 size(ImMin(size_x, text_size.x), text_size.y);
     window->DC.CursorMaxPos.x = ImMax(window->DC.CursorMaxPos.x, pos.x + text_size.x);
     window->DC.IdealMaxPos.x  = ImMax(window->DC.IdealMaxPos.x, pos.x + text_size.x);
     if (align_x > 0.0f && text_size.x < size_x)
         pos.x += ImTrunc((size_x - text_size.x) * align_x);
     RenderTextEllipsis(window->DrawList, pos, pos_max, pos_max.x, text, text_end, &text_size);
 
-    const Vec2 backup_max_pos = window->DC.CursorMaxPos;
+    const ::SF::Engine::Vec2 backup_max_pos = window->DC.CursorMaxPos;
     ItemSize(size);
     ItemAdd(ImRect(pos, pos + size), 0);
     window->DC.CursorMaxPos.x =
@@ -453,13 +454,14 @@ void ImGui::LabelTextV(const char *label, const char *fmt, va_list args)
 
     const char *value_text_begin, *value_text_end;
     ImFormatStringToTempBufferV(&value_text_begin, &value_text_end, fmt, args);
-    const Vec2 value_size = CalcTextSize(value_text_begin, value_text_end, false);
-    const char *label_end = FindRenderedTextEnd(label);
-    const Vec2 label_size = CalcTextSize(label, label_end, false);
+    const ::SF::Engine::Vec2 value_size = CalcTextSize(value_text_begin, value_text_end, false);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
-    const Vec2 pos = window->DC.CursorPos;
-    const ImRect value_bb(pos, pos + Vec2(w, value_size.y + style.FramePadding.y * 2));
-    const ImRect total_bb(pos, pos + Vec2(w + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f),
+    const ::SF::Engine::Vec2 pos = window->DC.CursorPos;
+    const ImRect value_bb(pos, pos + ::SF::Engine::Vec2(w, value_size.y + style.FramePadding.y * 2));
+    const ImRect total_bb(
+            pos, pos + ::SF::Engine::Vec2(w + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f),
                                           ImMax(value_size.y, label_size.y) + style.FramePadding.y * 2));
     ItemSize(total_bb, style.FramePadding.y);
     if (!ItemAdd(total_bb, 0))
@@ -467,10 +469,10 @@ void ImGui::LabelTextV(const char *label, const char *fmt, va_list args)
 
     // Render
     RenderTextClipped(value_bb.Min + style.FramePadding, value_bb.Max, value_text_begin, value_text_end, &value_size,
-                      Vec2(0.0f, 0.0f));
+                      ::SF::Engine::Vec2(0.0f, 0.0f));
     if (label_size.x > 0.0f)
-        RenderText(Vec2(value_bb.Max.x + style.ItemInnerSpacing.x, value_bb.Min.y + style.FramePadding.y), label,
-                   label_end, false);
+        RenderText(::SF::Engine::Vec2(value_bb.Max.x + style.ItemInnerSpacing.x, value_bb.Min.y + style.FramePadding.y),
+                   label, label_end, false);
 }
 
 void ImGui::BulletText(const char *fmt, ...)
@@ -493,10 +495,11 @@ void ImGui::BulletTextV(const char *fmt, va_list args)
 
     const char *text_begin, *text_end;
     ImFormatStringToTempBufferV(&text_begin, &text_end, fmt, args);
-    const Vec2 label_size = CalcTextSize(text_begin, text_end, false);
-    const Vec2 total_size = Vec2(g.FontSize + (label_size.x > 0.0f ? (label_size.x + style.FramePadding.x * 2) : 0.0f),
-                                 label_size.y); // Empty text doesn't add padding
-    Vec2 pos              = window->DC.CursorPos;
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(text_begin, text_end, false);
+    const ::SF::Engine::Vec2 total_size =
+            ::SF::Engine::Vec2(g.FontSize + (label_size.x > 0.0f ? (label_size.x + style.FramePadding.x * 2) : 0.0f),
+                               label_size.y); // Empty text doesn't add padding
+    ::SF::Engine::Vec2 pos = window->DC.CursorPos;
     pos.y += window->DC.CurrLineTextBaseOffset;
     ItemSize(total_size, 0.0f);
     const ImRect bb(pos, pos + total_size);
@@ -505,9 +508,9 @@ void ImGui::BulletTextV(const char *fmt, va_list args)
 
     // Render
     uint32_t text_col = GetColorU32(ImGuiCol_Text);
-    RenderBullet(window->DrawList, bb.Min + Vec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f),
-                 text_col);
-    RenderText(bb.Min + Vec2(g.FontSize + style.FramePadding.x * 2, 0.0f), text_begin, text_end, false);
+    RenderBullet(window->DrawList,
+                 bb.Min + ::SF::Engine::Vec2(style.FramePadding.x + g.FontSize * 0.5f, g.FontSize * 0.5f), text_col);
+    RenderText(bb.Min + ::SF::Engine::Vec2(g.FontSize + style.FramePadding.x * 2, 0.0f), text_begin, text_end, false);
 }
 
 //-------------------------------------------------------------------------
@@ -604,7 +607,7 @@ void ImGui::BulletTextV(const char *fmt, va_list args)
 //   with same ID and different MouseButton (see #8030). You can fix it by:
 //       (1) switching to use a single ButtonBehavior() with multiple _MouseButton flags.
 //    or (2) surrounding those calls with PushItemFlag(ImGuiItemFlags_AllowDuplicateId, true); ... PopItemFlag()
-bool ImGui::ButtonBehavior(const ImRect &bb, ImGuiID id, bool *out_hovered, bool *out_held, ImGuiButtonFlags flags)
+bool ImGui::ButtonBehavior(const ImRect &bb, IdType id, bool *out_hovered, bool *out_held, ImGuiButtonFlags flags)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = GetCurrentWindow();
@@ -668,7 +671,7 @@ bool ImGui::ButtonBehavior(const ImRect &bb, ImGuiID id, bool *out_hovered, bool
         g.HoveredWindow = backup_hovered_window;
 
     // Mouse handling
-    const ImGuiID test_owner_id = (flags & ImGuiButtonFlags_NoTestKeyOwner) ? ImGuiKeyOwner_Any : id;
+    const IdType test_owner_id = (flags & ImGuiButtonFlags_NoTestKeyOwner) ? ImGuiKeyOwner_Any : id;
     if (hovered)
     {
         IM_ASSERT(id != 0); // Lazily check inside rare path.
@@ -880,27 +883,27 @@ bool ImGui::ButtonBehavior(const ImRect &bb, ImGuiID id, bool *out_hovered, bool
     return pressed;
 }
 
-bool ImGui::ButtonEx(const char *label, const Vec2 &size_arg, ImGuiButtonFlags flags)
+bool ImGui::ButtonEx(const char *label, const ::SF::Engine::Vec2 &size_arg, ImGuiButtonFlags flags)
 {
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
 
-    ImGuiContext &g         = *GImGui;
-    const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = window->GetID(label);
-    const char *label_end   = FindRenderedTextEnd(label);
-    const Vec2 label_size   = CalcTextSize(label, label_end, false);
+    ImGuiContext &g                     = *GImGui;
+    const ImGuiStyle &style             = g.Style;
+    const IdType id                     = window->GetID(label);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
-    Vec2 pos = window->DC.CursorPos;
+    ::SF::Engine::Vec2 pos = window->DC.CursorPos;
     if ((flags & ImGuiButtonFlags_AlignTextBaseLine) &&
         style.FramePadding.y <
                 window->DC
                         .CurrLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so
                                                  // that text baseline matches (bit hacky, since it shouldn't be a flag)
         pos.y += window->DC.CurrLineTextBaseOffset - style.FramePadding.y;
-    Vec2 size = CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f,
-                             label_size.y + style.FramePadding.y * 2.0f);
+    ::SF::Engine::Vec2 size = CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f,
+                                           label_size.y + style.FramePadding.y * 2.0f);
 
     const ImRect bb(pos, pos + size);
     ItemSize(size, style.FramePadding.y);
@@ -930,7 +933,10 @@ bool ImGui::ButtonEx(const char *label, const Vec2 &size_arg, ImGuiButtonFlags f
     return pressed;
 }
 
-bool ImGui::Button(const char *label, const Vec2 &size_arg) { return ButtonEx(label, size_arg, ImGuiButtonFlags_None); }
+bool ImGui::Button(const char *label, const ::SF::Engine::Vec2 &size_arg)
+{
+    return ButtonEx(label, size_arg, ImGuiButtonFlags_None);
+}
 
 // Small buttons fits within text without additional vertical spacing.
 bool ImGui::SmallButton(const char *label)
@@ -938,7 +944,7 @@ bool ImGui::SmallButton(const char *label)
     ImGuiContext &g        = *GImGui;
     float backup_padding_y = g.Style.FramePadding.y;
     g.Style.FramePadding.y = 0.0f;
-    bool pressed           = ButtonEx(label, Vec2(0, 0), ImGuiButtonFlags_AlignTextBaseLine);
+    bool pressed           = ButtonEx(label, ::SF::Engine::Vec2(0, 0), ImGuiButtonFlags_AlignTextBaseLine);
     g.Style.FramePadding.y = backup_padding_y;
     return pressed;
 }
@@ -946,7 +952,7 @@ bool ImGui::SmallButton(const char *label)
 // Tip: use ImGui::PushID()/PopID() to push indices or pointers in the ID stack.
 // Then you can keep 'str_id' empty or the same for all your buttons (instead of creating a string based on a non-string
 // id)
-bool ImGui::InvisibleButton(const char *str_id, const Vec2 &size_arg, ImGuiButtonFlags flags)
+bool ImGui::InvisibleButton(const char *str_id, const ::SF::Engine::Vec2 &size_arg, ImGuiButtonFlags flags)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = GetCurrentWindow();
@@ -954,10 +960,11 @@ bool ImGui::InvisibleButton(const char *str_id, const Vec2 &size_arg, ImGuiButto
         return false;
 
     // Ensure zero-size fits to contents
-    Vec2 size = CalcItemSize(
-            Vec2(size_arg.x != 0.0f ? size_arg.x : -FLT_MIN, size_arg.y != 0.0f ? size_arg.y : -FLT_MIN), 0.0f, 0.0f);
+    ::SF::Engine::Vec2 size = CalcItemSize(
+            ::SF::Engine::Vec2(size_arg.x != 0.0f ? size_arg.x : -FLT_MIN, size_arg.y != 0.0f ? size_arg.y : -FLT_MIN),
+            0.0f, 0.0f);
 
-    const ImGuiID id = window->GetID(str_id);
+    const IdType id = window->GetID(str_id);
     const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
     ItemSize(size);
     if (!ItemAdd(bb, id, nullptr, (flags & ImGuiButtonFlags_EnableNav) ? ImGuiItemFlags_None : ImGuiItemFlags_NoNav))
@@ -971,14 +978,14 @@ bool ImGui::InvisibleButton(const char *str_id, const Vec2 &size_arg, ImGuiButto
     return pressed;
 }
 
-bool ImGui::ArrowButtonEx(const char *str_id, ImGuiDir dir, Vec2 size, ImGuiButtonFlags flags)
+bool ImGui::ArrowButtonEx(const char *str_id, ImGuiDir dir, ::SF::Engine::Vec2 size, ImGuiButtonFlags flags)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
 
-    const ImGuiID id = window->GetID(str_id);
+    const IdType id = window->GetID(str_id);
     const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
     const float default_size = GetFrameHeight();
     ItemSize(size, (size.y >= default_size) ? g.Style.FramePadding.y : -1.0f);
@@ -996,7 +1003,8 @@ bool ImGui::ArrowButtonEx(const char *str_id, ImGuiDir dir, Vec2 size, ImGuiButt
     RenderNavCursor(bb, id);
     RenderFrame(bb.Min, bb.Max, bg_col, true, g.Style.FrameRounding);
     RenderArrow(window->DrawList,
-                bb.Min + Vec2(ImMax(0.0f, (size.x - g.FontSize) * 0.5f), ImMax(0.0f, (size.y - g.FontSize) * 0.5f)),
+                bb.Min + ::SF::Engine::Vec2(ImMax(0.0f, (size.x - g.FontSize) * 0.5f),
+                                            ImMax(0.0f, (size.y - g.FontSize) * 0.5f)),
                 text_col, dir);
 
     IMGUI_TEST_ENGINE_ITEM_INFO(id, str_id, g.LastItemData.StatusFlags);
@@ -1006,11 +1014,11 @@ bool ImGui::ArrowButtonEx(const char *str_id, ImGuiDir dir, Vec2 size, ImGuiButt
 bool ImGui::ArrowButton(const char *str_id, ImGuiDir dir)
 {
     float sz = GetFrameHeight();
-    return ArrowButtonEx(str_id, dir, Vec2(sz, sz), ImGuiButtonFlags_None);
+    return ArrowButtonEx(str_id, dir, ::SF::Engine::Vec2(sz, sz), ImGuiButtonFlags_None);
 }
 
 // Button to close a window
-bool ImGui::CloseButton(ImGuiID id, const Vec2 &pos)
+bool ImGui::CloseButton(IdType id, const ::SF::Engine::Vec2 &pos)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
@@ -1018,7 +1026,7 @@ bool ImGui::CloseButton(ImGuiID id, const Vec2 &pos)
     // Tweak 1: Shrink hit-testing area if button covers an abnormally large proportion of the visible region. That's in
     // order to facilitate moving the window away. (#3825) This may better be applied as a general hit-rect reduction
     // mechanism for all widgets to ensure the area to move window is always accessible?
-    const ImRect bb(pos, pos + Vec2(g.FontSize, g.FontSize));
+    const ImRect bb(pos, pos + ::SF::Engine::Vec2(g.FontSize, g.FontSize));
     ImRect bb_interact                = bb;
     const float area_to_visible_ratio = window->OuterRectClipped.GetArea() / bb.GetArea();
     if (area_to_visible_ratio < 1.5f)
@@ -1039,25 +1047,27 @@ bool ImGui::CloseButton(ImGuiID id, const Vec2 &pos)
     if (hovered)
         window->DrawList->AddRectFilled(bb.Min, bb.Max, bg_col);
     RenderNavCursor(bb, id, ImGuiNavRenderCursorFlags_Compact);
-    const uint32_t cross_col    = GetColorU32(ImGuiCol_Text);
-    const Vec2 cross_center     = bb.GetCenter() - Vec2(0.5f, 0.5f);
-    const float cross_extent    = g.FontSize * 0.5f * 0.7071f - 1.0f;
-    const float cross_thickness = 1.0f * (float) (int) g.Style._MainScale; // FIXME-DPI
-    window->DrawList->AddLine(cross_center + Vec2(+cross_extent, +cross_extent),
-                              cross_center + Vec2(-cross_extent, -cross_extent), cross_col, cross_thickness);
-    window->DrawList->AddLine(cross_center + Vec2(+cross_extent, -cross_extent),
-                              cross_center + Vec2(-cross_extent, +cross_extent), cross_col, cross_thickness);
+    const uint32_t cross_col              = GetColorU32(ImGuiCol_Text);
+    const ::SF::Engine::Vec2 cross_center = bb.GetCenter() - ::SF::Engine::Vec2(0.5f, 0.5f);
+    const float cross_extent              = g.FontSize * 0.5f * 0.7071f - 1.0f;
+    const float cross_thickness           = 1.0f * (float) (int) g.Style._MainScale; // FIXME-DPI
+    window->DrawList->AddLine(cross_center + ::SF::Engine::Vec2(+cross_extent, +cross_extent),
+                              cross_center + ::SF::Engine::Vec2(-cross_extent, -cross_extent), cross_col,
+                              cross_thickness);
+    window->DrawList->AddLine(cross_center + ::SF::Engine::Vec2(+cross_extent, -cross_extent),
+                              cross_center + ::SF::Engine::Vec2(-cross_extent, +cross_extent), cross_col,
+                              cross_thickness);
 
     return pressed;
 }
 
 // The Collapse button also functions as a Dock Menu button.
-bool ImGui::CollapseButton(ImGuiID id, const Vec2 &pos, ImGuiDockNode *dock_node)
+bool ImGui::CollapseButton(IdType id, const ::SF::Engine::Vec2 &pos, ImGuiDockNode *dock_node)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
 
-    ImRect bb(pos, pos + Vec2(g.FontSize, g.FontSize));
+    ImRect bb(pos, pos + ::SF::Engine::Vec2(g.FontSize, g.FontSize));
     bool is_clipped = !ItemAdd(bb, id);
     bool hovered, held;
     bool pressed = ButtonBehavior(bb, id, &hovered, &held, ImGuiButtonFlags_None);
@@ -1086,7 +1096,7 @@ bool ImGui::CollapseButton(ImGuiID id, const Vec2 &pos, ImGuiDockNode *dock_node
     return pressed;
 }
 
-ImGuiID ImGui::GetWindowScrollbarID(ImGuiWindow *window, ImGuiAxis axis)
+IdType ImGui::GetWindowScrollbarID(ImGuiWindow *window, ImGuiAxis axis)
 {
     return window->GetID(axis == ImGuiAxis_X ? "#SCROLLX" : "#SCROLLY");
 }
@@ -1129,7 +1139,7 @@ void ImGui::Scrollbar(ImGuiAxis axis)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
-    const ImGuiID id    = GetWindowScrollbarID(window, axis);
+    const IdType id     = GetWindowScrollbarID(window, axis);
 
     // Calculate scrollbar bounding box
     ImRect bb                    = GetWindowScrollbarRect(window, axis);
@@ -1150,7 +1160,7 @@ void ImGui::Scrollbar(ImGuiAxis axis)
 // a scrollbar
 // - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal.
 // Still, the code should probably be made simpler..
-bool ImGui::ScrollbarEx(const ImRect &bb_frame, ImGuiID id, ImGuiAxis axis, int64_t *p_scroll_v, int64_t size_visible_v,
+bool ImGui::ScrollbarEx(const ImRect &bb_frame, IdType id, ImGuiAxis axis, int64_t *p_scroll_v, int64_t size_visible_v,
                         int64_t size_contents_v, ImDrawFlags draw_rounding_flags)
 {
     ImGuiContext &g     = *GImGui;
@@ -1280,15 +1290,16 @@ bool ImGui::ScrollbarEx(const ImRect &bb_frame, ImGuiID id, ImGuiAxis axis, int6
 // - Read about ImTextureID/ImTextureRef here:
 // https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
 // - 'uv0' and 'uv1' are texture coordinates. Read about them from the same link above.
-void ImGui::ImageWithBg(ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0, const Vec2 &uv1,
-                        const Vec4 &bg_col, const Vec4 &tint_col)
+void ImGui::ImageWithBg(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &image_size, const ::SF::Engine::Vec2 &uv0,
+                        const ::SF::Engine::Vec2 &uv1, const ::SF::Engine::Vec4 &bg_col,
+                        const ::SF::Engine::Vec4 &tint_col)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return;
 
-    const Vec2 padding(g.Style.ImageBorderSize, g.Style.ImageBorderSize);
+    const ::SF::Engine::Vec2 padding(g.Style.ImageBorderSize, g.Style.ImageBorderSize);
     const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + image_size + padding * 2.0f);
     ItemSize(bb);
     if (!ItemAdd(bb, 0))
@@ -1307,20 +1318,22 @@ void ImGui::ImageWithBg(ImTextureRef tex_ref, const Vec2 &image_size, const Vec2
         window->DrawList->AddRect(bb.Min, bb.Max, GetColorU32(ImGuiCol_Border), rounding, g.Style.ImageBorderSize);
 }
 
-void ImGui::Image(ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0, const Vec2 &uv1)
+void ImGui::Image(ImTextureRef tex_ref, const ::SF::Engine::Vec2 &image_size, const ::SF::Engine::Vec2 &uv0,
+                  const ::SF::Engine::Vec2 &uv1)
 {
     ImageWithBg(tex_ref, image_size, uv0, uv1);
 }
 
-bool ImGui::ImageButtonEx(ImGuiID id, ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0, const Vec2 &uv1,
-                          const Vec4 &bg_col, const Vec4 &tint_col, ImGuiButtonFlags flags)
+bool ImGui::ImageButtonEx(IdType id, ImTextureRef tex_ref, const ::SF::Engine::Vec2 &image_size,
+                          const ::SF::Engine::Vec2 &uv0, const ::SF::Engine::Vec2 &uv1,
+                          const ::SF::Engine::Vec4 &bg_col, const ::SF::Engine::Vec4 &tint_col, ImGuiButtonFlags flags)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
 
-    const Vec2 padding = g.Style.FramePadding;
+    const ::SF::Engine::Vec2 padding = g.Style.FramePadding;
     const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + image_size + padding * 2.0f);
     ItemSize(bb);
     if (!ItemAdd(bb, id))
@@ -1351,8 +1364,9 @@ bool ImGui::ImageButtonEx(ImGuiID id, ImTextureRef tex_ref, const Vec2 &image_si
 // button.
 // - ImageButton() draws a background based on regular Button() color + optionally an inner background if specified.
 // (#8165) // FIXME: Maybe that's not the best design?
-bool ImGui::ImageButton(const char *str_id, ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0,
-                        const Vec2 &uv1, const Vec4 &bg_col, const Vec4 &tint_col)
+bool ImGui::ImageButton(const char *str_id, ImTextureRef tex_ref, const ::SF::Engine::Vec2 &image_size,
+                        const ::SF::Engine::Vec2 &uv0, const ::SF::Engine::Vec2 &uv1, const ::SF::Engine::Vec4 &bg_col,
+                        const ::SF::Engine::Vec4 &tint_col)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
@@ -1368,16 +1382,17 @@ bool ImGui::Checkbox(const char *label, bool *v)
     if (window->SkipItems)
         return false;
 
-    ImGuiContext &g         = *GImGui;
-    const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = window->GetID(label);
-    const char *label_end   = FindRenderedTextEnd(label);
-    const Vec2 label_size   = CalcTextSize(label, label_end, false);
+    ImGuiContext &g                     = *GImGui;
+    const ImGuiStyle &style             = g.Style;
+    const IdType id                     = window->GetID(label);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
-    const float square_sz = GetFrameHeight();
-    const Vec2 pos        = window->DC.CursorPos;
-    const ImRect total_bb(pos,
-                          pos + Vec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f),
+    const float square_sz        = GetFrameHeight();
+    const ::SF::Engine::Vec2 pos = window->DC.CursorPos;
+    const ImRect total_bb(
+            pos,
+            pos + ::SF::Engine::Vec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f),
                                      label_size.y + style.FramePadding.y * 2.0f));
     ItemSize(total_bb, style.FramePadding.y);
     const bool is_visible      = ItemAdd(total_bb, id);
@@ -1413,7 +1428,7 @@ bool ImGui::Checkbox(const char *label, bool *v)
         MarkItemEdited(id);
     }
 
-    const ImRect check_bb(pos, pos + Vec2(square_sz, square_sz));
+    const ImRect check_bb(pos, pos + ::SF::Engine::Vec2(square_sz, square_sz));
     const bool mixed_value = (g.LastItemData.ItemFlags & ImGuiItemFlags_MixedValue) != 0;
     if (is_visible)
     {
@@ -1429,15 +1444,17 @@ bool ImGui::Checkbox(const char *label, bool *v)
             // Undocumented tristate/mixed/indeterminate checkbox (#2644)
             // This may seem awkwardly designed because the aim is to make ImGuiItemFlags_MixedValue supported by all
             // widgets (not just checkbox)
-            Vec2 pad(ImMax(1.0f, IM_TRUNC(square_sz / 3.6f)), ImMax(1.0f, IM_TRUNC(square_sz / 3.6f)));
+            ::SF::Engine::Vec2 pad(ImMax(1.0f, IM_TRUNC(square_sz / 3.6f)), ImMax(1.0f, IM_TRUNC(square_sz / 3.6f)));
             window->DrawList->AddRectFilled(check_bb.Min + pad, check_bb.Max - pad, check_col, style.FrameRounding);
         } else if (*v)
         {
             const float pad = ImMax(1.0f, IM_TRUNC(square_sz / 6.0f));
-            RenderCheckMark(window->DrawList, check_bb.Min + Vec2(pad, pad), check_col, square_sz - pad * 2.0f);
+            RenderCheckMark(window->DrawList, check_bb.Min + ::SF::Engine::Vec2(pad, pad), check_col,
+                            square_sz - pad * 2.0f);
         }
     }
-    const Vec2 label_pos = Vec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y);
+    const ::SF::Engine::Vec2 label_pos =
+            ::SF::Engine::Vec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y);
     if (g.LogEnabled)
         LogRenderedText(&label_pos, mixed_value ? "[~]" : *v ? "[x]" : "[ ]");
     if (is_visible && label_size.x > 0.0f)
@@ -1500,26 +1517,27 @@ bool ImGui::RadioButton(const char *label, bool active)
     if (window->SkipItems)
         return false;
 
-    ImGuiContext &g         = *GImGui;
-    const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = window->GetID(label);
-    const char *label_end   = FindRenderedTextEnd(label);
-    const Vec2 label_size   = CalcTextSize(label, label_end, false);
+    ImGuiContext &g                     = *GImGui;
+    const ImGuiStyle &style             = g.Style;
+    const IdType id                     = window->GetID(label);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
-    const float square_sz = GetFrameHeight();
-    const Vec2 pos        = window->DC.CursorPos;
-    const ImRect check_bb(pos, pos + Vec2(square_sz, square_sz));
-    const ImRect total_bb(pos,
-                          pos + Vec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f),
+    const float square_sz        = GetFrameHeight();
+    const ::SF::Engine::Vec2 pos = window->DC.CursorPos;
+    const ImRect check_bb(pos, pos + ::SF::Engine::Vec2(square_sz, square_sz));
+    const ImRect total_bb(
+            pos,
+            pos + ::SF::Engine::Vec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f),
                                      label_size.y + style.FramePadding.y * 2.0f));
     ItemSize(total_bb, style.FramePadding.y);
     if (!ItemAdd(total_bb, id))
         return false;
 
-    Vec2 center        = check_bb.GetCenter();
-    center.x           = IM_ROUND(center.x);
-    center.y           = IM_ROUND(center.y);
-    const float radius = (square_sz - 1.0f) * 0.5f;
+    ::SF::Engine::Vec2 center = check_bb.GetCenter();
+    center.x                  = IM_ROUND(center.x);
+    center.y                  = IM_ROUND(center.y);
+    const float radius        = (square_sz - 1.0f) * 0.5f;
 
     bool hovered, held;
     bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
@@ -1541,12 +1559,13 @@ bool ImGui::RadioButton(const char *label, bool active)
 
     if (style.FrameBorderSize > 0.0f)
     {
-        window->DrawList->AddCircle(center + Vec2(1, 1), radius, GetColorU32(ImGuiCol_BorderShadow), num_segment,
-                                    style.FrameBorderSize);
+        window->DrawList->AddCircle(center + ::SF::Engine::Vec2(1, 1), radius, GetColorU32(ImGuiCol_BorderShadow),
+                                    num_segment, style.FrameBorderSize);
         window->DrawList->AddCircle(center, radius, GetColorU32(ImGuiCol_Border), num_segment, style.FrameBorderSize);
     }
 
-    Vec2 label_pos = Vec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y);
+    ::SF::Engine::Vec2 label_pos =
+            ::SF::Engine::Vec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y);
     if (g.LogEnabled)
         LogRenderedText(&label_pos, active ? "(x)" : "( )");
     if (label_size.x > 0.0f)
@@ -1567,7 +1586,7 @@ bool ImGui::RadioButton(const char *label, int *v, int v_button)
 }
 
 // size_arg (for each axis) < 0.0f: align to end, 0.0f: auto, > 0.0f: specified size
-void ImGui::ProgressBar(float fraction, const Vec2 &size_arg, const char *overlay)
+void ImGui::ProgressBar(float fraction, const ::SF::Engine::Vec2 &size_arg, const char *overlay)
 {
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
@@ -1576,8 +1595,8 @@ void ImGui::ProgressBar(float fraction, const Vec2 &size_arg, const char *overla
     ImGuiContext &g         = *GImGui;
     const ImGuiStyle &style = g.Style;
 
-    Vec2 pos  = window->DC.CursorPos;
-    Vec2 size = CalcItemSize(size_arg, CalcItemWidth(), g.FontSize + style.FramePadding.y * 2.0f);
+    ::SF::Engine::Vec2 pos  = window->DC.CursorPos;
+    ::SF::Engine::Vec2 size = CalcItemSize(size_arg, CalcItemWidth(), g.FontSize + style.FramePadding.y * 2.0f);
     ImRect bb(pos, pos + size);
     ItemSize(size, style.FramePadding.y);
     if (!ItemAdd(bb, 0))
@@ -1603,7 +1622,7 @@ void ImGui::ProgressBar(float fraction, const Vec2 &size_arg, const char *overla
 
     // Render
     RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
-    bb.Expand(Vec2(-style.FrameBorderSize, -style.FrameBorderSize));
+    bb.Expand(::SF::Engine::Vec2(-style.FrameBorderSize, -style.FrameBorderSize));
     float fill_x0 = ImLerp(bb.Min.x, bb.Max.x, fill_n0);
     float fill_x1 = ImLerp(bb.Min.x, bb.Max.x, fill_n1);
     if (fill_x0 < fill_x1)
@@ -1621,14 +1640,15 @@ void ImGui::ProgressBar(float fraction, const Vec2 &size_arg, const char *overla
             overlay = overlay_buf;
         }
 
-        Vec2 overlay_size = CalcTextSize(overlay, nullptr);
+        ::SF::Engine::Vec2 overlay_size = CalcTextSize(overlay, nullptr);
         if (overlay_size.x > 0.0f)
         {
             float text_x =
                     is_indeterminate ? (bb.Min.x + bb.Max.x - overlay_size.x) * 0.5f : fill_x1 + style.ItemSpacing.x;
             RenderTextClipped(
-                    Vec2(ImClamp(text_x, bb.Min.x, bb.Max.x - overlay_size.x - style.ItemInnerSpacing.x), bb.Min.y),
-                    bb.Max, overlay, nullptr, &overlay_size, Vec2(0.0f, 0.5f), &bb);
+                    ::SF::Engine::Vec2(ImClamp(text_x, bb.Min.x, bb.Max.x - overlay_size.x - style.ItemInnerSpacing.x),
+                                       bb.Min.y),
+                    bb.Max, overlay, nullptr, &overlay_size, ::SF::Engine::Vec2(0.0f, 0.5f), &bb);
         }
     }
 }
@@ -1643,7 +1663,7 @@ void ImGui::Bullet()
     const ImGuiStyle &style = g.Style;
     const float line_height =
             ImMax(ImMin(window->DC.CurrLineSize.y, g.FontSize + style.FramePadding.y * 2), g.FontSize);
-    const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + Vec2(g.FontSize, line_height));
+    const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + ::SF::Engine::Vec2(g.FontSize, line_height));
     ItemSize(bb);
     if (!ItemAdd(bb, 0))
     {
@@ -1653,8 +1673,8 @@ void ImGui::Bullet()
 
     // Render and stay on same line
     uint32_t text_col = GetColorU32(ImGuiCol_Text);
-    RenderBullet(window->DrawList, bb.Min + Vec2(style.FramePadding.x + g.FontSize * 0.5f, line_height * 0.5f),
-                 text_col);
+    RenderBullet(window->DrawList,
+                 bb.Min + ::SF::Engine::Vec2(style.FramePadding.x + g.FontSize * 0.5f, line_height * 0.5f), text_col);
     SameLine(0, style.FramePadding.x * 2.0f);
 }
 
@@ -1669,11 +1689,11 @@ bool ImGui::TextLink(const char *label)
         return false;
 
     ImGuiContext &g       = *GImGui;
-    const ImGuiID id      = window->GetID(label);
+    const IdType id       = window->GetID(label);
     const char *label_end = FindRenderedTextEnd(label);
 
-    Vec2 pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
-    Vec2 size = CalcTextSize(label, label_end, false);
+    ::SF::Engine::Vec2 pos(window->DC.CursorPos.x, window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
+    ::SF::Engine::Vec2 size = CalcTextSize(label, label_end, false);
     ImRect bb(pos, pos + size);
     ItemSize(size, 0.0f);
     if (!ItemAdd(bb, id))
@@ -1686,8 +1706,8 @@ bool ImGui::TextLink(const char *label)
     if (hovered)
         SetMouseCursor(ImGuiMouseCursor_Hand);
 
-    Vec4 text_colf = g.Style.Colors[ImGuiCol_TextLink];
-    Vec4 line_colf = text_colf;
+    ::SF::Engine::Vec4 text_colf = g.Style.Colors[ImGuiCol_TextLink];
+    ::SF::Engine::Vec4 line_colf = text_colf;
     {
         // FIXME-STYLE: Read comments above. This widget is NOT written in the same style as some earlier widgets,
         // as we are currently experimenting/planning a different styling system.
@@ -1752,10 +1772,10 @@ void ImGui::Spacing()
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return;
-    ItemSize(Vec2(0, 0));
+    ItemSize(::SF::Engine::Vec2(0, 0));
 }
 
-void ImGui::Dummy(const Vec2 &size)
+void ImGui::Dummy(const ::SF::Engine::Vec2 &size)
 {
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
@@ -1778,9 +1798,9 @@ void ImGui::NewLine()
     window->DC.IsSameLine                    = false;
     if (window->DC.CurrLineSize.y > 0.0f) // In the event that we are on a line with items that is smaller that FontSize
                                           // high, we will preserve its height.
-        ItemSize(Vec2(0, 0));
+        ItemSize(::SF::Engine::Vec2(0, 0));
     else
-        ItemSize(Vec2(0.0f, g.FontSize));
+        ItemSize(::SF::Engine::Vec2(0.0f, g.FontSize));
     window->DC.LayoutType = backup_layout_type;
 }
 
@@ -1814,8 +1834,9 @@ void ImGui::SeparatorEx(ImGuiSeparatorFlags flags, float thickness)
         // Vertical separator, for menu bars (use current line height).
         float y1 = window->DC.CursorPos.y;
         float y2 = window->DC.CursorPos.y + window->DC.CurrLineSize.y;
-        const ImRect bb(Vec2(window->DC.CursorPos.x, y1), Vec2(window->DC.CursorPos.x + thickness, y2));
-        ItemSize(Vec2(thickness, 0.0f));
+        const ImRect bb(::SF::Engine::Vec2(window->DC.CursorPos.x, y1),
+                        ::SF::Engine::Vec2(window->DC.CursorPos.x + thickness, y2));
+        ItemSize(::SF::Engine::Vec2(thickness, 0.0f));
         if (!ItemAdd(bb, 0))
             return;
 
@@ -1849,8 +1870,9 @@ void ImGui::SeparatorEx(ImGuiSeparatorFlags flags, float thickness)
         // separator thickness and it would not makes sense to have a disparity depending on height.
         ////float thickness_for_layout = (thickness == 1.0f) ? 0.0f : thickness; // FIXME: See 1.70/1.71 Separator()
         /// change: makes legacy 1-px separator not affect layout yet. Should change.
-        const ImRect bb(Vec2(x1, window->DC.CursorPos.y), Vec2(x2, window->DC.CursorPos.y + thickness));
-        ItemSize(Vec2(0.0f, thickness));
+        const ImRect bb(::SF::Engine::Vec2(x1, window->DC.CursorPos.y),
+                        ::SF::Engine::Vec2(x2, window->DC.CursorPos.y + thickness));
+        ItemSize(::SF::Engine::Vec2(0.0f, thickness));
 
         if (ItemAdd(bb, 0))
         {
@@ -1885,20 +1907,20 @@ void ImGui::Separator()
     SeparatorEx(flags, ImMax(g.Style.SeparatorSize, 1.0f));
 }
 
-void ImGui::SeparatorTextEx(ImGuiID id, const char *label, const char *label_end, float extra_w)
+void ImGui::SeparatorTextEx(IdType id, const char *label, const char *label_end, float extra_w)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
     ImGuiStyle &style   = g.Style;
 
-    const Vec2 label_size = CalcTextSize(label, label_end, false);
-    const Vec2 pos        = window->DC.CursorPos;
-    const Vec2 padding    = style.SeparatorTextPadding;
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
+    const ::SF::Engine::Vec2 pos        = window->DC.CursorPos;
+    const ::SF::Engine::Vec2 padding    = style.SeparatorTextPadding;
 
     const float separator_thickness = style.SeparatorTextBorderSize;
-    const Vec2 min_size(label_size.x + extra_w + padding.x * 2.0f,
-                        ImMax(label_size.y + padding.y * 2.0f, separator_thickness));
-    const ImRect bb(pos, Vec2(window->WorkRect.Max.x, pos.y + min_size.y));
+    const ::SF::Engine::Vec2 min_size(label_size.x + extra_w + padding.x * 2.0f,
+                                      ImMax(label_size.y + padding.y * 2.0f, separator_thickness));
+    const ImRect bb(pos, ::SF::Engine::Vec2(window->WorkRect.Max.x, pos.y + min_size.y));
     const float text_baseline_y =
             ImTrunc((bb.GetHeight() - label_size.y) * style.SeparatorTextAlign.y +
                     0.999f); // ImMax(padding.y, ImTrunc((style.SeparatorTextSize - label_size.y) * 0.5f));
@@ -1911,9 +1933,9 @@ void ImGui::SeparatorTextEx(ImGuiID id, const char *label, const char *label_end
     const float seps_y  = ImTrunc((bb.Min.y + bb.Max.y) * 0.5f + 0.999f);
 
     const float label_avail_w = ImMax(0.0f, sep2_x2 - sep1_x1 - padding.x * 2.0f);
-    const Vec2 label_pos(pos.x + padding.x +
-                                 ImMax(0.0f, (label_avail_w - label_size.x - extra_w) * style.SeparatorTextAlign.x),
-                         pos.y + text_baseline_y); // FIXME-ALIGN
+    const ::SF::Engine::Vec2 label_pos(
+            pos.x + padding.x + ImMax(0.0f, (label_avail_w - label_size.x - extra_w) * style.SeparatorTextAlign.x),
+            pos.y + text_baseline_y); // FIXME-ALIGN
 
     // This allows using SameLine() to position something in the 'extra_w'
     window->DC.CursorPosPrevLine.x = label_pos.x + label_size.x;
@@ -1929,8 +1951,8 @@ void ImGui::SeparatorTextEx(ImGuiID id, const char *label, const char *label_end
             window->DrawList->AddLineH(sep2_x1, sep2_x2, seps_y, separator_col, separator_thickness);
         if (g.LogEnabled)
             LogSetNextTextDecoration("---", nullptr);
-        RenderTextEllipsis(window->DrawList, label_pos, Vec2(bb.Max.x, bb.Max.y + style.ItemSpacing.y), bb.Max.x, label,
-                           label_end, &label_size);
+        RenderTextEllipsis(window->DrawList, label_pos, ::SF::Engine::Vec2(bb.Max.x, bb.Max.y + style.ItemSpacing.y),
+                           bb.Max.x, label, label_end, &label_size);
     } else
     {
         if (g.LogEnabled)
@@ -1957,7 +1979,7 @@ void ImGui::SeparatorText(const char *label)
 
 // Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be
 // convenient to reduce visual noise.
-bool ImGui::SplitterBehavior(const ImRect &bb, ImGuiID id, ImGuiAxis axis, float *size1, float *size2, float min_size1,
+bool ImGui::SplitterBehavior(const ImRect &bb, IdType id, ImGuiAxis axis, float *size1, float *size2, float min_size1,
                              float min_size2, float hover_extend, float hover_visibility_delay, uint32_t bg_col)
 {
     ImGuiContext &g     = *GImGui;
@@ -1972,7 +1994,8 @@ bool ImGui::SplitterBehavior(const ImRect &bb, ImGuiID id, ImGuiAxis axis, float
     ImGuiButtonFlags button_flags = ImGuiButtonFlags_FlattenChildren;
     bool hovered, held;
     ImRect bb_interact = bb;
-    bb_interact.Expand(axis == ImGuiAxis_Y ? Vec2(0.0f, hover_extend) : Vec2(hover_extend, 0.0f));
+    bb_interact.Expand(axis == ImGuiAxis_Y ? ::SF::Engine::Vec2(0.0f, hover_extend)
+                                           : ::SF::Engine::Vec2(hover_extend, 0.0f));
     ButtonBehavior(bb_interact, id, &hovered, &held, button_flags);
     if (hovered)
         g.LastItemData.StatusFlags |=
@@ -1999,7 +2022,8 @@ bool ImGui::SplitterBehavior(const ImRect &bb, ImGuiID id, ImGuiAxis axis, float
         {
             *size1 = ImMax(*size1 + mouse_delta, min_size1);
             *size2 = ImMax(*size2 - mouse_delta, min_size2);
-            bb_render.Translate((axis == ImGuiAxis_X) ? Vec2(mouse_delta, 0.0f) : Vec2(0.0f, mouse_delta));
+            bb_render.Translate((axis == ImGuiAxis_X) ? ::SF::Engine::Vec2(mouse_delta, 0.0f)
+                                                      : ::SF::Engine::Vec2(0.0f, mouse_delta));
             MarkItemEdited(id);
         }
     }
@@ -2107,35 +2131,37 @@ bool ImGui::BeginCombo(const char *label, const char *preview_value, ImGuiComboF
         return false;
 
     const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = window->GetID(label);
+    const IdType id         = window->GetID(label);
     IM_ASSERT((flags & (ImGuiComboFlags_NoArrowButton | ImGuiComboFlags_NoPreview)) !=
               (ImGuiComboFlags_NoArrowButton | ImGuiComboFlags_NoPreview)); // Can't use both flags together
     if (flags & ImGuiComboFlags_WidthFitPreview)
         IM_ASSERT((flags & (ImGuiComboFlags_NoPreview | (ImGuiComboFlags) ImGuiComboFlags_CustomPreview)) == 0);
 
-    const float arrow_size    = (flags & ImGuiComboFlags_NoArrowButton) ? 0.0f : GetFrameHeight();
-    const char *label_end     = FindRenderedTextEnd(label);
-    const Vec2 label_size     = CalcTextSize(label, label_end, false);
-    const float preview_width = ((flags & ImGuiComboFlags_WidthFitPreview) && (preview_value != nullptr))
-                                        ? CalcTextSize(preview_value, nullptr, false).x
-                                        : 0.0f;
-    const float w             = (flags & ImGuiComboFlags_NoPreview)
-                                        ? arrow_size
-                                        : ((flags & ImGuiComboFlags_WidthFitPreview)
-                                                   ? (arrow_size + preview_width + style.FramePadding.x * 2.0f)
-                                                   : CalcItemWidth());
-    const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + Vec2(w, label_size.y + style.FramePadding.y * 2.0f));
-    const ImRect total_bb(bb.Min,
-                          bb.Max + Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+    const float arrow_size              = (flags & ImGuiComboFlags_NoArrowButton) ? 0.0f : GetFrameHeight();
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
+    const float preview_width           = ((flags & ImGuiComboFlags_WidthFitPreview) && (preview_value != nullptr))
+                                                  ? CalcTextSize(preview_value, nullptr, false).x
+                                                  : 0.0f;
+    const float w                       = (flags & ImGuiComboFlags_NoPreview)
+                                                  ? arrow_size
+                                                  : ((flags & ImGuiComboFlags_WidthFitPreview)
+                                                             ? (arrow_size + preview_width + style.FramePadding.x * 2.0f)
+                                                             : CalcItemWidth());
+    const ImRect bb(window->DC.CursorPos,
+                    window->DC.CursorPos + ::SF::Engine::Vec2(w, label_size.y + style.FramePadding.y * 2.0f));
+    const ImRect total_bb(
+            bb.Min,
+            bb.Max + ::SF::Engine::Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
     ItemSize(total_bb, style.FramePadding.y);
     if (!ItemAdd(total_bb, id, &bb))
         return false;
 
     // Open on click
     bool hovered, held;
-    bool pressed           = ButtonBehavior(bb, id, &hovered, &held);
-    const ImGuiID popup_id = ImHashStr("##ComboPopup", 0, id);
-    bool popup_open        = IsPopupOpen(popup_id, ImGuiPopupFlags_None);
+    bool pressed          = ButtonBehavior(bb, id, &hovered, &held);
+    const IdType popup_id = ImHashStr("##ComboPopup", 0, id);
+    bool popup_open       = IsPopupOpen(popup_id, ImGuiPopupFlags_None);
     if (pressed && !popup_open)
     {
         OpenPopupEx(popup_id, ImGuiPopupFlags_None);
@@ -2147,19 +2173,20 @@ bool ImGui::BeginCombo(const char *label, const char *preview_value, ImGuiComboF
     const float value_x2     = ImMax(bb.Min.x, bb.Max.x - arrow_size);
     RenderNavCursor(bb, id);
     if (!(flags & ImGuiComboFlags_NoPreview))
-        window->DrawList->AddRectFilled(bb.Min, Vec2(value_x2, bb.Max.y), frame_col, style.FrameRounding,
+        window->DrawList->AddRectFilled(bb.Min, ::SF::Engine::Vec2(value_x2, bb.Max.y), frame_col, style.FrameRounding,
                                         (flags & ImGuiComboFlags_NoArrowButton) ? ImDrawFlags_RoundCornersAll
                                                                                 : ImDrawFlags_RoundCornersLeft);
     if (!(flags & ImGuiComboFlags_NoArrowButton))
     {
         uint32_t bg_col   = GetColorU32((popup_open || hovered) ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
         uint32_t text_col = GetColorU32(ImGuiCol_Text);
-        window->DrawList->AddRectFilled(Vec2(value_x2, bb.Min.y), bb.Max, bg_col, style.FrameRounding,
+        window->DrawList->AddRectFilled(::SF::Engine::Vec2(value_x2, bb.Min.y), bb.Max, bg_col, style.FrameRounding,
                                         (w <= arrow_size) ? ImDrawFlags_RoundCornersAll
                                                           : ImDrawFlags_RoundCornersRight);
         if (value_x2 + arrow_size - style.FramePadding.x <= bb.Max.x)
-            RenderArrow(window->DrawList, Vec2(value_x2 + style.FramePadding.y, bb.Min.y + style.FramePadding.y),
-                        text_col, ImGuiDir_Down, 1.0f);
+            RenderArrow(window->DrawList,
+                        ::SF::Engine::Vec2(value_x2 + style.FramePadding.y, bb.Min.y + style.FramePadding.y), text_col,
+                        ImGuiDir_Down, 1.0f);
     }
     RenderFrameBorder(bb.Min, bb.Max, style.FrameRounding);
 
@@ -2176,10 +2203,12 @@ bool ImGui::BeginCombo(const char *label, const char *preview_value, ImGuiComboF
     {
         if (g.LogEnabled)
             LogSetNextTextDecoration("{", "}");
-        RenderTextClipped(bb.Min + style.FramePadding, Vec2(value_x2, bb.Max.y), preview_value, nullptr, nullptr);
+        RenderTextClipped(bb.Min + style.FramePadding, ::SF::Engine::Vec2(value_x2, bb.Max.y), preview_value, nullptr,
+                          nullptr);
     }
     if (label_size.x > 0)
-        RenderText(Vec2(bb.Max.x + style.ItemInnerSpacing.x, bb.Min.y + style.FramePadding.y), label, label_end, false);
+        RenderText(::SF::Engine::Vec2(bb.Max.x + style.ItemInnerSpacing.x, bb.Min.y + style.FramePadding.y), label,
+                   label_end, false);
 
     if (!popup_open)
         return false;
@@ -2188,7 +2217,7 @@ bool ImGui::BeginCombo(const char *label, const char *preview_value, ImGuiComboF
     return BeginComboPopup(popup_id, bb, flags);
 }
 
-bool ImGui::BeginComboPopup(ImGuiID popup_id, const ImRect &bb, ImGuiComboFlags flags)
+bool ImGui::BeginComboPopup(IdType popup_id, const ImRect &bb, ImGuiComboFlags flags)
 {
     ImGuiContext &g = *GImGui;
     if (!IsPopupOpen(popup_id, ImGuiPopupFlags_None))
@@ -2214,7 +2243,7 @@ bool ImGui::BeginComboPopup(ImGuiID popup_id, const ImRect &bb, ImGuiComboFlags 
             popup_max_height_in_items = 4;
         else if (flags & ImGuiComboFlags_HeightLarge)
             popup_max_height_in_items = 20;
-        Vec2 constraint_min(0.0f, 0.0f), constraint_max(FLT_MAX, FLT_MAX);
+        ::SF::Engine::Vec2 constraint_min(0.0f, 0.0f), constraint_max(FLT_MAX, FLT_MAX);
         if ((g.NextWindowData.HasFlags & ImGuiNextWindowDataFlags_HasSize) == 0 ||
             g.NextWindowData.SizeVal.x <= 0.0f) // Don't apply constraints if user specified a size
             constraint_min.x = w;
@@ -2235,14 +2264,15 @@ bool ImGui::BeginComboPopup(ImGuiID popup_id, const ImRect &bb, ImGuiComboFlags 
         if (popup_window->WasActive)
         {
             // Always override 'AutoPosLastDirection' to not leave a chance for a past value to affect us.
-            Vec2 size_expected = CalcWindowNextAutoFitSize(popup_window);
+            ::SF::Engine::Vec2 size_expected = CalcWindowNextAutoFitSize(popup_window);
             popup_window->AutoPosLastDirection =
                     (flags & ImGuiComboFlags_PopupAlignLeft)
                             ? ImGuiDir_Left
                             : ImGuiDir_Down; // Left = "Below, Toward Left", Down = "Below, Toward Right (default)"
             ImRect r_outer = GetPopupAllowedExtentRect(popup_window);
-            Vec2 pos       = FindBestWindowPosForPopupEx(bb.GetBL(), size_expected, &popup_window->AutoPosLastDirection,
-                                                         r_outer, bb, ImGuiPopupPositionPolicy_ComboBox);
+            ::SF::Engine::Vec2 pos =
+                    FindBestWindowPosForPopupEx(bb.GetBL(), size_expected, &popup_window->AutoPosLastDirection, r_outer,
+                                                bb, ImGuiPopupPositionPolicy_ComboBox);
             SetNextWindowPos(pos);
         }
 
@@ -2373,8 +2403,9 @@ bool ImGui::Combo(const char *label, int *current_item, const char *(*getter)(vo
     // The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't have/need
     // it, but we emulate it here.
     if (popup_max_height_in_items != -1 && !(g.NextWindowData.HasFlags & ImGuiNextWindowDataFlags_HasSizeConstraint))
-        SetNextWindowSizeConstraints(Vec2(0, 0),
-                                     Vec2(FLT_MAX, CalcMaxPopupHeightFromItemCount(popup_max_height_in_items)));
+        SetNextWindowSizeConstraints(
+                ::SF::Engine::Vec2(0, 0),
+                ::SF::Engine::Vec2(FLT_MAX, CalcMaxPopupHeightFromItemCount(popup_max_height_in_items)));
 
     if (!BeginCombo(label, preview_value, ImGuiComboFlags_None))
         return false;
@@ -2980,7 +3011,7 @@ bool ImGui::DragBehaviorT(ImGuiDataType data_type, TYPE *v, float v_speed, const
     return true;
 }
 
-bool ImGui::DragBehavior(ImGuiID id, ImGuiDataType data_type, void *p_v, float v_speed, const void *p_min,
+bool ImGui::DragBehavior(IdType id, ImGuiDataType data_type, void *p_v, float v_speed, const void *p_min,
                          const void *p_max, const char *format, ImGuiSliderFlags flags)
 {
     // Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
@@ -3105,18 +3136,19 @@ bool ImGui::DragScalar(const char *label, ImGuiDataType data_type, void *p_data,
 
     ImGuiContext &g         = *GImGui;
     const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = window->GetID(label);
+    const IdType id         = window->GetID(label);
     const float w           = CalcItemWidth();
     const uint32_t color_marker =
             (g.NextItemData.HasFlags & ImGuiNextItemDataFlags_HasColorMarker) ? g.NextItemData.ColorMarker : 0;
 
-    const char *label_end = FindRenderedTextEnd(label);
-    const Vec2 label_size = CalcTextSize(label, label_end, false);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
     const ImRect frame_bb(window->DC.CursorPos,
-                          window->DC.CursorPos + Vec2(w, label_size.y + style.FramePadding.y * 2.0f));
-    const ImRect total_bb(frame_bb.Min,
-                          frame_bb.Max +
-                                  Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+                          window->DC.CursorPos + ::SF::Engine::Vec2(w, label_size.y + style.FramePadding.y * 2.0f));
+    const ImRect total_bb(
+            frame_bb.Min,
+            frame_bb.Max +
+                    ::SF::Engine::Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
 
     const bool temp_input_allowed = (flags & ImGuiSliderFlags_NoInput) == 0;
     ItemSize(total_bb, style.FramePadding.y);
@@ -3193,11 +3225,11 @@ bool ImGui::DragScalar(const char *label, ImGuiDataType data_type, void *p_data,
             value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format);
     if (g.LogEnabled)
         LogSetNextTextDecoration("{", "}");
-    RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, nullptr, Vec2(0.5f, 0.5f));
+    RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, nullptr, ::SF::Engine::Vec2(0.5f, 0.5f));
 
     if (label_size.x > 0.0f)
-        RenderText(Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label,
-                   label_end, false);
+        RenderText(::SF::Engine::Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y),
+                   label, label_end, false);
 
     IMGUI_TEST_ENGINE_ITEM_INFO(id, label,
                                 g.LastItemData.StatusFlags | (temp_input_allowed ? ImGuiItemStatusFlags_Inputable : 0));
@@ -3542,7 +3574,7 @@ TYPE ImGui::ScaleValueFromRatioT(ImGuiDataType data_type, float t, TYPE v_min, T
 
 // FIXME: Try to move more of the code into shared SliderBehavior()
 template<typename TYPE, typename SIGNEDTYPE, typename FLOATTYPE>
-bool ImGui::SliderBehaviorT(const ImRect &bb, ImGuiID id, ImGuiDataType data_type, TYPE *v, const TYPE v_min,
+bool ImGui::SliderBehaviorT(const ImRect &bb, IdType id, ImGuiDataType data_type, TYPE *v, const TYPE v_min,
                             const TYPE v_max, const char *format, ImGuiSliderFlags flags, ImRect *out_grab_bb)
 {
     ImGuiContext &g         = *GImGui;
@@ -3739,7 +3771,7 @@ bool ImGui::SliderBehaviorT(const ImRect &bb, ImGuiID id, ImGuiDataType data_typ
 // So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and
 // INT_MAX/2 will be ok. It would be possible to lift that limitation with some work but it doesn't seem to be worth it
 // for sliders.
-bool ImGui::SliderBehavior(const ImRect &bb, ImGuiID id, ImGuiDataType data_type, void *p_v, const void *p_min,
+bool ImGui::SliderBehavior(const ImRect &bb, IdType id, ImGuiDataType data_type, void *p_v, const void *p_min,
                            const void *p_max, const char *format, ImGuiSliderFlags flags, ImRect *out_grab_bb)
 {
     // Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
@@ -3835,18 +3867,19 @@ bool ImGui::SliderScalar(const char *label, ImGuiDataType data_type, void *p_dat
 
     ImGuiContext &g         = *GImGui;
     const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = window->GetID(label);
+    const IdType id         = window->GetID(label);
     const float w           = CalcItemWidth();
     const uint32_t color_marker =
             (g.NextItemData.HasFlags & ImGuiNextItemDataFlags_HasColorMarker) ? g.NextItemData.ColorMarker : 0;
 
-    const char *label_end = FindRenderedTextEnd(label);
-    const Vec2 label_size = CalcTextSize(label, label_end, false);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
     const ImRect frame_bb(window->DC.CursorPos,
-                          window->DC.CursorPos + Vec2(w, label_size.y + style.FramePadding.y * 2.0f));
-    const ImRect total_bb(frame_bb.Min,
-                          frame_bb.Max +
-                                  Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+                          window->DC.CursorPos + ::SF::Engine::Vec2(w, label_size.y + style.FramePadding.y * 2.0f));
+    const ImRect total_bb(
+            frame_bb.Min,
+            frame_bb.Max +
+                    ::SF::Engine::Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
 
     const bool temp_input_allowed = (flags & ImGuiSliderFlags_NoInput) == 0;
     ItemSize(total_bb, style.FramePadding.y);
@@ -3921,11 +3954,11 @@ bool ImGui::SliderScalar(const char *label, ImGuiDataType data_type, void *p_dat
             value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format);
     if (g.LogEnabled)
         LogSetNextTextDecoration("{", "}");
-    RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, nullptr, Vec2(0.5f, 0.5f));
+    RenderTextClipped(frame_bb.Min, frame_bb.Max, value_buf, value_buf_end, nullptr, ::SF::Engine::Vec2(0.5f, 0.5f));
 
     if (label_size.x > 0.0f)
-        RenderText(Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label,
-                   label_end, false);
+        RenderText(::SF::Engine::Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y),
+                   label, label_end, false);
 
     IMGUI_TEST_ENGINE_ITEM_INFO(id, label,
                                 g.LastItemData.StatusFlags | (temp_input_allowed ? ImGuiItemStatusFlags_Inputable : 0));
@@ -4027,8 +4060,8 @@ bool ImGui::SliderInt4(const char *label, int v[4], int v_min, int v_max, const 
     return SliderScalarN(label, ImGuiDataType_S32, v, 4, &v_min, &v_max, format, flags);
 }
 
-bool ImGui::VSliderScalar(const char *label, const Vec2 &size, ImGuiDataType data_type, void *p_data, const void *p_min,
-                          const void *p_max, const char *format, ImGuiSliderFlags flags)
+bool ImGui::VSliderScalar(const char *label, const ::SF::Engine::Vec2 &size, ImGuiDataType data_type, void *p_data,
+                          const void *p_min, const void *p_max, const char *format, ImGuiSliderFlags flags)
 {
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
@@ -4036,13 +4069,14 @@ bool ImGui::VSliderScalar(const char *label, const Vec2 &size, ImGuiDataType dat
 
     ImGuiContext &g         = *GImGui;
     const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = window->GetID(label);
+    const IdType id         = window->GetID(label);
 
-    const char *label_end = FindRenderedTextEnd(label);
-    const Vec2 label_size = CalcTextSize(label, label_end, false);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
     const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + size);
     const ImRect bb(frame_bb.Min,
-                    frame_bb.Max + Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+                    frame_bb.Max + ::SF::Engine::Vec2(
+                                           label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
 
     ItemSize(bb, style.FramePadding.y);
     if (!ItemAdd(frame_bb, id))
@@ -4089,24 +4123,24 @@ bool ImGui::VSliderScalar(const char *label, const Vec2 &size, ImGuiDataType dat
     char value_buf[64];
     const char *value_buf_end =
             value_buf + DataTypeFormatString(value_buf, IM_COUNTOF(value_buf), data_type, p_data, format);
-    RenderTextClipped(Vec2(frame_bb.Min.x, frame_bb.Min.y + style.FramePadding.y), frame_bb.Max, value_buf,
-                      value_buf_end, nullptr, Vec2(0.5f, 0.0f));
+    RenderTextClipped(::SF::Engine::Vec2(frame_bb.Min.x, frame_bb.Min.y + style.FramePadding.y), frame_bb.Max,
+                      value_buf, value_buf_end, nullptr, ::SF::Engine::Vec2(0.5f, 0.0f));
     if (label_size.x > 0.0f)
-        RenderText(Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label,
-                   label_end, false);
+        RenderText(::SF::Engine::Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y),
+                   label, label_end, false);
 
     IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
     return value_changed;
 }
 
-bool ImGui::VSliderFloat(const char *label, const Vec2 &size, float *v, float v_min, float v_max, const char *format,
-                         ImGuiSliderFlags flags)
+bool ImGui::VSliderFloat(const char *label, const ::SF::Engine::Vec2 &size, float *v, float v_min, float v_max,
+                         const char *format, ImGuiSliderFlags flags)
 {
     return VSliderScalar(label, size, ImGuiDataType_Float, v, &v_min, &v_max, format, flags);
 }
 
-bool ImGui::VSliderInt(const char *label, const Vec2 &size, int *v, int v_min, int v_max, const char *format,
-                       ImGuiSliderFlags flags)
+bool ImGui::VSliderInt(const char *label, const ::SF::Engine::Vec2 &size, int *v, int v_min, int v_max,
+                       const char *format, ImGuiSliderFlags flags)
 {
     return VSliderScalar(label, size, ImGuiDataType_S32, v, &v_min, &v_max, format, flags);
 }
@@ -4274,7 +4308,7 @@ int ImParseFormatPrecision(const char *fmt, int default_precision)
 // Create text input in place of another active widget (e.g. used when doing a Ctrl+Click on drag/slider widgets)
 // - This must be submitted right after the item it is overlaying.
 // FIXME: Facilitate using this in variety of other situations.
-bool ImGui::TempInputText(const ImRect &bb, ImGuiID id, const char *label, char *buf, size_t buf_size,
+bool ImGui::TempInputText(const ImRect &bb, IdType id, const char *label, char *buf, size_t buf_size,
                           ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void *user_data)
 {
     // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
@@ -4287,8 +4321,8 @@ bool ImGui::TempInputText(const ImRect &bb, ImGuiID id, const char *label, char 
     if (!is_active && !is_deactivated)
         ClearActiveID();
 
-    Vec2 backup_pos      = window->DC.CursorPos;
-    window->DC.CursorPos = bb.Min;
+    ::SF::Engine::Vec2 backup_pos = window->DC.CursorPos;
+    window->DC.CursorPos          = bb.Min;
     g.LastItemData.ItemFlags |= ImGuiItemFlags_AllowDuplicateId; // Using ImGuiInputTextFlags_MergedItem above will skip
                                                                  // ItemAdd() so we poke here.
     bool value_changed =
@@ -4311,7 +4345,7 @@ bool ImGui::TempInputText(const ImRect &bb, ImGuiID id, const char *label, char 
 // ImGuiSliderFlags_AlwaysClamp flag is set! This is intended: this way we allow Ctrl+Click manual input to set a value
 // out of bounds, for maximum flexibility. However this may not be ideal for all uses, as some user code may break on
 // out of bound values.
-bool ImGui::TempInputScalar(const ImRect &bb, ImGuiID id, const char *label, ImGuiDataType data_type, void *p_data,
+bool ImGui::TempInputScalar(const ImRect &bb, IdType id, const char *label, ImGuiDataType data_type, void *p_data,
                             const char *format, const void *p_clamp_min, const void *p_clamp_max)
 {
     // FIXME: May need to clarify display behavior if format doesn't contain %.
@@ -4444,19 +4478,19 @@ bool ImGui::InputScalar(const char *label, ImGuiDataType data_type, void *p_data
     // Step buttons
     if (has_step_buttons)
     {
-        const Vec2 backup_frame_padding = style.FramePadding;
-        style.FramePadding.x            = style.FramePadding.y;
+        const ::SF::Engine::Vec2 backup_frame_padding = style.FramePadding;
+        style.FramePadding.x                          = style.FramePadding.y;
         if (flags & ImGuiInputTextFlags_ReadOnly)
             BeginDisabled();
         PushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
         SameLine(0, style.ItemInnerSpacing.x);
-        if (ButtonEx("-", Vec2(button_size, button_size)))
+        if (ButtonEx("-", ::SF::Engine::Vec2(button_size, button_size)))
         {
             DataTypeApplyOp(data_type, '-', p_data, p_data, g.IO.KeyCtrl && p_step_fast ? p_step_fast : p_step);
             value_changed = ret = true;
         }
         SameLine(0, style.ItemInnerSpacing.x);
-        if (ButtonEx("+", Vec2(button_size, button_size)))
+        if (ButtonEx("+", ::SF::Engine::Vec2(button_size, button_size)))
         {
             DataTypeApplyOp(data_type, '+', p_data, p_data, g.IO.KeyCtrl && p_step_fast ? p_step_fast : p_step);
             value_changed = ret = true;
@@ -4597,10 +4631,10 @@ bool ImGui::InputText(const char *label, char *buf, size_t buf_size, ImGuiInputT
                       ImGuiInputTextCallback callback, void *user_data)
 {
     IM_ASSERT(!(flags & ImGuiInputTextFlags_Multiline)); // call InputTextMultiline()
-    return InputTextEx(label, nullptr, buf, (int) buf_size, Vec2(0, 0), flags, callback, user_data);
+    return InputTextEx(label, nullptr, buf, (int) buf_size, ::SF::Engine::Vec2(0, 0), flags, callback, user_data);
 }
 
-bool ImGui::InputTextMultiline(const char *label, char *buf, size_t buf_size, const Vec2 &size,
+bool ImGui::InputTextMultiline(const char *label, char *buf, size_t buf_size, const ::SF::Engine::Vec2 &size,
                                ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void *user_data)
 {
     return InputTextEx(label, nullptr, buf, (int) buf_size, size, flags | ImGuiInputTextFlags_Multiline, callback,
@@ -4612,12 +4646,12 @@ bool ImGui::InputTextWithHint(const char *label, const char *hint, char *buf, si
 {
     IM_ASSERT(!(flags & ImGuiInputTextFlags_Multiline)); // call InputTextMultiline() or  InputTextEx() manually if you
                                                          // need multi-line + hint.
-    return InputTextEx(label, hint, buf, (int) buf_size, Vec2(0, 0), flags, callback, user_data);
+    return InputTextEx(label, hint, buf, (int) buf_size, ::SF::Engine::Vec2(0, 0), flags, callback, user_data);
 }
 
-static Vec2 InputTextCalcTextSize(ImGuiContext *ctx, const char *text_begin, const char *text_end_display,
-                                  const char *text_end, const char **out_remaining, Vec2 *out_offset,
-                                  ImDrawTextFlags flags)
+static ::SF::Engine::Vec2 InputTextCalcTextSize(ImGuiContext *ctx, const char *text_begin, const char *text_end_display,
+                                                const char *text_end, const char **out_remaining,
+                                                ::SF::Engine::Vec2 *out_offset, ImDrawTextFlags flags)
 {
     ImGuiContext &g          = *ctx;
     ImGuiInputTextState *obj = &g.InputTextState;
@@ -4653,17 +4687,17 @@ namespace ImStb
     static char STB_TEXTEDIT_NEWLINE = '\n';
     static void STB_TEXTEDIT_LAYOUTROW(StbTexteditRow *r, ImGuiInputTextState *obj, int line_start_idx)
     {
-        const char *text           = obj->TextSrc;
-        const char *text_remaining = nullptr;
-        const Vec2 size            = InputTextCalcTextSize(obj->Ctx, text + line_start_idx, text + obj->TextLen,
-                                                           text + obj->TextLen, &text_remaining, nullptr,
-                                                           ImDrawTextFlags_StopOnNewLine | ImDrawTextFlags_WrapKeepBlanks);
-        r->x0                      = 0.0f;
-        r->x1                      = size.x;
-        r->baseline_y_delta        = size.y;
-        r->ymin                    = 0.0f;
-        r->ymax                    = size.y;
-        r->num_chars               = (int) (text_remaining - (text + line_start_idx));
+        const char *text              = obj->TextSrc;
+        const char *text_remaining    = nullptr;
+        const ::SF::Engine::Vec2 size = InputTextCalcTextSize(
+                obj->Ctx, text + line_start_idx, text + obj->TextLen, text + obj->TextLen, &text_remaining, nullptr,
+                ImDrawTextFlags_StopOnNewLine | ImDrawTextFlags_WrapKeepBlanks);
+        r->x0               = 0.0f;
+        r->x1               = size.x;
+        r->baseline_y_delta = size.y;
+        r->ymin             = 0.0f;
+        r->ymax             = size.y;
+        r->num_chars        = (int) (text_remaining - (text + line_start_idx));
     }
 
     #define IMSTB_TEXTEDIT_GETNEXTCHARINDEX IMSTB_TEXTEDIT_GETNEXTCHARINDEX_IMPL
@@ -5279,7 +5313,7 @@ static void InputTextReconcileUndoState(ImGuiInputTextState *state, const char *
 // we need some form of hook to reapply data back to user buffer on deactivation frame. (#4714)
 // It would be more desirable that we discourage users from taking advantage of the "user not retaining data" trick,
 // but that more likely be attractive when we do have _NoLiveEdit flag available.
-void ImGui::InputTextDeactivateHook(ImGuiID id)
+void ImGui::InputTextDeactivateHook(IdType id)
 {
     ImGuiContext &g            = *GImGui;
     ImGuiInputTextState *state = &g.InputTextState;
@@ -5376,8 +5410,9 @@ static int InputTextLineIndexBuild(ImGuiInputTextFlags flags, ImGuiTextIndex *li
     return size;
 }
 
-static Vec2 InputTextLineIndexGetPosOffset(ImGuiContext &g, ImGuiInputTextState *state, ImGuiTextIndex *line_index,
-                                           const char *buf, const char *buf_end, int cursor_n)
+static ::SF::Engine::Vec2 InputTextLineIndexGetPosOffset(ImGuiContext &g, ImGuiInputTextState *state,
+                                                         ImGuiTextIndex *line_index, const char *buf,
+                                                         const char *buf_end, int cursor_n)
 {
     const char *cursor_ptr = buf + cursor_n;
     int *it_begin          = line_index->Offsets.begin();
@@ -5391,7 +5426,7 @@ static Vec2 InputTextLineIndexGetPosOffset(ImGuiContext &g, ImGuiInputTextState 
 
     const int line_no      = (it == it_begin) ? 0 : line_index->Offsets.index_from_ptr(it);
     const char *line_start = line_index->get_line_begin(buf, line_no);
-    Vec2 offset;
+    ::SF::Engine::Vec2 offset;
     offset.x =
             InputTextCalcTextSize(&g, line_start, cursor_ptr, buf_end, nullptr, nullptr, ImDrawTextFlags_WrapKeepBlanks)
                     .x;
@@ -5407,8 +5442,9 @@ static Vec2 InputTextLineIndexGetPosOffset(ImGuiContext &g, ImGuiInputTextState 
 // InputText is active has no effect.
 // - If you want to use InputText() with std::string or any custom dynamic string type, use the wrapper in
 // misc/cpp/imgui_stdlib.h/.cpp!
-bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_size, const Vec2 &size_arg,
-                        ImGuiInputTextFlags flags, ImGuiInputTextCallback callback, void *callback_user_data)
+bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_size,
+                        const ::SF::Engine::Vec2 &size_arg, ImGuiInputTextFlags flags, ImGuiInputTextCallback callback,
+                        void *callback_user_data)
 {
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
@@ -5436,25 +5472,25 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
     if (is_multiline) // Open group before calling GetID() because groups tracks id created within their scope
                       // (including the scrollbar)
         BeginGroup();
-    const ImGuiID id      = window->GetID(label);
-    const char *label_end = FindRenderedTextEnd(label);
-    const Vec2 label_size = CalcTextSize(label, label_end, false);
-    const Vec2 frame_size =
+    const IdType id                     = window->GetID(label);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
+    const ::SF::Engine::Vec2 frame_size =
             CalcItemSize(size_arg, CalcItemWidth(),
                          (is_multiline ? g.FontSize * 8.0f : label_size.y) +
                                  style.FramePadding.y * 2.0f); // Arbitrary default of 8 lines high for multi-line
-    const Vec2 total_size =
-            Vec2(frame_size.x + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), frame_size.y);
+    const ::SF::Engine::Vec2 total_size = ::SF::Engine::Vec2(
+            frame_size.x + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), frame_size.y);
 
     const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + frame_size);
     const ImRect total_bb(frame_bb.Min, frame_bb.Min + total_size);
 
-    ImGuiWindow *draw_window = window;
-    Vec2 inner_size          = frame_size;
+    ImGuiWindow *draw_window      = window;
+    ::SF::Engine::Vec2 inner_size = frame_size;
     ImGuiLastItemData item_data_backup;
     if (is_multiline)
     {
-        Vec2 backup_pos = window->DC.CursorPos;
+        ::SF::Engine::Vec2 backup_pos = window->DC.CursorPos;
         ItemSize(total_bb, style.FramePadding.y);
         bool no_clip =
                 (g.InputTextDeactivatedState.ID == id) || (g.ActiveId == id) ||
@@ -5474,7 +5510,7 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
             g.NavActivateId = 0;
 
         // Prevent NavActivate reactivating in BeginChild() when we are already active.
-        const ImGuiID backup_activate_id = g.NavActivateId;
+        const IdType backup_activate_id = g.NavActivateId;
         if (g.ActiveId == id) // Prevent reactivation
             g.NavActivateId = 0;
 
@@ -5484,7 +5520,7 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
         PushStyleVar(ImGuiStyleVar_ChildRounding, style.FrameRounding);
         PushStyleVar(ImGuiStyleVar_ChildBorderSize, style.FrameBorderSize);
         PushStyleVar(ImGuiStyleVar_WindowPadding,
-                     Vec2(0, 0)); // Ensure no clip rect so mouse hover can reach FramePadding edges
+                     ::SF::Engine::Vec2(0, 0)); // Ensure no clip rect so mouse hover can reach FramePadding edges
         bool child_visible =
                 BeginChildEx(label, id, frame_bb.GetSize(), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoMove);
         g.NavActivateId = backup_activate_id;
@@ -5551,8 +5587,7 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
     const bool input_requested_by_user =
             (user_clicked) ||
             (g.ActiveId == 0 && (flags & ImGuiInputTextFlags_TempInput) && g.InputTextDeactivatedState.ID != id);
-    const ImGuiID scrollbar_id =
-            (is_multiline && state != nullptr) ? GetWindowScrollbarID(draw_window, ImGuiAxis_Y) : 0;
+    const IdType scrollbar_id = (is_multiline && state != nullptr) ? GetWindowScrollbarID(draw_window, ImGuiAxis_Y) : 0;
     const bool user_scroll_finish =
             is_multiline && state != nullptr && g.ActiveId == 0 && g.ActiveIdPreviousFrame == scrollbar_id;
     const bool user_scroll_active = is_multiline && state != nullptr && g.ActiveId == scrollbar_id;
@@ -5626,7 +5661,7 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
         }
 
         // Find initial scroll position for right alignment
-        state->Scroll = Vec2(0.0f, 0.0f);
+        state->Scroll = ::SF::Engine::Vec2(0.0f, 0.0f);
         if (flags & ImGuiInputTextFlags_ElideLeft)
             state->Scroll.x += ImMax(0.0f, CalcTextSize(buf).x - frame_size.x + style.FramePadding.x * 2.0f);
 
@@ -6292,7 +6327,7 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
         RenderFrame(frame_bb.Min, frame_bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
     }
 
-    Vec2 draw_pos = is_multiline ? draw_window->DC.CursorPos : frame_bb.Min + style.FramePadding;
+    ::SF::Engine::Vec2 draw_pos = is_multiline ? draw_window->DC.CursorPos : frame_bb.Min + style.FramePadding;
     ImRect clip_rect(frame_bb.Min.x, frame_bb.Min.y, frame_bb.Min.x + inner_size.x,
                      frame_bb.Min.y + inner_size.y); // Not using frame_bb.Max because we have adjusted size
     if (is_multiline)
@@ -6357,15 +6392,15 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
 
     // Store text height (we don't need width)
     float text_size_y = line_count * g.FontSize;
-    // GetForegroundDrawList()->AddRect(draw_pos + Vec2(0, line_visible_n0 * g.FontSize), draw_pos +
-    // Vec2(frame_size.x, line_visible_n1 * g.FontSize), IM_COL32(255, 0, 0, 255));
+    // GetForegroundDrawList()->AddRect(draw_pos + ::SF::Engine::Vec2(0, line_visible_n0 * g.FontSize), draw_pos +
+    // ::SF::Engine::Vec2(frame_size.x, line_visible_n1 * g.FontSize), IM_COL32(255, 0, 0, 255));
 
     // Calculate blinking cursor position
-    const Vec2 cursor_offset = render_cursor && state
-                                       ? InputTextLineIndexGetPosOffset(g, state, line_index, buf_display,
-                                                                        buf_display_end, state->Stb->cursor)
-                                       : Vec2(0.0f, 0.0f);
-    Vec2 draw_scroll;
+    const ::SF::Engine::Vec2 cursor_offset =
+            render_cursor && state ? InputTextLineIndexGetPosOffset(g, state, line_index, buf_display, buf_display_end,
+                                                                    state->Stb->cursor)
+                                   : ::SF::Engine::Vec2(0.0f, 0.0f);
+    ::SF::Engine::Vec2 draw_scroll;
 
     // Render text. We currently only render selection when the widget is active or while scrolling.
     const uint32_t text_col = GetColorU32(is_displaying_hint ? ImGuiCol_TextDisabled : ImGuiCol_Text);
@@ -6486,7 +6521,7 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
     if ((is_multiline || (buf_display_end - buf_display) < buf_display_max_length) && (text_col & IM_COL32_A_MASK) &&
         (line_visible_n0 < line_visible_n1))
         g.Font->RenderText(draw_window->DrawList, g.FontSize,
-                           draw_pos - draw_scroll + Vec2(0.0f, line_visible_n0 * g.FontSize), text_col,
+                           draw_pos - draw_scroll + ::SF::Engine::Vec2(0.0f, line_visible_n0 * g.FontSize), text_col,
                            clip_rect.AsVec4(), line_index->get_line_begin(buf_display, line_visible_n0),
                            line_index->get_line_end(buf_display, line_visible_n1 - 1), wrap_width,
                            ImDrawTextFlags_WrapKeepBlanks | ImDrawTextFlags_CpuFineClip);
@@ -6497,7 +6532,7 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
         state->CursorAnim += io.DeltaTime;
         bool cursor_is_visible = (!g.IO.ConfigInputTextCursorBlink) || (state->CursorAnim <= 0.0f) ||
                                  ImFmod(state->CursorAnim, 1.20f) <= 0.80f;
-        Vec2 cursor_screen_pos = ImTrunc(draw_pos + cursor_offset - draw_scroll);
+        ::SF::Engine::Vec2 cursor_screen_pos = ImTrunc(draw_pos + cursor_offset - draw_scroll);
         ImRect cursor_screen_rect(cursor_screen_pos.x, cursor_screen_pos.y - g.FontSize + 0.5f,
                                   cursor_screen_pos.x + 1.0f, cursor_screen_pos.y - 1.5f);
         if (cursor_is_visible && cursor_screen_rect.Overlaps(clip_rect))
@@ -6512,9 +6547,9 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
         {
             ImGuiPlatformImeData *ime_data =
                     &g.PlatformImeData; // (this is a public struct, passed to io.Platform_SetImeDataFn() handler)
-            ime_data->WantVisible     = true;
-            ime_data->WantTextInput   = true;
-            ime_data->InputPos        = Vec2(cursor_screen_pos.x - 1.0f, cursor_screen_pos.y - g.FontSize);
+            ime_data->WantVisible   = true;
+            ime_data->WantTextInput = true;
+            ime_data->InputPos      = ::SF::Engine::Vec2(cursor_screen_pos.x - 1.0f, cursor_screen_pos.y - g.FontSize);
             ime_data->InputLineHeight = g.FontSize;
             ime_data->ViewportId      = window->Viewport->ID;
         }
@@ -6527,7 +6562,7 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
     {
         // For focus requests to work on our multiline we need to ensure our child ItemAdd() call specifies the
         // ImGuiItemFlags_Inputable (see #4761, #7870)...
-        Dummy(Vec2(0.0f, text_size_y + style.FramePadding.y));
+        Dummy(::SF::Engine::Vec2(0.0f, text_size_y + style.FramePadding.y));
         g.NextItemData.ItemFlagsSet |= (ImGuiItemFlags) ImGuiItemFlags_Inputable | ImGuiItemFlags_NoTabStop;
         EndChild();
         item_data_backup.StatusFlags |= (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_HoveredWindow);
@@ -6554,8 +6589,8 @@ bool ImGui::InputTextEx(const char *label, const char *hint, char *buf, int buf_
     }
 
     if (label_size.x > 0)
-        RenderText(Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y), label,
-                   label_end, false);
+        RenderText(::SF::Engine::Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y),
+                   label, label_end, false);
 
     if (value_changed)
         MarkItemEdited(id);
@@ -6584,10 +6619,10 @@ void ImGui::DebugNodeInputTextState(ImGuiInputTextState *state)
     Text("has_preferred_x: %d (%.2f)", stb_state->has_preferred_x, stb_state->preferred_x);
     Text("undo_point: %d, redo_point: %d, undo_char_point: %d, redo_char_point: %d", undo_state->undo_point,
          undo_state->redo_point, undo_state->undo_char_point, undo_state->redo_char_point);
-    if (BeginChild("undopoints", Vec2(0.0f, GetTextLineHeight() * 10),
+    if (BeginChild("undopoints", ::SF::Engine::Vec2(0.0f, GetTextLineHeight() * 10),
                    ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY)) // Visualize undo state
     {
-        PushStyleVar(ImGuiStyleVar_ItemSpacing, Vec2(0, 0));
+        PushStyleVar(ImGuiStyleVar_ItemSpacing, ::SF::Engine::Vec2(0, 0));
         for (int n = 0; n < IMSTB_TEXTEDIT_UNDOSTATECOUNT; n++)
         {
             ImStb::StbUndoRecord *undo_rec = &undo_state->undo_rec[n];
@@ -6635,7 +6670,7 @@ static void ColorEditRestoreH(const float *col, float *H)
     ImGuiContext &g = *GImGui;
     IM_ASSERT(g.ColorEditCurrentID != 0);
     if (g.ColorEditSavedID != g.ColorEditCurrentID ||
-        g.ColorEditSavedColor != ImGui::ColorConvertFloat4ToU32(Vec4(col[0], col[1], col[2], 0)))
+        g.ColorEditSavedColor != ImGui::ColorConvertFloat4ToU32(::SF::Engine::Vec4(col[0], col[1], col[2], 0)))
         return;
     *H = g.ColorEditSavedHue;
 }
@@ -6647,7 +6682,7 @@ static void ColorEditRestoreHS(const float *col, float *H, float *S, float *V)
     ImGuiContext &g = *GImGui;
     IM_ASSERT(g.ColorEditCurrentID != 0);
     if (g.ColorEditSavedID != g.ColorEditCurrentID ||
-        g.ColorEditSavedColor != ImGui::ColorConvertFloat4ToU32(Vec4(col[0], col[1], col[2], 0)))
+        g.ColorEditSavedColor != ImGui::ColorConvertFloat4ToU32(::SF::Engine::Vec4(col[0], col[1], col[2], 0)))
         return;
 
     // When S == 0, H is undefined.
@@ -6730,9 +6765,9 @@ bool ImGui::ColorEdit4(const char *label, float col[4], ImGuiColorEditFlags flag
     bool value_changed          = false;
     bool value_changed_as_float = false;
 
-    const Vec2 pos              = window->DC.CursorPos;
-    const float inputs_offset_x = (style.ColorButtonPosition == ImGuiDir_Left) ? w_button : 0.0f;
-    window->DC.CursorPos.x      = pos.x + inputs_offset_x;
+    const ::SF::Engine::Vec2 pos = window->DC.CursorPos;
+    const float inputs_offset_x  = (style.ColorButtonPosition == ImGuiDir_Left) ? w_button : 0.0f;
+    window->DC.CursorPos.x       = pos.x + inputs_offset_x;
 
     if ((flags & (ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_DisplayHSV)) != 0 &&
         (flags & ImGuiColorEditFlags_NoInputs) == 0)
@@ -6823,9 +6858,9 @@ bool ImGui::ColorEdit4(const char *label, float col[4], ImGuiColorEditFlags flag
                 ((flags & ImGuiColorEditFlags_NoInputs) || (style.ColorButtonPosition == ImGuiDir_Left))
                         ? 0.0f
                         : w_inputs + style.ItemInnerSpacing.x;
-        window->DC.CursorPos = Vec2(pos.x + button_offset_x, pos.y);
+        window->DC.CursorPos = ::SF::Engine::Vec2(pos.x + button_offset_x, pos.y);
 
-        const Vec4 col_v4(col[0], col[1], col[2], alpha ? col[3] : 1.0f);
+        const ::SF::Engine::Vec4 col_v4(col[0], col[1], col[2], alpha ? col[3] : 1.0f);
         if (ColorButton("##ColorButton", col_v4, flags))
         {
             if (!(flags & ImGuiColorEditFlags_NoPicker))
@@ -6833,7 +6868,7 @@ bool ImGui::ColorEdit4(const char *label, float col[4], ImGuiColorEditFlags flag
                 // Store current color and open a picker
                 g.ColorPickerRef = col_v4;
                 OpenPopup("picker");
-                SetNextWindowPos(g.LastItemData.Rect.GetBL() + Vec2(0.0f, style.ItemSpacing.y));
+                SetNextWindowPos(g.LastItemData.Rect.GetBL() + ::SF::Engine::Vec2(0.0f, style.ItemSpacing.y));
             }
         }
         if (!(flags & ImGuiColorEditFlags_NoOptions))
@@ -6886,7 +6921,7 @@ bool ImGui::ColorEdit4(const char *label, float col[4], ImGuiColorEditFlags flag
             g.ColorEditSavedSat = f[1];
             ColorConvertHSVtoRGB(f[0], f[1], f[2], f[0], f[1], f[2]);
             g.ColorEditSavedID    = g.ColorEditCurrentID;
-            g.ColorEditSavedColor = ColorConvertFloat4ToU32(Vec4(f[0], f[1], f[2], 0));
+            g.ColorEditSavedColor = ColorConvertFloat4ToU32(::SF::Engine::Vec4(f[0], f[1], f[2], 0));
         }
         if ((flags & ImGuiColorEditFlags_DisplayRGB) && (flags & ImGuiColorEditFlags_InputHSV))
             ColorConvertRGBtoHSV(f[0], f[1], f[2], f[0], f[1], f[2]);
@@ -6950,17 +6985,20 @@ bool ImGui::ColorPicker3(const char *label, float col[3], ImGuiColorEditFlags fl
 }
 
 // Helper for ColorPicker4()
-static void RenderArrowsForVerticalBar(ImDrawList *draw_list, Vec2 pos, Vec2 half_sz, float bar_w, float alpha)
+static void RenderArrowsForVerticalBar(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, ::SF::Engine::Vec2 half_sz,
+                                       float bar_w, float alpha)
 {
     uint32_t alpha8 = IM_F32_TO_INT8_SAT(alpha);
-    ImGui::RenderArrowPointingAt(draw_list, Vec2(pos.x + half_sz.x + 1, pos.y), Vec2(half_sz.x + 2, half_sz.y + 1),
-                                 ImGuiDir_Right, IM_COL32(0, 0, 0, alpha8));
-    ImGui::RenderArrowPointingAt(draw_list, Vec2(pos.x + half_sz.x, pos.y), half_sz, ImGuiDir_Right,
+    ImGui::RenderArrowPointingAt(draw_list, ::SF::Engine::Vec2(pos.x + half_sz.x + 1, pos.y),
+                                 ::SF::Engine::Vec2(half_sz.x + 2, half_sz.y + 1), ImGuiDir_Right,
+                                 IM_COL32(0, 0, 0, alpha8));
+    ImGui::RenderArrowPointingAt(draw_list, ::SF::Engine::Vec2(pos.x + half_sz.x, pos.y), half_sz, ImGuiDir_Right,
                                  IM_COL32(255, 255, 255, alpha8));
-    ImGui::RenderArrowPointingAt(draw_list, Vec2(pos.x + bar_w - half_sz.x - 1, pos.y),
-                                 Vec2(half_sz.x + 2, half_sz.y + 1), ImGuiDir_Left, IM_COL32(0, 0, 0, alpha8));
-    ImGui::RenderArrowPointingAt(draw_list, Vec2(pos.x + bar_w - half_sz.x, pos.y), half_sz, ImGuiDir_Left,
-                                 IM_COL32(255, 255, 255, alpha8));
+    ImGui::RenderArrowPointingAt(draw_list, ::SF::Engine::Vec2(pos.x + bar_w - half_sz.x - 1, pos.y),
+                                 ::SF::Engine::Vec2(half_sz.x + 2, half_sz.y + 1), ImGuiDir_Left,
+                                 IM_COL32(0, 0, 0, alpha8));
+    ImGui::RenderArrowPointingAt(draw_list, ::SF::Engine::Vec2(pos.x + bar_w - half_sz.x, pos.y), half_sz,
+                                 ImGuiDir_Left, IM_COL32(255, 255, 255, alpha8));
 }
 
 // Note: ColorPicker4() only accesses 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
@@ -7013,12 +7051,12 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
         flags |= (g.IO.ConfigColorEditFlags & ImGuiColorEditFlags_AlphaBar);
 
     // Setup
-    int components       = (flags & ImGuiColorEditFlags_NoAlpha) ? 3 : 4;
-    bool alpha_bar       = (flags & ImGuiColorEditFlags_AlphaBar) && !(flags & ImGuiColorEditFlags_NoAlpha);
-    Vec2 picker_pos      = window->DC.CursorPos;
-    float square_sz      = GetFrameHeight();
-    float bars_width     = square_sz; // Arbitrary smallish width of Hue/Alpha picking bars
-    float sv_picker_size = ImMax(
+    int components                = (flags & ImGuiColorEditFlags_NoAlpha) ? 3 : 4;
+    bool alpha_bar                = (flags & ImGuiColorEditFlags_AlphaBar) && !(flags & ImGuiColorEditFlags_NoAlpha);
+    ::SF::Engine::Vec2 picker_pos = window->DC.CursorPos;
+    float square_sz               = GetFrameHeight();
+    float bars_width              = square_sz; // Arbitrary smallish width of Hue/Alpha picking bars
+    float sv_picker_size          = ImMax(
             bars_width * 1,
             width - (alpha_bar ? 2 : 1) * (bars_width + style.ItemInnerSpacing.x)); // Saturation/Value picking box
     float bar0_pos_x             = picker_pos.x + sv_picker_size + style.ItemInnerSpacing.x;
@@ -7031,18 +7069,21 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
     float wheel_thickness = sv_picker_size * 0.08f;
     float wheel_r_outer   = sv_picker_size * 0.50f;
     float wheel_r_inner   = wheel_r_outer - wheel_thickness;
-    Vec2 wheel_center(picker_pos.x + (sv_picker_size + bars_width) * 0.5f, picker_pos.y + sv_picker_size * 0.5f);
+    ::SF::Engine::Vec2 wheel_center(picker_pos.x + (sv_picker_size + bars_width) * 0.5f,
+                                    picker_pos.y + sv_picker_size * 0.5f);
 
     // Note: the triangle is displayed rotated with triangle_pa pointing to Hue, but most coordinates stays unrotated
     // for logic.
     const bool triangle_rotate = (flags & ImGuiColorEditFlags_PickerNoRotate) == 0;
     float triangle_r           = wheel_r_inner - (int) (sv_picker_size * 0.027f);
-    Vec2 triangle_pa =
-            triangle_rotate ? Vec2(triangle_r, 0.0f) : Vec2(triangle_r * +0.866f, triangle_r * +0.5f); // Hue point.
-    Vec2 triangle_pb =
-            triangle_rotate ? Vec2(triangle_r * -0.5f, triangle_r * -0.866f) : Vec2(0.0f, -triangle_r); // Black point.
-    Vec2 triangle_pc = triangle_rotate ? Vec2(triangle_r * -0.5f, triangle_r * +0.866f)
-                                       : Vec2(triangle_r * -0.866f, triangle_r * +0.5f); // White point.
+    ::SF::Engine::Vec2 triangle_pa =
+            triangle_rotate ? ::SF::Engine::Vec2(triangle_r, 0.0f)
+                            : ::SF::Engine::Vec2(triangle_r * +0.866f, triangle_r * +0.5f); // Hue point.
+    ::SF::Engine::Vec2 triangle_pb = triangle_rotate ? ::SF::Engine::Vec2(triangle_r * -0.5f, triangle_r * -0.866f)
+                                                     : ::SF::Engine::Vec2(0.0f, -triangle_r); // Black point.
+    ::SF::Engine::Vec2 triangle_pc =
+            triangle_rotate ? ::SF::Engine::Vec2(triangle_r * -0.5f, triangle_r * +0.866f)
+                            : ::SF::Engine::Vec2(triangle_r * -0.866f, triangle_r * +0.5f); // White point.
 
     float H = col[0], S = col[1], V = col[2];
     float R = col[0], G = col[1], B = col[2];
@@ -7062,12 +7103,13 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
     if (flags & ImGuiColorEditFlags_PickerHueWheel)
     {
         // Hue wheel + SV triangle logic
-        InvisibleButton("hsv", Vec2(sv_picker_size + style.ItemInnerSpacing.x + bars_width, sv_picker_size));
+        InvisibleButton("hsv",
+                        ::SF::Engine::Vec2(sv_picker_size + style.ItemInnerSpacing.x + bars_width, sv_picker_size));
         if (IsItemActive() && !is_readonly)
         {
-            Vec2 initial_off    = g.IO.MouseClickedPos[0] - wheel_center;
-            Vec2 current_off    = g.IO.MousePos - wheel_center;
-            float initial_dist2 = ImLengthSqr(initial_off);
+            ::SF::Engine::Vec2 initial_off = g.IO.MouseClickedPos[0] - wheel_center;
+            ::SF::Engine::Vec2 current_off = g.IO.MousePos - wheel_center;
+            float initial_dist2            = ImLengthSqr(initial_off);
             if (initial_dist2 >= (wheel_r_inner - 1) * (wheel_r_inner - 1) &&
                 initial_dist2 <= (wheel_r_outer + 1) * (wheel_r_outer + 1))
             {
@@ -7083,7 +7125,7 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
                                         ImRotate(initial_off, cos_hue_angle, sin_hue_angle)))
             {
                 // Interacting with SV triangle
-                Vec2 current_off_unrotated = ImRotate(current_off, cos_hue_angle, sin_hue_angle);
+                ::SF::Engine::Vec2 current_off_unrotated = ImRotate(current_off, cos_hue_angle, sin_hue_angle);
                 if (!ImTriangleContainsPoint(triangle_pa, triangle_pb, triangle_pc, current_off_unrotated))
                     current_off_unrotated =
                             ImTriangleClosestPoint(triangle_pa, triangle_pb, triangle_pc, current_off_unrotated);
@@ -7099,7 +7141,7 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
     } else if (flags & ImGuiColorEditFlags_PickerHueBar)
     {
         // SV rectangle logic
-        InvisibleButton("sv", Vec2(sv_picker_size, sv_picker_size));
+        InvisibleButton("sv", ::SF::Engine::Vec2(sv_picker_size, sv_picker_size));
         if (IsItemActive() && !is_readonly)
         {
             S = ImSaturate((io.MousePos.x - picker_pos.x) / (sv_picker_size - 1));
@@ -7112,8 +7154,8 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
             OpenPopupOnItemClick("context", ImGuiPopupFlags_MouseButtonRight);
 
         // Hue bar logic
-        SetCursorScreenPos(Vec2(bar0_pos_x, picker_pos.y));
-        InvisibleButton("hue", Vec2(bars_width, sv_picker_size));
+        SetCursorScreenPos(::SF::Engine::Vec2(bar0_pos_x, picker_pos.y));
+        InvisibleButton("hue", ::SF::Engine::Vec2(bars_width, sv_picker_size));
         if (IsItemActive() && !is_readonly)
         {
             H             = ImSaturate((io.MousePos.y - picker_pos.y) / (sv_picker_size - 1));
@@ -7124,8 +7166,8 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
     // Alpha bar logic
     if (alpha_bar)
     {
-        SetCursorScreenPos(Vec2(bar1_pos_x, picker_pos.y));
-        InvisibleButton("alpha", Vec2(bars_width, sv_picker_size));
+        SetCursorScreenPos(::SF::Engine::Vec2(bar1_pos_x, picker_pos.y));
+        InvisibleButton("alpha", ::SF::Engine::Vec2(bars_width, sv_picker_size));
         if (IsItemActive())
         {
             col[3]        = 1.0f - ImSaturate((io.MousePos.y - picker_pos.y) / (sv_picker_size - 1));
@@ -7154,20 +7196,21 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
     if (!(flags & ImGuiColorEditFlags_NoSidePreview))
     {
         PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
-        Vec4 col_v4(col[0], col[1], col[2], (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : col[3]);
+        ::SF::Engine::Vec4 col_v4(col[0], col[1], col[2], (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : col[3]);
         if ((flags & ImGuiColorEditFlags_NoLabel))
             Text("Current");
 
         ImGuiColorEditFlags sub_flags_to_forward = ImGuiColorEditFlags_InputMask_ | ImGuiColorEditFlags_HDR |
                                                    ImGuiColorEditFlags_AlphaMask_ | ImGuiColorEditFlags_NoTooltip;
-        ColorButton("##current", col_v4, (flags & sub_flags_to_forward), Vec2(square_sz * 3, square_sz * 2));
+        ColorButton("##current", col_v4, (flags & sub_flags_to_forward),
+                    ::SF::Engine::Vec2(square_sz * 3, square_sz * 2));
         if (ref_col != nullptr)
         {
             Text("Original");
-            Vec4 ref_col_v4(ref_col[0], ref_col[1], ref_col[2],
-                            (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : ref_col[3]);
+            ::SF::Engine::Vec4 ref_col_v4(ref_col[0], ref_col[1], ref_col[2],
+                                          (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : ref_col[3]);
             if (ColorButton("##original", ref_col_v4, (flags & sub_flags_to_forward),
-                            Vec2(square_sz * 3, square_sz * 2)))
+                            ::SF::Engine::Vec2(square_sz * 3, square_sz * 2)))
             {
                 memcpy(col, ref_col, components * sizeof(float));
                 value_changed = true;
@@ -7186,7 +7229,7 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
             g.ColorEditSavedHue   = H;
             g.ColorEditSavedSat   = S;
             g.ColorEditSavedID    = g.ColorEditCurrentID;
-            g.ColorEditSavedColor = ColorConvertFloat4ToU32(Vec4(col[0], col[1], col[2], 0));
+            g.ColorEditSavedColor = ColorConvertFloat4ToU32(::SF::Engine::Vec4(col[0], col[1], col[2], 0));
         } else if (flags & ImGuiColorEditFlags_InputHSV)
         {
             col[0] = H;
@@ -7262,13 +7305,13 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
                                       IM_COL32(0, 0, 255, style_alpha8), IM_COL32(255, 0, 255, style_alpha8),
                                       IM_COL32(255, 0, 0, style_alpha8)};
 
-    Vec4 hue_color_f(1, 1, 1, style.Alpha);
+    ::SF::Engine::Vec4 hue_color_f(1, 1, 1, style.Alpha);
     ColorConvertHSVtoRGB(H, 1, 1, hue_color_f.x, hue_color_f.y, hue_color_f.z);
     uint32_t hue_color32                 = ColorConvertFloat4ToU32(hue_color_f);
-    uint32_t user_col32_striped_of_alpha = ColorConvertFloat4ToU32(
-            Vec4(R, G, B, style.Alpha)); // Important: this is still including the main Rendering/style alpha!!
+    uint32_t user_col32_striped_of_alpha = ColorConvertFloat4ToU32(::SF::Engine::Vec4(
+            R, G, B, style.Alpha)); // Important: this is still including the main Rendering/style alpha!!
 
-    Vec2 sv_cursor_pos;
+    ::SF::Engine::Vec2 sv_cursor_pos;
 
     if (flags & ImGuiColorEditFlags_PickerHueWheel)
     {
@@ -7285,8 +7328,10 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
             const int vert_end_idx = draw_list->VtxBuffer.Size;
 
             // Paint colors over existing vertices
-            Vec2 gradient_p0(wheel_center.x + ImCos(a0) * wheel_r_inner, wheel_center.y + ImSin(a0) * wheel_r_inner);
-            Vec2 gradient_p1(wheel_center.x + ImCos(a1) * wheel_r_inner, wheel_center.y + ImSin(a1) * wheel_r_inner);
+            ::SF::Engine::Vec2 gradient_p0(wheel_center.x + ImCos(a0) * wheel_r_inner,
+                                           wheel_center.y + ImSin(a0) * wheel_r_inner);
+            ::SF::Engine::Vec2 gradient_p1(wheel_center.x + ImCos(a1) * wheel_r_inner,
+                                           wheel_center.y + ImSin(a1) * wheel_r_inner);
             ShadeVertsLinearColorGradientKeepAlpha(draw_list, vert_start_idx, vert_end_idx, gradient_p0, gradient_p1,
                                                    col_hues[n], col_hues[n + 1]);
         }
@@ -7294,8 +7339,8 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
         // Render Cursor + preview on Hue Wheel
         float cos_hue_angle = ImCos(H * 2.0f * IM_PI);
         float sin_hue_angle = ImSin(H * 2.0f * IM_PI);
-        Vec2 hue_cursor_pos(wheel_center.x + cos_hue_angle * (wheel_r_inner + wheel_r_outer) * 0.5f,
-                            wheel_center.y + sin_hue_angle * (wheel_r_inner + wheel_r_outer) * 0.5f);
+        ::SF::Engine::Vec2 hue_cursor_pos(wheel_center.x + cos_hue_angle * (wheel_r_inner + wheel_r_outer) * 0.5f,
+                                          wheel_center.y + sin_hue_angle * (wheel_r_inner + wheel_r_outer) * 0.5f);
         float hue_cursor_rad    = value_changed_h ? wheel_thickness * 0.65f : wheel_thickness * 0.55f;
         int hue_cursor_segments = draw_list->_CalcCircleAutoSegmentCount(
                 hue_cursor_rad); // Lock segment count so the +1 one matches others.
@@ -7309,10 +7354,10 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
         }
 
         // Render SV triangle (rotated according to hue)
-        Vec2 tra      = wheel_center + ImRotate(triangle_pa, cos_hue_angle, sin_hue_angle);
-        Vec2 trb      = wheel_center + ImRotate(triangle_pb, cos_hue_angle, sin_hue_angle);
-        Vec2 trc      = wheel_center + ImRotate(triangle_pc, cos_hue_angle, sin_hue_angle);
-        Vec2 uv_white = GetFontTexUvWhitePixel();
+        ::SF::Engine::Vec2 tra      = wheel_center + ImRotate(triangle_pa, cos_hue_angle, sin_hue_angle);
+        ::SF::Engine::Vec2 trb      = wheel_center + ImRotate(triangle_pb, cos_hue_angle, sin_hue_angle);
+        ::SF::Engine::Vec2 trc      = wheel_center + ImRotate(triangle_pc, cos_hue_angle, sin_hue_angle);
+        ::SF::Engine::Vec2 uv_white = GetFontTexUvWhitePixel();
         draw_list->PrimReserve(3, 3);
         draw_list->PrimVtx(tra, uv_white, hue_color32);
         draw_list->PrimVtx(trb, uv_white, col_black);
@@ -7322,11 +7367,11 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
     } else if (flags & ImGuiColorEditFlags_PickerHueBar)
     {
         // Render SV Square
-        draw_list->AddRectFilledMultiColor(picker_pos, picker_pos + Vec2(sv_picker_size, sv_picker_size), col_white,
-                                           hue_color32, hue_color32, col_white);
-        draw_list->AddRectFilledMultiColor(picker_pos, picker_pos + Vec2(sv_picker_size, sv_picker_size), 0, 0,
-                                           col_black, col_black);
-        RenderFrameBorder(picker_pos, picker_pos + Vec2(sv_picker_size, sv_picker_size), 0.0f);
+        draw_list->AddRectFilledMultiColor(picker_pos, picker_pos + ::SF::Engine::Vec2(sv_picker_size, sv_picker_size),
+                                           col_white, hue_color32, hue_color32, col_white);
+        draw_list->AddRectFilledMultiColor(picker_pos, picker_pos + ::SF::Engine::Vec2(sv_picker_size, sv_picker_size),
+                                           0, 0, col_black, col_black);
+        RenderFrameBorder(picker_pos, picker_pos + ::SF::Engine::Vec2(sv_picker_size, sv_picker_size), 0.0f);
         sv_cursor_pos.x =
                 ImClamp(IM_ROUND(picker_pos.x + ImSaturate(S) * sv_picker_size), picker_pos.x + 2,
                         picker_pos.x + sv_picker_size - 2); // Sneakily prevent the circle to stick out too much
@@ -7336,15 +7381,15 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
         // Render Hue Bar
         for (int i = 0; i < 6; ++i)
             draw_list->AddRectFilledMultiColor(
-                    Vec2(bar0_pos_x, picker_pos.y + i * (sv_picker_size / 6)),
-                    Vec2(bar0_pos_x + bars_width, picker_pos.y + (i + 1) * (sv_picker_size / 6)), col_hues[i],
-                    col_hues[i], col_hues[i + 1], col_hues[i + 1]);
+                    ::SF::Engine::Vec2(bar0_pos_x, picker_pos.y + i * (sv_picker_size / 6)),
+                    ::SF::Engine::Vec2(bar0_pos_x + bars_width, picker_pos.y + (i + 1) * (sv_picker_size / 6)),
+                    col_hues[i], col_hues[i], col_hues[i + 1], col_hues[i + 1]);
         float bar0_line_y = IM_ROUND(picker_pos.y + H * sv_picker_size);
-        RenderFrameBorder(Vec2(bar0_pos_x, picker_pos.y), Vec2(bar0_pos_x + bars_width, picker_pos.y + sv_picker_size),
-                          0.0f);
-        RenderArrowsForVerticalBar(draw_list, Vec2(bar0_pos_x - 1, bar0_line_y),
-                                   Vec2(bars_triangles_half_sz + 1, bars_triangles_half_sz), bars_width + 2.0f,
-                                   style.Alpha);
+        RenderFrameBorder(::SF::Engine::Vec2(bar0_pos_x, picker_pos.y),
+                          ::SF::Engine::Vec2(bar0_pos_x + bars_width, picker_pos.y + sv_picker_size), 0.0f);
+        RenderArrowsForVerticalBar(draw_list, ::SF::Engine::Vec2(bar0_pos_x - 1, bar0_line_y),
+                                   ::SF::Engine::Vec2(bars_triangles_half_sz + 1, bars_triangles_half_sz),
+                                   bars_width + 2.0f, style.Alpha);
     }
 
     // Render cursor/preview circle (clamp S/V within 0..1 range because floating points colors may lead HSV values to
@@ -7362,15 +7407,15 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
         float alpha = ImSaturate(col[3]);
         ImRect bar1_bb(bar1_pos_x, picker_pos.y, bar1_pos_x + bars_width, picker_pos.y + sv_picker_size);
         RenderColorRectWithAlphaCheckerboard(draw_list, bar1_bb.Min, bar1_bb.Max, 0, bar1_bb.GetWidth() / 2.0f,
-                                             Vec2(0.0f, 0.0f));
+                                             ::SF::Engine::Vec2(0.0f, 0.0f));
         draw_list->AddRectFilledMultiColor(bar1_bb.Min, bar1_bb.Max, user_col32_striped_of_alpha,
                                            user_col32_striped_of_alpha, user_col32_striped_of_alpha & ~IM_COL32_A_MASK,
                                            user_col32_striped_of_alpha & ~IM_COL32_A_MASK);
         float bar1_line_y = IM_ROUND(picker_pos.y + (1.0f - alpha) * sv_picker_size);
         RenderFrameBorder(bar1_bb.Min, bar1_bb.Max, 0.0f);
-        RenderArrowsForVerticalBar(draw_list, Vec2(bar1_pos_x - 1, bar1_line_y),
-                                   Vec2(bars_triangles_half_sz + 1, bars_triangles_half_sz), bars_width + 2.0f,
-                                   style.Alpha);
+        RenderArrowsForVerticalBar(draw_list, ::SF::Engine::Vec2(bar1_pos_x - 1, bar1_line_y),
+                                   ::SF::Engine::Vec2(bars_triangles_half_sz + 1, bars_triangles_half_sz),
+                                   bars_width + 2.0f, style.Alpha);
     }
 
     EndGroup();
@@ -7392,16 +7437,18 @@ bool ImGui::ColorPicker4(const char *label, float col[4], ImGuiColorEditFlags fl
 // FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
 // 'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.
 // Note that 'col' may be encoded in HSV if ImGuiColorEditFlags_InputHSV is set.
-bool ImGui::ColorButton(const char *desc_id, const Vec4 &col, ImGuiColorEditFlags flags, const Vec2 &size_arg)
+bool ImGui::ColorButton(const char *desc_id, const ::SF::Engine::Vec4 &col, ImGuiColorEditFlags flags,
+                        const ::SF::Engine::Vec2 &size_arg)
 {
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
 
     ImGuiContext &g          = *GImGui;
-    const ImGuiID id         = window->GetID(desc_id);
+    const IdType id          = window->GetID(desc_id);
     const float default_size = GetFrameHeight();
-    const Vec2 size(size_arg.x == 0.0f ? default_size : size_arg.x, size_arg.y == 0.0f ? default_size : size_arg.y);
+    const ::SF::Engine::Vec2 size(size_arg.x == 0.0f ? default_size : size_arg.x,
+                                  size_arg.y == 0.0f ? default_size : size_arg.y);
     const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
     ItemSize(bb, (size.y >= default_size) ? g.Style.FramePadding.y : 0.0f);
     if (!ItemAdd(bb, id))
@@ -7413,11 +7460,11 @@ bool ImGui::ColorButton(const char *desc_id, const Vec4 &col, ImGuiColorEditFlag
     if (flags & (ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_AlphaOpaque))
         flags &= ~(ImGuiColorEditFlags_AlphaNoBg | ImGuiColorEditFlags_AlphaPreviewHalf);
 
-    Vec4 col_rgb = col;
+    ::SF::Engine::Vec4 col_rgb = col;
     if (flags & ImGuiColorEditFlags_InputHSV)
         ColorConvertHSVtoRGB(col_rgb.x, col_rgb.y, col_rgb.z, col_rgb.x, col_rgb.y, col_rgb.z);
 
-    Vec4 col_rgb_without_alpha(col_rgb.x, col_rgb.y, col_rgb.z, 1.0f);
+    ::SF::Engine::Vec4 col_rgb_without_alpha(col_rgb.x, col_rgb.y, col_rgb.z, 1.0f);
     float grid_step = ImMin(size.x, size.y) / 2.99f;
     float rounding  = ImMin(g.Style.FrameRounding, grid_step * 0.5f);
     ImRect bb_inner = bb;
@@ -7432,22 +7479,24 @@ bool ImGui::ColorButton(const char *desc_id, const Vec4 &col, ImGuiColorEditFlag
     {
         float mid_x = IM_ROUND((bb_inner.Min.x + bb_inner.Max.x) * 0.5f);
         if ((flags & ImGuiColorEditFlags_AlphaNoBg) == 0)
-            RenderColorRectWithAlphaCheckerboard(window->DrawList, Vec2(bb_inner.Min.x + grid_step, bb_inner.Min.y),
-                                                 bb_inner.Max, GetColorU32(col_rgb), grid_step,
-                                                 Vec2(-grid_step + off, off), rounding, ImDrawFlags_RoundCornersRight);
+            RenderColorRectWithAlphaCheckerboard(
+                    window->DrawList, ::SF::Engine::Vec2(bb_inner.Min.x + grid_step, bb_inner.Min.y), bb_inner.Max,
+                    GetColorU32(col_rgb), grid_step, ::SF::Engine::Vec2(-grid_step + off, off), rounding,
+                    ImDrawFlags_RoundCornersRight);
         else
-            window->DrawList->AddRectFilled(Vec2(bb_inner.Min.x + grid_step, bb_inner.Min.y), bb_inner.Max,
-                                            GetColorU32(col_rgb), rounding, ImDrawFlags_RoundCornersRight);
-        window->DrawList->AddRectFilled(bb_inner.Min, Vec2(mid_x, bb_inner.Max.y), GetColorU32(col_rgb_without_alpha),
-                                        rounding, ImDrawFlags_RoundCornersLeft);
+            window->DrawList->AddRectFilled(::SF::Engine::Vec2(bb_inner.Min.x + grid_step, bb_inner.Min.y),
+                                            bb_inner.Max, GetColorU32(col_rgb), rounding,
+                                            ImDrawFlags_RoundCornersRight);
+        window->DrawList->AddRectFilled(bb_inner.Min, ::SF::Engine::Vec2(mid_x, bb_inner.Max.y),
+                                        GetColorU32(col_rgb_without_alpha), rounding, ImDrawFlags_RoundCornersLeft);
     } else
     {
         // Because GetColorU32() multiplies by the global style Alpha and we don't want to display a checkerboard if the
         // source code had no alpha
-        Vec4 col_source = (flags & ImGuiColorEditFlags_AlphaOpaque) ? col_rgb_without_alpha : col_rgb;
+        ::SF::Engine::Vec4 col_source = (flags & ImGuiColorEditFlags_AlphaOpaque) ? col_rgb_without_alpha : col_rgb;
         if (col_source.w < 1.0f && (flags & ImGuiColorEditFlags_AlphaNoBg) == 0)
             RenderColorRectWithAlphaCheckerboard(window->DrawList, bb_inner.Min, bb_inner.Max, GetColorU32(col_source),
-                                                 grid_step, Vec2(off, off), rounding);
+                                                 grid_step, ::SF::Engine::Vec2(off, off), rounding);
         else
             window->DrawList->AddRectFilled(bb_inner.Min, bb_inner.Max, GetColorU32(col_source), rounding);
     }
@@ -7498,8 +7547,8 @@ void ImGui::ColorTooltip(const char *text, const float *col, ImGuiColorEditFlags
         Separator();
     }
 
-    Vec2 sz(g.FontSize * 3 + g.Style.FramePadding.y * 2, g.FontSize * 3 + g.Style.FramePadding.y * 2);
-    Vec4 cf(col[0], col[1], col[2], (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : col[3]);
+    ::SF::Engine::Vec2 sz(g.FontSize * 3 + g.Style.FramePadding.y * 2, g.FontSize * 3 + g.Style.FramePadding.y * 2);
+    ::SF::Engine::Vec4 cf(col[0], col[1], col[2], (flags & ImGuiColorEditFlags_NoAlpha) ? 1.0f : col[3]);
     int cr = IM_F32_TO_INT8_SAT(col[0]), cg = IM_F32_TO_INT8_SAT(col[1]), cb = IM_F32_TO_INT8_SAT(col[2]),
         ca                               = (flags & ImGuiColorEditFlags_NoAlpha) ? 255 : IM_F32_TO_INT8_SAT(col[3]);
     ImGuiColorEditFlags flags_to_forward = ImGuiColorEditFlags_InputMask_ | ImGuiColorEditFlags_AlphaMask_;
@@ -7554,7 +7603,7 @@ void ImGui::ColorEditOptionsPopup(const float *col, ImGuiColorEditFlags flags)
 
     if (allow_opt_inputs || allow_opt_datatype)
         Separator();
-    if (Button("Copy as..", Vec2(-1, 0)))
+    if (Button("Copy as..", ::SF::Engine::Vec2(-1, 0)))
         OpenPopup("Copy");
     if (BeginPopup("Copy"))
     {
@@ -7596,8 +7645,9 @@ void ImGui::ColorPickerOptionsPopup(const float *ref_col, ImGuiColorEditFlags fl
     PushItemFlag(ImGuiItemFlags_NoMarkEdited, true);
     if (allow_opt_picker)
     {
-        Vec2 picker_size(g.FontSize * 8, ImMax(g.FontSize * 8 - (GetFrameHeight() + g.Style.ItemInnerSpacing.x),
-                                               1.0f)); // FIXME: Picker size copied from main picker function
+        ::SF::Engine::Vec2 picker_size(g.FontSize * 8,
+                                       ImMax(g.FontSize * 8 - (GetFrameHeight() + g.Style.ItemInnerSpacing.x),
+                                             1.0f)); // FIXME: Picker size copied from main picker function
         PushItemWidth(picker_size.x);
         for (int picker_type = 0; picker_type < 2; picker_type++)
         {
@@ -7612,12 +7662,12 @@ void ImGui::ColorPickerOptionsPopup(const float *ref_col, ImGuiColorEditFlags fl
                 picker_flags |= ImGuiColorEditFlags_PickerHueBar;
             if (picker_type == 1)
                 picker_flags |= ImGuiColorEditFlags_PickerHueWheel;
-            Vec2 backup_pos = GetCursorScreenPos();
+            ::SF::Engine::Vec2 backup_pos = GetCursorScreenPos();
             if (Selectable("##selectable", false, 0, picker_size)) // By default, Selectable() is closing popup
                 g.IO.ConfigColorEditFlags = (g.IO.ConfigColorEditFlags & ~ImGuiColorEditFlags_PickerMask_) |
                                             (picker_flags & ImGuiColorEditFlags_PickerMask_);
             SetCursorScreenPos(backup_pos);
-            Vec4 previewing_ref_col;
+            ::SF::Engine::Vec4 previewing_ref_col;
             memcpy(&previewing_ref_col, ref_col,
                    sizeof(float) * ((picker_flags & ImGuiColorEditFlags_NoAlpha) ? 3 : 4));
             ColorPicker4("##previewing_picker", &previewing_ref_col.x, picker_flags);
@@ -7674,7 +7724,7 @@ bool ImGui::TreeNode(const char *label)
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
-    ImGuiID id = window->GetID(label);
+    IdType id = window->GetID(label);
     return TreeNodeBehavior(id, ImGuiTreeNodeFlags_None, label, nullptr);
 }
 
@@ -7687,7 +7737,7 @@ bool ImGui::TreeNodeEx(const char *label, ImGuiTreeNodeFlags flags)
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
-    ImGuiID id = window->GetID(label);
+    IdType id = window->GetID(label);
     return TreeNodeBehavior(id, flags, label, nullptr);
 }
 
@@ -7715,7 +7765,7 @@ bool ImGui::TreeNodeExV(const char *str_id, ImGuiTreeNodeFlags flags, const char
     if (window->SkipItems)
         return false;
 
-    ImGuiID id = window->GetID(str_id);
+    IdType id = window->GetID(str_id);
     const char *label, *label_end;
     ImFormatStringToTempBufferV(&label, &label_end, fmt, args);
     return TreeNodeBehavior(id, flags, label, label_end);
@@ -7727,7 +7777,7 @@ bool ImGui::TreeNodeExV(const void *ptr_id, ImGuiTreeNodeFlags flags, const char
     if (window->SkipItems)
         return false;
 
-    ImGuiID id = window->GetID(ptr_id);
+    IdType id = window->GetID(ptr_id);
     const char *label, *label_end;
     ImFormatStringToTempBufferV(&label, &label_end, fmt, args);
     return TreeNodeBehavior(id, flags, label, label_end);
@@ -7736,21 +7786,21 @@ bool ImGui::TreeNodeExV(const void *ptr_id, ImGuiTreeNodeFlags flags, const char
 // The reason those two functions are not yet in public API is because I would like to design a more feature-full and
 // generic API for this. They are otherwise function (cc: #3823, #9251, #7553, #6754, #5423, #2958, #2079, #1947, #1131,
 // #722)
-bool ImGui::TreeNodeGetOpen(ImGuiID storage_id)
+bool ImGui::TreeNodeGetOpen(IdType storage_id)
 {
     ImGuiContext &g       = *GImGui;
     ImGuiStorage *storage = g.CurrentWindow->DC.StateStorage;
     return storage->GetInt(storage_id, 0) != 0;
 }
 
-void ImGui::TreeNodeSetOpen(ImGuiID storage_id, bool is_open)
+void ImGui::TreeNodeSetOpen(IdType storage_id, bool is_open)
 {
     ImGuiContext &g       = *GImGui;
     ImGuiStorage *storage = g.CurrentWindow->DC.StateStorage;
     storage->SetInt(storage_id, is_open ? 1 : 0);
 }
 
-bool ImGui::TreeNodeUpdateNextOpen(ImGuiID storage_id, ImGuiTreeNodeFlags flags)
+bool ImGui::TreeNodeUpdateNextOpen(IdType storage_id, ImGuiTreeNodeFlags flags)
 {
     // Leaf node always open a new tree/id scope. If you never use it, add ImGuiTreeNodeFlags_NoTreePushOnOpen.
     if (flags & ImGuiTreeNodeFlags_Leaf)
@@ -7822,7 +7872,7 @@ static void TreeNodeStoreStackData(ImGuiTreeNodeFlags flags, float x1)
         window->DC.TreeRecordsClippedNodesY2Mask |= (1 << window->DC.TreeDepth);
 }
 
-bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *label, const char *label_end)
+bool ImGui::TreeNodeBehavior(IdType id, ImGuiTreeNodeFlags flags, const char *label, const char *label_end)
 {
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
@@ -7834,13 +7884,14 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *l
     // When not framed, we vertically increase height up to typical framed widget height
     const bool display_frame     = (flags & ImGuiTreeNodeFlags_Framed) != 0;
     const bool use_frame_padding = (display_frame || (flags & ImGuiTreeNodeFlags_FramePadding));
-    const Vec2 padding           = use_frame_padding ? style.FramePadding
-                                                     : Vec2(style.FramePadding.x,
-                                                            ImMin(window->DC.CurrLineTextBaseOffset, style.FramePadding.y));
+    const ::SF::Engine::Vec2 padding =
+            use_frame_padding ? style.FramePadding
+                              : ::SF::Engine::Vec2(style.FramePadding.x,
+                                                   ImMin(window->DC.CurrLineTextBaseOffset, style.FramePadding.y));
 
     if (!label_end)
         label_end = FindRenderedTextEnd(label);
-    const Vec2 label_size = CalcTextSize(label, label_end, false);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
     const float text_offset_x =
             g.FontSize + (display_frame ? padding.x * 3 : padding.x * 2); // Collapsing arrow width + Spacing
@@ -7870,8 +7921,8 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *l
         frame_bb.Max.x += outer_extend;
     }
 
-    Vec2 text_pos(window->DC.CursorPos.x + text_offset_x, window->DC.CursorPos.y + text_offset_y);
-    ItemSize(Vec2(text_width, frame_height), padding.y);
+    ::SF::Engine::Vec2 text_pos(window->DC.CursorPos.x + text_offset_x, window->DC.CursorPos.y + text_offset_y);
+    ItemSize(::SF::Engine::Vec2(text_width, frame_height), padding.y);
 
     // For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
     ImRect interact_bb = frame_bb;
@@ -7880,9 +7931,8 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *l
         interact_bb.Max.x = frame_bb.Min.x + text_width + (label_size.x > 0.0f ? style.ItemSpacing.x * 2.0f : 0.0f);
 
     // Compute open and multi-select states before ItemAdd() as it clear NextItem data.
-    ImGuiID storage_id =
-            (g.NextItemData.HasFlags & ImGuiNextItemDataFlags_HasStorageID) ? g.NextItemData.StorageId : id;
-    bool is_open = TreeNodeUpdateNextOpen(storage_id, flags);
+    IdType storage_id = (g.NextItemData.HasFlags & ImGuiNextItemDataFlags_HasStorageID) ? g.NextItemData.StorageId : id;
+    bool is_open      = TreeNodeUpdateNextOpen(storage_id, flags);
 
     bool is_visible;
     if (span_all_columns || span_all_columns_label)
@@ -8082,10 +8132,12 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *l
             if (span_all_columns && !span_all_columns_label)
                 TablePopBackgroundChannel();
             if (flags & ImGuiTreeNodeFlags_Bullet)
-                RenderBullet(window->DrawList, Vec2(text_pos.x - text_offset_x * 0.60f, text_pos.y + g.FontSize * 0.5f),
+                RenderBullet(window->DrawList,
+                             ::SF::Engine::Vec2(text_pos.x - text_offset_x * 0.60f, text_pos.y + g.FontSize * 0.5f),
                              text_col);
             else if (!is_leaf)
-                RenderArrow(window->DrawList, Vec2(text_pos.x - text_offset_x + padding.x, text_pos.y), text_col,
+                RenderArrow(window->DrawList, ::SF::Engine::Vec2(text_pos.x - text_offset_x + padding.x, text_pos.y),
+                            text_col,
                             is_open ? ((flags & ImGuiTreeNodeFlags_UpsideDownArrow) ? ImGuiDir_Up : ImGuiDir_Down)
                                     : ImGuiDir_Right,
                             1.0f);
@@ -8109,11 +8161,13 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *l
             if (span_all_columns && !span_all_columns_label)
                 TablePopBackgroundChannel();
             if (flags & ImGuiTreeNodeFlags_Bullet)
-                RenderBullet(window->DrawList, Vec2(text_pos.x - text_offset_x * 0.5f, text_pos.y + g.FontSize * 0.5f),
+                RenderBullet(window->DrawList,
+                             ::SF::Engine::Vec2(text_pos.x - text_offset_x * 0.5f, text_pos.y + g.FontSize * 0.5f),
                              text_col);
             else if (!is_leaf)
                 RenderArrow(window->DrawList,
-                            Vec2(text_pos.x - text_offset_x + padding.x, text_pos.y + g.FontSize * 0.15f), text_col,
+                            ::SF::Engine::Vec2(text_pos.x - text_offset_x + padding.x, text_pos.y + g.FontSize * 0.15f),
+                            text_col,
                             is_open ? ((flags & ImGuiTreeNodeFlags_UpsideDownArrow) ? ImGuiDir_Up : ImGuiDir_Down)
                                     : ImGuiDir_Right,
                             0.70f);
@@ -8122,7 +8176,8 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *l
         }
 
         if (draw_tree_lines)
-            TreeNodeDrawLineToChildNode(Vec2(text_pos.x - text_offset_x + padding.x, text_pos.y + g.FontSize * 0.5f));
+            TreeNodeDrawLineToChildNode(
+                    ::SF::Engine::Vec2(text_pos.x - text_offset_x + padding.x, text_pos.y + g.FontSize * 0.5f));
 
         // Label
         if (display_frame)
@@ -8147,7 +8202,7 @@ bool ImGui::TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *l
 
 // Draw horizontal line from our parent node
 // This is only called for visible child nodes so we are not too fussy anymore about performances
-void ImGui::TreeNodeDrawLineToChildNode(const Vec2 &target_pos)
+void ImGui::TreeNodeDrawLineToChildNode(const ::SF::Engine::Vec2 &target_pos)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
@@ -8165,9 +8220,9 @@ void ImGui::TreeNodeDrawLineToChildNode(const Vec2 &target_pos)
     if (rounding > 0.0f)
     {
         x1 += 0.5f + rounding;
-        window->DrawList->PathArcToFast(Vec2(x1, y - rounding), rounding, 6, 3);
+        window->DrawList->PathArcToFast(::SF::Engine::Vec2(x1, y - rounding), rounding, 6, 3);
         if (x1 < x2)
-            window->DrawList->PathLineTo(Vec2(x2, y));
+            window->DrawList->PathLineTo(::SF::Engine::Vec2(x2, y));
         window->DrawList->PathStroke(GetColorU32(ImGuiCol_TreeLines), g.Style.TreeLinesSize);
     } else
     {
@@ -8219,7 +8274,7 @@ void ImGui::TreePush(const void *ptr_id)
     PushID(ptr_id);
 }
 
-void ImGui::TreePushOverrideID(ImGuiID id)
+void ImGui::TreePushOverrideID(IdType id)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
@@ -8281,7 +8336,7 @@ void ImGui::SetNextItemOpen(bool is_open, ImGuiCond cond)
 }
 
 // Set next TreeNode/CollapsingHeader storage id.
-void ImGui::SetNextItemStorageID(ImGuiID storage_id)
+void ImGui::SetNextItemStorageID(IdType storage_id)
 {
     ImGuiContext &g = *GImGui;
     if (g.CurrentWindow->SkipItems)
@@ -8299,7 +8354,7 @@ bool ImGui::CollapsingHeader(const char *label, ImGuiTreeNodeFlags flags)
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
-    ImGuiID id = window->GetID(label);
+    IdType id = window->GetID(label);
     return TreeNodeBehavior(id, flags | ImGuiTreeNodeFlags_CollapsingHeader, label);
 }
 
@@ -8317,7 +8372,7 @@ bool ImGui::CollapsingHeader(const char *label, bool *p_visible, ImGuiTreeNodeFl
     if (p_visible && !*p_visible)
         return false;
 
-    ImGuiID id = window->GetID(label);
+    IdType id = window->GetID(label);
     flags |= ImGuiTreeNodeFlags_CollapsingHeader;
     if (p_visible)
         flags |= ImGuiTreeNodeFlags_AllowOverlap | (ImGuiTreeNodeFlags) ImGuiTreeNodeFlags_ClipLabelForTrailingButton;
@@ -8332,9 +8387,9 @@ bool ImGui::CollapsingHeader(const char *label, bool *p_visible, ImGuiTreeNodeFl
         float button_size                  = g.FontSize;
         float button_x =
                 ImMax(g.LastItemData.Rect.Min.x, g.LastItemData.Rect.Max.x - g.Style.FramePadding.x - button_size);
-        float button_y          = g.LastItemData.Rect.Min.y + g.Style.FramePadding.y;
-        ImGuiID close_button_id = GetIDWithSeed("#CLOSE", nullptr, id);
-        if (CloseButton(close_button_id, Vec2(button_x, button_y)))
+        float button_y         = g.LastItemData.Rect.Min.y + g.Style.FramePadding.y;
+        IdType close_button_id = GetIDWithSeed("#CLOSE", nullptr, id);
+        if (CloseButton(close_button_id, ::SF::Engine::Vec2(button_x, button_y)))
             *p_visible = false;
         g.LastItemData = last_item_backup;
     }
@@ -8354,7 +8409,7 @@ bool ImGui::CollapsingHeader(const char *label, bool *p_visible, ImGuiTreeNodeFl
 // flags.
 // FIXME: Selectable() with (size.x == 0.0f) and (SelectableTextAlign.x > 0.0f) followed by SameLine() is currently not
 // supported.
-bool ImGui::Selectable(const char *label, bool selected, ImGuiSelectableFlags flags, const Vec2 &size_arg)
+bool ImGui::Selectable(const char *label, bool selected, ImGuiSelectableFlags flags, const ::SF::Engine::Vec2 &size_arg)
 {
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
@@ -8364,11 +8419,12 @@ bool ImGui::Selectable(const char *label, bool selected, ImGuiSelectableFlags fl
     const ImGuiStyle &style = g.Style;
 
     // Submit label or explicit size to ItemSize(), whereas ItemAdd() will submit a larger/spanning rectangle.
-    ImGuiID id            = window->GetID(label);
-    const char *label_end = FindRenderedTextEnd(label);
-    Vec2 label_size       = CalcTextSize(label, label_end, false);
-    Vec2 size(size_arg.x != 0.0f ? size_arg.x : label_size.x, size_arg.y != 0.0f ? size_arg.y : label_size.y);
-    Vec2 pos = window->DC.CursorPos;
+    IdType id                     = window->GetID(label);
+    const char *label_end         = FindRenderedTextEnd(label);
+    ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
+    ::SF::Engine::Vec2 size(size_arg.x != 0.0f ? size_arg.x : label_size.x,
+                            size_arg.y != 0.0f ? size_arg.y : label_size.y);
+    ::SF::Engine::Vec2 pos = window->DC.CursorPos;
     pos.y += window->DC.CurrLineTextBaseOffset;
     ItemSize(size, 0.0f);
 
@@ -8557,8 +8613,8 @@ bool ImGui::Selectable(const char *label, bool selected, ImGuiSelectableFlags fl
 
     // Text stays at the submission position. Alignment/clipping extents ignore SpanAllColumns.
     if (is_visible)
-        RenderTextClipped(pos, Vec2(ImMin(pos.x + size.x, window->WorkRect.Max.x), pos.y + size.y), label, label_end,
-                          &label_size, style.SelectableTextAlign, &bb);
+        RenderTextClipped(pos, ::SF::Engine::Vec2(ImMin(pos.x + size.x, window->WorkRect.Max.x), pos.y + size.y), label,
+                          label_end, &label_size, style.SelectableTextAlign, &bb);
 
     #ifdef IMGUI_DEBUG_BOXSELECT
     if (g.BoxSelectState.UnclipMode)
@@ -8584,7 +8640,8 @@ bool ImGui::Selectable(const char *label, bool selected, ImGuiSelectableFlags fl
     return pressed; //-V1020
 }
 
-bool ImGui::Selectable(const char *label, bool *p_selected, ImGuiSelectableFlags flags, const Vec2 &size_arg)
+bool ImGui::Selectable(const char *label, bool *p_selected, ImGuiSelectableFlags flags,
+                       const ::SF::Engine::Vec2 &size_arg)
 {
     if (Selectable(label, *p_selected, flags, size_arg))
     {
@@ -8816,7 +8873,7 @@ void ImGui::DebugNodeTypingSelectState(ImGuiTypingSelectState *data)
 //-------------------------------------------------------------------------
 
 // Call on the initial click.
-static void BoxSelectPreStartDrag(ImGuiID id, ImGuiSelectionUserData clicked_item)
+static void BoxSelectPreStartDrag(IdType id, ImGuiSelectionUserData clicked_item)
 {
     ImGuiContext &g           = *GImGui;
     ImGuiBoxSelectState *bs   = &g.BoxSelectState;
@@ -8826,7 +8883,7 @@ static void BoxSelectPreStartDrag(ImGuiID id, ImGuiSelectionUserData clicked_ite
     bs->IsStartedSetNavIdOnce = bs->IsStartedFromVoid;
     bs->KeyMods               = g.IO.KeyMods;
     bs->StartPosRel = bs->EndPosRel = ImGui::WindowPosAbsToRel(g.CurrentWindow, g.IO.MousePos);
-    bs->ScrollAccum                 = Vec2(0.0f, 0.0f);
+    bs->ScrollAccum                 = ::SF::Engine::Vec2(0.0f, 0.0f);
 }
 
 static void BoxSelectActivateDrag(ImGuiBoxSelectState *bs, ImGuiWindow *window)
@@ -8883,7 +8940,7 @@ static void BoxSelectScrollWithMouseDrag(ImGuiBoxSelectState *bs, ImGuiWindow *w
     }
 }
 
-bool ImGui::BeginBoxSelect(const ImRect &scope_rect, ImGuiWindow *window, ImGuiID box_select_id,
+bool ImGui::BeginBoxSelect(const ImRect &scope_rect, ImGuiWindow *window, IdType box_select_id,
                            ImGuiMultiSelectFlags ms_flags)
 {
     ImGuiContext &g         = *GImGui;
@@ -8906,9 +8963,9 @@ bool ImGui::BeginBoxSelect(const ImRect &scope_rect, ImGuiWindow *window, ImGuiI
     // Current frame absolute prev/current rectangles are used to toggle selection.
     // They are derived from positions relative to scrolling space, so "previous" rectangle is reprojected for current
     // frame coordinates.
-    Vec2 start_pos_abs    = WindowPosRelToAbs(window, bs->StartPosRel);
-    Vec2 prev_end_pos_abs = WindowPosRelToAbs(window, bs->EndPosRel); // Clamped already
-    Vec2 curr_end_pos_abs = g.IO.MousePos;
+    ::SF::Engine::Vec2 start_pos_abs    = WindowPosRelToAbs(window, bs->StartPosRel);
+    ::SF::Engine::Vec2 prev_end_pos_abs = WindowPosRelToAbs(window, bs->EndPosRel); // Clamped already
+    ::SF::Engine::Vec2 curr_end_pos_abs = g.IO.MousePos;
     if (ms_flags & ImGuiMultiSelectFlags_ScopeWindow) // Box-select scrolling only happens with ScopeWindow
         curr_end_pos_abs = ImClamp(curr_end_pos_abs, scope_rect.Min, scope_rect.Max);
     bs->BoxSelectRectPrev.Min = ImMin(start_pos_abs, prev_end_pos_abs);
@@ -8929,10 +8986,10 @@ bool ImGui::BeginBoxSelect(const ImRect &scope_rect, ImGuiWindow *window, ImGuiI
         bs->UnclipRects[0] = bs->UnclipRects[1] = ImRect(+FLT_MAX, +FLT_MAX, -FLT_MAX, -FLT_MAX);
         for (int side = 0; side < 2; side++)
         {
-            Vec2 d_min = (side == 0) ? ImMin(bs->BoxSelectRectCurr.Min, bs->BoxSelectRectPrev.Min)
-                                     : ImMin(bs->BoxSelectRectCurr.Max, bs->BoxSelectRectPrev.Max);
-            Vec2 d_max = (side == 0) ? ImMax(bs->BoxSelectRectCurr.Min, bs->BoxSelectRectPrev.Min)
-                                     : ImMax(bs->BoxSelectRectCurr.Max, bs->BoxSelectRectPrev.Max);
+            ::SF::Engine::Vec2 d_min = (side == 0) ? ImMin(bs->BoxSelectRectCurr.Min, bs->BoxSelectRectPrev.Min)
+                                                   : ImMin(bs->BoxSelectRectCurr.Max, bs->BoxSelectRectPrev.Max);
+            ::SF::Engine::Vec2 d_max = (side == 0) ? ImMax(bs->BoxSelectRectCurr.Min, bs->BoxSelectRectPrev.Min)
+                                                   : ImMax(bs->BoxSelectRectCurr.Max, bs->BoxSelectRectPrev.Max);
             if (d_min.x != d_max.x)
             {
                 bs->UnclipRects[0].AddX(d_min.x);
@@ -9060,7 +9117,8 @@ static ImRect CalcScopeRect(ImGuiMultiSelectTempData *ms, ImGuiWindow *window)
         //     scope_rect = g.CurrentTable->HostClipRect;
 
         // Add inner table decoration (#7821) // FIXME: Why not baking in InnerClipRect?
-        scope_rect.Min = ImMin(scope_rect.Min + Vec2(window->DecoInnerSizeX1, window->DecoInnerSizeY1), scope_rect.Max);
+        scope_rect.Min = ImMin(scope_rect.Min + ::SF::Engine::Vec2(window->DecoInnerSizeX1, window->DecoInnerSizeY1),
+                               scope_rect.Max);
         return scope_rect;
     }
 }
@@ -9106,7 +9164,7 @@ ImGuiMultiSelectIO *ImGui::BeginMultiSelect(ImGuiMultiSelectFlags flags, int sel
     }
 
     // FIXME: BeginFocusScope()
-    const ImGuiID id = window->IDStack.back();
+    const IdType id = window->IDStack.back();
     ms->Clear();
     ms->FocusScopeId       = id;
     ms->Flags              = flags;
@@ -9331,7 +9389,7 @@ void ImGui::SetNextItemSelectionUserData(ImGuiSelectionUserData selection_user_d
 // - Applying SetAll for submitted items.
 // - Applying SetRange for submitted items and record end points.
 // - Altering button behavior flags to facilitate use with drag and drop.
-void ImGui::MultiSelectItemHeader(ImGuiID id, bool *p_selected, ImGuiButtonFlags *p_button_flags)
+void ImGui::MultiSelectItemHeader(IdType id, bool *p_selected, ImGuiButtonFlags *p_button_flags)
 {
     ImGuiContext &g              = *GImGui;
     ImGuiMultiSelectTempData *ms = g.CurrentMultiSelect;
@@ -9412,7 +9470,7 @@ void ImGui::MultiSelectItemHeader(ImGuiID id, bool *p_selected, ImGuiButtonFlags
 // - Altering selection based on Ctrl/Shift modifiers, both for keyboard and mouse.
 // - Record current selection state for RangeSrc
 // This is all rather complex, best to run and refer to "widgets_multiselect_xxx" tests in imgui_test_suite.
-void ImGui::MultiSelectItemFooter(ImGuiID id, bool *p_selected, bool *p_pressed, ImGuiMultiSelectFlags extra_flags)
+void ImGui::MultiSelectItemFooter(IdType id, bool *p_selected, bool *p_pressed, ImGuiMultiSelectFlags extra_flags)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
@@ -9721,7 +9779,7 @@ ImGuiSelectionBasicStorage::ImGuiSelectionBasicStorage()
     Size                    = 0;
     PreserveOrder           = false;
     UserData                = nullptr;
-    AdapterIndexToStorageId = [](ImGuiSelectionBasicStorage *, int idx) { return (ImGuiID) idx; };
+    AdapterIndexToStorageId = [](ImGuiSelectionBasicStorage *, int idx) { return (IdType) idx; };
     _SelectionOrder         = 1; // Always >0
 }
 
@@ -9739,7 +9797,7 @@ void ImGuiSelectionBasicStorage::Swap(ImGuiSelectionBasicStorage &r)
     _Storage.Data.swap(r._Storage.Data);
 }
 
-bool ImGuiSelectionBasicStorage::Contains(ImGuiID id) const { return _Storage.GetInt(id, 0) != 0; }
+bool ImGuiSelectionBasicStorage::Contains(IdType id) const { return _Storage.GetInt(id, 0) != 0; }
 
 static int IMGUI_CDECL PairComparerByValueInt(const void *lhs, const void *rhs)
 {
@@ -9749,9 +9807,9 @@ static int IMGUI_CDECL PairComparerByValueInt(const void *lhs, const void *rhs)
 }
 
 // GetNextSelectedItem() is an abstraction allowing us to change our underlying actual storage system without impacting
-// user. (e.g. store unselected vs compact down, compact down on demand, use raw ImVector<ImGuiID> instead of
+// user. (e.g. store unselected vs compact down, compact down on demand, use raw ImVector<IdType> instead of
 // ImGuiStorage...)
-bool ImGuiSelectionBasicStorage::GetNextSelectedItem(void **opaque_it, ImGuiID *out_id)
+bool ImGuiSelectionBasicStorage::GetNextSelectedItem(void **opaque_it, IdType *out_id)
 {
     ImGuiStoragePair *it     = (ImGuiStoragePair *) *opaque_it;
     ImGuiStoragePair *it_end = _Storage.Data.Data + _Storage.Data.Size;
@@ -9772,7 +9830,7 @@ bool ImGuiSelectionBasicStorage::GetNextSelectedItem(void **opaque_it, ImGuiID *
     return has_more;
 }
 
-void ImGuiSelectionBasicStorage::SetItemSelected(ImGuiID id, bool selected)
+void ImGuiSelectionBasicStorage::SetItemSelected(IdType id, bool selected)
 {
     int *p_int = _Storage.GetIntRef(id, 0);
     if (selected && *p_int == 0)
@@ -9787,7 +9845,7 @@ void ImGuiSelectionBasicStorage::SetItemSelected(ImGuiID id, bool selected)
 }
 
 // Optimized for batch edits (with same value of 'selected')
-static void ImGuiSelectionBasicStorage_BatchSetItemSelected(ImGuiSelectionBasicStorage *selection, ImGuiID id,
+static void ImGuiSelectionBasicStorage_BatchSetItemSelected(ImGuiSelectionBasicStorage *selection, IdType id,
                                                             bool selected, int size_before_amends, int selection_order)
 {
     ImGuiStorage *storage   = &selection->_Storage;
@@ -9844,7 +9902,7 @@ void ImGuiSelectionBasicStorage::ApplyRequests(ImGuiMultiSelectIO *ms_io)
     // ImGuiSelectionBasicStorage_BatchSetItemSelected() + ImGuiSelectionBasicStorage_BatchFinish().
     // - Optimized select can append unsorted, then sort in a second pass. Optimized unselect can clear in-place then
     // compact in a second pass.
-    // - A more optimal version wouldn't even use ImGuiStorage but directly a ImVector<ImGuiID> to reduce bandwidth, but
+    // - A more optimal version wouldn't even use ImGuiStorage but directly a ImVector<IdType> to reduce bandwidth, but
     // this is a reasonable trade off to reuse code.
     // - There are many ways this could be better optimized. The worse case scenario being: using BoxSelect2d in a grid,
     // box-select scrolling down while wiggling
@@ -9935,26 +9993,27 @@ void ImGuiSelectionExternalStorage::ApplyRequests(ImGuiMultiSelectIO *ms_io)
 // list filling the entire window width, use size.x = -FLT_MIN and pass an non-visible label e.g. "##empty" Tip: If your
 // vertical size is calculated from an item count (e.g. 10 * item_height) consider adding a fractional part to
 // facilitate seeing scrolling boundaries (e.g. 10.5f * item_height).
-bool ImGui::BeginListBox(const char *label, const Vec2 &size_arg)
+bool ImGui::BeginListBox(const char *label, const ::SF::Engine::Vec2 &size_arg)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = GetCurrentWindow();
     if (window->SkipItems)
         return false;
 
-    const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = GetID(label);
-    const char *label_end   = FindRenderedTextEnd(label);
-    const Vec2 label_size   = CalcTextSize(label, label_end, false);
+    const ImGuiStyle &style             = g.Style;
+    const IdType id                     = GetID(label);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
     // Size default to hold ~7.25 items.
     // Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
-    Vec2 size       = ImTrunc(CalcItemSize(size_arg, CalcItemWidth(),
-                                           GetTextLineHeightWithSpacing() * 7.25f + style.FramePadding.y * 2.0f));
-    Vec2 frame_size = Vec2(size.x, ImMax(size.y, label_size.y));
+    ::SF::Engine::Vec2 size       = ImTrunc(CalcItemSize(
+            size_arg, CalcItemWidth(), GetTextLineHeightWithSpacing() * 7.25f + style.FramePadding.y * 2.0f));
+    ::SF::Engine::Vec2 frame_size = ::SF::Engine::Vec2(size.x, ImMax(size.y, label_size.y));
     ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + frame_size);
     ImRect bb(frame_bb.Min,
-              frame_bb.Max + Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
+              frame_bb.Max +
+                      ::SF::Engine::Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
     g.NextItemData.ClearFlags();
 
     if (!IsRectVisible(bb.Min, bb.Max))
@@ -9969,7 +10028,8 @@ bool ImGui::BeginListBox(const char *label, const Vec2 &size_arg)
     BeginGroup();
     if (label_size.x > 0.0f)
     {
-        Vec2 label_pos = Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y);
+        ::SF::Engine::Vec2 label_pos =
+                ::SF::Engine::Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, frame_bb.Min.y + style.FramePadding.y);
         RenderText(label_pos, label, label_end, false);
         window->DC.CursorMaxPos = ImMax(window->DC.CursorMaxPos, label_pos + label_size);
         AlignTextToFramePadding();
@@ -10009,7 +10069,8 @@ bool ImGui::ListBox(const char *label, int *current_item, const char *(*getter)(
     if (height_in_items < 0)
         height_in_items = ImMin(items_count, 7);
     float height_in_items_f = height_in_items + 0.25f;
-    Vec2 size(0.0f, ImTrunc(GetTextLineHeightWithSpacing() * height_in_items_f + g.Style.FramePadding.y * 2.0f));
+    ::SF::Engine::Vec2 size(
+            0.0f, ImTrunc(GetTextLineHeightWithSpacing() * height_in_items_f + g.Style.FramePadding.y * 2.0f));
 
     if (!BeginListBox(label, size))
         return false;
@@ -10061,7 +10122,7 @@ bool ImGui::ListBox(const char *label, int *current_item, const char *(*getter)(
 
 int ImGui::PlotEx(ImGuiPlotType plot_type, const char *label, float (*values_getter)(void *data, int idx), void *data,
                   int values_count, int values_offset, const char *overlay_text, float scale_min, float scale_max,
-                  const Vec2 &size_arg)
+                  const ::SF::Engine::Vec2 &size_arg)
 {
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = GetCurrentWindow();
@@ -10069,16 +10130,18 @@ int ImGui::PlotEx(ImGuiPlotType plot_type, const char *label, float (*values_get
         return -1;
 
     const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = window->GetID(label);
+    const IdType id         = window->GetID(label);
 
-    const char *label_end = FindRenderedTextEnd(label);
-    const Vec2 label_size = CalcTextSize(label, label_end, false);
-    const Vec2 frame_size = CalcItemSize(size_arg, CalcItemWidth(), label_size.y + style.FramePadding.y * 2.0f);
+    const char *label_end               = FindRenderedTextEnd(label);
+    const ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
+    const ::SF::Engine::Vec2 frame_size =
+            CalcItemSize(size_arg, CalcItemWidth(), label_size.y + style.FramePadding.y * 2.0f);
 
     const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + frame_size);
     const ImRect inner_bb(frame_bb.Min + style.FramePadding, frame_bb.Max - style.FramePadding);
-    const ImRect total_bb(frame_bb.Min,
-                          frame_bb.Max + Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0));
+    const ImRect total_bb(
+            frame_bb.Min,
+            frame_bb.Max + ::SF::Engine::Vec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0));
     ItemSize(total_bb, style.FramePadding.y);
     if (!ItemAdd(total_bb, id, &frame_bb, ImGuiItemFlags_NoNav))
         return -1;
@@ -10133,10 +10196,11 @@ int ImGui::PlotEx(ImGuiPlotType plot_type, const char *label, float (*values_get
         const float t_step    = 1.0f / (float) res_w;
         const float inv_scale = (scale_min == scale_max) ? 0.0f : (1.0f / (scale_max - scale_min));
 
-        float v0                    = values_getter(data, (0 + values_offset) % values_count);
-        float t0                    = 0.0f;
-        Vec2 tp0                    = Vec2(t0, 1.0f - ImSaturate((v0 - scale_min) *
-                                                                 inv_scale)); // Point in the normalized space of our target rectangle
+        float v0               = values_getter(data, (0 + values_offset) % values_count);
+        float t0               = 0.0f;
+        ::SF::Engine::Vec2 tp0 = ::SF::Engine::Vec2(
+                t0, 1.0f - ImSaturate((v0 - scale_min) *
+                                      inv_scale)); // Point in the normalized space of our target rectangle
         float histogram_zero_line_t = (scale_min * scale_max < 0.0f)
                                               ? (1 + scale_min * inv_scale)
                                               : (scale_min < 0.0f ? 0.0f : 1.0f); // Where does the zero line stands
@@ -10151,14 +10215,15 @@ int ImGui::PlotEx(ImGuiPlotType plot_type, const char *label, float (*values_get
             const float t1   = t0 + t_step;
             const int v1_idx = (int) (t0 * item_count + 0.5f);
             IM_ASSERT(v1_idx >= 0 && v1_idx < values_count);
-            const float v1 = values_getter(data, (v1_idx + values_offset + 1) % values_count);
-            const Vec2 tp1 = Vec2(t1, 1.0f - ImSaturate((v1 - scale_min) * inv_scale));
+            const float v1               = values_getter(data, (v1_idx + values_offset + 1) % values_count);
+            const ::SF::Engine::Vec2 tp1 = ::SF::Engine::Vec2(t1, 1.0f - ImSaturate((v1 - scale_min) * inv_scale));
 
             // NB: Draw calls are merged together by the DrawList system. Still, we should render our batch are lower
             // level to save a bit of CPU.
-            Vec2 pos0 = ImLerp(inner_bb.Min, inner_bb.Max, tp0);
-            Vec2 pos1 = ImLerp(inner_bb.Min, inner_bb.Max,
-                               (plot_type == ImGuiPlotType_Lines) ? tp1 : Vec2(tp1.x, histogram_zero_line_t));
+            ::SF::Engine::Vec2 pos0 = ImLerp(inner_bb.Min, inner_bb.Max, tp0);
+            ::SF::Engine::Vec2 pos1 =
+                    ImLerp(inner_bb.Min, inner_bb.Max,
+                           (plot_type == ImGuiPlotType_Lines) ? tp1 : ::SF::Engine::Vec2(tp1.x, histogram_zero_line_t));
             if (plot_type == ImGuiPlotType_Lines)
             {
                 window->DrawList->AddLine(pos0, pos1, idx_hovered == v1_idx ? col_hovered : col_base);
@@ -10176,11 +10241,12 @@ int ImGui::PlotEx(ImGuiPlotType plot_type, const char *label, float (*values_get
 
     // Text overlay
     if (overlay_text)
-        RenderTextClipped(Vec2(frame_bb.Min.x, frame_bb.Min.y + style.FramePadding.y), frame_bb.Max, overlay_text,
-                          nullptr, nullptr, Vec2(0.5f, 0.0f));
+        RenderTextClipped(::SF::Engine::Vec2(frame_bb.Min.x, frame_bb.Min.y + style.FramePadding.y), frame_bb.Max,
+                          overlay_text, nullptr, nullptr, ::SF::Engine::Vec2(0.5f, 0.0f));
 
     if (label_size.x > 0.0f)
-        RenderText(Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, inner_bb.Min.y), label, label_end, false);
+        RenderText(::SF::Engine::Vec2(frame_bb.Max.x + style.ItemInnerSpacing.x, inner_bb.Min.y), label, label_end,
+                   false);
 
     // Return hovered index or -1 if none are hovered.
     // This is currently not exposed in the public API because we need a larger redesign of the whole thing, but in the
@@ -10210,7 +10276,8 @@ static float Plot_ArrayGetter(void *data, int idx)
 }
 
 void ImGui::PlotLines(const char *label, const float *values, int values_count, int values_offset,
-                      const char *overlay_text, float scale_min, float scale_max, Vec2 graph_size, int stride)
+                      const char *overlay_text, float scale_min, float scale_max, ::SF::Engine::Vec2 graph_size,
+                      int stride)
 {
     ImGuiPlotArrayGetterData data(values, stride);
     PlotEx(ImGuiPlotType_Lines, label, &Plot_ArrayGetter, (void *) &data, values_count, values_offset, overlay_text,
@@ -10218,7 +10285,8 @@ void ImGui::PlotLines(const char *label, const float *values, int values_count, 
 }
 
 void ImGui::PlotLines(const char *label, float (*values_getter)(void *data, int idx), void *data, int values_count,
-                      int values_offset, const char *overlay_text, float scale_min, float scale_max, Vec2 graph_size)
+                      int values_offset, const char *overlay_text, float scale_min, float scale_max,
+                      ::SF::Engine::Vec2 graph_size)
 {
     PlotEx(ImGuiPlotType_Lines, label, values_getter, data, values_count, values_offset, overlay_text, scale_min,
            scale_max, graph_size);
@@ -10226,7 +10294,8 @@ void ImGui::PlotLines(const char *label, float (*values_getter)(void *data, int 
 
 // Plot Histogram (the data provided _is_ histogram data. it doesn't compute the histogram of your data)
 void ImGui::PlotHistogram(const char *label, const float *values, int values_count, int values_offset,
-                          const char *overlay_text, float scale_min, float scale_max, Vec2 graph_size, int stride)
+                          const char *overlay_text, float scale_min, float scale_max, ::SF::Engine::Vec2 graph_size,
+                          int stride)
 {
     ImGuiPlotArrayGetterData data(values, stride);
     PlotEx(ImGuiPlotType_Histogram, label, &Plot_ArrayGetter, (void *) &data, values_count, values_offset, overlay_text,
@@ -10235,7 +10304,7 @@ void ImGui::PlotHistogram(const char *label, const float *values, int values_cou
 
 void ImGui::PlotHistogram(const char *label, float (*values_getter)(void *data, int idx), void *data, int values_count,
                           int values_offset, const char *overlay_text, float scale_min, float scale_max,
-                          Vec2 graph_size)
+                          ::SF::Engine::Vec2 graph_size)
 {
     PlotEx(ImGuiPlotType_Histogram, label, values_getter, data, values_count, values_offset, overlay_text, scale_min,
            scale_max, graph_size);
@@ -10364,12 +10433,12 @@ bool ImGui::BeginMenuBar()
 
     // We overwrite CursorMaxPos because BeginGroup sets it to CursorPos (essentially the .EmitItem hack in EndMenuBar()
     // would need something analogous here, maybe a BeginGroupEx() with flags).
-    window->DC.CursorPos = window->DC.CursorMaxPos =
-            Vec2(bar_rect.Min.x + window->DC.MenuBarOffset.x, bar_rect.Min.y + window->DC.MenuBarOffset.y);
-    window->DC.LayoutType       = ImGuiLayoutType_Horizontal;
-    window->DC.IsSameLine       = false;
-    window->DC.NavLayerCurrent  = ImGuiNavLayer_Menu;
-    window->DC.MenuBarAppending = true;
+    window->DC.CursorPos = window->DC.CursorMaxPos = ::SF::Engine::Vec2(bar_rect.Min.x + window->DC.MenuBarOffset.x,
+                                                                        bar_rect.Min.y + window->DC.MenuBarOffset.y);
+    window->DC.LayoutType                          = ImGuiLayoutType_Horizontal;
+    window->DC.IsSameLine                          = false;
+    window->DC.NavLayerCurrent                     = ImGuiNavLayer_Menu;
+    window->DC.MenuBarAppending                    = true;
     AlignTextToFramePadding();
     return true;
 }
@@ -10431,12 +10500,12 @@ void ImGui::EndMenuBar()
 
     // FIXME: Extremely confusing, cleanup by (a) working on WorkRect stack system (b) not using a Group confusingly
     // here.
-    ImGuiGroupData &group_data  = g.GroupStack.back();
-    group_data.EmitItem         = false;
-    Vec2 restore_cursor_max_pos = group_data.BackupCursorMaxPos;
-    window->DC.IdealMaxPos.x    = ImMax(window->DC.IdealMaxPos.x,
-                                        window->DC.CursorMaxPos.x -
-                                                window->Scroll.x); // Convert ideal extents for scrolling layer equivalent.
+    ImGuiGroupData &group_data                = g.GroupStack.back();
+    group_data.EmitItem                       = false;
+    ::SF::Engine::Vec2 restore_cursor_max_pos = group_data.BackupCursorMaxPos;
+    window->DC.IdealMaxPos.x                  = ImMax(window->DC.IdealMaxPos.x,
+                                                      window->DC.CursorMaxPos.x -
+                                                              window->Scroll.x); // Convert ideal extents for scrolling layer equivalent.
     EndGroup(); // Restore position on layer 0 // FIXME: Misleading to use a group for that backup/restore
     window->DC.LayoutType       = ImGuiLayoutType_Vertical;
     window->DC.IsSameLine       = false;
@@ -10459,13 +10528,13 @@ bool ImGui::BeginViewportSideBar(const char *name, ImGuiViewport *viewport_p, Im
     if (bar_window == nullptr || bar_window->BeginCount == 0)
     {
         // Calculate and set window size/position
-        ImRect avail_rect = viewport->GetBuildWorkRect();
-        ImGuiAxis axis    = (dir == ImGuiDir_Up || dir == ImGuiDir_Down) ? ImGuiAxis_Y : ImGuiAxis_X;
-        Vec2 pos          = avail_rect.Min;
+        ImRect avail_rect      = viewport->GetBuildWorkRect();
+        ImGuiAxis axis         = (dir == ImGuiDir_Up || dir == ImGuiDir_Down) ? ImGuiAxis_Y : ImGuiAxis_X;
+        ::SF::Engine::Vec2 pos = avail_rect.Min;
         if (dir == ImGuiDir_Right || dir == ImGuiDir_Down)
             pos[axis] = avail_rect.Max[axis] - axis_size;
-        Vec2 size  = avail_rect.GetSize();
-        size[axis] = axis_size;
+        ::SF::Engine::Vec2 size = avail_rect.GetSize();
+        size[axis]              = axis_size;
         SetNextWindowPos(pos);
         SetNextWindowSize(size);
 
@@ -10481,7 +10550,7 @@ bool ImGui::BeginViewportSideBar(const char *name, ImGuiViewport *viewport_p, Im
     SetNextWindowViewport(viewport->ID); // Enforce viewport so we don't create our own viewport when
                                          // ImGuiConfigFlags_ViewportsNoMerge is set.
     PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    PushStyleVar(ImGuiStyleVar_WindowMinSize, Vec2(0, 0)); // Lift normal size constraint
+    PushStyleVar(ImGuiStyleVar_WindowMinSize, ::SF::Engine::Vec2(0, 0)); // Lift normal size constraint
     bool is_open = Begin(name, nullptr, window_flags);
     PopStyleVar(2);
 
@@ -10501,13 +10570,13 @@ bool ImGui::BeginMainMenuBar()
     // FIXME: This could be generalized as an opt-in way to clamp window->DC.CursorStartPos to avoid SafeArea?
     // FIXME: Consider removing support for safe area down the line... it's messy. Nowadays consoles have support for TV
     // calibration in OS settings.
-    g.NextWindowData.MenuBarOffsetMinVal = Vec2(g.Style.DisplaySafeAreaPadding.x,
-                                                ImMax(g.Style.DisplaySafeAreaPadding.y - g.Style.FramePadding.y, 0.0f));
+    g.NextWindowData.MenuBarOffsetMinVal = ::SF::Engine::Vec2(
+            g.Style.DisplaySafeAreaPadding.x, ImMax(g.Style.DisplaySafeAreaPadding.y - g.Style.FramePadding.y, 0.0f));
     ImGuiWindowFlags window_flags =
             ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
     float height = GetFrameHeight();
     bool is_open = BeginViewportSideBar("##MainMenuBar", viewport, ImGuiDir_Up, height, window_flags);
-    g.NextWindowData.MenuBarOffsetMinVal = Vec2(0.0f, 0.0f);
+    g.NextWindowData.MenuBarOffsetMinVal = ::SF::Engine::Vec2(0.0f, 0.0f);
     if (!is_open)
     {
         End();
@@ -10577,7 +10646,7 @@ bool ImGui::BeginMenuEx(const char *label, const char *icon, bool enabled)
 
     ImGuiContext &g   = *GImGui;
     ImGuiStyle &style = g.Style;
-    const ImGuiID id  = window->GetID(label);
+    const IdType id   = window->GetID(label);
     bool menu_is_open = IsPopupOpen(id, ImGuiPopupFlags_None);
 
     // Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu would steal
@@ -10607,8 +10676,8 @@ bool ImGui::BeginMenuEx(const char *label, const char *icon, bool enabled)
     // Tag menu as used. Next time BeginMenu() with same ID is called it will append to existing menu
     g.MenusIdSubmittedThisFrame.push_back(id);
 
-    const char *label_end = FindRenderedTextEnd(label);
-    Vec2 label_size       = CalcTextSize(label, label_end, false);
+    const char *label_end         = FindRenderedTextEnd(label);
+    ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
     // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent without
     // always being a Child window) This is only done for items for the menu set and not the full parent window.
@@ -10619,8 +10688,8 @@ bool ImGui::BeginMenuEx(const char *label, const char *icon, bool enabled)
     // The reference position stored in popup_pos will be used by Begin() to find a suitable position for the child
     // menu, However the final position is going to be different! It is chosen by FindBestWindowPosForPopup(). e.g.
     // Menus tend to overlap each other horizontally to amplify relative Z-ordering.
-    Vec2 popup_pos;
-    Vec2 pos = window->DC.CursorPos;
+    ::SF::Engine::Vec2 popup_pos;
+    ::SF::Engine::Vec2 pos = window->DC.CursorPos;
     PushID(label);
     if (!enabled)
         BeginDisabled();
@@ -10639,7 +10708,8 @@ bool ImGui::BeginMenuEx(const char *label, const char *icon, bool enabled)
         // For ChildMenu, the popup position will be overwritten by the call to FindBestWindowPosForPopup() in Begin()
         window->DC.CursorPos.x += IM_TRUNC(style.ItemSpacing.x * 0.5f);
         PushStyleVarX(ImGuiStyleVar_ItemSpacing, style.ItemSpacing.x * 2.0f);
-        Vec2 text_pos(window->DC.CursorPos.x + offsets->OffsetLabel, pos.y + window->DC.CurrLineTextBaseOffset);
+        ::SF::Engine::Vec2 text_pos(window->DC.CursorPos.x + offsets->OffsetLabel,
+                                    pos.y + window->DC.CurrLineTextBaseOffset);
         pressed = Selectable("", menu_is_open, selectable_flags, label_size);
         LogSetNextTextDecoration("[", "]");
         RenderText(text_pos, label, label_end, false);
@@ -10648,8 +10718,8 @@ bool ImGui::BeginMenuEx(const char *label, const char *icon, bool enabled)
                 style.ItemSpacing.x *
                 (-1.0f + 0.5f)); // -1 spacing to compensate the spacing added when Selectable() did a SameLine(). It
                                  // would also work to call SameLine() ourselves after the PopStyleVar().
-        popup_pos = Vec2(pos.x - 1.0f - IM_TRUNC(style.ItemSpacing.x * 0.5f),
-                         text_pos.y - style.FramePadding.y + window->MenuBarHeight);
+        popup_pos = ::SF::Engine::Vec2(pos.x - 1.0f - IM_TRUNC(style.ItemSpacing.x * 0.5f),
+                                       text_pos.y - style.FramePadding.y + window->MenuBarHeight);
     } else
     {
         // Menu inside a regular/vertical menu
@@ -10660,16 +10730,17 @@ bool ImGui::BeginMenuEx(const char *label, const char *icon, bool enabled)
         float checkmark_w = IM_TRUNC(g.FontSize * 1.20f);
         float min_w       = offsets->DeclColumns(icon_w, label_size.x, 0.0f, checkmark_w); // Feedback to next frame
         float extra_w     = ImMax(0.0f, GetContentRegionAvail().x - min_w);
-        Vec2 text_pos(window->DC.CursorPos.x, pos.y + window->DC.CurrLineTextBaseOffset);
+        ::SF::Engine::Vec2 text_pos(window->DC.CursorPos.x, pos.y + window->DC.CurrLineTextBaseOffset);
         pressed = Selectable("", menu_is_open, selectable_flags | ImGuiSelectableFlags_SpanAvailWidth,
-                             Vec2(min_w, label_size.y));
+                             ::SF::Engine::Vec2(min_w, label_size.y));
         LogSetNextTextDecoration("", ">");
-        RenderText(Vec2(text_pos.x + offsets->OffsetLabel, text_pos.y), label, label_end, false);
+        RenderText(::SF::Engine::Vec2(text_pos.x + offsets->OffsetLabel, text_pos.y), label, label_end, false);
         if (icon_w > 0.0f)
-            RenderText(Vec2(text_pos.x + offsets->OffsetIcon, text_pos.y), icon);
-        RenderArrow(window->DrawList, Vec2(text_pos.x + offsets->OffsetMark + extra_w + g.FontSize * 0.30f, text_pos.y),
+            RenderText(::SF::Engine::Vec2(text_pos.x + offsets->OffsetIcon, text_pos.y), icon);
+        RenderArrow(window->DrawList,
+                    ::SF::Engine::Vec2(text_pos.x + offsets->OffsetMark + extra_w + g.FontSize * 0.30f, text_pos.y),
                     GetColorU32(ImGuiCol_Text), ImGuiDir_Right);
-        popup_pos = Vec2(pos.x, text_pos.y - style.WindowPadding.y);
+        popup_pos = ::SF::Engine::Vec2(pos.x, text_pos.y - style.WindowPadding.y);
     }
     style.SelectableRounding = backup_rounding;
     if (!enabled)
@@ -10709,9 +10780,9 @@ bool ImGui::BeginMenuEx(const char *label, const char *icon, bool enabled)
             const float ref_unit          = g.FontSize; // FIXME-DPI
             const float child_dir         = (window->Pos.x < child_menu_window->Pos.x) ? 1.0f : -1.0f;
             const ImRect next_window_rect = child_menu_window->Rect();
-            Vec2 ta                       = (g.IO.MousePos - g.IO.MouseDelta);
-            Vec2 tb                       = (child_dir > 0.0f) ? next_window_rect.GetTL() : next_window_rect.GetTR();
-            Vec2 tc                       = (child_dir > 0.0f) ? next_window_rect.GetBL() : next_window_rect.GetBR();
+            ::SF::Engine::Vec2 ta         = (g.IO.MousePos - g.IO.MouseDelta);
+            ::SF::Engine::Vec2 tb         = (child_dir > 0.0f) ? next_window_rect.GetTL() : next_window_rect.GetTR();
+            ::SF::Engine::Vec2 tc         = (child_dir > 0.0f) ? next_window_rect.GetBL() : next_window_rect.GetBR();
             const float pad_farmost_h =
                     ImClamp(ImFabs(ta.x - tb.x) * 0.30f, ref_unit * 0.5f, ref_unit * 2.5f); // Add a bit of extra slack.
             ta.x += child_dir * -0.5f;
@@ -10859,11 +10930,11 @@ bool ImGui::MenuItemEx(const char *label, const char *icon, const char *shortcut
     if (window->SkipItems)
         return false;
 
-    ImGuiContext &g       = *GImGui;
-    ImGuiStyle &style     = g.Style;
-    Vec2 pos              = window->DC.CursorPos;
-    const char *label_end = FindRenderedTextEnd(label);
-    Vec2 label_size       = CalcTextSize(label, label_end, false);
+    ImGuiContext &g               = *GImGui;
+    ImGuiStyle &style             = g.Style;
+    ::SF::Engine::Vec2 pos        = window->DC.CursorPos;
+    const char *label_end         = FindRenderedTextEnd(label);
+    ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
     // See BeginMenuEx() for comments about this.
     const bool menuset_is_open = IsRootOfOpenMenuSet();
@@ -10890,10 +10961,10 @@ bool ImGui::MenuItemEx(const char *label, const char *icon, const char *shortcut
         // misleading but may be useful Note that in this situation: we don't render the shortcut, we render a highlight
         // instead of the selected tick mark.
         window->DC.CursorPos.x += IM_TRUNC(style.ItemSpacing.x * 0.5f);
-        Vec2 text_pos(window->DC.CursorPos.x + offsets->OffsetLabel,
-                      window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
+        ::SF::Engine::Vec2 text_pos(window->DC.CursorPos.x + offsets->OffsetLabel,
+                                    window->DC.CursorPos.y + window->DC.CurrLineTextBaseOffset);
         PushStyleVarX(ImGuiStyleVar_ItemSpacing, style.ItemSpacing.x * 2.0f);
-        pressed = Selectable("", selected, selectable_flags, Vec2(label_size.x, 0.0f));
+        pressed = Selectable("", selected, selectable_flags, ::SF::Engine::Vec2(label_size.x, 0.0f));
         PopStyleVar();
         if (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_Visible)
             RenderText(text_pos, label, label_end, false);
@@ -10913,25 +10984,26 @@ bool ImGui::MenuItemEx(const char *label, const char *icon, const char *shortcut
                                                           // because 'selected' has no neutral setting.
         float min_w = offsets->DeclColumns(icon_w, label_size.x, shortcut_w, checkmark_w); // Feedback for next frame
         float stretch_w = ImMax(0.0f, GetContentRegionAvail().x - min_w);
-        Vec2 text_pos(pos.x, pos.y + window->DC.CurrLineTextBaseOffset);
+        ::SF::Engine::Vec2 text_pos(pos.x, pos.y + window->DC.CurrLineTextBaseOffset);
         pressed = Selectable("", false, selectable_flags | ImGuiSelectableFlags_SpanAvailWidth,
-                             Vec2(min_w, label_size.y));
+                             ::SF::Engine::Vec2(min_w, label_size.y));
         if (g.LastItemData.StatusFlags & ImGuiItemStatusFlags_Visible)
         {
-            RenderText(text_pos + Vec2(offsets->OffsetLabel, 0.0f), label, label_end, false);
+            RenderText(text_pos + ::SF::Engine::Vec2(offsets->OffsetLabel, 0.0f), label, label_end, false);
             if (icon_w > 0.0f)
-                RenderText(text_pos + Vec2(offsets->OffsetIcon, 0.0f), icon);
+                RenderText(text_pos + ::SF::Engine::Vec2(offsets->OffsetIcon, 0.0f), icon);
             if (shortcut_w > 0.0f)
             {
                 PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_TextDisabled]);
                 LogSetNextTextDecoration("(", ")");
-                RenderText(text_pos + Vec2(offsets->OffsetShortcut + stretch_w, 0.0f), shortcut, nullptr, false);
+                RenderText(text_pos + ::SF::Engine::Vec2(offsets->OffsetShortcut + stretch_w, 0.0f), shortcut, nullptr,
+                           false);
                 PopStyleColor();
             }
             if (selected)
                 RenderCheckMark(window->DrawList,
-                                text_pos + Vec2(offsets->OffsetMark + stretch_w + g.FontSize * 0.40f,
-                                                g.FontSize * 0.134f * 0.5f),
+                                text_pos + ::SF::Engine::Vec2(offsets->OffsetMark + stretch_w + g.FontSize * 0.40f,
+                                                              g.FontSize * 0.134f * 0.5f),
                                 GetColorU32(ImGuiCol_Text), g.FontSize * 0.866f);
         }
     }
@@ -10941,7 +11013,7 @@ bool ImGui::MenuItemEx(const char *label, const char *icon, const char *shortcut
     // elsewhere, up on some other MenuItem(). (#8233, #9394) Could move logic into lower-level
     // ImGuiButtonFlags_AutoReleaseActiveId + ImGuiButtonFlags_AutoReleaseKeyOwner? Easier once we get rid of the
     // Selectable() middle-man here.
-    const ImGuiID id = g.LastItemData.ID;
+    const IdType id = g.LastItemData.ID;
     if (g.ActiveId == id && g.HoveredId != id && g.ActiveIdSource == ImGuiInputSource_Mouse && IsMouseDragging(0))
     {
         ClearActiveID();
@@ -11018,7 +11090,7 @@ namespace ImGui
     static uint32_t TabBarCalcTabID(ImGuiTabBar *tab_bar, const char *label, ImGuiWindow *docked_window);
     static float TabBarCalcMaxTabWidth();
     static float TabBarScrollClamp(ImGuiTabBar *tab_bar, float scrolling);
-    static void TabBarScrollToTab(ImGuiTabBar *tab_bar, ImGuiID tab_id, ImGuiTabBarSection *sections);
+    static void TabBarScrollToTab(ImGuiTabBar *tab_bar, IdType tab_id, ImGuiTabBarSection *sections);
     static ImGuiTabItem *TabBarScrollingButtons(ImGuiTabBar *tab_bar);
     static ImGuiTabItem *TabBarTabListPopupButton(ImGuiTabBar *tab_bar);
 } // namespace ImGui
@@ -11067,7 +11139,7 @@ static ImGuiPtrOrIndex GetTabBarRefFromTabBar(ImGuiTabBar *tab_bar)
     return ImGuiPtrOrIndex(tab_bar);
 }
 
-ImGuiTabBar *ImGui::TabBarFindByID(ImGuiID id)
+ImGuiTabBar *ImGui::TabBarFindByID(IdType id)
 {
     ImGuiContext &g = *GImGui;
     return g.TabBars.GetByKey(id);
@@ -11087,7 +11159,7 @@ bool ImGui::BeginTabBar(const char *str_id, ImGuiTabBarFlags flags)
     if (window->SkipItems)
         return false;
 
-    ImGuiID id             = window->GetID(str_id);
+    IdType id              = window->GetID(str_id);
     ImGuiTabBar *tab_bar   = g.TabBars.GetOrAddByKey(id);
     ImRect tab_bar_bb      = ImRect(window->DC.CursorPos.x, window->DC.CursorPos.y, window->WorkRect.Max.x,
                                     window->DC.CursorPos.y + g.FontSize + g.Style.FramePadding.y * 2);
@@ -11119,7 +11191,8 @@ bool ImGui::BeginTabBarEx(ImGuiTabBar *tab_bar, const ImRect &tab_bar_bb, ImGuiT
     tab_bar->BackupCursorPos = window->DC.CursorPos;
     if (tab_bar->CurrFrameVisible == g.FrameCount)
     {
-        window->DC.CursorPos = Vec2(tab_bar->BarRect.Min.x, tab_bar->BarRect.Max.y + tab_bar->ItemSpacingY);
+        window->DC.CursorPos =
+                ::SF::Engine::Vec2(tab_bar->BarRect.Min.x, tab_bar->BarRect.Max.y + tab_bar->ItemSpacingY);
         tab_bar->BeginCount++;
         return true;
     }
@@ -11151,7 +11224,7 @@ bool ImGui::BeginTabBarEx(ImGuiTabBar *tab_bar, const ImRect &tab_bar_bb, ImGuiT
 
     // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before
     // BeginTabItem(): items will overlap
-    window->DC.CursorPos = Vec2(tab_bar->BarRect.Min.x, tab_bar->BarRect.Max.y + tab_bar->ItemSpacingY);
+    window->DC.CursorPos = ::SF::Engine::Vec2(tab_bar->BarRect.Min.x, tab_bar->BarRect.Max.y + tab_bar->ItemSpacingY);
 
     // Draw separator
     // (it would be misleading to draw this in EndTabBar() suggesting that it may be drawn over tabs, as tab bar are
@@ -11161,8 +11234,8 @@ bool ImGui::BeginTabBarEx(ImGuiTabBar *tab_bar, const ImRect &tab_bar_bb, ImGuiT
     if (g.Style.TabBarBorderSize > 0.0f)
     {
         const float y = tab_bar->BarRect.Max.y;
-        window->DrawList->AddRectFilled(Vec2(tab_bar->SeparatorMinX, y - g.Style.TabBarBorderSize),
-                                        Vec2(tab_bar->SeparatorMaxX, y), col);
+        window->DrawList->AddRectFilled(::SF::Engine::Vec2(tab_bar->SeparatorMinX, y - g.Style.TabBarBorderSize),
+                                        ::SF::Engine::Vec2(tab_bar->SeparatorMaxX, y), col);
     }
     return true;
 }
@@ -11282,7 +11355,7 @@ static void ImGui::TabBarLayout(ImGuiTabBar *tab_bar)
     sections[1].Spacing = sections[1].TabCount > 0 && sections[2].TabCount > 0 ? tab_spacing : 0.0f;
 
     // Setup next selected tab
-    ImGuiID scroll_to_tab_id = 0;
+    IdType scroll_to_tab_id = 0;
     if (tab_bar->NextScrollToTabId)
     {
         scroll_to_tab_id           = tab_bar->NextScrollToTabId;
@@ -11518,7 +11591,7 @@ static void ImGui::TabBarLayout(ImGuiTabBar *tab_bar)
     // Actual layout in host window (we don't do it in BeginTabBar() so as not to waste an extra frame)
     ImGuiWindow *window  = g.CurrentWindow;
     window->DC.CursorPos = tab_bar->BarRect.Min;
-    ItemSize(Vec2(tab_bar->WidthAllTabs, tab_bar->BarRect.GetHeight()), tab_bar->FramePadding.y);
+    ItemSize(::SF::Engine::Vec2(tab_bar->WidthAllTabs, tab_bar->BarRect.GetHeight()), tab_bar->FramePadding.y);
     window->DC.IdealMaxPos.x = ImMax(window->DC.IdealMaxPos.x, tab_bar->BarRect.Min.x + tab_bar->WidthAllTabsIdeal);
 }
 
@@ -11529,7 +11602,7 @@ static uint32_t ImGui::TabBarCalcTabID(ImGuiTabBar *tab_bar, const char *label, 
     {
         IM_UNUSED(tab_bar);
         IM_ASSERT(tab_bar->Flags & ImGuiTabBarFlags_DockNode);
-        ImGuiID id = docked_window->TabId;
+        IdType id = docked_window->TabId;
         KeepAliveID(id);
         return id;
     } else
@@ -11545,7 +11618,7 @@ static float ImGui::TabBarCalcMaxTabWidth()
     return g.FontSize * 20.0f;
 }
 
-ImGuiTabItem *ImGui::TabBarFindTabByID(ImGuiTabBar *tab_bar, ImGuiID tab_id)
+ImGuiTabItem *ImGui::TabBarFindTabByID(ImGuiTabBar *tab_bar, IdType tab_id)
 {
     if (tab_id != 0)
         for (int n = 0; n < tab_bar->Tabs.Size; n++)
@@ -11622,7 +11695,7 @@ void ImGui::TabBarAddTab(ImGuiTabBar *tab_bar, ImGuiTabItemFlags tab_flags, ImGu
 
 // The *TabId fields are already set by the docking system _before_ the actual TabItem was created, so we clear them
 // regardless.
-void ImGui::TabBarRemoveTab(ImGuiTabBar *tab_bar, ImGuiID tab_id)
+void ImGui::TabBarRemoveTab(ImGuiTabBar *tab_bar, IdType tab_id)
 {
     if (ImGuiTabItem *tab = TabBarFindTabByID(tab_bar, tab_id))
         tab_bar->Tabs.erase(tab);
@@ -11673,7 +11746,7 @@ static float ImGui::TabBarScrollClamp(ImGuiTabBar *tab_bar, float scrolling)
 }
 
 // Note: we may scroll to tab that are not selected! e.g. using keyboard arrow keys
-static void ImGui::TabBarScrollToTab(ImGuiTabBar *tab_bar, ImGuiID tab_id, ImGuiTabBarSection *sections)
+static void ImGui::TabBarScrollToTab(ImGuiTabBar *tab_bar, IdType tab_id, ImGuiTabBarSection *sections)
 {
     ImGuiTabItem *tab = TabBarFindTabByID(tab_bar, tab_id);
     if (tab == nullptr)
@@ -11712,7 +11785,7 @@ void ImGui::TabBarQueueFocus(ImGuiTabBar *tab_bar, ImGuiTabItem *tab) { tab_bar-
 void ImGui::TabBarQueueFocus(ImGuiTabBar *tab_bar, const char *tab_name)
 {
     IM_ASSERT((tab_bar->Flags & ImGuiTabBarFlags_DockNode) == 0); // Only supported for manual/explicit tab bars
-    ImGuiID tab_id             = TabBarCalcTabID(tab_bar, tab_name, nullptr);
+    IdType tab_id              = TabBarCalcTabID(tab_bar, tab_name, nullptr);
     tab_bar->NextSelectedTabId = tab_id;
 }
 
@@ -11724,7 +11797,7 @@ void ImGui::TabBarQueueReorder(ImGuiTabBar *tab_bar, ImGuiTabItem *tab, int offs
     tab_bar->ReorderRequestOffset = (int16_t) offset;
 }
 
-void ImGui::TabBarQueueReorderFromMousePos(ImGuiTabBar *tab_bar, ImGuiTabItem *src_tab, Vec2 mouse_pos)
+void ImGui::TabBarQueueReorderFromMousePos(ImGuiTabBar *tab_bar, ImGuiTabItem *src_tab, ::SF::Engine::Vec2 mouse_pos)
 {
     ImGuiContext &g = *GImGui;
     IM_ASSERT(tab_bar->ReorderRequestTabId == 0);
@@ -11753,8 +11826,8 @@ void ImGui::TabBarQueueReorderFromMousePos(ImGuiTabBar *tab_bar, ImGuiTabItem *s
         // that are not hovered.
         const float x1 = bar_offset + dst_tab->Offset - tab_spacing;
         const float x2 = bar_offset + dst_tab->Offset + dst_tab->Width + tab_spacing;
-        // GetForegroundDrawList()->AddRect(Vec2(x1, tab_bar->BarRect.Min.y), Vec2(x2, tab_bar->BarRect.Max.y),
-        // IM_COL32(255, 0, 0, 255));
+        // GetForegroundDrawList()->AddRect(::SF::Engine::Vec2(x1, tab_bar->BarRect.Min.y), ::SF::Engine::Vec2(x2,
+        // tab_bar->BarRect.Max.y), IM_COL32(255, 0, 0, 255));
         if ((dir < 0 && mouse_pos.x > x1) || (dir > 0 && mouse_pos.x < x2))
             break;
     }
@@ -11801,29 +11874,30 @@ static ImGuiTabItem *ImGui::TabBarScrollingButtons(ImGuiTabBar *tab_bar)
     ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = g.CurrentWindow;
 
-    const Vec2 arrow_button_size(g.FontSize - 2.0f, g.FontSize + g.Style.FramePadding.y * 2.0f);
+    const ::SF::Engine::Vec2 arrow_button_size(g.FontSize - 2.0f, g.FontSize + g.Style.FramePadding.y * 2.0f);
     const float scrolling_buttons_width = arrow_button_size.x * 2.0f;
 
-    const Vec2 backup_cursor_pos = window->DC.CursorPos;
-    // window->DrawList->AddRect(Vec2(tab_bar->BarRect.Max.x - scrolling_buttons_width, tab_bar->BarRect.Min.y),
-    // Vec2(tab_bar->BarRect.Max.x, tab_bar->BarRect.Max.y), IM_COL32(255,0,0,255));
+    const ::SF::Engine::Vec2 backup_cursor_pos = window->DC.CursorPos;
+    // window->DrawList->AddRect(::SF::Engine::Vec2(tab_bar->BarRect.Max.x - scrolling_buttons_width,
+    // tab_bar->BarRect.Min.y),
+    // ::SF::Engine::Vec2(tab_bar->BarRect.Max.x, tab_bar->BarRect.Max.y), IM_COL32(255,0,0,255));
 
-    int select_dir = 0;
-    Vec4 arrow_col = g.Style.Colors[ImGuiCol_Text];
+    int select_dir               = 0;
+    ::SF::Engine::Vec4 arrow_col = g.Style.Colors[ImGuiCol_Text];
     arrow_col.w *= 0.5f;
 
     PushStyleColor(ImGuiCol_Text, arrow_col);
-    PushStyleColor(ImGuiCol_Button, Vec4(0, 0, 0, 0));
+    PushStyleColor(ImGuiCol_Button, ::SF::Engine::Vec4(0, 0, 0, 0));
     PushItemFlag(ImGuiItemFlags_ButtonRepeat | ImGuiItemFlags_NoNav, true);
     const float backup_repeat_delay = g.IO.KeyRepeatDelay;
     const float backup_repeat_rate  = g.IO.KeyRepeatRate;
     g.IO.KeyRepeatDelay             = 0.250f;
     g.IO.KeyRepeatRate              = 0.200f;
     float x                         = ImMax(tab_bar->BarRect.Min.x, tab_bar->BarRect.Max.x - scrolling_buttons_width);
-    window->DC.CursorPos            = Vec2(x, tab_bar->BarRect.Min.y);
+    window->DC.CursorPos            = ::SF::Engine::Vec2(x, tab_bar->BarRect.Min.y);
     if (ArrowButtonEx("##<", ImGuiDir_Left, arrow_button_size, ImGuiButtonFlags_PressedOnClick))
         select_dir = -1;
-    window->DC.CursorPos = Vec2(x + arrow_button_size.x, tab_bar->BarRect.Min.y);
+    window->DC.CursorPos = ::SF::Engine::Vec2(x + arrow_button_size.x, tab_bar->BarRect.Min.y);
     if (ArrowButtonEx("##>", ImGuiDir_Right, arrow_button_size, ImGuiButtonFlags_PressedOnClick))
         select_dir = +1;
     PopItemFlag();
@@ -11869,15 +11943,15 @@ static ImGuiTabItem *ImGui::TabBarTabListPopupButton(ImGuiTabBar *tab_bar)
     ImGuiWindow *window = g.CurrentWindow;
 
     // We use g.Style.FramePadding.y to match the square ArrowButton size
-    const float tab_list_popup_button_width = g.FontSize + g.Style.FramePadding.y;
-    const Vec2 backup_cursor_pos            = window->DC.CursorPos;
-    window->DC.CursorPos = Vec2(tab_bar->BarRect.Min.x - g.Style.FramePadding.y, tab_bar->BarRect.Min.y);
+    const float tab_list_popup_button_width    = g.FontSize + g.Style.FramePadding.y;
+    const ::SF::Engine::Vec2 backup_cursor_pos = window->DC.CursorPos;
+    window->DC.CursorPos = ::SF::Engine::Vec2(tab_bar->BarRect.Min.x - g.Style.FramePadding.y, tab_bar->BarRect.Min.y);
     tab_bar->BarRect.Min.x += tab_list_popup_button_width;
 
-    Vec4 arrow_col = g.Style.Colors[ImGuiCol_Text];
+    ::SF::Engine::Vec4 arrow_col = g.Style.Colors[ImGuiCol_Text];
     arrow_col.w *= 0.5f;
     PushStyleColor(ImGuiCol_Text, arrow_col);
-    PushStyleColor(ImGuiCol_Button, Vec4(0, 0, 0, 0));
+    PushStyleColor(ImGuiCol_Button, ::SF::Engine::Vec4(0, 0, 0, 0));
     bool open = BeginCombo("##v", nullptr, ImGuiComboFlags_NoPreview | ImGuiComboFlags_HeightLargest);
     PopStyleColor(2);
 
@@ -11993,7 +12067,7 @@ bool ImGui::TabItemEx(ImGuiTabBar *tab_bar, const char *label, bool *p_open, ImG
         return false;
 
     const ImGuiStyle &style = g.Style;
-    const ImGuiID id        = TabBarCalcTabID(tab_bar, label, docked_window);
+    const IdType id         = TabBarCalcTabID(tab_bar, label, docked_window);
 
     // If the user called us with *p_open == false, we early out and don't render.
     // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an
@@ -12029,7 +12103,8 @@ bool ImGui::TabItemEx(ImGuiTabBar *tab_bar, const char *label, bool *p_open, ImG
     tab_bar->LastTabItemIdx = (int16_t) tab_bar->Tabs.index_from_ptr(tab);
 
     // Calculate tab contents size
-    Vec2 size           = TabItemCalcSize(label, (p_open != nullptr) || (flags & ImGuiTabItemFlags_UnsavedDocument));
+    ::SF::Engine::Vec2 size =
+            TabItemCalcSize(label, (p_open != nullptr) || (flags & ImGuiTabItemFlags_UnsavedDocument));
     tab->RequestedWidth = -1.0f;
     if (g.NextItemData.HasFlags & ImGuiNextItemDataFlags_HasWidth)
         size.x = tab->RequestedWidth = g.NextItemData.Width;
@@ -12097,16 +12172,17 @@ bool ImGui::TabItemEx(ImGuiTabBar *tab_bar, const char *label, bool *p_open, ImG
         tab->LastFrameSelected = g.FrameCount;
 
     // Backup current layout position
-    const Vec2 backup_main_cursor_pos = window->DC.CursorPos;
+    const ::SF::Engine::Vec2 backup_main_cursor_pos = window->DC.CursorPos;
 
     // Layout
     const bool is_central_section = (tab->Flags & ImGuiTabItemFlags_SectionMask_) == 0;
     size.x                        = tab->Width;
     if (is_central_section)
-        window->DC.CursorPos = tab_bar->BarRect.Min + Vec2(IM_TRUNC(tab->Offset - tab_bar->ScrollingAnim), 0.0f);
+        window->DC.CursorPos =
+                tab_bar->BarRect.Min + ::SF::Engine::Vec2(IM_TRUNC(tab->Offset - tab_bar->ScrollingAnim), 0.0f);
     else
-        window->DC.CursorPos = tab_bar->BarRect.Min + Vec2(tab->Offset, 0.0f);
-    Vec2 pos = window->DC.CursorPos;
+        window->DC.CursorPos = tab_bar->BarRect.Min + ::SF::Engine::Vec2(tab->Offset, 0.0f);
+    ::SF::Engine::Vec2 pos = window->DC.CursorPos;
     ImRect bb(pos, pos + size);
 
     // We don't have CPU clipping primitives to clip the CloseButton (until it becomes a texture), so need to add an
@@ -12114,10 +12190,11 @@ bool ImGui::TabItemEx(ImGuiTabBar *tab_bar, const char *label, bool *p_open, ImG
     const bool want_clip_rect =
             is_central_section && (bb.Min.x < tab_bar->ScrollingRectMinX || bb.Max.x > tab_bar->ScrollingRectMaxX);
     if (want_clip_rect)
-        PushClipRect(Vec2(ImClamp(bb.Min.x, tab_bar->ScrollingRectMinX, tab_bar->ScrollingRectMaxX), bb.Min.y - 1),
-                     Vec2(tab_bar->ScrollingRectMaxX, bb.Max.y), true);
+        PushClipRect(::SF::Engine::Vec2(ImClamp(bb.Min.x, tab_bar->ScrollingRectMinX, tab_bar->ScrollingRectMaxX),
+                                        bb.Min.y - 1),
+                     ::SF::Engine::Vec2(tab_bar->ScrollingRectMaxX, bb.Max.y), true);
 
-    Vec2 backup_cursor_max_pos = window->DC.CursorMaxPos;
+    ::SF::Engine::Vec2 backup_cursor_max_pos = window->DC.CursorMaxPos;
     ItemSize(bb.GetSize(), style.FramePadding.y);
     window->DC.CursorMaxPos = backup_cursor_max_pos;
 
@@ -12193,8 +12270,8 @@ bool ImGui::TabItemEx(ImGuiTabBar *tab_bar, const char *label, bool *p_open, ImG
                 float threshold_y    = (threshold_base * 1.5f) +
                                     ImClamp((ImFabs(g.IO.MouseDragMaxDistanceAbs[0].x) - threshold_base * 2.0f) * 0.20f,
                                             0.0f, threshold_base * 4.0f);
-                // GetForegroundDrawList()->AddRect(Vec2(bb.Min.x - threshold_x, bb.Min.y - threshold_y),
-                // Vec2(bb.Max.x + threshold_x, bb.Max.y + threshold_y), IM_COL32_WHITE); // [DEBUG]
+                // GetForegroundDrawList()->AddRect(::SF::Engine::Vec2(bb.Min.x - threshold_x, bb.Min.y - threshold_y),
+                // ::SF::Engine::Vec2(bb.Max.x + threshold_x, bb.Max.y + threshold_y), IM_COL32_WHITE); // [DEBUG]
 
                 float distance_from_edge_y = ImMax(bb.Min.y - g.IO.MousePos.y, g.IO.MousePos.y - bb.Max.y);
                 if (distance_from_edge_y >= threshold_y)
@@ -12244,20 +12321,20 @@ bool ImGui::TabItemEx(ImGuiTabBar *tab_bar, const char *label, bool *p_open, ImG
             style.TabBarOverlineSize > 0.0f)
         {
             // Might be moved to TabItemBackground() ?
-            Vec2 tl = bb.GetTL() + Vec2(0, 1.0f * g.CurrentDpiScale);
-            Vec2 tr = bb.GetTR() + Vec2(0, 1.0f * g.CurrentDpiScale);
+            ::SF::Engine::Vec2 tl = bb.GetTL() + ::SF::Engine::Vec2(0, 1.0f * g.CurrentDpiScale);
+            ::SF::Engine::Vec2 tr = bb.GetTR() + ::SF::Engine::Vec2(0, 1.0f * g.CurrentDpiScale);
             uint32_t overline_col =
                     GetColorU32(tab_bar_focused ? ImGuiCol_TabSelectedOverline : ImGuiCol_TabDimmedSelectedOverline);
             if (style.TabRounding > 0.0f)
             {
                 float rounding = style.TabRounding;
-                display_draw_list->PathArcToFast(tl + Vec2(+rounding, +rounding), rounding, 7, 9);
-                display_draw_list->PathArcToFast(tr + Vec2(-rounding, +rounding), rounding, 9, 11);
+                display_draw_list->PathArcToFast(tl + ::SF::Engine::Vec2(+rounding, +rounding), rounding, 7, 9);
+                display_draw_list->PathArcToFast(tr + ::SF::Engine::Vec2(-rounding, +rounding), rounding, 9, 11);
                 display_draw_list->PathStroke(overline_col, style.TabBarOverlineSize);
             } else
             {
-                display_draw_list->AddLine(tl - Vec2(0.5f, 0.5f), tr - Vec2(0.5f, 0.5f), overline_col,
-                                           style.TabBarOverlineSize);
+                display_draw_list->AddLine(tl - ::SF::Engine::Vec2(0.5f, 0.5f), tr - ::SF::Engine::Vec2(0.5f, 0.5f),
+                                           overline_col, style.TabBarOverlineSize);
             }
         }
         RenderNavCursor(bb, id);
@@ -12273,7 +12350,7 @@ bool ImGui::TabItemEx(ImGuiTabBar *tab_bar, const char *label, bool *p_open, ImG
             flags |= ImGuiTabItemFlags_NoCloseWithMiddleMouseButton;
 
         // Render tab label, process close button
-        const ImGuiID close_button_id =
+        const IdType close_button_id =
                 p_open ? GetIDWithSeed("#CLOSE", nullptr, docked_window ? docked_window->ID : id) : 0;
         bool just_closed;
         bool text_clipped;
@@ -12324,7 +12401,7 @@ void ImGui::SetTabItemClosed(const char *label)
     if (is_within_manual_tab_bar)
     {
         ImGuiTabBar *tab_bar = g.CurrentTabBar;
-        ImGuiID tab_id       = TabBarCalcTabID(tab_bar, label, nullptr);
+        IdType tab_id        = TabBarCalcTabID(tab_bar, label, nullptr);
         if (ImGuiTabItem *tab = TabBarFindTabByID(tab_bar, tab_id))
             tab->WantClose = true; // Will be processed by next call to TabBarLayout()
     } else if (ImGuiWindow *window = FindWindowByName(label))
@@ -12332,27 +12409,28 @@ void ImGui::SetTabItemClosed(const char *label)
         if (window->DockIsActive)
             if (ImGuiDockNode *node = window->DockNode)
             {
-                ImGuiID tab_id = TabBarCalcTabID(node->TabBar, label, window);
+                IdType tab_id = TabBarCalcTabID(node->TabBar, label, window);
                 TabBarRemoveTab(node->TabBar, tab_id);
                 window->DockTabWantClose = true;
             }
     }
 }
 
-Vec2 ImGui::TabItemCalcSize(const char *label, bool has_close_button_or_unsaved_marker)
+::SF::Engine::Vec2 ImGui::TabItemCalcSize(const char *label, bool has_close_button_or_unsaved_marker)
 {
-    ImGuiContext &g = *GImGui;
-    Vec2 label_size = CalcTextSize(label, nullptr, true);
-    Vec2 size       = Vec2(label_size.x + g.Style.FramePadding.x, label_size.y + g.Style.FramePadding.y * 2.0f);
+    ImGuiContext &g               = *GImGui;
+    ::SF::Engine::Vec2 label_size = CalcTextSize(label, nullptr, true);
+    ::SF::Engine::Vec2 size =
+            ::SF::Engine::Vec2(label_size.x + g.Style.FramePadding.x, label_size.y + g.Style.FramePadding.y * 2.0f);
     if (has_close_button_or_unsaved_marker)
         size.x += g.Style.FramePadding.x +
                   (g.Style.ItemInnerSpacing.x + g.FontSize); // We use Y intentionally to fit the close button circle.
     else
         size.x += g.Style.FramePadding.x + 1.0f;
-    return Vec2(ImMin(size.x, TabBarCalcMaxTabWidth()), size.y);
+    return ::SF::Engine::Vec2(ImMin(size.x, TabBarCalcMaxTabWidth()), size.y);
 }
 
-Vec2 ImGui::TabItemCalcSize(ImGuiWindow *window)
+::SF::Engine::Vec2 ImGui::TabItemCalcSize(ImGuiWindow *window)
 {
     return TabItemCalcSize(window->Name, window->HasCloseButton || (window->Flags & ImGuiWindowFlags_UnsavedDocument));
 }
@@ -12370,13 +12448,13 @@ void ImGui::TabItemBackground(ImDrawList *draw_list, const ImRect &bb, ImGuiTabI
                               width * 0.5f - 1.0f));
     const float y1 = bb.Min.y + 1.0f; // Leave a bit of room in title bars.
     const float y2 = bb.Max.y - g.Style.TabBarBorderSize;
-    draw_list->AddRectFilled(bb.Min, Vec2(bb.Max.x, y2), col, rounding, ImDrawFlags_RoundCornersTop);
+    draw_list->AddRectFilled(bb.Min, ::SF::Engine::Vec2(bb.Max.x, y2), col, rounding, ImDrawFlags_RoundCornersTop);
     if (g.Style.TabBorderSize > 0.0f)
     {
-        draw_list->PathLineTo(Vec2(bb.Min.x + 0.5f, y2));
-        draw_list->PathArcToFast(Vec2(bb.Min.x + rounding + 0.5f, y1 + rounding + 0.5f), rounding, 6, 9);
-        draw_list->PathArcToFast(Vec2(bb.Max.x - rounding - 0.5f, y1 + rounding + 0.5f), rounding, 9, 12);
-        draw_list->PathLineTo(Vec2(bb.Max.x - 0.5f, y2));
+        draw_list->PathLineTo(::SF::Engine::Vec2(bb.Min.x + 0.5f, y2));
+        draw_list->PathArcToFast(::SF::Engine::Vec2(bb.Min.x + rounding + 0.5f, y1 + rounding + 0.5f), rounding, 6, 9);
+        draw_list->PathArcToFast(::SF::Engine::Vec2(bb.Max.x - rounding - 0.5f, y1 + rounding + 0.5f), rounding, 9, 12);
+        draw_list->PathLineTo(::SF::Engine::Vec2(bb.Max.x - 0.5f, y2));
         draw_list->PathStroke(GetColorU32(ImGuiCol_Border), g.Style.TabBorderSize);
     }
 }
@@ -12384,12 +12462,13 @@ void ImGui::TabItemBackground(ImDrawList *draw_list, const ImRect &bb, ImGuiTabI
 // Render text label (with custom clipping) + Unsaved Document marker + Close Button logic
 // We tend to lock style.FramePadding for a given tab-bar, hence the 'frame_padding' parameter.
 void ImGui::TabItemLabelAndCloseButton(ImDrawList *draw_list, const ImRect &bb, ImGuiTabItemFlags flags,
-                                       Vec2 frame_padding, const char *label, ImGuiID tab_id, ImGuiID close_button_id,
-                                       bool is_contents_visible, bool *out_just_closed, bool *out_text_clipped)
+                                       ::SF::Engine::Vec2 frame_padding, const char *label, IdType tab_id,
+                                       IdType close_button_id, bool is_contents_visible, bool *out_just_closed,
+                                       bool *out_text_clipped)
 {
-    ImGuiContext &g       = *GImGui;
-    const char *label_end = FindRenderedTextEnd(label);
-    Vec2 label_size       = CalcTextSize(label, label_end, false);
+    ImGuiContext &g               = *GImGui;
+    const char *label_end         = FindRenderedTextEnd(label);
+    ::SF::Engine::Vec2 label_size = CalcTextSize(label, label_end, false);
 
     if (out_just_closed)
         *out_just_closed = false;
@@ -12420,7 +12499,8 @@ void ImGui::TabItemLabelAndCloseButton(ImDrawList *draw_list, const ImRect &bb, 
     }
 
     const float button_sz = g.FontSize;
-    const Vec2 button_pos(ImMax(bb.Min.x, bb.Max.x - frame_padding.x - button_sz), bb.Min.y + frame_padding.y);
+    const ::SF::Engine::Vec2 button_pos(ImMax(bb.Min.x, bb.Max.x - frame_padding.x - button_sz),
+                                        bb.Min.y + frame_padding.y);
 
     // Close Button & Unsaved Marker
     // We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens because we
@@ -12455,7 +12535,7 @@ void ImGui::TabItemLabelAndCloseButton(ImDrawList *draw_list, const ImRect &bb, 
                                         (!close_button_visible || !is_hovered);
     if (unsaved_marker_visible)
     {
-        Vec2 bullet_pos = button_pos + Vec2(button_sz, button_sz) * 0.5f;
+        ::SF::Engine::Vec2 bullet_pos = button_pos + ::SF::Engine::Vec2(button_sz, button_sz) * 0.5f;
         RenderBullet(draw_list, bullet_pos, GetColorU32(ImGuiCol_UnsavedMarker));
     } else if (close_button_visible)
     {

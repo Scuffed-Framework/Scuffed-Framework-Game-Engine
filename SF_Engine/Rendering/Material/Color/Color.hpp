@@ -1,13 +1,15 @@
 #pragma once
 
-#include <cassert>
-#include <sstream>
-#include <iomanip>
 #include <array>
+#include <cassert>
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 #include <string_view>
 
 #include <Math/Math.hpp>
+
+#include "Math/Vectors/Vector.hpp"
 
 namespace SF::Engine
 {
@@ -41,29 +43,28 @@ namespace SF::Engine
          * @param b Blue component (0-1)
          * @param a Alpha component (0-1)
          */
-        constexpr Color(float r, float g, float b, float a = 1.0f) noexcept
-            : r(r), g(g), b(b), a(a) {}
+        constexpr Color(float r, float g, float b, float a = 1.0f) noexcept : r(r), g(g), b(b), a(a) {}
+
+
+        /**
+         * @brief Constructor from a Vec4
+         * @param vec input
+         */
+        explicit constexpr Color(const Vec4 vec) noexcept : r(vec.x), g(vec.y), b(vec.z), a(vec.a) {}
 
         /**
          * @brief Constructor from integer value
          * @param value The packed integer value
          * @param order The component packing order
          */
-        constexpr Color(uint32_t value, PackingOrder order = PackingOrder::RGB) noexcept
-        {
-            FromInt(value, order);
-        }
+        constexpr Color(uint32_t value, PackingOrder order = PackingOrder::RGB) noexcept { FromInt(value, order); }
 
         /**
          * @brief Constructor from hex string (e.g., "#FF0000" or "FF0000")
          * @param hex The hex string
          * @param alpha Optional alpha value
          */
-        explicit Color(std::string_view hex, float alpha = 1.0f)
-            : a(alpha)
-        {
-            FromHex(hex);
-        }
+        explicit Color(std::string_view hex, float alpha = 1.0f) : a(alpha) { FromHex(hex); }
 
         /**
          * @brief Create color from HSV values
@@ -91,13 +92,10 @@ namespace SF::Engine
          * @param t The interpolation factor (0-1)
          * @return The interpolated color
          */
-        constexpr Color Lerp(const Color &other, float t) const noexcept
+        [[nodiscard]] constexpr Color Lerp(const Color &other, float t) const noexcept
         {
-            return Color(
-                Mathematics::Lerp(r, other.r, t),
-                Mathematics::Lerp(g, other.g, t),
-                Mathematics::Lerp(b, other.b, t),
-                Mathematics::Lerp(a, other.a, t));
+            return {Mathematics::Lerp(r, other.r, t), Mathematics::Lerp(g, other.g, t),
+                    Mathematics::Lerp(b, other.b, t), Mathematics::Lerp(a, other.a, t)};
         }
 
         /**
@@ -106,7 +104,7 @@ namespace SF::Engine
          * @param t The interpolation factor (0-1)
          * @return The interpolated color
          */
-        Color SmoothLerp(const Color &other, float t) const
+        [[nodiscard]] Color SmoothLerp(const Color &other, float t) const
         {
             float smoothT = Mathematics::Smoothstep(0.0f, 1.0f, t);
             return Lerp(other, smoothT);
@@ -120,7 +118,7 @@ namespace SF::Engine
         {
             float len = Length();
             if (Mathematics::IsZero(len))
-                return Color(0, 0, 0, 0);
+                return {0, 0, 0, 0};
             return *this / len;
         }
 
@@ -128,19 +126,13 @@ namespace SF::Engine
          * @brief Get the squared length of the color vector
          * @return The squared length
          */
-        [[nodiscard]] constexpr float LengthSquared() const noexcept
-        {
-            return r * r + g * g + b * b + a * a;
-        }
+        [[nodiscard]] constexpr float LengthSquared() const noexcept { return r * r + g * g + b * b + a * a; }
 
         /**
          * @brief Get the length of the color vector
          * @return The length
          */
-        [[nodiscard]] float Length() const noexcept
-        {
-            return std::sqrt(LengthSquared());
-        }
+        [[nodiscard]] float Length() const noexcept { return std::sqrt(LengthSquared()); }
 
         /**
          * @brief Gradually change towards a target color
@@ -148,7 +140,7 @@ namespace SF::Engine
          * @param rate The interpolation rate
          * @return The changed color
          */
-        constexpr Color SmoothDamp(const Color &target, float rate) const noexcept
+        [[nodiscard]] constexpr Color SmoothDamp(const Color &target, float rate) const noexcept
         {
             return Lerp(target, rate);
         }
@@ -160,8 +152,10 @@ namespace SF::Engine
         [[nodiscard]] Color ToGrayscale() const noexcept
         {
             float luminance = r * 0.299f + g * 0.587f + b * 0.114f;
-            return Color(luminance, luminance, luminance, a);
+            return {luminance, luminance, luminance, a};
         }
+
+        [[nodiscard]] Vec4 AsVec4() const noexcept { return {r, g, b, a}; }
 
         /**
          * @brief Invert the color (1 - component)
@@ -170,11 +164,7 @@ namespace SF::Engine
          */
         [[nodiscard]] constexpr Color Invert(bool invertAlpha = false) const noexcept
         {
-            return Color(
-                1.0f - r,
-                1.0f - g,
-                1.0f - b,
-                invertAlpha ? 1.0f - a : a);
+            return {1.0f - r, 1.0f - g, 1.0f - b, invertAlpha ? 1.0f - a : a};
         }
 
         /**
@@ -183,11 +173,8 @@ namespace SF::Engine
          */
         [[nodiscard]] Color Saturate() const noexcept
         {
-            return Color(
-                Mathematics::Saturate(r),
-                Mathematics::Saturate(g),
-                Mathematics::Saturate(b),
-                Mathematics::Saturate(a));
+            return {Mathematics::Saturate(r), Mathematics::Saturate(g), Mathematics::Saturate(b),
+                    Mathematics::Saturate(a)};
         }
 
         /**
@@ -216,18 +203,18 @@ namespace SF::Engine
 
             switch (order)
             {
-            case PackingOrder::RGBA:
-                return (r8 << 24) | (g8 << 16) | (b8 << 8) | a8;
-            case PackingOrder::ARGB:
-                return (a8 << 24) | (r8 << 16) | (g8 << 8) | b8;
-            case PackingOrder::BGRA:
-                return (b8 << 24) | (g8 << 16) | (r8 << 8) | a8;
-            case PackingOrder::ABGR:
-                return (a8 << 24) | (b8 << 16) | (g8 << 8) | r8;
-            case PackingOrder::RGB:
-                return (r8 << 16) | (g8 << 8) | b8;
-            default:
-                return 0;
+                case PackingOrder::RGBA:
+                    return (r8 << 24) | (g8 << 16) | (b8 << 8) | a8;
+                case PackingOrder::ARGB:
+                    return (a8 << 24) | (r8 << 16) | (g8 << 8) | b8;
+                case PackingOrder::BGRA:
+                    return (b8 << 24) | (g8 << 16) | (r8 << 8) | a8;
+                case PackingOrder::ABGR:
+                    return (a8 << 24) | (b8 << 16) | (g8 << 8) | r8;
+                case PackingOrder::RGB:
+                    return (r8 << 16) | (g8 << 8) | b8;
+                default:
+                    return 0;
             }
         }
 
@@ -256,36 +243,37 @@ namespace SF::Engine
             assert(i < 4 && "Color subscript out of range");
             switch (i)
             {
-            case 0:
-                return r;
-            case 1:
-                return g;
-            case 2:
-                return b;
-            case 3:
-                return a;
-            default:
-                return 0.0f;
+                case 0:
+                    return r;
+                case 1:
+                    return g;
+                case 2:
+                    return b;
+                case 3:
+                    return a;
+                default:
+                    return 0.0f;
             }
         }
 
         // No constexpr here :(
-        [[nodiscard]] float &operator[](size_t i) /* constexpr is causing dummy to throw "variable in constexpr function does not have automatic storage duration" */
+        [[nodiscard]] float &operator[](size_t i) /* constexpr is causing dummy to throw "variable in constexpr function
+                                                     does not have automatic storage duration" */
         {
             assert(i < 4 && "Color subscript out of range");
             switch (i)
             {
-            case 0:
-                return r;
-            case 1:
-                return g;
-            case 2:
-                return b;
-            case 3:
-                return a;
-            default:
-                static float dummy = 0.0f;
-                return dummy;
+                case 0:
+                    return r;
+                case 1:
+                    return g;
+                case 2:
+                    return b;
+                case 3:
+                    return a;
+                default:
+                    static float dummy = 0.0f;
+                    return dummy;
             }
         }
 
@@ -342,41 +330,42 @@ namespace SF::Engine
 
         float r = 0.0f, g = 0.0f, b = 0.0f, a = 1.0f;
 
+
     private:
         constexpr void FromInt(uint32_t value, PackingOrder order) noexcept
         {
             switch (order)
             {
-            case PackingOrder::RGBA:
-                r = ((value >> 24) & 0xFF) / 255.0f;
-                g = ((value >> 16) & 0xFF) / 255.0f;
-                b = ((value >> 8) & 0xFF) / 255.0f;
-                a = (value & 0xFF) / 255.0f;
-                break;
-            case PackingOrder::ARGB:
-                a = ((value >> 24) & 0xFF) / 255.0f;
-                r = ((value >> 16) & 0xFF) / 255.0f;
-                g = ((value >> 8) & 0xFF) / 255.0f;
-                b = (value & 0xFF) / 255.0f;
-                break;
-            case PackingOrder::BGRA:
-                b = ((value >> 24) & 0xFF) / 255.0f;
-                g = ((value >> 16) & 0xFF) / 255.0f;
-                r = ((value >> 8) & 0xFF) / 255.0f;
-                a = (value & 0xFF) / 255.0f;
-                break;
-            case PackingOrder::ABGR:
-                a = ((value >> 24) & 0xFF) / 255.0f;
-                b = ((value >> 16) & 0xFF) / 255.0f;
-                g = ((value >> 8) & 0xFF) / 255.0f;
-                r = (value & 0xFF) / 255.0f;
-                break;
-            case PackingOrder::RGB:
-                r = ((value >> 16) & 0xFF) / 255.0f;
-                g = ((value >> 8) & 0xFF) / 255.0f;
-                b = (value & 0xFF) / 255.0f;
-                a = 1.0f;
-                break;
+                case PackingOrder::RGBA:
+                    r = ((value >> 24) & 0xFF) / 255.0f;
+                    g = ((value >> 16) & 0xFF) / 255.0f;
+                    b = ((value >> 8) & 0xFF) / 255.0f;
+                    a = (value & 0xFF) / 255.0f;
+                    break;
+                case PackingOrder::ARGB:
+                    a = ((value >> 24) & 0xFF) / 255.0f;
+                    r = ((value >> 16) & 0xFF) / 255.0f;
+                    g = ((value >> 8) & 0xFF) / 255.0f;
+                    b = (value & 0xFF) / 255.0f;
+                    break;
+                case PackingOrder::BGRA:
+                    b = ((value >> 24) & 0xFF) / 255.0f;
+                    g = ((value >> 16) & 0xFF) / 255.0f;
+                    r = ((value >> 8) & 0xFF) / 255.0f;
+                    a = (value & 0xFF) / 255.0f;
+                    break;
+                case PackingOrder::ABGR:
+                    a = ((value >> 24) & 0xFF) / 255.0f;
+                    b = ((value >> 16) & 0xFF) / 255.0f;
+                    g = ((value >> 8) & 0xFF) / 255.0f;
+                    r = (value & 0xFF) / 255.0f;
+                    break;
+                case PackingOrder::RGB:
+                    r = ((value >> 16) & 0xFF) / 255.0f;
+                    g = ((value >> 8) & 0xFF) / 255.0f;
+                    b = (value & 0xFF) / 255.0f;
+                    a = 1.0f;
+                    break;
             }
         }
 
@@ -396,8 +385,7 @@ namespace SF::Engine
                 r = ((hexValue >> 16) & 0xFF) / 255.0f;
                 g = ((hexValue >> 8) & 0xFF) / 255.0f;
                 b = (hexValue & 0xFF) / 255.0f;
-            }
-            else // 8 characters (RGBA)
+            } else // 8 characters (RGBA)
             {
                 r = ((hexValue >> 24) & 0xFF) / 255.0f;
                 g = ((hexValue >> 16) & 0xFF) / 255.0f;
@@ -406,6 +394,6 @@ namespace SF::Engine
             }
         }
     };
-}
+} // namespace SF::Engine
 
 #include "Color.inl"

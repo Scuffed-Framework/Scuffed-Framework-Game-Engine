@@ -42,15 +42,30 @@ namespace ImCurveEdit
 {
 
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
-    static Vec2 operator+(const Vec2 &a, const Vec2 &b) { return Vec2(a.x + b.x, a.y + b.y); }
+    static ::SF::Engine::Vec2 operator+(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b)
+    {
+        return ::SF::Engine::Vec2(a.x + b.x, a.y + b.y);
+    }
 
-    static Vec2 operator-(const Vec2 &a, const Vec2 &b) { return Vec2(a.x - b.x, a.y - b.y); }
+    static ::SF::Engine::Vec2 operator-(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b)
+    {
+        return ::SF::Engine::Vec2(a.x - b.x, a.y - b.y);
+    }
 
-    static Vec2 operator*(const Vec2 &a, const Vec2 &b) { return Vec2(a.x * b.x, a.y * b.y); }
+    static ::SF::Engine::Vec2 operator*(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b)
+    {
+        return ::SF::Engine::Vec2(a.x * b.x, a.y * b.y);
+    }
 
-    static Vec2 operator/(const Vec2 &a, const Vec2 &b) { return Vec2(a.x / b.x, a.y / b.y); }
+    static ::SF::Engine::Vec2 operator/(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b)
+    {
+        return ::SF::Engine::Vec2(a.x / b.x, a.y / b.y);
+    }
 
-    static Vec2 operator*(const Vec2 &a, const float b) { return Vec2(a.x * b, a.y * b); }
+    static ::SF::Engine::Vec2 operator*(const ::SF::Engine::Vec2 &a, const float b)
+    {
+        return ::SF::Engine::Vec2(a.x * b, a.y * b);
+    }
 #endif
 
     static float smoothstep(float edge0, float edge1, float x)
@@ -93,20 +108,22 @@ namespace ImCurveEdit
         return sqrtf(dx * dx + dy * dy);
     }
 
-    static int DrawPoint(ImDrawList *draw_list, Vec2 pos, const Vec2 size, const Vec2 offset, bool edited)
+    static int DrawPoint(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, const ::SF::Engine::Vec2 size,
+                         const ::SF::Engine::Vec2 offset, bool edited)
     {
         int ret     = 0;
         ImGuiIO &io = ImGui::GetIO();
 
-        static const Vec2 localOffsets[4] = {Vec2(1, 0), Vec2(0, 1), Vec2(-1, 0), Vec2(0, -1)};
-        Vec2 offsets[4];
+        static const ::SF::Engine::Vec2 localOffsets[4] = {::SF::Engine::Vec2(1, 0), ::SF::Engine::Vec2(0, 1),
+                                                           ::SF::Engine::Vec2(-1, 0), ::SF::Engine::Vec2(0, -1)};
+        ::SF::Engine::Vec2 offsets[4];
         for (int i = 0; i < 4; i++)
         {
             offsets[i] = pos * size + localOffsets[i] * 4.5f + offset;
         }
 
-        const Vec2 center = pos * size + offset;
-        const ImRect anchor(center - Vec2(5, 5), center + Vec2(5, 5));
+        const ::SF::Engine::Vec2 center = pos * size + offset;
+        const ImRect anchor(center - ::SF::Engine::Vec2(5, 5), center + ::SF::Engine::Vec2(5, 5));
         draw_list->AddConvexPolyFilled(offsets, 4, 0xFF000000);
         if (anchor.Contains(io.MousePos))
         {
@@ -132,11 +149,11 @@ namespace ImCurveEdit
         return ret;
     }
 
-    int Edit(Delegate &delegate, const Vec2 &size, unsigned int id, const ImRect *clippingRect,
+    int Edit(Delegate &delegate, const ::SF::Engine::Vec2 &size, unsigned int id, const ImRect *clippingRect,
              ImVector<EditPoint> *selectedPoints)
     {
         static bool selectingQuad = false;
-        static Vec2 quadSelection;
+        static ::SF::Engine::Vec2 quadSelection;
         static int overCurve   = -1;
         static int movingCurve = -1;
         static bool scrollingV = false;
@@ -146,7 +163,7 @@ namespace ImCurveEdit
         int ret = 0;
 
         ImGuiIO &io = ImGui::GetIO();
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, Vec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ::SF::Engine::Vec2(0, 0));
         ImGui::PushStyleColor(ImGuiCol_Border, 0);
         ImGui::BeginChild(id, size, ImGuiChildFlags_FrameStyle);
         delegate.focused      = ImGui::IsWindowFocused();
@@ -154,11 +171,11 @@ namespace ImCurveEdit
         if (clippingRect)
             draw_list->PushClipRect(clippingRect->Min, clippingRect->Max, true);
 
-        const Vec2 offset = ImGui::GetCursorScreenPos() + Vec2(0.f, size.y);
-        const Vec2 ssize(size.x, -size.y);
-        const ImRect container(offset + Vec2(0.f, ssize.y), offset + Vec2(ssize.x, 0.f));
-        Vec2 &min = delegate.GetMin();
-        Vec2 &max = delegate.GetMax();
+        const ::SF::Engine::Vec2 offset = ImGui::GetCursorScreenPos() + ::SF::Engine::Vec2(0.f, size.y);
+        const ::SF::Engine::Vec2 ssize(size.x, -size.y);
+        const ImRect container(offset + ::SF::Engine::Vec2(0.f, ssize.y), offset + ::SF::Engine::Vec2(ssize.x, 0.f));
+        ::SF::Engine::Vec2 &min = delegate.GetMin();
+        ::SF::Engine::Vec2 &max = delegate.GetMax();
 
         // handle zoom and VScroll
         if (container.Contains(io.MousePos))
@@ -182,11 +199,11 @@ namespace ImCurveEdit
                 scrollingV = true;
             }
         }
-        Vec2 range = max - min + Vec2(1.f, 0.f); // +1 because of inclusive last frame
+        ::SF::Engine::Vec2 range = max - min + ::SF::Engine::Vec2(1.f, 0.f); // +1 because of inclusive last frame
 
-        const Vec2 viewSize(size.x, -size.y);
-        const Vec2 sizeOfPixel  = Vec2(1.f, 1.f) / viewSize;
-        const size_t curveCount = delegate.GetCurveCount();
+        const ::SF::Engine::Vec2 viewSize(size.x, -size.y);
+        const ::SF::Engine::Vec2 sizeOfPixel = ::SF::Engine::Vec2(1.f, 1.f) / viewSize;
+        const size_t curveCount              = delegate.GetCurveCount();
 
         if (scrollingV)
         {
@@ -199,11 +216,11 @@ namespace ImCurveEdit
 
         draw_list->AddRectFilled(offset, offset + ssize, delegate.GetBackgroundColor());
 
-        auto pointToRange = [&](Vec2 pt) { return (pt - min) / range; };
-        auto rangeToPoint = [&](Vec2 pt) { return (pt * range) + min; };
+        auto pointToRange = [&](::SF::Engine::Vec2 pt) { return (pt - min) / range; };
+        auto rangeToPoint = [&](::SF::Engine::Vec2 pt) { return (pt * range) + min; };
 
-        draw_list->AddLine(Vec2(-1.f, -min.y / range.y) * viewSize + offset,
-                           Vec2(1.f, -min.y / range.y) * viewSize + offset, 0xFF000000, 1.5f);
+        draw_list->AddLine(::SF::Engine::Vec2(-1.f, -min.y / range.y) * viewSize + offset,
+                           ::SF::Engine::Vec2(1.f, -min.y / range.y) * viewSize + offset, 0xFF000000, 1.5f);
         bool overCurveOrPoint = false;
 
         int localOverCurve = -1;
@@ -229,15 +246,15 @@ namespace ImCurveEdit
             CurveType curveType = delegate.GetCurveType(c);
             if (curveType == CurveNone)
                 continue;
-            const Vec2 *pts     = delegate.GetPoints(c);
-            uint32_t curveColor = delegate.GetCurveColor(c);
+            const ::SF::Engine::Vec2 *pts = delegate.GetPoints(c);
+            uint32_t curveColor           = delegate.GetCurveColor(c);
             if ((c == highLightedCurveIndex && selection.empty() && !selectingQuad) || movingCurve == c)
                 curveColor = 0xFFFFFFFF;
 
             for (size_t p = 0; p < ptCount - 1; p++)
             {
-                const Vec2 p1 = pointToRange(pts[p]);
-                const Vec2 p2 = pointToRange(pts[p + 1]);
+                const ::SF::Engine::Vec2 p1 = pointToRange(pts[p]);
+                const ::SF::Engine::Vec2 p2 = pointToRange(pts[p + 1]);
 
                 if (curveType == CurveSmooth || curveType == CurveLinear)
                 {
@@ -247,14 +264,16 @@ namespace ImCurveEdit
                     {
                         float t = float(substep) * step;
 
-                        const Vec2 sp1 = ImLerp(p1, p2, t);
-                        const Vec2 sp2 = ImLerp(p1, p2, t + step);
+                        const ::SF::Engine::Vec2 sp1 = ImLerp(p1, p2, t);
+                        const ::SF::Engine::Vec2 sp2 = ImLerp(p1, p2, t + step);
 
                         const float rt1 = smoothstep(p1.x, p2.x, sp1.x);
                         const float rt2 = smoothstep(p1.x, p2.x, sp2.x);
 
-                        const Vec2 pos1 = Vec2(sp1.x, ImLerp(p1.y, p2.y, rt1)) * viewSize + offset;
-                        const Vec2 pos2 = Vec2(sp2.x, ImLerp(p1.y, p2.y, rt2)) * viewSize + offset;
+                        const ::SF::Engine::Vec2 pos1 =
+                                ::SF::Engine::Vec2(sp1.x, ImLerp(p1.y, p2.y, rt1)) * viewSize + offset;
+                        const ::SF::Engine::Vec2 pos2 =
+                                ::SF::Engine::Vec2(sp2.x, ImLerp(p1.y, p2.y, rt2)) * viewSize + offset;
 
                         if (distance(io.MousePos.x, io.MousePos.y, pos1.x, pos1.y, pos2.x, pos2.y) < 8.f && !scrollingV)
                         {
@@ -267,9 +286,9 @@ namespace ImCurveEdit
                     } // substep
                 } else if (curveType == CurveDiscrete)
                 {
-                    Vec2 dp1 = p1 * viewSize + offset;
-                    Vec2 dp2 = Vec2(p2.x, p1.y) * viewSize + offset;
-                    Vec2 dp3 = p2 * viewSize + offset;
+                    ::SF::Engine::Vec2 dp1 = p1 * viewSize + offset;
+                    ::SF::Engine::Vec2 dp2 = ::SF::Engine::Vec2(p2.x, p1.y) * viewSize + offset;
+                    ::SF::Engine::Vec2 dp3 = p2 * viewSize + offset;
                     draw_list->AddLine(dp1, dp2, curveColor, 1.3f);
                     draw_list->AddLine(dp2, dp3, curveColor, 1.3f);
 
@@ -309,8 +328,8 @@ namespace ImCurveEdit
 
         // move selection
         static bool pointsMoved = false;
-        static Vec2 mousePosOrigin;
-        static std::vector<Vec2> originalPoints;
+        static ::SF::Engine::Vec2 mousePosOrigin;
+        static std::vector<::SF::Engine::Vec2> originalPoints;
         if (overSelectedPoint && io.MouseDown[0])
         {
             if ((fabsf(io.MouseDelta.x) > 0.f || fabsf(io.MouseDelta.y) > 0.f) && !selection.empty())
@@ -323,8 +342,8 @@ namespace ImCurveEdit
                     int index = 0;
                     for (auto &sel: selection)
                     {
-                        const Vec2 *pts         = delegate.GetPoints(sel.curveIndex);
-                        originalPoints[index++] = pts[sel.pointIndex];
+                        const ::SF::Engine::Vec2 *pts = delegate.GetPoints(sel.curveIndex);
+                        originalPoints[index++]       = pts[sel.pointIndex];
                     }
                 }
                 pointsMoved        = true;
@@ -333,9 +352,9 @@ namespace ImCurveEdit
                 int originalIndex  = 0;
                 for (auto &sel: prevSelection)
                 {
-                    const Vec2 p       = rangeToPoint(pointToRange(originalPoints[originalIndex]) +
-                                                      (io.MousePos - mousePosOrigin) * sizeOfPixel);
-                    const int newIndex = delegate.EditPoint(sel.curveIndex, sel.pointIndex, p);
+                    const ::SF::Engine::Vec2 p = rangeToPoint(pointToRange(originalPoints[originalIndex]) +
+                                                              (io.MousePos - mousePosOrigin) * sizeOfPixel);
+                    const int newIndex         = delegate.EditPoint(sel.curveIndex, sel.pointIndex, p);
                     if (newIndex != sel.pointIndex)
                     {
                         selection.erase(sel);
@@ -359,7 +378,7 @@ namespace ImCurveEdit
         // add point
         if (overCurve != -1 && io.MouseDoubleClicked[0])
         {
-            const Vec2 np = rangeToPoint((io.MousePos - offset) / viewSize);
+            const ::SF::Engine::Vec2 np = rangeToPoint((io.MousePos - offset) / viewSize);
             delegate.BeginEdit(overCurve);
             delegate.AddPoint(overCurve, np);
             delegate.EndEdit();
@@ -370,8 +389,8 @@ namespace ImCurveEdit
 
         if (movingCurve != -1)
         {
-            const size_t ptCount = delegate.GetPointCount(movingCurve);
-            const Vec2 *pts      = delegate.GetPoints(movingCurve);
+            const size_t ptCount          = delegate.GetPointCount(movingCurve);
+            const ::SF::Engine::Vec2 *pts = delegate.GetPoints(movingCurve);
             if (!pointsMoved)
             {
                 mousePosOrigin = io.MousePos;
@@ -408,8 +427,8 @@ namespace ImCurveEdit
         // quad selection
         if (selectingQuad)
         {
-            const Vec2 bmin = ImMin(quadSelection, io.MousePos);
-            const Vec2 bmax = ImMax(quadSelection, io.MousePos);
+            const ::SF::Engine::Vec2 bmin = ImMin(quadSelection, io.MousePos);
+            const ::SF::Engine::Vec2 bmax = ImMax(quadSelection, io.MousePos);
             draw_list->AddRectFilled(bmin, bmax, 0x40FF0000, 1.f);
             draw_list->AddRect(bmin, bmax, 0xFFFF0000, 1.f);
             const ImRect selectionQuad(bmin, bmax);
@@ -427,10 +446,10 @@ namespace ImCurveEdit
                     if (ptCount < 1)
                         continue;
 
-                    const Vec2 *pts = delegate.GetPoints(c);
+                    const ::SF::Engine::Vec2 *pts = delegate.GetPoints(c);
                     for (size_t p = 0; p < ptCount; p++)
                     {
-                        const Vec2 center = pointToRange(pts[p]) * viewSize + offset;
+                        const ::SF::Engine::Vec2 center = pointToRange(pts[p]) * viewSize + offset;
                         if (selectionQuad.Contains(center))
                             selection.insert({int(c), int(p)});
                     }

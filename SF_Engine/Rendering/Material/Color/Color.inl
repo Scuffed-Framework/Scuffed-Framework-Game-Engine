@@ -1,21 +1,16 @@
 #pragma once
 
+#include <SF>
 #include "Color.hpp"
-
 namespace SF::Engine
 {
     constexpr bool Color::operator==(const Color &rhs) const noexcept
     {
-        return Mathematics::AlmostEqual(r, rhs.r) &&
-               Mathematics::AlmostEqual(g, rhs.g) &&
-               Mathematics::AlmostEqual(b, rhs.b) &&
-               Mathematics::AlmostEqual(a, rhs.a);
+        return Mathematics::AlmostEqual(r, rhs.r) && Mathematics::AlmostEqual(g, rhs.g) &&
+               Mathematics::AlmostEqual(b, rhs.b) && Mathematics::AlmostEqual(a, rhs.a);
     }
 
-    constexpr bool Color::operator!=(const Color &rhs) const noexcept
-    {
-        return !(*this == rhs);
-    }
+    constexpr bool Color::operator!=(const Color &rhs) const noexcept { return !(*this == rhs); }
 
     constexpr Color operator+(const Color &lhs, const Color &rhs) noexcept
     {
@@ -42,10 +37,7 @@ namespace SF::Engine
         return Color(lhs.r * rhs, lhs.g * rhs, lhs.b * rhs, lhs.a * rhs);
     }
 
-    constexpr Color operator*(float lhs, const Color &rhs) noexcept
-    {
-        return rhs * lhs;
-    }
+    constexpr Color operator*(float lhs, const Color &rhs) noexcept { return rhs * lhs; }
 
     constexpr Color operator/(const Color &lhs, float rhs) noexcept
     {
@@ -108,14 +100,13 @@ namespace SF::Engine
 
     inline std::ostream &operator<<(std::ostream &stream, const Color &color)
     {
-        return stream << "Color(" << color.r << ", " << color.g << ", "
-                      << color.b << ", " << color.a << ")";
+        return stream << "Color(" << color.r << ", " << color.g << ", " << color.b << ", " << color.a << ")";
     }
-}
+} // namespace SF::Engine
 
 namespace std
 {
-    template <>
+    template<>
     struct hash<SF::Engine::Color>
     {
         size_t operator()(const SF::Engine::Color &color) const noexcept
@@ -123,4 +114,4 @@ namespace std
             return SF::Engine::Mathematics::Hash(color.r, color.g, color.b, color.a);
         }
     };
-}
+} // namespace std

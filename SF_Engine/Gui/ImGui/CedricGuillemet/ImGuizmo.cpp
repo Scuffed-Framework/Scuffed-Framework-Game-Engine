@@ -339,7 +339,7 @@ namespace IMGUIZMO_NAMESPACE
         res.w = _w;
         return res;
     }
-    vec_t makeVect(Vec2 v)
+    vec_t makeVect(::SF::Engine::Vec2 v)
     {
         vec_t res;
         res.x = v.x;
@@ -715,28 +715,28 @@ namespace IMGUIZMO_NAMESPACE
         CenterCircleSize           = 6.0f;
 
         // initialize default colors
-        Colors[DIRECTION_X]           = Vec4(0.666f, 0.000f, 0.000f, 1.000f);
-        Colors[DIRECTION_Y]           = Vec4(0.000f, 0.666f, 0.000f, 1.000f);
-        Colors[DIRECTION_Z]           = Vec4(0.000f, 0.000f, 0.666f, 1.000f);
-        Colors[PLANE_X]               = Vec4(0.666f, 0.000f, 0.000f, 0.380f);
-        Colors[PLANE_Y]               = Vec4(0.000f, 0.666f, 0.000f, 0.380f);
-        Colors[PLANE_Z]               = Vec4(0.000f, 0.000f, 0.666f, 0.380f);
-        Colors[SELECTION]             = Vec4(1.000f, 0.500f, 0.062f, 0.541f);
-        Colors[INACTIVE]              = Vec4(0.600f, 0.600f, 0.600f, 0.600f);
-        Colors[TRANSLATION_LINE]      = Vec4(0.666f, 0.666f, 0.666f, 0.666f);
-        Colors[SCALE_LINE]            = Vec4(0.250f, 0.250f, 0.250f, 1.000f);
-        Colors[ROTATION_USING_BORDER] = Vec4(1.000f, 0.500f, 0.062f, 1.000f);
-        Colors[ROTATION_USING_FILL]   = Vec4(1.000f, 0.500f, 0.062f, 0.500f);
-        Colors[HATCHED_AXIS_LINES]    = Vec4(0.000f, 0.000f, 0.000f, 0.500f);
-        Colors[TEXT]                  = Vec4(1.000f, 1.000f, 1.000f, 1.000f);
-        Colors[TEXT_SHADOW]           = Vec4(0.000f, 0.000f, 0.000f, 1.000f);
+        Colors[DIRECTION_X]           = ::SF::Engine::Vec4(0.666f, 0.000f, 0.000f, 1.000f);
+        Colors[DIRECTION_Y]           = ::SF::Engine::Vec4(0.000f, 0.666f, 0.000f, 1.000f);
+        Colors[DIRECTION_Z]           = ::SF::Engine::Vec4(0.000f, 0.000f, 0.666f, 1.000f);
+        Colors[PLANE_X]               = ::SF::Engine::Vec4(0.666f, 0.000f, 0.000f, 0.380f);
+        Colors[PLANE_Y]               = ::SF::Engine::Vec4(0.000f, 0.666f, 0.000f, 0.380f);
+        Colors[PLANE_Z]               = ::SF::Engine::Vec4(0.000f, 0.000f, 0.666f, 0.380f);
+        Colors[SELECTION]             = ::SF::Engine::Vec4(1.000f, 0.500f, 0.062f, 0.541f);
+        Colors[INACTIVE]              = ::SF::Engine::Vec4(0.600f, 0.600f, 0.600f, 0.600f);
+        Colors[TRANSLATION_LINE]      = ::SF::Engine::Vec4(0.666f, 0.666f, 0.666f, 0.666f);
+        Colors[SCALE_LINE]            = ::SF::Engine::Vec4(0.250f, 0.250f, 0.250f, 1.000f);
+        Colors[ROTATION_USING_BORDER] = ::SF::Engine::Vec4(1.000f, 0.500f, 0.062f, 1.000f);
+        Colors[ROTATION_USING_FILL]   = ::SF::Engine::Vec4(1.000f, 0.500f, 0.062f, 0.500f);
+        Colors[HATCHED_AXIS_LINES]    = ::SF::Engine::Vec4(0.000f, 0.000f, 0.000f, 0.500f);
+        Colors[TEXT]                  = ::SF::Engine::Vec4(1.000f, 1.000f, 1.000f, 1.000f);
+        Colors[TEXT_SHADOW]           = ::SF::Engine::Vec4(0.000f, 0.000f, 0.000f, 1.000f);
     }
 
     // Per-id state of a ViewManipulate widget, so several view cubes (one per viewport)
     // can be manipulated independently through the PushID/PopID mechanism.
     struct ViewManipulateState
     {
-        ImGuiID mID              = (ImGuiID) -1;
+        IdType mID               = (IdType) -1;
         bool mIsDragging         = false;
         bool mIsClicking         = false;
         int mInterpolationFrames = 0;
@@ -784,9 +784,9 @@ namespace IMGUIZMO_NAMESPACE
         vec_t mRayVector;
 
         float mRadiusSquareCenter;
-        Vec2 mScreenSquareCenter;
-        Vec2 mScreenSquareMin;
-        Vec2 mScreenSquareMax;
+        ::SF::Engine::Vec2 mScreenSquareCenter;
+        ::SF::Engine::Vec2 mScreenSquareMin;
+        ::SF::Engine::Vec2 mScreenSquareMax;
 
         float mScreenFactor;
         vec_t mRelativeOrigin;
@@ -853,8 +853,8 @@ namespace IMGUIZMO_NAMESPACE
         bool mbOverGizmoHotspotLastFrame = false;
 
         ImGuiWindow *mAlternativeWindow = nullptr;
-        ImVector<ImGuiID> mIDStack;
-        ImGuiID mEditingID   = -1;
+        ImVector<IdType> mIDStack;
+        IdType mEditingID    = -1;
         OPERATION mOperation = OPERATION(0);
 
         // per-id ViewManipulate widget states (see ViewManipulateState)
@@ -863,7 +863,7 @@ namespace IMGUIZMO_NAMESPACE
         bool mAllowAxisFlip       = true;
         float mGizmoSizeClipSpace = 0.1f;
 
-        inline ImGuiID GetCurrentID()
+        inline IdType GetCurrentID()
         {
             if (mIDStack.empty())
             {
@@ -880,7 +880,7 @@ namespace IMGUIZMO_NAMESPACE
         // Retrieve (creating if needed) the ViewManipulate state bound to the current id.
         inline ViewManipulateState &GetViewManipulateState()
         {
-            const ImGuiID id = GetCurrentID();
+            const IdType id = GetCurrentID();
             for (int i = 0; i < mViewManipulateStates.Size; i++)
             {
                 if (mViewManipulateStates[i].mID == id)
@@ -929,13 +929,15 @@ namespace IMGUIZMO_NAMESPACE
         return ImGui::ColorConvertFloat4ToU32(gContext.mStyle.Colors[idx]);
     }
 
-    static Vec2 worldToPos(const vec_t &worldPos, const matrix_t &mat, Vec2 position = Vec2(gContext.mX, gContext.mY),
-                           Vec2 size = Vec2(gContext.mWidth, gContext.mHeight))
+    static ::SF::Engine::Vec2 worldToPos(const vec_t &worldPos, const matrix_t &mat,
+                                         ::SF::Engine::Vec2 position = ::SF::Engine::Vec2(gContext.mX, gContext.mY),
+                                         ::SF::Engine::Vec2 size     = ::SF::Engine::Vec2(gContext.mWidth,
+                                                                                          gContext.mHeight))
     {
         vec_t trans;
         trans.TransformPoint(worldPos, mat);
         if (fabsf(trans.w) < FLT_EPSILON)
-            return Vec2(-FLT_MAX, -FLT_MAX);
+            return ::SF::Engine::Vec2(-FLT_MAX, -FLT_MAX);
         trans *= 0.5f / trans.w;
         trans += makeVect(0.5f, 0.5f);
         trans.y = 1.f - trans.y;
@@ -943,11 +945,12 @@ namespace IMGUIZMO_NAMESPACE
         trans.y *= size.y;
         trans.x += position.x;
         trans.y += position.y;
-        return Vec2(trans.x, trans.y);
+        return ::SF::Engine::Vec2(trans.x, trans.y);
     }
 
     static void ComputeCameraRay(vec_t &rayOrigin, vec_t &rayDir, const matrix_t &viewMatrix,
-                                 const matrix_t &projectionMatrix, const Vec2 &mousePosition, Vec2 position, Vec2 size)
+                                 const matrix_t &projectionMatrix, const ::SF::Engine::Vec2 &mousePosition,
+                                 ::SF::Engine::Vec2 position, ::SF::Engine::Vec2 size)
     {
         matrix_t mViewProjInverse;
         mViewProjInverse.Inverse(viewMatrix * projectionMatrix);
@@ -998,15 +1001,17 @@ namespace IMGUIZMO_NAMESPACE
         rayDir = farAtInfinity ? Normalized(nearPoint - eye) : Normalized(farPoint - nearPoint);
     }
 
-    static void ComputeCameraRay(vec_t &rayOrigin, vec_t &rayDir, Vec2 position = Vec2(gContext.mX, gContext.mY),
-                                 Vec2 size = Vec2(gContext.mWidth, gContext.mHeight))
+    static void ComputeCameraRay(vec_t &rayOrigin, vec_t &rayDir,
+                                 ::SF::Engine::Vec2 position = ::SF::Engine::Vec2(gContext.mX, gContext.mY),
+                                 ::SF::Engine::Vec2 size     = ::SF::Engine::Vec2(gContext.mWidth, gContext.mHeight))
     {
         ImGuiIO &io = ImGui::GetIO();
         ComputeCameraRay(rayOrigin, rayDir, gContext.mViewMat, gContext.mProjectionMat, io.MousePos, position, size);
     }
 
-    void ComputeMouseRay(const float *view, const float *projection, const Vec2 &mousePosition,
-                         const Vec2 &rectPosition, const Vec2 &rectSize, float *rayOrigin, float *rayDirection)
+    void ComputeMouseRay(const float *view, const float *projection, const ::SF::Engine::Vec2 &mousePosition,
+                         const ::SF::Engine::Vec2 &rectPosition, const ::SF::Engine::Vec2 &rectSize, float *rayOrigin,
+                         float *rayDirection)
     {
         vec_t origin, dir;
         ComputeCameraRay(origin, dir, *(const matrix_t *) view, *(const matrix_t *) projection, mousePosition,
@@ -1104,7 +1109,7 @@ namespace IMGUIZMO_NAMESPACE
 
     static float DistanceToPlane(const vec_t &point, const vec_t &plan) { return plan.Dot3(point) + plan.w; }
 
-    static bool IsInContextRect(Vec2 p)
+    static bool IsInContextRect(::SF::Engine::Vec2 p)
     {
         return IsWithin(p.x, gContext.mX, gContext.mXMax) && IsWithin(p.y, gContext.mY, gContext.mYMax);
     }
@@ -1285,10 +1290,10 @@ namespace IMGUIZMO_NAMESPACE
         float rightLength      = GetSegmentLengthClipSpace(makeVect(0.f, 0.f), rightViewInverse);
         gContext.mScreenFactor = gContext.mGizmoSizeClipSpace / rightLength;
 
-        Vec2 centerSSpace            = worldToPos(makeVect(0.f, 0.f), gContext.mMVP);
-        gContext.mScreenSquareCenter = centerSSpace;
-        gContext.mScreenSquareMin    = Vec2(centerSSpace.x - 10.f, centerSSpace.y - 10.f);
-        gContext.mScreenSquareMax    = Vec2(centerSSpace.x + 10.f, centerSSpace.y + 10.f);
+        ::SF::Engine::Vec2 centerSSpace = worldToPos(makeVect(0.f, 0.f), gContext.mMVP);
+        gContext.mScreenSquareCenter    = centerSSpace;
+        gContext.mScreenSquareMin       = ::SF::Engine::Vec2(centerSSpace.x - 10.f, centerSSpace.y - 10.f);
+        gContext.mScreenSquareMax       = ::SF::Engine::Vec2(centerSSpace.x + 10.f, centerSSpace.y + 10.f);
 
         ComputeCameraRay(gContext.mRayOrigin, gContext.mRayVector);
     }
@@ -1502,9 +1507,10 @@ namespace IMGUIZMO_NAMESPACE
             const bool usingAxis = (gContext.mbUsing && type == MT_ROTATE_Z - axis);
             const int circleMul  = (hasRSC && !usingAxis) ? 1 : 2;
 
-            Vec2 *circlePos        = (Vec2 *) alloca(sizeof(Vec2) * (circleMul * halfCircleSegmentCount + 1));
-            const bool rightHanded = gContext.mProjectionMat.m[2][3] < 0.f;
-            float angleStart       = atan2f(viewDirNormalized[(4 - axis) % 3], viewDirNormalized[(3 - axis) % 3]) +
+            ::SF::Engine::Vec2 *circlePos = (::SF::Engine::Vec2 *) alloca(sizeof(::SF::Engine::Vec2) *
+                                                                          (circleMul * halfCircleSegmentCount + 1));
+            const bool rightHanded        = gContext.mProjectionMat.m[2][3] < 0.f;
+            float angleStart = atan2f(viewDirNormalized[(4 - axis) % 3], viewDirNormalized[(3 - axis) % 3]) +
                                (gContext.mIsOrthographic ? ZPI : -ZPI) * 0.5f + (rightHanded ? 0.f : ZPI);
 
             for (int i = 0; i < circleMul * halfCircleSegmentCount + 1; i++)
@@ -1543,7 +1549,7 @@ namespace IMGUIZMO_NAMESPACE
 
         if (gContext.mbUsing && (gContext.GetCurrentID() == gContext.mEditingID) && IsRotateType(type))
         {
-            Vec2 circlePos[halfCircleSegmentCount + 1];
+            ::SF::Engine::Vec2 circlePos[halfCircleSegmentCount + 1];
 
             circlePos[0] = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
             for (unsigned int i = 1; i < halfCircleSegmentCount + 1; i++)
@@ -1565,14 +1571,14 @@ namespace IMGUIZMO_NAMESPACE
                                   gContext.mStyle.RotationLineThickness, ImDrawFlags_Closed);
 #endif
 
-            Vec2 destinationPosOnScreen = circlePos[1];
+            ::SF::Engine::Vec2 destinationPosOnScreen = circlePos[1];
             char tmps[512];
             ImFormatString(tmps, sizeof(tmps), rotationInfoMask[type - MT_ROTATE_X],
                            (gContext.mRotationAngle / ZPI) * 180.f, gContext.mRotationAngle);
-            drawList->AddText(Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
+            drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
                               GetColorU32(TEXT_SHADOW), tmps);
-            drawList->AddText(Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14), GetColorU32(TEXT),
-                              tmps);
+            drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14),
+                              GetColorU32(TEXT), tmps);
         }
     }
 
@@ -1585,8 +1591,9 @@ namespace IMGUIZMO_NAMESPACE
 
         for (int j = 1; j < 10; j++)
         {
-            Vec2 baseSSpace2 = worldToPos(axis * 0.05f * (float) (j * 2) * gContext.mScreenFactor, gContext.mMVP);
-            Vec2 worldDirSSpace2 =
+            ::SF::Engine::Vec2 baseSSpace2 =
+                    worldToPos(axis * 0.05f * (float) (j * 2) * gContext.mScreenFactor, gContext.mMVP);
+            ::SF::Engine::Vec2 worldDirSSpace2 =
                     worldToPos(axis * 0.05f * (float) (j * 2 + 1) * gContext.mScreenFactor, gContext.mMVP);
             gContext.mDrawList->AddLine(baseSSpace2, worldDirSSpace2, GetColorU32(HATCHED_AXIS_LINES),
                                         gContext.mStyle.HatchedAxisLineThickness);
@@ -1630,13 +1637,13 @@ namespace IMGUIZMO_NAMESPACE
                 // draw axis
                 if (belowAxisLimit)
                 {
-                    bool hasTranslateOnAxis = Contains(op, static_cast<OPERATION>(TRANSLATE_X << i));
-                    float markerScale       = hasTranslateOnAxis ? 1.4f : 1.0f;
-                    Vec2 baseSSpace         = worldToPos(dirAxis * 0.1f * gContext.mScreenFactor, gContext.mMVP);
-                    Vec2 worldDirSSpaceNoScale =
+                    bool hasTranslateOnAxis       = Contains(op, static_cast<OPERATION>(TRANSLATE_X << i));
+                    float markerScale             = hasTranslateOnAxis ? 1.4f : 1.0f;
+                    ::SF::Engine::Vec2 baseSSpace = worldToPos(dirAxis * 0.1f * gContext.mScreenFactor, gContext.mMVP);
+                    ::SF::Engine::Vec2 worldDirSSpaceNoScale =
                             worldToPos(dirAxis * markerScale * gContext.mScreenFactor, gContext.mMVP);
-                    Vec2 worldDirSSpace = worldToPos((dirAxis * markerScale * scaleDisplay[i]) * gContext.mScreenFactor,
-                                                     gContext.mMVP);
+                    ::SF::Engine::Vec2 worldDirSSpace = worldToPos(
+                            (dirAxis * markerScale * scaleDisplay[i]) * gContext.mScreenFactor, gContext.mMVP);
 
                     if (gContext.mbUsing && (gContext.GetCurrentID() == gContext.mEditingID))
                     {
@@ -1667,25 +1674,27 @@ namespace IMGUIZMO_NAMESPACE
 
         if (gContext.mbUsing && (gContext.GetCurrentID() == gContext.mEditingID) && IsScaleType(type))
         {
-            // Vec2 sourcePosOnScreen = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
-            Vec2 destinationPosOnScreen = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
+            // ::SF::Engine::Vec2 sourcePosOnScreen = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
+            ::SF::Engine::Vec2 destinationPosOnScreen =
+                    worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
             /*vec_t dif(destinationPosOnScreen.x - sourcePosOnScreen.x, destinationPosOnScreen.y - sourcePosOnScreen.y);
             dif.Normalize();
             dif *= 5.f;
             drawList->AddCircle(sourcePosOnScreen, 6.f, translationLineColor);
             drawList->AddCircle(destinationPosOnScreen, 6.f, translationLineColor);
-            drawList->AddLine(Vec2(sourcePosOnScreen.x + dif.x, sourcePosOnScreen.y + dif.y),
-            Vec2(destinationPosOnScreen.x - dif.x, destinationPosOnScreen.y - dif.y), translationLineColor, 2.f);
+            drawList->AddLine(::SF::Engine::Vec2(sourcePosOnScreen.x + dif.x, sourcePosOnScreen.y + dif.y),
+            ::SF::Engine::Vec2(destinationPosOnScreen.x - dif.x, destinationPosOnScreen.y - dif.y),
+            translationLineColor, 2.f);
             */
             char tmps[512];
             // vec_t deltaInfo = gContext.mModel.v.position - gContext.mMatrixOrigin;
             int componentInfoIndex = (type - MT_SCALE_X) * 3;
             ImFormatString(tmps, sizeof(tmps), scaleInfoMask[type - MT_SCALE_X],
                            scaleDisplay[translationInfoIndex[componentInfoIndex]]);
-            drawList->AddText(Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
+            drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
                               GetColorU32(TEXT_SHADOW), tmps);
-            drawList->AddText(Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14), GetColorU32(TEXT),
-                              tmps);
+            drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14),
+                              GetColorU32(TEXT), tmps);
         }
     }
 
@@ -1729,11 +1738,12 @@ namespace IMGUIZMO_NAMESPACE
                 {
                     bool hasTranslateOnAxis = Contains(op, static_cast<OPERATION>(TRANSLATE_X << i));
                     float markerScale       = hasTranslateOnAxis ? 1.4f : 1.0f;
-                    // Vec2 baseSSpace = worldToPos(dirAxis * 0.1f * gContext.mScreenFactor, gContext.mMVPLocal);
-                    // Vec2 worldDirSSpaceNoScale = worldToPos(dirAxis * markerScale * gContext.mScreenFactor,
-                    // gContext.mMVP);
-                    Vec2 worldDirSSpace = worldToPos((dirAxis * markerScale * scaleDisplay[i]) * gContext.mScreenFactor,
-                                                     gContext.mMVPLocal);
+                    // ::SF::Engine::Vec2 baseSSpace = worldToPos(dirAxis * 0.1f * gContext.mScreenFactor,
+                    // gContext.mMVPLocal);
+                    // ::SF::Engine::Vec2 worldDirSSpaceNoScale = worldToPos(dirAxis * markerScale *
+                    // gContext.mScreenFactor, gContext.mMVP);
+                    ::SF::Engine::Vec2 worldDirSSpace = worldToPos(
+                            (dirAxis * markerScale * scaleDisplay[i]) * gContext.mScreenFactor, gContext.mMVPLocal);
 
 #if 0
                if (gContext.mbUsing && (gContext.GetCurrentID() == gContext.mEditingID))
@@ -1758,25 +1768,27 @@ namespace IMGUIZMO_NAMESPACE
 
         if (gContext.mbUsing && (gContext.GetCurrentID() == gContext.mEditingID) && IsScaleType(type))
         {
-            // Vec2 sourcePosOnScreen = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
-            Vec2 destinationPosOnScreen = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
+            // ::SF::Engine::Vec2 sourcePosOnScreen = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
+            ::SF::Engine::Vec2 destinationPosOnScreen =
+                    worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
             /*vec_t dif(destinationPosOnScreen.x - sourcePosOnScreen.x, destinationPosOnScreen.y - sourcePosOnScreen.y);
             dif.Normalize();
             dif *= 5.f;
             drawList->AddCircle(sourcePosOnScreen, 6.f, translationLineColor);
             drawList->AddCircle(destinationPosOnScreen, 6.f, translationLineColor);
-            drawList->AddLine(Vec2(sourcePosOnScreen.x + dif.x, sourcePosOnScreen.y + dif.y),
-            Vec2(destinationPosOnScreen.x - dif.x, destinationPosOnScreen.y - dif.y), translationLineColor, 2.f);
+            drawList->AddLine(::SF::Engine::Vec2(sourcePosOnScreen.x + dif.x, sourcePosOnScreen.y + dif.y),
+            ::SF::Engine::Vec2(destinationPosOnScreen.x - dif.x, destinationPosOnScreen.y - dif.y),
+            translationLineColor, 2.f);
             */
             char tmps[512];
             // vec_t deltaInfo = gContext.mModel.v.position - gContext.mMatrixOrigin;
             int componentInfoIndex = (type - MT_SCALE_X) * 3;
             ImFormatString(tmps, sizeof(tmps), scaleInfoMask[type - MT_SCALE_X],
                            scaleDisplay[translationInfoIndex[componentInfoIndex]]);
-            drawList->AddText(Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
+            drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
                               GetColorU32(TEXT_SHADOW), tmps);
-            drawList->AddText(Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14), GetColorU32(TEXT),
-                              tmps);
+            drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14),
+                              GetColorU32(TEXT), tmps);
         }
     }
 
@@ -1797,7 +1809,7 @@ namespace IMGUIZMO_NAMESPACE
         uint32_t colors[7];
         ComputeColors(colors, type, TRANSLATE);
 
-        const Vec2 origin = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
+        const ::SF::Engine::Vec2 origin = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
 
         // draw
         bool belowAxisLimit  = false;
@@ -1812,21 +1824,21 @@ namespace IMGUIZMO_NAMESPACE
                 // draw axis
                 if (belowAxisLimit && Intersects(op, static_cast<OPERATION>(TRANSLATE_X << i)))
                 {
-                    Vec2 baseSSpace     = worldToPos(dirAxis * 0.1f * gContext.mScreenFactor, gContext.mMVP);
-                    Vec2 worldDirSSpace = worldToPos(dirAxis * gContext.mScreenFactor, gContext.mMVP);
+                    ::SF::Engine::Vec2 baseSSpace = worldToPos(dirAxis * 0.1f * gContext.mScreenFactor, gContext.mMVP);
+                    ::SF::Engine::Vec2 worldDirSSpace = worldToPos(dirAxis * gContext.mScreenFactor, gContext.mMVP);
 
                     drawList->AddLine(baseSSpace, worldDirSSpace, colors[i + 1],
                                       gContext.mStyle.TranslationLineThickness);
 
                     // Arrow head begin
-                    Vec2 dir(origin - worldDirSSpace);
+                    ::SF::Engine::Vec2 dir(origin - worldDirSSpace);
 
                     float d = sqrtf(ImLengthSqr(dir));
                     dir /= d; // Normalize
                     dir *= gContext.mStyle.TranslationLineArrowSize;
 
-                    Vec2 ortogonalDir(dir.y, -dir.x); // Perpendicular vector
-                    Vec2 a(worldDirSSpace + dir);
+                    ::SF::Engine::Vec2 ortogonalDir(dir.y, -dir.x); // Perpendicular vector
+                    ::SF::Engine::Vec2 a(worldDirSSpace + dir);
                     drawList->AddTriangleFilled(worldDirSSpace - dir, a + ortogonalDir, a - ortogonalDir,
                                                 colors[i + 1]);
                     // Arrow head end
@@ -1842,7 +1854,7 @@ namespace IMGUIZMO_NAMESPACE
             {
                 if (belowPlaneLimit && Contains(op, TRANSLATE_PLANS[i]))
                 {
-                    Vec2 screenQuadPts[4];
+                    ::SF::Engine::Vec2 screenQuadPts[4];
                     for (int j = 0; j < 4; ++j)
                     {
                         vec_t cornerWorldPos =
@@ -1865,16 +1877,17 @@ namespace IMGUIZMO_NAMESPACE
         {
             uint32_t translationLineColor = GetColorU32(TRANSLATION_LINE);
 
-            Vec2 sourcePosOnScreen      = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
-            Vec2 destinationPosOnScreen = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
+            ::SF::Engine::Vec2 sourcePosOnScreen = worldToPos(gContext.mMatrixOrigin, gContext.mViewProjection);
+            ::SF::Engine::Vec2 destinationPosOnScreen =
+                    worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
             vec_t dif = {destinationPosOnScreen.x - sourcePosOnScreen.x, destinationPosOnScreen.y - sourcePosOnScreen.y,
                          0.f, 0.f};
             dif.Normalize();
             dif *= 5.f;
             drawList->AddCircle(sourcePosOnScreen, 6.f, translationLineColor);
             drawList->AddCircle(destinationPosOnScreen, 6.f, translationLineColor);
-            drawList->AddLine(Vec2(sourcePosOnScreen.x + dif.x, sourcePosOnScreen.y + dif.y),
-                              Vec2(destinationPosOnScreen.x - dif.x, destinationPosOnScreen.y - dif.y),
+            drawList->AddLine(::SF::Engine::Vec2(sourcePosOnScreen.x + dif.x, sourcePosOnScreen.y + dif.y),
+                              ::SF::Engine::Vec2(destinationPosOnScreen.x - dif.x, destinationPosOnScreen.y - dif.y),
                               translationLineColor, 2.f);
 
             char tmps[512];
@@ -1884,10 +1897,10 @@ namespace IMGUIZMO_NAMESPACE
                            deltaInfo[translationInfoIndex[componentInfoIndex]],
                            deltaInfo[translationInfoIndex[componentInfoIndex + 1]],
                            deltaInfo[translationInfoIndex[componentInfoIndex + 2]]);
-            drawList->AddText(Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
+            drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
                               GetColorU32(TEXT_SHADOW), tmps);
-            drawList->AddText(Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14), GetColorU32(TEXT),
-                              tmps);
+            drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14),
+                              GetColorU32(TEXT), tmps);
         }
     }
 
@@ -2022,25 +2035,25 @@ namespace IMGUIZMO_NAMESPACE
                     p1.z    = p0.z + (p1.z - p0.z) * t;
                     p1.w    = wEps;
                 }
-                auto clipToScreen = [](const vec_t &c) -> Vec2
+                auto clipToScreen = [](const vec_t &c) -> ::SF::Engine::Vec2
                 {
                     float nx = c.x * (0.5f / c.w) + 0.5f;
                     float ny = c.y * (0.5f / c.w) + 0.5f;
                     ny       = 1.f - ny;
-                    return Vec2(gContext.mX + nx * gContext.mWidth, gContext.mY + ny * gContext.mHeight);
+                    return ::SF::Engine::Vec2(gContext.mX + nx * gContext.mWidth, gContext.mY + ny * gContext.mHeight);
                 };
-                Vec2 worldBound1    = clipToScreen(p0);
-                Vec2 worldBound2    = clipToScreen(p1);
-                float boundDistance = sqrtf(ImLengthSqr(worldBound1 - worldBound2));
-                int stepCount       = (int) (boundDistance / 10.f);
-                stepCount           = min(stepCount, 1000);
+                ::SF::Engine::Vec2 worldBound1 = clipToScreen(p0);
+                ::SF::Engine::Vec2 worldBound2 = clipToScreen(p1);
+                float boundDistance            = sqrtf(ImLengthSqr(worldBound1 - worldBound2));
+                int stepCount                  = (int) (boundDistance / 10.f);
+                stepCount                      = min(stepCount, 1000);
                 for (int j = 0; j < stepCount; j++)
                 {
-                    float stepLength   = 1.f / (float) stepCount;
-                    float t1           = (float) j * stepLength;
-                    float t2           = (float) j * stepLength + stepLength * 0.5f;
-                    Vec2 worldBoundSS1 = ImLerp(worldBound1, worldBound2, Vec2(t1, t1));
-                    Vec2 worldBoundSS2 = ImLerp(worldBound1, worldBound2, Vec2(t2, t2));
+                    float stepLength                 = 1.f / (float) stepCount;
+                    float t1                         = (float) j * stepLength;
+                    float t2                         = (float) j * stepLength + stepLength * 0.5f;
+                    ::SF::Engine::Vec2 worldBoundSS1 = ImLerp(worldBound1, worldBound2, ::SF::Engine::Vec2(t1, t1));
+                    ::SF::Engine::Vec2 worldBoundSS2 = ImLerp(worldBound1, worldBound2, ::SF::Engine::Vec2(t2, t2));
                     // drawList->AddLine(worldBoundSS1, worldBoundSS2, IM_COL32(0, 0, 0, 0) + anchorAlpha, 3.f);
                     drawList->AddLine(worldBoundSS1, worldBoundSS2, IM_COL32(0xAA, 0xAA, 0xAA, 0) + anchorAlpha, 2.f);
                 }
@@ -2051,10 +2064,10 @@ namespace IMGUIZMO_NAMESPACE
                 pCorner.TransformPoint(aabb[i], boundsMVP);
                 vec_t pMid;
                 pMid.TransformPoint(midPoint, boundsMVP);
-                Vec2 worldBoundOrig     = worldToPos(aabb[i], boundsMVP);
-                Vec2 midBound           = worldToPos(midPoint, boundsMVP);
-                bool bigAnchorVisible   = pCorner.w >= wEps && IsInContextRect(worldBoundOrig);
-                bool smallAnchorVisible = pMid.w >= wEps && IsInContextRect(midBound);
+                ::SF::Engine::Vec2 worldBoundOrig = worldToPos(aabb[i], boundsMVP);
+                ::SF::Engine::Vec2 midBound       = worldToPos(midPoint, boundsMVP);
+                bool bigAnchorVisible             = pCorner.w >= wEps && IsInContextRect(worldBoundOrig);
+                bool smallAnchorVisible           = pMid.w >= wEps && IsInContextRect(midBound);
 
                 static const float AnchorBigRadius   = 8.f;
                 static const float AnchorSmallRadius = 6.f;
@@ -2203,7 +2216,8 @@ namespace IMGUIZMO_NAMESPACE
 
                 // info text
                 char tmps[512];
-                Vec2 destinationPosOnScreen = worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
+                ::SF::Engine::Vec2 destinationPosOnScreen =
+                        worldToPos(gContext.mModel.v.position, gContext.mViewProjection);
                 ImFormatString(tmps, sizeof(tmps), "X: %.2f Y: %.2f Z: %.2f",
                                (bounds[3] - bounds[0]) * gContext.mBoundsMatrix.component[0].Length() *
                                        scale.component[0].Length(),
@@ -2211,10 +2225,10 @@ namespace IMGUIZMO_NAMESPACE
                                        scale.component[1].Length(),
                                (bounds[5] - bounds[2]) * gContext.mBoundsMatrix.component[2].Length() *
                                        scale.component[2].Length());
-                drawList->AddText(Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
+                drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 15, destinationPosOnScreen.y + 15),
                                   GetColorU32(TEXT_SHADOW), tmps);
-                drawList->AddText(Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14), GetColorU32(TEXT),
-                                  tmps);
+                drawList->AddText(::SF::Engine::Vec2(destinationPosOnScreen.x + 14, destinationPosOnScreen.y + 14),
+                                  GetColorU32(TEXT), tmps);
             }
 
             if (!io.MouseDown[0])
@@ -2271,13 +2285,13 @@ namespace IMGUIZMO_NAMESPACE
                                                 BuildPlan(gContext.mModelLocal.v.position, dirAxis));
             vec_t posOnPlan = gContext.mRayOrigin + gContext.mRayVector * len;
 
-            const float startOffset    = Contains(op, static_cast<OPERATION>(TRANSLATE_X << i)) ? 1.0f : 0.1f;
-            const float endOffset      = Contains(op, static_cast<OPERATION>(TRANSLATE_X << i)) ? 1.4f : 1.0f;
-            const Vec2 posOnPlanScreen = worldToPos(posOnPlan, gContext.mViewProjection);
-            const Vec2 axisStartOnScreen =
+            const float startOffset = Contains(op, static_cast<OPERATION>(TRANSLATE_X << i)) ? 1.0f : 0.1f;
+            const float endOffset   = Contains(op, static_cast<OPERATION>(TRANSLATE_X << i)) ? 1.4f : 1.0f;
+            const ::SF::Engine::Vec2 posOnPlanScreen = worldToPos(posOnPlan, gContext.mViewProjection);
+            const ::SF::Engine::Vec2 axisStartOnScreen =
                     worldToPos(gContext.mModelLocal.v.position + dirAxis * gContext.mScreenFactor * startOffset,
                                gContext.mViewProjection);
-            const Vec2 axisEndOnScreen =
+            const ::SF::Engine::Vec2 axisEndOnScreen =
                     worldToPos(gContext.mModelLocal.v.position + dirAxis * gContext.mScreenFactor * endOffset,
                                gContext.mViewProjection);
 
@@ -2317,10 +2331,12 @@ namespace IMGUIZMO_NAMESPACE
             {
                 bool hasTranslateOnAxis = Contains(op, static_cast<OPERATION>(TRANSLATE_X << i));
                 float markerScale       = hasTranslateOnAxis ? 1.4f : 1.0f;
-                // Vec2 baseSSpace = worldToPos(dirAxis * 0.1f * gContext.mScreenFactor, gContext.mMVPLocal);
-                // Vec2 worldDirSSpaceNoScale = worldToPos(dirAxis * markerScale * gContext.mScreenFactor,
+                // ::SF::Engine::Vec2 baseSSpace = worldToPos(dirAxis * 0.1f * gContext.mScreenFactor,
+                // gContext.mMVPLocal);
+                // ::SF::Engine::Vec2 worldDirSSpaceNoScale = worldToPos(dirAxis * markerScale * gContext.mScreenFactor,
                 // gContext.mMVP);
-                Vec2 worldDirSSpace = worldToPos((dirAxis * markerScale) * gContext.mScreenFactor, gContext.mMVPLocal);
+                ::SF::Engine::Vec2 worldDirSSpace =
+                        worldToPos((dirAxis * markerScale) * gContext.mScreenFactor, gContext.mMVPLocal);
 
                 float distance = sqrtf(ImLengthSqr(worldDirSSpace - io.MousePos));
                 if (distance < 12.f)
@@ -2384,11 +2400,11 @@ namespace IMGUIZMO_NAMESPACE
             const vec_t localPos   = intersectWorldPos - gContext.mModel.v.position;
             vec_t idealPosOnCircle = Normalized(localPos);
             idealPosOnCircle.TransformVector(gContext.mModelInverse);
-            const Vec2 idealPosOnCircleScreen =
+            const ::SF::Engine::Vec2 idealPosOnCircleScreen =
                     worldToPos(idealPosOnCircle * rotationDisplayFactor * gContext.mScreenFactor, gContext.mMVP);
 
             // gContext.mDrawList->AddCircle(idealPosOnCircleScreen, 5.f, IM_COL32_WHITE);
-            const Vec2 distanceOnScreen = idealPosOnCircleScreen - io.MousePos;
+            const ::SF::Engine::Vec2 distanceOnScreen = idealPosOnCircleScreen - io.MousePos;
 
             const float distance = makeVect(distanceOnScreen).Length();
             if (distance < 8.f) // pixel size
@@ -2423,7 +2439,7 @@ namespace IMGUIZMO_NAMESPACE
             type = MT_MOVE_SCREEN;
         }
 
-        const vec_t screenCoord = makeVect(io.MousePos - Vec2(gContext.mX, gContext.mY));
+        const vec_t screenCoord = makeVect(io.MousePos - ::SF::Engine::Vec2(gContext.mX, gContext.mY));
 
         // compute
         for (int i = 0; i < 3 && type == MT_NONE; i++)
@@ -2440,13 +2456,14 @@ namespace IMGUIZMO_NAMESPACE
                                                 BuildPlan(gContext.mModel.v.position, dirAxis));
             vec_t posOnPlan = gContext.mRayOrigin + gContext.mRayVector * len;
 
-            const Vec2 axisStartOnScreen =
+            const ::SF::Engine::Vec2 axisStartOnScreen =
                     worldToPos(gContext.mModel.v.position + dirAxis * gContext.mScreenFactor * 0.1f,
                                gContext.mViewProjection) -
-                    Vec2(gContext.mX, gContext.mY);
-            const Vec2 axisEndOnScreen = worldToPos(gContext.mModel.v.position + dirAxis * gContext.mScreenFactor,
-                                                    gContext.mViewProjection) -
-                                         Vec2(gContext.mX, gContext.mY);
+                    ::SF::Engine::Vec2(gContext.mX, gContext.mY);
+            const ::SF::Engine::Vec2 axisEndOnScreen =
+                    worldToPos(gContext.mModel.v.position + dirAxis * gContext.mScreenFactor,
+                               gContext.mViewProjection) -
+                    ::SF::Engine::Vec2(gContext.mX, gContext.mY);
 
             vec_t closestPointOnAxis =
                     PointOnSegment(screenCoord, makeVect(axisStartOnScreen), makeVect(axisEndOnScreen));
@@ -2908,50 +2925,50 @@ namespace IMGUIZMO_NAMESPACE
         gContext.mIDStack.back() = id;
     }
 
-    ImGuiID GetID(const char *str, const char *str_end)
+    IdType GetID(const char *str, const char *str_end)
     {
-        ImGuiID seed = gContext.GetCurrentID();
-        ImGuiID id   = ImHashStr(str, str_end ? (str_end - str) : 0, seed);
+        IdType seed = gContext.GetCurrentID();
+        IdType id   = ImHashStr(str, str_end ? (str_end - str) : 0, seed);
         return id;
     }
 
-    ImGuiID GetID(const char *str) { return GetID(str, nullptr); }
+    IdType GetID(const char *str) { return GetID(str, nullptr); }
 
-    ImGuiID GetID(const void *ptr)
+    IdType GetID(const void *ptr)
     {
-        ImGuiID seed = gContext.GetCurrentID();
-        ImGuiID id   = ImHashData(&ptr, sizeof(void *), seed);
+        IdType seed = gContext.GetCurrentID();
+        IdType id   = ImHashData(&ptr, sizeof(void *), seed);
         return id;
     }
 
-    ImGuiID GetID(int n)
+    IdType GetID(int n)
     {
-        ImGuiID seed = gContext.GetCurrentID();
-        ImGuiID id   = ImHashData(&n, sizeof(n), seed);
+        IdType seed = gContext.GetCurrentID();
+        IdType id   = ImHashData(&n, sizeof(n), seed);
         return id;
     }
 
     void PushID(const char *str_id)
     {
-        ImGuiID id = GetID(str_id);
+        IdType id = GetID(str_id);
         gContext.mIDStack.push_back(id);
     }
 
     void PushID(const char *str_id_begin, const char *str_id_end)
     {
-        ImGuiID id = GetID(str_id_begin, str_id_end);
+        IdType id = GetID(str_id_begin, str_id_end);
         gContext.mIDStack.push_back(id);
     }
 
     void PushID(const void *ptr_id)
     {
-        ImGuiID id = GetID(ptr_id);
+        IdType id = GetID(ptr_id);
         gContext.mIDStack.push_back(id);
     }
 
     void PushID(int int_id)
     {
-        ImGuiID id = GetID(int_id);
+        IdType id = GetID(int_id);
         gContext.mIDStack.push_back(id);
     }
 
@@ -2985,8 +3002,9 @@ namespace IMGUIZMO_NAMESPACE
     bool Manipulate(const float *view, const float *projection, OPERATION operation, MODE mode, float *matrix,
                     float *deltaMatrix, const float *snap, const float *localBounds, const float *boundsSnap)
     {
-        gContext.mDrawList->PushClipRect(Vec2(gContext.mX, gContext.mY),
-                                         Vec2(gContext.mX + gContext.mWidth, gContext.mY + gContext.mHeight), false);
+        gContext.mDrawList->PushClipRect(
+                ::SF::Engine::Vec2(gContext.mX, gContext.mY),
+                ::SF::Engine::Vec2(gContext.mX + gContext.mWidth, gContext.mY + gContext.mHeight), false);
 
         // Scale is always local or matrix will be skewed when applying world scale or oriented matrix
         ComputeContext(view, projection, matrix, (operation & SCALE) ? LOCAL : mode);
@@ -3140,8 +3158,8 @@ namespace IMGUIZMO_NAMESPACE
                 }
 
                 // project to screen
-                Vec2 p0 = worldToPos(vec_t(0.f, 0.f, 0.f), mvp);
-                Vec2 p1 = worldToPos(endLocal, mvp);
+                ::SF::Engine::Vec2 p0 = worldToPos(vec_t(0.f, 0.f, 0.f), mvp);
+                ::SF::Engine::Vec2 p1 = worldToPos(endLocal, mvp);
 
                 // reject behind camera (clip space)
                 vec_t clip0, clip1;
@@ -3167,7 +3185,7 @@ namespace IMGUIZMO_NAMESPACE
         struct CubeFace
         {
             float z;
-            Vec2 faceCoordsScreen[4];
+            ::SF::Engine::Vec2 faceCoordsScreen[4];
             uint32_t color;
         };
         CubeFace *faces = (CubeFace *) _malloca(sizeof(CubeFace) * matrixCount * 6);
@@ -3256,7 +3274,7 @@ namespace IMGUIZMO_NAMESPACE
                 CubeFace &cubeFace = faces[cubeFaceCount];
 
                 // 3D->2D
-                // Vec2 faceCoordsScreen[4];
+                // ::SF::Engine::Vec2 faceCoordsScreen[4];
                 for (unsigned int iCoord = 0; iCoord < 4; iCoord++)
                 {
                     cubeFace.faceCoordsScreen[iCoord] = worldToPos(faceCoords[iCoord] * 0.5f * invert, res);
@@ -3436,14 +3454,15 @@ namespace IMGUIZMO_NAMESPACE
     }
 
     void ViewManipulate(float *view, const float *projection, OPERATION operation, MODE mode, float *matrix,
-                        float length, Vec2 position, Vec2 size, uint32_t backgroundColor)
+                        float length, ::SF::Engine::Vec2 position, ::SF::Engine::Vec2 size, uint32_t backgroundColor)
     {
         // Scale is always local or matrix will be skewed when applying world scale or oriented matrix
         ComputeContext(view, projection, matrix, (operation & SCALE) ? LOCAL : mode);
         ViewManipulate(view, length, position, size, backgroundColor);
     }
 
-    void ViewManipulate(float *view, float length, Vec2 position, Vec2 size, uint32_t backgroundColor)
+    void ViewManipulate(float *view, float length, ::SF::Engine::Vec2 position, ::SF::Engine::Vec2 size,
+                        uint32_t backgroundColor)
     {
         // State is bound to the current id (PushID/PopID) so multiple view cubes are independent.
         ViewManipulateState &vms = gContext.GetViewManipulateState();
@@ -3492,13 +3511,15 @@ namespace IMGUIZMO_NAMESPACE
         const matrix_t res = cubeView * cubeProjection;
 
         // panels
-        static const Vec2 panelPosition[9] = {Vec2(0.75f, 0.75f), Vec2(0.25f, 0.75f), Vec2(0.f, 0.75f),
-                                              Vec2(0.75f, 0.25f), Vec2(0.25f, 0.25f), Vec2(0.f, 0.25f),
-                                              Vec2(0.75f, 0.f),   Vec2(0.25f, 0.f),   Vec2(0.f, 0.f)};
+        static const ::SF::Engine::Vec2 panelPosition[9] = {
+                ::SF::Engine::Vec2(0.75f, 0.75f), ::SF::Engine::Vec2(0.25f, 0.75f), ::SF::Engine::Vec2(0.f, 0.75f),
+                ::SF::Engine::Vec2(0.75f, 0.25f), ::SF::Engine::Vec2(0.25f, 0.25f), ::SF::Engine::Vec2(0.f, 0.25f),
+                ::SF::Engine::Vec2(0.75f, 0.f),   ::SF::Engine::Vec2(0.25f, 0.f),   ::SF::Engine::Vec2(0.f, 0.f)};
 
-        static const Vec2 panelSize[9] = {Vec2(0.25f, 0.25f), Vec2(0.5f, 0.25f), Vec2(0.25f, 0.25f),
-                                          Vec2(0.25f, 0.5f),  Vec2(0.5f, 0.5f),  Vec2(0.25f, 0.5f),
-                                          Vec2(0.25f, 0.25f), Vec2(0.5f, 0.25f), Vec2(0.25f, 0.25f)};
+        static const ::SF::Engine::Vec2 panelSize[9] = {
+                ::SF::Engine::Vec2(0.25f, 0.25f), ::SF::Engine::Vec2(0.5f, 0.25f), ::SF::Engine::Vec2(0.25f, 0.25f),
+                ::SF::Engine::Vec2(0.25f, 0.5f),  ::SF::Engine::Vec2(0.5f, 0.5f),  ::SF::Engine::Vec2(0.25f, 0.5f),
+                ::SF::Engine::Vec2(0.25f, 0.25f), ::SF::Engine::Vec2(0.5f, 0.25f), ::SF::Engine::Vec2(0.25f, 0.25f)};
 
         // tag faces
         bool boxes[27]{};
@@ -3546,9 +3567,9 @@ namespace IMGUIZMO_NAMESPACE
                 {
                     vec_t boxCoord = boxOrigin + indexVectorX * float(iPanel % 3) + indexVectorY * float(iPanel / 3) +
                                      makeVect(1.f, 1.f, 1.f);
-                    const Vec2 p = panelPosition[iPanel] * 2.f;
-                    const Vec2 s = panelSize[iPanel] * 2.f;
-                    Vec2 faceCoordsScreen[4];
+                    const ::SF::Engine::Vec2 p = panelPosition[iPanel] * 2.f;
+                    const ::SF::Engine::Vec2 s = panelSize[iPanel] * 2.f;
+                    ::SF::Engine::Vec2 faceCoordsScreen[4];
                     vec_t panelPos[4] = {dx * p.x + dy * p.y, dx * p.x + dy * (p.y + s.y),
                                          dx * (p.x + s.x) + dy * (p.y + s.y), dx * (p.x + s.x) + dy * p.y};
 
@@ -3558,8 +3579,9 @@ namespace IMGUIZMO_NAMESPACE
                                 worldToPos((panelPos[iCoord] + origin) * 0.5f * invert, res, position, size);
                     }
 
-                    const Vec2 panelCorners[2] = {panelPosition[iPanel], panelPosition[iPanel] + panelSize[iPanel]};
-                    bool insidePanel           = localx > panelCorners[0].x && localx < panelCorners[1].x &&
+                    const ::SF::Engine::Vec2 panelCorners[2] = {panelPosition[iPanel],
+                                                                panelPosition[iPanel] + panelSize[iPanel]};
+                    bool insidePanel = localx > panelCorners[0].x && localx < panelCorners[1].x &&
                                        localy > panelCorners[0].y && localy < panelCorners[1].y;
                     int boxCoordInt = int(boxCoord.x * 9.f + boxCoord.y * 3.f + boxCoord.z);
                     IM_ASSERT(boxCoordInt < 27);

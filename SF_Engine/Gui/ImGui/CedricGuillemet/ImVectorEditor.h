@@ -51,12 +51,12 @@ namespace ImVectorEditor
 
     struct Anchor
     {
-        Vec2 position         = Vec2(0.0f, 0.0f);
-        Vec2 handleIn         = Vec2(0.0f, 0.0f);
-        Vec2 handleOut        = Vec2(0.0f, 0.0f);
-        bool hasHandleIn      = false;
-        bool hasHandleOut     = false;
-        HandleMode handleMode = HandleMode::Corner;
+        ::SF::Engine::Vec2 position  = ::SF::Engine::Vec2(0.0f, 0.0f);
+        ::SF::Engine::Vec2 handleIn  = ::SF::Engine::Vec2(0.0f, 0.0f);
+        ::SF::Engine::Vec2 handleOut = ::SF::Engine::Vec2(0.0f, 0.0f);
+        bool hasHandleIn             = false;
+        bool hasHandleOut            = false;
+        HandleMode handleMode        = HandleMode::Corner;
     };
 
     struct Path
@@ -90,15 +90,15 @@ namespace ImVectorEditor
     // The editor composes object transform first, then canvas pan/zoom.
     struct Transform
     {
-        Vec2 pan                    = Vec2(0.0f, 0.0f);
-        float zoom                  = 1.0f;
-        Vec2 objectPivot            = Vec2(0.0f, 0.0f);
-        Vec2 objectTranslation      = Vec2(0.0f, 0.0f);
-        float objectRotationRadians = 0.0f;
-        Vec2 objectScale            = Vec2(1.0f, 1.0f);
+        ::SF::Engine::Vec2 pan               = ::SF::Engine::Vec2(0.0f, 0.0f);
+        float zoom                           = 1.0f;
+        ::SF::Engine::Vec2 objectPivot       = ::SF::Engine::Vec2(0.0f, 0.0f);
+        ::SF::Engine::Vec2 objectTranslation = ::SF::Engine::Vec2(0.0f, 0.0f);
+        float objectRotationRadians          = 0.0f;
+        ::SF::Engine::Vec2 objectScale       = ::SF::Engine::Vec2(1.0f, 1.0f);
 
-        Vec2 LocalToCanvas(const Vec2 &local) const;
-        Vec2 CanvasToLocal(const Vec2 &canvas) const;
+        ::SF::Engine::Vec2 LocalToCanvas(const ::SF::Engine::Vec2 &local) const;
+        ::SF::Engine::Vec2 CanvasToLocal(const ::SF::Engine::Vec2 &canvas) const;
     };
 
     struct Style
@@ -124,8 +124,8 @@ namespace ImVectorEditor
 
     struct Config
     {
-        Vec2 canvasSize = Vec2(0.0f, 360.0f);
-        Tool tool       = Tool::Pen;
+        ::SF::Engine::Vec2 canvasSize = ::SF::Engine::Vec2(0.0f, 360.0f);
+        Tool tool                     = Tool::Pen;
         Transform transform;
         Style style;
         Delegate *delegate          = nullptr;
@@ -136,17 +136,17 @@ namespace ImVectorEditor
 
     struct Result
     {
-        bool changed              = false;
-        bool committed            = false;
-        bool canceled             = false;
-        bool pathClosed           = false;
-        bool hovered              = false;
-        bool active               = false;
-        bool wantsMouseCapture    = false;
-        bool wantsKeyboardCapture = false;
-        Vec2 viewPanDelta         = Vec2(0.0f, 0.0f);
-        Vec2 viewZoomCenterCanvas = Vec2(0.0f, 0.0f);
-        float viewZoomFactor      = 1.0f;
+        bool changed                            = false;
+        bool committed                          = false;
+        bool canceled                           = false;
+        bool pathClosed                         = false;
+        bool hovered                            = false;
+        bool active                             = false;
+        bool wantsMouseCapture                  = false;
+        bool wantsKeyboardCapture               = false;
+        ::SF::Engine::Vec2 viewPanDelta         = ::SF::Engine::Vec2(0.0f, 0.0f);
+        ::SF::Engine::Vec2 viewZoomCenterCanvas = ::SF::Engine::Vec2(0.0f, 0.0f);
+        float viewZoomFactor                    = 1.0f;
     };
 
     class Editor
@@ -172,39 +172,45 @@ namespace ImVectorEditor
             float distance = 0.0f;
         };
 
-        Hit HitTest(const Path &path, const Config &config, const Vec2 &canvasOrigin, const Vec2 &mouseScreen) const;
-        Vec2 LocalToScreen(const Config &config, const Vec2 &canvasOrigin, const Vec2 &local) const;
-        Vec2 ScreenToLocal(const Config &config, const Vec2 &canvasOrigin, const Vec2 &screen) const;
+        Hit HitTest(const Path &path, const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                    const ::SF::Engine::Vec2 &mouseScreen) const;
+        ::SF::Engine::Vec2 LocalToScreen(const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                                         const ::SF::Engine::Vec2 &local) const;
+        ::SF::Engine::Vec2 ScreenToLocal(const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                                         const ::SF::Engine::Vec2 &screen) const;
 
-        void DrawGrid(ImDrawList *drawList, const Vec2 &origin, const Vec2 &size, const Config &config) const;
-        void DrawPath(ImDrawList *drawList, const Path &path, const Config &config, const Vec2 &canvasOrigin) const;
-        void DrawControls(ImDrawList *drawList, const Path &path, const Config &config, const Vec2 &canvasOrigin,
-                          const Hit &hoveredHit) const;
+        void DrawGrid(ImDrawList *drawList, const ::SF::Engine::Vec2 &origin, const ::SF::Engine::Vec2 &size,
+                      const Config &config) const;
+        void DrawPath(ImDrawList *drawList, const Path &path, const Config &config,
+                      const ::SF::Engine::Vec2 &canvasOrigin) const;
+        void DrawControls(ImDrawList *drawList, const Path &path, const Config &config,
+                          const ::SF::Engine::Vec2 &canvasOrigin, const Hit &hoveredHit) const;
 
         bool HandleKeyboard(Path &path, const Config &config, Result &result);
-        bool HandleMouse(Path &path, const Config &config, const Vec2 &canvasOrigin, const Hit &hoveredHit,
-                         Result &result);
+        bool HandleMouse(Path &path, const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                         const Hit &hoveredHit, Result &result);
         bool IsAnchorSelected(int anchor) const;
         void SelectAnchor(int anchor, HitPart part, bool addToSelection);
         void RemoveSelectedAnchors(Path &path);
-        void BeginAnchorDrag(const Path &path, const Vec2 &mouseLocal);
-        void UpdateBoxSelection(Path &path, const Config &config, const Vec2 &canvasOrigin, bool addToSelection);
+        void BeginAnchorDrag(const Path &path, const ::SF::Engine::Vec2 &mouseLocal);
+        void UpdateBoxSelection(Path &path, const Config &config, const ::SF::Engine::Vec2 &canvasOrigin,
+                                bool addToSelection);
         void BeginEdit(const Config &config, EditKind kind, int anchorIndex);
         void EndEdit(const Config &config);
 
         int selectedAnchor_   = -1;
         HitPart selectedPart_ = HitPart::None;
         std::vector<int> selectedAnchors_;
-        bool dragging_               = false;
-        bool penActive_              = false;
-        bool newAnchorDrag_          = false;
-        bool boxSelecting_           = false;
-        bool editActive_             = false;
-        bool dragEditStarted_        = false;
-        Vec2 dragStartLocal_         = Vec2(0.0f, 0.0f);
-        Vec2 boxSelectStartScreen_   = Vec2(0.0f, 0.0f);
-        Vec2 boxSelectCurrentScreen_ = Vec2(0.0f, 0.0f);
-        std::vector<Vec2> dragStartAnchorPositions_;
+        bool dragging_                             = false;
+        bool penActive_                            = false;
+        bool newAnchorDrag_                        = false;
+        bool boxSelecting_                         = false;
+        bool editActive_                           = false;
+        bool dragEditStarted_                      = false;
+        ::SF::Engine::Vec2 dragStartLocal_         = ::SF::Engine::Vec2(0.0f, 0.0f);
+        ::SF::Engine::Vec2 boxSelectStartScreen_   = ::SF::Engine::Vec2(0.0f, 0.0f);
+        ::SF::Engine::Vec2 boxSelectCurrentScreen_ = ::SF::Engine::Vec2(0.0f, 0.0f);
+        std::vector<::SF::Engine::Vec2> dragStartAnchorPositions_;
 
         bool hovered_              = false;
         bool active_               = false;

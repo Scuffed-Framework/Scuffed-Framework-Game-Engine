@@ -31,13 +31,13 @@ namespace ImGradient
 {
     struct Delegate
     {
-        virtual size_t GetPointCount()                    = 0;
-        virtual Vec4 *GetPoints()                         = 0;
-        virtual int EditPoint(int pointIndex, Vec4 value) = 0;
-        virtual Vec4 GetPoint(float t)                    = 0;
-        virtual void AddPoint(Vec4 value)                 = 0;
-        virtual ~Delegate()                               = default;
+        virtual size_t GetPointCount()                                  = 0;
+        virtual ::SF::Engine::Vec4 *GetPoints()                         = 0;
+        virtual int EditPoint(int pointIndex, ::SF::Engine::Vec4 value) = 0;
+        virtual ::SF::Engine::Vec4 GetPoint(float t)                    = 0;
+        virtual void AddPoint(::SF::Engine::Vec4 value)                 = 0;
+        virtual ~Delegate()                                             = default;
     };
 
-    bool Edit(Delegate &delegate, const Vec2 &size, int &selection);
+    bool Edit(Delegate &delegate, const ::SF::Engine::Vec2 &size, int &selection);
 } // namespace ImGradient

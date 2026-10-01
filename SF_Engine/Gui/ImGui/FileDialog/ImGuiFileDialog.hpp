@@ -362,7 +362,7 @@ namespace IGFD
         typedef std::function<bool(const FileInfos &, FileStyle &)> FileStyleFunctor;
 
     public:
-        Vec4 color = Vec4(0, 0, 0, 0);
+        ::SF::Engine::Vec4 color = ::SF::Engine::Vec4(0, 0, 0, 0);
         std::string icon;
         ImFont *font              = nullptr;
         IGFD_FileStyleFlags flags = 0;
@@ -370,7 +370,7 @@ namespace IGFD
     public:
         FileStyle();
         FileStyle(const FileStyle &vStyle);
-        FileStyle(const Vec4 &vColor, const std::string &vIcon = "", ImFont *vFont = nullptr);
+        FileStyle(const ::SF::Engine::Vec4 &vColor, const std::string &vIcon = "", ImFont *vFont = nullptr);
     };
 
     class IGFD_API SearchManager
@@ -436,12 +436,12 @@ namespace IGFD
         bool FillFileStyle(std::shared_ptr<FileInfos> vFileInfos) const; // fill with the good style
         void SetFileStyle(const IGFD_FileStyleFlags &vFlags, const char *vCriteria,
                           const FileStyle &vInfos); // Set FileStyle
-        void SetFileStyle(const IGFD_FileStyleFlags &vFlags, const char *vCriteria, const Vec4 &vColor,
+        void SetFileStyle(const IGFD_FileStyleFlags &vFlags, const char *vCriteria, const ::SF::Engine::Vec4 &vColor,
                           const std::string &vIcon,
                           ImFont *vFont);                        // link file style to Color and Icon and Font
         void SetFileStyle(FileStyle::FileStyleFunctor vFunctor); // lambda functor for set file style.
-        bool GetFileStyle(const IGFD_FileStyleFlags &vFlags, const std::string &vCriteria, Vec4 *vOutColor,
-                          std::string *vOutIcon,
+        bool GetFileStyle(const IGFD_FileStyleFlags &vFlags, const std::string &vCriteria,
+                          ::SF::Engine::Vec4 *vOutColor, std::string *vOutIcon,
                           ImFont **vOutFont); // Get Color and Icon for Filter
         void ClearFilesStyle();               // clear m_FileStyle
         bool IsCoveredByFilters(const FileInfos &vFileInfos,
@@ -737,23 +737,24 @@ namespace IGFD
         SearchManager searchManager; // the search manager
 
     public:
-        std::string name;                       // the internal dialog name (title + ##word)
-        bool showDialog           = false;      // the dialog is shown
-        Vec2 dialogCenterPos      = Vec2(0, 0); // center pos for display the confirm overwrite dialog
-        int lastImGuiFrameCount   = 0;          // to be sure than only one dialog displayed per frame
-        float footerHeight        = 0.0f;       // footer height
-        bool canWeContinue        = true;       // events
-        bool okResultToConfirm    = false;      // to confim if ok for OverWrite
-        bool isOk                 = false;      // is dialog ok button click
-        bool fileInputIsActive    = false;      // when input text for file or directory is active
-        bool fileListViewIsActive = false;      // when list view is active
-        std::string dLGkey;                     // the dialog key
-        std::string dLGtitle;                   // the dialog title
-        bool needToExitDialog  = false;         // we need to exit the dialog
-        bool puUseCustomLocale = false;         // custom user locale
-        int localeCategory     = LC_ALL;        // locale category to use
-        std::string localeBegin;                // the locale who will be applied at start of the display dialog
-        std::string localeEnd;                  // the locale who will be applaied at end of the display dialog
+        std::string name;        // the internal dialog name (title + ##word)
+        bool showDialog = false; // the dialog is shown
+        ::SF::Engine::Vec2 dialogCenterPos =
+                ::SF::Engine::Vec2(0, 0);  // center pos for display the confirm overwrite dialog
+        int lastImGuiFrameCount   = 0;     // to be sure than only one dialog displayed per frame
+        float footerHeight        = 0.0f;  // footer height
+        bool canWeContinue        = true;  // events
+        bool okResultToConfirm    = false; // to confim if ok for OverWrite
+        bool isOk                 = false; // is dialog ok button click
+        bool fileInputIsActive    = false; // when input text for file or directory is active
+        bool fileListViewIsActive = false; // when list view is active
+        std::string dLGkey;                // the dialog key
+        std::string dLGtitle;              // the dialog title
+        bool needToExitDialog  = false;    // we need to exit the dialog
+        bool puUseCustomLocale = false;    // custom user locale
+        int localeCategory     = LC_ALL;   // locale category to use
+        std::string localeBegin;           // the locale who will be applied at start of the display dialog
+        std::string localeEnd;             // the locale who will be applaied at end of the display dialog
 
     private:
         FileDialogConfig m_DialogConfig;
@@ -814,7 +815,7 @@ namespace IGFD
         DisplayModeEnum m_DisplayMode = DisplayModeEnum::FILE_LIST;
 
     private:
-        void m_VariadicProgressBar(float fraction, const Vec2 &size_arg, const char *fmt, ...);
+        void m_VariadicProgressBar(float fraction, const ::SF::Engine::Vec2 &size_arg, const char *fmt, ...);
 
     protected:
         // will be call in cpu zone (imgui computations, will call a texture file retrieval thread)
@@ -887,8 +888,9 @@ namespace IGFD
 
     protected:
         void m_InitPlaces(FileDialogInternal &vFileDialogInternal);
-        void m_DrawPlacesButton();                                                         // draw place button
-        bool m_DrawPlacesPane(FileDialogInternal &vFileDialogInternal, const Vec2 &vSize); // draw place Pane
+        void m_DrawPlacesButton(); // draw place button
+        bool m_DrawPlacesPane(FileDialogInternal &vFileDialogInternal,
+                              const ::SF::Engine::Vec2 &vSize); // draw place Pane
 
     public:
         std::string SerializePlaces( // serialize place : return place buffer to save in a file
@@ -928,15 +930,15 @@ namespace IGFD
         bool m_LocateItem_Loop(FileDialogInternal &vFileDialogInternal,
                                ImWchar vC); // restrat for start of list view if not found a corresponding file
         void m_ExploreWithkeys(FileDialogInternal &vFileDialogInternal,
-                               ImGuiID vListViewID); // select file/directory line in listview accroding to up/down
-                                                     // enter/backspace keys
-        void m_StartFlashItem(size_t vIdx);          // define than an item must be flashed
-        bool m_BeginFlashItem(size_t vIdx);          // start the flashing of a line in lsit view
-        static void m_EndFlashItem();                // end the fleshing accrdoin to var m_FlashAlphaAttenInSecs
+                               IdType vListViewID); // select file/directory line in listview accroding to up/down
+                                                    // enter/backspace keys
+        void m_StartFlashItem(size_t vIdx);         // define than an item must be flashed
+        bool m_BeginFlashItem(size_t vIdx);         // start the flashing of a line in lsit view
+        static void m_EndFlashItem();               // end the fleshing accrdoin to var m_FlashAlphaAttenInSecs
         static bool m_FlashableSelectable(
                 const char *label, bool selected = false, ImGuiSelectableFlags flags = 0, bool vFlashing = false,
-                const Vec2 &size =
-                        Vec2(0, 0)); // custom flashing selectable widgets, for flash the selected line in a short time
+                const ::SF::Engine::Vec2 &size = ::SF::Engine::Vec2(
+                        0, 0)); // custom flashing selectable widgets, for flash the selected line in a short time
 
     public:
         void
@@ -1017,9 +1019,10 @@ namespace IGFD
         bool Display( // Display the dialog. return true if a result was obtained (Ok or not)
                 const std::string
                         &vKey, // key dialog to display (if not the same key as defined by OpenDialog => no opening)
-                ImGuiWindowFlags vFlags = ImGuiWindowFlags_NoCollapse, // ImGuiWindowFlags
-                Vec2 vMinSize           = Vec2(0, 0),                  // mininmal size contraint for the ImGuiWindow
-                Vec2 vMaxSize           = Vec2(FLT_MAX, FLT_MAX));               // maximal size contraint for the ImGuiWindow
+                ImGuiWindowFlags vFlags     = ImGuiWindowFlags_NoCollapse, // ImGuiWindowFlags
+                ::SF::Engine::Vec2 vMinSize = ::SF::Engine::Vec2(0, 0), // mininmal size contraint for the ImGuiWindow
+                ::SF::Engine::Vec2 vMaxSize =
+                        ::SF::Engine::Vec2(FLT_MAX, FLT_MAX)); // maximal size contraint for the ImGuiWindow
 
         void Close(); // close dialog
 
@@ -1054,14 +1057,14 @@ namespace IGFD
         void SetFileStyle(                // SetExtention datas for have custom display of particular file type
                 const IGFD_FileStyleFlags &vFlags, // file style
                 const char *vCriteria,             // extention filter to tune
-                const Vec4 &vColor,                // wanted color for the display of the file with extention filter
+                const ::SF::Engine::Vec4 &vColor,  // wanted color for the display of the file with extention filter
                 const std::string &vIcon = "",     // wanted text or icon of the file with extention filter
                 ImFont *vFont            = nullptr);          // wanted font
         void SetFileStyle(FileStyle::FileStyleFunctor vFunctor); // set file style via lambda function
         bool GetFileStyle(                                       // GetExtention datas. return true is extention exist
                 const IGFD_FileStyleFlags &vFlags,               // file style
                 const std::string &vCriteria,                    // extention filter (same as used in SetExtentionInfos)
-                Vec4 *vOutColor,                                 // color to retrieve
+                ::SF::Engine::Vec4 *vOutColor,                   // color to retrieve
                 std::string *vOutIcon = nullptr,                 // icon or text to retrieve
                 ImFont **vOutFont     = nullptr);                    // font to retreive
         void ClearFilesStyle();                                  // clear extentions setttings
@@ -1088,22 +1091,23 @@ namespace IGFD
         virtual bool m_DrawFooter();  // draw footer part of the dialog (file field, fitler combobox, ok/cancel btn's)
 
         // widgets components
-        virtual void m_DisplayPathPopup(Vec2 vSize); // draw path popup when click on a \ or /
-        virtual bool m_DrawValidationButtons();      // draw validations btns, ok, cancel buttons
-        virtual bool m_DrawOkButton();               // draw ok button
-        virtual bool m_DrawCancelButton();           // draw cancel button
-        virtual void m_DrawSidePane(float vHeight);  // draw side pane
+        virtual void m_DisplayPathPopup(::SF::Engine::Vec2 vSize); // draw path popup when click on a \ or /
+        virtual bool m_DrawValidationButtons();                    // draw validations btns, ok, cancel buttons
+        virtual bool m_DrawOkButton();                             // draw ok button
+        virtual bool m_DrawCancelButton();                         // draw cancel button
+        virtual void m_DrawSidePane(float vHeight);                // draw side pane
         virtual bool m_Selectable(int vRowIdx, const char *vLabel, bool vSelected, ImGuiSelectableFlags vFlags,
-                                  const Vec2 &vSizeArg);
+                                  const ::SF::Engine::Vec2 &vSizeArg);
         virtual void m_SelectableItem(int vRowIdx, std::shared_ptr<FileInfos> vInfos, bool vSelected, const char *vFmt,
                                       ...); // draw a custom selectable behavior item
         virtual void m_drawColumnText(int vColIdx, const char *vFmt, const char *vLabel, bool vSelected, bool vHovered);
         virtual void m_rightAlignText(const char *text, const char *maxWidthText); // align a text on right
-        virtual void m_DrawFileListView(Vec2 vSize);                               // draw file list view (default mode)
+        virtual void m_DrawFileListView(::SF::Engine::Vec2 vSize);                 // draw file list view (default mode)
 
     #ifdef USE_THUMBNAILS
-        virtual void m_DrawThumbnailsListView(Vec2 vSize); // draw file list view with small thumbnails on the same line
-        virtual void m_DrawThumbnailsGridView(Vec2 vSize); // draw a grid of small thumbnails
+        virtual void m_DrawThumbnailsListView(
+                ::SF::Engine::Vec2 vSize); // draw file list view with small thumbnails on the same line
+        virtual void m_DrawThumbnailsGridView(::SF::Engine::Vec2 vSize); // draw a grid of small thumbnails
     #endif
 
         // to be called only by these function and theirs overrides
@@ -1192,8 +1196,8 @@ IGFD_C_API bool IGFD_DisplayDialog(   // Display the dialog
         ImGuiFileDialog *vContextPtr, // ImGuiFileDialog context
         const char *vKey,        // key dialog to display (if not the same key as defined by OpenDialog => no opening)
         ImGuiWindowFlags vFlags, // ImGuiWindowFlags
-        Vec2 vMinSize,           // mininmal size contraint for the ImGuiWindow
-        Vec2 vMaxSize);          // maximal size contraint for the ImGuiWindow
+        ::SF::Engine::Vec2 vMinSize,  // mininmal size contraint for the ImGuiWindow
+        ::SF::Engine::Vec2 vMaxSize); // maximal size contraint for the ImGuiWindow
 
 IGFD_C_API void IGFD_CloseDialog(      // Close the dialog
         ImGuiFileDialog *vContextPtr); // ImGuiFileDialog context
@@ -1243,7 +1247,7 @@ IGFD_C_API void IGFD_SetFileStyle(           // SetExtention datas for have cust
         ImGuiFileDialog *vContextPtr,        // ImGuiFileDialog context
         IGFD_FileStyleFlags vFileStyleFlags, // file style type
         const char *vFilter,                 // extention filter to tune
-        Vec4 vColor,                         // wanted color for the display of the file with extention filter
+        ::SF::Engine::Vec4 vColor,           // wanted color for the display of the file with extention filter
         const char *vIconText, // wanted text or icon of the file with extention filter (can be sued with font icon)
         ImFont *vFont);        // wanted font pointer
 
@@ -1260,7 +1264,7 @@ IGFD_C_API bool
 IGFD_GetFileStyle(ImGuiFileDialog *vContextPtr,        // ImGuiFileDialog context
                   IGFD_FileStyleFlags vFileStyleFlags, // file style type
                   const char *vFilter,                 // extention filter (same as used in SetExtentionInfos)
-                  Vec4 *vOutColor,                     // color to retrieve
+                  ::SF::Engine::Vec4 *vOutColor,       // color to retrieve
                   char **vOutIconText, // icon or text to retrieve, WARNINGS you are responsible to free it
                   ImFont **vOutFont);  // font pointer to retrived
 

@@ -41,6 +41,10 @@
 #include <numbers>
 #include <random>
 
+// cuz syntax highlights ig
+#define Std430
+#define Std140
+
 #include <glm/gtx/hash.hpp>
 
 namespace SF::Engine

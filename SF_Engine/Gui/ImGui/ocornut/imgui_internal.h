@@ -378,7 +378,7 @@ extern ImGuiContext *GImGui; // Current implicit context pointer
 // - Helpers: String
 // - Helpers: Formatting
 // - Helpers: UTF-8 <> wchar conversions
-// - Helpers: Vec2/Vec4 operators
+// - Helpers: ::SF::Engine::Vec2/::SF::Engine::Vec4 operators
 // - Helpers: Maths
 // - Helpers: Geometry
 // - Helper: ImVec1
@@ -395,8 +395,8 @@ extern ImGuiContext *GImGui; // Current implicit context pointer
 //-----------------------------------------------------------------------------
 
 // Helpers: Hashing
-ImGuiID ImHashData(const void *data, size_t data_size, ImGuiID seed = 0);
-ImGuiID ImHashStr(const char *data, size_t data_size = 0, ImGuiID seed = 0);
+IdType ImHashData(const void *data, size_t data_size, IdType seed = 0);
+IdType ImHashStr(const char *data, size_t data_size = 0, IdType seed = 0);
 const char *ImHashSkipUncontributingPrefix(const char *label);
 
     // Helpers: Sorting
@@ -510,9 +510,10 @@ enum ImDrawTextFlags_
     ImDrawTextFlags_WrapKeepBlanks = 1 << 1,
     ImDrawTextFlags_StopOnNewLine  = 1 << 2,
 };
-Vec2 ImFontCalcTextSizeEx(ImFont *font, float size, float max_width, float wrap_width, const char *text_begin,
-                          const char *text_end_display, const char *text_end, const char **out_remaining,
-                          Vec2 *out_offset, ImDrawTextFlags flags);
+::SF::Engine::Vec2 ImFontCalcTextSizeEx(ImFont *font, float size, float max_width, float wrap_width,
+                                        const char *text_begin, const char *text_end_display, const char *text_end,
+                                        const char **out_remaining, ::SF::Engine::Vec2 *out_offset,
+                                        ImDrawTextFlags flags);
 const char *ImFontCalcWordWrapPositionEx(ImFont *font, float size, const char *text, const char *text_end,
                                          float wrap_width, ImDrawTextFlags flags = 0);
 const char *
@@ -649,34 +650,39 @@ T ImSubClampOverflow(T a, T b, T mn, T mx)
     return a - b;
 }
 // - Misc maths helpers
-inline Vec2 ImMin(const Vec2 &lhs, const Vec2 &rhs)
+inline ::SF::Engine::Vec2 ImMin(const ::SF::Engine::Vec2 &lhs, const ::SF::Engine::Vec2 &rhs)
 {
-    return Vec2(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y);
+    return ::SF::Engine::Vec2(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y);
 }
-inline Vec2 ImMax(const Vec2 &lhs, const Vec2 &rhs)
+inline ::SF::Engine::Vec2 ImMax(const ::SF::Engine::Vec2 &lhs, const ::SF::Engine::Vec2 &rhs)
 {
-    return Vec2(lhs.x >= rhs.x ? lhs.x : rhs.x, lhs.y >= rhs.y ? lhs.y : rhs.y);
+    return ::SF::Engine::Vec2(lhs.x >= rhs.x ? lhs.x : rhs.x, lhs.y >= rhs.y ? lhs.y : rhs.y);
 }
-inline Vec2 ImClamp(const Vec2 &v, const Vec2 &mn, const Vec2 &mx)
+inline ::SF::Engine::Vec2 ImClamp(const ::SF::Engine::Vec2 &v, const ::SF::Engine::Vec2 &mn,
+                                  const ::SF::Engine::Vec2 &mx)
 {
     return {(v.x < mn.x) ? mn.x : (v.x > mx.x) ? mx.x : v.x, (v.y < mn.y) ? mn.y : (v.y > mx.y) ? mx.y : v.y};
 }
-inline Vec2 ImLerp(const Vec2 &a, const Vec2 &b, float t) { return Vec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
-inline Vec2 ImLerp(const Vec2 &a, const Vec2 &b, const Vec2 &t)
+inline ::SF::Engine::Vec2 ImLerp(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, float t)
 {
-    return Vec2(a.x + (b.x - a.x) * t.x, a.y + (b.y - a.y) * t.y);
+    return ::SF::Engine::Vec2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
 }
-inline Vec4 ImLerp(const Vec4 &a, const Vec4 &b, float t)
+inline ::SF::Engine::Vec2 ImLerp(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &t)
 {
-    return Vec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
+    return ::SF::Engine::Vec2(a.x + (b.x - a.x) * t.x, a.y + (b.y - a.y) * t.y);
+}
+inline ::SF::Engine::Vec4 ImLerp(const ::SF::Engine::Vec4 &a, const ::SF::Engine::Vec4 &b, float t)
+{
+    return ::SF::Engine::Vec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t,
+                              a.w + (b.w - a.w) * t);
 }
 inline float ImSaturate(float f) { return (f < 0.0f) ? 0.0f : (f > 1.0f) ? 1.0f : f; }
-inline float ImLengthSqr(const Vec2 &lhs) { return (lhs.x * lhs.x) + (lhs.y * lhs.y); }
-inline float ImLengthSqr(const Vec4 &lhs)
+inline float ImLengthSqr(const ::SF::Engine::Vec2 &lhs) { return (lhs.x * lhs.x) + (lhs.y * lhs.y); }
+inline float ImLengthSqr(const ::SF::Engine::Vec4 &lhs)
 {
     return (lhs.x * lhs.x) + (lhs.y * lhs.y) + (lhs.z * lhs.z) + (lhs.w * lhs.w);
 }
-inline float ImInvLength(const Vec2 &lhs, float fail_value)
+inline float ImInvLength(const ::SF::Engine::Vec2 &lhs, float fail_value)
 {
     float d = (lhs.x * lhs.x) + (lhs.y * lhs.y);
     if (d > 0.0f)
@@ -684,12 +690,18 @@ inline float ImInvLength(const Vec2 &lhs, float fail_value)
     return fail_value;
 }
 inline float ImTrunc(float f) { return (float) (int) (f); }
-inline Vec2 ImTrunc(const Vec2 &v) { return Vec2((float) (int) (v.x), (float) (int) (v.y)); }
+inline ::SF::Engine::Vec2 ImTrunc(const ::SF::Engine::Vec2 &v)
+{
+    return ::SF::Engine::Vec2((float) (int) (v.x), (float) (int) (v.y));
+}
 inline float ImFloor(float f)
 {
     return (float) ((f >= 0 || (float) (int) f == f) ? (int) f : (int) f - 1);
 } // Decent replacement for floorf()
-inline Vec2 ImFloor(const Vec2 &v) { return Vec2(ImFloor(v.x), ImFloor(v.y)); }
+inline ::SF::Engine::Vec2 ImFloor(const ::SF::Engine::Vec2 &v)
+{
+    return ::SF::Engine::Vec2(ImFloor(v.x), ImFloor(v.y));
+}
 inline float ImTrunc64(float f) { return (float) (int64_t) (f); }
 inline float ImRound64(float f) { return (float) (int64_t) (f + 0.5f); } // FIXME: Positive values only.
 inline float ImCeilFast(float f)
@@ -698,10 +710,10 @@ inline float ImCeilFast(float f)
     return (float) (i + (f > (float) i));
 } // Consider using the the bit-hack version (search for "0x1p120f").
 inline int ImModPositive(int a, int b) { return (a + b) % b; }
-inline float ImDot(const Vec2 &a, const Vec2 &b) { return a.x * b.x + a.y * b.y; }
-inline Vec2 ImRotate(const Vec2 &v, float cos_a, float sin_a)
+inline float ImDot(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b) { return a.x * b.x + a.y * b.y; }
+inline ::SF::Engine::Vec2 ImRotate(const ::SF::Engine::Vec2 &v, float cos_a, float sin_a)
 {
-    return Vec2(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a);
+    return ::SF::Engine::Vec2(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a);
 }
 inline float ImLinearSweep(float current, float target, float speed)
 {
@@ -715,7 +727,10 @@ inline float ImLinearRemapClamp(float s0, float s1, float d0, float d1, float x)
 {
     return ImSaturate((x - s0) / (s1 - s0)) * (d1 - d0) + d0;
 }
-inline Vec2 ImMul(const Vec2 &lhs, const Vec2 &rhs) { return Vec2(lhs.x * rhs.x, lhs.y * rhs.y); }
+inline ::SF::Engine::Vec2 ImMul(const ::SF::Engine::Vec2 &lhs, const ::SF::Engine::Vec2 &rhs)
+{
+    return ::SF::Engine::Vec2(lhs.x * rhs.x, lhs.y * rhs.y);
+}
 inline bool ImIsFloatAboveGuaranteedIntegerPrecision(float f) { return f <= -16777216 || f >= 16777216; }
 inline float ImExponentialMovingAverage(float avg, float sample, int n)
 {
@@ -726,23 +741,31 @@ inline float ImExponentialMovingAverage(float avg, float sample, int n)
 IM_MSVC_RUNTIME_CHECKS_RESTORE
 
 // Helpers: Geometry
-Vec2 ImBezierCubicCalc(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, float t);
-Vec2 ImBezierCubicClosestPoint(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, const Vec2 &p,
-                               int num_segments); // For curves with explicit number of segments
-Vec2 ImBezierCubicClosestPointCasteljau(
-        const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, const Vec2 &p,
+::SF::Engine::Vec2 ImBezierCubicCalc(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                                     const ::SF::Engine::Vec2 &p3, const ::SF::Engine::Vec2 &p4, float t);
+::SF::Engine::Vec2 ImBezierCubicClosestPoint(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                                             const ::SF::Engine::Vec2 &p3, const ::SF::Engine::Vec2 &p4,
+                                             const ::SF::Engine::Vec2 &p,
+                                             int num_segments); // For curves with explicit number of segments
+::SF::Engine::Vec2 ImBezierCubicClosestPointCasteljau(
+        const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2, const ::SF::Engine::Vec2 &p3,
+        const ::SF::Engine::Vec2 &p4, const ::SF::Engine::Vec2 &p,
         float max_error); // For auto-tessellated curves you can use max_error = style.CurveTessellationMaxError
-Vec2 ImBezierQuadraticCalc(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, float t);
-Vec2 ImLineClosestPoint(const Vec2 &a, const Vec2 &b, const Vec2 &p);
-bool ImTriangleContainsPoint(const Vec2 &a, const Vec2 &b, const Vec2 &c, const Vec2 &p);
-Vec2 ImTriangleClosestPoint(const Vec2 &a, const Vec2 &b, const Vec2 &c, const Vec2 &p);
-void ImTriangleBarycentricCoords(const Vec2 &a, const Vec2 &b, const Vec2 &c, const Vec2 &p, float &out_u, float &out_v,
-                                 float &out_w);
-inline float ImTriangleArea(const Vec2 &a, const Vec2 &b, const Vec2 &c)
+::SF::Engine::Vec2 ImBezierQuadraticCalc(const ::SF::Engine::Vec2 &p1, const ::SF::Engine::Vec2 &p2,
+                                         const ::SF::Engine::Vec2 &p3, float t);
+::SF::Engine::Vec2 ImLineClosestPoint(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b,
+                                      const ::SF::Engine::Vec2 &p);
+bool ImTriangleContainsPoint(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &c,
+                             const ::SF::Engine::Vec2 &p);
+::SF::Engine::Vec2 ImTriangleClosestPoint(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b,
+                                          const ::SF::Engine::Vec2 &c, const ::SF::Engine::Vec2 &p);
+void ImTriangleBarycentricCoords(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &c,
+                                 const ::SF::Engine::Vec2 &p, float &out_u, float &out_v, float &out_w);
+inline float ImTriangleArea(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &c)
 {
     return ImFabs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 0.5f;
 }
-inline bool ImTriangleIsClockwise(const Vec2 &a, const Vec2 &b, const Vec2 &c)
+inline bool ImTriangleIsClockwise(const ::SF::Engine::Vec2 &a, const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &c)
 {
     return ((b.x - a.x) * (c.y - b.y)) - ((c.x - b.x) * (b.y - a.y)) > 0.0f;
 }
@@ -772,31 +795,34 @@ struct Vec2ih
     short x, y;
     constexpr Vec2ih() : x(0), y(0) {}
     constexpr Vec2ih(short _x, short _y) : x(_x), y(_y) {}
-    constexpr explicit Vec2ih(const Vec2 &rhs) : x((short) rhs.x), y((short) rhs.y) {}
+    constexpr explicit Vec2ih(const ::SF::Engine::Vec2 &rhs) : x((short) rhs.x), y((short) rhs.y) {}
 };
 
 // Helper: ImRect (2D axis aligned bounding-box)
-// NB: we can't rely on Vec2 math operators being available here!
+// NB: we can't rely on ::SF::Engine::Vec2 math operators being available here!
 struct ImRect
 {
-    Vec2 Min; // Upper-left
-    Vec2 Max; // Lower-right
+    ::SF::Engine::Vec2 Min; // Upper-left
+    ::SF::Engine::Vec2 Max; // Lower-right
 
     constexpr ImRect() : Min(0.0f, 0.0f), Max(0.0f, 0.0f) {}
-    constexpr ImRect(const Vec2 &min, const Vec2 &max) : Min(min), Max(max) {}
-    constexpr ImRect(const Vec4 &v) : Min(v.x, v.y), Max(v.z, v.w) {}
+    constexpr ImRect(const ::SF::Engine::Vec2 &min, const ::SF::Engine::Vec2 &max) : Min(min), Max(max) {}
+    constexpr ImRect(const ::SF::Engine::Vec4 &v) : Min(v.x, v.y), Max(v.z, v.w) {}
     constexpr ImRect(float x1, float y1, float x2, float y2) : Min(x1, y1), Max(x2, y2) {}
 
-    [[nodiscard]] Vec2 GetCenter() const { return Vec2((Min.x + Max.x) * 0.5f, (Min.y + Max.y) * 0.5f); }
-    [[nodiscard]] Vec2 GetSize() const { return Vec2(Max.x - Min.x, Max.y - Min.y); }
+    [[nodiscard]] ::SF::Engine::Vec2 GetCenter() const
+    {
+        return ::SF::Engine::Vec2((Min.x + Max.x) * 0.5f, (Min.y + Max.y) * 0.5f);
+    }
+    [[nodiscard]] ::SF::Engine::Vec2 GetSize() const { return ::SF::Engine::Vec2(Max.x - Min.x, Max.y - Min.y); }
     [[nodiscard]] float GetWidth() const { return Max.x - Min.x; }
     [[nodiscard]] float GetHeight() const { return Max.y - Min.y; }
     [[nodiscard]] float GetArea() const { return (Max.x - Min.x) * (Max.y - Min.y); }
-    [[nodiscard]] Vec2 GetTL() const { return Min; }                // Top-left
-    [[nodiscard]] Vec2 GetTR() const { return Vec2(Max.x, Min.y); } // Top-right
-    [[nodiscard]] Vec2 GetBL() const { return Vec2(Min.x, Max.y); } // Bottom-left
-    [[nodiscard]] Vec2 GetBR() const { return Max; }                // Bottom-right
-    [[nodiscard]] bool Contains(const Vec2 &p) const
+    [[nodiscard]] ::SF::Engine::Vec2 GetTL() const { return Min; }                              // Top-left
+    [[nodiscard]] ::SF::Engine::Vec2 GetTR() const { return ::SF::Engine::Vec2(Max.x, Min.y); } // Top-right
+    [[nodiscard]] ::SF::Engine::Vec2 GetBL() const { return ::SF::Engine::Vec2(Min.x, Max.y); } // Bottom-left
+    [[nodiscard]] ::SF::Engine::Vec2 GetBR() const { return Max; }                              // Bottom-right
+    [[nodiscard]] bool Contains(const ::SF::Engine::Vec2 &p) const
     {
         return p.x >= Min.x && p.y >= Min.y && p.x < Max.x && p.y < Max.y;
     }
@@ -804,7 +830,7 @@ struct ImRect
     {
         return r.Min.x >= Min.x && r.Min.y >= Min.y && r.Max.x <= Max.x && r.Max.y <= Max.y;
     }
-    [[nodiscard]] bool ContainsWithPad(const Vec2 &p, const Vec2 &pad) const
+    [[nodiscard]] bool ContainsWithPad(const ::SF::Engine::Vec2 &p, const ::SF::Engine::Vec2 &pad) const
     {
         return p.x >= Min.x - pad.x && p.y >= Min.y - pad.y && p.x < Max.x + pad.x && p.y < Max.y + pad.y;
     }
@@ -813,7 +839,7 @@ struct ImRect
         return r.Min.y < Max.y && r.Max.y > Min.y && r.Min.x < Max.x && r.Max.x > Min.x;
     }
 
-    void AddXY(const Vec2 &rhs)
+    void AddXY(const ::SF::Engine::Vec2 &rhs)
     {
         if (Min.x > rhs.x)
             Min.x = rhs.x;
@@ -857,14 +883,14 @@ struct ImRect
         Max.x += amount;
         Max.y += amount;
     }
-    void Expand(const Vec2 &amount)
+    void Expand(const ::SF::Engine::Vec2 &amount)
     {
         Min.x -= amount.x;
         Min.y -= amount.y;
         Max.x += amount.x;
         Max.y += amount.y;
     }
-    void Translate(const Vec2 &d)
+    void Translate(const ::SF::Engine::Vec2 &d)
     {
         Min.x += d.x;
         Min.y += d.y;
@@ -893,8 +919,8 @@ struct ImRect
         Max = ImClamp(Max, r.Min, r.Max);
     } // Full version, ensure both points are fully clipped.
     [[nodiscard]] bool IsInverted() const { return Min.x > Max.x || Min.y > Max.y; }
-    [[nodiscard]] Vec4 ToVec4() const { return Vec4(Min.x, Min.y, Max.x, Max.y); }
-    [[nodiscard]] const Vec4 &AsVec4() const { return *(const Vec4 *) &Min.x; }
+    [[nodiscard]] ::SF::Engine::Vec4 ToVec4() const { return ::SF::Engine::Vec4(Min.x, Min.y, Max.x, Max.y); }
+    [[nodiscard]] const ::SF::Engine::Vec4 &AsVec4() const { return *(const ::SF::Engine::Vec4 *) &Min.x; }
 };
 
     // Helper: ImBitArray
@@ -1194,7 +1220,7 @@ struct ImPool
 
     ImPool() { FreeIdx = AliveCount = 0; }
     ~ImPool() { Clear(); }
-    T *GetByKey(ImGuiID key)
+    T *GetByKey(IdType key)
     {
         int idx = Map.GetInt(key, -1);
         return (idx != -1) ? &Buf[idx] : nullptr;
@@ -1205,7 +1231,7 @@ struct ImPool
         IM_ASSERT(p >= Buf.Data && p < Buf.Data + Buf.Size);
         return (ImPoolIdx) (p - Buf.Data);
     }
-    T *GetOrAddByKey(ImGuiID key)
+    T *GetOrAddByKey(IdType key)
     {
         int *p_idx = Map.GetIntRef(key, -1);
         if (*p_idx != -1)
@@ -1241,8 +1267,8 @@ struct ImPool
         AliveCount++;
         return &Buf[idx];
     }
-    void Remove(ImGuiID key, const T *p) { Remove(key, GetIndex(p)); }
-    void Remove(ImGuiID key, ImPoolIdx idx)
+    void Remove(IdType key, const T *p) { Remove(key, GetIndex(p)); }
+    void Remove(IdType key, ImPoolIdx idx)
     {
         Buf[idx].~T();
         *(int *) &Buf[idx] = FreeIdx;
@@ -1380,7 +1406,7 @@ struct ImGuiPackedDate
 };
 
 // Helper: ImGuiStorage
-ImGuiStoragePair *ImLowerBound(ImGuiStoragePair *in_begin, ImGuiStoragePair *in_end, ImGuiID key);
+ImGuiStoragePair *ImLowerBound(ImGuiStoragePair *in_begin, ImGuiStoragePair *in_end, IdType key);
 
     //-----------------------------------------------------------------------------
     // [SECTION] ImDrawList support
@@ -1423,24 +1449,24 @@ ImGuiStoragePair *ImLowerBound(ImGuiStoragePair *in_begin, ImGuiStoragePair *in_
 // for future changes to this structure.
 struct ImDrawListSharedData
 {
-    Vec2 TexUvWhitePixel;             // UV of white pixel in the atlas (== FontAtlas->TexUvWhitePixel)
-    const Vec4 *TexUvLines;           // UV of anti-aliased lines in the atlas (== FontAtlas->TexUvLines)
-    ImFontAtlas *FontAtlas;           // Current font atlas
-    ImFont *Font;                     // Current font (used for simplified AddText overload)
-    float FontSize;                   // Current font size (used for for simplified AddText overload)
-    float FontScale;                  // Current font scale (== FontSize / Font->FontSize)
-    float CurveTessellationMaxError;  // Tessellation tolerance when using PathBezierCurveTo()
-    float CircleTessellationMaxError; // Number of circle segments to use per pixel of radius for AddCircle() etc
-    ImDrawListFlags InitialFlags;     // Initial flags at the beginning of the frame (it is possible to alter flags on a
-                                      // per-drawlist basis afterwards)
-    Vec4 ClipRectFullscreen;          // Value for PushClipRectFullscreen()
-    ImVector<Vec2> TempBuffer;        // Temporary write buffer
-    ImVector<ImDrawList *> DrawLists; // All draw lists associated to this ImDrawListSharedData
+    ::SF::Engine::Vec2 TexUvWhitePixel;   // UV of white pixel in the atlas (== FontAtlas->TexUvWhitePixel)
+    const ::SF::Engine::Vec4 *TexUvLines; // UV of anti-aliased lines in the atlas (== FontAtlas->TexUvLines)
+    ImFontAtlas *FontAtlas;               // Current font atlas
+    ImFont *Font;                         // Current font (used for simplified AddText overload)
+    float FontSize;                       // Current font size (used for for simplified AddText overload)
+    float FontScale;                      // Current font scale (== FontSize / Font->FontSize)
+    float CurveTessellationMaxError;      // Tessellation tolerance when using PathBezierCurveTo()
+    float CircleTessellationMaxError;     // Number of circle segments to use per pixel of radius for AddCircle() etc
+    ImDrawListFlags InitialFlags; // Initial flags at the beginning of the frame (it is possible to alter flags on a
+                                  // per-drawlist basis afterwards)
+    ::SF::Engine::Vec4 ClipRectFullscreen;   // Value for PushClipRectFullscreen()
+    ImVector<::SF::Engine::Vec2> TempBuffer; // Temporary write buffer
+    ImVector<ImDrawList *> DrawLists;        // All draw lists associated to this ImDrawListSharedData
     ImGuiContext *Context; // [OPTIONAL] Link to Dear ImGui context. 99% of ImDrawList/ImFontAtlas can function without
                            // an ImGui context, but this facilitate handling one legacy edge case.
 
     // Lookup tables
-    Vec2 ArcFastVtx[IM_DRAWLIST_ARCFAST_TABLE_SIZE]; // Sample points on the quarter of the circle.
+    ::SF::Engine::Vec2 ArcFastVtx[IM_DRAWLIST_ARCFAST_TABLE_SIZE]; // Sample points on the quarter of the circle.
     float ArcFastRadiusCutoff;       // Cutoff radius after which arc drawing will fallback to slower PathArcTo()
     uint8_t CircleSegmentCounts[64]; // Precomputed segment count for given radius before we calculate it dynamically
                                      // (to avoid calculation overhead)
@@ -1482,7 +1508,7 @@ struct ImGuiStyleVarInfo
 struct ImGuiColorMod
 {
     ImGuiCol Col;
-    Vec4 BackupValue;
+    ::SF::Engine::Vec4 BackupValue;
 };
 
 // Stacked style modifier, backup of modified data so we can restore it. Data type inferred from the variable.
@@ -1504,7 +1530,7 @@ struct ImGuiStyleMod
         VarIdx         = idx;
         BackupFloat[0] = v;
     }
-    ImGuiStyleMod(ImGuiStyleVar idx, Vec2 v)
+    ImGuiStyleMod(ImGuiStyleVar idx, ::SF::Engine::Vec2 v)
     {
         VarIdx         = idx;
         BackupFloat[0] = v.x;
@@ -1764,7 +1790,7 @@ enum ImGuiTooltipFlags_
 };
 
 // FIXME: this is in development, not exposed/functional as a generic feature yet.
-// Horizontal/Vertical enums are fixed to 0/1 so they may be used to index Vec2
+// Horizontal/Vertical enums are fixed to 0/1 so they may be used to index ::SF::Engine::Vec2
 enum ImGuiLayoutType_
 {
     ImGuiLayoutType_Horizontal = 0,
@@ -1784,7 +1810,7 @@ enum ImGuiLogFlags_
                                 ImGuiLogFlags_OutputClipboard,
 };
 
-// X/Y enums are fixed to 0/1 so they may be used to index Vec2
+// X/Y enums are fixed to 0/1 so they may be used to index ::SF::Engine::Vec2
 enum ImGuiAxis
 {
     ImGuiAxis_None = -1,
@@ -1802,9 +1828,9 @@ enum ImGuiPlotType
 struct ImGuiComboPreviewData
 {
     ImRect PreviewRect;
-    Vec2 BackupCursorPos;
-    Vec2 BackupCursorMaxPos;
-    Vec2 BackupCursorPosPrevLine;
+    ::SF::Engine::Vec2 BackupCursorPos;
+    ::SF::Engine::Vec2 BackupCursorMaxPos;
+    ::SF::Engine::Vec2 BackupCursorPosPrevLine;
     float BackupPrevLineTextBaseOffset;
     ImGuiLayoutType BackupLayout;
 
@@ -1814,15 +1840,15 @@ struct ImGuiComboPreviewData
 // Stacked storage data for BeginGroup()/EndGroup()
 struct ImGuiGroupData
 {
-    ImGuiID WindowID;
-    Vec2 BackupCursorPos;
-    Vec2 BackupCursorMaxPos;
-    Vec2 BackupCursorPosPrevLine;
+    IdType WindowID;
+    ::SF::Engine::Vec2 BackupCursorPos;
+    ::SF::Engine::Vec2 BackupCursorMaxPos;
+    ::SF::Engine::Vec2 BackupCursorPosPrevLine;
     ImVec1 BackupIndent;
     ImVec1 BackupGroupOffset;
-    Vec2 BackupCurrLineSize;
+    ::SF::Engine::Vec2 BackupCurrLineSize;
     float BackupCurrLineTextBaseOffset;
-    ImGuiID BackupActiveIdIsAlive;
+    IdType BackupActiveIdIsAlive;
     bool BackupAnyIdHasBeenEditedThisFrame;
     bool BackupDeactivatedIdIsAlive;
     bool BackupHoveredIdIsAlive;
@@ -1853,7 +1879,7 @@ struct ImGuiMenuColumns
 // Store as part of ImGuiDeactivatedItemData?
 struct ImGuiInputTextDeactivatedState
 {
-    ImGuiID ID; // widget id owning the text state (which just got deactivated)
+    IdType ID; // widget id owning the text state (which just got deactivated)
     int ElapseFrame;
     ImVector<char> TextA; // text buffer
 
@@ -1888,7 +1914,7 @@ struct ImGuiInputTextState
     ImStbTexteditState *Stb; // State for stb_textedit.h
     ImGuiInputTextFlags
             Flags; // copy of InputText() flags. may be used to check if e.g. ImGuiInputTextFlags_Password is set.
-    ImGuiID ID;    // widget id owning the text state
+    IdType ID;     // widget id owning the text state
     // int                   LastFrameActive;        // Last used frame-count (unused)
     int TextLen;          // UTF-8 length of the string in TextA (in bytes)
     const char *TextSrc;  // == TextA.Data unless read-only, in which case == buf passed to InputText(). For _ReadOnly
@@ -1899,14 +1925,14 @@ struct ImGuiInputTextState
                                    // focus (in UTF-8, unaltered)
     ImVector<char> CallbackTextBackup; // temporary storage for callback to support automatic reconcile of undo-stack
     int BufCapacity;                   // end-user buffer capacity (include zero terminator)
-    Vec2 Scroll;        // horizontal offset (managed manually) + vertical scrolling (pulled from child window's own
-                        // Scroll.y)
-    int LineCount;      // last line count (solely for debugging)
-    float WrapWidth;    // word-wrapping width
-    float CursorAnim;   // timer for cursor blink, reset on every user action so the cursor reappears immediately
-    bool CursorFollow;  // set when we want scrolling to follow the current cursor position (not always!)
-    bool CursorCenterY; // set when we want scrolling to be centered over the cursor position (while resizing a
-                        // word-wrapping field)
+    ::SF::Engine::Vec2 Scroll; // horizontal offset (managed manually) + vertical scrolling (pulled from child window's
+                               // own Scroll.y)
+    int LineCount;             // last line count (solely for debugging)
+    float WrapWidth;           // word-wrapping width
+    float CursorAnim;          // timer for cursor blink, reset on every user action so the cursor reappears immediately
+    bool CursorFollow;         // set when we want scrolling to follow the current cursor position (not always!)
+    bool CursorCenterY;        // set when we want scrolling to be centered over the cursor position (while resizing a
+                               // word-wrapping field)
     bool SelectedAllMouseLock; // after a double-click to select all, we ignore further mouse drags to update selection
     bool EditedBefore;         // edited since activated
     bool EditedThisFrame;      // edited this frame
@@ -2003,11 +2029,11 @@ struct ImGuiNextWindowData
     ImGuiCond SizeCond;
     ImGuiCond CollapsedCond;
     ImGuiCond DockCond;
-    Vec2 PosVal;
-    Vec2 PosPivotVal;
-    Vec2 SizeVal;
-    Vec2 ContentSizeVal;
-    Vec2 ScrollVal;
+    ::SF::Engine::Vec2 PosVal;
+    ::SF::Engine::Vec2 PosPivotVal;
+    ::SF::Engine::Vec2 SizeVal;
+    ::SF::Engine::Vec2 ContentSizeVal;
+    ::SF::Engine::Vec2 ScrollVal;
     ImGuiWindowFlags WindowFlagsSet; // Flags to set. Use SetNextWindowFlags()!
     ImGuiWindowFlags WindowFlagsClear;
     ImGuiChildFlags ChildFlagsSet; // Flags to set. Use SetNextWindowChildFlags().
@@ -2018,11 +2044,11 @@ struct ImGuiNextWindowData
     ImGuiSizeCallback SizeCallback;
     void *SizeCallbackUserData;
     float BgAlphaVal; // Override background alpha
-    ImGuiID ViewportId;
-    ImGuiID DockId;
+    IdType ViewportId;
+    IdType DockId;
     ImGuiWindowClass WindowClass;
-    Vec2 MenuBarOffsetMinVal; // (Always on) This is not exposed publicly, so we don't clear it and it doesn't have a
-                              // corresponding flag (could we? for consistency?)
+    ::SF::Engine::Vec2 MenuBarOffsetMinVal; // (Always on) This is not exposed publicly, so we don't clear it and it
+                                            // doesn't have a corresponding flag (could we? for consistency?)
     ImGuiWindowRefreshFlags RefreshFlagsVal;
 
     ImGuiNextWindowData() { memset((void *) this, 0, sizeof(*this)); }
@@ -2048,7 +2074,7 @@ struct ImGuiNextItemData
 
     // Members below are NOT cleared by ItemAdd() meaning they are still valid during e.g. NavProcessItem(). Always rely
     // on HasFlags.
-    ImGuiID FocusScopeId; // Set by SetNextItemSelectionUserData()
+    IdType FocusScopeId; // Set by SetNextItemSelectionUserData()
     ImGuiSelectionUserData
             SelectionUserData; // Set by SetNextItemSelectionUserData() (note that nullptr/0 is a valid value, we use -1
                                // == ImGuiSelectionUserData_Invalid to mark invalid values)
@@ -2058,7 +2084,7 @@ struct ImGuiNextItemData
     bool OpenVal;                  // Set by SetNextItemOpen()
     uint8_t OpenCond;              // Set by SetNextItemOpen()
     ImGuiDataTypeStorage RefVal;   // Not exposed yet, for ImGuiInputTextFlags_ParseEmptyAsRefVal
-    ImGuiID StorageId;             // Set by SetNextItemStorageID()
+    IdType StorageId;              // Set by SetNextItemStorageID()
     uint32_t ColorMarker; // Set by SetNextItemColorMarker(). Not exposed yet, supported by DragScalar,SliderScalar and
                           // for ImGuiSliderFlags_ColorMarkers.
 
@@ -2077,7 +2103,7 @@ struct ImGuiNextItemData
 // Status storage for the last submitted item
 struct ImGuiLastItemData
 {
-    ImGuiID ID;
+    IdType ID;
     ImGuiItemFlags ItemFlags;         // See ImGuiItemFlags_ (called 'InFlags' before v1.91.4).
     ImGuiItemStatusFlags StatusFlags; // See ImGuiItemStatusFlags_
     ImRect Rect;                      // Full rectangle
@@ -2098,7 +2124,7 @@ struct ImGuiLastItemData
 //   Only stored when the node is a potential candidate for landing on a Left arrow jump.
 struct ImGuiTreeNodeStackData
 {
-    ImGuiID ID;
+    IdType ID;
     ImGuiTreeNodeFlags TreeFlags;
     ImGuiItemFlags ItemFlags; // Used for nav landing
     ImRect NavRect;           // Used for nav landing
@@ -2164,7 +2190,7 @@ struct ImGuiPtrOrIndex
 // Also see ImGuiInputTextDeactivatedState which is an extension for this for InputText()
 struct ImGuiDeactivatedItemData
 {
-    ImGuiID ID;
+    IdType ID;
     int ElapseFrame;
     bool HasBeenEditedBefore;
     bool IsAlive;
@@ -2184,16 +2210,17 @@ enum ImGuiPopupPositionPolicy
 // Storage for popup stacks (g.OpenPopupStack and g.BeginPopupStack)
 struct ImGuiPopupData
 {
-    ImGuiID PopupId;               // Set on OpenPopup()
+    IdType PopupId;                // Set on OpenPopup()
     ImGuiWindow *Window;           // Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()
     ImGuiWindow *RestoreNavWindow; // Set on OpenPopup(), a NavWindow that will be restored on popup close
     int ParentNavLayer; // Resolved on BeginPopup(). Actually a ImGuiNavLayer type (declared down below), initialized to
                         // -1 which is not part of an enum, but serves well-enough as "not any of layers" value
     int OpenFrameCount; // Set on OpenPopup()
-    ImGuiID OpenParentId; // Set on OpenPopup(), we need this to differentiate multiple menu sets from each others (e.g.
-                          // inside menu bar vs loose menu items)
-    Vec2 OpenPopupPos;    // Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)
-    Vec2 OpenMousePos;    // Set on OpenPopup(), copy of mouse position at the time of opening popup
+    IdType OpenParentId; // Set on OpenPopup(), we need this to differentiate multiple menu sets from each others (e.g.
+                         // inside menu bar vs loose menu items)
+    ::SF::Engine::Vec2
+            OpenPopupPos; // Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)
+    ::SF::Engine::Vec2 OpenMousePos; // Set on OpenPopup(), copy of mouse position at the time of opening popup
 
     ImGuiPopupData()
     {
@@ -2256,7 +2283,7 @@ enum ImGuiInputSource : int
 };
 
 // FIXME: Structures in the union below need to be declared as anonymous unions appears to be an extension?
-// Using Vec2() would fail on Clang 'union member 'MousePos' has a non-trivial default constructor'
+// Using ::SF::Engine::Vec2() would fail on Clang 'union member 'MousePos' has a non-trivial default constructor'
 struct ImGuiInputEventMousePos
 {
     float PosX, PosY;
@@ -2275,7 +2302,7 @@ struct ImGuiInputEventMouseButton
 };
 struct ImGuiInputEventMouseViewport
 {
-    ImGuiID HoveredViewportID;
+    IdType HoveredViewportID;
 };
 struct ImGuiInputEventKey
 {
@@ -2313,12 +2340,12 @@ struct ImGuiInputEvent
     ImGuiInputEvent() { memset((void *) this, 0, sizeof(*this)); }
 };
 
-    // Input function taking an 'ImGuiID owner_id' argument defaults to (ImGuiKeyOwner_Any == 0) aka don't test
+    // Input function taking an 'IdType owner_id' argument defaults to (ImGuiKeyOwner_Any == 0) aka don't test
     // ownership, which matches legacy behavior.
     #define ImGuiKeyOwner_Any                                                                                          \
-        ((ImGuiID) 0) // Accept key that have an owner, UNLESS a call to SetKeyOwner() explicitly used
-                      // ImGuiInputFlags_LockThisFrame or ImGuiInputFlags_LockUntilRelease.
-    #define ImGuiKeyOwner_NoOwner ((ImGuiID) - 1) // Require key to have no owner.
+        ((IdType) 0) // Accept key that have an owner, UNLESS a call to SetKeyOwner() explicitly used
+                     // ImGuiInputFlags_LockThisFrame or ImGuiInputFlags_LockUntilRelease.
+    #define ImGuiKeyOwner_NoOwner ((IdType) - 1) // Require key to have no owner.
 // #define ImGuiKeyOwner_None ImGuiKeyOwner_NoOwner  // We previously called this 'ImGuiKeyOwner_None' but it was
 // inconsistent with our pattern that _None values == 0 and quite dangerous. Also using _NoOwner makes the
 // IsKeyPressed() calls more explicit.
@@ -2332,8 +2359,8 @@ struct ImGuiKeyRoutingData
     uint16_t Mods; // Technically we'd only need 4-bits but for simplify we store ImGuiMod_ values which need 16-bits.
     uint16_t RoutingCurrScore; // [DEBUG] For debug display
     uint16_t RoutingNextScore; // Lower is better (0: perfect score)
-    ImGuiID RoutingCurr;
-    ImGuiID RoutingNext;
+    IdType RoutingCurr;
+    IdType RoutingNext;
 
     ImGuiKeyRoutingData()
     {
@@ -2366,8 +2393,8 @@ struct ImGuiKeyRoutingTable
 // Stored in main context (1 per named key). In the future it might be merged into ImGuiKeyData.
 struct ImGuiKeyOwnerData
 {
-    ImGuiID OwnerCurr;
-    ImGuiID OwnerNext;
+    IdType OwnerCurr;
+    IdType OwnerNext;
     bool LockThisFrame;    // Reading this key requires explicit owner id (until end of frame). Set by
                            // ImGuiInputFlags_LockThisFrame.
     bool LockUntilRelease; // Reading this key requires explicit owner id (until key is released). Set by
@@ -2581,8 +2608,8 @@ struct ImGuiNavItemData
 {
     ImGuiWindow
             *Window; // Init,Move    // Best candidate window (result->ItemWindow->RootWindowForNav == request->Window)
-    ImGuiID ID;      // Init,Move    // Best candidate item ID
-    ImGuiID FocusScopeId;                     // Init,Move    // Best candidate focus scope ID
+    IdType ID;       // Init,Move    // Best candidate item ID
+    IdType FocusScopeId;                      // Init,Move    // Best candidate focus scope ID
     ImRect RectRel;                           // Init,Move    // Best candidate bounding box in window relative space
     ImGuiItemFlags ItemFlags;                 // ????,Move    // Best candidate item flags
     float DistBox;                            //      Move    // Best candidate box distance to current NavId
@@ -2605,8 +2632,8 @@ struct ImGuiNavItemData
 // Storage for PushFocusScope(), g.FocusScopeStack[], g.NavFocusRoute[]
 struct ImGuiFocusScopeData
 {
-    ImGuiID ID;
-    ImGuiID WindowID;
+    IdType ID;
+    IdType WindowID;
 };
 
 //-----------------------------------------------------------------------------
@@ -2644,7 +2671,7 @@ struct ImGuiTypingSelectState
 {
     ImGuiTypingSelectRequest Request; // User-facing data
     char SearchBuffer[64];            // Search buffer: no need to make dynamic as this search is very transient.
-    ImGuiID FocusScope;
+    IdType FocusScope;
     int LastRequestFrame  = 0;
     float LastRequestTime = 0.0f;
     bool SingleCharModeLock =
@@ -2689,7 +2716,7 @@ struct ImGuiOldColumnData
 
 struct ImGuiOldColumns
 {
-    ImGuiID ID;
+    IdType ID;
     ImGuiOldColumnFlags Flags;
     bool IsFirstFrame;
     bool IsBeingResized;
@@ -2715,16 +2742,16 @@ struct ImGuiOldColumns
 struct ImGuiBoxSelectState
 {
     // Active box-selection data (persistent, 1 active at a time)
-    ImGuiID ID;
+    IdType ID;
     bool IsActive;
     bool IsStarting;
     bool IsStartedFromVoid; // Starting click was not from an item.
     bool IsStartedSetNavIdOnce;
     bool RequestClear;
-    ImGuiKeyChord KeyMods : 16; // Latched key-mods for box-select logic.
-    Vec2 StartPosRel;           // Start position in window-contents relative space (to support scrolling)
-    Vec2 EndPosRel;             // End position in window-contents relative space
-    Vec2 ScrollAccum;           // Scrolling accumulator (to behave at high-frame spaces)
+    ImGuiKeyChord KeyMods : 16;     // Latched key-mods for box-select logic.
+    ::SF::Engine::Vec2 StartPosRel; // Start position in window-contents relative space (to support scrolling)
+    ::SF::Engine::Vec2 EndPosRel;   // End position in window-contents relative space
+    ::SF::Engine::Vec2 ScrollAccum; // Scrolling accumulator (to behave at high-frame spaces)
     ImGuiWindow *Window;
 
     // Temporary/Transient data
@@ -2753,13 +2780,13 @@ struct ImGuiMultiSelectTempData
     ImGuiMultiSelectIO IO; // MUST BE FIRST FIELD. Requests are set and returned by BeginMultiSelect()/EndMultiSelect()
                            // + written to by user during the loop.
     ImGuiMultiSelectState *Storage;
-    ImGuiID FocusScopeId; // Copied from g.CurrentFocusScopeId (unless another selection scope was pushed manually)
+    IdType FocusScopeId; // Copied from g.CurrentFocusScopeId (unless another selection scope was pushed manually)
     ImGuiMultiSelectFlags Flags;
-    Vec2 ScopeRectMin;
-    Vec2 BackupCursorMaxPos;
+    ::SF::Engine::Vec2 ScopeRectMin;
+    ::SF::Engine::Vec2 BackupCursorMaxPos;
     // ImGuiSelectionUserData CurrSubmittedItem; // Copy of last submitted item data, used to merge output ranges.
     // ImGuiSelectionUserData PrevSubmittedItem; // Copy of previous submitted item data, used to merge output ranges.
-    ImGuiID BoxSelectId;
+    IdType BoxSelectId;
     ImGuiKeyChord KeyMods;
     int8_t LoopRequestSetAll; // -1: no operation, 0: clear all, 1: select all.
     bool IsEndIO;             // Set when switching IO from BeginMultiSelect() to EndMultiSelect() state.
@@ -2791,7 +2818,7 @@ struct ImGuiMultiSelectTempData
 struct ImGuiMultiSelectState
 {
     ImGuiWindow *Window;
-    ImGuiID ID;
+    IdType ID;
     int LastFrameActive;   // Last used frame-count, for GC.
     int LastSelectionSize; // Set by BeginMultiSelect() based on optional info provided by user. May be -1 if unknown.
     int8_t RangeSelected;  // -1 (don't have) or true/false
@@ -2890,7 +2917,7 @@ enum ImGuiDockNodeState
 // sizeof() 176~216
 struct ImGuiDockNode
 {
-    ImGuiID ID;
+    IdType ID;
     ImGuiDockNodeFlags SharedFlags; // (Write) Flags shared by all nodes of a same dockspace hierarchy (inherited from
                                     // the root node)
     ImGuiDockNodeFlags LocalFlags;  // (Write) Flags specific to this node
@@ -2902,11 +2929,11 @@ struct ImGuiDockNode
             *ChildNodes[2]; // [Split node only] Child nodes (left/right or top/bottom). Consider switching to an array.
     ImVector<ImGuiWindow *> Windows; // Note: unordered list! Iterate TabBar->Tabs for user-order.
     ImGuiTabBar *TabBar;
-    Vec2 Pos;     // Current position
-    Vec2 Size;    // Current size
-    Vec2 SizeRef; // [Split node only] Last explicitly written-to size (overridden when using a splitter affecting the
-                  // node), used to calculate Size.
-    ImGuiAxis SplitAxis; // [Split node only] Split axis (X or Y)
+    ::SF::Engine::Vec2 Pos;     // Current position
+    ::SF::Engine::Vec2 Size;    // Current size
+    ::SF::Engine::Vec2 SizeRef; // [Split node only] Last explicitly written-to size (overridden when using a splitter
+                                // affecting the node), used to calculate Size.
+    ImGuiAxis SplitAxis;        // [Split node only] Split axis (X or Y)
     uint32_t LastBgColor;
     ImGuiWindowClass WindowClass; // [Root node only]
 
@@ -2921,11 +2948,11 @@ struct ImGuiDockNode
                                   // ImGuiDockNodeFlags_KeepAliveOnly
     int LastFrameActive;          // Last frame number the node was updated.
     int LastFrameFocused;         // Last frame number the node was focused.
-    ImGuiID LastFocusedNodeId;   // [Root node only] Which of our child docking node (any ancestor in the hierarchy) was
+    IdType LastFocusedNodeId;    // [Root node only] Which of our child docking node (any ancestor in the hierarchy) was
                                  // last focused.
-    ImGuiID SelectedTabId;       // [Leaf node only] Which of our tab/window is selected.
-    ImGuiID WantCloseTabId;      // [Leaf node only] Set when closing a specific tab/window.
-    ImGuiID RefViewportId;       // Reference viewport ID from visible window when HostWindow == nullptr.
+    IdType SelectedTabId;        // [Leaf node only] Which of our tab/window is selected.
+    IdType WantCloseTabId;       // [Leaf node only] Set when closing a specific tab/window.
+    IdType RefViewportId;        // Reference viewport ID from visible window when HostWindow == nullptr.
     uint8_t AuthorityForPos : 3; // ImGuiDataAuthority
     uint8_t AuthorityForSize : 3;
     uint8_t AuthorityForViewport : 3;
@@ -2942,7 +2969,7 @@ struct ImGuiDockNode
     bool WantHiddenTabBarUpdate : 1;
     bool WantHiddenTabBarToggle : 1;
 
-    ImGuiDockNode(ImGuiID id);
+    ImGuiDockNode(IdType id);
     ~ImGuiDockNode();
     bool IsRootNode() const { return ParentNode == nullptr; }
     bool IsDockSpace() const { return (MergedFlags & ImGuiDockNodeFlags_DockSpace) != 0; }
@@ -3016,9 +3043,9 @@ struct ImGuiViewportP : public ImGuiViewport
     int LastFocusedStampCount; // Last stamp number from when a window hosted by this viewport was focused (by comparing
                                // this value between two viewport we have an implicit viewport z-order we use as
                                // fallback)
-    ImGuiID LastNameHash;
-    Vec2 LastPos;
-    Vec2 LastSize;
+    IdType LastNameHash;
+    ::SF::Engine::Vec2 LastPos;
+    ::SF::Engine::Vec2 LastSize;
     float Alpha; // Window opacity (when dragging dockable windows/viewports we make them transparent)
     float LastAlpha;
     bool LastFocusedHadNavWindow; // Instead of maintaining a LastFocusedWindow (which may harder to correctly
@@ -3032,18 +3059,20 @@ struct ImGuiViewportP : public ImGuiViewport
                                // mouser cursor when io.MouseDrawCursor is set and to draw most debug overlays.
     ImDrawData DrawDataP;
     ImDrawDataBuilder DrawDataBuilder; // Temporary data while building final ImDrawData
-    Vec2 LastPlatformPos;
-    Vec2 LastPlatformSize;
-    Vec2 LastRendererSize;
+    ::SF::Engine::Vec2 LastPlatformPos;
+    ::SF::Engine::Vec2 LastPlatformSize;
+    ::SF::Engine::Vec2 LastRendererSize;
 
     // Per-viewport work area
     // - Insets are >= 0.0f values, distance from viewport corners to work area.
     // - BeginMainMenuBar() and DockspaceOverViewport() tend to use work area to avoid stepping over existing contents.
     // - Generally 'safeAreaInsets' in iOS land, 'DisplayCutout' in Android land.
-    Vec2 WorkInsetMin;      // Work Area inset locked for the frame. GetWorkRect() always fits within GetMainRect().
-    Vec2 WorkInsetMax;      // "
-    Vec2 BuildWorkInsetMin; // Work Area inset accumulator for current frame, to become next frame's WorkInset
-    Vec2 BuildWorkInsetMax; // "
+    ::SF::Engine::Vec2
+            WorkInsetMin; // Work Area inset locked for the frame. GetWorkRect() always fits within GetMainRect().
+    ::SF::Engine::Vec2 WorkInsetMax; // "
+    ::SF::Engine::Vec2
+            BuildWorkInsetMin; // Work Area inset accumulator for current frame, to become next frame's WorkInset
+    ::SF::Engine::Vec2 BuildWorkInsetMax; // "
 
     ImGuiViewportP()
     {
@@ -3056,7 +3085,7 @@ struct ImGuiViewportP : public ImGuiViewport
         LastFocusedHadNavWindow = false;
         PlatformMonitor         = -1;
         BgFgDrawLists[0] = BgFgDrawLists[1] = nullptr;
-        LastPlatformPos = LastPlatformSize = LastRendererSize = Vec2(FLT_MAX, FLT_MAX);
+        LastPlatformPos = LastPlatformSize = LastRendererSize = ::SF::Engine::Vec2(FLT_MAX, FLT_MAX);
     }
     ~ImGuiViewportP()
     {
@@ -3069,10 +3098,14 @@ struct ImGuiViewportP : public ImGuiViewport
 
     // Calculate work rect pos/size given a set of offset (we have 1 pair of offset for rect locked from last frame
     // data, and 1 pair for currently building rect)
-    Vec2 CalcWorkRectPos(const Vec2 &inset_min) const { return Vec2(Pos.x + inset_min.x, Pos.y + inset_min.y); }
-    Vec2 CalcWorkRectSize(const Vec2 &inset_min, const Vec2 &inset_max) const
+    ::SF::Engine::Vec2 CalcWorkRectPos(const ::SF::Engine::Vec2 &inset_min) const
     {
-        return Vec2(ImMax(0.0f, Size.x - inset_min.x - inset_max.x), ImMax(0.0f, Size.y - inset_min.y - inset_max.y));
+        return ::SF::Engine::Vec2(Pos.x + inset_min.x, Pos.y + inset_min.y);
+    }
+    ::SF::Engine::Vec2 CalcWorkRectSize(const ::SF::Engine::Vec2 &inset_min, const ::SF::Engine::Vec2 &inset_max) const
+    {
+        return ::SF::Engine::Vec2(ImMax(0.0f, Size.x - inset_min.x - inset_max.x),
+                                  ImMax(0.0f, Size.y - inset_min.y - inset_max.y));
     }
     void UpdateWorkRect()
     {
@@ -3086,8 +3119,8 @@ struct ImGuiViewportP : public ImGuiViewport
     ImRect GetWorkRect() const { return ImRect(WorkPos.x, WorkPos.y, WorkPos.x + WorkSize.x, WorkPos.y + WorkSize.y); }
     ImRect GetBuildWorkRect() const
     {
-        Vec2 pos  = CalcWorkRectPos(BuildWorkInsetMin);
-        Vec2 size = CalcWorkRectSize(BuildWorkInsetMin, BuildWorkInsetMax);
+        ::SF::Engine::Vec2 pos  = CalcWorkRectPos(BuildWorkInsetMin);
+        ::SF::Engine::Vec2 size = CalcWorkRectSize(BuildWorkInsetMin, BuildWorkInsetMax);
         return ImRect(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
     }
 };
@@ -3101,15 +3134,15 @@ struct ImGuiViewportP : public ImGuiViewport
 // (this is designed to be stored in a ImChunkStream buffer, with the variable-length Name following our structure)
 struct ImGuiWindowSettings
 {
-    ImGuiID ID;
+    IdType ID;
     Vec2ih Pos; // NB: Settings position are stored RELATIVE to the viewport! Whereas runtime ones are absolute
                 // positions.
     Vec2ih Size;
     Vec2ih ViewportPos;
-    ImGuiID ViewportId;
-    ImGuiID DockId;  // ID of last known DockNode (even if the DockNode is invisible because it has only 1 active
+    IdType ViewportId;
+    IdType DockId;   // ID of last known DockNode (even if the DockNode is invisible because it has only 1 active
                      // window), or 0 if none.
-    ImGuiID ClassId; // ID of window class if specified
+    IdType ClassId;  // ID of window class if specified
     short DockOrder; // Order of the last time the window was visible within its DockNode. This is used to reorder
                      // windows that are reappearing on the same frame. Same value between windows that were active and
                      // windows that were none are possible.
@@ -3130,7 +3163,7 @@ struct ImGuiWindowSettings
 
 struct ImGuiSettingsCleanupArgs
 {
-    ImGuiID TypeHashFilter = 0;      // Set to restrict cleanup to a given .ini type, e.g. == ImHashStr("Window"),
+    IdType TypeHashFilter = 0;       // Set to restrict cleanup to a given .ini type, e.g. == ImHashStr("Window"),
                                      // ImHashStr("Table"). Otherwise every types supporting Cleanup will be affected.
     int DiscardOlderThanMonths  = 0; // Enable to discard entries older than XX months.
     bool DiscardWhenMissingDate = false; // Enable to discard entries missing a date.
@@ -3146,7 +3179,7 @@ struct ImGuiSettingsCleanupArgs
 struct ImGuiSettingsHandler
 {
     const char *TypeName; // Short description stored in .ini file. Disallowed characters: '[' ']'
-    ImGuiID TypeHash;     // == ImHashStr(TypeName)
+    IdType TypeHash;      // == ImHashStr(TypeName)
     void (*ClearAllFn)(ImGuiContext *ctx, ImGuiSettingsHandler *handler); // Clear all settings data
     void (*ReadInitFn)(ImGuiContext *ctx,
                        ImGuiSettingsHandler *handler); // Read: Called before reading (in registration order)
@@ -3315,7 +3348,7 @@ struct ImGuiMetricsConfig
     int ShowWindowsRectsType         = -1;
     int ShowTablesRectsType          = -1;
     int HighlightMonitorIdx          = -1;
-    ImGuiID HighlightViewportID      = 0;
+    IdType HighlightViewportID       = 0;
     int SettingsDiscardMonths        = 6;
     bool SettingsHighlightOldEntries = false;
     bool ShowFontPreview             = true;
@@ -3323,7 +3356,7 @@ struct ImGuiMetricsConfig
 
 struct ImGuiStackLevelInfo
 {
-    ImGuiID ID;
+    IdType ID;
     int8_t QueryFrameCount; // >= 1: Sub-query in progress
     bool QuerySuccess;      // Sub-query obtained result from DebugHookIdInfo()
     int8_t DataType;        // ImGuiDataType
@@ -3339,10 +3372,10 @@ struct ImGuiStackLevelInfo
 
 struct ImGuiDebugItemPathQuery
 {
-    ImGuiID MainID; // ID to query details for.
-    bool Active;    // Used to disambiguate the case when ID == 0 and e.g. some code calls PushOverrideID(0).
-    bool Complete;  // All sub-queries are finished (some may have failed).
-    int8_t Step;    // -1: query stack + init Results, >= 0: filling individual stack level.
+    IdType MainID; // ID to query details for.
+    bool Active;   // Used to disambiguate the case when ID == 0 and e.g. some code calls PushOverrideID(0).
+    bool Complete; // All sub-queries are finished (some may have failed).
+    int8_t Step;   // -1: query stack + init Results, >= 0: filling individual stack level.
     ImVector<ImGuiStackLevelInfo> Results;
     ImGuiTextBuffer ResultsDescBuf;
     ImGuiTextBuffer ResultPathBuf;
@@ -3386,9 +3419,9 @@ enum ImGuiContextHookType
 
 struct ImGuiContextHook
 {
-    ImGuiID HookId; // A unique ID assigned by AddContextHook()
+    IdType HookId; // A unique ID assigned by AddContextHook()
     ImGuiContextHookType Type;
-    ImGuiID Owner;
+    IdType Owner;
     ImGuiContextHookCallback Callback;
     void *UserData;
 
@@ -3432,9 +3465,9 @@ struct ImGuiContext
     float CurrentPixelDensity; // Current font density. Used by all calls to GetFontBaked().
     float CurrentDpiScale;     // Current window/viewport DpiScale == CurrentViewport->DpiScale
     ImDrawListSharedData DrawListSharedData;
-    ImGuiID WithinEndChildID; // Set within EndChild()
-    ImGuiID WithinEndPopupID; // Set within EndPopup()
-    void *TestEngine;         // Test engine user data
+    IdType WithinEndChildID; // Set within EndChild()
+    IdType WithinEndPopupID; // Set within EndPopup()
+    void *TestEngine;        // Test engine user data
 
     // Inputs
     ImVector<ImGuiInputEvent> InputEventsQueue; // Input events which will be trickled/written into IO structure.
@@ -3449,12 +3482,12 @@ struct ImGuiContext
     ImVector<ImGuiWindow *> WindowsTempSortBuffer; // Temporary buffer used in EndFrame() to reorder windows so parents
                                                    // are kept before their child
     ImVector<ImGuiWindowStackData> CurrentWindowStack;
-    ImGuiStorage WindowsById;        // Map window's ImGuiID to ImGuiWindow*
+    ImGuiStorage WindowsById;        // Map window's IdType to ImGuiWindow*
     int WindowsActiveCount;          // Number of unique windows submitted by frame
     float WindowsBorderHoverPadding; // Padding around resizable windows for which hovering on counts as hovering the
                                      // window == ImMax(style.TouchExtraPadding, style.WindowBorderHoverPadding). This
                                      // isn't so multi-dpi friendly.
-    ImGuiID DebugBreakInWindow;      // Set to break in Begin() call.
+    IdType DebugBreakInWindow;       // Set to break in Begin() call.
     ImGuiWindow *CurrentWindow;      // Window being drawn into
     ImGuiWindow *HoveredWindow;      // Window the mouse is hovering. Will typically catch mouse inputs.
     ImGuiWindow
@@ -3466,19 +3499,19 @@ struct ImGuiContext
     ImGuiWindow *WheelingWindow; // Track the window we started mouse-wheeling on. Until a timer elapse or mouse has
                                  // moved, generally keep scrolling the same window even if during the course of
                                  // scrolling the mouse ends up hovering a child window.
-    Vec2 WheelingWindowRefMousePos;
+    ::SF::Engine::Vec2 WheelingWindowRefMousePos;
     int WheelingWindowStartFrame; // This may be set one frame before WheelingWindow is != nullptr
     int WheelingWindowScrolledFrame;
     float WheelingWindowReleaseTimer;
-    Vec2 WheelingWindowWheelRemainder;
-    Vec2 WheelingAxisAvg;
+    ::SF::Engine::Vec2 WheelingWindowWheelRemainder;
+    ::SF::Engine::Vec2 WheelingAxisAvg;
 
     // Item/widgets state and tracking information
-    ImGuiID DebugDrawIdConflictsId; // Set when we detect multiple items with the same identifier
-    ImGuiID DebugHookIdInfoId; // Will call core hooks: DebugHookIdInfo() from GetID functions, used by ID Stack Tool
-                               // [next HoveredId/ActiveId to not pull in an extra cache-line]
-    ImGuiID HoveredId;         // Hovered widget, filled during the frame
-    ImGuiID HoveredIdPreviousFrame;
+    IdType DebugDrawIdConflictsId; // Set when we detect multiple items with the same identifier
+    IdType DebugHookIdInfoId; // Will call core hooks: DebugHookIdInfo() from GetID functions, used by ID Stack Tool
+                              // [next HoveredId/ActiveId to not pull in an extra cache-line]
+    IdType HoveredId;         // Hovered widget, filled during the frame
+    IdType HoveredIdPreviousFrame;
     int HoveredIdPreviousFrameItemCount; // Count numbers of items using the same ID as last frame's hovered id
     float HoveredIdTimer;                // Measure contiguous hovering time
     float HoveredIdNotActiveTimer;       // Measure contiguous hovering time where the item has not been active
@@ -3487,9 +3520,9 @@ struct ImGuiContext
                               // popup inhibit. May be true even if HoveredId == 0.
     bool ItemUnclipByLog;     // Disable ItemAdd() clipping, essentially a memory-locality friendly copy of LogEnabled
     bool AnyIdHasBeenEditedThisFrame;
-    ImGuiID ActiveId;        // Active widget
-    ImGuiID ActiveIdIsAlive; // Active widget has been seen this frame (we can't use a bool as the ActiveId may change
-                             // within the frame)
+    IdType ActiveId;        // Active widget
+    IdType ActiveIdIsAlive; // Active widget has been seen this frame (we can't use a bool as the ActiveId may change
+                            // within the frame)
     float ActiveIdTimer;
     bool ActiveIdIsJustActivated; // Set at the time of activation for one frame
     bool ActiveIdWasSelected;     // Active ID was selected at the time of activating
@@ -3505,18 +3538,18 @@ struct ImGuiContext
     bool ActiveIdHasBeenEditedThisFrame;
     bool ActiveIdFromShortcut;
     int8_t ActiveIdMouseButton;
-    ImGuiID ActiveIdDisabledId; // When clicking a disabled item we set ActiveId=window->MoveId to avoid interference
-                                // with widget code. Actual item ID is stored here.
-    Vec2 ActiveIdClickOffset;   // Clicked offset from upper-left corner, if applicable (currently only set by
-                                // ButtonBehavior)
-    ImGuiInputSource ActiveIdSource; // Activating source: ImGuiInputSource_Mouse OR ImGuiInputSource_Keyboard OR
-                                     // ImGuiInputSource_Gamepad
+    IdType ActiveIdDisabledId; // When clicking a disabled item we set ActiveId=window->MoveId to avoid interference
+                               // with widget code. Actual item ID is stored here.
+    ::SF::Engine::Vec2 ActiveIdClickOffset; // Clicked offset from upper-left corner, if applicable (currently only set
+                                            // by ButtonBehavior)
+    ImGuiInputSource ActiveIdSource;        // Activating source: ImGuiInputSource_Mouse OR ImGuiInputSource_Keyboard OR
+                                            // ImGuiInputSource_Gamepad
     ImGuiWindow *ActiveIdWindow;
-    ImGuiID ActiveIdPreviousFrame;
+    IdType ActiveIdPreviousFrame;
     ImGuiDeactivatedItemData DeactivatedItemData;
     ImGuiDataTypeStorage ActiveIdValueOnActivation; // Backup of initial value at the time of activation. ONLY SET BY
                                                     // SPECIFIC WIDGETS: DragXXX and SliderXXX.
-    ImGuiID LastActiveId;                           // Store the last non-zero ActiveId, useful for animation.
+    IdType LastActiveId;                            // Store the last non-zero ActiveId, useful for animation.
     float LastActiveIdTimer; // Store the last non-zero ActiveId timer since the beginning of activation, useful for
                              // animation.
     bool LastActiveIdWasSelected;
@@ -3546,11 +3579,11 @@ struct ImGuiContext
     // g.ActiveId) and/or SetKeyOwner(ImGuiKey_NavGamepadCancel, g.ActiveId);'
 
     // Next window/item data
-    ImGuiID CurrentFocusScopeId; // Value for currently appending items == g.FocusScopeStack.back(). Not to be mistaken
-                                 // with g.NavFocusScopeId.
+    IdType CurrentFocusScopeId; // Value for currently appending items == g.FocusScopeStack.back(). Not to be mistaken
+                                // with g.NavFocusScopeId.
     ImGuiItemFlags CurrentItemFlags; // Value for currently appending items == g.ItemFlagsStack.back()
-    ImGuiID DebugLocateId; // Storage for DebugLocateItemOnHover() feature: this is read by ItemAdd() so we keep it in a
-                           // hot/cached location
+    IdType DebugLocateId; // Storage for DebugLocateItemOnHover() feature: this is read by ItemAdd() so we keep it in a
+                          // hot/cached location
     ImGuiNextItemData NextItemData;     // Storage for SetNextItem** functions
     ImGuiLastItemData LastItemData;     // Storage for last submitted item (setup by ItemAdd)
     ImGuiNextWindowData NextWindowData; // Storage for SetNextWindow** functions
@@ -3578,7 +3611,7 @@ struct ImGuiContext
     ImGuiViewportP *MouseViewport;
     ImGuiViewportP *MouseLastHoveredViewport; // Last known viewport that was hovered by mouse (even if we are not
                                               // hovering any viewport any more) + honoring the _NoInputs flag.
-    ImGuiID PlatformLastFocusedViewportId;
+    IdType PlatformLastFocusedViewportId;
     ImGuiPlatformMonitor
             FallbackMonitor; // Virtual monitor used as fallback if backend doesn't provide monitor information.
     ImRect PlatformMonitorsFullWorkRect; // Bounding box of all platform monitors
@@ -3599,28 +3632,28 @@ struct ImGuiContext
     bool NavMousePosDirty;  // When set we will update mouse position if io.ConfigNavMoveSetMousePos is set (not enabled
                             // by default)
     bool NavIdIsAlive;      // Nav widget has been seen this frame ~~ NavRectRel is valid
-    ImGuiID NavId;          // Focused item for navigation
+    IdType NavId;           // Focused item for navigation
     ImGuiWindow *NavWindow; // Focused window for navigation. Could be called 'FocusedWindow'
-    ImGuiID NavFocusScopeId; // Focused focus scope (e.g. selection code often wants to "clear other items" when landing
-                             // on an item of the same scope)
-    ImGuiNavLayer NavLayer;  // Focused layer (main scrolling layer, or menu/title bar layer)
+    IdType NavFocusScopeId; // Focused focus scope (e.g. selection code often wants to "clear other items" when landing
+                            // on an item of the same scope)
+    ImGuiNavLayer NavLayer; // Focused layer (main scrolling layer, or menu/title bar layer)
     ImGuiItemFlags NavIdItemFlags;
-    ImGuiID NavActivateId;     // ~~ (g.ActiveId == 0) && (IsKeyPressed(ImGuiKey_Space) || IsKeyDown(ImGuiKey_Enter) ||
-                               // IsKeyPressed(ImGuiKey_NavGamepadActivate)) ? NavId : 0, also set when calling
-                               // ActivateItemByID()
-    ImGuiID NavActivateDownId; // ~~ IsKeyDown(ImGuiKey_Space) || IsKeyDown(ImGuiKey_Enter) ||
-                               // IsKeyDown(ImGuiKey_NavGamepadActivate) ? NavId : 0
-    ImGuiID NavActivatePressedId; // ~~ IsKeyPressed(ImGuiKey_Space) || IsKeyPressed(ImGuiKey_Enter) ||
-                                  // IsKeyPressed(ImGuiKey_NavGamepadActivate) ? NavId : 0 (no repeat)
+    IdType NavActivateId;     // ~~ (g.ActiveId == 0) && (IsKeyPressed(ImGuiKey_Space) || IsKeyDown(ImGuiKey_Enter) ||
+                              // IsKeyPressed(ImGuiKey_NavGamepadActivate)) ? NavId : 0, also set when calling
+                              // ActivateItemByID()
+    IdType NavActivateDownId; // ~~ IsKeyDown(ImGuiKey_Space) || IsKeyDown(ImGuiKey_Enter) ||
+                              // IsKeyDown(ImGuiKey_NavGamepadActivate) ? NavId : 0
+    IdType NavActivatePressedId; // ~~ IsKeyPressed(ImGuiKey_Space) || IsKeyPressed(ImGuiKey_Enter) ||
+                                 // IsKeyPressed(ImGuiKey_NavGamepadActivate) ? NavId : 0 (no repeat)
     ImGuiActivateFlags NavActivateFlags;
     ImVector<ImGuiFocusScopeData>
             NavFocusRoute; // Reversed copy focus scope stack for NavId (should contains NavFocusScopeId). This
                            // essentially follow the window->ParentWindowForFocusRoute chain.
-    ImGuiID NavHighlightActivatedId;
+    IdType NavHighlightActivatedId;
     float NavHighlightActivatedTimer;
-    ImGuiID NavOpenContextMenuItemId;
-    ImGuiID NavOpenContextMenuWindowId;
-    ImGuiID NavNextActivateId; // Set by ActivateItemByID(), queued until next frame.
+    IdType NavOpenContextMenuItemId;
+    IdType NavOpenContextMenuWindowId;
+    IdType NavNextActivateId; // Set by ActivateItemByID(), queued until next frame.
     ImGuiActivateFlags NavNextActivateFlags;
     ImGuiInputSource NavInputSource; // Keyboard or Gamepad mode? THIS CAN ONLY BE ImGuiInputSource_Keyboard or
                                      // ImGuiInputSource_Gamepad
@@ -3628,7 +3661,7 @@ struct ImGuiContext
             NavLastValidSelectionUserData; // Last valid data passed to SetNextItemSelectionUser(), or -1. For current
                                            // window. Not reset when focusing an item that doesn't have selection data.
     int8_t NavCursorHideFrames;
-    // ImGuiID               NavActivateInputId;                 // Removed in 1.89.4 (July 2023). This is now part of
+    // IdType               NavActivateInputId;                 // Removed in 1.89.4 (July 2023). This is now part of
     // g.NavActivateId and sets g.NavActivateFlags |= ImGuiActivateFlags_PreferInput. See commit c9a53aa74, issue #5606.
 
     // Navigation: Init & Move Requests
@@ -3661,10 +3694,10 @@ struct ImGuiContext
     ImGuiNavItemData NavTabbingResultFirst; // First tabbing request candidate within NavWindow and flattened hierarchy
 
     // Navigation: record of last move request
-    ImGuiID NavJustMovedFromFocusScopeId; // Just navigated from this focus scope id (result of a successfully
-                                          // MoveRequest).
-    ImGuiID NavJustMovedToId;             // Just navigated to this id (result of a successfully MoveRequest).
-    ImGuiID NavJustMovedToFocusScopeId; // Just navigated to this focus scope id (result of a successfully MoveRequest).
+    IdType NavJustMovedFromFocusScopeId; // Just navigated from this focus scope id (result of a successfully
+                                         // MoveRequest).
+    IdType NavJustMovedToId;             // Just navigated to this id (result of a successfully MoveRequest).
+    IdType NavJustMovedToFocusScopeId; // Just navigated to this focus scope id (result of a successfully MoveRequest).
     ImGuiKeyChord NavJustMovedToKeyMods;
     bool NavJustMovedToIsTabbing;        // Copy of ImGuiNavMoveFlags_IsTabbing. Maybe we should store whole flags.
     bool NavJustMovedToHasSelectionData; // Copy of move result's ItemFlags & ImGuiItemFlags_HasSelectionUserData).
@@ -3696,8 +3729,8 @@ struct ImGuiContext
     bool NavWindowingToggleLayer;   // Set while Alt or GamepadMenu is held, may be cleared by other operations, and
                                     // processed when releasing the key.
     ImGuiKey NavWindowingToggleKey; // Keyboard/gamepad key used when toggling to menu layer.
-    Vec2 NavWindowingAccumDeltaPos;
-    Vec2 NavWindowingAccumDeltaSize;
+    ::SF::Engine::Vec2 NavWindowingAccumDeltaPos;
+    ::SF::Engine::Vec2 NavWindowingAccumDeltaSize;
 
     // Render
     float DimBgRatio; // 0.0..1.0 animation when fading in a dimming background (for modal window and Ctrl+Tab list)
@@ -3712,17 +3745,17 @@ struct ImGuiContext
     ImGuiPayload DragDropPayload;
     ImRect DragDropTargetRect; // Store rectangle of current target candidate (we favor small targets when overlapping)
     ImRect DragDropTargetClipRect; // Store ClipRect at the time of item's drawing
-    ImGuiID DragDropTargetId;
-    ImGuiID DragDropTargetFullViewport;
+    IdType DragDropTargetId;
+    IdType DragDropTargetFullViewport;
     ImGuiDragDropFlags DragDropAcceptFlagsCurr;
     ImGuiDragDropFlags DragDropAcceptFlagsPrev;
     float DragDropAcceptIdCurrRectSurface; // Target item surface (we resolve overlapping targets by prioritizing the
                                            // smaller surface)
-    ImGuiID DragDropAcceptIdCurr;          // Target item id (set at the time of accepting the payload)
-    ImGuiID DragDropAcceptIdPrev; // Target item id from previous frame (we need to store this to allow for overlapping
+    IdType DragDropAcceptIdCurr;           // Target item id (set at the time of accepting the payload)
+    IdType DragDropAcceptIdPrev;  // Target item id from previous frame (we need to store this to allow for overlapping
                                   // drag and drop targets)
     int DragDropAcceptFrameCount; // Last time a target expressed a desire to accept the source
-    ImGuiID DragDropHoldJustPressedId; // Set when holding a payload just made ButtonBehavior() return a press.
+    IdType DragDropHoldJustPressedId; // Set when holding a payload just made ButtonBehavior() return a press.
     ImVector<unsigned char>
             DragDropPayloadBufHeap; // We don't expose the ImVector<> directly, ImGuiPayload only holds pointer+size
     unsigned char DragDropPayloadBufLocal[16]; // Local buffer for small payloads
@@ -3733,7 +3766,7 @@ struct ImGuiContext
 
     // Tables
     ImGuiTable *CurrentTable;
-    ImGuiID DebugBreakInTable; // Set to break in BeginTable() call.
+    IdType DebugBreakInTable;  // Set to break in BeginTable() call.
     int TablesTempDataStacked; // Temporary table data size (because we leave previous instances undestructed, we
                                // generally don't use TablesTempData.Size)
     ImVector<ImGuiTableTempData>
@@ -3757,20 +3790,20 @@ struct ImGuiContext
     ImPool<ImGuiMultiSelectState> MultiSelectStorage;
 
     // Hover Delay system
-    ImGuiID HoverItemDelayId;
-    ImGuiID HoverItemDelayIdPreviousFrame;
+    IdType HoverItemDelayId;
+    IdType HoverItemDelayIdPreviousFrame;
     float HoverItemDelayTimer;      // Currently used by IsItemHovered()
     float HoverItemDelayClearTimer; // Currently used by IsItemHovered(): grace time before g.TooltipHoverTimer gets
                                     // cleared.
-    ImGuiID HoverItemUnlockedStationaryId;   // Mouse has once been stationary on this item. Only reset after departing
-                                             // the item.
-    ImGuiID HoverWindowUnlockedStationaryId; // Mouse has once been stationary on this window. Only reset after
-                                             // departing the window.
+    IdType HoverItemUnlockedStationaryId;   // Mouse has once been stationary on this item. Only reset after departing
+                                            // the item.
+    IdType HoverWindowUnlockedStationaryId; // Mouse has once been stationary on this window. Only reset after
+                                            // departing the window.
 
     // Mouse state
     ImGuiMouseCursor MouseCursor;
     float MouseStationaryTimer; // Time the mouse has been stationary (with some loose heuristic)
-    Vec2 MouseLastValidPos;
+    ::SF::Engine::Vec2 MouseLastValidPos;
 
     // Widget state
     ImGuiInputTextState InputTextState;
@@ -3778,21 +3811,21 @@ struct ImGuiContext
     ImGuiInputTextDeactivatedState InputTextDeactivatedState;
     ImFontBaked InputTextPasswordFontBackupBaked;
     ImFontFlags InputTextPasswordFontBackupFlags;
-    ImGuiID InputTextReactivateId; // ID of InputText to reactivate on next frame (for io.ConfigInputTextEnterKeepActive
-                                   // behavior)
-    ImGuiID TempInputId;           // Temporary text input when using Ctrl+Click on a slider, etc.
+    IdType InputTextReactivateId; // ID of InputText to reactivate on next frame (for io.ConfigInputTextEnterKeepActive
+                                  // behavior)
+    IdType TempInputId;           // Temporary text input when using Ctrl+Click on a slider, etc.
     ImGuiDataTypeStorage DataTypeZeroValue; // 0 for all data types
     int BeginMenuDepth;
     int BeginComboDepth;
-    ImGuiID ColorEditCurrentID; // Set temporarily while inside of the parent-most ColorEdit4/ColorPicker4 (because they
-                                // call each others).
-    ImGuiID ColorEditSavedID;   // ID we are saving/restoring HS for
-    float ColorEditSavedHue;    // Backup of last Hue associated to LastColor, so we can restore Hue in lossy RGB<>HSV
-                                // round trips
+    IdType ColorEditCurrentID; // Set temporarily while inside of the parent-most ColorEdit4/ColorPicker4 (because they
+                               // call each others).
+    IdType ColorEditSavedID;   // ID we are saving/restoring HS for
+    float ColorEditSavedHue;   // Backup of last Hue associated to LastColor, so we can restore Hue in lossy RGB<>HSV
+                               // round trips
     float ColorEditSavedSat; // Backup of last Saturation associated to LastColor, so we can restore Saturation in lossy
                              // RGB<>HSV round trips
-    uint32_t ColorEditSavedColor; // RGB value with alpha set to 0.
-    Vec4 ColorPickerRef;          // Initial/reference color at the time of opening the color picker.
+    uint32_t ColorEditSavedColor;      // RGB value with alpha set to 0.
+    ::SF::Engine::Vec4 ColorPickerRef; // Initial/reference color at the time of opening the color picker.
     ImGuiComboPreviewData ComboPreviewData;
     ImRect WindowResizeBorderExpectedRect; // Expected border rect, switch to relative edit if moving
     bool WindowResizeRelativeMode;
@@ -3809,10 +3842,10 @@ struct ImGuiContext
     float DisabledAlphaBackup;   // Backup for style.Alpha for BeginDisabled()
     short DisabledStackSize;
     short TooltipOverrideCount;
-    ImGuiWindow *TooltipPreviousWindow;          // Window of last tooltip submitted during the frame
-    ImVector<char> ClipboardHandlerData;         // If no custom clipboard handler is defined
-    ImVector<ImGuiID> MenusIdSubmittedThisFrame; // A list of menu IDs that were rendered at least once
-    ImGuiTypingSelectState TypingSelectState;    // State for GetTypingSelectRequest()
+    ImGuiWindow *TooltipPreviousWindow;         // Window of last tooltip submitted during the frame
+    ImVector<char> ClipboardHandlerData;        // If no custom clipboard handler is defined
+    ImVector<IdType> MenusIdSubmittedThisFrame; // A list of menu IDs that were rendered at least once
+    ImGuiTypingSelectState TypingSelectState;   // State for GetTypingSelectRequest()
 
     // Platform support
     ImGuiPlatformImeData
@@ -3839,7 +3872,7 @@ struct ImGuiContext
 
     // Hooks
     ImVector<ImGuiContextHook> Hooks; // Hooks for extensions (e.g. test engine)
-    ImGuiID HookIdNext;               // Next available HookId
+    IdType HookIdNext;                // Next available HookId
     ImGuiDemoMarkerCallback DemoMarkerCallback;
 
     // Localization
@@ -3865,7 +3898,7 @@ struct ImGuiContext
     // Error Handling
     ImGuiErrorCallback ErrorCallback; // = nullptr. May be exposed in public API eventually.
     void *ErrorCallbackUserData;      // = nullptr
-    Vec2 ErrorTooltipLockedPos;
+    ::SF::Engine::Vec2 ErrorTooltipLockedPos;
     bool ErrorFirst;
     int ErrorCountCurrentFrame;                                 // [Internal] Number of errors submitted this frame.
     ImGuiErrorRecoveryState StackSizesInNewFrame;               // [Internal]
@@ -3888,9 +3921,9 @@ struct ImGuiContext
     int8_t DebugBeginReturnValueCullDepth; // Cycle between 0..9 then wrap around.
     bool DebugItemPickerActive;            // Item picker is active (started with DebugStartItemPicker())
     uint8_t DebugItemPickerMouseButton;
-    ImGuiID DebugItemPickerBreakId; // Will call IM_DEBUG_BREAK() when encountering this ID
+    IdType DebugItemPickerBreakId; // Will call IM_DEBUG_BREAK() when encountering this ID
     float DebugFlashStyleColorTime;
-    Vec4 DebugFlashStyleColorBackup;
+    ::SF::Engine::Vec4 DebugFlashStyleColorBackup;
     ImGuiMetricsConfig DebugMetricsConfig;
     ImGuiDebugItemPathQuery DebugItemPathQuery;
     ImGuiIDStackTool DebugIDStackTool;
@@ -3931,15 +3964,15 @@ struct ImGuiContext
 struct ImGuiWindowTempData
 {
     // Layout
-    Vec2 CursorPos; // Current emitting position, in absolute coordinates.
-    Vec2 CursorPosPrevLine;
-    Vec2 CursorStartPos; // Initial position after Begin(), generally ~ window position + WindowPadding.
-    Vec2 CursorMaxPos;   // Used to implicitly calculate ContentSize at the beginning of next frame, for scrolling range
-                         // and auto-resize. Always growing during the frame.
-    Vec2 IdealMaxPos; // Used to implicitly calculate ContentSizeIdeal at the beginning of next frame, for auto-resize
-                      // only. Always growing during the frame.
-    Vec2 CurrLineSize;
-    Vec2 PrevLineSize;
+    ::SF::Engine::Vec2 CursorPos; // Current emitting position, in absolute coordinates.
+    ::SF::Engine::Vec2 CursorPosPrevLine;
+    ::SF::Engine::Vec2 CursorStartPos; // Initial position after Begin(), generally ~ window position + WindowPadding.
+    ::SF::Engine::Vec2 CursorMaxPos;   // Used to implicitly calculate ContentSize at the beginning of next frame, for
+                                       // scrolling range and auto-resize. Always growing during the frame.
+    ::SF::Engine::Vec2 IdealMaxPos; // Used to implicitly calculate ContentSizeIdeal at the beginning of next frame, for
+                                    // auto-resize only. Always growing during the frame.
+    ::SF::Engine::Vec2 CurrLineSize;
+    ::SF::Engine::Vec2 PrevLineSize;
     float CurrLineTextBaseOffset; // Baseline offset (0.0f by default on a new line, generally == style.FramePadding.y
                                   // when a framed item has been added).
     float PrevLineTextBaseOffset;
@@ -3949,9 +3982,9 @@ struct ImGuiWindowTempData
     ImVec1 ColumnsOffset; // Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a
                           // stack to allow use cases like Tree->Column->Tree. Need revamp columns API.
     ImVec1 GroupOffset;
-    Vec2 CursorStartPosLossyness; // Record the loss of precision of CursorStartPos due to really large scrolling
-                                  // amount. This is used by clipper to compensate and fix the most common use case of
-                                  // large scroll area.
+    ::SF::Engine::Vec2 CursorStartPosLossyness; // Record the loss of precision of CursorStartPos due to really large
+                                                // scrolling amount. This is used by clipper to compensate and fix the
+                                                // most common use case of large scroll area.
 
     // Keyboard/Gamepad navigation
     ImGuiNavLayer NavLayerCurrent; // Current layer, 0..31 (we currently only use 0..1)
@@ -3964,7 +3997,8 @@ struct ImGuiWindowTempData
 
     // Miscellaneous
     bool MenuBarAppending; // FIXME: Remove this
-    Vec2 MenuBarOffset;    // MenuBarOffset.x is sort of equivalent of a per-layer CursorPos.x, saved/restored as we
+    ::SF::Engine::Vec2
+            MenuBarOffset; // MenuBarOffset.x is sort of equivalent of a per-layer CursorPos.x, saved/restored as we
                            // switch to the menu bar. The only situation when MenuBarOffset.y is > 0 if when
                            // (SafeAreaPadding.y > FramePadding.y), often used on TVs.
     ImGuiMenuColumns MenuColumns;       // Simplified columns storage for menu items measurement
@@ -4003,28 +4037,29 @@ struct ImGuiWindow
 {
     ImGuiContext *Ctx;                          // Parent UI context (needs to be set explicitly by parent).
     char *Name;                                 // Window name, owned by the window.
-    ImGuiID ID;                                 // == ImHashStr(Name)
+    IdType ID;                                  // == ImHashStr(Name)
     ImGuiWindowFlags Flags, FlagsPreviousFrame; // See enum ImGuiWindowFlags_
     ImGuiChildFlags ChildFlags;                 // Set when window is a child window. See enum ImGuiChildFlags_
     ImGuiWindowClass WindowClass;               // Advanced users only. Set with SetNextWindowClass()
     ImGuiViewportP *Viewport; // Always set in Begin(). Inactive windows may have a nullptr value here if their viewport
                               // was discarded.
-    ImGuiID ViewportId; // We backup the viewport id (since the viewport may disappear or never be created if the window
-                        // is inactive)
-    Vec2 ViewportPos;   // We backup the viewport position (since the viewport may disappear or never be created if the
-                        // window is inactive)
+    IdType ViewportId; // We backup the viewport id (since the viewport may disappear or never be created if the window
+                       // is inactive)
+    ::SF::Engine::Vec2 ViewportPos; // We backup the viewport position (since the viewport may disappear or never be
+                                    // created if the window is inactive)
     int ViewportAllowPlatformMonitorExtend; // Reset to -1 every frame (index is guaranteed to be valid between
                                             // NewFrame..EndFrame), only used in the Appearing frame of a tooltip/popup
                                             // to enforce clamping to a given monitor
-    Vec2 Pos;                               // Position (always rounded-up to nearest pixel)
-    Vec2 Size;                              // Current size (==SizeFull or collapsed title bar size)
-    Vec2 SizeFull;                          // Size when non collapsed
-    Vec2 ContentSize; // Size of contents/scrollable client area (calculated from the extents reach of the cursor)
-                      // from previous frame. Does not include window decoration or window padding.
-    Vec2 ContentSizeIdeal;
-    Vec2 ContentSizeExplicit; // Size of contents/scrollable client area explicitly request by the user via
-                              // SetNextWindowContentSize().
-    Vec2 WindowPadding;       // Window padding at the time of Begin().
+    ::SF::Engine::Vec2 Pos;                 // Position (always rounded-up to nearest pixel)
+    ::SF::Engine::Vec2 Size;                // Current size (==SizeFull or collapsed title bar size)
+    ::SF::Engine::Vec2 SizeFull;            // Size when non collapsed
+    ::SF::Engine::Vec2
+            ContentSize; // Size of contents/scrollable client area (calculated from the extents reach of the cursor)
+                         // from previous frame. Does not include window decoration or window padding.
+    ::SF::Engine::Vec2 ContentSizeIdeal;
+    ::SF::Engine::Vec2 ContentSizeExplicit; // Size of contents/scrollable client area explicitly request by the user
+                                            // via SetNextWindowContentSize().
+    ::SF::Engine::Vec2 WindowPadding;       // Window padding at the time of Begin().
     float WindowRounding;   // Window rounding at the time of Begin(). May be clamped lower to avoid rendering artifacts
                             // with title bar, menu bar etc.
     float WindowBorderSize; // Window border size at the time of Begin().
@@ -4039,21 +4074,22 @@ struct ImGuiWindow
                                             // specialized form of clipping and frozen rows/columns are inside InnerRect
                                             // (and not part of regular decoration sizes).
     int NameBufLen;                         // Size of buffer storing Name. May be larger than strlen(Name)!
-    ImGuiID MoveId;                         // == window->GetID("#MOVE")
-    ImGuiID TabId;                          // == window->GetID("#TAB")
-    ImGuiID ChildId; // ID of corresponding item in parent window (for navigation to return from child window to parent
-                     // window)
-    ImGuiID PopupId; // ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID
-                     // for recycling)
-    Vec2 Scroll;
-    Vec2 ScrollMax;
-    Vec2 ScrollTarget; // target scroll position. stored as cursor position with scrolling canceled out, so the
-                       // highest point is always 0.0f. (FLT_MAX for no change)
-    Vec2 ScrollTargetCenterRatio;  // 0.0f = scroll so that target position is at top, 0.5f = scroll so that target
-                                   // position is centered
-    Vec2 ScrollTargetEdgeSnapDist; // 0.0f = no snapping, >0.0f snapping threshold
-    Vec2 ScrollbarSizes; // Size taken by each scrollbars on their smaller axis. Pay attention! ScrollbarSizes.x ==
-                         // width of the vertical scrollbar, ScrollbarSizes.y = height of the horizontal scrollbar.
+    IdType MoveId;                          // == window->GetID("#MOVE")
+    IdType TabId;                           // == window->GetID("#TAB")
+    IdType ChildId; // ID of corresponding item in parent window (for navigation to return from child window to parent
+                    // window)
+    IdType PopupId; // ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID
+                    // for recycling)
+    ::SF::Engine::Vec2 Scroll;
+    ::SF::Engine::Vec2 ScrollMax;
+    ::SF::Engine::Vec2 ScrollTarget; // target scroll position. stored as cursor position with scrolling canceled out,
+                                     // so the highest point is always 0.0f. (FLT_MAX for no change)
+    ::SF::Engine::Vec2 ScrollTargetCenterRatio;  // 0.0f = scroll so that target position is at top, 0.5f = scroll so
+                                                 // that target position is centered
+    ::SF::Engine::Vec2 ScrollTargetEdgeSnapDist; // 0.0f = no snapping, >0.0f snapping threshold
+    ::SF::Engine::Vec2
+            ScrollbarSizes; // Size taken by each scrollbars on their smaller axis. Pay attention! ScrollbarSizes.x ==
+                            // width of the vertical scrollbar, ScrollbarSizes.y = height of the horizontal scrollbar.
     bool ScrollbarX, ScrollbarY;               // Are scrollbars visible?
     bool ScrollbarXStabilizeEnabled;           // Was ScrollbarX previously auto-stabilized?
     uint8_t ScrollbarXStabilizeToggledHistory; // Used to stabilize scrollbar visibility in case of feedback loops
@@ -4095,15 +4131,17 @@ struct ImGuiWindow
     ImGuiCond SetWindowSizeAllowFlags : 8;      // store acceptable condition flags for SetNextWindowSize() use.
     ImGuiCond SetWindowCollapsedAllowFlags : 8; // store acceptable condition flags for SetNextWindowCollapsed() use.
     ImGuiCond SetWindowDockAllowFlags : 8;      // store acceptable condition flags for SetNextWindowDock() use.
-    Vec2 SetWindowPosVal;   // store window position when using a non-zero Pivot (position set needs to be processed
-                            // when we know the window size)
-    Vec2 SetWindowPosPivot; // store window pivot for positioning. Vec2(0, 0) when positioning from top-left corner;
-                            // Vec2(0.5f, 0.5f) for centering; Vec2(1, 1) for bottom right.
+    ::SF::Engine::Vec2 SetWindowPosVal;   // store window position when using a non-zero Pivot (position set needs to be
+                                          // processed when we know the window size)
+    ::SF::Engine::Vec2 SetWindowPosPivot; // store window pivot for positioning. ::SF::Engine::Vec2(0, 0) when
+                                          // positioning from top-left corner;
+                                          // ::SF::Engine::Vec2(0.5f, 0.5f) for centering; ::SF::Engine::Vec2(1, 1) for
+                                          // bottom right.
 
-    ImVector<ImGuiID> IDStack; // ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this
-                               // should be in the TempData structure)
-    ImGuiWindowTempData DC;    // Temporary per-window data, reset at the beginning of the frame. This used to be called
-                               // ImGuiDrawContext, hence the "DC" variable name.
+    ImVector<IdType> IDStack; // ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this
+                              // should be in the TempData structure)
+    ImGuiWindowTempData DC;   // Temporary per-window data, reset at the beginning of the frame. This used to be called
+                              // ImGuiDrawContext, hence the "DC" variable name.
 
     // The best way to understand what those rectangles are is to use the 'Metrics->Tools->Show Windows Rectangles'
     // viewer. The main 'OuterRect', omitted as a field, is window->Rect().
@@ -4158,11 +4196,11 @@ struct ImGuiWindow
     ImGuiWindow *NavLastChildNavWindow; // When going to the menu bar, we remember the child window we came from. (This
                                         // could probably be made implicit if we kept g.Windows sorted by last focused
                                         // including child window.)
-    ImGuiID NavLastIds[ImGuiNavLayer_COUNT];             // Last known NavId for this window, per layer (0/1)
-    ImRect NavRectRel[ImGuiNavLayer_COUNT];              // Reference rectangle, in window relative space
-    Vec2 NavPreferredScoringPosRel[ImGuiNavLayer_COUNT]; // Preferred X/Y position updated when moving on a given
-                                                         // axis, reset to FLT_MAX.
-    ImGuiID NavRootFocusScopeId;                         // Focus Scope ID at the time of Begin()
+    IdType NavLastIds[ImGuiNavLayer_COUNT]; // Last known NavId for this window, per layer (0/1)
+    ImRect NavRectRel[ImGuiNavLayer_COUNT]; // Reference rectangle, in window relative space
+    ::SF::Engine::Vec2 NavPreferredScoringPosRel[ImGuiNavLayer_COUNT]; // Preferred X/Y position updated when moving on
+                                                                       // a given axis, reset to FLT_MAX.
+    IdType NavRootFocusScopeId;                                        // Focus Scope ID at the time of Begin()
 
     int MemoryDrawListIdxCapacity; // Backup of last idx/vtx count, so when waking up the window we can preallocate and
                                    // avoid iterative alloc/copy
@@ -4182,22 +4220,22 @@ struct ImGuiWindow
     ImGuiDockNode *DockNode; // Which node are we docked into. Important: Prefer testing DockIsActive in many cases as
                              // this will still be set when the dock node is hidden.
     ImGuiDockNode *DockNodeAsHost; // Which node are we owning (for parent windows)
-    ImGuiID DockId; // Backup of last valid DockNode->ID, so single window remember their dock node id even when they
-                    // are not bound any more
+    IdType DockId; // Backup of last valid DockNode->ID, so single window remember their dock node id even when they
+                   // are not bound any more
 
 public:
     ImGuiWindow(ImGuiContext *context, const char *name);
     ~ImGuiWindow();
 
-    ImGuiID GetID(const char *str, const char *str_end = nullptr);
-    ImGuiID GetID(const void *ptr);
-    ImGuiID GetID(int n);
-    ImGuiID GetIDFromPos(const Vec2 &p_abs);
-    ImGuiID GetIDFromRectangle(const ImRect &r_abs);
+    IdType GetID(const char *str, const char *str_end = nullptr);
+    IdType GetID(const void *ptr);
+    IdType GetID(int n);
+    IdType GetIDFromPos(const ::SF::Engine::Vec2 &p_abs);
+    IdType GetIDFromRectangle(const ImRect &r_abs);
 
     // We don't use g.FontSize because the window may be != g.CurrentWindow.
     ImRect Rect() const { return ImRect(Pos.x, Pos.y, Pos.x + Size.x, Pos.y + Size.y); }
-    ImRect TitleBarRect() const { return ImRect(Pos, Vec2(Pos.x + SizeFull.x, Pos.y + TitleBarHeight)); }
+    ImRect TitleBarRect() const { return ImRect(Pos, ::SF::Engine::Vec2(Pos.x + SizeFull.x, Pos.y + TitleBarHeight)); }
     ImRect MenuBarRect() const
     {
         float y1 = Pos.y + TitleBarHeight;
@@ -4234,7 +4272,7 @@ enum ImGuiTabItemFlagsPrivate_
 // Storage for one active tab item (sizeof() 48 bytes)
 struct ImGuiTabItem
 {
-    ImGuiID ID;
+    IdType ID;
     ImGuiTabItemFlags Flags;
     ImGuiWindow *Window; // When TabItem is part of a DockNode's TabBar, we hold on to a window.
     int LastFrameVisible;
@@ -4267,11 +4305,11 @@ struct ImGuiTabBar
     ImGuiWindow *Window;
     ImVector<ImGuiTabItem> Tabs;
     ImGuiTabBarFlags Flags;
-    ImGuiID ID;                // Zero for tab-bars used by docking
-    ImGuiID SelectedTabId;     // Selected tab/window
-    ImGuiID NextSelectedTabId; // Next selected tab/window. Will also trigger a scrolling animation
-    ImGuiID NextScrollToTabId;
-    ImGuiID VisibleTabId; // Can occasionally be != SelectedTabId (e.g. when previewing contents for Ctrl+Tab preview)
+    IdType ID;                // Zero for tab-bars used by docking
+    IdType SelectedTabId;     // Selected tab/window
+    IdType NextSelectedTabId; // Next selected tab/window. Will also trigger a scrolling animation
+    IdType NextScrollToTabId;
+    IdType VisibleTabId; // Can occasionally be != SelectedTabId (e.g. when previewing contents for Ctrl+Tab preview)
     int CurrFrameVisible;
     int PrevFrameVisible;
     ImRect BarRect;
@@ -4289,7 +4327,7 @@ struct ImGuiTabBar
     float ScrollingRectMaxX;
     float SeparatorMinX;
     float SeparatorMaxX;
-    ImGuiID ReorderRequestTabId;
+    IdType ReorderRequestTabId;
     int16_t ReorderRequestOffset;
     int8_t BeginCount;
     bool WantLayout;
@@ -4299,8 +4337,8 @@ struct ImGuiTabBar
     int16_t TabsActiveCount; // Number of tabs submitted this frame.
     int16_t LastTabItemIdx;  // Index of last BeginTabItem() tab for use by EndTabItem()
     float ItemSpacingY;
-    Vec2 FramePadding; // style.FramePadding locked at the time of BeginTabBar()
-    Vec2 BackupCursorPos;
+    ::SF::Engine::Vec2 FramePadding; // style.FramePadding locked at the time of BeginTabBar()
+    ::SF::Engine::Vec2 BackupCursorPos;
     ImGuiTextBuffer TabsNames; // For non-docking tab bar we re-append names in a contiguous buffer.
 
     ImGuiTabBar();
@@ -4337,8 +4375,8 @@ struct ImGuiTableColumn
     float InitStretchWeightOrWidth; // Value passed to TableSetupColumn(). For Width it is a content width (_without
                                     // padding_).
     ImRect ClipRect;                // Clipping rectangle for the column
-    ImGuiID ID;       // Hash of column name (ignoring top of ID stack), used for .ini persistence when available.
-    ImGuiID UserData; // (Optional) User data value passed to TableSetupColumn()
+    IdType ID;       // Hash of column name (ignoring top of ID stack), used for .ini persistence when available.
+    IdType UserData; // (Optional) User data value passed to TableSetupColumn()
     float WorkMinX; // Contents region min ~(MinX + CellPaddingX + CellSpacingX1) == cursor start position when entering
                     // column
     float WorkMaxX; // Contents region max ~(MaxX - CellPaddingX - CellSpacingX2)
@@ -4403,11 +4441,11 @@ struct ImGuiTableColumn
 struct ImGuiTableReconcileColumnData
 {
     // Setup data
-    ImGuiID ID;
+    IdType ID;
     int16_t NameOffset;
     ImGuiTableColumnFlags Flags;
     float InitWidthOrWeight;
-    ImGuiID UserData;
+    IdType UserData;
 
     // Reconcile data
     ImGuiTableColumnIdx ColumnNewIdx; // Index in the current table.
@@ -4439,7 +4477,7 @@ struct ImGuiTableHeaderData
 // debug needs. Does that means they could be moved to ImGuiTableTempData?) sizeof() ~ 24 bytes
 struct ImGuiTableInstanceData
 {
-    ImGuiID TableInstanceID;
+    IdType TableInstanceID;
     float LastOuterHeight;         // Outer height from last frame
     float LastTopHeadersRowHeight; // Height of first consecutive header rows from last frame (FIXME: this is used
                                    // assuming consecutive headers are in same frozen set)
@@ -4458,7 +4496,7 @@ struct ImGuiTableInstanceData
 // sizeof() ~ 592 bytes + heap allocs described in TableBeginInitMemory()
 struct ImGuiTable
 {
-    ImGuiID ID;
+    IdType ID;
     ImGuiTableFlags Flags;
     void *RawData;                    // Single allocation to hold Columns[], DisplayOrderToIndex[], and RowCellData[]
     ImGuiTableTempData *TempData;     // Transient data while table is active. Point within g.CurrentTableStack[]
@@ -4617,7 +4655,7 @@ struct ImGuiTable
 // sizeof() ~ 176 bytes.
 struct ImGuiTableTempData
 {
-    ImGuiID WindowID;              // Shortcut to g.Tables[TableIndex]->OuterWindow->ID.
+    IdType WindowID;               // Shortcut to g.Tables[TableIndex]->OuterWindow->ID.
     int TableIndex;                // Index in g.Tables.Buf[] pool
     float LastTimeActive;          // Last timestamp this structure was used
     float AngledHeadersExtraWidth; // Used in EndTable()
@@ -4630,16 +4668,16 @@ struct ImGuiTableTempData
     void *OldColumnsRawData;          // Used in BeginTable() -> TableUpdateLayout() when resizing.
     ImSpan<ImGuiTableColumn> OldColumnsData;
 
-    Vec2 UserOuterSize; // outer_size.x passed to BeginTable()
+    ::SF::Engine::Vec2 UserOuterSize; // outer_size.x passed to BeginTable()
     ImDrawListSplitter DrawSplitter;
 
-    ImRect HostBackupWorkRect;        // Backup of InnerWindow->WorkRect at the end of BeginTable()
-    ImRect HostBackupParentWorkRect;  // Backup of InnerWindow->ParentWorkRect at the end of BeginTable()
-    Vec2 HostBackupPrevLineSize;      // Backup of InnerWindow->DC.PrevLineSize at the end of BeginTable()
-    Vec2 HostBackupCurrLineSize;      // Backup of InnerWindow->DC.CurrLineSize at the end of BeginTable()
-    Vec2 HostBackupCursorMaxPos;      // Backup of InnerWindow->DC.CursorMaxPos at the end of BeginTable()
-    ImVec1 HostBackupColumnsOffset;   // Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable()
-    float HostBackupItemWidth;        // Backup of OuterWindow->DC.ItemWidth at the end of BeginTable()
+    ImRect HostBackupWorkRect;                 // Backup of InnerWindow->WorkRect at the end of BeginTable()
+    ImRect HostBackupParentWorkRect;           // Backup of InnerWindow->ParentWorkRect at the end of BeginTable()
+    ::SF::Engine::Vec2 HostBackupPrevLineSize; // Backup of InnerWindow->DC.PrevLineSize at the end of BeginTable()
+    ::SF::Engine::Vec2 HostBackupCurrLineSize; // Backup of InnerWindow->DC.CurrLineSize at the end of BeginTable()
+    ::SF::Engine::Vec2 HostBackupCursorMaxPos; // Backup of InnerWindow->DC.CursorMaxPos at the end of BeginTable()
+    ImVec1 HostBackupColumnsOffset;            // Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable()
+    float HostBackupItemWidth;                 // Backup of OuterWindow->DC.ItemWidth at the end of BeginTable()
     int HostBackupItemWidthStackSize; // Backup of OuterWindow->DC.ItemWidthStack.Size at the end of BeginTable()
 
     ImGuiTableTempData()
@@ -4653,7 +4691,7 @@ struct ImGuiTableTempData
 struct ImGuiTableColumnSettings
 {
     float WidthOrWeight;
-    ImGuiID ID;
+    IdType ID;
     ImGuiTableColumnIdx Index;
     ImGuiTableColumnIdx DisplayOrder;
     ImGuiTableColumnIdx SortOrder;
@@ -4678,7 +4716,7 @@ struct ImGuiTableColumnSettings
 // This is designed to be stored in a single ImChunkStream (1 header followed by N ImGuiTableColumnSettings, etc.)
 struct ImGuiTableSettings
 {
-    ImGuiID ID;                // Set to 0 to invalidate/delete the setting
+    IdType ID;                 // Set to 0 to invalidate/delete the setting
     ImGuiTableFlags SaveFlags; // Indicate data we want to save using the Resizable/Reorderable/Sortable/Hideable flags
                                // (could be using its own flags..)
     float RefScale;            // Reference scale to be able to rescale columns on font/dpi changes.
@@ -4707,7 +4745,7 @@ namespace ImGui
     void TablePopBackgroundChannel();
     void TablePushColumnChannel(int column_n);
     void TablePopColumnChannel();
-    void TableAngledHeadersRowEx(ImGuiID row_id, float angle, float max_label_width, const ImGuiTableHeaderData *data,
+    void TableAngledHeadersRowEx(IdType row_id, float angle, float max_label_width, const ImGuiTableHeaderData *data,
                                  int data_count);
 
     // Tables: Internals
@@ -4716,9 +4754,9 @@ namespace ImGui
         ImGuiContext &g = *GImGui;
         return g.CurrentTable;
     }
-    ImGuiTable *TableFindByID(ImGuiID id);
-    bool BeginTableEx(const char *name, ImGuiID id, int columns_count, ImGuiTableFlags flags = 0,
-                      const Vec2 &outer_size = Vec2(0, 0), float inner_width = 0.0f);
+    ImGuiTable *TableFindByID(IdType id);
+    bool BeginTableEx(const char *name, IdType id, int columns_count, ImGuiTableFlags flags = 0,
+                      const ::SF::Engine::Vec2 &outer_size = ::SF::Engine::Vec2(0, 0), float inner_width = 0.0f);
     void TableBeginInitMemory(ImGuiTable *table, int columns_count);
     void TableApplyQueuedRequests(ImGuiTable *table);
     void TableSetupDrawChannels(ImGuiTable *table);
@@ -4737,7 +4775,7 @@ namespace ImGui
             return &table->InstanceDataFirst;
         return &table->InstanceDataExtra[instance_no - 1];
     }
-    inline ImGuiID TableGetInstanceID(ImGuiTable *table, int instance_no)
+    inline IdType TableGetInstanceID(ImGuiTable *table, int instance_no)
     {
         return TableGetInstanceData(table, instance_no)->TableInstanceID;
     }
@@ -4754,7 +4792,7 @@ namespace ImGui
     void TableEndCell(ImGuiTable *table);
     ImRect TableGetCellBgRect(const ImGuiTable *table, int column_n);
     const char *TableGetColumnName(const ImGuiTable *table, int column_n);
-    ImGuiID TableGetColumnResizeID(ImGuiTable *table, int column_n, int instance_no = 0);
+    IdType TableGetColumnResizeID(ImGuiTable *table, int column_n, int instance_no = 0);
     float TableCalcMaxColumnWidth(const ImGuiTable *table, int column_n);
     void TableSetColumnWidthAutoSingle(ImGuiTable *table, int column_n);
     void TableSetColumnWidthAutoAll(ImGuiTable *table);
@@ -4774,8 +4812,8 @@ namespace ImGui
     void TableResetSettings(ImGuiTable *table);
     ImGuiTableSettings *TableGetBoundSettings(ImGuiTable *table);
     void TableSettingsAddSettingsHandler();
-    ImGuiTableSettings *TableSettingsCreate(ImGuiID id, int columns_count);
-    ImGuiTableSettings *TableSettingsFindByID(ImGuiID id);
+    ImGuiTableSettings *TableSettingsCreate(IdType id, int columns_count);
+    ImGuiTableSettings *TableSettingsFindByID(IdType id);
 
     // Legacy Columns API (this is not exposed because we will encourage transitioning to the Tables API)
     void SetWindowClipRectBeforeSetChannel(ImGuiWindow *window, const ImRect &clip_rect);
@@ -4786,8 +4824,8 @@ namespace ImGui
     void PushColumnClipRect(int column_index);
     void PushColumnsBackground();
     void PopColumnsBackground();
-    ImGuiID GetColumnsID(const char *str_id, int count);
-    ImGuiOldColumns *FindOrCreateColumns(ImGuiWindow *window, ImGuiID id);
+    IdType GetColumnsID(const char *str_id, int count);
+    ImGuiOldColumns *FindOrCreateColumns(ImGuiWindow *window, IdType id);
     float GetColumnOffsetFromNorm(const ImGuiOldColumns *columns, float offset_norm);
     float GetColumnNormFromOffset(const ImGuiOldColumns *columns, float offset);
 } // namespace ImGui
@@ -4823,20 +4861,20 @@ namespace ImGui
         g.CurrentWindow->WriteAccessed = true;
         return g.CurrentWindow;
     }
-    ImGuiWindow *FindWindowByID(ImGuiID id);
+    ImGuiWindow *FindWindowByID(IdType id);
     ImGuiWindow *FindWindowByName(const char *name);
     void UpdateWindowParentAndRootLinks(ImGuiWindow *window, ImGuiWindowFlags flags, ImGuiWindow *parent_window);
     void UpdateWindowSkipRefresh(ImGuiWindow *window);
-    Vec2 CalcWindowNextAutoFitSize(ImGuiWindow *window);
+    ::SF::Engine::Vec2 CalcWindowNextAutoFitSize(ImGuiWindow *window);
     bool IsWindowChildOf(ImGuiWindow *window, ImGuiWindow *potential_parent, bool popup_hierarchy, bool dock_hierarchy);
     bool IsWindowInBeginStack(ImGuiWindow *window);
     bool IsWindowWithinBeginStackOf(ImGuiWindow *window, ImGuiWindow *potential_parent);
     bool IsWindowAbove(ImGuiWindow *potential_above, ImGuiWindow *potential_below);
     bool IsWindowNavFocusable(ImGuiWindow *window);
-    void SetWindowPos(ImGuiWindow *window, const Vec2 &pos, ImGuiCond cond = 0);
-    void SetWindowSize(ImGuiWindow *window, const Vec2 &size, ImGuiCond cond = 0);
+    void SetWindowPos(ImGuiWindow *window, const ::SF::Engine::Vec2 &pos, ImGuiCond cond = 0);
+    void SetWindowSize(ImGuiWindow *window, const ::SF::Engine::Vec2 &size, ImGuiCond cond = 0);
     void SetWindowCollapsed(ImGuiWindow *window, bool collapsed, ImGuiCond cond = 0);
-    void SetWindowHitTestHole(ImGuiWindow *window, const Vec2 &pos, const Vec2 &size);
+    void SetWindowHitTestHole(ImGuiWindow *window, const ::SF::Engine::Vec2 &pos, const ::SF::Engine::Vec2 &size);
     void SetWindowHiddenAndSkipItemsForCurrentFrame(ImGuiWindow *window);
     inline void SetWindowParentWindowForFocusRoute(ImGuiWindow *window, ImGuiWindow *parent_window)
     {
@@ -4844,23 +4882,23 @@ namespace ImGui
     } // You may also use SetNextWindowClass()'s FocusRouteParentWindowId field.
     inline ImRect WindowRectAbsToRel(ImGuiWindow *window, const ImRect &r)
     {
-        Vec2 off = window->DC.CursorStartPos;
+        ::SF::Engine::Vec2 off = window->DC.CursorStartPos;
         return ImRect(r.Min.x - off.x, r.Min.y - off.y, r.Max.x - off.x, r.Max.y - off.y);
     }
     inline ImRect WindowRectRelToAbs(ImGuiWindow *window, const ImRect &r)
     {
-        Vec2 off = window->DC.CursorStartPos;
+        ::SF::Engine::Vec2 off = window->DC.CursorStartPos;
         return ImRect(r.Min.x + off.x, r.Min.y + off.y, r.Max.x + off.x, r.Max.y + off.y);
     }
-    inline Vec2 WindowPosAbsToRel(ImGuiWindow *window, const Vec2 &p)
+    inline ::SF::Engine::Vec2 WindowPosAbsToRel(ImGuiWindow *window, const ::SF::Engine::Vec2 &p)
     {
-        Vec2 off = window->DC.CursorStartPos;
-        return Vec2(p.x - off.x, p.y - off.y);
+        ::SF::Engine::Vec2 off = window->DC.CursorStartPos;
+        return ::SF::Engine::Vec2(p.x - off.x, p.y - off.y);
     }
-    inline Vec2 WindowPosRelToAbs(ImGuiWindow *window, const Vec2 &p)
+    inline ::SF::Engine::Vec2 WindowPosRelToAbs(ImGuiWindow *window, const ::SF::Engine::Vec2 &p)
     {
-        Vec2 off = window->DC.CursorStartPos;
-        return Vec2(p.x + off.x, p.y + off.y);
+        ::SF::Engine::Vec2 off = window->DC.CursorStartPos;
+        return ::SF::Engine::Vec2(p.x + off.x, p.y + off.y);
     }
     void SetNextWindowFlags(ImGuiWindowFlags flags, bool enabled);
     void SetNextWindowChildFlags(ImGuiChildFlags flags, bool enabled);
@@ -4902,15 +4940,15 @@ namespace ImGui
 
     // Context name & generic context hooks
     void SetContextName(ImGuiContext *ctx, const char *name);
-    ImGuiID AddContextHook(ImGuiContext *ctx, const ImGuiContextHook *hook);
-    void RemoveContextHook(ImGuiContext *ctx, ImGuiID hook_to_remove);
+    IdType AddContextHook(ImGuiContext *ctx, const ImGuiContextHook *hook);
+    void RemoveContextHook(ImGuiContext *ctx, IdType hook_to_remove);
     void CallContextHooks(ImGuiContext *ctx, ImGuiContextHookType type);
 
     // NewFrame
     void UpdateInputEvents(bool trickle_fast_inputs);
-    void UpdateHoveredWindowAndCaptureFlags(const Vec2 &mouse_pos);
-    void FindHoveredWindowEx(const Vec2 &pos, bool find_first_and_in_any_viewport, ImGuiWindow **out_hovered_window,
-                             ImGuiWindow **out_hovered_window_under_moving_window);
+    void UpdateHoveredWindowAndCaptureFlags(const ::SF::Engine::Vec2 &mouse_pos);
+    void FindHoveredWindowEx(const ::SF::Engine::Vec2 &pos, bool find_first_and_in_any_viewport,
+                             ImGuiWindow **out_hovered_window, ImGuiWindow **out_hovered_window_under_moving_window);
     void StartMouseMovingWindow(ImGuiWindow *window);
     void StartMouseMovingWindowOrNode(ImGuiWindow *window, ImGuiDockNode *node, bool undock);
     void StopMouseMovingWindow();
@@ -4918,14 +4956,15 @@ namespace ImGui
     void UpdateMouseMovingWindowEndFrame();
 
     // Viewports
-    void TranslateWindowsInViewport(ImGuiViewportP *viewport, const Vec2 &old_pos, const Vec2 &new_pos,
-                                    const Vec2 &old_size, const Vec2 &new_size);
+    void TranslateWindowsInViewport(ImGuiViewportP *viewport, const ::SF::Engine::Vec2 &old_pos,
+                                    const ::SF::Engine::Vec2 &new_pos, const ::SF::Engine::Vec2 &old_size,
+                                    const ::SF::Engine::Vec2 &new_size);
     void ScaleWindowsInViewport(ImGuiViewportP *viewport, float scale);
     void DestroyPlatformWindow(ImGuiViewportP *viewport);
     void SetWindowViewport(ImGuiWindow *window, ImGuiViewportP *viewport);
     void SetCurrentViewport(ImGuiWindow *window, ImGuiViewportP *viewport);
     const ImGuiPlatformMonitor *GetViewportPlatformMonitor(ImGuiViewport *viewport);
-    ImGuiViewportP *FindHoveredViewportFromPlatformWindowStack(const Vec2 &mouse_platform_pos);
+    ImGuiViewportP *FindHoveredViewportFromPlatformWindowStack(const ::SF::Engine::Vec2 &mouse_platform_pos);
 
     // Settings
     void MarkIniSettingsDirty();
@@ -4939,7 +4978,7 @@ namespace ImGui
 
     // Settings - Windows
     ImGuiWindowSettings *CreateNewWindowSettings(const char *name);
-    ImGuiWindowSettings *FindWindowSettingsByID(ImGuiID id);
+    ImGuiWindowSettings *FindWindowSettingsByID(IdType id);
     ImGuiWindowSettings *FindWindowSettingsByWindow(ImGuiWindow *window);
     void ClearWindowSettings(const char *name);
 
@@ -4961,7 +5000,7 @@ namespace ImGui
     // Early work-in-progress API (ScrollToItem() will become public)
     void ScrollToItem(ImGuiScrollFlags flags = 0);
     void ScrollToRect(ImGuiWindow *window, const ImRect &rect, ImGuiScrollFlags flags = 0);
-    Vec2 ScrollToRectEx(ImGuiWindow *window, const ImRect &rect, ImGuiScrollFlags flags = 0);
+    ::SF::Engine::Vec2 ScrollToRectEx(ImGuiWindow *window, const ImRect &rect, ImGuiScrollFlags flags = 0);
     inline void ScrollToBringRectIntoView(ImGuiWindow *window, const ImRect &rect)
     {
         ScrollToRect(window, rect, ImGuiScrollFlags_KeepVisibleEdgeY);
@@ -4973,47 +5012,47 @@ namespace ImGui
         ImGuiContext &g = *GImGui;
         return g.LastItemData.StatusFlags;
     }
-    inline ImGuiID GetActiveID()
+    inline IdType GetActiveID()
     {
         ImGuiContext &g = *GImGui;
         return g.ActiveId;
     }
-    inline ImGuiID GetFocusID()
+    inline IdType GetFocusID()
     {
         ImGuiContext &g = *GImGui;
         return g.NavId;
     }
-    void SetActiveID(ImGuiID id, ImGuiWindow *window);
-    void SetFocusID(ImGuiID id, ImGuiWindow *window);
+    void SetActiveID(IdType id, ImGuiWindow *window);
+    void SetFocusID(IdType id, ImGuiWindow *window);
     void ClearActiveID();
-    ImGuiID GetHoveredID();
-    void SetHoveredID(ImGuiID id);
-    void KeepAliveID(ImGuiID id);
-    void MarkItemEdited(ImGuiID id); // Mark data associated to given item as "edited", used by
-                                     // IsItemDeactivatedAfterEdit() function.
-    void PushOverrideID(ImGuiID id); // Push given value as-is at the top of the ID stack (whereas PushID combines old
-                                     // and new hashes)
-    ImGuiID GetIDWithSeed(const char *str_id_begin, const char *str_id_end, ImGuiID seed);
-    ImGuiID GetIDWithSeed(int n, ImGuiID seed);
+    IdType GetHoveredID();
+    void SetHoveredID(IdType id);
+    void KeepAliveID(IdType id);
+    void MarkItemEdited(IdType id); // Mark data associated to given item as "edited", used by
+                                    // IsItemDeactivatedAfterEdit() function.
+    void PushOverrideID(IdType id); // Push given value as-is at the top of the ID stack (whereas PushID combines old
+                                    // and new hashes)
+    IdType GetIDWithSeed(const char *str_id_begin, const char *str_id_end, IdType seed);
+    IdType GetIDWithSeed(int n, IdType seed);
 
     // Basic Helpers for widget code
-    void ItemSize(const Vec2 &size, float text_baseline_y = -1.0f);
+    void ItemSize(const ::SF::Engine::Vec2 &size, float text_baseline_y = -1.0f);
     inline void ItemSize(const ImRect &bb, float text_baseline_y = -1.0f)
     {
         ItemSize(bb.GetSize(), text_baseline_y);
     } // FIXME: This is a misleading API since we expect CursorPos to be bb.Min.
-    bool ItemAdd(const ImRect &bb, ImGuiID id, const ImRect *nav_bb = nullptr, ImGuiItemFlags extra_flags = 0);
-    bool ItemHoverable(const ImRect &bb, ImGuiID id, ImGuiItemFlags item_flags);
+    bool ItemAdd(const ImRect &bb, IdType id, const ImRect *nav_bb = nullptr, ImGuiItemFlags extra_flags = 0);
+    bool ItemHoverable(const ImRect &bb, IdType id, ImGuiItemFlags item_flags);
     bool IsWindowContentHoverable(ImGuiWindow *window, ImGuiHoveredFlags flags = 0);
-    bool IsClippedEx(const ImRect &bb, ImGuiID id);
-    void SetLastItemData(ImGuiID item_id, ImGuiItemFlags item_flags, ImGuiItemStatusFlags status_flags,
+    bool IsClippedEx(const ImRect &bb, IdType id);
+    void SetLastItemData(IdType item_id, ImGuiItemFlags item_flags, ImGuiItemStatusFlags status_flags,
                          const ImRect &item_rect);
-    Vec2 CalcItemSize(Vec2 size, float default_w, float default_h);
-    float CalcWrapWidthForPos(const Vec2 &pos, float wrap_pos_x);
+    ::SF::Engine::Vec2 CalcItemSize(::SF::Engine::Vec2 size, float default_w, float default_h);
+    float CalcWrapWidthForPos(const ::SF::Engine::Vec2 &pos, float wrap_pos_x);
     void PushMultiItemsWidths(int components, float width_full);
     void ShrinkWidths(ImGuiShrinkWidthItem *items, int count, float width_excess, float width_min);
-    void CalcClipRectVisibleItemsY(const ImRect &clip_rect, const Vec2 &pos, float items_height, int *out_visible_start,
-                                   int *out_visible_end);
+    void CalcClipRectVisibleItemsY(const ImRect &clip_rect, const ::SF::Engine::Vec2 &pos, float items_height,
+                                   int *out_visible_start, int *out_visible_end);
 
     // Parameter stacks (shared)
     const ImGuiStyleVarInfo *GetStyleVarInfo(ImGuiStyleVar idx);
@@ -5024,31 +5063,32 @@ namespace ImGui
     void LogBegin(ImGuiLogFlags flags, int auto_open_depth); // -> BeginCapture() when we design v2 api, for now stay
                                                              // under the radar by using the old name.
     void LogToBuffer(int auto_open_depth = -1);              // Start logging/capturing to internal buffer
-    void LogRenderedText(const Vec2 *ref_pos, const char *text, const char *text_end = nullptr);
+    void LogRenderedText(const ::SF::Engine::Vec2 *ref_pos, const char *text, const char *text_end = nullptr);
     void LogSetNextTextDecoration(const char *prefix, const char *suffix);
 
     // Childs
-    bool BeginChildEx(const char *name, ImGuiID id, const Vec2 &size_arg, ImGuiChildFlags child_flags,
+    bool BeginChildEx(const char *name, IdType id, const ::SF::Engine::Vec2 &size_arg, ImGuiChildFlags child_flags,
                       ImGuiWindowFlags window_flags);
     ImGuiWindow *FindFrontMostVisibleChildWindow(ImGuiWindow *window);
 
     // Popups, Modals
-    bool BeginPopupEx(ImGuiID id, ImGuiWindowFlags extra_window_flags);
-    bool BeginPopupMenuEx(ImGuiID id, const char *label, ImGuiWindowFlags extra_window_flags);
-    bool OpenPopupEx(ImGuiID id, ImGuiPopupFlags popup_flags = ImGuiPopupFlags_None);
+    bool BeginPopupEx(IdType id, ImGuiWindowFlags extra_window_flags);
+    bool BeginPopupMenuEx(IdType id, const char *label, ImGuiWindowFlags extra_window_flags);
+    bool OpenPopupEx(IdType id, ImGuiPopupFlags popup_flags = ImGuiPopupFlags_None);
     void ClosePopupToLevel(int remaining, bool restore_focus_to_window_under_popup);
     void ClosePopupsOverWindow(ImGuiWindow *ref_window, bool restore_focus_to_window_under_popup);
     void ClosePopupsExceptModals();
-    bool IsPopupOpen(ImGuiID id, ImGuiPopupFlags popup_flags);
+    bool IsPopupOpen(IdType id, ImGuiPopupFlags popup_flags);
     ImRect GetPopupAllowedExtentRect(ImGuiWindow *window);
     ImGuiWindow *GetTopMostPopupModal();
     ImGuiWindow *GetTopMostAndVisiblePopupModal();
     ImGuiWindow *FindBlockingModal(ImGuiWindow *window);
-    Vec2 FindBestWindowPosForPopup(ImGuiWindow *window);
-    Vec2 FindBestWindowPosForPopupEx(const Vec2 &ref_pos, const Vec2 &size, ImGuiDir *last_dir, const ImRect &r_outer,
-                                     const ImRect &r_avoid, ImGuiPopupPositionPolicy policy);
+    ::SF::Engine::Vec2 FindBestWindowPosForPopup(ImGuiWindow *window);
+    ::SF::Engine::Vec2 FindBestWindowPosForPopupEx(const ::SF::Engine::Vec2 &ref_pos, const ::SF::Engine::Vec2 &size,
+                                                   ImGuiDir *last_dir, const ImRect &r_outer, const ImRect &r_avoid,
+                                                   ImGuiPopupPositionPolicy policy);
     ImGuiMouseButton GetMouseButtonFromPopupFlags(ImGuiPopupFlags flags);
-    bool IsPopupOpenRequestForItem(ImGuiPopupFlags flags, ImGuiID id);
+    bool IsPopupOpenRequestForItem(ImGuiPopupFlags flags, IdType id);
     bool IsPopupOpenRequestForWindow(ImGuiPopupFlags flags);
 
     // Tooltips
@@ -5063,7 +5103,7 @@ namespace ImGui
                     bool enabled = true);
 
     // Combos
-    bool BeginComboPopup(ImGuiID popup_id, const ImRect &bb, ImGuiComboFlags flags);
+    bool BeginComboPopup(IdType popup_id, const ImRect &bb, ImGuiComboFlags flags);
     bool BeginComboPreview();
     void EndComboPreview();
 
@@ -5080,22 +5120,22 @@ namespace ImGui
     void NavMoveRequestCancel();
     void NavMoveRequestApplyResult();
     void NavMoveRequestTryWrapping(ImGuiWindow *window, ImGuiNavMoveFlags move_flags);
-    void NavHighlightActivated(ImGuiID id);
+    void NavHighlightActivated(IdType id);
     void NavClearPreferredPosForAxis(ImGuiAxis axis);
     void SetNavCursorVisibleAfterMove();
     void NavUpdateCurrentWindowIsScrollPushableX();
     void SetNavWindow(ImGuiWindow *window);
-    void SetNavID(ImGuiID id, ImGuiNavLayer nav_layer, ImGuiID focus_scope_id, const ImRect &rect_rel);
-    void SetNavFocusScope(ImGuiID focus_scope_id);
+    void SetNavID(IdType id, ImGuiNavLayer nav_layer, IdType focus_scope_id, const ImRect &rect_rel);
+    void SetNavFocusScope(IdType focus_scope_id);
 
     // Focus/Activation
     // This should be part of a larger set of API: FocusItem(offset = -1), FocusItemByID(id), ActivateItem(offset = -1),
     // ActivateItemByID(id) etc. which are much harder to design and implement than expected. I have a couple of private
     // branches on this matter but it's not simple. For now implementing the easy ones.
-    void FocusItem();                  // Focus last item (no selection/activation).
-    void ActivateItemByID(ImGuiID id); // Activate an item by ID (button, checkbox, tree node etc.). Activation is
-                                       // queued and processed on the next frame when the item is encountered again. Was
-                                       // called 'ActivateItem()' before 1.89.7.
+    void FocusItem();                 // Focus last item (no selection/activation).
+    void ActivateItemByID(IdType id); // Activate an item by ID (button, checkbox, tree node etc.). Activation is
+                                      // queued and processed on the next frame when the item is encountered again. Was
+                                      // called 'ActivateItem()' before 1.89.7.
 
     // Inputs
     // FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions.
@@ -5141,11 +5181,11 @@ namespace ImGui
         return (ImGuiKey) (ImGuiKey_MouseLeft + button);
     }
     bool IsMouseDragPastThreshold(ImGuiMouseButton button, float lock_threshold = -1.0f);
-    Vec2 GetKeyMagnitude2d(ImGuiKey key_left, ImGuiKey key_right, ImGuiKey key_up, ImGuiKey key_down);
+    ::SF::Engine::Vec2 GetKeyMagnitude2d(ImGuiKey key_left, ImGuiKey key_right, ImGuiKey key_up, ImGuiKey key_down);
     float GetNavTweakPressedAmount(ImGuiAxis axis);
     int CalcTypematicRepeatAmount(float t0, float t1, float repeat_delay, float repeat_rate);
     void GetTypematicRepeatRate(ImGuiInputFlags flags, float *repeat_delay, float *repeat_rate);
-    void TeleportMousePos(const Vec2 &pos);
+    void TeleportMousePos(const ::SF::Engine::Vec2 &pos);
     void SetActiveIdUsingAllKeyboardKeys();
     inline bool IsActiveIdUsingNavDir(ImGuiDir dir)
     {
@@ -5171,11 +5211,11 @@ namespace ImGui
     // - This is marked experimental because not all widgets are fully honoring the Set/Test idioms. We will need to
     // move forward step by step.
     //   Please open a GitHub Issue to submit your usage scenario or if there's a use case you need solved.
-    ImGuiID GetKeyOwner(ImGuiKey key);
-    void SetKeyOwner(ImGuiKey key, ImGuiID owner_id, ImGuiInputFlags flags = 0);
-    void SetKeyOwnersForKeyChord(ImGuiKeyChord key, ImGuiID owner_id, ImGuiInputFlags flags = 0);
+    IdType GetKeyOwner(ImGuiKey key);
+    void SetKeyOwner(ImGuiKey key, IdType owner_id, ImGuiInputFlags flags = 0);
+    void SetKeyOwnersForKeyChord(ImGuiKeyChord key, IdType owner_id, ImGuiInputFlags flags = 0);
     bool SetItemKeyOwner(ImGuiKey key, ImGuiInputFlags flags);
-    bool TestKeyOwner(ImGuiKey key, ImGuiID owner_id); // Test that key is either not owned, either owned by 'owner_id'
+    bool TestKeyOwner(ImGuiKey key, IdType owner_id); // Test that key is either not owned, either owned by 'owner_id'
     inline ImGuiKeyOwnerData *GetKeyOwnerData(ImGuiContext *ctx, ImGuiKey key)
     {
         if (key & ImGuiMod_Mask_)
@@ -5189,24 +5229,24 @@ namespace ImGui
     // _EXPLICIT_ ImGuiInputFlags_Repeat flag.
     // - Expected to be later promoted to public API, the prototypes are designed to replace existing ones (since
     // owner_id can default to Any == 0)
-    // - Specifying a value for 'ImGuiID owner' will test that EITHER the key is NOT owned (UNLESS locked), EITHER the
+    // - Specifying a value for 'IdType owner' will test that EITHER the key is NOT owned (UNLESS locked), EITHER the
     // key is owned by 'owner'.
     //   Legacy functions use ImGuiKeyOwner_Any meaning that they typically ignore ownership, unless a call to
     //   SetKeyOwner() explicitly used ImGuiInputFlags_LockThisFrame or ImGuiInputFlags_LockUntilRelease.
     // - Binding generators may want to ignore those for now, or suffix them with Ex() until we decide if this gets
     // moved into public API.
-    bool IsKeyDown(ImGuiKey key, ImGuiID owner_id);
+    bool IsKeyDown(ImGuiKey key, IdType owner_id);
     bool
     IsKeyPressed(ImGuiKey key, ImGuiInputFlags flags,
-                 ImGuiID owner_id =
+                 IdType owner_id =
                          0); // Important: when transitioning from old to new IsKeyPressed(): old API has "bool repeat =
                              // true", so would default to repeat. New API requires explicit ImGuiInputFlags_Repeat.
-    bool IsKeyReleased(ImGuiKey key, ImGuiID owner_id);
-    bool IsKeyChordPressed(ImGuiKeyChord key_chord, ImGuiInputFlags flags, ImGuiID owner_id = 0);
-    bool IsMouseDown(ImGuiMouseButton button, ImGuiID owner_id);
-    bool IsMouseClicked(ImGuiMouseButton button, ImGuiInputFlags flags, ImGuiID owner_id = 0);
-    bool IsMouseReleased(ImGuiMouseButton button, ImGuiID owner_id);
-    bool IsMouseDoubleClicked(ImGuiMouseButton button, ImGuiID owner_id);
+    bool IsKeyReleased(ImGuiKey key, IdType owner_id);
+    bool IsKeyChordPressed(ImGuiKeyChord key_chord, ImGuiInputFlags flags, IdType owner_id = 0);
+    bool IsMouseDown(ImGuiMouseButton button, IdType owner_id);
+    bool IsMouseClicked(ImGuiMouseButton button, ImGuiInputFlags flags, IdType owner_id = 0);
+    bool IsMouseReleased(ImGuiMouseButton button, IdType owner_id);
+    bool IsMouseDoubleClicked(ImGuiMouseButton button, IdType owner_id);
 
     // Shortcut Testing & Routing
     // - Set Shortcut() and SetNextItemShortcut() in imgui.h
@@ -5228,23 +5268,23 @@ namespace ImGui
     // - You can chain two unrelated windows in the focus stack using SetWindowParentWindowForFocusRoute()
     //   e.g. if you have a tool window associated to a document, and you want document shortcuts to run when the tool
     //   is focused.
-    bool Shortcut(ImGuiKeyChord key_chord, ImGuiInputFlags flags, ImGuiID owner_id);
+    bool Shortcut(ImGuiKeyChord key_chord, ImGuiInputFlags flags, IdType owner_id);
     bool SetShortcutRouting(ImGuiKeyChord key_chord, ImGuiInputFlags flags,
-                            ImGuiID owner_id); // owner_id needs to be explicit and cannot be 0
-    bool TestShortcutRouting(ImGuiKeyChord key_chord, ImGuiID owner_id);
+                            IdType owner_id); // owner_id needs to be explicit and cannot be 0
+    bool TestShortcutRouting(ImGuiKeyChord key_chord, IdType owner_id);
     ImGuiKeyRoutingData *GetShortcutRoutingData(ImGuiKeyChord key_chord);
 
     // Docking
     // (some functions are only declared in imgui.cpp, see Docking section)
     void DockContextInitialize(ImGuiContext *ctx);
     void DockContextShutdown(ImGuiContext *ctx);
-    void DockContextClearNodes(ImGuiContext *ctx, ImGuiID root_id,
+    void DockContextClearNodes(ImGuiContext *ctx, IdType root_id,
                                bool clear_settings_refs); // Use root_id==0 to clear all
     void DockContextRebuildNodes(ImGuiContext *ctx);
     void DockContextNewFrameUpdateUndocking(ImGuiContext *ctx);
     void DockContextNewFrameUpdateDocking(ImGuiContext *ctx);
     void DockContextEndFrame(ImGuiContext *ctx);
-    ImGuiID DockContextGenNodeID(ImGuiContext *ctx);
+    IdType DockContextGenNodeID(ImGuiContext *ctx);
     void DockContextQueueDock(ImGuiContext *ctx, ImGuiWindow *target, ImGuiDockNode *target_node, ImGuiWindow *payload,
                               ImGuiDir split_dir, float split_ratio, bool split_outer);
     void DockContextQueueUndockWindow(ImGuiContext *ctx, ImGuiWindow *window);
@@ -5254,8 +5294,8 @@ namespace ImGui
     void DockContextProcessUndockNode(ImGuiContext *ctx, ImGuiDockNode *node);
     bool DockContextCalcDropPosForDocking(ImGuiWindow *target, ImGuiDockNode *target_node, ImGuiWindow *payload_window,
                                           ImGuiDockNode *payload_node, ImGuiDir split_dir, bool split_outer,
-                                          Vec2 *out_pos);
-    ImGuiDockNode *DockContextFindNodeByID(ImGuiContext *ctx, ImGuiID id);
+                                          ::SF::Engine::Vec2 *out_pos);
+    ImGuiDockNode *DockContextFindNodeByID(ImGuiContext *ctx, IdType id);
     void DockNodeWindowMenuHandler_Default(ImGuiContext *ctx, ImGuiDockNode *node, ImGuiTabBar *tab_bar);
     bool DockNodeBeginAmendTabBar(ImGuiDockNode *node);
     void DockNodeEndAmendTabBar();
@@ -5285,7 +5325,7 @@ namespace ImGui
         }
         return depth;
     }
-    inline ImGuiID DockNodeGetWindowMenuButtonId(const ImGuiDockNode *node)
+    inline IdType DockNodeGetWindowMenuButtonId(const ImGuiDockNode *node)
     {
         return ImHashStr("#COLLAPSE", 0, node->ID);
     }
@@ -5298,7 +5338,7 @@ namespace ImGui
     void BeginDocked(ImGuiWindow *window, bool *p_open);
     void BeginDockableDragDropSource(ImGuiWindow *window);
     void BeginDockableDragDropTarget(ImGuiWindow *window);
-    void SetWindowDock(ImGuiWindow *window, ImGuiID dock_id, ImGuiCond cond);
+    void SetWindowDock(ImGuiWindow *window, IdType dock_id, ImGuiCond cond);
 
     // Docking - Builder function needs to be generally called before the node is used/submitted.
     // - The DockBuilderXXX functions are designed to _eventually_ become a public API, but it is too early to expose it
@@ -5312,30 +5352,30 @@ namespace ImGui
     // - If you intend to split the node immediately after creation using DockBuilderSplitNode(), make sure
     //   to call DockBuilderSetNodeSize() beforehand. If you don't, the resulting split sizes may not be reliable.
     // - Call DockBuilderFinish() after you are done.
-    void DockBuilderDockWindow(const char *window_name, ImGuiID node_id);
-    ImGuiDockNode *DockBuilderGetNode(ImGuiID node_id);
-    inline ImGuiDockNode *DockBuilderGetCentralNode(ImGuiID node_id)
+    void DockBuilderDockWindow(const char *window_name, IdType node_id);
+    ImGuiDockNode *DockBuilderGetNode(IdType node_id);
+    inline ImGuiDockNode *DockBuilderGetCentralNode(IdType node_id)
     {
         ImGuiDockNode *node = DockBuilderGetNode(node_id);
         if (!node)
             return nullptr;
         return DockNodeGetRootNode(node)->CentralNode;
     }
-    ImGuiID DockBuilderAddNode(ImGuiID node_id = 0, ImGuiDockNodeFlags flags = 0);
-    void DockBuilderRemoveNode(ImGuiID node_id); // Remove node and all its child, undock all windows
-    void DockBuilderRemoveNodeDockedWindows(ImGuiID node_id, bool clear_settings_refs = true);
-    void DockBuilderRemoveNodeChildNodes(ImGuiID node_id); // Remove all split/hierarchy. All remaining docked windows
-                                                           // will be re-docked to the remaining root node (node_id).
-    void DockBuilderSetNodePos(ImGuiID node_id, Vec2 pos);
-    void DockBuilderSetNodeSize(ImGuiID node_id, Vec2 size);
-    ImGuiID DockBuilderSplitNode(ImGuiID node_id, ImGuiDir split_dir, float size_ratio_for_node_at_dir,
-                                 ImGuiID *out_id_at_dir,
-                                 ImGuiID *out_id_at_opposite_dir); // Create 2 child nodes in this parent node.
-    void DockBuilderCopyDockSpace(ImGuiID src_dockspace_id, ImGuiID dst_dockspace_id,
+    IdType DockBuilderAddNode(IdType node_id = 0, ImGuiDockNodeFlags flags = 0);
+    void DockBuilderRemoveNode(IdType node_id); // Remove node and all its child, undock all windows
+    void DockBuilderRemoveNodeDockedWindows(IdType node_id, bool clear_settings_refs = true);
+    void DockBuilderRemoveNodeChildNodes(IdType node_id); // Remove all split/hierarchy. All remaining docked windows
+                                                          // will be re-docked to the remaining root node (node_id).
+    void DockBuilderSetNodePos(IdType node_id, ::SF::Engine::Vec2 pos);
+    void DockBuilderSetNodeSize(IdType node_id, ::SF::Engine::Vec2 size);
+    IdType DockBuilderSplitNode(IdType node_id, ImGuiDir split_dir, float size_ratio_for_node_at_dir,
+                                IdType *out_id_at_dir,
+                                IdType *out_id_at_opposite_dir); // Create 2 child nodes in this parent node.
+    void DockBuilderCopyDockSpace(IdType src_dockspace_id, IdType dst_dockspace_id,
                                   ImVector<const char *> *in_window_remap_pairs);
-    void DockBuilderCopyNode(ImGuiID src_node_id, ImGuiID dst_node_id, ImVector<ImGuiID> *out_node_remap_pairs);
+    void DockBuilderCopyNode(IdType src_node_id, IdType dst_node_id, ImVector<IdType> *out_node_remap_pairs);
     void DockBuilderCopyWindowSettings(const char *src_name, const char *dst_name);
-    void DockBuilderFinish(ImGuiID node_id);
+    void DockBuilderFinish(IdType node_id);
 
     // [EXPERIMENTAL] Focus Scope
     // This is generally used to identify a unique input location (for e.g. a selection set)
@@ -5346,10 +5386,10 @@ namespace ImGui
     //   PushFocusScope()/EndFocusScope()
     // - Shortcut routing also use focus scope as a default location identifier if an owner is not provided.
     // We don't use the ID Stack for this as it is common to want them separate.
-    void PushFocusScope(ImGuiID id);
+    void PushFocusScope(IdType id);
     void PopFocusScope();
-    bool IsInNavFocusRoute(ImGuiID focus_scope_id);
-    inline ImGuiID GetCurrentFocusScope()
+    bool IsInNavFocusRoute(IdType focus_scope_id);
+    inline IdType GetCurrentFocusScope()
     {
         ImGuiContext &g = *GImGui;
         return g.CurrentFocusScopeId;
@@ -5357,7 +5397,7 @@ namespace ImGui
 
     // Drag and Drop
     bool IsDragDropActive();
-    bool BeginDragDropTargetCustom(const ImRect &bb, ImGuiID id);
+    bool BeginDragDropTargetCustom(const ImRect &bb, IdType id);
     bool BeginDragDropTargetViewport(ImGuiViewport *viewport, const ImRect *p_bb = nullptr);
     void ClearDragDrop();
     bool IsDragDropPayloadBeingAccepted();
@@ -5378,22 +5418,22 @@ namespace ImGui
                                          const char *(*get_item_name_func)(void *, int), void *user_data);
 
     // Box-Select API
-    bool BeginBoxSelect(const ImRect &scope_rect, ImGuiWindow *window, ImGuiID box_select_id,
+    bool BeginBoxSelect(const ImRect &scope_rect, ImGuiWindow *window, IdType box_select_id,
                         ImGuiMultiSelectFlags ms_flags);
     void EndBoxSelect(const ImRect &scope_rect, ImGuiMultiSelectFlags ms_flags);
 
     // Multi-Select API
-    void MultiSelectItemHeader(ImGuiID id, bool *p_selected, ImGuiButtonFlags *p_button_flags);
-    void MultiSelectItemFooter(ImGuiID id, bool *p_selected, bool *p_pressed, ImGuiMultiSelectFlags extra_flags = 0);
+    void MultiSelectItemHeader(IdType id, bool *p_selected, ImGuiButtonFlags *p_button_flags);
+    void MultiSelectItemFooter(IdType id, bool *p_selected, bool *p_pressed, ImGuiMultiSelectFlags extra_flags = 0);
     void MultiSelectAddSetAll(ImGuiMultiSelectTempData *ms, bool selected);
     void MultiSelectAddSetRange(ImGuiMultiSelectTempData *ms, bool selected, int range_dir,
                                 ImGuiSelectionUserData first_item, ImGuiSelectionUserData last_item);
-    inline ImGuiBoxSelectState *GetBoxSelectState(ImGuiID id)
+    inline ImGuiBoxSelectState *GetBoxSelectState(IdType id)
     {
         ImGuiContext &g = *GImGui;
         return (id != 0 && g.BoxSelectState.ID == id && g.BoxSelectState.IsActive) ? &g.BoxSelectState : nullptr;
     }
-    inline ImGuiMultiSelectState *GetMultiSelectState(ImGuiID id)
+    inline ImGuiMultiSelectState *GetMultiSelectState(IdType id)
     {
         ImGuiContext &g = *GImGui;
         return g.MultiSelectStorage.GetByKey(id);
@@ -5405,67 +5445,75 @@ namespace ImGui
         ImGuiContext &g = *GImGui;
         return g.CurrentTabBar;
     }
-    ImGuiTabBar *TabBarFindByID(ImGuiID id);
+    ImGuiTabBar *TabBarFindByID(IdType id);
     void TabBarRemove(ImGuiTabBar *tab_bar);
     bool BeginTabBarEx(ImGuiTabBar *tab_bar, const ImRect &bb, ImGuiTabBarFlags flags);
-    ImGuiTabItem *TabBarFindTabByID(ImGuiTabBar *tab_bar, ImGuiID tab_id);
+    ImGuiTabItem *TabBarFindTabByID(ImGuiTabBar *tab_bar, IdType tab_id);
     ImGuiTabItem *TabBarFindTabByOrder(ImGuiTabBar *tab_bar, int order);
     ImGuiTabItem *TabBarFindMostRecentlySelectedTabForActiveWindow(ImGuiTabBar *tab_bar);
     ImGuiTabItem *TabBarGetCurrentTab(ImGuiTabBar *tab_bar);
     inline int TabBarGetTabOrder(ImGuiTabBar *tab_bar, ImGuiTabItem *tab) { return tab_bar->Tabs.index_from_ptr(tab); }
     const char *TabBarGetTabName(ImGuiTabBar *tab_bar, ImGuiTabItem *tab);
     void TabBarAddTab(ImGuiTabBar *tab_bar, ImGuiTabItemFlags tab_flags, ImGuiWindow *window);
-    void TabBarRemoveTab(ImGuiTabBar *tab_bar, ImGuiID tab_id);
+    void TabBarRemoveTab(ImGuiTabBar *tab_bar, IdType tab_id);
     void TabBarCloseTab(ImGuiTabBar *tab_bar, ImGuiTabItem *tab);
     void TabBarQueueFocus(ImGuiTabBar *tab_bar, ImGuiTabItem *tab);
     void TabBarQueueFocus(ImGuiTabBar *tab_bar, const char *tab_name);
     void TabBarQueueReorder(ImGuiTabBar *tab_bar, ImGuiTabItem *tab, int offset);
-    void TabBarQueueReorderFromMousePos(ImGuiTabBar *tab_bar, ImGuiTabItem *tab, Vec2 mouse_pos);
+    void TabBarQueueReorderFromMousePos(ImGuiTabBar *tab_bar, ImGuiTabItem *tab, ::SF::Engine::Vec2 mouse_pos);
     bool TabBarProcessReorder(ImGuiTabBar *tab_bar);
     bool TabItemEx(ImGuiTabBar *tab_bar, const char *label, bool *p_open, ImGuiTabItemFlags flags,
                    ImGuiWindow *docked_window);
     void TabItemSpacing(const char *str_id, ImGuiTabItemFlags flags, float width);
-    Vec2 TabItemCalcSize(const char *label, bool has_close_button_or_unsaved_marker);
-    Vec2 TabItemCalcSize(ImGuiWindow *window);
+    ::SF::Engine::Vec2 TabItemCalcSize(const char *label, bool has_close_button_or_unsaved_marker);
+    ::SF::Engine::Vec2 TabItemCalcSize(ImGuiWindow *window);
     void TabItemBackground(ImDrawList *draw_list, const ImRect &bb, ImGuiTabItemFlags flags, uint32_t col);
     void TabItemLabelAndCloseButton(ImDrawList *draw_list, const ImRect &bb, ImGuiTabItemFlags flags,
-                                    Vec2 frame_padding, const char *label, ImGuiID tab_id, ImGuiID close_button_id,
-                                    bool is_contents_visible, bool *out_just_closed, bool *out_text_clipped);
+                                    ::SF::Engine::Vec2 frame_padding, const char *label, IdType tab_id,
+                                    IdType close_button_id, bool is_contents_visible, bool *out_just_closed,
+                                    bool *out_text_clipped);
 
     // Render helpers
     // AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND
     // BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT. NB: All position are in absolute pixels
     // coordinates (we are never using window coordinates internally)
-    void RenderText(Vec2 pos, const char *text, const char *text_end = nullptr, bool hide_text_after_hash = true);
-    void RenderTextWrapped(Vec2 pos, const char *text, const char *text_end, float wrap_width);
-    void RenderTextClipped(const Vec2 &pos_min, const Vec2 &pos_max, const char *text, const char *text_end,
-                           const Vec2 *text_size_if_known, const Vec2 &align = Vec2(0, 0),
-                           const ImRect *clip_rect = nullptr);
-    void RenderTextClippedEx(ImDrawList *draw_list, const Vec2 &pos_min, const Vec2 &pos_max, const char *text,
-                             const char *text_end, const Vec2 *text_size_if_known, const Vec2 &align = Vec2(0, 0),
-                             const ImRect *clip_rect = nullptr);
-    void RenderTextEllipsis(ImDrawList *draw_list, const Vec2 &pos_min, const Vec2 &pos_max, float ellipsis_max_x,
-                            const char *text, const char *text_end, const Vec2 *text_size_if_known);
-    void RenderFrame(Vec2 p_min, Vec2 p_max, uint32_t fill_col, bool borders = true, float rounding = 0.0f);
-    void RenderFrameBorder(Vec2 p_min, Vec2 p_max, float rounding = 0.0f);
+    void RenderText(::SF::Engine::Vec2 pos, const char *text, const char *text_end = nullptr,
+                    bool hide_text_after_hash = true);
+    void RenderTextWrapped(::SF::Engine::Vec2 pos, const char *text, const char *text_end, float wrap_width);
+    void RenderTextClipped(const ::SF::Engine::Vec2 &pos_min, const ::SF::Engine::Vec2 &pos_max, const char *text,
+                           const char *text_end, const ::SF::Engine::Vec2 *text_size_if_known,
+                           const ::SF::Engine::Vec2 &align = ::SF::Engine::Vec2(0, 0),
+                           const ImRect *clip_rect         = nullptr);
+    void RenderTextClippedEx(ImDrawList *draw_list, const ::SF::Engine::Vec2 &pos_min,
+                             const ::SF::Engine::Vec2 &pos_max, const char *text, const char *text_end,
+                             const ::SF::Engine::Vec2 *text_size_if_known,
+                             const ::SF::Engine::Vec2 &align = ::SF::Engine::Vec2(0, 0),
+                             const ImRect *clip_rect         = nullptr);
+    void RenderTextEllipsis(ImDrawList *draw_list, const ::SF::Engine::Vec2 &pos_min, const ::SF::Engine::Vec2 &pos_max,
+                            float ellipsis_max_x, const char *text, const char *text_end,
+                            const ::SF::Engine::Vec2 *text_size_if_known);
+    void RenderFrame(::SF::Engine::Vec2 p_min, ::SF::Engine::Vec2 p_max, uint32_t fill_col, bool borders = true,
+                     float rounding = 0.0f);
+    void RenderFrameBorder(::SF::Engine::Vec2 p_min, ::SF::Engine::Vec2 p_max, float rounding = 0.0f);
     void RenderColorComponentMarker(const ImRect &bb, uint32_t col, float rounding);
-    void RenderColorRectWithAlphaCheckerboard(ImDrawList *draw_list, Vec2 p_min, Vec2 p_max, uint32_t fill_col,
-                                              float grid_step, Vec2 grid_off, float rounding = 0.0f,
-                                              ImDrawFlags flags = 0);
-    void RenderNavCursor(const ImRect &bb, ImGuiID id, ImGuiNavRenderCursorFlags flags = ImGuiNavRenderCursorFlags_None,
+    void RenderColorRectWithAlphaCheckerboard(ImDrawList *draw_list, ::SF::Engine::Vec2 p_min, ::SF::Engine::Vec2 p_max,
+                                              uint32_t fill_col, float grid_step, ::SF::Engine::Vec2 grid_off,
+                                              float rounding = 0.0f, ImDrawFlags flags = 0);
+    void RenderNavCursor(const ImRect &bb, IdType id, ImGuiNavRenderCursorFlags flags = ImGuiNavRenderCursorFlags_None,
                          float rounding = -1.0f); // Navigation highlight
     const char *
     FindRenderedTextEnd(const char *text,
                         const char *text_end = nullptr); // Find the optional ## from which we stop displaying text.
-    void RenderMouseCursor(Vec2 pos, float scale, ImGuiMouseCursor mouse_cursor, uint32_t col_fill, uint32_t col_border,
-                           uint32_t col_shadow);
+    void RenderMouseCursor(::SF::Engine::Vec2 pos, float scale, ImGuiMouseCursor mouse_cursor, uint32_t col_fill,
+                           uint32_t col_border, uint32_t col_shadow);
 
     // Render helpers (those functions don't access any ImGui state!)
-    void RenderArrow(ImDrawList *draw_list, Vec2 pos, uint32_t col, ImGuiDir dir, float scale = 1.0f);
-    void RenderBullet(ImDrawList *draw_list, Vec2 pos, uint32_t col);
-    void RenderCheckMark(ImDrawList *draw_list, Vec2 pos, uint32_t col, float sz);
-    void RenderArrowPointingAt(ImDrawList *draw_list, Vec2 pos, Vec2 half_sz, ImGuiDir direction, uint32_t col);
-    void RenderArrowDockMenu(ImDrawList *draw_list, Vec2 p_min, float sz, uint32_t col);
+    void RenderArrow(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, uint32_t col, ImGuiDir dir, float scale = 1.0f);
+    void RenderBullet(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, uint32_t col);
+    void RenderCheckMark(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, uint32_t col, float sz);
+    void RenderArrowPointingAt(ImDrawList *draw_list, ::SF::Engine::Vec2 pos, ::SF::Engine::Vec2 half_sz,
+                               ImGuiDir direction, uint32_t col);
+    void RenderArrowDockMenu(ImDrawList *draw_list, ::SF::Engine::Vec2 p_min, float sz, uint32_t col);
     void RenderRectFilledInRangeH(ImDrawList *draw_list, const ImRect &rect, uint32_t col, float fill_x0, float fill_x1,
                                   float rounding);
     void RenderRectFilledWithHole(ImDrawList *draw_list, const ImRect &outer, const ImRect &inner, uint32_t col,
@@ -5480,44 +5528,46 @@ namespace ImGui
     void TextAlignedV(float align_x, float size_x, const char *fmt, va_list args);
 
     // Widgets
-    bool ButtonEx(const char *label, const Vec2 &size_arg = Vec2(0, 0), ImGuiButtonFlags flags = 0);
-    bool ArrowButtonEx(const char *str_id, ImGuiDir dir, Vec2 size_arg, ImGuiButtonFlags flags = 0);
-    bool ImageButtonEx(ImGuiID id, ImTextureRef tex_ref, const Vec2 &image_size, const Vec2 &uv0, const Vec2 &uv1,
-                       const Vec4 &bg_col, const Vec4 &tint_col, ImGuiButtonFlags flags = 0);
+    bool ButtonEx(const char *label, const ::SF::Engine::Vec2 &size_arg = ::SF::Engine::Vec2(0, 0),
+                  ImGuiButtonFlags flags = 0);
+    bool ArrowButtonEx(const char *str_id, ImGuiDir dir, ::SF::Engine::Vec2 size_arg, ImGuiButtonFlags flags = 0);
+    bool ImageButtonEx(IdType id, ImTextureRef tex_ref, const ::SF::Engine::Vec2 &image_size,
+                       const ::SF::Engine::Vec2 &uv0, const ::SF::Engine::Vec2 &uv1, const ::SF::Engine::Vec4 &bg_col,
+                       const ::SF::Engine::Vec4 &tint_col, ImGuiButtonFlags flags = 0);
     void SeparatorEx(ImGuiSeparatorFlags flags, float thickness = 1.0f);
-    void SeparatorTextEx(ImGuiID id, const char *label, const char *label_end, float extra_width);
+    void SeparatorTextEx(IdType id, const char *label, const char *label_end, float extra_width);
     bool CheckboxFlags(const char *label, int64_t *flags, int64_t flags_value);
     bool CheckboxFlags(const char *label, uint64_t *flags, uint64_t flags_value);
 
     // Widgets: Window Decorations
-    bool CloseButton(ImGuiID id, const Vec2 &pos);
-    bool CollapseButton(ImGuiID id, const Vec2 &pos, ImGuiDockNode *dock_node);
+    bool CloseButton(IdType id, const ::SF::Engine::Vec2 &pos);
+    bool CollapseButton(IdType id, const ::SF::Engine::Vec2 &pos, ImGuiDockNode *dock_node);
     void Scrollbar(ImGuiAxis axis);
-    bool ScrollbarEx(const ImRect &bb, ImGuiID id, ImGuiAxis axis, int64_t *p_scroll_v, int64_t avail_v,
+    bool ScrollbarEx(const ImRect &bb, IdType id, ImGuiAxis axis, int64_t *p_scroll_v, int64_t avail_v,
                      int64_t contents_v, ImDrawFlags draw_rounding_flags = 0);
     ImRect GetWindowScrollbarRect(ImGuiWindow *window, ImGuiAxis axis);
-    ImGuiID GetWindowScrollbarID(ImGuiWindow *window, ImGuiAxis axis);
-    ImGuiID GetWindowResizeCornerID(ImGuiWindow *window, int n); // 0..3: corners
-    ImGuiID GetWindowResizeBorderID(ImGuiWindow *window, ImGuiDir dir);
+    IdType GetWindowScrollbarID(ImGuiWindow *window, ImGuiAxis axis);
+    IdType GetWindowResizeCornerID(ImGuiWindow *window, int n); // 0..3: corners
+    IdType GetWindowResizeBorderID(ImGuiWindow *window, ImGuiDir dir);
     void ExtendHitBoxWhenNearViewportEdge(ImGuiWindow *window, ImRect *bb, float threshold, ImGuiAxis axis);
 
     // Widgets low-level behaviors
-    bool ButtonBehavior(const ImRect &bb, ImGuiID id, bool *out_hovered, bool *out_held, ImGuiButtonFlags flags = 0);
-    bool DragBehavior(ImGuiID id, ImGuiDataType data_type, void *p_v, float v_speed, const void *p_min,
+    bool ButtonBehavior(const ImRect &bb, IdType id, bool *out_hovered, bool *out_held, ImGuiButtonFlags flags = 0);
+    bool DragBehavior(IdType id, ImGuiDataType data_type, void *p_v, float v_speed, const void *p_min,
                       const void *p_max, const char *format, ImGuiSliderFlags flags);
-    bool SliderBehavior(const ImRect &bb, ImGuiID id, ImGuiDataType data_type, void *p_v, const void *p_min,
+    bool SliderBehavior(const ImRect &bb, IdType id, ImGuiDataType data_type, void *p_v, const void *p_min,
                         const void *p_max, const char *format, ImGuiSliderFlags flags, ImRect *out_grab_bb);
-    bool SplitterBehavior(const ImRect &bb, ImGuiID id, ImGuiAxis axis, float *size1, float *size2, float min_size1,
+    bool SplitterBehavior(const ImRect &bb, IdType id, ImGuiAxis axis, float *size1, float *size2, float min_size1,
                           float min_size2, float hover_extend = 0.0f, float hover_visibility_delay = 0.0f,
                           uint32_t bg_col = 0);
 
     // Widgets: Tree Nodes
-    bool TreeNodeBehavior(ImGuiID id, ImGuiTreeNodeFlags flags, const char *label, const char *label_end = nullptr);
-    void TreeNodeDrawLineToChildNode(const Vec2 &target_pos);
+    bool TreeNodeBehavior(IdType id, ImGuiTreeNodeFlags flags, const char *label, const char *label_end = nullptr);
+    void TreeNodeDrawLineToChildNode(const ::SF::Engine::Vec2 &target_pos);
     void TreeNodeDrawLineToTreePop(const ImGuiTreeNodeStackData *data);
-    void TreePushOverrideID(ImGuiID id);
-    void TreeNodeSetOpen(ImGuiID storage_id, bool open);
-    bool TreeNodeUpdateNextOpen(ImGuiID storage_id,
+    void TreePushOverrideID(IdType id);
+    void TreeNodeSetOpen(IdType storage_id, bool open);
+    bool TreeNodeUpdateNextOpen(IdType storage_id,
                                 ImGuiTreeNodeFlags flags); // Return open state. Consume previous SetNextItemOpen()
                                                            // data, if any. May return true when logging.
 
@@ -5535,7 +5585,7 @@ namespace ImGui
     bool DragBehaviorT(ImGuiDataType data_type, T *v, float v_speed, T v_min, T v_max, const char *format,
                        ImGuiSliderFlags flags);
     template<typename T, typename SIGNED_T, typename FLOAT_T>
-    bool SliderBehaviorT(const ImRect &bb, ImGuiID id, ImGuiDataType data_type, T *v, T v_min, T v_max,
+    bool SliderBehaviorT(const ImRect &bb, IdType id, ImGuiDataType data_type, T *v, T v_min, T v_max,
                          const char *format, ImGuiSliderFlags flags, ImRect *out_grab_bb);
     template<typename T>
     T RoundScalarWithFormatT(const char *format, ImGuiDataType data_type, T v);
@@ -5553,20 +5603,20 @@ namespace ImGui
     bool DataTypeIsZero(ImGuiDataType data_type, const void *p_data);
 
     // InputText
-    bool InputTextEx(const char *label, const char *hint, char *buf, int buf_size, const Vec2 &size_arg,
+    bool InputTextEx(const char *label, const char *hint, char *buf, int buf_size, const ::SF::Engine::Vec2 &size_arg,
                      ImGuiInputTextFlags flags, ImGuiInputTextCallback callback = nullptr, void *user_data = nullptr);
-    void InputTextDeactivateHook(ImGuiID id);
-    bool TempInputText(const ImRect &bb, ImGuiID id, const char *label, char *buf, size_t buf_size,
+    void InputTextDeactivateHook(IdType id);
+    bool TempInputText(const ImRect &bb, IdType id, const char *label, char *buf, size_t buf_size,
                        ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr,
                        void *user_data = nullptr);
-    bool TempInputScalar(const ImRect &bb, ImGuiID id, const char *label, ImGuiDataType data_type, void *p_data,
+    bool TempInputScalar(const ImRect &bb, IdType id, const char *label, ImGuiDataType data_type, void *p_data,
                          const char *format, const void *p_clamp_min = nullptr, const void *p_clamp_max = nullptr);
-    inline bool TempInputIsActive(ImGuiID id)
+    inline bool TempInputIsActive(IdType id)
     {
         ImGuiContext &g = *GImGui;
         return (g.TempInputId == id && g.ActiveId == id) || (g.InputTextDeactivatedState.ID == id);
     }
-    inline ImGuiInputTextState *GetInputTextState(ImGuiID id)
+    inline ImGuiInputTextState *GetInputTextState(IdType id)
     {
         ImGuiContext &g = *GImGui;
         return (id != 0 && g.InputTextState.ID == id) ? &g.InputTextState : nullptr;
@@ -5593,15 +5643,18 @@ namespace ImGui
     // Plot
     int PlotEx(ImGuiPlotType plot_type, const char *label, float (*values_getter)(void *data, int idx), void *data,
                int values_count, int values_offset, const char *overlay_text, float scale_min, float scale_max,
-               const Vec2 &size_arg);
+               const ::SF::Engine::Vec2 &size_arg);
 
     // Shade functions (write over already created vertices)
     void ShadeVertsLinearColorGradientKeepAlpha(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx,
-                                                Vec2 gradient_p0, Vec2 gradient_p1, uint32_t col0, uint32_t col1);
-    void ShadeVertsLinearUV(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx, const Vec2 &a, const Vec2 &b,
-                            const Vec2 &uv_a, const Vec2 &uv_b, bool clamp);
-    void ShadeVertsTransformPos(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx, const Vec2 &pivot_in,
-                                float cos_a, float sin_a, const Vec2 &pivot_out);
+                                                ::SF::Engine::Vec2 gradient_p0, ::SF::Engine::Vec2 gradient_p1,
+                                                uint32_t col0, uint32_t col1);
+    void ShadeVertsLinearUV(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx, const ::SF::Engine::Vec2 &a,
+                            const ::SF::Engine::Vec2 &b, const ::SF::Engine::Vec2 &uv_a, const ::SF::Engine::Vec2 &uv_b,
+                            bool clamp);
+    void ShadeVertsTransformPos(ImDrawList *draw_list, int vert_start_idx, int vert_end_idx,
+                                const ::SF::Engine::Vec2 &pivot_in, float cos_a, float sin_a,
+                                const ::SF::Engine::Vec2 &pivot_out);
 
     // Garbage collection
     void GcCompactTransientMiscBuffers();
@@ -5628,16 +5681,16 @@ namespace ImGui
     void DebugDrawLineExtents(uint32_t col = IM_COL32(255, 0, 0, 255));
     void DebugDrawItemRect(uint32_t col = IM_COL32(255, 0, 0, 255));
     void DebugTextUnformattedWithLocateItem(const char *line_begin, const char *line_end);
-    void DebugLocateItem(ImGuiID target_id); // Call sparingly: only 1 at the same time!
+    void DebugLocateItem(IdType target_id); // Call sparingly: only 1 at the same time!
     void DebugLocateItemOnHover(
-            ImGuiID target_id); // Only call on reaction to a mouse Hover: because only 1 at the same time!
+            IdType target_id); // Only call on reaction to a mouse Hover: because only 1 at the same time!
     void DebugLocateItemResolveWithLastItem();
     void DebugBreakClearData();
     bool DebugBreakButton(const char *label, const char *description_of_location);
     void DebugBreakButtonTooltip(bool keyboard_only, const char *description_of_location);
     void ShowFontAtlas(ImFontAtlas *atlas);
     uint64_t DebugTextureIDToU64(ImTextureID tex_id);
-    void DebugHookIdInfo(ImGuiID id, ImGuiDataType data_type, const void *data_id, const void *data_id_end);
+    void DebugHookIdInfo(IdType id, ImGuiDataType data_type, const void *data_id, const void *data_id_end);
     void DebugNodeColumns(ImGuiOldColumns *columns);
     void DebugNodeDockNode(ImGuiDockNode *node, const char *label);
     void DebugNodeDrawList(ImGuiWindow *window, ImGuiViewportP *viewport, const ImDrawList *draw_list,
@@ -5854,12 +5907,12 @@ void ImFontAtlasFontDestroyOutput(ImFontAtlas *atlas, ImFont *font);
 void ImFontAtlasFontRebuildOutput(ImFontAtlas *atlas, ImFont *font);
 void ImFontAtlasFontDiscardBakes(ImFontAtlas *atlas, ImFont *font, int unused_frames);
 
-ImGuiID ImFontAtlasBakedGetId(ImGuiID font_id, float baked_size, float rasterizer_density);
+IdType ImFontAtlasBakedGetId(IdType font_id, float baked_size, float rasterizer_density);
 ImFontBaked *ImFontAtlasBakedGetOrAdd(ImFontAtlas *atlas, ImFont *font, float font_size, float font_rasterizer_density);
 ImFontBaked *ImFontAtlasBakedGetClosestMatch(ImFontAtlas *atlas, ImFont *font, float font_size,
                                              float font_rasterizer_density);
 ImFontBaked *ImFontAtlasBakedAdd(ImFontAtlas *atlas, ImFont *font, float font_size, float font_rasterizer_density,
-                                 ImGuiID baked_id);
+                                 IdType baked_id);
 void ImFontAtlasBakedDiscard(ImFontAtlas *atlas, ImFont *font, ImFontBaked *baked);
 ImFontGlyph *ImFontAtlasBakedAddFontGlyph(ImFontAtlas *atlas, ImFontBaked *baked, ImFontConfig *src,
                                           const ImFontGlyph *in_glyph);
@@ -5902,19 +5955,20 @@ const char *ImTextureDataGetFormatName(ImTextureFormat format);
 void ImFontAtlasDebugLogTextureRequests(ImFontAtlas *atlas);
     #endif
 
-bool ImFontAtlasGetMouseCursorTexData(ImFontAtlas *atlas, ImGuiMouseCursor cursor_type, Vec2 *out_offset,
-                                      Vec2 *out_size, Vec2 out_uv_border[2], Vec2 out_uv_fill[2]);
+bool ImFontAtlasGetMouseCursorTexData(ImFontAtlas *atlas, ImGuiMouseCursor cursor_type, ::SF::Engine::Vec2 *out_offset,
+                                      ::SF::Engine::Vec2 *out_size, ::SF::Engine::Vec2 out_uv_border[2],
+                                      ::SF::Engine::Vec2 out_uv_fill[2]);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Test Engine specific hooks (imgui_test_engine)
 //-----------------------------------------------------------------------------
 
     #ifdef IMGUI_ENABLE_TEST_ENGINE
-extern void ImGuiTestEngineHook_ItemAdd(ImGuiContext *ctx, ImGuiID id, const ImRect &bb,
+extern void ImGuiTestEngineHook_ItemAdd(ImGuiContext *ctx, IdType id, const ImRect &bb,
                                         const ImGuiLastItemData *item_data); // item_data may be nullptr
-extern void ImGuiTestEngineHook_ItemInfo(ImGuiContext *ctx, ImGuiID id, const char *label, ImGuiItemStatusFlags flags);
+extern void ImGuiTestEngineHook_ItemInfo(ImGuiContext *ctx, IdType id, const char *label, ImGuiItemStatusFlags flags);
 extern void ImGuiTestEngineHook_Log(ImGuiContext *ctx, const char *fmt, ...);
-extern const char *ImGuiTestEngine_FindItemDebugLabel(ImGuiContext *ctx, ImGuiID id);
+extern const char *ImGuiTestEngine_FindItemDebugLabel(ImGuiContext *ctx, IdType id);
 
         // In IMGUI_VERSION_NUM >= 18934: changed IMGUI_TEST_ENGINE_ITEM_ADD(bb,id) to
         // IMGUI_TEST_ENGINE_ITEM_ADD(id,bb,item_data);

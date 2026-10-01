@@ -14,12 +14,11 @@
 
 namespace SF::Engine
 {
-    class ForwardLitRenderer : public SF::Engine::Renderer
+    class ForwardLitRenderer : public Renderer
     {
     public:
         ForwardLitRenderer()
         {
-            using namespace SF::Engine;
             AddRenderStage(std::make_unique<RhiRenderStage>(
                     std::vector<RhiAttachment>{
                             RhiAttachment{0, "depth", RhiAttachment::Type::Depth},
@@ -73,23 +72,21 @@ namespace SF::Engine
             // litPass_->Submit();
         }
 
-        SF::Engine::LightManager *GetLightManager() { return lightManager_.get(); }
-        SF::Engine::LitMeshPipelinePass *GetLitPass() { return litPass_; }
+        LightManager *GetLightManager() { return lightManager_.get(); }
+        LitMeshPipelinePass *GetLitPass() { return litPass_; }
 
     private:
-        std::unique_ptr<SF::Engine::LightManager> lightManager_;
-        SF::Engine::ClusterCullPipelinePass *clusterCull_ = nullptr;
-        SF::Engine::LitMeshPipelinePass *litPass_         = nullptr;
-        std::unique_ptr<SF::Engine::Mesh> demoMesh_;
+        std::unique_ptr<LightManager> lightManager_;
+        ClusterCullPipelinePass *clusterCull_ = nullptr;
+        LitMeshPipelinePass *litPass_         = nullptr;
+        std::unique_ptr<Mesh> demoMesh_;
     };
 
-    class LightingRenderer : public SF::Engine::Renderer
+    class LightingRenderer : public Renderer
     {
     public:
         LightingRenderer()
         {
-            using namespace SF::Engine;
-
             // Stage 0: GBuffer (off-screen MRT, no swapchain)
             AddRenderStage(std::make_unique<RhiRenderStage>(
                     std::vector<RhiAttachment>{
