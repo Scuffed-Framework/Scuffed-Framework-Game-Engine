@@ -592,9 +592,9 @@ namespace SF::Engine
             root.SetAttribute("Filter", static_cast<int>(texture->GetFilter()));
             root.SetAttribute("AddressMode", static_cast<int>(texture->GetAddressMode()));
             root.SetAttribute("Format", static_cast<int>(texture->GetFormat()));
-            root.SetAttribute("Samples", static_cast<int>(texture->GetSamples()));
-            root.SetAttribute("MipLevels", static_cast<int>(texture->GetMipLevels()));
-            root.SetAttribute("ArrayLayers", static_cast<int>(texture->GetArrayLevels()));
+            // root.SetAttribute("Samples", static_cast<int>(texture->GetSamples()));
+            // root.SetAttribute("MipLevels", static_cast<int>(texture->GetMipLevels()));
+            // root.SetAttribute("ArrayLayers", static_cast<int>(texture->GetArrayLevels()));
             root.SetAttribute("UsageBits", static_cast<int>(texture->GetUsage()));
             root.SetAttribute("Layout", static_cast<int>(texture->GetLayout()));
         }

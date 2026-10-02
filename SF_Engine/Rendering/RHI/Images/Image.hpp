@@ -637,7 +637,7 @@ namespace SF::Engine
             if (!bitmap || !*bitmap)
                 return false;
 
-            int rawFormat{}, rawLayout{}, rawUsage{}, rawFilter{}, rawAddressMode{};
+            int rawFormat{}, rawLayout{}, rawUsage{}, rawFilter{}, rawAddressMode{}, samples{}, mips{}, arrayLevels{};
             root.GetAttribute("Format", rawFormat);
             root.GetAttribute("Layout", rawLayout);
             root.GetAttribute("UsageBits", rawUsage);
