@@ -1,9 +1,9 @@
 #pragma once
 
 #define VK_NO_PROTOTYPES
+#include <Rendering/RenderSystem.hpp>
 #include <volk.h>
 #include "PhysicalDevice.hpp" // includes volk
-#include <Rendering/RenderSystem.hpp>
 
 namespace SF::Engine
 {
@@ -20,12 +20,11 @@ namespace SF::Engine
             deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
             deviceFeatures2.pNext = &deviceFeatures12;
 
-            vkGetPhysicalDeviceFeatures(
-                RenderSystem::Get()->GetPhysicalDevice()->GetPhysicalDevice(),
-                &deviceFeatures2);
+            vkGetPhysicalDeviceFeatures2(RenderSystem::Get()->GetPhysicalDevice()->GetPhysicalDevice(),
+                                         &deviceFeatures2);
 
             return (deviceFeatures12.shaderBufferInt64Atomics == VK_TRUE &&
                     deviceFeatures12.shaderSharedInt64Atomics == VK_TRUE);
         }
     };
-}
+} // namespace SF::Engine

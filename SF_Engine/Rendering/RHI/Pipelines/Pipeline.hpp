@@ -12,16 +12,9 @@ namespace SF::Engine
     {
     public:
         /**
-         * Represents position in the render structure, first value being the renderpass and second for subpass.
+         * @breif Represents position in the render structure, first value being the renderpass and second for subpass.
          */
         using Stage = std::pair<uint32_t, uint32_t>;
-        /*
-        struct Stage
-        {
-            uint32_t RenderPass;
-            uint32_t SubPass;
-        };
-        */
 
         Pipeline()          = default;
         virtual ~Pipeline() = default;
@@ -31,12 +24,12 @@ namespace SF::Engine
             vkCmdBindPipeline(commandBuffer, GetPipelineBindPoint(), GetPipeline());
         }
 
-        virtual const Shader *GetShader() const                             = 0;
-        virtual bool IsPushDescriptors() const                              = 0;
-        virtual const VkDescriptorSetLayout &GetDescriptorSetLayout() const = 0;
-        virtual const VkDescriptorPool &GetDescriptorPool() const           = 0;
-        virtual const VkPipeline &GetPipeline() const                       = 0;
-        virtual const VkPipelineLayout &GetPipelineLayout() const           = 0;
-        virtual const VkPipelineBindPoint &GetPipelineBindPoint() const     = 0;
+        [[nodiscard]] virtual const Shader *GetShader() const                             = 0;
+        [[nodiscard]] virtual bool IsPushDescriptors() const                              = 0;
+        [[nodiscard]] virtual const VkDescriptorSetLayout &GetDescriptorSetLayout() const = 0;
+        [[nodiscard]] virtual const VkDescriptorPool &GetDescriptorPool() const           = 0;
+        [[nodiscard]] virtual const VkPipeline &GetPipeline() const                       = 0;
+        [[nodiscard]] virtual const VkPipelineLayout &GetPipelineLayout() const           = 0;
+        [[nodiscard]] virtual const VkPipelineBindPoint &GetPipelineBindPoint() const     = 0;
     };
-}
+} // namespace SF::Engine

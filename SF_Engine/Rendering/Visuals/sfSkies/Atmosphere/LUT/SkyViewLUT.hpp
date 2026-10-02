@@ -1,7 +1,7 @@
 #pragma once
-#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
+#include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <memory>
 #include "../AtmosphereParams.hpp"

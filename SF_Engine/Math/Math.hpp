@@ -601,5 +601,11 @@ namespace SF::Engine
             (HashCombine(seed, args), ...);
             return seed;
         }
+
+        template<Arithmetic Int_T>
+        static constexpr Int_T CeilDiv(Int_T x, Int_T y)
+        {
+            return (x + y - 1) / y;
+        }
     };
 } // namespace SF::Engine

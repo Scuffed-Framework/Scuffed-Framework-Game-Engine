@@ -1,64 +1,50 @@
-#include "Cubemap.hpp"
-
 #include <cstring>
 
 #include <Assets/Bitmaps/Bitmap.hpp>
 #include <Rendering/RenderSystem.hpp>
+#include <utility>
 #include "Image.hpp"
 
 namespace SF::Engine
 {
-    Cubemap::Cubemap(const std::filesystem::path& filename, const std::string& fileSuffix,
-                     VkFilter filter, VkSamplerAddressMode addressMode, bool anisotropic,
-                     bool mipmap)
-        : Image(filter, addressMode, VK_SAMPLE_COUNT_1_BIT,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                    VK_IMAGE_USAGE_SAMPLED_BIT,
-                VK_FORMAT_R8G8B8A8_UNORM, 1, 6, {0, 0, 1}),
-          filename(filename),
-          fileSuffix(fileSuffix),
-          anisotropic(anisotropic),
-          mipmap(mipmap)
+    Cubemap::Cubemap(std::filesystem::path filename, std::string fileSuffix, VkFilter filter,
+                     VkSamplerAddressMode addressMode, bool anisotropic, bool mipmap) :
+        Image(filter, addressMode, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+              VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+              VK_FORMAT_R8G8B8A8_UNORM, 1, 6, {0, 0, 1}),
+        filename(std::move(filename)), fileSuffix(std::move(fileSuffix)), anisotropic(anisotropic), mipmap(mipmap)
     {
         Load();
     }
 
-    Cubemap::Cubemap(const UVec2& extent, VkFormat format, VkImageLayout layout,
-                     VkImageUsageFlags usage, VkFilter filter, VkSamplerAddressMode addressMode,
-                     VkSampleCountFlagBits samples, bool anisotropic, bool mipmap)
-        : Image(filter, addressMode, samples, layout,
-                usage | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                    VK_IMAGE_USAGE_SAMPLED_BIT,
-                format, 1, 6, {extent.x, extent.y, 1}),
-          anisotropic(anisotropic),
-          mipmap(mipmap),
-          components(4)
+    Cubemap::Cubemap(const UVec2 &extent, VkFormat format, VkImageLayout layout, VkImageUsageFlags usage,
+                     VkFilter filter, VkSamplerAddressMode addressMode, VkSampleCountFlagBits samples, bool anisotropic,
+                     bool mipmap) :
+        Image(filter, addressMode, samples, layout,
+              usage | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+              format, 1, 6, {extent.x, extent.y, 1}),
+        anisotropic(anisotropic), mipmap(mipmap), components(4)
     {
         Load();
     }
 
-    Cubemap::Cubemap(std::unique_ptr<Bitmap>&& bitmap, VkFormat format, VkImageLayout layout,
-                     VkImageUsageFlags usage, VkFilter filter, VkSamplerAddressMode addressMode,
-                     VkSampleCountFlagBits samples, bool anisotropic, bool mipmap)
-        : Image(filter, addressMode, samples, layout,
-                usage | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-                    VK_IMAGE_USAGE_SAMPLED_BIT,
-                format, 1, 6, {bitmap->GetSize().x, bitmap->GetSize().y, 1}),
-          anisotropic(anisotropic),
-          mipmap(mipmap),
-          components(bitmap->GetBytesPerPixel())
+    Cubemap::Cubemap(std::unique_ptr<Bitmap> &&bitmap, VkFormat format, VkImageLayout layout, VkImageUsageFlags usage,
+                     VkFilter filter, VkSamplerAddressMode addressMode, VkSampleCountFlagBits samples, bool anisotropic,
+                     bool mipmap) :
+        Image(filter, addressMode, samples, layout,
+              usage | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+              format, 1, 6, {bitmap->GetSize().x, bitmap->GetSize().y, 1}),
+        anisotropic(anisotropic), mipmap(mipmap), components(bitmap->GetBytesPerPixel())
     {
         Load(std::move(bitmap));
     }
 
     std::unique_ptr<Bitmap> Cubemap::GetBitmap(uint32_t mipLevel) const
     {
-        auto size = UVec2(extent.x, extent.y) >> mipLevel;
+        auto size     = UVec2(extent.x, extent.y) >> mipLevel;
         auto sizeSide = size.x * size.y * components;
-        auto bitmap =
-            std::make_unique<Bitmap>(UVec2(size.x, size.y * arrayLayers), components);
-        auto offset = bitmap->GetData().get();
+        auto bitmap   = std::make_unique<Bitmap>(UVec2(size.x, size.y * arrayLayers), components);
+        auto offset   = bitmap->GetData().get();
 
         for (uint32_t i = 0; i < 6; i++)
         {
@@ -70,25 +56,25 @@ namespace SF::Engine
         return bitmap;
     }
 
-    void Cubemap::SetPixels(const uint8_t* pixels, uint32_t layerCount, uint32_t baseArrayLayer)
+    void Cubemap::SetPixels(const uint8_t *pixels, uint32_t layerCount, uint32_t baseArrayLayer)
     {
         VkDeviceSize bufferSize = extent.x * extent.y * components * arrayLayers;
 
         // Create staging buffer with VMA
         VkBufferCreateInfo bufferInfo = {VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
-        bufferInfo.size = bufferSize;
-        bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        bufferInfo.size               = bufferSize;
+        bufferInfo.usage              = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
         VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+        allocInfo.usage                   = VMA_MEMORY_USAGE_CPU_ONLY;
 
         VkBuffer stagingBuffer;
         VmaAllocation stagingAllocation;
-        vmaCreateBuffer(*RenderSystem::Get()->GetAllocator(), &bufferInfo, &allocInfo,
-                        &stagingBuffer, &stagingAllocation, nullptr);
+        vmaCreateBuffer(*RenderSystem::Get()->GetAllocator(), &bufferInfo, &allocInfo, &stagingBuffer,
+                        &stagingAllocation, nullptr);
 
         // Map and copy data
-        void* data;
+        void *data;
         vmaMapMemory(*RenderSystem::Get()->GetAllocator(), stagingAllocation, &data);
         std::memcpy(data, pixels, bufferSize);
         vmaUnmapMemory(*RenderSystem::Get()->GetAllocator(), stagingAllocation);
@@ -104,26 +90,25 @@ namespace SF::Engine
     {
         if (!filename.empty() && !loadBitmap)
         {
-            uint8_t* offset = nullptr;
+            uint8_t *offset = nullptr;
 
-            for (const auto& side : fileSides)
+            for (const auto &side: fileSides)
             {
                 Bitmap bitmapSide(filename / (side + fileSuffix));
                 auto lengthSide = bitmapSide.GetLength();
 
                 if (!loadBitmap)
                 {
-                    loadBitmap = std::make_unique<Bitmap>(
-                        std::make_unique<uint8_t[]>(lengthSide * arrayLayers), bitmapSide.GetSize(),
-                        bitmapSide.GetBytesPerPixel());
-                    offset = loadBitmap->GetData().get();
+                    loadBitmap = std::make_unique<Bitmap>(std::make_unique<uint8_t[]>(lengthSide * arrayLayers),
+                                                          bitmapSide.GetSize(), bitmapSide.GetBytesPerPixel());
+                    offset     = loadBitmap->GetData().get();
                 }
 
                 std::memcpy(offset, bitmapSide.GetData().get(), lengthSide);
                 offset += lengthSide;
             }
 
-            extent = {loadBitmap->GetSize().y, loadBitmap->GetSize().y, 1};
+            extent     = {loadBitmap->GetSize().y, loadBitmap->GetSize().y, 1};
             components = loadBitmap->GetBytesPerPixel();
         }
 
@@ -137,14 +122,13 @@ namespace SF::Engine
         CreateImage(image, allocation, extent, format, samples, VK_IMAGE_TILING_OPTIMAL, usage,
                     VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, arrayLayers, VK_IMAGE_TYPE_2D);
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
-        CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_CUBE, format, VK_IMAGE_ASPECT_COLOR_BIT,
-                        mipLevels, 0, arrayLayers, 0);
+        CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_CUBE, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0,
+                        arrayLayers, 0);
 
         if (loadBitmap || mipmap)
         {
-            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED,
-                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT,
-                                  mipLevels, 0, arrayLayers, 0);
+            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                  VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
         }
 
         if (loadBitmap)
@@ -153,19 +137,19 @@ namespace SF::Engine
 
             // Create staging buffer with VMA
             VkBufferCreateInfo bufferInfo = {VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
-            bufferInfo.size = bufferSize;
-            bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            bufferInfo.size               = bufferSize;
+            bufferInfo.usage              = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
             VmaAllocationCreateInfo allocInfo = {};
-            allocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+            allocInfo.usage                   = VMA_MEMORY_USAGE_CPU_ONLY;
 
             VkBuffer stagingBuffer;
             VmaAllocation stagingAllocation;
-            vmaCreateBuffer(*RenderSystem::Get()->GetAllocator(), &bufferInfo, &allocInfo,
-                            &stagingBuffer, &stagingAllocation, nullptr);
+            vmaCreateBuffer(*RenderSystem::Get()->GetAllocator(), &bufferInfo, &allocInfo, &stagingBuffer,
+                            &stagingAllocation, nullptr);
 
             // Map and copy data
-            void* data;
+            void *data;
             vmaMapMemory(*RenderSystem::Get()->GetAllocator(), stagingAllocation, &data);
             std::memcpy(data, loadBitmap->GetData().get(), bufferSize);
             vmaUnmapMemory(*RenderSystem::Get()->GetAllocator(), stagingAllocation);
@@ -174,23 +158,20 @@ namespace SF::Engine
             CopyBufferToImage(stagingBuffer, image, extent, arrayLayers, 0);
 
             // Cleanup
-            vmaDestroyBuffer(*RenderSystem::Get()->GetAllocator(), stagingBuffer,
-                             stagingAllocation);
+            vmaDestroyBuffer(*RenderSystem::Get()->GetAllocator(), stagingBuffer, stagingAllocation);
         }
 
         if (mipmap)
         {
             CreateMipmaps(image, extent, format, layout, mipLevels, 0, arrayLayers);
-        }
-        else if (loadBitmap)
+        } else if (loadBitmap)
         {
             TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
                                   VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
-        }
-        else
+        } else
         {
-            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, layout,
-                                  VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
+            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT,
+                                  mipLevels, 0, arrayLayers, 0);
         }
     }
-}
+} // namespace SF::Engine

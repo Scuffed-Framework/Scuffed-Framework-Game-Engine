@@ -80,8 +80,10 @@ namespace SF::Engine
         auto *depth = dynamic_cast<const ImageDepth *>(rs->GetAttachment("gbuf_depth"));
         if (!hdr || !depth)
             return;
-        if (hdr == lastHDR_ && depth == lastDepth_)
+        const uint64_t generation = rs->GetAttachmentGeneration();
+        if (generation == lastGeneration_ && hdr == lastHDR_ && depth == lastDepth_)
             return;
+        lastGeneration_ = generation;
         lastHDR_ = hdr;
         lastDepth_ = depth;
 

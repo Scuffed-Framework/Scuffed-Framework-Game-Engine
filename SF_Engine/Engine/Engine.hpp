@@ -26,6 +26,7 @@
 #include <Platform/Threading/ThreadPool.hpp>
 
 #include <Platform/PlatformIncludes.hpp>
+#include "Configuration.hpp"
 #include "InitGame/GameInfo.hpp"
 #include "InitGame/GameInstance.hpp"
 #include "VersionSemantic.hpp"

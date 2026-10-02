@@ -105,6 +105,46 @@ namespace SF::Engine
         Writes.Apply();
     }
 
+    void AtmospherePipelinePass::EnsureColorRTSized(UVec2 required)
+    {
+        if (required.x == 0 || required.y == 0)
+            return;
+
+        const auto cur = atmoColorRT_->GetExtent();
+        if (cur.x == required.x && cur.y == required.y)
+            return;
+
+        // Prior frames may still be reading/writing the old image and the descriptors below.
+        if (VkResult r = vkDeviceWaitIdle(*RenderSystem::Get()->GetLogicalDevice()); r < 0)
+        {
+            Log::Critical("[Atmosphere] vkDeviceWaitIdle in EnsureColorRTSized failed: {}",
+                          RenderSystem::StrVkResult(r));
+            RenderSystem::CheckVkResult(r);
+        }
+
+        atmoColorRT_ = std::make_unique<Image2d>(required, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_LAYOUT_GENERAL,
+                                                 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        {
+            CommandBuffer cmd(true);
+            Image::InsertImageMemoryBarrier(cmd, atmoColorRT_->GetImage(), 0, VK_ACCESS_SHADER_READ_BIT,
+                                            VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
+            cmd.SubmitIdle();
+        }
+        atmoColorRT_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        DescriptorSetWriteBuilder(*descSet_)
+                .Image(7, atmoColorRT_->GetView(), VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                .Build()
+                .Apply();
+        DescriptorSetWriteBuilder(*compositeSet_)
+                .CombinedImageSampler(1, atmoColorRT_->GetView(), atmoColorRT_->GetSampler(),
+                                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                .Build()
+                .Apply();
+    }
+
     void AtmospherePipelinePass::SetSceneBuffers()
     {
         const Image2d *sceneColor =
@@ -114,11 +154,19 @@ namespace SF::Engine
         if (!sceneColor || !sceneDepth)
             return;
 
-        // Avoid redundant descriptor writes if nothing changed.
-        if (sceneColor == lastColor_ && sceneDepth == lastDepth_)
+        {
+            const auto ext = sceneColor->GetExtent();
+            EnsureColorRTSized(UVec2{ext.x, ext.y});
+        }
+
+        // Avoid redundant descriptor writes if nothing changed. Generation compare, not just
+        // pointers: freed Image2d/ImageDepth addresses get reused by later allocations.
+        const uint64_t generation = RenderSystem::Get()->GetAttachmentGeneration();
+        if (generation == lastGeneration_ && sceneColor == lastColor_ && sceneDepth == lastDepth_)
             return;
-        lastColor_ = sceneColor;
-        lastDepth_ = sceneDepth;
+        lastGeneration_ = generation;
+        lastColor_      = sceneColor;
+        lastDepth_      = sceneDepth;
 
         auto Writes = DescriptorSetWriteBuilder(*descSet_)
                               .CombinedImageSampler(6, sceneDepth->GetView(), sceneDepth->GetSampler(),
@@ -184,6 +232,11 @@ namespace SF::Engine
         if (!lastColor_)
             return; // scene attachments not available yet (e.g. before first frame)
 
+        // Dispatch exactly the private RT's extent (the kernel indexes frameData_.screenSize).
+        {
+            const auto rt         = atmoColorRT_->GetExtent();
+            frameData_.screenSize = Vec2(static_cast<float>(rt.x), static_cast<float>(rt.y));
+        }
         ubo_->Update(frameData_);
 
         AtmoLUTs::Get().GetSkyViewLUT()->Bake(commandBuffer);
@@ -198,7 +251,7 @@ namespace SF::Engine
 
         UVec3 extent{static_cast<uint32_t>(frameData_.screenSize.x), static_cast<uint32_t>(frameData_.screenSize.y),
                      1u};
-        pipeline_->CmdRender(commandBuffer, extent, /*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1);
+        pipeline_->Dispatch(commandBuffer, extent, {/*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1});
 
         TransitionAtmoColor(commandBuffer, atmoColorRT_.get(), VK_IMAGE_LAYOUT_GENERAL,
                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_WRITE_BIT,

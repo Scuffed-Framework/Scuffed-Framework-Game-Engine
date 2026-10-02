@@ -49,19 +49,8 @@ namespace SF::Engine
 
         ~ComputePipeline() override;
 
-        /// Dispatches ceil(extent / localSize) groups in x/y, 1 group in z.
-        /// Uses the localSize this pipeline was constructed with.
-        void CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent) const;
-
-        /// Dispatches ceil(extent.x/X) * ceil(extent.y/Y) groups in x/y, and exactly
-        /// `zGroups` groups in z; e.g. for cubemap faces, cascades, or array layers
-        /// that aren't part of `extent`.
-        void CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent, const uint32_t X, const uint32_t Y,
-                       const uint32_t zGroups) const;
-
         /// Dispatches ceil(extent / {LOCAL_X, LOCAL_Y, LOCAL_Z}) groups in all 3 dimensions.
-        void CmdRender(const CommandBuffer &commandBuffer, const UVec3 &extent, const uint32_t LOCAL_X,
-                       const uint32_t LOCAL_Y, const uint32_t LOCAL_Z) const;
+        void Dispatch(const CommandBuffer &commandBuffer, const UVec3 &extent, const UVec3 &localSize = {}) const;
 
         [[nodiscard]] const std::filesystem::path &GetShaderStage() const { return shaderStage; }
         [[nodiscard]] const std::string &GetEntry() const { return entryOpt; }
@@ -103,4 +92,4 @@ namespace SF::Engine
         VkPipelineLayout pipelineLayout           = VK_NULL_HANDLE;
         VkPipelineBindPoint pipelineBindPoint     = VK_PIPELINE_BIND_POINT_COMPUTE;
     };
-}
+} // namespace SF::Engine

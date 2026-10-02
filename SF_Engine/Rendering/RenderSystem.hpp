@@ -3,12 +3,12 @@
 #include <Engine/Module.hpp>
 #include <Platform/Windowing/Surface.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
+#include "RHI/Adapter/Instance.hpp"
+#include "RHI/Adapter/LogicalDevice.hpp"
+#include "RHI/Adapter/PhysicalDevice.hpp"
 #include "RHI/Bindless/Bindless.hpp"
 #include "RHI/Commands/CommandBuffer.hpp"
 #include "RHI/Commands/CommandPool.hpp"
-#include "RHI/Devices/Instance.hpp"
-#include "RHI/Devices/LogicalDevice.hpp"
-#include "RHI/Devices/PhysicalDevice.hpp"
 #include "RHI/Renderpass/RhiSwapchain.hpp"
 #include "Renderer.hpp"
 
@@ -76,6 +76,14 @@ namespace SF::Engine
          * @brief Get attachment descriptor by name
          */
         const Descriptor *GetAttachment(const string &name) const;
+
+        /**
+         * @brief Incremented every time render-stage attachments are rebuilt. Passes that cache
+         * descriptors pointing at attachment images must compare THIS, not attachment pointers:
+         * freed Image2d objects' addresses are routinely reused by the next allocation, so a
+         * pointer compare can falsely report "unchanged" and leave a descriptor on a destroyed view.
+         */
+        uint64_t GetAttachmentGeneration() const noexcept { return attachmentGeneration; }
 
         // Device and resource accessors
         const Instance *GetInstance() const noexcept { return instance.get(); }
@@ -194,6 +202,7 @@ namespace SF::Engine
         // Rendering
         unique_ptr<Renderer> renderer;
         unordered_map<string, const Descriptor *> attachments;
+        uint64_t attachmentGeneration = 1;
 
         // Command pool management
         unordered_map<thread::id, shared_ptr<CommandPool>> commandPools;

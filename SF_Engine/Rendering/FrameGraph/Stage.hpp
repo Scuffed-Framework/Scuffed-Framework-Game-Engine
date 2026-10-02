@@ -2,7 +2,6 @@
 
 #include <map>
 #include "../Material/Color/Color.hpp"
-#include "../RHI/Images/ImageDepth.hpp"
 #include "../RHI/Renderpass/FrameBuffer.hpp"
 #include "../RHI/Renderpass/RhiRenderpass.hpp"
 #include "../RHI/Renderpass/RhiSwapchain.hpp"
@@ -133,6 +132,14 @@ namespace SF::Engine
 
         void Update();
         void Rebuild(const RhiSwapchain &swapchain);
+
+        /**
+         * Extent used for this stage's framebuffer, render area and viewport. Equal to the stage's
+         * render area extent, except stages that write the swapchain use the swapchain's extent
+         * exactly (the surface dictates it, and during a live resize it can differ from the window
+         * size). Rebuild() and StartRenderpass() must both use this.
+         */
+        [[nodiscard]] UVec2 GetEffectiveExtent(const RhiSwapchain &swapchain) const;
 
         [[nodiscard]] optional<RhiAttachment> GetAttachment(const string &name) const;
         [[nodiscard]] optional<RhiAttachment> GetAttachment(uint32_t binding) const;

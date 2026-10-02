@@ -4,10 +4,10 @@
 #include <volk.h>
 
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
-#include <Rendering/RHI/Buffers/Buffer.hpp>
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
+#include <Rendering/RHI/Memory/Buffer.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include <string>
@@ -48,7 +48,10 @@ namespace SF::Engine
         std::unique_ptr<RhiRenderPipeline> pipeline_;
         std::unique_ptr<DescriptorSet> descriptorSet_;
 
-        // Tracks the last image pointer so we only rewrite descriptors on change.
+        // Tracks the last image pointer / attachment generation so we only rewrite descriptors on
+        // change. Pointer alone is NOT enough: a freed Image2d's address is routinely reused by the
+        // next rebuild's allocation, which left this set pointing at a destroyed view (GPU hang).
         const Image2d *lastBoundImage_ = nullptr;
+        uint64_t lastGeneration_       = 0;
     };
 } // namespace SF::Engine

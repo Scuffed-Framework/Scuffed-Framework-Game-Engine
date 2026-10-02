@@ -1,7 +1,6 @@
 #include "FrameBuffer.hpp"
 
 #include <Rendering/FrameGraph/Stage.hpp>
-#include <Rendering/RHI/Images/ImageDepth.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include "RhiRenderpass.hpp"
 
@@ -19,8 +18,13 @@ namespace SF::Engine
             switch (attachment.GetType())
             {
                 case RhiAttachment::Type::Image:
+                    // Created in SHADER_READ_ONLY_OPTIMAL (the renderpass finalLayout), not
+                    // COLOR_ATTACHMENT_OPTIMAL: passes that sample an attachment in PreRender (SSR
+                    // reads "hdr" before its stage's renderpass has run) assume SHADER_READ_ONLY,
+                    // which on the first frame after a rebuild was a layout mismatch. The renderpass
+                    // itself uses initialLayout=UNDEFINED, so this is safe for rendering.
                     imageAttachments.emplace_back(std::make_unique<Image2d>(
-                            extent, attachment.GetFormat(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                            extent, attachment.GetFormat(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_FILTER_LINEAR,
                             VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, attachmentSamples));
                     break;

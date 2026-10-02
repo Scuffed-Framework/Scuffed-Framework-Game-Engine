@@ -3,10 +3,9 @@
 #include <Gui/ImGui/UIRegistry.hpp>
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/Lighting/LightManager.hpp>
-#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
-#include <Rendering/RHI/Images/ImageDepth.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
+#include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 
@@ -163,8 +162,23 @@ namespace SF::Engine
         const Image2d *compositeLastNormal_   = nullptr;
         const Image2d *compositeLastAlbedo_   = nullptr;
         const Image2d *compositeLastPbr_      = nullptr;
+        uint64_t compositeLastGeneration_     = 0;
 
         static constexpr uint32_t kFramesInFlight = 3;
+
+        // Compute-set descriptors (rayGen/trace/temporal/spatial) used to be rewritten EVERY frame
+        // via vkUpdateDescriptorSets on sets earlier in-flight command buffers were still using
+        // (VUID-vkUpdateDescriptorSets-None-03047). Their contents only change when attachments
+        // are rebuilt (RenderSystem attachment generation) or SSR's own images are reallocated,
+        // so they're rewritten only then. 0 forces a rewrite on the next PreRender().
+        uint64_t descGeneration_ = 0;
+        // Same, tracked per frame slot for temporalSet_[i]/spatialSet_[i] (each slot's set is only
+        // visited once every kFramesInFlight frames, so a single shared flag would miss slots).
+        uint64_t slotDescGeneration_[kFramesInFlight] = {};
+        // Per-slot history view last written to temporalSet_[i] bindings 5/6 (only changes once,
+        // when history goes from the dummy texture to the real accumulation image).
+        VkImageView temporalHistColorView_[kFramesInFlight]   = {};
+        VkImageView temporalHistMomentsView_[kFramesInFlight] = {};
 
         // The resolution rayDirRT_/traceColorRT_/filteredRT_/accumColor_/accumMoments_ are
         // CURRENTLY allocated at. Checked every PreRender() against the live "hdr" attachment's

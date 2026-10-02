@@ -166,29 +166,13 @@ namespace SF::Engine
         Log::Info("Compute pipeline created successfully");
     }
 
-
-    void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent) const
+    void ComputePipeline::Dispatch(const CommandBuffer &commandBuffer, const UVec3 &extent,
+                                    const UVec3 &localSize) const
     {
-        uint32_t gx = (extent.x + localSize.x - 1) / localSize.x;
-        uint32_t gy = (extent.y + localSize.y - 1) / localSize.y;
-        vkCmdDispatch(commandBuffer, gx, gy, 1);
-    }
+        const UVec3 groupCount{Mathematics::CeilDiv(extent.x, localSize.x), Mathematics::CeilDiv(extent.y, localSize.y),
+                               Mathematics::CeilDiv(extent.z, localSize.z)};
 
-    void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer, const UVec2 &extent, const uint32_t X,
-                                    const uint32_t Y, const uint32_t zGroups) const
-    {
-        uint32_t gx = (extent.x + X - 1) / X;
-        uint32_t gy = (extent.y + Y - 1) / Y;
-        vkCmdDispatch(commandBuffer, gx, gy, zGroups);
-    }
-
-    void ComputePipeline::CmdRender(const CommandBuffer &commandBuffer, const UVec3 &extent, const uint32_t LOCAL_X,
-                                    const uint32_t LOCAL_Y, const uint32_t LOCAL_Z) const
-    {
-        uint32_t gx = (extent.x + LOCAL_X - 1) / LOCAL_X;
-        uint32_t gy = (extent.y + LOCAL_Y - 1) / LOCAL_Y;
-        uint32_t gz = (extent.z + LOCAL_Z - 1) / LOCAL_Z;
-        vkCmdDispatch(commandBuffer, gx, gy, gz);
+        vkCmdDispatch(commandBuffer, groupCount.x, groupCount.y, groupCount.z);
     }
 
     void ComputePipeline::ReloadShader(const std::vector<uint32_t> &newSpirv)

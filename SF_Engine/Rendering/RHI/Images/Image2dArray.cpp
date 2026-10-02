@@ -1,7 +1,7 @@
-#include "Image2dArray.hpp"
+#include "Image.hpp"
 
 #include <Assets/Bitmaps/Bitmap.hpp>
-#include <Rendering/RHI/Buffers/Buffer.hpp>
+#include <Rendering/RHI/Memory/Buffer.hpp>
 #include <Rendering/RenderSystem.hpp>
 
 namespace SF::Engine

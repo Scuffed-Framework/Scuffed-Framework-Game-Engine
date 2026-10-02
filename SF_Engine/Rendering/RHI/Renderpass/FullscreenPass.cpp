@@ -1,7 +1,7 @@
 #include "FullscreenPass.hpp"
 #include <Engine/Log/Log.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/RenderSystem.hpp>
 
 namespace SF::Engine
@@ -36,9 +36,11 @@ namespace SF::Engine
 
         // Only rewrite the descriptor set when the backing image changes
         // (avoids redundant Vulkan descriptor writes every frame).
-        if (srcImage != lastBoundImage_)
+        const uint64_t generation = renderSystem->GetAttachmentGeneration();
+        if (srcImage != lastBoundImage_ || generation != lastGeneration_)
         {
             lastBoundImage_ = srcImage;
+            lastGeneration_ = generation;
 
             VkDescriptorImageInfo imageInfo{};
             imageInfo.sampler     = srcImage->GetSampler();

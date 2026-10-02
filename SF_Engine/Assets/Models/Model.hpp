@@ -6,7 +6,7 @@
 
 #include <Math/BasicMath.hpp>
 #include <Rendering/Mesh/Vertex.hpp>
-#include <Rendering/RHI/Buffers/Buffer.hpp>
+#include <Rendering/RHI/Memory/Buffer.hpp>
 
 // Cool feature idea:
 // import whole .blend files and set up meshes, cameras, and lights.

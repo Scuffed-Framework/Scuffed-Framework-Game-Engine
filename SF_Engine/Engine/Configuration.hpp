@@ -5,13 +5,20 @@
 
 namespace SF::Engine
 {
-    struct LogConfig
-    {
-        bool shutUp;
-    };
     struct EngineConfig : Serializable
     {
     public:
+        struct LogConfig
+        {
+            bool Disable;
+        };
+
+        // Scalable Multi-threaded Adaptive Rendering Technology
+        struct SMARTRenderSystemConfig
+        {
+            bool VulkanValidationLayersAllowed;
+        };
+
         unsigned int LongDoubleSize = sizeof(long double);
         Scene *StartupScene;
 

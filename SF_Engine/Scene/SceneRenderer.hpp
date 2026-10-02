@@ -2,7 +2,7 @@
 #include <Rendering/FrameGraph/Stage.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/Renderer.hpp>
 #include <Rendering/Visuals/SSR/SSRPipelinePass.hpp>
 #include <Rendering/Visuals/sfSkies/AtmosphereController.hpp>

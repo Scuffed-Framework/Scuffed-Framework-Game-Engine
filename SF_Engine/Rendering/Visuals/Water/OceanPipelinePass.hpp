@@ -2,9 +2,9 @@
 
 #include <Rendering/FrameGraph/EngineRenderpassInitRegistry.hpp>
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
-#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image2dArray.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
+#include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>

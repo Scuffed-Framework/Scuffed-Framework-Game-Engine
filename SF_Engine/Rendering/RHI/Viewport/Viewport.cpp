@@ -2,7 +2,8 @@
 
 namespace SF::Engine
 {
-    SceneViewport::SceneViewport(UVec2 extent) : desiredExtent(extent), pendingFree(kFramesInFlight)
+    SceneViewport::SceneViewport(UVec2 extent) :
+        desiredExtent(extent), pendingFree(kFramesInFlight), retired(kFramesInFlight)
     {
         CreateImages(extent);
     }
@@ -24,7 +25,8 @@ namespace SF::Engine
         color = std::make_unique<Image2d>(
                 UVec2{extent.x, extent.y}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FILTER_LINEAR,
-                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLE_COUNT_1_BIT, 1, 1);
+                VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLE_COUNT_1_BIT, /*anisotropic=*/false,
+                /*mipmap=*/false);
 
         depth = std::make_unique<ImageDepth>(extent, VK_SAMPLE_COUNT_1_BIT);
 
@@ -70,6 +72,12 @@ namespace SF::Engine
 
         if (imguiDescriptor != VK_NULL_HANDLE)
             pendingFree[safeIndex] = imguiDescriptor;
+
+        // Park the outgoing images instead of destroying them: earlier frames still in flight
+        // reference them. Assigning here frees whatever was parked in this slot >= kFramesInFlight
+        // frames ago.
+        retired[safeIndex].color = std::move(color);
+        retired[safeIndex].depth = std::move(depth);
 
         CreateImages(desiredExtent);
     }

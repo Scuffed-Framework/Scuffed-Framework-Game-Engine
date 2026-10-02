@@ -1,8 +1,8 @@
 #include "Surface.hpp"
 
-#include <Rendering/RHI/Devices/Instance.hpp>
-#include <Rendering/RHI/Devices/LogicalDevice.hpp>
-#include <Rendering/RHI/Devices/PhysicalDevice.hpp>
+#include <Rendering/RHI/Adapter/Instance.hpp>
+#include <Rendering/RHI/Adapter/LogicalDevice.hpp>
+#include <Rendering/RHI/Adapter/PhysicalDevice.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include "WindowManager.hpp"
 

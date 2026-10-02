@@ -2,7 +2,7 @@
 
 #include <Math/BasicMath.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/RHI/Buffers/Buffer.hpp>
+#include <Rendering/RHI/Memory/Buffer.hpp>
 #include <memory>
 #include <vector>
 

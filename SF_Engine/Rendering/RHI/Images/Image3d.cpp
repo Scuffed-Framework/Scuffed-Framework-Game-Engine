@@ -1,5 +1,5 @@
-#include "Image3d.hpp"
-#include <Rendering/RHI/Buffers/Buffer.hpp>
+#include "Image.hpp"
+#include <Rendering/RHI/Memory/Buffer.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Math/BasicMath.hpp>
 

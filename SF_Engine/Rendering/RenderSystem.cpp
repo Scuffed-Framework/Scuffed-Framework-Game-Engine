@@ -151,8 +151,12 @@ namespace SF::Engine
 
         if (anyOutOfDate)
         {
-            RecreatePass(0, *renderer->renderStages.front()); // rebuilds ALL stages internally
-            return;
+            // Rebuild ALL stages (and the swapchain if needed) for the new window size, then fall
+            // through and render + present THIS frame at the new size. Previously this returned
+            // without presenting, so during an interactive resize (a rebuild nearly every Update)
+            // no frame was ever presented and the compositor kept showing the stale old-size image
+            // with an uncovered black / garbage border where the window had grown.
+            RecreatePass(0, *renderer->renderStages.front());
         }
 
         for (auto [id, swapchain]: Enumerate(swapchains))
@@ -168,6 +172,24 @@ namespace SF::Engine
             auto acquireResult =
                     swapchain->AcquireNextImage(perSurfaceBuffer->presentCompletes[perSurfaceBuffer->currentFrame],
                                                 perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
+
+            static int s_consecutiveTimeouts = 0;
+            if (acquireResult == VK_TIMEOUT)
+            {
+                // The in-flight fence didn't signal within the bounded wait: presentation/GPU is
+                // stalled (e.g. compositor holding frames during an interactive resize). This is
+                // NOT an out-of-date swapchain; recreating here destroys sync objects still in
+                // flight. Skip this frame and try again. Only if it stays stuck (a skipped Submit
+                // leaves the fence unsignaled forever) fall back to a full recreate.
+                if (++s_consecutiveTimeouts < 8)
+                    return;
+                Log::Warning("[RenderSystem] Frame fence timed out {} times in a row; recreating swapchain.",
+                             s_consecutiveTimeouts);
+                s_consecutiveTimeouts = 0;
+                RecreateSwapchain();
+                return;
+            }
+            s_consecutiveTimeouts = 0;
 
             if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
             {
@@ -532,6 +554,7 @@ namespace SF::Engine
 
     void RenderSystem::RecreateAttachmentsMap()
     {
+        ++attachmentGeneration;
         attachments.clear();
 
         for (const auto &renderStage: renderer->renderStages)
@@ -553,7 +576,11 @@ namespace SF::Engine
         if (!commandBuffer->IsRunning())
             commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
 
-        auto scExtent       = swapchain->GetExtent();
+        // Use the stage's own framebuffer extent (clamped to the swapchain for swapchain stages),
+        // NOT the raw swapchain extent: non-swapchain stages' attachments are sized from the
+        // window, and a render area/viewport larger than the framebuffer is UB (GPU hang).
+        const UVec2 stageExtent = renderStage.GetEffectiveExtent(*swapchain);
+        VkExtent2D scExtent     = {stageExtent.x, stageExtent.y};
         VkRect2D renderArea = {};
         renderArea.offset   = {0, 0};
         renderArea.extent   = scExtent;

@@ -144,7 +144,7 @@ namespace SF::Engine
             char fpsBuf[32];
             std::snprintf(fpsBuf, sizeof(fpsBuf), "%.0f FPS", ImGui::GetIO().Framerate);
             float fpsW = ImGui::CalcTextSize(fpsBuf).x + 16.0f;
-            ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - fpsW);
+            ImGui::SetCursorPosX(ImGui::GetWindowSize().x - fpsW);
             ImGui::TextDisabled("%s", fpsBuf);
             ImGui::EndMainMenuBar();
         }

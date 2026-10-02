@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include "RhiSwapchain.hpp"
 
 namespace SF::Engine
@@ -13,8 +13,9 @@ namespace SF::Engine
     class Framebuffer : NoCopy
     {
     public:
-        Framebuffer(const LogicalDevice &logicalDevice, const RhiSwapchain &swapchain, const RhiRenderStage &renderStage,
-                    const RhiRenderpass &renderPass, const ImageDepth *depthStencil, // pointer now
+        Framebuffer(const LogicalDevice &logicalDevice, const RhiSwapchain &swapchain,
+                    const RhiRenderStage &renderStage, const RhiRenderpass &renderPass,
+                    const ImageDepth *depthStencil, // pointer now
                     const UVec2 &extent, VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT);
         ~Framebuffer();
 

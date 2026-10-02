@@ -80,9 +80,7 @@ namespace SF::Engine
 
     Instance::Instance()
     {
-#if defined(Debug) || defined(_DEBUG)
         validationLayersEnabled = true;
-#endif
 
         CreateInstance();
         CreateDebugMessenger();
@@ -101,9 +99,7 @@ namespace SF::Engine
         std::vector<VkLayerProperties> instanceLayerProperties(instanceLayerPropertyCount);
         vkEnumerateInstanceLayerProperties(&instanceLayerPropertyCount, instanceLayerProperties.data());
 
-#ifdef Debug
         LogVulkanLayers(instanceLayerProperties);
-#endif
 
         for (const auto &layerName: ValidationLayers)
         {
@@ -136,8 +132,11 @@ namespace SF::Engine
         std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionsCount);
 
         if (validationLayersEnabled)
+        {
             extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        // extensions.emplace_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+            // extensions.emplace_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);}
+        }
+
         return extensions;
     }
 
@@ -225,4 +224,4 @@ namespace SF::Engine
         // Use fmt::runtime to prevent constexpr evaluation
         Log::Out(fmt::runtime("{}"), ss.str());
     }
-}
+} // namespace SF::Engine

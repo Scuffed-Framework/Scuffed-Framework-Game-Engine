@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Rendering/RHI/Buffers/StorageBuffer.hpp>
-#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
+#include <Rendering/RHI/Memory/StorageBuffer.hpp>
+#include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <memory>
 #include <vector>
 #include "Light.hpp"

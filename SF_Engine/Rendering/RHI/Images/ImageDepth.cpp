@@ -1,4 +1,4 @@
-#include "ImageDepth.hpp"
+#include "Image.hpp"
 
 #include <Rendering/RenderSystem.hpp>
 

@@ -2,7 +2,7 @@
 
 #include <Rendering/RenderSystem.hpp>
 
-#include <Rendering/RHI/Devices/LogicalDevice.hpp>
+#include <Rendering/RHI/Adapter/LogicalDevice.hpp>
 
 namespace SF::Engine
 {

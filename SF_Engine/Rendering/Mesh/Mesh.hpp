@@ -3,8 +3,8 @@
 #include <Entity/Components/Component.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <Rendering/Mesh/Vertex.hpp>
-#include <Rendering/RHI/Buffers/Buffer.hpp>
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
+#include <Rendering/RHI/Memory/Buffer.hpp>
 #include <Scene/SceneSerialization.hpp>
 #include <UtilityClasses/UUID.hpp>
 #include <span>

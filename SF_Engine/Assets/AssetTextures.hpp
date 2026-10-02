@@ -1,7 +1,7 @@
 #pragma once
 #include <Assets/Bitmaps/PNG/BitmapPNG.hpp>
 #include <LowLevel/stb_image.h>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <cstring>
 
 namespace SF::Engine

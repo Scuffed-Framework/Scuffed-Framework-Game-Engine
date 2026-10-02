@@ -1,4 +1,4 @@
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include "Color/Color.hpp"
 
 namespace SF::Engine
@@ -39,7 +39,7 @@ namespace SF::Engine
     struct PBRMaterial
     {
         // Scalars / colors
-        Color baseColor          = Color::White;
+        Color baseColor = Color::White;
         // Defaults to dielectric, not metallic: an object with no material assigned should
         // render as a plain white diffuse surface (what "white, unconfigured" reads as to
         // anyone placing an object), not a mirror. At metallic=1, DeferredLight.shader's

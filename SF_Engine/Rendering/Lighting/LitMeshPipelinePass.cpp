@@ -1,7 +1,7 @@
 #include "LitMeshPipelinePass.hpp"
 
 #include <Assets/Bitmaps/Bitmap.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/RenderSystem.hpp>
 
 namespace SF::Engine

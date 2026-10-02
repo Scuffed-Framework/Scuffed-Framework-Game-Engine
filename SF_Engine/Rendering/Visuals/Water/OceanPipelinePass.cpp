@@ -81,9 +81,9 @@ namespace SF::Engine
         // with patchControlPoints = 4 when topology == PATCH_LIST.
         pipeline_ = std::make_unique<RhiRenderPipeline>(
                 stage, "Shaders/Ocean/OceanTessellation.shader",
-                std::vector<Shader::VertexInput>{PatchVertex::GetVertexInput()}, defines, RhiRenderPipeline::Mode::Polygon,
-                RhiRenderPipeline::Depth::ReadWrite, VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_POLYGON_MODE_FILL,
-                VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+                std::vector<Shader::VertexInput>{PatchVertex::GetVertexInput()}, defines,
+                RhiRenderPipeline::Mode::Polygon, RhiRenderPipeline::Depth::ReadWrite, VK_PRIMITIVE_TOPOLOGY_PATCH_LIST,
+                VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         setupDescriptorSet();
         setupComputeDescriptorSets();
@@ -91,7 +91,7 @@ namespace SF::Engine
         {
             CommandBuffer initCmd = CommandBuffer(true);
 
-            initSpectrumPipeline_->CmdRender(initCmd, {N / 8, N / 8});
+            initSpectrumPipeline_->Dispatch(initCmd, UVec3{N / 8, N / 8, 1});
 
             // CS_PackSpectrumConjugate reads the same image it writes for the
             // mirrored coordinate, so a barrier is needed between the two
@@ -102,7 +102,7 @@ namespace SF::Engine
                               VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                               /*layerCount=*/4);
 
-            packConjugatePipeline_->CmdRender(initCmd, {N / 8, N / 8});
+            packConjugatePipeline_->Dispatch(initCmd, UVec3{N / 8, N / 8, 1});
 
             // Leave initialSpectrumTex_ readable by CS_UpdateSpectrumForFFT
             // every frame thereafter.
@@ -349,7 +349,7 @@ namespace SF::Engine
         //    aliases spectrumTex_'s memory -- see CS_UpdateSpectrumForFFT
         //    binding setup: both bound to bindings 3/6 of the same images).
         updateSpectrumDescSet_->BindDescriptor(cmd);
-        updateSpectrumPipeline_->CmdRender(cmd, {N / 8, N / 8});
+        updateSpectrumPipeline_->Dispatch(cmd, UVec3{N / 8, N / 8, 1});
 
         // Barrier: spectrum write -> FFT read/write (8 layers)
         ImageArrayBarrier(cmd, fourierTarget_->GetImage(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
@@ -359,14 +359,14 @@ namespace SF::Engine
         // 2. 1024-point FFT, horizontal then vertical (in-place, log2(1024)=10
         //    butterfly passes each, done inside the compute shader's loop).
         horizontalFFTDescSet_->BindDescriptor(cmd);
-        horizontalFFTPipeline_->CmdRender(cmd, {1, N});
+        horizontalFFTPipeline_->Dispatch(cmd, UVec3{1, N, 1});
 
         ImageArrayBarrier(cmd, fourierTarget_->GetImage(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
                           VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, kCompute,
                           kCompute, /*layerCount=*/8);
 
         verticalFFTDescSet_->BindDescriptor(cmd);
-        verticalFFTPipeline_->CmdRender(cmd, {1, N});
+        verticalFFTPipeline_->Dispatch(cmd, UVec3{1, N, 1}, {1, 1, 1});
 
         ImageArrayBarrier(cmd, fourierTarget_->GetImage(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
                           VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, kCompute, kCompute, /*layerCount=*/8);
@@ -374,7 +374,7 @@ namespace SF::Engine
         // 3. Assemble final displacement/slope/foam maps with permutation +
         //    Tessendorf choppiness + foam accumulation.
         assembleDescSet_->BindDescriptor(cmd);
-        assemblePipeline_->CmdRender(cmd, {N / 8, N / 8});
+        assemblePipeline_->Dispatch(cmd, UVec3{N / 8, N / 8, 1});
 
         // Barrier: displacement/slope write -> graphics sampled read.
         ImageArrayBarrier(cmd, displacementTex_->GetImage(), VK_IMAGE_LAYOUT_GENERAL,

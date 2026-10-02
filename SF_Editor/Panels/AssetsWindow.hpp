@@ -11,9 +11,13 @@
 #include <cctype>
 #include <unordered_map>
 
+// X.h leaks this
+#ifdef None
+#undef None
+#endif
+
 namespace SF::Engine
 {
-
     class AssetBrowser
     {
     public:

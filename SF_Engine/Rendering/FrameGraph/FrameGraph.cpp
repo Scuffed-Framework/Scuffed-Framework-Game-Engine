@@ -295,29 +295,9 @@ namespace SF::Engine
                         return;
 
                     if (recording)
-                    {
-                        if (const Texture tex = res.resolve ? res.resolve() : Texture{}; tex.image != VK_NULL_HANDLE)
-                        {
-                            VkImageMemoryBarrier2 barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2};
-                            barrier.srcStageMask        = res.state.last_stage;
-                            barrier.srcAccessMask       = res.state.last_access;
-                            barrier.dstStageMask        = target.last_stage;
-                            barrier.dstAccessMask       = target.last_access;
-                            barrier.oldLayout           = res.state.current_layout;
-                            barrier.newLayout           = target.current_layout;
-                            barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                            barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                            barrier.image               = tex.image;
-                            barrier.subresourceRange    = {tex.aspect_mask, 0, VK_REMAINING_MIP_LEVELS, 0,
-                                                           VK_REMAINING_ARRAY_LAYERS};
-
-                            pendingBarriers.push_back(PendingBarrier{stageIndex, barrier});
-                        }
-                        // else: resource not resolvable yet (e.g. before the first
-                        // ResetRenderStages()) -- skip silently rather than record a barrier
-                        // against a null image; state is still advanced below so later
-                        // transitions in this same pass stay consistent.
-                    }
+                        pendingBarriers.push_back(PendingBarrier{stageIndex, res.state.last_stage,
+                                                                 res.state.last_access, target.last_stage,
+                                                                 target.last_access});
 
                     res.state = target;
                 };
@@ -345,17 +325,32 @@ namespace SF::Engine
 
     void FrameGraph::EmitPendingBarriers(uint32_t renderStageIndex, const CommandBuffer &commandBuffer) const
     {
-        std::vector<VkImageMemoryBarrier2> batch;
+        VkPipelineStageFlags2 srcStage = 0, dstStage = 0;
+        VkAccessFlags2 srcAccess = 0, dstAccess = 0;
+        bool any = false;
         for (const auto &pending: pendingBarriers)
-            if (pending.renderStageIndex == renderStageIndex)
-                batch.push_back(pending.barrier);
+        {
+            if (pending.renderStageIndex != renderStageIndex)
+                continue;
+            srcStage |= pending.srcStage;
+            srcAccess |= pending.srcAccess;
+            dstStage |= pending.dstStage;
+            dstAccess |= pending.dstAccess;
+            any = true;
+        }
 
-        if (batch.empty())
+        if (!any)
             return;
 
+        VkMemoryBarrier2 barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER_2};
+        barrier.srcStageMask  = srcStage;
+        barrier.srcAccessMask = srcAccess;
+        barrier.dstStageMask  = dstStage;
+        barrier.dstAccessMask = dstAccess;
+
         VkDependencyInfo dependencyInfo{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
-        dependencyInfo.imageMemoryBarrierCount = static_cast<uint32_t>(batch.size());
-        dependencyInfo.pImageMemoryBarriers    = batch.data();
+        dependencyInfo.memoryBarrierCount = 1;
+        dependencyInfo.pMemoryBarriers    = &barrier;
 
         vkCmdPipelineBarrier2(commandBuffer, &dependencyInfo);
     }

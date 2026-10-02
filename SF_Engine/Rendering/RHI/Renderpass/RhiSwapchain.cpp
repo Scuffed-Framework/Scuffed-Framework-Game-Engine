@@ -153,7 +153,7 @@ namespace SF::Engine
         {
             auto waitResult = vkWaitForFences(logicalDevice, 1, &fence, VK_TRUE, 1'000'000'000);
             if (waitResult == VK_TIMEOUT)
-                return VK_ERROR_OUT_OF_DATE_KHR; // treat timeout as out-of-date, triggers recreate
+                return VK_TIMEOUT; // GPU/present stalled, not a stale swapchain; caller decides
             RenderSystem::CheckVkResult(waitResult);
         }
 

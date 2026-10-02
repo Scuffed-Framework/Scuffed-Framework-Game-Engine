@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Assets/Models/Model.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 
 namespace SF::Engine
 {

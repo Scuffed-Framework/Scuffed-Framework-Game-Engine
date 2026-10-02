@@ -1,6 +1,6 @@
 #pragma once
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image3d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <memory>
 
@@ -21,9 +21,9 @@ namespace SF::Engine
     public:
         explicit CloudNoiseLUTs(uint32_t width = 32, uint32_t height = 32, uint32_t depth = 1)
         {
-            BaseNoiseTexture_ =
-                    std::make_unique<Image3d>(UVec3{width, height, depth}, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_GENERAL,
-                                              VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+            BaseNoiseTexture_ = std::make_unique<SF::Engine::Image3d>(
+                    UVec3{width, height, depth}, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_GENERAL,
+                    VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
             DetailNoiseTexture_ =
                     std::make_unique<Image3d>(UVec3{width, height, depth}, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_GENERAL,
@@ -189,4 +189,4 @@ namespace SF::Engine
         ::std::unique_ptr<UniformBuffer> uboD_;
         bool baked_ = false;
     };
-}
+} // namespace SF::Engine

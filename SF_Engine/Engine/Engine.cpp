@@ -144,7 +144,11 @@ namespace SF::Engine
                 deltaRender.Update();
             }
         }
-        vkDeviceWaitIdle(*RenderSystem::Get()->GetLogicalDevice());
+        if (VkResult r = vkDeviceWaitIdle(*RenderSystem::Get()->GetLogicalDevice()); r < 0)
+        {
+            Log::Critical("[Engine::Run] vkDeviceWaitIdle at loop exit failed: {}", RenderSystem::StrVkResult(r));
+            RenderSystem::CheckVkResult(r);
+        }
 
         return EXIT_SUCCESS;
     }

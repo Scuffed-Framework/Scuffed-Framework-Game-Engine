@@ -134,10 +134,24 @@ namespace SF::Engine
         // there genuinely could be prior frames' GPU work still reading/writing the old images.
         // vkDeviceWaitIdle is the same blunt tool RecreateSwapchain already uses for this; a
         // resize is a rare, interactive event, not a hot path, so the stall is a non-issue.
-        vkDeviceWaitIdle(*RenderSystem::Get()->GetLogicalDevice());
+        if (VkResult r = vkDeviceWaitIdle(*RenderSystem::Get()->GetLogicalDevice()); r < 0)
+        {
+            Log::Critical("[SSR] vkDeviceWaitIdle in EnsureResourcesSized failed: {}", RenderSystem::StrVkResult(r));
+            RenderSystem::CheckVkResult(r);
+        }
 
         CreateScreenSizedResources(required);
         BindStaticDescriptors();
+
+        // BindStaticDescriptors() just reset temporal history bindings to the dummy texture and
+        // dropped the gbuffer bindings' validity: force PreRender() to rewrite them.
+        descGeneration_ = 0;
+        for (uint32_t i = 0; i < kFramesInFlight; ++i)
+        {
+            slotDescGeneration_[i]      = 0;
+            temporalHistColorView_[i]   = VK_NULL_HANDLE;
+            temporalHistMomentsView_[i] = VK_NULL_HANDLE;
+        }
 
         // History is invalid at the old resolution; force TemporalAccumulate to treat this as a
         // cold start rather than blending against stale (and now differently-sized) data.
@@ -286,12 +300,8 @@ namespace SF::Engine
 
         UpdateUBO();
 
-        const uint32_t cur    = frameSlot_ % kFramesInFlight;
-        const uint32_t hist   = (frameSlot_ + kFramesInFlight - 1) % kFramesInFlight;
-        const bool hasHistory = (framesSinceStart_ > 0);
-
         auto ext = colorImg->GetExtent();
-        UVec2 full{ext.x, ext.y};
+        UVec3 full{ext.x, ext.y, 1};
 
         // Reallocate rayDirRT_/traceColorRT_/filteredRT_/accumColor_/accumMoments_ if "hdr"'s
         // resolution has changed since they were last (re)created; they used to be sized once
@@ -300,6 +310,22 @@ namespace SF::Engine
         // by RhiRenderStage) was writing past the bounds of these fixed-size images. Must run
         // before anything below references them.
         EnsureResourcesSized(full);
+
+        // Must come AFTER EnsureResourcesSized: a resize resets frameSlot_/framesSinceStart_, and
+        // these were previously captured before it, so the first frame after a resize treated
+        // brand-new, uninitialised accumulation images as valid history.
+        const uint32_t cur    = frameSlot_ % kFramesInFlight;
+        const uint32_t hist   = (frameSlot_ + kFramesInFlight - 1) % kFramesInFlight;
+        const bool hasHistory = (framesSinceStart_ > 0);
+
+        // Only rewrite compute-set descriptors when something they point at actually changed (see
+        // descGeneration_ in the header): rewriting them every frame mutated sets that earlier
+        // in-flight command buffers were still using.
+        const uint64_t gbufGeneration = rs->GetAttachmentGeneration();
+        const bool refreshDescs       = (gbufGeneration != descGeneration_);
+        descGeneration_               = gbufGeneration;
+        const bool refreshSlotDescs   = (gbufGeneration != slotDescGeneration_[cur]);
+        slotDescGeneration_[cur]      = gbufGeneration;
 
         // RayGen : rewrite gbuffer reads (attachment pointers can change on
         // resize), transition rayDir/rayData to GENERAL, dispatch.
@@ -328,7 +354,8 @@ namespace SF::Engine
                 writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
                 writes[i].pImageInfo      = &infos[i];
             }
-            DescriptorSet::Update({writes[0], writes[1], writes[2]});
+            if (refreshDescs)
+                DescriptorSet::Update({writes[0], writes[1], writes[2]});
 
             Image2d *writeTargets[2] = {rayDirRT_.get(), rayDataRT_.get()};
             for (auto *img: writeTargets)
@@ -344,7 +371,7 @@ namespace SF::Engine
             rayGenSet_->BindDescriptor(cmd);
             SharedSamplers::BindSharedSamplerSet(cmd, rayGenPipeline_->GetPipelineLayout(),
                                                  VK_PIPELINE_BIND_POINT_COMPUTE);
-            rayGenPipeline_->CmdRender(cmd, full, 8, 8, 1);
+            rayGenPipeline_->Dispatch(cmd, full, {8, 8, 1});
 
             for (auto *img: writeTargets)
             {
@@ -383,7 +410,8 @@ namespace SF::Engine
             writes[1].descriptorCount = 1;
             writes[1].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
             writes[1].pImageInfo      = &hdrII;
-            DescriptorSet::Update({writes[0], writes[1]});
+            if (refreshDescs)
+                DescriptorSet::Update({writes[0], writes[1]});
 
             Image2d *writeTargets[2] = {traceColorRT_.get(), traceHitRT_.get()};
             for (auto *img: writeTargets)
@@ -399,7 +427,7 @@ namespace SF::Engine
             traceSet_->BindDescriptor(cmd);
             SharedSamplers::BindSharedSamplerSet(cmd, tracePipeline_->GetPipelineLayout(),
                                                  VK_PIPELINE_BIND_POINT_COMPUTE);
-            tracePipeline_->CmdRender(cmd, full, 8, 8, 1);
+            tracePipeline_->Dispatch(cmd, full, {8, 8, 1});
 
             for (auto *img: writeTargets)
             {
@@ -433,7 +461,14 @@ namespace SF::Engine
                 writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
                 writes[i].pImageInfo      = &infos[i];
             }
-            DescriptorSet::Update({writes[0], writes[1], writes[2]});
+            const bool histChanged = temporalHistColorView_[cur] != histColorII.imageView ||
+                                     temporalHistMomentsView_[cur] != histMomentsII.imageView;
+            if (refreshSlotDescs || histChanged)
+            {
+                DescriptorSet::Update({writes[0], writes[1], writes[2]});
+                temporalHistColorView_[cur]   = histColorII.imageView;
+                temporalHistMomentsView_[cur] = histMomentsII.imageView;
+            }
 
             Image2d *writeTargets[2] = {accumColor_[cur].get(), accumMoments_[cur].get()};
             for (auto *img: writeTargets)
@@ -449,7 +484,7 @@ namespace SF::Engine
             temporalSet_[cur]->BindDescriptor(cmd);
             SharedSamplers::BindSharedSamplerSet(cmd, temporalPipeline_->GetPipelineLayout(),
                                                  VK_PIPELINE_BIND_POINT_COMPUTE);
-            temporalPipeline_->CmdRender(cmd, full, 8, 8, 1);
+            temporalPipeline_->Dispatch(cmd, full,{ 8, 8, 1});
 
             for (auto *img: writeTargets)
             {
@@ -480,7 +515,8 @@ namespace SF::Engine
                 writes[i].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
                 writes[i].pImageInfo      = &infos[i];
             }
-            DescriptorSet::Update({writes[0], writes[1], writes[2]});
+            if (refreshSlotDescs)
+                DescriptorSet::Update({writes[0], writes[1], writes[2]});
 
             Image::InsertImageMemoryBarrier(
                     cmd, filteredRT_->GetImage(), VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
@@ -492,7 +528,7 @@ namespace SF::Engine
             spatialSet_[cur]->BindDescriptor(cmd);
             SharedSamplers::BindSharedSamplerSet(cmd, spatialPipeline_->GetPipelineLayout(),
                                                  VK_PIPELINE_BIND_POINT_COMPUTE);
-            spatialPipeline_->CmdRender(cmd, full, 8, 8, 1);
+            spatialPipeline_->Dispatch(cmd, full, {8, 8, 1});
 
             // autobarrier w/ frame graph?
             // Back to SHADER_READ_ONLY_OPTIMAL : this IS the layout Render()
@@ -523,13 +559,15 @@ namespace SF::Engine
         if (!depthImgD || !normalImg || !albedoImg || !pbrImg)
             return;
 
-        if (depthImgD != compositeLastDepth_ || normalImg != compositeLastNormal_ ||
-            albedoImg != compositeLastAlbedo_ || pbrImg != compositeLastPbr_)
+        const uint64_t compositeGeneration = rs->GetAttachmentGeneration();
+        if (compositeGeneration != compositeLastGeneration_ || depthImgD != compositeLastDepth_ ||
+            normalImg != compositeLastNormal_ || albedoImg != compositeLastAlbedo_ || pbrImg != compositeLastPbr_)
         {
-            compositeLastDepth_  = depthImgD;
-            compositeLastNormal_ = normalImg;
-            compositeLastAlbedo_ = albedoImg;
-            compositeLastPbr_    = pbrImg;
+            compositeLastGeneration_ = compositeGeneration;
+            compositeLastDepth_      = depthImgD;
+            compositeLastNormal_     = normalImg;
+            compositeLastAlbedo_     = albedoImg;
+            compositeLastPbr_        = pbrImg;
 
             VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImgD->GetView(),
                                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};

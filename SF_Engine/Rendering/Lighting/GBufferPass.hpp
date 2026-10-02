@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Math/BasicMath.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include <vector>

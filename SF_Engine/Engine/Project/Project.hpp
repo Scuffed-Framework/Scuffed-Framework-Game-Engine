@@ -4,7 +4,7 @@
 #include <Gui/ImGui/UIRegistry.hpp>
 #include <LowLevel/FileSystem/File.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <string>
 #include <vector>
 

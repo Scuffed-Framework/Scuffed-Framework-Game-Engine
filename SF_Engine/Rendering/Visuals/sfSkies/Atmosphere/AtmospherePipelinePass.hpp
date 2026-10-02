@@ -1,9 +1,9 @@
 #pragma once
 
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
-#include <Rendering/RHI/Buffers/UniformBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
+#include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include "LUT/MultiScatterLUT.hpp"
@@ -77,5 +77,11 @@ namespace SF::Engine
 
         const Image2d *lastColor_    = nullptr;
         const ImageDepth *lastDepth_ = nullptr;
+        uint64_t lastGeneration_     = 0;
+
+        // Reallocates atmoColorRT_ (and rewrites the descriptors that reference it) when the live
+        // "hdr" extent no longer matches it. Previously sized once at construction, so after the
+        // window grew the compute kernel wrote past the image's bounds.
+        void EnsureColorRTSized(UVec2 required);
     };
 } // namespace SF::Engine

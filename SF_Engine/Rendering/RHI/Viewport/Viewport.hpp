@@ -1,8 +1,7 @@
 #pragma once
 #include <Gui/ImGui/ocornut/imgui_impl_vulkan.h>
 #include <Rendering/Camera/Camera.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
-#include <Rendering/RHI/Images/ImageDepth.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 #include <array>
@@ -40,6 +39,16 @@ namespace SF::Engine
         std::unique_ptr<ImageDepth> depth;
         VkDescriptorSet imguiDescriptor = VK_NULL_HANDLE;
         std::vector<std::optional<VkDescriptorSet>> pendingFree{};
+        // Images retired by a viewport resize. They're referenced by command buffers still in
+        // flight (as the render target, and as the ImGui texture), so they can't be destroyed the
+        // moment Tick() replaces them -- they're parked per frame slot and only freed when that slot
+        // comes round again (>= kFramesInFlight frames later), mirroring pendingFree above.
+        struct RetiredImages
+        {
+            std::unique_ptr<Image2d> color;
+            std::unique_ptr<ImageDepth> depth;
+        };
+        std::vector<RetiredImages> retired{};
         UVec2 currentExtent{};
         UVec2 desiredExtent{};
         bool resizePending                           = false;

@@ -4,7 +4,6 @@
 #include <Math/Transform.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
-#include <Rendering/RHI/Images/ImageDepth.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Scene/Scene.hpp>
 #include <chrono>

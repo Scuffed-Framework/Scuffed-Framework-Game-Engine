@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include <Rendering/RHI/Buffers/Buffer.hpp>
+#include <Rendering/RHI/Memory/Buffer.hpp>
 #include <Rendering/RenderSystem.hpp>
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
@@ -560,4 +560,51 @@ namespace SF::Engine
         XmlNodeReader reader(node);
         ::SF::RTTI::SerializeContext::Instance().Load(*this, reader);
     }
+
+    void BindStorageImage(DescriptorSet &ds, Image *img)
+    {
+        VkDescriptorImageInfo imgInfo{};
+        imgInfo.sampler     = img->GetSampler();
+        imgInfo.imageView   = img->GetView();
+        imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+        VkWriteDescriptorSet w{};
+        w.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w.dstSet          = ds.GetDescriptorSet();
+        w.dstBinding      = 0;
+        w.descriptorCount = 1;
+        w.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        w.pImageInfo      = &imgInfo;
+        DescriptorSet::Update({w});
+    }
+
+    template<typename TImage>
+    void ImageAsset<TImage>::Save()
+    {
+        XMLModule *writer = XMLModule::Get();
+        writer->SetRootNode(RTTI_TypeName());
+        XMLNode root = writer->GetRootNode();
+        AssetBase::Serialize(root);
+
+        root.SetAttribute("Filename", filename.string());
+        if (texture)
+        {
+            root.SetAttribute("Filter", static_cast<int>(texture->GetFilter()));
+            root.SetAttribute("AddressMode", static_cast<int>(texture->GetAddressMode()));
+            root.SetAttribute("Format", static_cast<int>(texture->GetFormat()));
+            root.SetAttribute("Samples", static_cast<int>(texture->GetSamples()));
+            root.SetAttribute("MipLevels", static_cast<int>(texture->GetMipLevels()));
+            root.SetAttribute("ArrayLayers", static_cast<int>(texture->GetArrayLevels()));
+            root.SetAttribute("UsageBits", static_cast<int>(texture->GetUsage()));
+            root.SetAttribute("Layout", static_cast<int>(texture->GetLayout()));
+        }
+
+        if (!writer->SaveToFile((GetEngineAssetsPath() / (name + ".xml")).string()))
+            Log::Error("Failed to save image asset to file!");
+    }
+
+    template void ImageAsset<Image2d>::Save();
+    template void ImageAsset<Cubemap>::Save();
+    template void ImageAsset<Image2dArray>::Save();
+    template void ImageAsset<Image3d>::Save();
 } // namespace SF::Engine

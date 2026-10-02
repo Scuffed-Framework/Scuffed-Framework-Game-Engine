@@ -205,7 +205,15 @@ namespace SF::Engine
         struct PendingBarrier
         {
             uint32_t renderStageIndex;
-            VkImageMemoryBarrier2 barrier;
+            // Execution + memory dependency only -- deliberately NO VkImage and NO layout
+            // transition. Every resource this graph models today is a framebuffer attachment whose
+            // layouts are owned by its renderpass (initialLayout/finalLayout); a graph-issued layout
+            // transition on top of that disagreed with the real layout, and caching VkImage handles
+            // at Compile() time left barriers pointing at destroyed images after any window resize.
+            VkPipelineStageFlags2 srcStage;
+            VkAccessFlags2 srcAccess;
+            VkPipelineStageFlags2 dstStage;
+            VkAccessFlags2 dstAccess;
         };
 
         // Shared by Cull()/TopoSort(): for each node, which OTHER node indices it must run

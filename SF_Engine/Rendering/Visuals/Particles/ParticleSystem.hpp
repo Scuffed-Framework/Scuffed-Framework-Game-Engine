@@ -3,9 +3,9 @@
 #include <Engine/Module.hpp>
 #include <Scene/Scene.hpp>
 
-#include <Rendering/RHI/Buffers/Buffer.hpp>
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Memory/Buffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 
 #include <Math/BasicMath.hpp>

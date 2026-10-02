@@ -1,6 +1,6 @@
 #include "../FrameGraph/Stage.hpp"
 #include <Platform/Windowing/WindowManager.hpp>
-#include "../RHI/Images/ImageDepth.hpp"
+#include "../RHI/Images/Image.hpp"
 #include "../RenderSystem.hpp"
 
 namespace SF::Engine
@@ -81,6 +81,21 @@ namespace SF::Engine
         outOfDate = renderArea != lastRenderArea;
     }
 
+    UVec2 RhiRenderStage::GetEffectiveExtent(const RhiSwapchain &swapchain) const
+    {
+        UVec2 extent = renderArea.GetExtent();
+        if (swapchainAttachment)
+        {
+            // The swapchain stage must cover the swapchain images exactly: smaller leaves an
+            // uncleared/black strip along the edge, larger is invalid (framebuffer > attachments).
+            // Fullscreen composite passes sample by UV, so a window-vs-swapchain size mismatch of
+            // a few pixels just rescales instead of tearing.
+            const VkExtent2D sc = swapchain.GetExtent();
+            extent              = UVec2{sc.width, sc.height};
+        }
+        return extent;
+    }
+
     void RhiRenderStage::Rebuild(const RhiSwapchain &swapchain)
     {
         auto physicalDevice = RenderSystem::Get()->GetPhysicalDevice();
@@ -88,13 +103,14 @@ namespace SF::Engine
         auto surface        = RenderSystem::Get()->GetSurface(0);
 
         auto msaaSamples = physicalDevice->GetMsaaSamples();
-        Log::Info("RenderStage::Rebuild extent={}x{}", renderArea.GetExtent().x, renderArea.GetExtent().y);
+        const UVec2 fbExtent = GetEffectiveExtent(swapchain);
+        Log::Info("RenderStage::Rebuild extent={}x{}", fbExtent.x, fbExtent.y);
 
         if (depthAttachment)
         {
             Log::Info("Creating ImageDepth");
             depthStencil = std::make_unique<ImageDepth>(
-                    renderArea.GetExtent(), depthAttachment->IsMultisampled() ? msaaSamples : VK_SAMPLE_COUNT_1_BIT);
+                    fbExtent, depthAttachment->IsMultisampled() ? msaaSamples : VK_SAMPLE_COUNT_1_BIT);
             Log::Info("ImageDepth created");
         }
 
@@ -109,7 +125,7 @@ namespace SF::Engine
 
         Log::Info("Creating Framebuffer");
         framebuffer = std::make_unique<Framebuffer>(*logicalDevice, swapchain, *this, *renderpass, depthStencil.get(),
-                                                    renderArea.GetExtent(), msaaSamples);
+                                                    fbExtent, msaaSamples);
         Log::Info("Framebuffer created");
         outOfDate = false;
 

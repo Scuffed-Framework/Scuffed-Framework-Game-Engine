@@ -1,16 +1,16 @@
 #pragma once
 #include <Engine/Module.hpp>
+#include <functional>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxml/xmlsave.h>
-#include <string>
-#include <vector>
-#include <unordered_map>
 #include <memory>
-#include <functional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-#include <UtilityClasses/UUID.hpp>
 #include <LowLevel/Reflection/RTTI/RTTI.hpp>
+#include <UtilityClasses/UUID.hpp>
 
 namespace SF::Engine
 {
@@ -42,15 +42,15 @@ namespace SF::Engine
         bool GetAttribute(const std::string &name, float &out) const;
         bool GetAttribute(const std::string &name, bool &out) const;
 
-        template <typename T>
+        template<typename T>
         bool GetAttribute(const std::string &name, T &out) const;
-        template <typename T>
+        template<typename T>
         void SetAttribute(const std::string &name, const T &value);
 
-        template <typename T>
+        template<typename T>
         bool GetChildContent(const std::string &childName, T &out) const;
 
-        template <typename T>
+        template<typename T>
         void SetChildContent(const std::string &childName, const T &value);
 
         // Bulk get attributes into a map
@@ -58,7 +58,7 @@ namespace SF::Engine
         GetAttributes(const std::vector<std::string> &keys) const
         {
             std::unordered_map<std::string, std::string> result;
-            for (const auto &key : keys)
+            for (const auto &key: keys)
             {
                 std::string val;
                 if (GetAttribute(key, val))
@@ -69,7 +69,7 @@ namespace SF::Engine
 
         void SetAttributes(const std::unordered_map<std::string, std::string> &attrs)
         {
-            for (const auto &[key, val] : attrs)
+            for (const auto &[key, val]: attrs)
                 SetAttribute(key, val);
         }
 
@@ -113,13 +113,13 @@ namespace SF::Engine
         XMLModule();
         ~XMLModule() override;
 
-        XMLModule(const XMLModule &) = delete;
+        XMLModule(const XMLModule &)            = delete;
         XMLModule &operator=(const XMLModule &) = delete;
 
         void Update() override {}
 
         bool LoadFromFile(const std::string &filename);
-        [[nodiscard]] bool SaveToFile(const std::string &filename) const;
+        bool SaveToFile(const std::string &filename) const;
 
         bool LoadFromString(const std::string &content);
         [[nodiscard]] std::string SaveToString() const;
@@ -127,10 +127,10 @@ namespace SF::Engine
         [[nodiscard]] XMLNode GetRootNode() const;
         void SetRootNode(const std::string &rootName);
 
-        template <typename T>
+        template<typename T>
         bool Serialize(const std::string &name, const T &object, const std::string &filename);
 
-        template <typename T>
+        template<typename T>
         bool Deserialize(const std::string &filename, T &object);
 
         // Type-specific serialization
@@ -158,7 +158,7 @@ namespace SF::Engine
         void SetError(const std::string &error);
         static void ErrorHandler(void *ctx, const char *msg, ...);
     };
-}
+} // namespace SF::Engine
 
 // Include implementation
 #include "XMLModule.inl"

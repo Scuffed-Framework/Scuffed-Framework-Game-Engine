@@ -185,6 +185,13 @@ namespace SF::Engine
             {
                 Update();
             }
+            // Drain the GPU BEFORE anything is torn down. The loop exits with up to a few frames
+            // still in flight, and OnShutdown()/member destructors (viewport images, editor
+            // panels' textures, ...) run before the engine's own idle-wait; destroying an image a
+            // pending command buffer still references (VUID-vkDestroyImage-image-01000) is what
+            // lost the device at shutdown.
+            if (renderer)
+                RenderSystem::CheckVkResult(vkDeviceWaitIdle(*renderer->GetLogicalDevice()));
             OnShutdown();
         }
 
@@ -266,6 +273,11 @@ namespace SF::Engine
 
         virtual ~Application()
         {
+            // Derived-class members are already gone by now; this covers any path that skipped
+            // AppLoop() and protects the members destroyed after this body (viewports, ...), which
+            // are declared after `engine` and so die BEFORE it (and before RenderSystem's own wait).
+            if (renderer && renderer->GetLogicalDevice())
+                vkDeviceWaitIdle(*renderer->GetLogicalDevice());
             if (started_)
                 Shutdown();
         }

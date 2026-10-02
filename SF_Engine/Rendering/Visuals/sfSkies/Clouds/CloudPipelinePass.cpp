@@ -327,7 +327,7 @@ namespace SF::Engine
             raymarchSet_->BindDescriptor(cmd);
             SharedSamplers::BindSharedSamplerSet(cmd, raymarchPipeline_->GetPipelineLayout(),
                                                  VK_PIPELINE_BIND_POINT_COMPUTE);
-            raymarchPipeline_->CmdRender(cmd, UVec2(qext.x, qext.y), /*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1);
+            raymarchPipeline_->Dispatch(cmd, UVec3(qext.x, qext.y, 1), {/*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1});
 
             // Post-write barriers: transition to SHADER_READ_ONLY_OPTIMAL
             for (int i = 0; i < 3; ++i)
@@ -487,20 +487,21 @@ namespace SF::Engine
         reconstructSet_[cur]->BindDescriptor(cmd);
         SharedSamplers::BindSharedSamplerSet(cmd, reconstructPipeline_->GetPipelineLayout(),
                                              VK_PIPELINE_BIND_POINT_COMPUTE);
-        reconstructPipeline_->CmdRender(cmd, UVec3(fext.x, fext.y, fext.z), /*LOCAL_X=*/8, /*LOCAL_Y=*/8,
-                                        /*LOCAL_Z=*/1);
+        reconstructPipeline_->Dispatch(cmd, UVec3(fext),
+                                       {/*LOCAL_X=*/8, /*LOCAL_Y=*/8,
+                                        /*LOCAL_Z=*/1});
 
         // Transition reconstruction outputs to SHADER_READ_ONLY_OPTIMAL
         {
             Image2d *reconImages[3] = {reconColor_[cur].get(), reconDepth_[cur].get(), reconFog_[cur].get()};
-            for (int i = 0; i < 3; ++i)
+            for (auto &reconImage: reconImages)
             {
                 Image::InsertImageMemoryBarrier(
-                        cmd, reconImages[i]->GetImage(), VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                        cmd, reconImage->GetImage(), VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
                         VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                         VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
-                reconImages[i]->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                reconImage->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             }
         }
 
@@ -511,7 +512,7 @@ namespace SF::Engine
         compositeSet_[cur]->BindDescriptor(cmd);
         SharedSamplers::BindSharedSamplerSet(cmd, compositePipeline_->GetPipelineLayout(),
                                              VK_PIPELINE_BIND_POINT_COMPUTE);
-        compositePipeline_->CmdRender(cmd, UVec2(fext.x, fext.y), /*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1);
+        compositePipeline_->Dispatch(cmd, UVec3(fext.x, fext.y, 1), {/*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1});
 
         // Transition scene color back to SHADER_READ_ONLY_OPTIMAL
         Image::InsertImageMemoryBarrier(cmd, const_cast<Image2d *>(colorImg)->GetImage(), VK_ACCESS_SHADER_WRITE_BIT,

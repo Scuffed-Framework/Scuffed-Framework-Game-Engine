@@ -7,7 +7,7 @@
 #include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
-#include <Rendering/RHI/Images/Image2d.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
 #include <memory>
 #include <vector>

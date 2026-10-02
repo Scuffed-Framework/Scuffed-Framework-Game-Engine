@@ -1,6 +1,5 @@
 #include "DeferredLightPipelinePass.hpp"
 #include <Rendering/RenderSystem.hpp>
-#include <Rendering/RHI/Images/ImageDepth.hpp>
 #include <Rendering/SharedSamplers.hpp>
 
 namespace SF::Engine
@@ -122,11 +121,14 @@ namespace SF::Engine
 
         if (!albedo || !normal || !pbr || !depth)
             return;
-        // Pointer comparison : only rewrite if attachments were recreated
-        if (albedo == lastAlbedo_ && normal == lastNormal_ &&
+        // Generation compare, not pointer compare: freed Image2d addresses get reused, so an
+        // unchanged pointer does not mean an unchanged (non-destroyed) VkImageView.
+        const uint64_t generation = rs->GetAttachmentGeneration();
+        if (generation == lastGeneration_ && albedo == lastAlbedo_ && normal == lastNormal_ &&
             pbr == lastPbr_ && depth == lastDepth_)
             return;
 
+        lastGeneration_ = generation;
         lastAlbedo_ = albedo;
         lastNormal_ = normal;
         lastPbr_ = pbr;
