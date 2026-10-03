@@ -152,4 +152,16 @@ namespace SF::Engine
     {
         return *obj.get();
     }
+
+    static constexpr std::string ToHex(uint32_t value)
+    {
+        static constexpr char digits[] = "0123456789ABCDEF";
+        std::string s;
+        do
+        {
+            s.insert(s.begin(), digits[value & 0xF]);
+            value >>= 4;
+        } while (value != 0);
+        return s;
+    }
 } // namespace SF::Engine

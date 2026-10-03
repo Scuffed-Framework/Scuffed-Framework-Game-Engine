@@ -7,6 +7,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -14,35 +15,36 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     class SvgColor
     {
     public:
         SvgColor() = default;
 
         static SvgColor None();
-        static SvgColor Named(std::string name);
+        static SvgColor Named(string name);
         static SvgColor Rgb(uint8_t r, uint8_t g, uint8_t b);
         static SvgColor Rgba(uint8_t r, uint8_t g, uint8_t b, float a);
 
-        const std::string &ToString() const { return m_Value; }
+        [[nodiscard]] const string &ToString() const { return m_Value; }
 
     private:
-        std::string m_Value = "#000000";
+        string m_Value = "#000000";
     };
 
     struct SvgStyle
     {
-        std::optional<SvgColor> fill;
-        std::optional<SvgColor> stroke;
-        std::optional<float> strokeWidth;
-        std::optional<float> opacity;
-        std::optional<float> fillOpacity;
-        std::optional<float> strokeOpacity;
-        std::string strokeLinecap;  // "butt" | "round" | "square"
-        std::string strokeLinejoin; // "miter" | "round" | "bevel"
-        std::string transform;
-        std::string id;
-        std::string cssClass;
+        optional<SvgColor> fill;
+        optional<SvgColor> stroke;
+        optional<float> strokeWidth;
+        optional<float> opacity;
+        optional<float> fillOpacity;
+        optional<float> strokeOpacity;
+        string strokeLinecap;  // "butt" | "round" | "square"
+        string strokeLinejoin; // "miter" | "round" | "bevel"
+        string transform;
+        string id;
+        string cssClass;
 
         SvgStyle &WithFill(SvgColor color)
         {
@@ -60,23 +62,23 @@ namespace SF::Engine
             opacity = value;
             return *this;
         }
-        SvgStyle &WithTransform(std::string value)
+        SvgStyle &WithTransform(string value)
         {
             transform = std::move(value);
             return *this;
         }
-        SvgStyle &WithId(std::string value)
+        SvgStyle &WithId(string value)
         {
             id = std::move(value);
             return *this;
         }
-        SvgStyle &WithClass(std::string value)
+        SvgStyle &WithClass(string value)
         {
             cssClass = std::move(value);
             return *this;
         }
 
-        void WriteAttributes(std::ostream &os) const;
+        void WriteAttributes(ostream &os) const;
     };
 
     struct SvgRect
@@ -111,52 +113,52 @@ namespace SF::Engine
 
     struct SvgPolyline
     {
-        std::vector<Vec2> points;
+        vector<Vec2> points;
         SvgStyle style;
     };
 
     struct SvgPolygon
     {
-        std::vector<Vec2> points;
+        vector<Vec2> points;
         SvgStyle style;
     };
 
     struct SvgPath
     {
-        std::string data; // the 'd' attribute; build with SvgPathBuilder
+        string data; // the 'd' attribute; build with SvgPathBuilder
         SvgStyle style;
     };
 
     struct SvgText
     {
         Vec2 position{};
-        std::string content;
-        float fontSize         = 16.0f;
-        std::string fontFamily = "sans-serif";
+        string content;
+        float fontSize    = 16.0f;
+        string fontFamily = "sans-serif";
         SvgStyle style;
     };
 
     struct SvgGroup;
 
-    using SvgElement = std::variant<SvgRect, SvgCircle, SvgEllipse, SvgLine, SvgPolyline, SvgPolygon, SvgPath, SvgText,
-                                    std::unique_ptr<SvgGroup>>;
+    using SvgElement = variant<SvgRect, SvgCircle, SvgEllipse, SvgLine, SvgPolyline, SvgPolygon, SvgPath, SvgText,
+                               unique_ptr<SvgGroup>>;
 
     struct SvgGroup
     {
         SvgStyle style;
-        std::vector<SvgElement> elements;
+        vector<SvgElement> elements;
     };
 
     class SvgDocument
     {
     public:
-        void Write(const std::filesystem::path &filename) const;
+        void Write(const filesystem::path &filename) const;
 
         float width  = 100.0f;
         float height = 100.0f;
-        std::optional<std::array<float, 4>> viewBox; // minX, minY, width, height
-        std::string title;
-        std::vector<SvgElement> elements;
+        optional<array<float, 4>> viewBox; // minX, minY, width, height
+        string title;
+        vector<SvgElement> elements;
     };
 
     // Load: parsed and rasterized by plutosvg (RGBA8, straight alpha).
@@ -164,8 +166,13 @@ namespace SF::Engine
     class BitmapSvg : public Bitmap::Registrar<BitmapSvg>
     {
     public:
-        static void Load(Bitmap &bitmap, const std::filesystem::path &filename);
-        static void Write(const Bitmap &bitmap, const std::filesystem::path &filename);
+        static void Load(Bitmap &bitmap, const filesystem::path &filename);
+        static void Write(const Bitmap &bitmap, const filesystem::path &filename);
+
+        // Rasterizes SVG markup directly (embedded icons, generated documents, ...).
+        // width/height == 0 uses the document's own size; if only one is given the other keeps the aspect ratio.
+        // `svg` only needs to stay alive for the duration of the call.
+        static void LoadFromMemory(Bitmap &bitmap, string_view svg, uint32_t width = 0, uint32_t height = 0);
         // todo: impl & take data from svgbuilder
 
     private:

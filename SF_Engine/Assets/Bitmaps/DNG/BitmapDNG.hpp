@@ -1,9 +1,9 @@
 #pragma once
 #include <Assets/Bitmaps/Bitmap.hpp>
-#include <libraw/libraw.h>
 #include <filesystem>
-#include <stdexcept>
+#include <libraw/libraw.h>
 #include <memory>
+#include <stdexcept>
 
 namespace SF::Engine
 {
@@ -12,7 +12,7 @@ namespace SF::Engine
     public:
         static void Load(Bitmap &bitmap, const std::filesystem::path &filename)
         {
-            LibRaw raw;
+            LibRaw raw; // can we not do this guys? this is dumb
 
             //  Open
             int err = raw.open_file(filename.string().c_str());
@@ -21,13 +21,13 @@ namespace SF::Engine
 
             //  Processing params
             // Output as 8-bit sRGB RGBA, auto white-balance from the camera metadata.
-            raw.imgdata.params.output_bps = 8;     // 8 bits per channel
-            raw.imgdata.params.output_color = 1;   // sRGB
-            raw.imgdata.params.use_auto_wb = 1;    // camera auto white-balance
-            raw.imgdata.params.use_camera_wb = 1;  // prefer camera WB if available
+            raw.imgdata.params.output_bps     = 8; // 8 bits per channel
+            raw.imgdata.params.output_color   = 1; // sRGB
+            raw.imgdata.params.use_auto_wb    = 1; // camera auto white-balance
+            raw.imgdata.params.use_camera_wb  = 1; // prefer camera WB if available
             raw.imgdata.params.no_auto_bright = 1; // don't clip highlights
-            raw.imgdata.params.highlight = 0;      // clip highlights
-            raw.imgdata.params.half_size = 0;      // full resolution
+            raw.imgdata.params.highlight      = 0; // clip highlights
+            raw.imgdata.params.half_size      = 0; // full resolution
             raw.imgdata.params.four_color_rgb = 0; // standard 3-channel demosaic
 
             //  Unpack raw data
@@ -41,7 +41,7 @@ namespace SF::Engine
                 throw std::runtime_error("LibRaw process failed: " + std::string(libraw_strerror(err)));
 
             //  Pull out the processed image
-            int errCode = 0;
+            int errCode                   = 0;
             libraw_processed_image_t *img = raw.dcraw_make_mem_image(&errCode);
             if (!img || errCode != LIBRAW_SUCCESS)
                 throw std::runtime_error("LibRaw make_mem_image failed: " + std::string(libraw_strerror(errCode)));
@@ -56,13 +56,13 @@ namespace SF::Engine
             if (img->type != LIBRAW_IMAGE_BITMAP)
                 throw std::runtime_error("LibRaw returned non-bitmap image type");
 
-            const uint32_t width = img->width;
-            const uint32_t height = img->height;
+            const uint32_t width    = img->width;
+            const uint32_t height   = img->height;
             const uint32_t channels = img->colors; // 3 (RGB)
-            const size_t pixels = width * height;
+            const size_t pixels     = width * height;
 
             //  Convert RGB → RGBA
-            auto rgba = std::make_unique<uint8_t[]>(pixels * 4);
+            auto rgba          = std::make_unique<uint8_t[]>(pixels * 4);
             const uint8_t *src = img->data;
 
             if (channels == 3)
@@ -74,12 +74,10 @@ namespace SF::Engine
                     rgba[i * 4 + 2] = src[i * 3 + 2]; // B
                     rgba[i * 4 + 3] = 0xFF;           // A = opaque
                 }
-            }
-            else if (channels == 4)
+            } else if (channels == 4)
             {
                 std::memcpy(rgba.get(), src, pixels * 4);
-            }
-            else
+            } else
             {
                 throw std::runtime_error("Unexpected channel count from LibRaw: " + std::to_string(channels));
             }
@@ -96,15 +94,13 @@ namespace SF::Engine
         // into a valid DNG would require embedding a full TIFF structure,
         // Bayer pattern metadata, colour matrices, and EXIF. Use TIFF or PNG
         // for round-trip storage of processed bitmaps.
-        static void Write(const Bitmap &, const std::filesystem::path &filename,
-                          int = 0)
+        static void Write(const Bitmap &, const std::filesystem::path &filename, int = 0)
         {
-            throw std::runtime_error(
-                "DNG write is not supported. "
-                "Save processed images as PNG or TIFF instead.");
+            throw std::runtime_error("DNG write is not supported. "
+                                     "Save processed images as PNG or TIFF instead.");
         }
 
     private:
         static inline bool registered = Register("dng", "DNG");
     };
-}
+} // namespace SF::Engine

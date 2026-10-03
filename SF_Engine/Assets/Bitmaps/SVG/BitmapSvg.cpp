@@ -8,6 +8,7 @@
 #include <iterator>
 #include <ostream>
 #include <stdexcept>
+#include <string_view>
 
 #include <plutosvg.h>
 
@@ -20,7 +21,7 @@ namespace SF::Engine
         return c;
     }
 
-    SvgColor SvgColor::Named(std::string name)
+    SvgColor SvgColor::Named(string name)
     {
         SvgColor c;
         c.m_Value = std::move(name);
@@ -41,7 +42,7 @@ namespace SF::Engine
         return c;
     }
 
-    void SvgStyle::WriteAttributes(std::ostream &os) const
+    void SvgStyle::WriteAttributes(ostream &os) const
     {
         if (fill)
             os << std::format(R"( fill="{}")", fill->ToString());
@@ -70,9 +71,9 @@ namespace SF::Engine
     namespace
     {
 
-        void WriteElement(std::ostream &os, const SvgElement &element); // fwd (groups recurse)
+        void WriteElement(ostream &os, const SvgElement &element); // fwd (groups recurse)
 
-        void WriteShape(std::ostream &os, const SvgRect &rect)
+        void WriteShape(ostream &os, const SvgRect &rect)
         {
             os << std::format(R"(<rect x="{}" y="{}" width="{}" height="{}")", rect.position.x, rect.position.y,
                               rect.size.x, rect.size.y);
@@ -84,14 +85,14 @@ namespace SF::Engine
             os << "/>\n";
         }
 
-        void WriteShape(std::ostream &os, const SvgCircle &circle)
+        void WriteShape(ostream &os, const SvgCircle &circle)
         {
             os << std::format(R"(<circle cx="{}" cy="{}" r="{}")", circle.center.x, circle.center.y, circle.radius);
             circle.style.WriteAttributes(os);
             os << "/>\n";
         }
 
-        void WriteShape(std::ostream &os, const SvgEllipse &ellipse)
+        void WriteShape(ostream &os, const SvgEllipse &ellipse)
         {
             os << std::format(R"(<ellipse cx="{}" cy="{}" rx="{}" ry="{}")", ellipse.center.x, ellipse.center.y,
                               ellipse.radius.x, ellipse.radius.y);
@@ -99,7 +100,7 @@ namespace SF::Engine
             os << "/>\n";
         }
 
-        void WriteShape(std::ostream &os, const SvgLine &line)
+        void WriteShape(ostream &os, const SvgLine &line)
         {
             os << std::format(R"(<line x1="{}" y1="{}" x2="{}" y2="{}")", line.start.x, line.start.y, line.end.x,
                               line.end.y);
@@ -107,7 +108,7 @@ namespace SF::Engine
             os << "/>\n";
         }
 
-        void WritePoints(std::ostream &os, const std::vector<Vec2> &points)
+        void WritePoints(ostream &os, const vector<Vec2> &points)
         {
             os << R"( points=")";
             for (size_t i = 0; i < points.size(); ++i)
@@ -119,7 +120,7 @@ namespace SF::Engine
             os << '"';
         }
 
-        void WriteShape(std::ostream &os, const SvgPolyline &polyline)
+        void WriteShape(ostream &os, const SvgPolyline &polyline)
         {
             os << "<polyline";
             WritePoints(os, polyline.points);
@@ -127,7 +128,7 @@ namespace SF::Engine
             os << "/>\n";
         }
 
-        void WriteShape(std::ostream &os, const SvgPolygon &polygon)
+        void WriteShape(ostream &os, const SvgPolygon &polygon)
         {
             os << "<polygon";
             WritePoints(os, polygon.points);
@@ -135,14 +136,14 @@ namespace SF::Engine
             os << "/>\n";
         }
 
-        void WriteShape(std::ostream &os, const SvgPath &path)
+        void WriteShape(ostream &os, const SvgPath &path)
         {
             os << std::format(R"(<path d="{}")", path.data);
             path.style.WriteAttributes(os);
             os << "/>\n";
         }
 
-        void WriteShape(std::ostream &os, const SvgText &text)
+        void WriteShape(ostream &os, const SvgText &text)
         {
             os << std::format(R"(<text x="{}" y="{}" font-size="{}" font-family="{}")", text.position.x,
                               text.position.y, text.fontSize, text.fontFamily);
@@ -150,7 +151,7 @@ namespace SF::Engine
             os << '>' << text.content << "</text>\n";
         }
 
-        void WriteShape(std::ostream &os, const std::unique_ptr<SvgGroup> &group)
+        void WriteShape(ostream &os, const unique_ptr<SvgGroup> &group)
         {
             os << "<g";
             group->style.WriteAttributes(os);
@@ -160,19 +161,19 @@ namespace SF::Engine
             os << "</g>\n";
         }
 
-        void WriteElement(std::ostream &os, const SvgElement &element)
+        void WriteElement(ostream &os, const SvgElement &element)
         {
-            std::visit([&os](const auto &shape) { WriteShape(os, shape); }, element);
+            visit([&os](const auto &shape) { WriteShape(os, shape); }, element);
         }
 
         // ------------------------------------------------------------------
         // BitmapSvg::Write helpers (BMP-in-base64 wrapper)
         // ------------------------------------------------------------------
 
-        std::string Base64Encode(const uint8_t *data, size_t len)
+        string Base64Encode(const uint8_t *data, size_t len)
         {
             static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-            std::string out;
+            string out;
             out.reserve(((len + 2) / 3) * 4);
             size_t i = 0;
             while (i + 3 <= len)
@@ -203,13 +204,13 @@ namespace SF::Engine
         }
 
         // Minimal uncompressed 32bpp top-down BMP encoder.
-        std::vector<uint8_t> EncodeBmp(const uint8_t *rgba, int width, int height)
+        vector<uint8_t> EncodeBmp(const uint8_t *rgba, int width, int height)
         {
             const uint32_t headerSize = 14 + 40;
             const uint32_t imageSize  = static_cast<uint32_t>(width) * height * 4;
-            std::vector<uint8_t> out(headerSize + imageSize);
-            auto put16 = [&](size_t off, uint16_t v) { std::memcpy(out.data() + off, &v, 2); };
-            auto put32 = [&](size_t off, uint32_t v) { std::memcpy(out.data() + off, &v, 4); };
+            vector<uint8_t> out(headerSize + imageSize);
+            auto put16 = [&](size_t off, uint16_t v) { memcpy(out.data() + off, &v, 2); };
+            auto put32 = [&](size_t off, uint32_t v) { memcpy(out.data() + off, &v, 4); };
 
             out[0] = 'B';
             out[1] = 'M';
@@ -251,15 +252,15 @@ namespace SF::Engine
         {
             void operator()(plutovg_surface_t *surface) const { plutovg_surface_destroy(surface); }
         };
-        using SvgDocPtr  = std::unique_ptr<plutosvg_document_t, SvgDocDeleter>;
-        using SurfacePtr = std::unique_ptr<plutovg_surface_t, SurfaceDeleter>;
+        using SvgDocPtr  = unique_ptr<plutosvg_document_t, SvgDocDeleter>;
+        using SurfacePtr = unique_ptr<plutovg_surface_t, SurfaceDeleter>;
     } // namespace
 
-    void SvgDocument::Write(const std::filesystem::path &filename) const
+    void SvgDocument::Write(const filesystem::path &filename) const
     {
-        std::ofstream file(filename, std::ios::out | std::ios::trunc);
+        ofstream file(filename, ios::out | ios::trunc);
         if (!file)
-            throw std::runtime_error("SvgDocument::Write: failed to open " + filename.string());
+            throw runtime_error("SvgDocument::Write: failed to open " + filename.string());
 
         file << R"(<?xml version="1.0" encoding="UTF-8"?>)" << '\n';
         file << std::format(R"(<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}")", width, height);
@@ -279,58 +280,88 @@ namespace SF::Engine
         file << "</svg>\n";
     }
 
-    void BitmapSvg::Load(Bitmap &bitmap, const std::filesystem::path &filename)
+    namespace
     {
-        std::ifstream file(filename, std::ios::binary);
+        // Shared by Load() and LoadFromMemory(). `xml` must outlive the plutosvg document (it is not copied).
+        void RasterizeSvg(Bitmap &bitmap, string_view xml, uint32_t width, uint32_t height, const string &what)
+        {
+            SvgDocPtr doc(plutosvg_document_load_from_data(xml.data(), static_cast<int>(xml.size()), -1.0f, -1.0f,
+                                                           nullptr, nullptr));
+            if (!doc)
+                throw runtime_error("BitmapSvg: not a valid SVG: " + what);
+
+            float docWidth  = plutosvg_document_get_width(doc.get());
+            float docHeight = plutosvg_document_get_height(doc.get());
+            if (docWidth <= 0.0f)
+                docWidth = 256.0f;
+            if (docHeight <= 0.0f)
+                docHeight = 256.0f;
+
+            int pixelW, pixelH;
+            if (width > 0 && height > 0)
+            {
+                pixelW = static_cast<int>(width);
+                pixelH = static_cast<int>(height);
+            } else if (width > 0)
+            {
+                pixelW = static_cast<int>(width);
+                pixelH = max(1, static_cast<int>(round(width * docHeight / docWidth)));
+            } else if (height > 0)
+            {
+                pixelH = static_cast<int>(height);
+                pixelW = max(1, static_cast<int>(round(height * docWidth / docHeight)));
+            } else
+            {
+                pixelW = max(1, static_cast<int>(round(docWidth)));
+                pixelH = max(1, static_cast<int>(round(docHeight)));
+            }
+
+            SurfacePtr surface(
+                    plutosvg_document_render_to_surface(doc.get(), nullptr, pixelW, pixelH, nullptr, nullptr, nullptr));
+            if (!surface)
+                throw runtime_error("BitmapSvg: failed to render " + what);
+
+            // plutovg surfaces are premultiplied ARGB32 (BGRA bytes on little-endian);
+            // Bitmap wants straight-alpha RGBA8.
+            const size_t byteCount = static_cast<size_t>(pixelW) * static_cast<size_t>(pixelH) * 4u;
+            auto pixelData         = make_unique<uint8_t[]>(byteCount);
+            plutovg_convert_argb_to_rgba(pixelData.get(), plutovg_surface_get_data(surface.get()), pixelW, pixelH,
+                                         plutovg_surface_get_stride(surface.get()));
+
+            bitmap.SetSize(UVec2{static_cast<uint32_t>(pixelW), static_cast<uint32_t>(pixelH)});
+            bitmap.SetFormat(PixelFormat::RGBA8);
+            bitmap.SetData(std::move(pixelData));
+        }
+    } // namespace
+
+    void BitmapSvg::Load(Bitmap &bitmap, const filesystem::path &filename)
+    {
+        ifstream file(filename, ios::binary);
         if (!file)
-            throw std::runtime_error("BitmapSvg::Load: failed to open " + filename.string());
+            throw runtime_error("BitmapSvg::Load: failed to open " + filename.string());
         // Must outlive `doc`: plutosvg references this buffer without copying it.
-        const std::string xml((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        const string xml((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
 
-        SvgDocPtr doc(plutosvg_document_load_from_data(xml.data(), static_cast<int>(xml.size()), -1.0f, -1.0f, nullptr,
-                                                       nullptr));
-        if (!doc)
-            throw std::runtime_error("BitmapSvg::Load: not a valid SVG file: " + filename.string());
-
-        float docWidth  = plutosvg_document_get_width(doc.get());
-        float docHeight = plutosvg_document_get_height(doc.get());
-        if (docWidth <= 0.0f)
-            docWidth = 256.0f;
-        if (docHeight <= 0.0f)
-            docHeight = 256.0f;
-
-        const int pixelW = std::max(1, static_cast<int>(std::round(docWidth)));
-        const int pixelH = std::max(1, static_cast<int>(std::round(docHeight)));
-
-        SurfacePtr surface(
-                plutosvg_document_render_to_surface(doc.get(), nullptr, pixelW, pixelH, nullptr, nullptr, nullptr));
-        if (!surface)
-            throw std::runtime_error("BitmapSvg::Load: failed to render " + filename.string());
-
-        // plutovg surfaces are premultiplied ARGB32 (BGRA bytes on little-endian);
-        // Bitmap wants straight-alpha RGBA8 at bpp=4.
-        const uint32_t byteCount = static_cast<uint32_t>(pixelW) * static_cast<uint32_t>(pixelH) * 4u;
-        auto pixelData           = std::make_unique<uint8_t[]>(byteCount);
-        plutovg_convert_argb_to_rgba(pixelData.get(), plutovg_surface_get_data(surface.get()), pixelW, pixelH,
-                                     plutovg_surface_get_stride(surface.get()));
-
-        bitmap.SetSize(UVec2{static_cast<uint32_t>(pixelW), static_cast<uint32_t>(pixelH)});
-        bitmap.SetBytesPerPixel(4);
-        bitmap.SetData(std::move(pixelData));
+        RasterizeSvg(bitmap, xml, 0, 0, filename.string());
         bitmap.SetFilename(filename);
     }
 
-    void BitmapSvg::Write(const Bitmap &bitmap, const std::filesystem::path &filename)
+    void BitmapSvg::LoadFromMemory(Bitmap &bitmap, string_view svg, uint32_t width, uint32_t height)
+    {
+        RasterizeSvg(bitmap, svg, width, height, "<memory>");
+    }
+
+    void BitmapSvg::Write(const Bitmap &bitmap, const filesystem::path &filename)
     {
         const UVec2 &size = bitmap.GetSize();
         uint32_t w = size.x, h = size.y;
         uint32_t bpp       = bitmap.GetBytesPerPixel();
         const uint8_t *src = bitmap.GetData().get();
         if (!src || w == 0 || h == 0)
-            throw std::runtime_error("BitmapSvg::Write: bitmap has no pixel data");
+            throw runtime_error("BitmapSvg::Write: bitmap has no pixel data");
 
         // Normalize to RGBA8; EncodeBmp only understands that layout.
-        std::vector<uint8_t> rgba(static_cast<size_t>(w) * h * 4);
+        vector<uint8_t> rgba(static_cast<size_t>(w) * h * 4);
         for (uint32_t p = 0; p < w * h; ++p)
         {
             const uint8_t *s = src + p * bpp;
@@ -354,16 +385,16 @@ namespace SF::Engine
                     d[3]               = 255;
                     break;
                 default:
-                    throw std::runtime_error("BitmapSvg::Write: unsupported bytes-per-pixel " + std::to_string(bpp));
+                    throw runtime_error("BitmapSvg::Write: unsupported bytes-per-pixel " + to_string(bpp));
             }
         }
 
-        std::vector<uint8_t> bmp = EncodeBmp(rgba.data(), static_cast<int>(w), static_cast<int>(h));
-        std::string b64          = Base64Encode(bmp.data(), bmp.size());
+        vector<uint8_t> bmp = EncodeBmp(rgba.data(), static_cast<int>(w), static_cast<int>(h));
+        string b64          = Base64Encode(bmp.data(), bmp.size());
 
-        std::ofstream file(filename, std::ios::out | std::ios::trunc);
+        ofstream file(filename, ios::out | ios::trunc);
         if (!file)
-            throw std::runtime_error("BitmapSvg::Write: failed to open " + filename.string());
+            throw runtime_error("BitmapSvg::Write: failed to open " + filename.string());
 
         file << R"(<?xml version="1.0" encoding="UTF-8"?>)" << '\n';
         file << std::format(
