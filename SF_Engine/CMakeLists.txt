@@ -24,9 +24,9 @@ set(SLANG_VERSION "2026.14.1")
 
 include(FetchContent)
 
-# 
+#
 # Dependencies (Conan)
-# 
+#
 find_package(OpenAL CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(OpenCLHeaders REQUIRED)
@@ -53,6 +53,7 @@ find_package(libraw CONFIG REQUIRED)
 find_package(plutosvg CONFIG REQUIRED)
 find_package(tinyexr CONFIG REQUIRED)
 find_package(openfbx REQUIRED)
+find_package(WebP CONFIG REQUIRED) # Conan libwebp -> WebP-config.cmake, targets WebP::*
 find_package(TinyOBJLoader REQUIRED)
 
 if (WIN32)
@@ -60,9 +61,9 @@ if (WIN32)
     find_package(D3D12MemoryAllocator CONFIG REQUIRED)
 endif ()
 
-# 
+#
 # Sources
-# 
+#
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/*.cc"
@@ -94,9 +95,9 @@ target_compile_definitions(SF_Engine PUBLIC
         VK_NO_PROTOTYPES
 )
 
-# 
+#
 # Platform selection (console builds first, they may also set UNIX)
-# 
+#
 if (OrbisOS_build)
     target_compile_definitions(SF_Engine PUBLIC _PLATFORM_PLAYSTATION)
 elseif (HorizonOS_build)
@@ -129,9 +130,9 @@ elseif (UNIX)
     target_link_libraries(SF_Engine PUBLIC X11 pthread dl)
 endif ()
 
-# 
+#
 # box3d
-# 
+#
 # Disable extras before MakeAvailable (option names depend on box3d; harmless if absent).
 set(BOX3D_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(BOX3D_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
@@ -140,9 +141,9 @@ FetchContent_Declare(box3d
         GIT_TAG v0.1.0)
 FetchContent_MakeAvailable(box3d)
 
-# 
+#
 # Slang (prebuilt)
-# 
+#
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|ARM64|aarch64)$")
     set(SLANG_ARCH "aarch64")
 else ()
@@ -206,9 +207,9 @@ if (DEFINED SLANG_ARCHIVE_NAME AND NOT OrbisOS_build AND NOT HorizonOS_build)
     endif ()
 endif ()
 
-# 
+#
 # Linking (imported targets propagate their own include dirs)
-# 
+#
 target_link_libraries(SF_Engine PUBLIC
         OpenAL::OpenAL
         assimp::assimp
@@ -236,6 +237,8 @@ target_link_libraries(SF_Engine PUBLIC
         tinyobjloader::tinyobjloader
         plutosvg::plutosvg
         tinyexr::tinyexr
+        WebP::webp
+        WebP::webpdemux
 )
 
 if (TARGET utf8cpp::utf8cpp)
@@ -257,9 +260,9 @@ target_include_directories(SF_Engine PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
-# 
+#
 # Shaders
-# 
+#
 set(SF_ENGINE_SHADER_OUT_DIR "${CMAKE_BINARY_DIR}/Shaders")
 
 add_custom_target(SF_CopyShaders ALL
