@@ -80,8 +80,10 @@ class SfEngineConan(ConanFile):
 
         self.requires("openfbx/cci.20210426")
         self.requires("tinyobjloader/2.0.0-rc10")
+        self.requires("miniz/3.0.2", override=True)
 
         self.requires("plutosvg/0.0.8")
+        self.requires("tinyexr/1.0.7")
 
     def layout(self):
         cmake_layout(self)

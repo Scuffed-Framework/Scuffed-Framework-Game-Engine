@@ -1,233 +1,67 @@
 #pragma once
 #include <Assets/Bitmaps/Bitmap.hpp>
+
+#include <tinyexr.h>
+
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace SF::Engine
 {
-    // EXR compression methods
+    using namespace std;
     enum class EXRCompression
     {
-        NONE = 0,
-        RLE = 1,
-        ZIPS = 2,
-        ZIP = 3,
-        PIZ = 4,
+        NONE  = 0,
+        RLE   = 1,
+        ZIPS  = 2,
+        ZIP   = 3,
+        PIZ   = 4,
         PXR24 = 5,
-        B44 = 6,
-        B44A = 7,
-        DWAA = 8,
-        DWAB = 9
+        B44   = 6,
+        B44A  = 7,
+        DWAA  = 8, // not supported by tinyexr
+        DWAB  = 9  // not supported by tinyexr
     };
-
-    // EXR pixel types
-    enum class EXRPixelType
-    {
-        UINT = 0,
-        HALF = 1,
-        FLOAT = 2
-    };
-
-#pragma pack(push, 1)
-    // EXR file header (first part)
-    struct EXRHeader
-    {
-        uint32_t magic;    // 0x01312F76
-        uint32_t version;  // Version field with flags
-    };
-
-    // EXR attribute header
-    struct EXRAttribute
-    {
-        // Variable length strings followed by type and data
-        // Structure: name\0 type\0 size data
-    };
-#pragma pack(pop)
-
-    constexpr uint32_t EXR_MAGIC = 0x01312F76;
-    constexpr uint32_t EXR_VERSION = 2;
-    constexpr uint32_t EXR_TILED_FLAG = 0x00000200;
-    constexpr uint32_t EXR_LONG_NAMES_FLAG = 0x00000400;
-    constexpr uint32_t EXR_MULTIPART_FLAG = 0x00001000;
 
     class BitmapEXR : public Bitmap::Registrar<BitmapEXR>
     {
     public:
-        static void Load(Bitmap& bitmap, const std::filesystem::path& filename)
+        static void Load(Bitmap &bitmap, const filesystem::path &filename)
         {
-            std::ifstream file(filename, std::ios::binary);
-            if (!file)
+            const vector<unsigned char> fileData = ReadFile(filename);
+
+            float *rgba     = nullptr;
+            int width       = 0;
+            int height      = 0;
+            const char *err = nullptr;
+
+            const int ret = LoadEXRFromMemory(&rgba, &width, &height, fileData.data(), fileData.size(), &err);
+            if (ret != TINYEXR_SUCCESS)
             {
-                throw std::runtime_error("Failed to open EXR file: " + filename.string());
+                throw runtime_error("Failed to load EXR '" + filename.string() + "': " + TakeError(err));
             }
-
-            // Read magic number and version
-            EXRHeader header;
-            file.read(reinterpret_cast<char*>(&header), sizeof(EXRHeader));
-
-            if (header.magic != EXR_MAGIC)
-            {
-                throw std::runtime_error("Invalid EXR file magic number");
-            }
-
-            uint32_t version = header.version & 0xFF;
-            uint32_t flags = header.version & 0xFFFFFF00;
-
-            if (flags & EXR_TILED_FLAG)
-            {
-                throw std::runtime_error("Tiled EXR files not supported");
-            }
-
-            if (flags & EXR_MULTIPART_FLAG)
-            {
-                throw std::runtime_error("Multi-part EXR files not supported");
-            }
-
-            // Parse attributes
-            int width = 0, height = 0;
-            int dataWindowMinX = 0, dataWindowMinY = 0;
-            int dataWindowMaxX = 0, dataWindowMaxY = 0;
-            EXRCompression compression = EXRCompression::NONE;
-            std::vector<std::string> channelNames;
-            std::vector<EXRPixelType> channelTypes;
-
-            while (true)
-            {
-                // Read attribute name
-                std::string attrName;
-                char ch;
-                while (file.get(ch) && ch != '\0')
-                {
-                    attrName += ch;
-                }
-
-                // Empty name means end of header
-                if (attrName.empty()) break;
-
-                // Read attribute type
-                std::string attrType;
-                while (file.get(ch) && ch != '\0')
-                {
-                    attrType += ch;
-                }
-
-                // Read attribute size
-                uint32_t attrSize;
-                file.read(reinterpret_cast<char*>(&attrSize), sizeof(uint32_t));
-
-                // Read attribute data
-                std::vector<uint8_t> attrData(attrSize);
-                file.read(reinterpret_cast<char*>(attrData.data()), attrSize);
-
-                // Parse important attributes
-                if (attrName == "dataWindow" && attrType == "box2i")
-                {
-                    std::memcpy(&dataWindowMinX, &attrData[0], 4);
-                    std::memcpy(&dataWindowMinY, &attrData[4], 4);
-                    std::memcpy(&dataWindowMaxX, &attrData[8], 4);
-                    std::memcpy(&dataWindowMaxY, &attrData[12], 4);
-                    width = dataWindowMaxX - dataWindowMinX + 1;
-                    height = dataWindowMaxY - dataWindowMinY + 1;
-                }
-                else if (attrName == "compression" && attrType == "compression")
-                {
-                    compression = static_cast<EXRCompression>(attrData[0]);
-                }
-                else if (attrName == "channels" && attrType == "chlist")
-                {
-                    // Parse channel list (simplified)
-                    size_t offset = 0;
-                    while (offset < attrData.size())
-                    {
-                        std::string channelName;
-                        while (offset < attrData.size() && attrData[offset] != '\0')
-                        {
-                            channelName += static_cast<char>(attrData[offset++]);
-                        }
-                        offset++;  // Skip null terminator
-
-                        if (channelName.empty()) break;
-
-                        channelNames.push_back(channelName);
-
-                        // Read pixel type (4 bytes)
-                        if (offset + 4 <= attrData.size())
-                        {
-                            uint32_t pixelType;
-                            std::memcpy(&pixelType, &attrData[offset], 4);
-                            channelTypes.push_back(static_cast<EXRPixelType>(pixelType));
-                            offset += 4;
-                        }
-
-                        // Skip pLinear (1 byte) and reserved (3 bytes)
-                        offset += 4;
-
-                        // Skip xSampling and ySampling (4 bytes each)
-                        offset += 8;
-                    }
-                }
-            }
+            unique_ptr<float, decltype(&free)> rgbaGuard(rgba, &free);
 
             if (width <= 0 || height <= 0)
             {
-                throw std::runtime_error("Invalid EXR dimensions");
+                throw runtime_error("Invalid EXR dimensions: " + filename.string());
             }
 
-            if (compression != EXRCompression::NONE)
+            const size_t pixelCount = static_cast<size_t>(width) * static_cast<size_t>(height);
+            auto data               = make_unique<uint8_t[]>(pixelCount * 4);
+
+            for (size_t i = 0; i < pixelCount * 4; ++i)
             {
-                throw std::runtime_error(
-                    "Compressed EXR files not yet supported. "
-                    "Use libraries like OpenEXR or tinyexr for full support");
-            }
-
-            // For uncompressed, read scanline data
-            // This is a simplified implementation
-            size_t numChannels = std::min(size_t(4), channelNames.size());
-            size_t dataSize = width * height * 4;  // Always convert to RGBA
-
-            auto data = std::make_unique<uint8_t[]>(dataSize);
-            std::memset(data.get(), 255, dataSize);  // Default alpha to 255
-
-            // Read scanline offset table
-            std::vector<uint64_t> scanlineOffsets(height);
-            file.read(reinterpret_cast<char*>(scanlineOffsets.data()), height * sizeof(uint64_t));
-
-            // Read pixel data (simplified - assumes float32 RGB/RGBA)
-            for (int y = 0; y < height; ++y)
-            {
-                // Read scanline header
-                int32_t lineNumber;
-                uint32_t dataSize;
-                file.read(reinterpret_cast<char*>(&lineNumber), sizeof(int32_t));
-                file.read(reinterpret_cast<char*>(&dataSize), sizeof(uint32_t));
-
-                // Read scanline data
-                std::vector<float> scanline(width * numChannels);
-                file.read(reinterpret_cast<char*>(scanline.data()),
-                          width * numChannels * sizeof(float));
-
-                // Convert float to uint8 and store as RGBA
-                for (int x = 0; x < width; ++x)
-                {
-                    size_t outIdx = (y * width + x) * 4;
-                    for (size_t c = 0; c < numChannels && c < 3; ++c)
-                    {
-                        float val = scanline[x * numChannels + c];
-                        val = std::clamp(val, 0.0f, 1.0f);
-                        data[outIdx + c] = static_cast<uint8_t>(val * 255.0f);
-                    }
-                    // Alpha channel
-                    if (numChannels >= 4)
-                    {
-                        float val = scanline[x * numChannels + 3];
-                        val = std::clamp(val, 0.0f, 1.0f);
-                        data[outIdx + 3] = static_cast<uint8_t>(val * 255.0f);
-                    }
-                }
+                data[i] = FloatToByte(rgba[i]);
             }
 
             bitmap.SetData(std::move(data));
@@ -236,185 +70,165 @@ namespace SF::Engine
             bitmap.SetFilename(filename);
         }
 
-        static void Write(const Bitmap& bitmap, const std::filesystem::path& filename,
-                          EXRCompression compression = EXRCompression::NONE)
+        // Writes 1/2/3/4 byte-per-pixel bitmaps (gray, gray+alpha, RGB, RGBA) as EXR.
+        // saveAsHalf stores 16-bit floats on disk (smaller files; required for B44/B44A to be effective).
+        static void Write(const Bitmap &bitmap, const filesystem::path &filename,
+                          EXRCompression compression = EXRCompression::ZIP, bool saveAsHalf = false)
         {
-            if (!bitmap.GetData())
+            const auto &src = bitmap.GetData();
+            if (!src)
             {
-                throw std::runtime_error("Cannot write empty bitmap");
+                throw runtime_error("Cannot write empty bitmap");
             }
 
-            const auto& size = bitmap.GetSize();
-            int width = static_cast<int>(size.x);
-            int height = static_cast<int>(size.y);
-            uint32_t bytesPerPixel = bitmap.GetBytesPerPixel();
-
-            if (compression != EXRCompression::NONE)
+            if (compression == EXRCompression::DWAA || compression == EXRCompression::DWAB)
             {
-                throw std::runtime_error(
-                    "EXR compression not yet implemented. "
-                    "Use NONE or integrate OpenEXR/tinyexr library");
+                throw runtime_error("DWAA/DWAB compression is not supported by tinyexr");
             }
 
-            std::ofstream file(filename, std::ios::binary);
-            if (!file)
+            const auto &size             = bitmap.GetSize();
+            const int width              = static_cast<int>(size.x);
+            const int height             = static_cast<int>(size.y);
+            const uint32_t bytesPerPixel = bitmap.GetBytesPerPixel();
+
+            if (width <= 0 || height <= 0 || bytesPerPixel == 0)
             {
-                throw std::runtime_error("Failed to create EXR file: " + filename.string());
+                throw runtime_error("Cannot write bitmap with invalid size or format");
             }
 
-            // Write header
+            const bool hasAlpha   = (bytesPerPixel == 2 || bytesPerPixel >= 4);
+            const int numChannels = hasAlpha ? 4 : 3;
+
+            // EXR requires channels sorted alphabetically: A, B, G, R.
+            const char *channelNames = hasAlpha ? "ABGR" : "BGR";
+            const int iA             = hasAlpha ? 0 : -1;
+            const int iB             = hasAlpha ? 1 : 0;
+            const int iG             = iB + 1;
+            const int iR             = iB + 2;
+
+            const size_t pixelCount = static_cast<size_t>(width) * static_cast<size_t>(height);
+            vector<vector<float>> planes(numChannels, vector<float>(pixelCount));
+
+            for (size_t p = 0; p < pixelCount; ++p)
+            {
+                const size_t s = p * bytesPerPixel;
+                float r, g, b, a = 1.0f;
+
+                if (bytesPerPixel <= 2)
+                {
+                    r = g = b = src[s] / 255.0f;
+                    if (bytesPerPixel == 2)
+                        a = src[s + 1] / 255.0f;
+                } else
+                {
+                    r = src[s + 0] / 255.0f;
+                    g = src[s + 1] / 255.0f;
+                    b = src[s + 2] / 255.0f;
+                    if (bytesPerPixel >= 4)
+                        a = src[s + 3] / 255.0f;
+                }
+
+                planes[iR][p] = r;
+                planes[iG][p] = g;
+                planes[iB][p] = b;
+                if (iA >= 0)
+                    planes[iA][p] = a;
+            }
+
             EXRHeader header;
-            header.magic = EXR_MAGIC;
-            header.version = EXR_VERSION;
-            file.write(reinterpret_cast<const char*>(&header), sizeof(EXRHeader));
+            InitEXRHeader(&header);
+            EXRImage image;
+            InitEXRImage(&image);
 
-            // Helper to write string attribute
-            auto writeStringAttr =
-                [&](const std::string& name, const std::string& type, const std::string& value)
+            vector<float *> planePtrs(numChannels);
+            for (int i = 0; i < numChannels; ++i)
+                planePtrs[i] = planes[i].data();
+
+            image.num_channels = numChannels;
+            image.images       = reinterpret_cast<unsigned char **>(planePtrs.data());
+            image.width        = width;
+            image.height       = height;
+
+            vector<EXRChannelInfo> channelInfos(numChannels);
+            vector<int> pixelTypes(numChannels, TINYEXR_PIXELTYPE_FLOAT); // type of the data we pass in
+            vector<int> requestedTypes(numChannels,
+                                       saveAsHalf ? TINYEXR_PIXELTYPE_HALF : TINYEXR_PIXELTYPE_FLOAT); // type on disk
+
+            for (int i = 0; i < numChannels; ++i)
             {
-                file.write(name.c_str(), name.length() + 1);
-                file.write(type.c_str(), type.length() + 1);
-                uint32_t size = value.length() + 1;
-                file.write(reinterpret_cast<const char*>(&size), sizeof(uint32_t));
-                file.write(value.c_str(), size);
-            };
-
-            // Helper to write binary attribute
-            auto writeBinaryAttr = [&](const std::string& name, const std::string& type,
-                                       const void* data, uint32_t size)
-            {
-                file.write(name.c_str(), name.length() + 1);
-                file.write(type.c_str(), type.length() + 1);
-                file.write(reinterpret_cast<const char*>(&size), sizeof(uint32_t));
-                file.write(reinterpret_cast<const char*>(data), size);
-            };
-
-            // Write channels attribute
-            {
-                std::vector<uint8_t> channelData;
-                const char* channels[] = {"B", "G", "R", "A"};
-
-                for (int i = 0; i < 4; ++i)
-                {
-                    // Channel name
-                    const char* ch = channels[i];
-                    channelData.insert(channelData.end(), ch, ch + strlen(ch) + 1);
-
-                    // Pixel type (FLOAT = 2)
-                    uint32_t pixelType = 2;
-                    uint8_t* pt = reinterpret_cast<uint8_t*>(&pixelType);
-                    channelData.insert(channelData.end(), pt, pt + 4);
-
-                    // pLinear (1) + reserved (3)
-                    uint32_t linear = 0;
-                    uint8_t* lin = reinterpret_cast<uint8_t*>(&linear);
-                    channelData.insert(channelData.end(), lin, lin + 4);
-
-                    // xSampling and ySampling
-                    uint32_t sampling = 1;
-                    uint8_t* samp = reinterpret_cast<uint8_t*>(&sampling);
-                    channelData.insert(channelData.end(), samp, samp + 4);
-                    channelData.insert(channelData.end(), samp, samp + 4);
-                }
-                channelData.push_back(0);  // Null terminator
-
-                writeBinaryAttr("channels", "chlist", channelData.data(), channelData.size());
+                memset(&channelInfos[i], 0, sizeof(EXRChannelInfo));
+                channelInfos[i].name[0]    = channelNames[i];
+                channelInfos[i].name[1]    = '\0';
+                channelInfos[i].x_sampling = 1;
+                channelInfos[i].y_sampling = 1;
             }
 
-            // Write compression
+            header.num_channels          = numChannels;
+            header.channels              = channelInfos.data();
+            header.pixel_types           = pixelTypes.data();
+            header.requested_pixel_types = requestedTypes.data();
+            header.compression_type      = static_cast<int>(compression);
+
+            // Encode to memory, then write with ofstream so non-ASCII paths work on Windows.
+            unsigned char *encoded   = nullptr;
+            const char *err          = nullptr;
+            const size_t encodedSize = SaveEXRImageToMemory(&image, &header, &encoded, &err);
+            if (encodedSize == 0)
             {
-                uint8_t comp = static_cast<uint8_t>(compression);
-                writeBinaryAttr("compression", "compression", &comp, 1);
+                throw runtime_error("Failed to encode EXR: " + TakeError(err));
             }
+            unique_ptr<unsigned char, decltype(&free)> encodedGuard(encoded, &free);
 
-            // Write dataWindow
-            {
-                int32_t box[4] = {0, 0, width - 1, height - 1};
-                writeBinaryAttr("dataWindow", "box2i", box, sizeof(box));
-            }
-
-            // Write displayWindow
-            {
-                int32_t box[4] = {0, 0, width - 1, height - 1};
-                writeBinaryAttr("displayWindow", "box2i", box, sizeof(box));
-            }
-
-            // Write lineOrder
-            {
-                uint8_t lineOrder = 0;  // Increasing Y
-                writeBinaryAttr("lineOrder", "lineOrder", &lineOrder, 1);
-            }
-
-            // Write pixelAspectRatio
-            {
-                float aspectRatio = 1.0f;
-                writeBinaryAttr("pixelAspectRatio", "float", &aspectRatio, sizeof(float));
-            }
-
-            // Write screenWindowCenter
-            {
-                float center[2] = {0.0f, 0.0f};
-                writeBinaryAttr("screenWindowCenter", "v2f", center, sizeof(center));
-            }
-
-            // Write screenWindowWidth
-            {
-                float windowWidth = 1.0f;
-                writeBinaryAttr("screenWindowWidth", "float", &windowWidth, sizeof(float));
-            }
-
-            // End of header
-            file.put('\0');
-
-            // Write scanline offset table (placeholder)
-            std::vector<uint64_t> offsets(height, 0);
-            uint64_t currentOffset = file.tellp();
-            currentOffset += height * sizeof(uint64_t);
-
-            for (int y = 0; y < height; ++y)
-            {
-                offsets[y] = currentOffset;
-                uint32_t scanlineSize =
-                    width * 4 * sizeof(float) + 8;  // +8 for line number and size
-                currentOffset += scanlineSize;
-            }
-
-            file.write(reinterpret_cast<const char*>(offsets.data()), height * sizeof(uint64_t));
-
-            // Write scanlines
-            for (int y = 0; y < height; ++y)
-            {
-                int32_t lineNumber = y;
-                uint32_t scanlineDataSize = width * 4 * sizeof(float);
-
-                file.write(reinterpret_cast<const char*>(&lineNumber), sizeof(int32_t));
-                file.write(reinterpret_cast<const char*>(&scanlineDataSize), sizeof(uint32_t));
-
-                // Convert uint8 to float and write
-                std::vector<float> scanline(width * 4);
-                for (int x = 0; x < width; ++x)
-                {
-                    size_t srcIdx = (y * width + x) * bytesPerPixel;
-                    size_t dstIdx = x * 4;
-
-                    // BGRA order for EXR
-                    scanline[dstIdx + 0] = bitmap.GetData()[srcIdx + 2] / 255.0f;  // B
-                    scanline[dstIdx + 1] = bitmap.GetData()[srcIdx + 1] / 255.0f;  // G
-                    scanline[dstIdx + 2] = bitmap.GetData()[srcIdx + 0] / 255.0f;  // R
-                    scanline[dstIdx + 3] =
-                        (bytesPerPixel >= 4) ? bitmap.GetData()[srcIdx + 3] / 255.0f : 1.0f;  // A
-                }
-
-                file.write(reinterpret_cast<const char*>(scanline.data()), scanlineDataSize);
-            }
-
+            ofstream file(filename, ios::binary | ios::trunc);
             if (!file)
             {
-                throw std::runtime_error("Failed to write EXR data");
+                throw runtime_error("Failed to create EXR file: " + filename.string());
+            }
+            file.write(reinterpret_cast<const char *>(encoded), static_cast<streamsize>(encodedSize));
+            if (!file)
+            {
+                throw runtime_error("Failed to write EXR data: " + filename.string());
             }
         }
 
     private:
+        static uint8_t FloatToByte(float v)
+        {
+            if (!(v > 0.0f)) // also catches NaN
+                return 0;
+            return static_cast<uint8_t>(min(v, 1.0f) * 255.0f + 0.5f);
+        }
+
+        static vector<unsigned char> ReadFile(const filesystem::path &filename)
+        {
+            ifstream file(filename, ios::binary | ios::ate);
+            if (!file)
+            {
+                throw runtime_error("Failed to open EXR file: " + filename.string());
+            }
+            const streamsize size = file.tellg();
+            if (size <= 0)
+            {
+                throw runtime_error("EXR file is empty: " + filename.string());
+            }
+            vector<unsigned char> buffer(static_cast<size_t>(size));
+            file.seekg(0);
+            file.read(reinterpret_cast<char *>(buffer.data()), size);
+            if (!file)
+            {
+                throw runtime_error("Failed to read EXR file: " + filename.string());
+            }
+            return buffer;
+        }
+
+        static string TakeError(const char *err)
+        {
+            string message = err ? err : "unknown error";
+            if (err)
+                FreeEXRErrorMessage(err);
+            return message;
+        }
+
         static inline bool registered = Register("exr", "EXR");
     };
-}
+} // namespace SF::Engine
