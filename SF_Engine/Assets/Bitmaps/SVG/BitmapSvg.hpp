@@ -172,7 +172,7 @@ namespace SF::Engine
         // Rasterizes SVG markup directly (embedded icons, generated documents, ...).
         // width/height == 0 uses the document's own size; if only one is given the other keeps the aspect ratio.
         // `svg` only needs to stay alive for the duration of the call.
-        static void LoadFromMemory(Bitmap &bitmap, string_view svg, uint32_t width = 0, uint32_t height = 0);
+        static void LoadFromMemory(Bitmap &bitmap, string_view svg, Ui32Vec2 size = {0, 0});
         // todo: impl & take data from svgbuilder
 
     private:

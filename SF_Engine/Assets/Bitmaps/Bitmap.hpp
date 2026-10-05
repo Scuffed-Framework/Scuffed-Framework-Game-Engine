@@ -134,12 +134,12 @@ namespace SF::Engine
     public:
         Bitmap() = default;
         explicit Bitmap(const std::filesystem::path &filename);
-        explicit Bitmap(const UVec2 &size, PixelFormat format = PixelFormat::RGBA8);
-        Bitmap(std::unique_ptr<uint8_t[]> &&data, const UVec2 &size, PixelFormat format = PixelFormat::RGBA8);
+        explicit Bitmap(const Ui32Vec2 &size, PixelFormat format = PixelFormat::RGBA8);
+        Bitmap(std::unique_ptr<uint8_t[]> &&data, const Ui32Vec2 &size, PixelFormat format = PixelFormat::RGBA8);
 
         // Legacy 8-bit constructors: bytesPerPixel 1/2/3/4 -> R8/RG8/RGB8/RGBA8.
-        Bitmap(const UVec2 &size, uint32_t bytesPerPixel);
-        Bitmap(std::unique_ptr<uint8_t[]> &&data, const UVec2 &size, uint32_t bytesPerPixel);
+        Bitmap(const Ui32Vec2 &size, uint32_t bytesPerPixel);
+        Bitmap(std::unique_ptr<uint8_t[]> &&data, const Ui32Vec2 &size, uint32_t bytesPerPixel);
 
         ~Bitmap() = default;
 
@@ -182,8 +182,8 @@ namespace SF::Engine
             return reinterpret_cast<T *>(data.get());
         }
 
-        [[nodiscard]] const UVec2 &GetSize() const { return size; }
-        void SetSize(const UVec2 &size) { this->size = size; }
+        [[nodiscard]] const Ui32Vec2 &GetSize() const { return size; }
+        void SetSize(const Ui32Vec2 &size) { this->size = size; }
 
         [[nodiscard]] PixelFormat GetFormat() const { return format; }
         // Relabels the existing buffer; it does NOT convert pixel data. Use Converted() for that.
@@ -198,11 +198,11 @@ namespace SF::Engine
         void SetBytesPerPixel(uint32_t bytesPerPixel);
 
     private:
-        static size_t CalculateLength(const UVec2 &size, PixelFormat format);
+        static size_t CalculateLength(const Ui32Vec2 &size, PixelFormat format);
 
         std::filesystem::path filename;
         std::unique_ptr<uint8_t[]> data;
-        UVec2 size;
+        Ui32Vec2 size;
         PixelFormat format = PixelFormat::RGBA8;
     };
 } // namespace SF::Engine

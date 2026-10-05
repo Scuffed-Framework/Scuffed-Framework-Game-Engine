@@ -153,23 +153,23 @@ namespace SF::Engine
 
     Bitmap::Bitmap(const std::filesystem::path &filename) { Load(filename); }
 
-    Bitmap::Bitmap(const UVec2 &size, PixelFormat format) : size(size), format(format)
+    Bitmap::Bitmap(const Ui32Vec2 &size, PixelFormat format) : size(size), format(format)
     {
         data = std::make_unique<uint8_t[]>(CalculateLength(size, format));
     }
 
-    Bitmap::Bitmap(std::unique_ptr<uint8_t[]> &&data, const UVec2 &size, PixelFormat format) :
+    Bitmap::Bitmap(std::unique_ptr<uint8_t[]> &&data, const Ui32Vec2 &size, PixelFormat format) :
         data(std::move(data)), size(size), format(format)
     {
     }
 
-    Bitmap::Bitmap(const UVec2 &size, uint32_t bytesPerPixel) : size(size)
+    Bitmap::Bitmap(const Ui32Vec2 &size, uint32_t bytesPerPixel) : size(size)
     {
         SetBytesPerPixel(bytesPerPixel);
         data = std::make_unique<uint8_t[]>(CalculateLength(size, format));
     }
 
-    Bitmap::Bitmap(std::unique_ptr<uint8_t[]> &&data, const UVec2 &size, uint32_t bytesPerPixel) :
+    Bitmap::Bitmap(std::unique_ptr<uint8_t[]> &&data, const Ui32Vec2 &size, uint32_t bytesPerPixel) :
         data(std::move(data)), size(size)
     {
         SetBytesPerPixel(bytesPerPixel);
@@ -270,7 +270,7 @@ namespace SF::Engine
 
     size_t Bitmap::GetLength() const { return CalculateLength(size, format); }
 
-    size_t Bitmap::CalculateLength(const UVec2 &size, PixelFormat format)
+    size_t Bitmap::CalculateLength(const Ui32Vec2 &size, PixelFormat format)
     {
         return static_cast<size_t>(size.x) * static_cast<size_t>(size.y) * PixelFormatBytesPerPixel(format);
     }

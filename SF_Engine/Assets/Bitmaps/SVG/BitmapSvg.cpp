@@ -283,7 +283,7 @@ namespace SF::Engine
     namespace
     {
         // Shared by Load() and LoadFromMemory(). `xml` must outlive the plutosvg document (it is not copied).
-        void RasterizeSvg(Bitmap &bitmap, string_view xml, uint32_t width, uint32_t height, const string &what)
+        void RasterizeSvg(Bitmap &bitmap, string_view xml, Ui32Vec2 size, const string &what)
         {
             SvgDocPtr doc(plutosvg_document_load_from_data(xml.data(), static_cast<int>(xml.size()), -1.0f, -1.0f,
                                                            nullptr, nullptr));
@@ -298,18 +298,18 @@ namespace SF::Engine
                 docHeight = 256.0f;
 
             int pixelW, pixelH;
-            if (width > 0 && height > 0)
+            if (size.x > 0 && size.y > 0)
             {
-                pixelW = static_cast<int>(width);
-                pixelH = static_cast<int>(height);
-            } else if (width > 0)
+                pixelW = static_cast<int>(size.x);
+                pixelH = static_cast<int>(size.y);
+            } else if (size.x > 0)
             {
-                pixelW = static_cast<int>(width);
-                pixelH = max(1, static_cast<int>(round(width * docHeight / docWidth)));
-            } else if (height > 0)
+                pixelW = static_cast<int>(size.x);
+                pixelH = max(1, static_cast<int>(round(size.x * docHeight / docWidth)));
+            } else if (size.y > 0)
             {
-                pixelH = static_cast<int>(height);
-                pixelW = max(1, static_cast<int>(round(height * docWidth / docHeight)));
+                pixelH = static_cast<int>(size.y);
+                pixelW = max(1, static_cast<int>(round(size.y * docWidth / docHeight)));
             } else
             {
                 pixelW = max(1, static_cast<int>(round(docWidth)));
@@ -328,7 +328,7 @@ namespace SF::Engine
             plutovg_convert_argb_to_rgba(pixelData.get(), plutovg_surface_get_data(surface.get()), pixelW, pixelH,
                                          plutovg_surface_get_stride(surface.get()));
 
-            bitmap.SetSize(UVec2{static_cast<uint32_t>(pixelW), static_cast<uint32_t>(pixelH)});
+            bitmap.SetSize(Ui32Vec2{static_cast<uint32_t>(pixelW), static_cast<uint32_t>(pixelH)});
             bitmap.SetFormat(PixelFormat::RGBA8);
             bitmap.SetData(std::move(pixelData));
         }
@@ -342,18 +342,18 @@ namespace SF::Engine
         // Must outlive `doc`: plutosvg references this buffer without copying it.
         const string xml((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
 
-        RasterizeSvg(bitmap, xml, 0, 0, filename.string());
+        RasterizeSvg(bitmap, xml, {0, 0}, filename.string());
         bitmap.SetFilename(filename);
     }
 
-    void BitmapSvg::LoadFromMemory(Bitmap &bitmap, string_view svg, uint32_t width, uint32_t height)
+    void BitmapSvg::LoadFromMemory(Bitmap &bitmap, string_view svg, Ui32Vec2 size)
     {
-        RasterizeSvg(bitmap, svg, width, height, "<memory>");
+        RasterizeSvg(bitmap, svg, {size.x, size.y}, "<memory>");
     }
 
     void BitmapSvg::Write(const Bitmap &bitmap, const filesystem::path &filename)
     {
-        const UVec2 &size = bitmap.GetSize();
+        const Ui32Vec2 &size = bitmap.GetSize();
         uint32_t w = size.x, h = size.y;
         uint32_t bpp       = bitmap.GetBytesPerPixel();
         const uint8_t *src = bitmap.GetData().get();

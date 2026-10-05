@@ -83,7 +83,7 @@ namespace SF::Engine
             }
 
             bitmap.SetData(std::move(rgba));
-            bitmap.SetSize(UVec2(width, height));
+            bitmap.SetSize(Ui32Vec2(width, height));
             bitmap.SetBytesPerPixel(4);
             bitmap.SetFilename(filename);
         }

@@ -62,7 +62,7 @@ namespace SF::Engine
             std::memcpy(data.get(), rgba, byteCount);
 
             bitmap.SetData(std::move(data));
-            bitmap.SetSize(UVec2(static_cast<uint32_t>(width), static_cast<uint32_t>(height)));
+            bitmap.SetSize(Ui32Vec2(static_cast<uint32_t>(width), static_cast<uint32_t>(height)));
             bitmap.SetFormat(PixelFormat::RGBA32F);
             bitmap.SetFilename(filename);
         }

@@ -1,8 +1,8 @@
 #pragma once
-#include <LowLevel/stb_image.h>
-#include <LowLevel/stb_image_write.h>
 #include <Assets/Bitmaps/Bitmap.hpp>
 #include <LowLevel/FileSystem/File.hpp>
+#include <LowLevel/stb_image.h>
+#include <LowLevel/stb_image_write.h>
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
@@ -17,10 +17,9 @@ namespace SF::Engine
             int width, height, channels;
 
             // Load JPEG using stb_image
-            unsigned char *imageData =
-                stbi_load(filename.string().c_str(), &width, &height, &channels,
-                          STBI_rgb_alpha // Force 4 channels (RGBA)
-                );
+            unsigned char *imageData = stbi_load(filename.string().c_str(), &width, &height, &channels,
+                                                 STBI_rgb_alpha // Force 4 channels (RGBA)
+            );
 
             if (!imageData)
             {
@@ -39,13 +38,12 @@ namespace SF::Engine
 
             // Set bitmap properties
             bitmap.SetData(std::move(data));
-            bitmap.SetSize(UVec2(width, height));
+            bitmap.SetSize(Ui32Vec2(width, height));
             bitmap.SetBytesPerPixel(4);
             bitmap.SetFilename(filename);
         }
 
-        static void Write(const Bitmap &bitmap, const std::filesystem::path &filename,
-                          int quality = 90)
+        static void Write(const Bitmap &bitmap, const std::filesystem::path &filename, int quality = 90)
         {
             if (!bitmap.GetData())
             {
@@ -56,13 +54,13 @@ namespace SF::Engine
             quality = std::clamp(quality, 1, 100);
 
             const auto &size = bitmap.GetSize();
-            int width = static_cast<int>(size.x);
-            int height = static_cast<int>(size.y);
-            int channels = static_cast<int>(bitmap.GetBytesPerPixel());
+            int width        = static_cast<int>(size.x);
+            int height       = static_cast<int>(size.y);
+            int channels     = static_cast<int>(bitmap.GetBytesPerPixel());
 
             // Write JPEG with specified quality
-            int result = stbi_write_jpg(filename.string().c_str(), width, height, channels,
-                                        bitmap.GetData().get(), quality);
+            int result =
+                    stbi_write_jpg(filename.string().c_str(), width, height, channels, bitmap.GetData().get(), quality);
 
             if (!result)
             {

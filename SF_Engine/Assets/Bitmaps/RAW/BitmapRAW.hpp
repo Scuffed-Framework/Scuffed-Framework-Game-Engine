@@ -99,7 +99,7 @@ namespace SF::Engine
                 ExpandToRGBA<uint8_t>(image->data, data.get(), pixelCount, colors, 255);
 
             bitmap.SetData(std::move(data));
-            bitmap.SetSize(UVec2(static_cast<uint32_t>(width), static_cast<uint32_t>(height)));
+            bitmap.SetSize(Ui32Vec2(static_cast<uint32_t>(width), static_cast<uint32_t>(height)));
             bitmap.SetFormat(options.output16Bit ? PixelFormat::RGBA16 : PixelFormat::RGBA8);
             bitmap.SetFilename(filename);
         }

@@ -124,7 +124,7 @@ namespace SF::Engine
         inline std::shared_ptr<Image2d> Construct(const std::string &svg, uint32_t size = 256)
         {
             auto bitmap = std::make_unique<Bitmap>();
-            BitmapSvg::LoadFromMemory(*bitmap, svg, size, size);
+            BitmapSvg::LoadFromMemory(*bitmap, svg, {size, size});
             return std::make_shared<Image2d>(std::move(bitmap));
         }
     } // namespace EmbeddedIcons
