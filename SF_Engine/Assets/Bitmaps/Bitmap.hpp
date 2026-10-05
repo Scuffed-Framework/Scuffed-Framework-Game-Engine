@@ -202,7 +202,7 @@ namespace SF::Engine
 
         std::filesystem::path filename;
         std::unique_ptr<uint8_t[]> data;
-        Ui32Vec2 size;
+        Ui32Vec2 size{};
         PixelFormat format = PixelFormat::RGBA8;
     };
 } // namespace SF::Engine
