@@ -209,19 +209,19 @@ namespace SF::Engine
                              VkPipelineStageFlags dstStage, VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT,
                              uint32_t mipLevel = 0, uint32_t arrayLayer = 0)
     {
-        VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
-        b.oldLayout                       = oldLayout;
-        b.newLayout                       = newLayout;
-        b.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        b.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        b.image                           = image;
-        b.subresourceRange.aspectMask     = aspect;
+        VkImageMemoryBarrier b{};
+        b.sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        b.pNext         = nullptr;
+        b.srcAccessMask = srcAccess, b.subresourceRange.aspectMask = aspect;
         b.subresourceRange.baseMipLevel   = mipLevel;
         b.subresourceRange.levelCount     = 1;
         b.subresourceRange.baseArrayLayer = arrayLayer;
         b.subresourceRange.layerCount     = 1;
-        b.srcAccessMask                   = srcAccess;
-        b.dstAccessMask                   = dstAccess;
+        b.dstAccessMask = dstAccess, b.oldLayout = oldLayout;
+        b.newLayout           = newLayout;
+        b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        b.image               = image;
         vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &b);
     }
 
@@ -232,6 +232,7 @@ namespace SF::Engine
     {
         VkImageMemoryBarrier b{
                 .sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .pNext               = nullptr,
                 .srcAccessMask       = srcAccess,
                 .dstAccessMask       = dstAccess,
                 .oldLayout           = oldLayout,
