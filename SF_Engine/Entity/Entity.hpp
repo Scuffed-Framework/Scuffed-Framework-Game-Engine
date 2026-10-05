@@ -22,7 +22,6 @@ namespace SF::Engine
     };
 
     class Transform;
-    // todo: cloning
     class Entity
     {
     public:
@@ -91,6 +90,44 @@ namespace SF::Engine
             componentPtr->SetOwner(this);
             components[std::type_index(typeid(T))] = std::move(component);
             return componentPtr;
+        }
+
+        /**
+         * @brief Factory hook so derived entity types clone as themselves.
+         *        Override in subclasses (and copy any extra members there).
+         */
+        virtual std::unique_ptr<Entity> CreateInstance() const { return std::make_unique<Entity>(name); }
+
+        /**
+         * @brief Deep-copies this entity: name, tags, active flag, components,
+         *        and the full child subtree. The result is unparented, has
+         *        id == InvalidEntityId, and is NOT registered anywhere.
+         *        Use EntityRegistry::DuplicateEntity() to place it in the scene.
+         */
+        std::unique_ptr<Entity> Clone() const
+        {
+            auto copy    = CreateInstance();
+            copy->name   = name;
+            copy->tags   = tags;
+            copy->active = active;
+            // markedForRemoval intentionally not copied
+
+            for (const auto &[ti, comp]: components)
+            {
+                auto c = comp->Clone();
+                if (!c)
+                {
+                    Log::Warning("Component '{}' is not cloneable, skipped.", comp->GetTypeName());
+                    continue;
+                }
+                c->SetOwner(copy.get());
+                copy->components[ti] = std::move(c); // replaces the default Transform, if the ctor adds one
+            }
+
+            for (const auto &child: children)
+                copy->AdoptChild(child->Clone()); // sets child->parent = copy
+
+            return copy;
         }
 
         template<typename T>
@@ -546,6 +583,36 @@ namespace SF::Engine
                     return;
                 }
             }
+        }
+
+    public:
+        Entity *DuplicateEntity(Entity *source)
+        {
+            if (!source)
+                return nullptr;
+
+            auto copy = source->Clone();
+            copy->SetName(source->GetName() + " (Copy)"); // only the top-level copy is renamed
+
+            Entity *ptr = copy.get();
+            RegisterSubtree(ptr);
+
+            if (Entity *parent = source->GetParent())
+                parent->AdoptChild(std::move(copy));
+            else
+                roots.push_back(std::move(copy));
+
+            return ptr;
+        }
+
+    private:
+        void RegisterSubtree(Entity *entity)
+        {
+            EntityId id = nextId++;
+            entity->SetId(id);
+            lookup[id] = entity;
+            for (auto &child: entity->GetChildren())
+                RegisterSubtree(child.get());
         }
     };
 } // namespace SF::Engine

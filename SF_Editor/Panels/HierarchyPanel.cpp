@@ -2,6 +2,7 @@
 #include <Entity/Entity.hpp>
 #include <Gui/ImGui/ocornut/imgui_internal.h>
 #include <Scene/SceneManager.hpp>
+#include <utility>
 #include "Panels.hpp"
 
 namespace SF::Engine
@@ -36,9 +37,9 @@ namespace SF::Engine
         // Filter entities based on search
         if (!searchStr.empty())
         {
-            visibleEntities.erase(std::remove_if(visibleEntities.begin(), visibleEntities.end(),
-                                                 [&searchStr](SF::Engine::Entity *e)
-                                                 { return e->GetName().find(searchStr) == std::string::npos; }),
+            visibleEntities.erase(ranges::remove_if(visibleEntities, [&searchStr](SF::Engine::Entity *e)
+                                                    { return e->GetName().find(searchStr) == std::string::npos; })
+                                          .begin(),
                                   visibleEntities.end());
         }
 
@@ -78,6 +79,17 @@ namespace SF::Engine
 
         ImGui::EndChild();
         ImGui::End();
+
+        if (m_pendingDuplicate)
+        {
+            if (Entity *copy = scene->GetEntities()->Duplicate(m_pendingDuplicate))
+            {
+                m_selectedId     = copy->GetId();
+                m_selectedEntity = copy;
+            }
+            m_pendingDuplicate = nullptr;
+            m_needsRefresh     = true;
+        }
     }
 
     void HierarchyPanel::DrawEntityNode(SF::Engine::Entity *entity)
@@ -151,12 +163,10 @@ namespace SF::Engine
             {
                 // Create child entity
                 m_needsRefresh = true;
-                ImGui::EndMenu();
             }
             if (ImGui::MenuItem("Duplicate"))
             {
-                // Duplicate entity
-                ImGui::EndMenu();
+                m_pendingDuplicate = entity;
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Delete", "Del"))
@@ -168,7 +178,6 @@ namespace SF::Engine
                     m_selectedEntity = nullptr;
                 }
                 m_needsRefresh = true;
-                ImGui::EndMenu();
             }
             ImGui::EndPopup();
         }
@@ -213,7 +222,7 @@ namespace SF::Engine
 
     void HierarchyPanel::SetOnEntitySelected(std::function<void(SF::Engine::Entity *)> callback)
     {
-        m_onEntitySelected = callback;
+        m_onEntitySelected = std::move(callback);
     }
 
     void HierarchyPanel::SetSelectedEntity(SF::Engine::Entity *entity)

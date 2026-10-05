@@ -110,5 +110,6 @@ namespace SF::Engine
                 colNode.GetAttribute("b", color.b);
             }
         }
+        [[nodiscard]] std::unique_ptr<Component> Clone() const override { return std::make_unique<Light>(*this); }
     };
 }

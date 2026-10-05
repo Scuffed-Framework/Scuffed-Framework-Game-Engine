@@ -1,11 +1,11 @@
 #pragma once
 
-#include <UtilityClasses/NoCopy.hpp>
 #include <Entity/Components/Component.hpp>
-#include "Entity.hpp"
-#include <vector>
-#include <string>
+#include <UtilityClasses/NoCopy.hpp>
 #include <cstdint>
+#include <string>
+#include <vector>
+#include "Entity.hpp"
 
 namespace SF::Engine
 {
@@ -14,100 +14,81 @@ namespace SF::Engine
     public:
         EntityHolder() = default;
 
-        void Update()
-        {
-            registry.CleanupRemovedEntities();
-        }
+        void Update() { registry.CleanupRemovedEntities(); }
 
-        void CleanupRemovedEntities()
-        {
-            registry.CleanupRemovedEntities();
-        }
+        void CleanupRemovedEntities() { registry.CleanupRemovedEntities(); }
 
-        Entity *GetEntity(const std::string &name) const
-        {
-            return registry.FindByName(name);
-        }
+        Entity *GetEntity(const std::string &name) const { return registry.FindByName(name); }
 
-        Entity *FindById(const EntityId id)
-        {
-            return registry.Find(id);
-        }
+        Entity *FindById(const EntityId id) { return registry.Find(id); }
 
-        template <typename T = Entity, typename... Args>
+        Entity *Duplicate(Entity *entity) { return registry.DuplicateEntity(entity); }
+
+        template<typename T = Entity, typename... Args>
         T *CreateEntity(Args &&...args)
         {
             return registry.CreateEntity<T>(std::forward<Args>(args)...);
         }
 
-        template <typename T = Entity, typename... Args>
+        template<typename T = Entity, typename... Args>
         T *CreateChildEntity(Entity *parent, Args &&...args)
         {
             return registry.CreateChildEntity<T>(parent, std::forward<Args>(args)...);
         }
 
-        Entity *CreateEntity(const std::string &name = "Entity")
-        {
-            return registry.CreateEntity(name);
-        }
+        Entity *CreateEntity(const std::string &name = "Entity") { return registry.CreateEntity(name); }
 
-        Entity *CreateEntity(const std::string &name, Entity *parent)
-        {
-            return registry.CreateEntity(name, parent);
-        }
+        Entity *CreateEntity(const std::string &name, Entity *parent) { return registry.CreateEntity(name, parent); }
 
-        void Remove(Entity *entity)
-        {
-            registry.MarkForRemoval(entity);
-        }
+        void Remove(Entity *entity) { registry.MarkForRemoval(entity); }
 
-        void Clear()
-        {
-            registry = EntityRegistry{};
-        }
+        void Clear() { registry = EntityRegistry{}; }
 
         uint32_t GetSize() const
         {
             uint32_t count = 0;
-            registry.ForEach([&](Entity *)
-                             { ++count; });
+            registry.ForEach([&](Entity *) { ++count; });
             return count;
         }
 
         std::vector<Entity *> QueryAll() const
         {
             std::vector<Entity *> entities;
-            registry.ForEach([&](Entity *e)
-                             { entities.push_back(e); });
+            registry.ForEach([&](Entity *e) { entities.push_back(e); });
             return entities;
         }
 
-        template <typename T>
+        template<typename T>
         T *GetComponent(bool allowDisabled = false)
         {
             T *found = nullptr;
-            registry.ForEach([&](Entity *e)
-                             {
-                if (found) return;
-                if (auto* comp = e->GetComponent<T>())
-                {
-                    if (allowDisabled || comp->IsEnabled())
-                        found = comp;
-                } });
+            registry.ForEach(
+                    [&](Entity *e)
+                    {
+                        if (found)
+                            return;
+                        if (auto *comp = e->GetComponent<T>())
+                        {
+                            if (allowDisabled || comp->IsEnabled())
+                                found = comp;
+                        }
+                    });
             return found;
         }
 
-        template <typename T>
+        template<typename T>
         std::vector<T *> QueryComponents(bool allowDisabled = false)
         {
             std::vector<T *> components;
-            registry.ForEach([&](Entity *e)
-                             {
-                if (auto* comp = e->GetComponent<T>())
-                {
-                    if (allowDisabled || comp->IsEnabled())
-                        components.push_back(comp);
-                } });
+            registry.ForEach(
+                    [&](Entity *e)
+                    {
+                        if (auto *comp = e->GetComponent<T>())
+                        {
+                            if (allowDisabled || comp->IsEnabled())
+                                components.push_back(comp);
+                        }
+                    });
             return components;
         }
 
@@ -124,8 +105,7 @@ namespace SF::Engine
             if (Entity *oldParent = child->GetParent())
             {
                 owned = oldParent->ReleaseChild(child);
-            }
-            else
+            } else
             {
                 owned = registry.RemoveRoot(child);
             }
@@ -138,4 +118,4 @@ namespace SF::Engine
     private:
         EntityRegistry registry;
     };
-}
+} // namespace SF::Engine

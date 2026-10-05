@@ -24,9 +24,9 @@ namespace SF::Engine::Animation
             //     PlayAnimation();
         }
 
-        map<std::string, Mat4> CalculateCurrentAnimationPose() const;
-        pair<Keyframe, Keyframe> GetSurroundingKeyframes() const;
-        float CalculateProgression(const Keyframe &previousFrame, const Keyframe &nextFrame) const;
+        [[nodiscard]] map<std::string, Mat4> CalculateCurrentAnimationPose() const;
+        [[nodiscard]] pair<Keyframe, Keyframe> GetSurroundingKeyframes() const;
+        [[nodiscard]] float CalculateProgression(const Keyframe &previousFrame, const Keyframe &nextFrame) const;
 
         void PlayAnimation(const Joint &Root, vector<Mat4> &Matrices) {}
     };

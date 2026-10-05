@@ -66,7 +66,7 @@ EOF
 
 echo "==> Building $BUILD_TYPE ..."
 
-BUILD_DIR="$ROOT/build/$BUILD_TYPE"
+BUILD_DIR="$ROOT/000-Build-$BUILD_TYPE-x64"
 
 if [[ ! -f "$BUILD_DIR/CMakeCache.txt" ]]; then
     echo "Error: not a CMake build directory: $BUILD_DIR"
@@ -75,5 +75,9 @@ if [[ ! -f "$BUILD_DIR/CMakeCache.txt" ]]; then
 fi
 
 cmake --build "$BUILD_DIR" --config "$BUILD_TYPE"
+
+rm -rf "$BUILD_DIR/Shaders"
+mkdir -p "$BUILD_DIR/Shaders"
+cp -r "$ROOT/SF_Engine/Shaders/." "$BUILD_DIR/Shaders/"
 
 echo "==> Build succeeded"

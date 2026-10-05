@@ -23,22 +23,23 @@ namespace SF::Engine
 
         void Draw();
 
-        void SetOnEntitySelected(std::function<void(SF::Engine::Entity *)> callback);
-        void SetSelectedEntity(SF::Engine::Entity *entity);
-        SF::Engine::Entity *GetSelectedEntity() const { return m_selectedEntity; }
-        EntityId GetSelectedId() const { return m_selectedId; }
+        void SetOnEntitySelected(std::function<void(Entity *)> callback);
+        void SetSelectedEntity(Entity *entity);
+        [[nodiscard]] Entity *GetSelectedEntity() const { return m_selectedEntity; }
+        [[nodiscard]] EntityId GetSelectedId() const { return m_selectedId; }
 
         void DrawCreateOptions();
 
     private:
-        void DrawEntityNode(SF::Engine::Entity *entity);
+        void DrawEntityNode(Entity *entity);
         void DrawRowBackground(float height);
-        void CollectVisibleEntities(SF::Engine::Entity *entity, std::vector<SF::Engine::Entity *> &outEntities);
+        void CollectVisibleEntities(Entity *entity, std::vector<Entity *> &outEntities);
 
-        SF::Engine::Entity *m_selectedEntity = nullptr;
-        EntityId m_selectedId                = 0;
-        std::function<void(SF::Engine::Entity *)> m_onEntitySelected;
-        bool m_needsRefresh = true;
+        Entity *m_selectedEntity = nullptr;
+        EntityId m_selectedId    = 0;
+        std::function<void(Entity *)> m_onEntitySelected;
+        bool m_needsRefresh        = true;
+        Entity *m_pendingDuplicate = nullptr;
         size_t reg;
     };
 } // namespace SF::Engine

@@ -38,9 +38,9 @@ namespace SF::Engine
          */
         void Draw(const CommandBuffer &commandBuffer, uint32_t instanceCount = 1) const;
 
-        uint32_t GetVertexCount() const { return vertexCount_; }
-        uint32_t GetIndexCount() const { return indexCount_; }
-        bool IsIndexed() const { return indexCount_ > 0; }
+        [[nodiscard]] uint32_t GetVertexCount() const { return vertexCount_; }
+        [[nodiscard]] uint32_t GetIndexCount() const { return indexCount_; }
+        [[nodiscard]] bool IsIndexed() const { return indexCount_ > 0; }
 
     private:
         std::unique_ptr<Buffer> vertexBuffer_;

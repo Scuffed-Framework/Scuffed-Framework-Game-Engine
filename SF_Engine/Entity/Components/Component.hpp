@@ -29,6 +29,8 @@ namespace SF::Engine
         [[nodiscard]] Entity *GetOwner() const { return owner; }
         void SetOwner(Entity *entity) { this->owner = entity; }
 
+        [[nodiscard]] virtual std::unique_ptr<Component> Clone() const { return nullptr; }
+
     private:
         bool started  = false;
         bool enabled  = true;
