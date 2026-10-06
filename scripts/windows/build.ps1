@@ -107,6 +107,6 @@ Import-VsDevEnvironment
 
 cmake --build --preset conan2-$buildType
 if ($LASTEXITCODE -ne 0) { Write-Host "Build failed" -ForegroundColor Red; Pop-Location; exit 1 }
-
+Copy-Item -Path "$PSScriptRoot/../SF_Engine/Shaders" -Destination "$out/Shaders" -Recurse
 Write-Host "==> Build succeeded" -ForegroundColor Green
 Pop-Location
