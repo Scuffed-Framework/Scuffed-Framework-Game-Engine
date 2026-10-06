@@ -187,12 +187,6 @@ void ImGui_ImplVulkan_UpdateTexture(ImTextureData *tex);
 VkDescriptorSet ImGui_ImplVulkan_AddTexture(VkImageView image_view, VkImageLayout image_layout);
 void ImGui_ImplVulkan_RemoveTexture(VkDescriptorSet descriptor_set);
 
-// Optional: load Vulkan functions with a custom function loader
-// This is only useful with IMGUI_IMPL_VULKAN_NO_PROTOTYPES / VK_NO_PROTOTYPES
-bool ImGui_ImplVulkan_LoadFunctions(uint32_t api_version,
-                                    PFN_vkVoidFunction (*loader_func)(const char *function_name, void *user_data),
-                                    void *user_data = nullptr);
-
 // [BETA] Selected render state data shared with callbacks.
 // This is temporarily stored in GetPlatformIO().Renderer_RenderState during the ImGui_ImplVulkan_RenderDrawData() call.
 //      ImGui_ImplVulkan_RenderState* render_state =

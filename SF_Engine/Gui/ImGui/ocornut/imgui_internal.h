@@ -5289,7 +5289,7 @@ namespace ImGui
                               ImGuiDir split_dir, float split_ratio, bool split_outer);
     void DockContextQueueUndockWindow(ImGuiContext *ctx, ImGuiWindow *window);
     void DockContextQueueUndockNode(ImGuiContext *ctx, ImGuiDockNode *node);
-    void DockContextProcessUndockWindow(ImGuiContext *ctx, ImGuiWindow *window,
+    void DockContextProcessUndockWindow(ImGuiWindow *window,
                                         bool clear_persistent_docking_ref = true);
     void DockContextProcessUndockNode(ImGuiContext *ctx, ImGuiDockNode *node);
     bool DockContextCalcDropPosForDocking(ImGuiWindow *target, ImGuiDockNode *target_node, ImGuiWindow *payload_window,

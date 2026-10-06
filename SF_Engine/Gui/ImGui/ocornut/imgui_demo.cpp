@@ -12401,8 +12401,6 @@ struct ExampleAssetsBrowser
         if (ImGui::BeginChild("Assets", ::SF::Engine::Vec2(0.0f, -ImGui::GetTextLineHeightWithSpacing()),
                               ImGuiChildFlags_Borders, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_HorizontalScrollbar))
         {
-            ImDrawList *draw_list = ImGui::GetWindowDrawList();
-
             const float avail_width = ImGui::GetContentRegionAvail().x;
             UpdateLayoutSizes(avail_width);
 
@@ -12463,13 +12461,6 @@ struct ExampleAssetsBrowser
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,
                                 ::SF::Engine::Vec2(LayoutSelectableSpacing, LayoutSelectableSpacing));
 
-            // Rendering parameters
-            const uint32_t icon_type_overlay_colors[3] = {0, IM_COL32(200, 70, 70, 255), IM_COL32(70, 170, 70, 255)};
-            const uint32_t icon_bg_color               = ImGui::GetColorU32(IM_COL32(35, 35, 35, 220));
-            const ::SF::Engine::Vec2 icon_type_overlay_size = ::SF::Engine::Vec2(4.0f, 4.0f);
-            const bool display_label                        = (LayoutItemSize.x >= ImGui::CalcTextSize("999").x);
-
-            const int column_count = LayoutColumnCount;
             if (Items.Size == 0)
                 ImGui::Dummy(::SF::Engine::Vec2(0, 0));
             ImGui::PopStyleVar(); // ImGuiStyleVar_ItemSpacing

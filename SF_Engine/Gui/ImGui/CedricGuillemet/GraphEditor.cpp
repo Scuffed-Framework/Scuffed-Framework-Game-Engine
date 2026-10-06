@@ -47,9 +47,8 @@ namespace GraphEditor
     {
         ::SF::Engine::Vec2 Size = node.mRect.GetSize() * factor;
         size_t InputsCount      = delegate.GetTemplate(node.mTemplateIndex).mInputCount;
-        return ::SF::Engine::Vec2(node.mRect.Min.x * factor,
-                                  node.mRect.Min.y * factor +
-                                          Size.y * ((float) slotIndex + 1) / ((float) InputsCount + 1) + 8.f);
+        return {node.mRect.Min.x * factor,
+                node.mRect.Min.y * factor + Size.y * ((float) slotIndex + 1) / ((float) InputsCount + 1) + 8.f};
     }
 
     static ::SF::Engine::Vec2 GetOutputSlotPos(Delegate &delegate, const Node &node, SlotIndex slotIndex, float factor)
@@ -391,7 +390,8 @@ namespace GraphEditor
                                                -textSize.y / 2);
 
                 ImRect nodeRect = GetNodeRect(node, factor);
-                if (!inMinimap && (overCon || (nodeRect.Contains(io.MousePos - offset) && closestConn == -1 &&
+                if (!inMinimap && (overCon || (nodeRect.Contains(io.MousePos - offset) &&
+                                               closestConn == std::numeric_limits<size_t>::max() && // -1
                                                (editingInput == (i != 0)) && nodeOperation == NO_EditingLink)))
                 {
                     closestDistance = distance;
@@ -421,7 +421,7 @@ namespace GraphEditor
                 }
             }
 
-            if (closestConn != -1)
+            if (closestConn != std::numeric_limits<size_t>::max())
             {
                 const char **con                = i ? nodeTemplate.mOutputNames : nodeTemplate.mInputNames;
                 const char *conText             = (con && con[closestConn]) ? con[closestConn] : "";
@@ -550,34 +550,6 @@ namespace GraphEditor
 
         // test nested IO
         drawList->ChannelsSetCurrent(1); // Background
-        const size_t InputsCount  = nodeTemplate.mInputCount;
-        const size_t OutputsCount = nodeTemplate.mOutputCount;
-
-        /*
-        for (int i = 0; i < 2; i++)
-        {
-            const size_t slotCount[2] = {InputsCount, OutputsCount};
-
-            for (size_t slotIndex = 0; slotIndex < slotCount[i]; slotIndex++)
-            {
-                const char* con = i ? nodeTemplate.mOutputNames[slotIndex] :
-        nodeTemplate.mInputNames[slotIndex];//node.mOutputs[slot_idx] : node->mInputs[slot_idx]; if
-        (!delegate->IsIOPinned(nodeIndex, slot_idx, i == 1))
-                {
-
-                }
-                continue;
-
-                ::SF::Engine::Vec2 p = offset + (i ? GetOutputSlotPos(delegate, node, slotIndex, factor) :
-        GetInputSlotPos(delegate, node, slotIndex, factor)); const float arc = 28.f * (float(i) * 0.3f + 1.0f) * (i
-        ? 1.f : -1.f); const float ofs = 0.f;
-
-                ::SF::Engine::Vec2 pts[3] = {p + ::SF::Engine::Vec2(arc + ofs, 0.f), p + ::SF::Engine::Vec2(0.f + ofs,
-        -arc), p + ::SF::Engine::Vec2(0.f + ofs, arc)}; drawList->AddTriangleFilled(pts[0], pts[1], pts[2], i ?
-        0xFFAA5030 : 0xFF30AA50); drawList->AddTriangle(pts[0], pts[1], pts[2], 0xFF000000, 2.f);
-            }
-        }
-        */
 
         ImGui::SetCursorScreenPos(nodeRectangleMin);
         float maxHeight = ImMin(viewPort.Max.y, nodeRectangleMin.y + nodeSize.y) - nodeRectangleMin.y;
@@ -638,39 +610,7 @@ namespace GraphEditor
                           ImDrawFlags_RoundCornersAll);
 #endif
 
-        ::SF::Engine::Vec2 imgPos  = nodeRectangleMin + ::SF::Engine::Vec2(14, 25);
-        ::SF::Engine::Vec2 imgSize = nodeRectangleMax + ::SF::Engine::Vec2(-5, -5) - imgPos;
-        float imgSizeComp          = std::min(imgSize.x, imgSize.y);
-
         drawList->AddRectFilled(nodeRectangleMin, nodeRectangleMax, node_bg_color, options.mRounding);
-        /*float progress = delegate->NodeProgress(nodeIndex);
-        if (progress > FLT_EPSILON && progress < 1.f - FLT_EPSILON)
-        {
-            ::SF::Engine::Vec2 progressLineA = nodeRectangleMax - ::SF::Engine::Vec2(nodeSize.x - 2.f, 3.f);
-            ::SF::Engine::Vec2 progressLineB = progressLineA + ::SF::Engine::Vec2(nodeSize.x * factor - 4.f, 0.f);
-            drawList->AddLine(progressLineA, progressLineB, 0xFF400000, 3.f);
-            drawList->AddLine(progressLineA, ImLerp(progressLineA, progressLineB, progress), 0xFFFF0000, 3.f);
-        }*/
-        ::SF::Engine::Vec2 imgPosMax = imgPos + ::SF::Engine::Vec2(imgSizeComp, imgSizeComp);
-
-        // ::SF::Engine::Vec2 imageSize = delegate->GetEvaluationSize(nodeIndex);
-        /*float imageRatio = 1.f;
-        if (imageSize.x > 0.f && imageSize.y > 0.f)
-        {
-            imageRatio = imageSize.y / imageSize.x;
-        }
-        ::SF::Engine::Vec2 quadSize = imgPosMax - imgPos;
-        ::SF::Engine::Vec2 marge(0.f, 0.f);
-        if (imageRatio > 1.f)
-        {
-            marge.x = (quadSize.x - quadSize.y / imageRatio) * 0.5f;
-        }
-        else
-        {
-            marge.y = (quadSize.y - quadSize.y * imageRatio) * 0.5f;
-        }*/
-
-        // delegate->DrawNodeImage(drawList, ImRect(imgPos, imgPosMax), marge, nodeIndex);
 
         drawList->AddRectFilled(nodeRectangleMin, ::SF::Engine::Vec2(nodeRectangleMax.x, nodeRectangleMin.y + 20),
                                 nodeTemplate.mHeaderColor, options.mRounding);
@@ -685,37 +625,7 @@ namespace GraphEditor
         {
             delegate.CustomDraw(drawList, customDrawRect, nodeIndex);
         }
-        /*
-            const ImTextureID bmpInfo = (ImTextureID)(uint64_t)delegate->GetBitmapInfo(nodeIndex).idx;
-            if (bmpInfo)
-            {
-                ::SF::Engine::Vec2 bmpInfoPos(nodeRectangleMax - ::SF::Engine::Vec2(26, 12));
-                ::SF::Engine::Vec2 bmpInfoSize(20, 20);
-                if (delegate->NodeIsCompute(nodeIndex))
-                {
-                    drawList->AddImageQuad(bmpInfo,
-                                           bmpInfoPos,
-                                           bmpInfoPos + ::SF::Engine::Vec2(bmpInfoSize.x, 0.f),
-                                           bmpInfoPos + bmpInfoSize,
-                                           bmpInfoPos + ::SF::Engine::Vec2(0., bmpInfoSize.y));
-                }
-                else if (delegate->NodeIs2D(nodeIndex))
-                {
-                    drawList->AddImageQuad(bmpInfo,
-                                           bmpInfoPos,
-                                           bmpInfoPos + ::SF::Engine::Vec2(bmpInfoSize.x, 0.f),
-                                           bmpInfoPos + bmpInfoSize,
-                                           bmpInfoPos + ::SF::Engine::Vec2(0., bmpInfoSize.y));
-                }
-                else if (delegate->NodeIsCubemap(nodeIndex))
-                {
-                    drawList->AddImageQuad(bmpInfo,
-                                           bmpInfoPos + ::SF::Engine::Vec2(0., bmpInfoSize.y),
-                                           bmpInfoPos + bmpInfoSize,
-                                           bmpInfoPos + ::SF::Engine::Vec2(bmpInfoSize.x, 0.f),
-                                           bmpInfoPos);
-                }
-            }*/
+
         return nodeHovered;
     }
 
@@ -835,7 +745,6 @@ namespace GraphEditor
 
         const ::SF::Engine::Vec2 windowPos  = ImGui::GetCursorScreenPos();
         const ::SF::Engine::Vec2 canvasSize = ImGui::GetContentRegionAvail();
-        const ::SF::Engine::Vec2 scrollRegionLocalPos(0, 0);
 
         ImRect regionRect(windowPos, windowPos + canvasSize);
 
@@ -943,36 +852,6 @@ namespace GraphEditor
                             (!inMinimap) && HandleConnections(drawList, nodeIndex, offset, viewState.mFactor, delegate,
                                                               options, false, inputSlot, outputSlot, inMinimap);
 
-                    // shadow
-                    /*
-                    ::SF::Engine::Vec2 shadowOffset = ::SF::Engine::Vec2(30, 30);
-                    ::SF::Engine::Vec2 shadowPivot = (nodeRect.Min + nodeRect.Max) /2.f;
-                    ::SF::Engine::Vec2 shadowPointMiddle = shadowPivot + shadowOffset;
-                    ::SF::Engine::Vec2 shadowPointTop = ::SF::Engine::Vec2(shadowPivot.x, nodeRect.Min.y) +
-                    shadowOffset;
-                    ::SF::Engine::Vec2 shadowPointBottom = ::SF::Engine::Vec2(shadowPivot.x, nodeRect.Max.y) +
-                    shadowOffset;
-                    ::SF::Engine::Vec2 shadowPointLeft = ::SF::Engine::Vec2(nodeRect.Min.x, shadowPivot.y) +
-                    shadowOffset;
-                    ::SF::Engine::Vec2 shadowPointRight = ::SF::Engine::Vec2(nodeRect.Max.x, shadowPivot.y) +
-                    shadowOffset;
-
-                    // top left
-                    drawList->AddRectFilledMultiColor(nodeRect.Min + shadowOffset, shadowPointMiddle, IM_COL32(0 ,0, 0,
-                    0), IM_COL32(0,0,0,0), IM_COL32(0, 0, 0, 255), IM_COL32(0, 0, 0, 0));
-
-                    // top right
-                    drawList->AddRectFilledMultiColor(shadowPointTop, shadowPointRight, IM_COL32(0 ,0, 0, 0),
-                    IM_COL32(0,0,0,0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 255));
-
-                    // bottom left
-                    drawList->AddRectFilledMultiColor(shadowPointLeft, shadowPointBottom, IM_COL32(0 ,0, 0, 0),
-                    IM_COL32(0, 0, 0, 255), IM_COL32(0, 0, 0, 0), IM_COL32(0,0,0,0));
-
-                    // bottom right
-                    drawList->AddRectFilledMultiColor(shadowPointMiddle, nodeRect.Max + shadowOffset, IM_COL32(0, 0, 0,
-                    255), IM_COL32(0 ,0, 0, 0), IM_COL32(0,0,0,0), IM_COL32(0, 0, 0, 0));
-                    */
                     if (DrawNode(drawList, nodeIndex, offset, viewState.mFactor, delegate, overInput, options,
                                  inMinimap, regionRect))
                     {
@@ -981,7 +860,8 @@ namespace GraphEditor
 
                     HandleConnections(drawList, nodeIndex, offset, viewState.mFactor, delegate, options, true,
                                       inputSlot, outputSlot, inMinimap);
-                    if (inputSlot != -1 || outputSlot != -1)
+                    if (inputSlot != std::numeric_limits<size_t>::max() ||
+                        outputSlot != std::numeric_limits<size_t>::max())
                     {
                         inputSlotOver  = inputSlot;
                         outputSlotOver = outputSlot;

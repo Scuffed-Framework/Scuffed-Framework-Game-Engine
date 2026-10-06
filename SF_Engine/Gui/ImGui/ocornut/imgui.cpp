@@ -16237,14 +16237,13 @@ ImGuiWindowSettings *ImGui::FindWindowSettingsByWindow(ImGuiWindow *window)
 // once more.
 void ImGui::ClearWindowSettings(const char *name)
 {
-    ImGuiContext &g     = *GImGui;
     ImGuiWindow *window = FindWindowByName(name);
     if (window != nullptr)
     {
         window->Flags |= ImGuiWindowFlags_NoSavedSettings;
         InitOrLoadWindowSettings(window, nullptr);
         if (window->DockId != 0)
-            DockContextProcessUndockWindow(&g, window, true);
+            DockContextProcessUndockWindow(window, true);
     }
     if (ImGuiWindowSettings *settings =
                 window ? FindWindowSettingsByWindow(window) : FindWindowSettingsByID(ImHashStr(name)))
@@ -17953,7 +17952,7 @@ void ImGui::DockContextNewFrameUpdateUndocking(ImGuiContext *ctx)
     for (ImGuiDockRequest &req: dc->Requests)
     {
         if (req.Type == ImGuiDockRequestType_Undock && req.UndockTargetWindow)
-            DockContextProcessUndockWindow(ctx, req.UndockTargetWindow);
+            DockContextProcessUndockWindow(req.UndockTargetWindow);
         else if (req.Type == ImGuiDockRequestType_Undock && req.UndockTargetNode)
             DockContextProcessUndockNode(ctx, req.UndockTargetNode);
     }
@@ -18457,7 +18456,7 @@ static ::SF::Engine::Vec2 FixLargeWindowsWhenUndocking(const ::SF::Engine::Vec2 
     return ImMin(size, max_size);
 }
 
-void ImGui::DockContextProcessUndockWindow(ImGuiContext *ctx, ImGuiWindow *window, bool clear_persistent_docking_ref)
+void ImGui::DockContextProcessUndockWindow(ImGuiWindow *window, bool clear_persistent_docking_ref)
 {
     if (window->DockNode)
         DockNodeRemoveWindow(window->DockNode, window, clear_persistent_docking_ref ? 0 : window->DockId);
@@ -21066,7 +21065,7 @@ void ImGui::DockBuilderRemoveNodeDockedWindows(IdType root_id, bool clear_settin
         {
             const IdType backup_dock_id = window->DockId;
             IM_UNUSED(backup_dock_id);
-            DockContextProcessUndockWindow(&g, window, clear_settings_refs);
+            DockContextProcessUndockWindow(window, clear_settings_refs);
             if (!clear_settings_refs)
                 IM_ASSERT(window->DockId == backup_dock_id);
         }
@@ -21312,7 +21311,7 @@ static ImGuiDockNode *ImGui::DockContextBindNodeToWindow(ImGuiContext *ctx, ImGu
     // We should not be docking into a split node (SetWindowDock should avoid this)
     if (node && node->IsSplitNode())
     {
-        DockContextProcessUndockWindow(ctx, window);
+        DockContextProcessUndockWindow(window);
         return nullptr;
     }
 
@@ -21384,7 +21383,7 @@ void ImGui::BeginDocked(ImGuiWindow *window, bool *p_open)
                        (window->SetWindowPosAllowFlags & g.NextWindowData.PosCond) && g.NextWindowData.PosUndock;
         if (want_undock)
         {
-            DockContextProcessUndockWindow(&g, window);
+            DockContextProcessUndockWindow(window);
             return;
         }
     }
@@ -21404,7 +21403,7 @@ void ImGui::BeginDocked(ImGuiWindow *window, bool *p_open)
     // Undock if the ImGuiDockNodeFlags_NoDockingInCentralNode got set
     if (node->IsCentralNode && (node->Flags & ImGuiDockNodeFlags_NoDockingInCentralNode))
     {
-        DockContextProcessUndockWindow(ctx, window);
+        DockContextProcessUndockWindow( window);
         return;
     }
     #endif
@@ -21418,7 +21417,7 @@ void ImGui::BeginDocked(ImGuiWindow *window, bool *p_open)
         // DockContextNewFrameUpdateDocking()
         ImGuiDockNode *root_node = DockNodeGetRootNode(node);
         if (root_node->LastFrameAlive < g.FrameCount)
-            DockContextProcessUndockWindow(&g, window);
+            DockContextProcessUndockWindow(window);
         else
             window->DockIsActive = true;
         return;
@@ -21450,7 +21449,7 @@ void ImGui::BeginDocked(ImGuiWindow *window, bool *p_open)
     if (!(node->MergedFlags & ImGuiDockNodeFlags_KeepAliveOnly) &&
         window->BeginOrderWithinContext < node->HostWindow->BeginOrderWithinContext)
     {
-        DockContextProcessUndockWindow(&g, window);
+        DockContextProcessUndockWindow(window);
         return;
     }
 

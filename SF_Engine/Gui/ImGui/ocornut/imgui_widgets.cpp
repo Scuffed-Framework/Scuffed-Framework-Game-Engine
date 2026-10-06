@@ -8888,10 +8888,9 @@ static void BoxSelectPreStartDrag(IdType id, ImGuiSelectionUserData clicked_item
 
 static void BoxSelectActivateDrag(ImGuiBoxSelectState *bs, ImGuiWindow *window)
 {
-    ImGuiContext &g = *GImGui;
-    bs->IsActive    = true;
-    bs->Window      = window;
-    bs->IsStarting  = false;
+    bs->IsActive   = true;
+    bs->Window     = window;
+    bs->IsStarting = false;
     ImGui::SetActiveID(bs->ID, window);
     ImGui::SetActiveIdUsingAllKeyboardKeys();
     if (bs->IsStartedFromVoid && (bs->KeyMods & (ImGuiMod_Ctrl | ImGuiMod_Shift)) == 0)
@@ -9088,7 +9087,6 @@ void ImGui::EndBoxSelect(const ImRect &scope_rect, ImGuiMultiSelectFlags ms_flag
 //-------------------------------------------------------------------------
 // [SECTION] Widgets: Multi-Select support
 //-------------------------------------------------------------------------
-// - DebugLogMultiSelectRequests() [Internal]
 // - CalcScopeRect() [Internal]
 // - BeginMultiSelect()
 // - EndMultiSelect()
@@ -9098,7 +9096,6 @@ void ImGui::EndBoxSelect(const ImRect &scope_rect, ImGuiMultiSelectFlags ms_flag
 // - DebugNodeMultiSelectState() [Internal]
 //-------------------------------------------------------------------------
 
-static void DebugLogMultiSelectRequests(const char *function, const ImGuiMultiSelectIO *io) {}
 
 static ImRect CalcScopeRect(ImGuiMultiSelectTempData *ms, ImGuiWindow *window)
 {
@@ -9107,20 +9104,18 @@ static ImRect CalcScopeRect(ImGuiMultiSelectTempData *ms, ImGuiWindow *window)
         // Warning: this depends on CursorMaxPos so it means to be called by EndMultiSelect() only
         // This probably doesn't work inside a table as there are ample ambiguities related to exact time of calling
         // BeginMultiSelect()/EndMultiSelect().
-        return ImRect(ms->ScopeRectMin, ImMax(window->DC.CursorMaxPos, ms->ScopeRectMin));
-    } else
-    {
-        //// When a table, pull HostClipRect, which allows us to predict ClipRect before first row/layout is performed.
-        ///(#7970)
-        ImRect scope_rect = window->InnerClipRect;
-        // if (g.CurrentTable != nullptr)
-        //     scope_rect = g.CurrentTable->HostClipRect;
-
-        // Add inner table decoration (#7821) // FIXME: Why not baking in InnerClipRect?
-        scope_rect.Min = ImMin(scope_rect.Min + ::SF::Engine::Vec2(window->DecoInnerSizeX1, window->DecoInnerSizeY1),
-                               scope_rect.Max);
-        return scope_rect;
+        return {ms->ScopeRectMin, ImMax(window->DC.CursorMaxPos, ms->ScopeRectMin)};
     }
+    //// When a table, pull HostClipRect, which allows us to predict ClipRect before first row/layout is performed.
+    ///(#7970)
+    ImRect scope_rect = window->InnerClipRect;
+    // if (g.CurrentTable != nullptr)
+    //     scope_rect = g.CurrentTable->HostClipRect;
+
+    // Add inner table decoration (#7821) // FIXME: Why not baking in InnerClipRect?
+    scope_rect.Min = ImMin(scope_rect.Min + ::SF::Engine::Vec2(window->DecoInnerSizeX1, window->DecoInnerSizeY1),
+                           scope_rect.Max);
+    return scope_rect;
 }
 
 // Return ImGuiMultiSelectIO structure.
@@ -9261,10 +9256,7 @@ ImGuiMultiSelectIO *ImGui::BeginMultiSelect(ImGuiMultiSelectFlags flags, int sel
     }
     ms->LoopRequestSetAll            = request_select_all ? 1 : request_clear ? 0 : -1;
     ms->IsSoleOrUnknownSelectionSize = (storage->LastSelectionSize == 1) || (storage->LastSelectionSize == -1);
-    // ms->PrevSubmittedItem = ImGuiSelectionUserData_Invalid;
 
-    if (g.DebugLogFlags & ImGuiDebugLogFlags_EventSelection)
-        DebugLogMultiSelectRequests("BeginMultiSelect", &ms->IO);
 
     return &ms->IO;
 }
@@ -9350,9 +9342,6 @@ ImGuiMultiSelectIO *ImGui::EndMultiSelect()
             TableEndRow(table);
     window->DC.CursorMaxPos = ImMax(ms->BackupCursorMaxPos, window->DC.CursorMaxPos);
     PopFocusScope();
-
-    if (g.DebugLogFlags & ImGuiDebugLogFlags_EventSelection)
-        DebugLogMultiSelectRequests("EndMultiSelect", &ms->IO);
 
     ms->FocusScopeId = 0;
     ms->Flags        = ImGuiMultiSelectFlags_None;

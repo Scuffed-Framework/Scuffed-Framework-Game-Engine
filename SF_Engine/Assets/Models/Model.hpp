@@ -46,9 +46,9 @@ namespace SF::Engine
         class Registrar : public Base
         {
         protected:
-            template<int Dummy = 0>
             static bool Register(const std::string &typeName, const std::string &extension)
             {
+                name                                        = typeName; // per-T, since Registrar<T> has its own static
                 ModelFactory::RegistryFilename()[extension] = [](const std::filesystem::path &filename) -> TCreateReturn
                 { return T::Create(filename); };
                 return true;
@@ -80,29 +80,29 @@ namespace SF::Engine
         template<typename T>
         explicit Model(const std::vector<T> &vertices, const std::vector<uint32_t> &indices = {});
 
-        bool CmdRender(const CommandBuffer &commandBuffer, uint32_t instances = 1) const;
+        [[nodiscard]] bool CmdRender(const CommandBuffer &commandBuffer, uint32_t instances = 1) const;
 
-        std::vector<Vertex> GetVertices(std::size_t offset = 0) const;
+        [[nodiscard]] std::vector<Vertex> GetVertices(std::size_t offset = 0) const;
         void SetVertices(std::vector<Vertex> &vertices);
 
-        std::vector<uint32_t> GetIndices(std::size_t offset = 0) const;
+        [[nodiscard]] std::vector<uint32_t> GetIndices(std::size_t offset = 0) const;
         void SetIndices(std::vector<uint32_t> &indices);
 
-        std::vector<float> GetPointCloud() const;
+        [[nodiscard]] std::vector<float> GetPointCloud() const;
 
-        const Vec3 &GetMinExtents() const { return minExtents; }
-        const Vec3 &GetMaxExtents() const { return maxExtents; }
+        [[nodiscard]] const Vec3 &GetMinExtents() const { return minExtents; }
+        [[nodiscard]] const Vec3 &GetMaxExtents() const { return maxExtents; }
 
-        float GetWidth() const { return maxExtents.x - minExtents.x; }
-        float GetHeight() const { return maxExtents.y - minExtents.y; }
-        float GetDepth() const { return maxExtents.z - minExtents.z; }
+        [[nodiscard]] float GetWidth() const { return maxExtents.x - minExtents.x; }
+        [[nodiscard]] float GetHeight() const { return maxExtents.y - minExtents.y; }
+        [[nodiscard]] float GetDepth() const { return maxExtents.z - minExtents.z; }
 
-        float GetRadius() const { return radius; }
-        const Buffer *GetVertexBuffer() const { return vertexBuffer.get(); }
-        const Buffer *GetIndexBuffer() const { return indexBuffer.get(); }
+        [[nodiscard]] float GetRadius() const { return radius; }
+        [[nodiscard]] const Buffer *GetVertexBuffer() const { return vertexBuffer.get(); }
+        [[nodiscard]] const Buffer *GetIndexBuffer() const { return indexBuffer.get(); }
 
-        uint32_t GetVertexCount() const { return vertexCount; }
-        uint32_t GetIndexCount() const { return indexCount; }
+        [[nodiscard]] uint32_t GetVertexCount() const { return vertexCount; }
+        [[nodiscard]] uint32_t GetIndexCount() const { return indexCount; }
 
         static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
 
@@ -119,9 +119,9 @@ namespace SF::Engine
         uint32_t vertexCount = 0;
         uint32_t indexCount  = 0;
 
-        Vec3 minExtents;
-        Vec3 maxExtents;
-        float radius = 0.0f;
+        Vec3 minExtents = {};
+        Vec3 maxExtents = {};
+        float radius    = 0.0f;
     };
 
     // Template constructors must be defined where they're visible for
@@ -134,4 +134,4 @@ namespace SF::Engine
         std::vector<uint32_t> indexData(indices);
         Initialize(vertexData, indexData);
     }
-}
+} // namespace SF::Engine

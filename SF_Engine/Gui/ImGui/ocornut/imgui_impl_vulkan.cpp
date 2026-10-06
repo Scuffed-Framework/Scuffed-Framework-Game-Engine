@@ -1413,13 +1413,6 @@ static uint32_t ImGui_ImplVulkan_GetDefaultApiVersion()
     #endif
 }
 
-bool ImGui_ImplVulkan_LoadFunctions(uint32_t api_version,
-                                    PFN_vkVoidFunction (*loader_func)(const char *function_name, void *user_data),
-                                    void *user_data)
-{
-    return true;
-}
-
 bool ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo *info)
 {
     if (info->ApiVersion == 0)

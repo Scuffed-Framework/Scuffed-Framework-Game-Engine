@@ -3,26 +3,14 @@
 #include <tiny_obj_loader.h>
 
 #include <LowLevel/FileSystem/File.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
-#include <Rendering/Mesh/Mesh.hpp>
-
-namespace
-{
-    // Assumed Vertex layout: position (Vec3), uv (Vec2), normal (Vec3).
-    // Adjust field names here if Vertex.hpp differs.
-    bool operator==(const SF::Engine::Vertex &a, const SF::Engine::Vertex &b)
-    {
-        return a.position.x == b.position.x && a.position.y == b.position.y && a.position.z == b.position.z &&
-               a.texCoord.x == b.texCoord.x && a.texCoord.y == b.texCoord.y &&
-               a.normal.x == b.normal.x && a.normal.y == b.normal.y && a.normal.z == b.normal.z;
-    }
-}
 
 namespace std
 {
-    template <>
+    template<>
     struct hash<SF::Engine::Vertex>
     {
         size_t operator()(const SF::Engine::Vertex &v) const noexcept
@@ -38,18 +26,17 @@ namespace std
             return h;
         }
     };
-}
+} // namespace std
 
 namespace SF::Engine
 {
     class MaterialStreamReader : public tinyobj::MaterialReader
     {
     public:
-        explicit MaterialStreamReader(std::filesystem::path folder) : folder(std::move(folder))
-        {
-        }
+        explicit MaterialStreamReader(std::filesystem::path folder) : folder(std::move(folder)) {}
 
-        bool operator()(const std::string &matId, std::vector<tinyobj::material_t> *materials, std::map<std::string, int> *matMap, std::string *warn, std::string *err) override
+        bool operator()(const std::string &matId, std::vector<tinyobj::material_t> *materials,
+                        std::map<std::string, int> *matMap, std::string *warn, std::string *err) override
         {
             auto filepath = folder / matId;
 
@@ -113,32 +100,26 @@ namespace SF::Engine
         std::vector<uint32_t> indices;
         std::unordered_map<Vertex, uint32_t> uniqueVertices;
 
-        for (const auto &shape : shapes)
+        for (const auto &shape: shapes)
         {
-            for (const auto &index : shape.mesh.indices)
+            for (const auto &index: shape.mesh.indices)
             {
-                Vec3 position(
-                    attrib.vertices[3 * index.vertex_index],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]);
+                Vec3 position(attrib.vertices[3 * index.vertex_index], attrib.vertices[3 * index.vertex_index + 1],
+                              attrib.vertices[3 * index.vertex_index + 2]);
 
                 Vec3 uv;
                 if (index.texcoord_index >= 0 && !attrib.texcoords.empty())
                 {
-                    uv = Vec3(
-                        attrib.texcoords[2 * index.texcoord_index],
-                        1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
-                        attrib.texcoords[2*index.texcoord_index + 2]
-                    );
+                    uv = Vec3(attrib.texcoords[2 * index.texcoord_index],
+                              1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+                              attrib.texcoords[2 * index.texcoord_index + 2]);
                 }
 
                 Vec3 normal;
                 if (index.normal_index >= 0 && !attrib.normals.empty())
                 {
-                    normal = Vec3(
-                        attrib.normals[3 * index.normal_index],
-                        attrib.normals[3 * index.normal_index + 1],
-                        attrib.normals[3 * index.normal_index + 2]);
+                    normal = Vec3(attrib.normals[3 * index.normal_index], attrib.normals[3 * index.normal_index + 1],
+                                  attrib.normals[3 * index.normal_index + 2]);
                 }
 
                 Vertex vertex(position, uv, normal);
@@ -150,8 +131,7 @@ namespace SF::Engine
                     uniqueVertices.emplace(vertex, newIndex);
                     vertices.emplace_back(vertex);
                     indices.emplace_back(newIndex);
-                }
-                else
+                } else
                 {
                     indices.emplace_back(it->second);
                 }
@@ -160,4 +140,4 @@ namespace SF::Engine
 
         Initialize(vertices, indices);
     }
-}
+} // namespace SF::Engine

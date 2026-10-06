@@ -36,7 +36,6 @@ SOFTWARE.
 
 #include <algorithm>        // all_of, find, for_each
 #include <cassert>          // assert
-#include <ciso646>          // and, not, or
 #include <cstddef>          // nullptr_t, ptrdiff_t, size_t
 #include <functional>       // hash, less
 #include <initializer_list> // initializer_list
@@ -45,6 +44,7 @@ SOFTWARE.
 #include <numeric>          // accumulate
 #include <string>           // string, stoi, to_string
 #include <utility>          // declval, forward, move, pair, swap
+#include <type_traits>
 
 // #include <nlohmann/json_fwd.hpp>
 #ifndef NLOHMANN_JSON_FWD_HPP
@@ -237,177 +237,18 @@ namespace nlohmann
     basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, \
                AllocatorType, JSONSerializer>
 
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-
-#include <ciso646>     // not
-#include <cstddef>     // size_t
-#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
-
-namespace nlohmann
-{
-    namespace detail
-    {
-        // alias templates to reduce boilerplate
-        template<bool B, typename T = void>
-        using enable_if_t = typename std::enable_if<B, T>::type;
-
-        template<typename T>
-        using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
-
-        // implementation of C++14 index_sequence and affiliates
-        // source: https://stackoverflow.com/a/32223343
-        template<std::size_t... Ints>
-        struct index_sequence
-        {
-            using type       = index_sequence;
-            using value_type = std::size_t;
-            static constexpr std::size_t size() noexcept { return sizeof...(Ints); }
-        };
-
-        template<class Sequence1, class Sequence2>
-        struct merge_and_renumber;
-
-        template<std::size_t... I1, std::size_t... I2>
-        struct merge_and_renumber<index_sequence<I1...>, index_sequence<I2...>>
-            : index_sequence<I1..., (sizeof...(I1) + I2)...>
-        {
-        };
-
-        template<std::size_t N>
-        struct make_index_sequence : merge_and_renumber<typename make_index_sequence<N / 2>::type,
-                                                        typename make_index_sequence<N - N / 2>::type>
-        {
-        };
-
-        template<>
-        struct make_index_sequence<0> : index_sequence<>
-        {
-        };
-        template<>
-        struct make_index_sequence<1> : index_sequence<0>
-        {
-        };
-
-        template<typename... Ts>
-        using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
-
-        // dispatch utility (taken from ranges-v3)
-        template<unsigned N>
-        struct priority_tag : priority_tag<N - 1>
-        {
-        };
-        template<>
-        struct priority_tag<0>
-        {
-        };
-
-        // taken from ranges-v3
-        template<typename T>
-        struct static_const
-        {
-            static constexpr T value{};
-        };
-
-        template<typename T>
-        constexpr T static_const<T>::value;
-    } // namespace detail
-} // namespace nlohmann
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-
-#include <ciso646>     // not
-#include <limits>      // numeric_limits
-#include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
-#include <utility>     // declval
-
-// #include <nlohmann/json_fwd.hpp>
-
-// #include <nlohmann/detail/iterators/iterator_traits.hpp>
-
-
-#include <iterator> // random_access_iterator_tag
-
-// #include <nlohmann/detail/meta/void_t.hpp>
-
-
-namespace nlohmann
-{
-    namespace detail
-    {
-        template<typename... Ts>
-        struct make_void
-        {
-            using type = void;
-        };
-        template<typename... Ts>
-        using void_t = typename make_void<Ts...>::type;
-    } // namespace detail
-} // namespace nlohmann
-
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-
-namespace nlohmann
-{
-    namespace detail
-    {
-        template<typename It, typename = void>
-        struct iterator_types
-        {
-        };
-
-        template<typename It>
-        struct iterator_types<It, void_t<typename It::difference_type, typename It::value_type, typename It::pointer,
-                                         typename It::reference, typename It::iterator_category>>
-        {
-            using difference_type   = typename It::difference_type;
-            using value_type        = typename It::value_type;
-            using pointer           = typename It::pointer;
-            using reference         = typename It::reference;
-            using iterator_category = typename It::iterator_category;
-        };
-
-        // This is required as some compilers implement std::iterator_traits in a way that
-        // doesn't work with SFINAE. See https://github.com/nlohmann/json/issues/1341.
-        template<typename T, typename = void>
-        struct iterator_traits
-        {
-        };
-
-        template<typename T>
-        struct iterator_traits<T, enable_if_t<!std::is_pointer<T>::value>> : iterator_types<T>
-        {
-        };
-
-        template<typename T>
-        struct iterator_traits<T *, enable_if_t<std::is_object<T>::value>>
-        {
-            using iterator_category = std::random_access_iterator_tag;
-            using value_type        = T;
-            using difference_type   = ptrdiff_t;
-            using pointer           = T *;
-            using reference         = T &;
-        };
-    } // namespace detail
-} // namespace nlohmann
-
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/meta/detected.hpp>
-
+// really? you don't need a custom STL lil bro
 
 #include <type_traits>
 
-// #include <nlohmann/detail/meta/void_t.hpp>
 
-
-// http://en.cppreference.com/w/cpp/experimental/is_detected
 namespace nlohmann
 {
     namespace detail
     {
+        template<typename T>
+        using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+
         struct nonesuch
         {
             nonesuch()                       = delete;
@@ -424,7 +265,7 @@ namespace nlohmann
         };
 
         template<class Default, template<class...> class Op, class... Args>
-        struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+        struct detector<Default, std::void_t<Op<Args...>>, Op, Args...>
         {
             using value_t = std::true_type;
             using type    = Op<Args...>;
@@ -448,13 +289,7 @@ namespace nlohmann
         template<class To, template<class...> class Op, class... Args>
         using is_detected_convertible = std::is_convertible<detected_t<Op, Args...>, To>;
     } // namespace detail
-} // namespace nlohmann
 
-// #include <nlohmann/detail/macro_scope.hpp>
-
-
-namespace nlohmann
-{
     /*!
     @brief detail namespace with internal helper functions
 
@@ -532,7 +367,7 @@ namespace nlohmann
         };
 
         template<typename BasicJsonType, typename T>
-        struct has_from_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
+        struct has_from_json<BasicJsonType, T, std::enable_if_t<not is_basic_json<T>::value>>
         {
             using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
@@ -548,7 +383,7 @@ namespace nlohmann
         };
 
         template<typename BasicJsonType, typename T>
-        struct has_non_default_from_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
+        struct has_non_default_from_json<BasicJsonType, T, std::enable_if_t<not is_basic_json<T>::value>>
         {
             using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
@@ -564,14 +399,13 @@ namespace nlohmann
         };
 
         template<typename BasicJsonType, typename T>
-        struct has_to_json<BasicJsonType, T, enable_if_t<not is_basic_json<T>::value>>
+        struct has_to_json<BasicJsonType, T, std::enable_if_t<not is_basic_json<T>::value>>
         {
             using serializer = typename BasicJsonType::template json_serializer<T, void>;
 
             static constexpr bool value =
                     is_detected_exact<void, to_json_function, serializer, BasicJsonType &, T>::value;
         };
-
 
         ///////////////////
         // is_ functions //
@@ -583,10 +417,10 @@ namespace nlohmann
         };
 
         template<typename T>
-        struct is_iterator_traits<iterator_traits<T>>
+        struct is_iterator_traits<std::iterator_traits<T>>
         {
         private:
-            using traits = iterator_traits<T>;
+            using traits = std::iterator_traits<T>;
 
         public:
             static constexpr auto value =
@@ -613,9 +447,10 @@ namespace nlohmann
         };
 
         template<typename BasicJsonType, typename CompatibleObjectType>
-        struct is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType,
-                                              enable_if_t<is_detected<mapped_type_t, CompatibleObjectType>::value and
-                                                          is_detected<key_type_t, CompatibleObjectType>::value>>
+        struct is_compatible_object_type_impl<
+                BasicJsonType, CompatibleObjectType,
+                std::enable_if_t<is_detected<mapped_type_t, CompatibleObjectType>::value and
+                                 is_detected<key_type_t, CompatibleObjectType>::value>>
         {
 
             using object_t = typename BasicJsonType::object_t;
@@ -640,8 +475,8 @@ namespace nlohmann
         template<typename BasicJsonType, typename ConstructibleObjectType>
         struct is_constructible_object_type_impl<
                 BasicJsonType, ConstructibleObjectType,
-                enable_if_t<is_detected<mapped_type_t, ConstructibleObjectType>::value and
-                            is_detected<key_type_t, ConstructibleObjectType>::value>>
+                std::enable_if_t<is_detected<mapped_type_t, ConstructibleObjectType>::value and
+                                 is_detected<key_type_t, ConstructibleObjectType>::value>>
         {
             using object_t = typename BasicJsonType::object_t;
 
@@ -667,8 +502,8 @@ namespace nlohmann
         template<typename BasicJsonType, typename CompatibleStringType>
         struct is_compatible_string_type_impl<
                 BasicJsonType, CompatibleStringType,
-                enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type, value_type_t,
-                                              CompatibleStringType>::value>>
+                std::enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type, value_type_t,
+                                                   CompatibleStringType>::value>>
         {
             static constexpr auto value =
                     std::is_constructible<typename BasicJsonType::string_t, CompatibleStringType>::value;
@@ -687,8 +522,8 @@ namespace nlohmann
         template<typename BasicJsonType, typename ConstructibleStringType>
         struct is_constructible_string_type_impl<
                 BasicJsonType, ConstructibleStringType,
-                enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type, value_type_t,
-                                              ConstructibleStringType>::value>>
+                std::enable_if_t<is_detected_exact<typename BasicJsonType::string_t::value_type, value_type_t,
+                                                   ConstructibleStringType>::value>>
         {
             static constexpr auto value =
                     std::is_constructible<ConstructibleStringType, typename BasicJsonType::string_t>::value;
@@ -707,12 +542,12 @@ namespace nlohmann
         template<typename BasicJsonType, typename CompatibleArrayType>
         struct is_compatible_array_type_impl<
                 BasicJsonType, CompatibleArrayType,
-                enable_if_t<is_detected<value_type_t, CompatibleArrayType>::value and
-                            is_detected<iterator_t, CompatibleArrayType>::value and
-                            // This is needed because json_reverse_iterator has a ::iterator type...
-                            // Therefore it is detected as a CompatibleArrayType.
-                            // The real fix would be to have an Iterable concept.
-                            not is_iterator_traits<iterator_traits<CompatibleArrayType>>::value>>
+                std::enable_if_t<is_detected<value_type_t, CompatibleArrayType>::value and
+                                 is_detected<iterator_t, CompatibleArrayType>::value and
+                                 // This is needed because json_reverse_iterator has a ::iterator type...
+                                 // Therefore it is detected as a CompatibleArrayType.
+                                 // The real fix would be to have an Iterable concept.
+                                 not is_iterator_traits<std::iterator_traits<CompatibleArrayType>>::value>>
         {
             static constexpr bool value =
                     std::is_constructible<BasicJsonType, typename CompatibleArrayType::value_type>::value;
@@ -731,7 +566,7 @@ namespace nlohmann
         template<typename BasicJsonType, typename ConstructibleArrayType>
         struct is_constructible_array_type_impl<
                 BasicJsonType, ConstructibleArrayType,
-                enable_if_t<std::is_same<ConstructibleArrayType, typename BasicJsonType::value_type>::value>>
+                std::enable_if_t<std::is_same<ConstructibleArrayType, typename BasicJsonType::value_type>::value>>
             : std::true_type
         {
         };
@@ -739,17 +574,17 @@ namespace nlohmann
         template<typename BasicJsonType, typename ConstructibleArrayType>
         struct is_constructible_array_type_impl<
                 BasicJsonType, ConstructibleArrayType,
-                enable_if_t<not std::is_same<ConstructibleArrayType, typename BasicJsonType::value_type>::value and
-                            is_detected<value_type_t, ConstructibleArrayType>::value and
-                            is_detected<iterator_t, ConstructibleArrayType>::value and
-                            is_complete_type<detected_t<value_type_t, ConstructibleArrayType>>::value>>
+                std::enable_if_t<not std::is_same<ConstructibleArrayType, typename BasicJsonType::value_type>::value and
+                                 is_detected<value_type_t, ConstructibleArrayType>::value and
+                                 is_detected<iterator_t, ConstructibleArrayType>::value and
+                                 is_complete_type<detected_t<value_type_t, ConstructibleArrayType>>::value>>
         {
             static constexpr bool value =
                     // This is needed because json_reverse_iterator has a ::iterator type,
                     // furthermore, std::back_insert_iterator (and other iterators) have a base class `iterator`...
                     // Therefore it is detected as a ConstructibleArrayType.
                     // The real fix would be to have an Iterable concept.
-                    not is_iterator_traits<iterator_traits<ConstructibleArrayType>>::value and
+                    not is_iterator_traits<std::iterator_traits<ConstructibleArrayType>>::value and
 
                     (std::is_same<typename ConstructibleArrayType::value_type,
                                   typename BasicJsonType::array_t::value_type>::value or
@@ -768,10 +603,11 @@ namespace nlohmann
         };
 
         template<typename RealIntegerType, typename CompatibleNumberIntegerType>
-        struct is_compatible_integer_type_impl<RealIntegerType, CompatibleNumberIntegerType,
-                                               enable_if_t<std::is_integral<RealIntegerType>::value and
-                                                           std::is_integral<CompatibleNumberIntegerType>::value and
-                                                           not std::is_same<bool, CompatibleNumberIntegerType>::value>>
+        struct is_compatible_integer_type_impl<
+                RealIntegerType, CompatibleNumberIntegerType,
+                std::enable_if_t<std::is_integral<RealIntegerType>::value and
+                                 std::is_integral<CompatibleNumberIntegerType>::value and
+                                 not std::is_same<bool, CompatibleNumberIntegerType>::value>>
         {
             // is there an assert somewhere on overflows?
             using RealLimits       = std::numeric_limits<RealIntegerType>;
@@ -795,7 +631,7 @@ namespace nlohmann
 
         template<typename BasicJsonType, typename CompatibleType>
         struct is_compatible_type_impl<BasicJsonType, CompatibleType,
-                                       enable_if_t<is_complete_type<CompatibleType>::value>>
+                                       std::enable_if_t<is_complete_type<CompatibleType>::value>>
         {
             static constexpr bool value = has_to_json<BasicJsonType, CompatibleType>::value;
         };
@@ -1231,10 +1067,7 @@ namespace nlohmann
 // #include <nlohmann/detail/value_t.hpp>
 
 
-#include <array>   // array
-#include <ciso646> // and
-#include <cstddef> // size_t
-#include <cstdint> // uint8_t
+#include <array> // array
 
 namespace nlohmann
 {
@@ -1305,31 +1138,10 @@ namespace nlohmann
     } // namespace detail
 } // namespace nlohmann
 
-// #include <nlohmann/detail/conversions/from_json.hpp>
-
-
-#include <algorithm>     // transform
-#include <array>         // array
-#include <ciso646>       // and, not
 #include <forward_list>  // forward_list
-#include <iterator>      // inserter, front_inserter, end
-#include <map>           // map
-#include <string>        // string
 #include <tuple>         // tuple, make_tuple
-#include <type_traits>   // is_arithmetic, is_same, is_enum, underlying_type, is_convertible
 #include <unordered_map> // unordered_map
-#include <utility>       // pair, declval
 #include <valarray>      // valarray
-
-// #include <nlohmann/detail/exceptions.hpp>
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-// #include <nlohmann/detail/value_t.hpp>
 
 
 namespace nlohmann
@@ -1348,9 +1160,9 @@ namespace nlohmann
 
         // overloads for basic_json template parameters
         template<typename BasicJsonType, typename ArithmeticType,
-                 enable_if_t<std::is_arithmetic<ArithmeticType>::value and
-                                     not std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
-                             int> = 0>
+                 std::enable_if_t<std::is_arithmetic<ArithmeticType>::value and
+                                          not std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
+                                  int> = 0>
         void get_arithmetic_value(const BasicJsonType &j, ArithmeticType &val)
         {
             switch (static_cast<value_t>(j))
@@ -1400,9 +1212,10 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename ConstructibleStringType,
-                 enable_if_t<is_constructible_string_type<BasicJsonType, ConstructibleStringType>::value and
-                                     not std::is_same<typename BasicJsonType::string_t, ConstructibleStringType>::value,
-                             int> = 0>
+                 std::enable_if_t<
+                         is_constructible_string_type<BasicJsonType, ConstructibleStringType>::value and
+                                 not std::is_same<typename BasicJsonType::string_t, ConstructibleStringType>::value,
+                         int> = 0>
         void from_json(const BasicJsonType &j, ConstructibleStringType &s)
         {
             if (JSON_UNLIKELY(not j.is_string()))
@@ -1431,7 +1244,7 @@ namespace nlohmann
             get_arithmetic_value(j, val);
         }
 
-        template<typename BasicJsonType, typename EnumType, enable_if_t<std::is_enum<EnumType>::value, int> = 0>
+        template<typename BasicJsonType, typename EnumType, std::enable_if_t<std::is_enum<EnumType>::value, int> = 0>
         void from_json(const BasicJsonType &j, EnumType &e)
         {
             typename std::underlying_type<EnumType>::type val;
@@ -1441,7 +1254,7 @@ namespace nlohmann
 
         // forward_list doesn't have an insert method
         template<typename BasicJsonType, typename T, typename Allocator,
-                 enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
+                 std::enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
         void from_json(const BasicJsonType &j, std::forward_list<T, Allocator> &l)
         {
             if (JSON_UNLIKELY(not j.is_array()))
@@ -1453,7 +1266,8 @@ namespace nlohmann
         }
 
         // valarray doesn't have an insert method
-        template<typename BasicJsonType, typename T, enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
+        template<typename BasicJsonType, typename T,
+                 std::enable_if_t<std::is_convertible<BasicJsonType, T>::value, int> = 0>
         void from_json(const BasicJsonType &j, std::valarray<T> &l)
         {
             if (JSON_UNLIKELY(not j.is_array()))
@@ -1465,14 +1279,13 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType>
-        void from_json_array_impl(const BasicJsonType &j, typename BasicJsonType::array_t &arr,
-                                  priority_tag<3> /*unused*/)
+        void from_json_array_impl(const BasicJsonType &j, typename BasicJsonType::array_t &arr)
         {
             arr = *j.template get_ptr<const typename BasicJsonType::array_t *>();
         }
 
         template<typename BasicJsonType, typename T, std::size_t N>
-        auto from_json_array_impl(const BasicJsonType &j, std::array<T, N> &arr, priority_tag<2> /*unused*/)
+        auto from_json_array_impl(const BasicJsonType &j, std::array<T, N> &arr)
                 -> decltype(j.template get<T>(), void())
         {
             for (std::size_t i = 0; i < N; ++i)
@@ -1482,7 +1295,7 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename ConstructibleArrayType>
-        auto from_json_array_impl(const BasicJsonType &j, ConstructibleArrayType &arr, priority_tag<1> /*unused*/)
+        auto from_json_array_impl(const BasicJsonType &j, ConstructibleArrayType &arr)
                 -> decltype(arr.reserve(std::declval<typename ConstructibleArrayType::size_type>()),
                             j.template get<typename ConstructibleArrayType::value_type>(), void())
         {
@@ -1499,7 +1312,7 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename ConstructibleArrayType>
-        void from_json_array_impl(const BasicJsonType &j, ConstructibleArrayType &arr, priority_tag<0> /*unused*/)
+        void from_json_array_impl(const BasicJsonType &j, ConstructibleArrayType &arr)
         {
             using std::end;
 
@@ -1513,26 +1326,27 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename ConstructibleArrayType,
-                 enable_if_t<is_constructible_array_type<BasicJsonType, ConstructibleArrayType>::value and
-                                     not is_constructible_object_type<BasicJsonType, ConstructibleArrayType>::value and
-                                     not is_constructible_string_type<BasicJsonType, ConstructibleArrayType>::value and
-                                     not is_basic_json<ConstructibleArrayType>::value,
-                             int> = 0>
+                 std::enable_if_t<
+                         is_constructible_array_type<BasicJsonType, ConstructibleArrayType>::value and
+                                 not is_constructible_object_type<BasicJsonType, ConstructibleArrayType>::value and
+                                 not is_constructible_string_type<BasicJsonType, ConstructibleArrayType>::value and
+                                 not is_basic_json<ConstructibleArrayType>::value,
+                         int> = 0>
 
         auto from_json(const BasicJsonType &j, ConstructibleArrayType &arr)
-                -> decltype(from_json_array_impl(j, arr, priority_tag<3>{}),
-                            j.template get<typename ConstructibleArrayType::value_type>(), void())
+                -> decltype(from_json_array_impl(j, arr), j.template get<typename ConstructibleArrayType::value_type>(),
+                            void())
         {
             if (JSON_UNLIKELY(not j.is_array()))
             {
                 JSON_THROW(type_error::create(302, "type must be array, but is " + std::string(j.type_name())));
             }
 
-            from_json_array_impl(j, arr, priority_tag<3>{});
+            from_json_array_impl(j, arr);
         }
 
         template<typename BasicJsonType, typename ConstructibleObjectType,
-                 enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
+                 std::enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
         void from_json(const BasicJsonType &j, ConstructibleObjectType &obj)
         {
             if (JSON_UNLIKELY(not j.is_object()))
@@ -1555,7 +1369,7 @@ namespace nlohmann
         // overloads for boolean_t etc. in case of a custom BooleanType which is not
         // an arithmetic type?
         template<typename BasicJsonType, typename ArithmeticType,
-                 enable_if_t<
+                 std::enable_if_t<
                          std::is_arithmetic<ArithmeticType>::value and
                                  not std::is_same<ArithmeticType, typename BasicJsonType::number_unsigned_t>::value and
                                  not std::is_same<ArithmeticType, typename BasicJsonType::number_integer_t>::value and
@@ -1602,7 +1416,7 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-        void from_json_tuple_impl(const BasicJsonType &j, Tuple &t, index_sequence<Idx...> /*unused*/)
+        void from_json_tuple_impl(const BasicJsonType &j, Tuple &t, std::index_sequence<Idx...> /*unused*/)
         {
             t = std::make_tuple(j.at(Idx).template get<typename std::tuple_element<Idx, Tuple>::type>()...);
         }
@@ -1610,11 +1424,11 @@ namespace nlohmann
         template<typename BasicJsonType, typename... Args>
         void from_json(const BasicJsonType &j, std::tuple<Args...> &t)
         {
-            from_json_tuple_impl(j, t, index_sequence_for<Args...>{});
+            from_json_tuple_impl(j, t, std::index_sequence_for<Args...>{});
         }
 
         template<typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
-                 typename = enable_if_t<not std::is_constructible<typename BasicJsonType::string_t, Key>::value>>
+                 typename = std::enable_if_t<not std::is_constructible<typename BasicJsonType::string_t, Key>::value>>
         void from_json(const BasicJsonType &j, std::map<Key, Value, Compare, Allocator> &m)
         {
             if (JSON_UNLIKELY(not j.is_array()))
@@ -1633,7 +1447,7 @@ namespace nlohmann
 
         template<typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual,
                  typename Allocator,
-                 typename = enable_if_t<not std::is_constructible<typename BasicJsonType::string_t, Key>::value>>
+                 typename = std::enable_if_t<not std::is_constructible<typename BasicJsonType::string_t, Key>::value>>
         void from_json(const BasicJsonType &j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator> &m)
         {
             if (JSON_UNLIKELY(not j.is_array()))
@@ -1659,49 +1473,14 @@ namespace nlohmann
                 return from_json(j, val);
             }
         };
+
     } // namespace detail
 
-    /// namespace to hold default `from_json` function
-    /// to see why this is required:
-    /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
     namespace
     {
-        constexpr const auto &from_json = detail::static_const<detail::from_json_fn>::value;
+        constexpr const detail::from_json_fn &from_json{};
     } // namespace
-} // namespace nlohmann
 
-// #include <nlohmann/detail/conversions/to_json.hpp>
-
-
-#include <ciso646>     // or, and, not
-#include <iterator>    // begin, end
-#include <tuple>       // tuple, get
-#include <type_traits> // is_same, is_constructible, is_floating_point, is_enum, underlying_type
-#include <utility>     // move, forward, declval, pair
-#include <valarray>    // valarray
-#include <vector>      // vector
-
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-// #include <nlohmann/detail/value_t.hpp>
-
-// #include <nlohmann/detail/iterators/iteration_proxy.hpp>
-
-
-#include <cstddef>  // size_t
-#include <iterator> // input_iterator_tag
-#include <string>   // string, to_string
-#include <tuple>    // tuple_size, get, tuple_element
-
-// #include <nlohmann/detail/value_t.hpp>
-
-// #include <nlohmann/detail/meta/type_traits.hpp>
-
-
-namespace nlohmann
-{
     namespace detail
     {
         template<typename IteratorType>
@@ -1806,7 +1585,7 @@ namespace nlohmann
         // Structured Bindings Support
         // For further reference see https://blog.tartanllama.xyz/structured-bindings/
         // And see https://github.com/nlohmann/json/pull/1391
-        template<std::size_t N, typename IteratorType, enable_if_t<N == 0, int> = 0>
+        template<std::size_t N, typename IteratorType, std::enable_if_t<N == 0, int> = 0>
         auto get(const nlohmann::detail::iteration_proxy_value<IteratorType> &i) -> decltype(i.key())
         {
             return i.key();
@@ -1814,7 +1593,7 @@ namespace nlohmann
         // Structured Bindings Support
         // For further reference see https://blog.tartanllama.xyz/structured-bindings/
         // And see https://github.com/nlohmann/json/pull/1391
-        template<std::size_t N, typename IteratorType, enable_if_t<N == 1, int> = 0>
+        template<std::size_t N, typename IteratorType, std::enable_if_t<N == 1, int> = 0>
         auto get(const nlohmann::detail::iteration_proxy_value<IteratorType> &i) -> decltype(i.value())
         {
             return i.value();
@@ -1885,8 +1664,8 @@ namespace nlohmann
             }
 
             template<typename BasicJsonType, typename CompatibleStringType,
-                     enable_if_t<not std::is_same<CompatibleStringType, typename BasicJsonType::string_t>::value, int> =
-                             0>
+                     std::enable_if_t<not std::is_same<CompatibleStringType, typename BasicJsonType::string_t>::value,
+                                      int> = 0>
             static void construct(BasicJsonType &j, const CompatibleStringType &str)
             {
                 j.m_type         = value_t::string;
@@ -1950,9 +1729,9 @@ namespace nlohmann
                 j.assert_invariant();
             }
 
-            template<
-                    typename BasicJsonType, typename CompatibleArrayType,
-                    enable_if_t<not std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value, int> = 0>
+            template<typename BasicJsonType, typename CompatibleArrayType,
+                     std::enable_if_t<not std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value,
+                                      int> = 0>
             static void construct(BasicJsonType &j, const CompatibleArrayType &arr)
             {
                 using std::begin;
@@ -1976,7 +1755,7 @@ namespace nlohmann
             }
 
             template<typename BasicJsonType, typename T,
-                     enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
+                     std::enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
             static void construct(BasicJsonType &j, const std::valarray<T> &arr)
             {
                 j.m_type  = value_t::array;
@@ -2007,8 +1786,8 @@ namespace nlohmann
             }
 
             template<typename BasicJsonType, typename CompatibleObjectType,
-                     enable_if_t<not std::is_same<CompatibleObjectType, typename BasicJsonType::object_t>::value, int> =
-                             0>
+                     std::enable_if_t<not std::is_same<CompatibleObjectType, typename BasicJsonType::object_t>::value,
+                                      int> = 0>
             static void construct(BasicJsonType &j, const CompatibleObjectType &obj)
             {
                 using std::begin;
@@ -2025,14 +1804,15 @@ namespace nlohmann
         /////////////
 
         template<typename BasicJsonType, typename T,
-                 enable_if_t<std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>
+                 std::enable_if_t<std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>
         void to_json(BasicJsonType &j, T b) noexcept
         {
             external_constructor<value_t::boolean>::construct(j, b);
         }
 
         template<typename BasicJsonType, typename CompatibleString,
-                 enable_if_t<std::is_constructible<typename BasicJsonType::string_t, CompatibleString>::value, int> = 0>
+                 std::enable_if_t<std::is_constructible<typename BasicJsonType::string_t, CompatibleString>::value,
+                                  int> = 0>
         void to_json(BasicJsonType &j, const CompatibleString &s)
         {
             external_constructor<value_t::string>::construct(j, s);
@@ -2045,7 +1825,7 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename FloatType,
-                 enable_if_t<std::is_floating_point<FloatType>::value, int> = 0>
+                 std::enable_if_t<std::is_floating_point<FloatType>::value, int> = 0>
         void to_json(BasicJsonType &j, FloatType val) noexcept
         {
             external_constructor<value_t::number_float>::construct(
@@ -2053,9 +1833,9 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename CompatibleNumberUnsignedType,
-                 enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t,
-                                                        CompatibleNumberUnsignedType>::value,
-                             int> = 0>
+                 std::enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_unsigned_t,
+                                                             CompatibleNumberUnsignedType>::value,
+                                  int> = 0>
         void to_json(BasicJsonType &j, CompatibleNumberUnsignedType val) noexcept
         {
             external_constructor<value_t::number_unsigned>::construct(
@@ -2063,16 +1843,16 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename CompatibleNumberIntegerType,
-                 enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t,
-                                                        CompatibleNumberIntegerType>::value,
-                             int> = 0>
+                 std::enable_if_t<is_compatible_integer_type<typename BasicJsonType::number_integer_t,
+                                                             CompatibleNumberIntegerType>::value,
+                                  int> = 0>
         void to_json(BasicJsonType &j, CompatibleNumberIntegerType val) noexcept
         {
             external_constructor<value_t::number_integer>::construct(
                     j, static_cast<typename BasicJsonType::number_integer_t>(val));
         }
 
-        template<typename BasicJsonType, typename EnumType, enable_if_t<std::is_enum<EnumType>::value, int> = 0>
+        template<typename BasicJsonType, typename EnumType, std::enable_if_t<std::is_enum<EnumType>::value, int> = 0>
         void to_json(BasicJsonType &j, EnumType e) noexcept
         {
             using underlying_type = typename std::underlying_type<EnumType>::type;
@@ -2086,17 +1866,18 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename CompatibleArrayType,
-                 enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
-                                     not is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value and
-                                     not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
-                                     not is_basic_json<CompatibleArrayType>::value,
-                             int> = 0>
+                 std::enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
+                                          not is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value and
+                                          not is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value and
+                                          not is_basic_json<CompatibleArrayType>::value,
+                                  int> = 0>
         void to_json(BasicJsonType &j, const CompatibleArrayType &arr)
         {
             external_constructor<value_t::array>::construct(j, arr);
         }
 
-        template<typename BasicJsonType, typename T, enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
+        template<typename BasicJsonType, typename T,
+                 std::enable_if_t<std::is_convertible<T, BasicJsonType>::value, int> = 0>
         void to_json(BasicJsonType &j, const std::valarray<T> &arr)
         {
             external_constructor<value_t::array>::construct(j, std::move(arr));
@@ -2109,9 +1890,9 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename CompatibleObjectType,
-                 enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value and
-                                     not is_basic_json<CompatibleObjectType>::value,
-                             int> = 0>
+                 std::enable_if_t<is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value and
+                                          not is_basic_json<CompatibleObjectType>::value,
+                                  int> = 0>
         void to_json(BasicJsonType &j, const CompatibleObjectType &obj)
         {
             external_constructor<value_t::object>::construct(j, obj);
@@ -2124,8 +1905,8 @@ namespace nlohmann
         }
 
         template<typename BasicJsonType, typename T, std::size_t N,
-                 enable_if_t<not std::is_constructible<typename BasicJsonType::string_t, const T (&)[N]>::value, int> =
-                         0>
+                 std::enable_if_t<not std::is_constructible<typename BasicJsonType::string_t, const T (&)[N]>::value,
+                                  int> = 0>
         void to_json(BasicJsonType &j, const T (&arr)[N])
         {
             external_constructor<value_t::array>::construct(j, arr);
@@ -2139,14 +1920,15 @@ namespace nlohmann
 
         // for https://github.com/nlohmann/json/pull/1134
         template<typename BasicJsonType, typename T,
-                 enable_if_t<std::is_same<T, iteration_proxy_value<typename BasicJsonType::iterator>>::value, int> = 0>
+                 std::enable_if_t<std::is_same<T, iteration_proxy_value<typename BasicJsonType::iterator>>::value,
+                                  int> = 0>
         void to_json(BasicJsonType &j, const T &b)
         {
             j = {{b.key(), b.value()}};
         }
 
         template<typename BasicJsonType, typename Tuple, std::size_t... Idx>
-        void to_json_tuple_impl(BasicJsonType &j, const Tuple &t, index_sequence<Idx...> /*unused*/)
+        void to_json_tuple_impl(BasicJsonType &j, const Tuple &t, std::index_sequence<Idx...> /*unused*/)
         {
             j = {std::get<Idx>(t)...};
         }
@@ -2154,7 +1936,7 @@ namespace nlohmann
         template<typename BasicJsonType, typename... Args>
         void to_json(BasicJsonType &j, const std::tuple<Args...> &t)
         {
-            to_json_tuple_impl(j, t, index_sequence_for<Args...>{});
+            to_json_tuple_impl(j, t, std::index_sequence_for<Args...>{});
         }
 
         struct to_json_fn
@@ -2166,35 +1948,14 @@ namespace nlohmann
                 return to_json(j, std::forward<T>(val));
             }
         };
+
     } // namespace detail
 
-    /// namespace to hold default `to_json` function
     namespace
     {
-        constexpr const auto &to_json = detail::static_const<detail::to_json_fn>::value;
-    } // namespace
-} // namespace nlohmann
+        constexpr const detail::to_json_fn &to_json{};
+    }
 
-// #include <nlohmann/detail/input/input_adapters.hpp>
-
-
-#include <cassert>     // assert
-#include <cstddef>     // size_t
-#include <cstdio>      //FILE *
-#include <cstring>     // strlen
-#include <istream>     // istream
-#include <iterator>    // begin, end, iterator_traits, random_access_iterator_tag, distance, next
-#include <memory>      // shared_ptr, make_shared, addressof
-#include <numeric>     // accumulate
-#include <string>      // string, char_traits
-#include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
-#include <utility>     // pair, declval
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-
-namespace nlohmann
-{
     namespace detail
     {
         /// the supported input formats
@@ -2532,10 +2293,11 @@ namespace nlohmann
             }
 
             /// input adapter for iterator range with contiguous storage
-            template<class IteratorType,
-                     typename std::enable_if<std::is_same<typename iterator_traits<IteratorType>::iterator_category,
-                                                          std::random_access_iterator_tag>::value,
-                                             int>::type = 0>
+            template<
+                    class IteratorType,
+                    typename std::enable_if<std::is_same<typename std::iterator_traits<IteratorType>::iterator_category,
+                                                         std::random_access_iterator_tag>::value,
+                                            int>::type = 0>
             input_adapter(IteratorType first, IteratorType last)
             {
 #ifndef NDEBUG
@@ -2553,7 +2315,7 @@ namespace nlohmann
 #endif
 
                 // assertion to check that each element is 1 byte long
-                static_assert(sizeof(typename iterator_traits<IteratorType>::value_type) == 1,
+                static_assert(sizeof(typename std::iterator_traits<IteratorType>::value_type) == 1,
                               "each element in the iterator range must have the size of 1 byte");
 
                 const auto len = static_cast<size_t>(std::distance(first, last));
@@ -2579,7 +2341,7 @@ namespace nlohmann
                      typename std::enable_if<
                              not std::is_pointer<ContiguousContainer>::value and
                                      std::is_base_of<std::random_access_iterator_tag,
-                                                     typename iterator_traits<decltype(std::begin(
+                                                     typename std::iterator_traits<decltype(std::begin(
                                                              std::declval<ContiguousContainer const>()))>::
                                                              iterator_category>::value,
                              int>::type = 0>
@@ -2594,28 +2356,7 @@ namespace nlohmann
             input_adapter_t ia = nullptr;
         };
     } // namespace detail
-} // namespace nlohmann
 
-// #include <nlohmann/detail/input/lexer.hpp>
-
-
-#include <clocale>          // localeconv
-#include <cstddef>          // size_t
-#include <cstdio>           // snprintf
-#include <cstdlib>          // strtof, strtod, strtold, strtoll, strtoull
-#include <initializer_list> // initializer_list
-#include <string>           // char_traits, string
-#include <vector>           // vector
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/input/input_adapters.hpp>
-
-// #include <nlohmann/detail/input/position_t.hpp>
-
-
-namespace nlohmann
-{
     namespace detail
     {
         ///////////
@@ -5491,26 +5232,6 @@ namespace nlohmann
         };
     } // namespace detail
 } // namespace nlohmann
-
-// #include <nlohmann/detail/iterators/iter_impl.hpp>
-
-
-#include <ciso646>     // not
-#include <iterator>    // iterator, random_access_iterator_tag, bidirectional_iterator_tag, advance, next
-#include <type_traits> // conditional, is_const, remove_const
-
-// #include <nlohmann/detail/exceptions.hpp>
-
-// #include <nlohmann/detail/iterators/internal_iterator.hpp>
-
-// #include <nlohmann/detail/iterators/primitive_iterator.hpp>
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-// #include <nlohmann/detail/meta/cpp_future.hpp>
-
-// #include <nlohmann/detail/value_t.hpp>
-
 
 namespace nlohmann
 {
@@ -9611,14 +9332,15 @@ namespace nlohmann
             // between uint8_t and CharType. In case CharType is not unsigned,
             // such a conversion is required to allow values greater than 128.
             // See <https://github.com/nlohmann/json/issues/1286> for a discussion.
-            template<typename C                                                              = CharType,
-                     enable_if_t<std::is_signed<C>::value and std::is_signed<char>::value> * = nullptr>
+            template<typename C                                                                   = CharType,
+                     std::enable_if_t<std::is_signed<C>::value and std::is_signed<char>::value> * = nullptr>
             static constexpr CharType to_char_type(std::uint8_t x) noexcept
             {
                 return *reinterpret_cast<char *>(&x);
             }
 
-            template<typename C = CharType, enable_if_t<std::is_signed_v<C> and std::is_unsigned_v<char>> * = nullptr>
+            template<typename C                                                           = CharType,
+                     std::enable_if_t<std::is_signed_v<C> and std::is_unsigned_v<char>> * = nullptr>
             static CharType to_char_type(std::uint8_t x) noexcept
             {
                 static_assert(sizeof(std::uint8_t) == sizeof(CharType),
@@ -9629,15 +9351,16 @@ namespace nlohmann
                 return result;
             }
 
-            template<typename C = CharType, enable_if_t<std::is_unsigned<C>::value> * = nullptr>
+            template<typename C = CharType, std::enable_if_t<std::is_unsigned<C>::value> * = nullptr>
             static constexpr CharType to_char_type(std::uint8_t x) noexcept
             {
                 return x;
             }
 
             template<typename InputCharType, typename C = CharType,
-                     enable_if_t<std::is_signed<C>::value and std::is_signed<char>::value and
-                                 std::is_same<char, typename std::remove_cv<InputCharType>::type>::value> * = nullptr>
+                     std::enable_if_t<std::is_signed<C>::value and std::is_signed<char>::value and
+                                      std::is_same<char, typename std::remove_cv<InputCharType>::type>::value> * =
+                             nullptr>
             static constexpr CharType to_char_type(InputCharType x) noexcept
             {
                 return x;
@@ -9650,40 +9373,7 @@ namespace nlohmann
             /// the output
             output_adapter_t<CharType> oa = nullptr;
         };
-    } // namespace detail
-} // namespace nlohmann
 
-// #include <nlohmann/detail/output/serializer.hpp>
-
-
-#include <algorithm>   // reverse, remove, fill, find, none_of
-#include <array>       // array
-#include <cassert>     // assert
-#include <ciso646>     // and, or
-#include <clocale>     // localeconv, lconv
-#include <cmath>       // labs, isfinite, isnan, signbit
-#include <cstddef>     // size_t, ptrdiff_t
-#include <cstdint>     // uint8_t
-#include <cstdio>      // snprintf
-#include <limits>      // numeric_limits
-#include <string>      // string
-#include <type_traits> // is_same
-
-// #include <nlohmann/detail/exceptions.hpp>
-
-// #include <nlohmann/detail/conversions/to_chars.hpp>
-
-
-#include <cassert> // assert
-#include <ciso646> // or, and, not
-#include <cmath>   // signbit, isfinite
-#include <cstdint> // intN_t, uintN_t
-#include <cstring> // memcpy, memmove
-
-namespace nlohmann
-{
-    namespace detail
-    {
 
         /*!
         @brief implements the Grisu2 algorithm for binary to decimal floating-point
@@ -11225,9 +10915,9 @@ namespace nlohmann
             @param[in] x  integer number (signed or unsigned) to dump
             @tparam NumberType either @a number_integer_t or @a number_unsigned_t
             */
-            template<typename NumberType, detail::enable_if_t<std::is_same<NumberType, number_unsigned_t>::value or
-                                                                      std::is_same<NumberType, number_integer_t>::value,
-                                                              int> = 0>
+            template<typename NumberType, std::enable_if_t<std::is_same<NumberType, number_unsigned_t>::value or
+                                                                   std::is_same<NumberType, number_integer_t>::value,
+                                                           int> = 0>
             void dump_integer(NumberType x)
             {
                 // special case for "0"
@@ -11462,7 +11152,7 @@ namespace nlohmann
             {
             }
 
-            template<class... Args, enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0>
+            template<class... Args, std::enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0>
             json_ref(Args &&...args) :
                 owned_value(std::forward<Args>(args)...), value_ref(&owned_value), is_rvalue(true)
             {
@@ -13353,9 +13043,9 @@ namespace nlohmann
         @since version 2.1.0
         */
         template<typename CompatibleType, typename U = detail::uncvref_t<CompatibleType>,
-                 detail::enable_if_t<not detail::is_basic_json<U>::value and
-                                             detail::is_compatible_type<basic_json_t, U>::value,
-                                     int> = 0>
+                 std::enable_if_t<not detail::is_basic_json<U>::value and
+                                          detail::is_compatible_type<basic_json_t, U>::value,
+                                  int> = 0>
         basic_json(CompatibleType &&val) noexcept(
                 noexcept(JSONSerializer<U>::to_json(std::declval<basic_json_t &>(), std::forward<CompatibleType>(val))))
         {
@@ -13389,9 +13079,9 @@ namespace nlohmann
 
         @since version 3.2.0
         */
-        template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value and
-                                                                     not std::is_same<basic_json, BasicJsonType>::value,
-                                                             int> = 0>
+        template<typename BasicJsonType, std::enable_if_t<detail::is_basic_json<BasicJsonType>::value and
+                                                                  not std::is_same<basic_json, BasicJsonType>::value,
+                                                          int> = 0>
         basic_json(const BasicJsonType &val)
         {
             using other_boolean_t         = typename BasicJsonType::boolean_t;
@@ -14538,8 +14228,8 @@ namespace nlohmann
         @since version 2.1.0
         */
         template<typename BasicJsonType,
-                 detail::enable_if_t<std::is_same<typename std::remove_const<BasicJsonType>::type, basic_json_t>::value,
-                                     int> = 0>
+                 std::enable_if_t<std::is_same<typename std::remove_const<BasicJsonType>::type, basic_json_t>::value,
+                                  int> = 0>
         basic_json get() const
         {
             return *this;
@@ -14560,9 +14250,9 @@ namespace nlohmann
 
         @since version 3.2.0
         */
-        template<typename BasicJsonType, detail::enable_if_t<not std::is_same<BasicJsonType, basic_json>::value and
-                                                                     detail::is_basic_json<BasicJsonType>::value,
-                                                             int> = 0>
+        template<typename BasicJsonType, std::enable_if_t<not std::is_same<BasicJsonType, basic_json>::value and
+                                                                  detail::is_basic_json<BasicJsonType>::value,
+                                                          int> = 0>
         BasicJsonType get() const
         {
             return *this;
@@ -14608,10 +14298,10 @@ namespace nlohmann
         @since version 2.1.0
         */
         template<typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
-                 detail::enable_if_t<not detail::is_basic_json<ValueType>::value and
-                                             detail::has_from_json<basic_json_t, ValueType>::value and
-                                             not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
-                                     int> = 0>
+                 std::enable_if_t<not detail::is_basic_json<ValueType>::value and
+                                          detail::has_from_json<basic_json_t, ValueType>::value and
+                                          not detail::has_non_default_from_json<basic_json_t, ValueType>::value,
+                                  int> = 0>
         ValueType get() const
                 noexcept(noexcept(JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t &>(),
                                                                        std::declval<ValueType &>())))
@@ -14661,9 +14351,9 @@ namespace nlohmann
         @since version 2.1.0
         */
         template<typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>,
-                 detail::enable_if_t<not std::is_same<basic_json_t, ValueType>::value and
-                                             detail::has_non_default_from_json<basic_json_t, ValueType>::value,
-                                     int> = 0>
+                 std::enable_if_t<not std::is_same<basic_json_t, ValueType>::value and
+                                          detail::has_non_default_from_json<basic_json_t, ValueType>::value,
+                                  int> = 0>
         ValueType get() const
                 noexcept(noexcept(JSONSerializer<ValueTypeCV>::from_json(std::declval<const basic_json_t &>())))
         {
@@ -14705,9 +14395,9 @@ namespace nlohmann
 
         @since version 3.3.0
         */
-        template<typename ValueType, detail::enable_if_t<not detail::is_basic_json<ValueType>::value and
-                                                                 detail::has_from_json<basic_json_t, ValueType>::value,
-                                                         int> = 0>
+        template<typename ValueType, std::enable_if_t<not detail::is_basic_json<ValueType>::value and
+                                                              detail::has_from_json<basic_json_t, ValueType>::value,
+                                                      int> = 0>
         ValueType &get_to(ValueType &v) const
                 noexcept(noexcept(JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t &>(), v)))
         {
@@ -18761,7 +18451,7 @@ namespace nlohmann
         @copydoc from_cbor(detail::input_adapter&&, const bool, const bool)
         */
         template<typename A1, typename A2,
-                 detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+                 std::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
         static basic_json from_cbor(A1 &&a1, A2 &&a2, const bool strict = true, const bool allow_exceptions = true)
         {
             basic_json result;
@@ -18864,7 +18554,7 @@ namespace nlohmann
         @copydoc from_msgpack(detail::input_adapter&&, const bool, const bool)
         */
         template<typename A1, typename A2,
-                 detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+                 std::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
         static basic_json from_msgpack(A1 &&a1, A2 &&a2, const bool strict = true, const bool allow_exceptions = true)
         {
             basic_json result;
@@ -18946,7 +18636,7 @@ namespace nlohmann
         @copydoc from_ubjson(detail::input_adapter&&, const bool, const bool)
         */
         template<typename A1, typename A2,
-                 detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+                 std::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
         static basic_json from_ubjson(A1 &&a1, A2 &&a2, const bool strict = true, const bool allow_exceptions = true)
         {
             basic_json result;
@@ -19027,7 +18717,7 @@ namespace nlohmann
         @copydoc from_bson(detail::input_adapter&&, const bool, const bool)
         */
         template<typename A1, typename A2,
-                 detail::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
+                 std::enable_if_t<std::is_constructible<detail::input_adapter, A1, A2>::value, int> = 0>
         static basic_json from_bson(A1 &&a1, A2 &&a2, const bool strict = true, const bool allow_exceptions = true)
         {
             basic_json result;
@@ -19829,36 +19519,7 @@ namespace std
             return nlohmann::detail::operator<(lhs, rhs);
         }
     };
-
-    /*!
-    @brief exchanges the values of two JSON objects
-
-    @since version 1.0.0
-    */
-    template<>
-    inline void swap<nlohmann::json>(nlohmann::json &j1, nlohmann::json &j2) noexcept(
-            is_nothrow_move_constructible<nlohmann::json>::value and is_nothrow_move_assignable<nlohmann::json>::value)
-    {
-        j1.swap(j2);
-    }
-
 } // namespace std
-
-/*!
-@brief user-defined string literal for JSON values
-
-This operator implements a user-defined string literal for JSON objects. It
-can be used by adding `"_json"` to a string literal and returns a JSON object
-if no parse error occurred.
-
-@param[in] s  a string representation of a JSON object
-@param[in] n  the length of string @a s
-@return a JSON object
-
-@since version 1.0.0
-*/
-inline nlohmann::json operator"" _json(const char *s, std::size_t n) { return nlohmann::json::parse(s, s + n); }
-
 
 // restore GCC/clang diagnostic settings
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)

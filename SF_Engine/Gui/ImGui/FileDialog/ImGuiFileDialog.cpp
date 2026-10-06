@@ -670,7 +670,6 @@ public:
         {
             fs::path fpath(vFilePathName);
             // date
-            size_t len{};
             const auto lastWriteTime = fs::last_write_time(fpath);
             const auto sctp          = std::chrono::time_point_cast<std::chrono::system_clock::duration>( //
                     lastWriteTime - fs::file_time_type::clock::now() + std::chrono::system_clock::now());
