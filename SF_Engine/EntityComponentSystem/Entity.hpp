@@ -1,11 +1,19 @@
 #pragma once
 
-#include <Entity/Components/Component.hpp>
+#include <EntityComponentSystem/Component.hpp>
 #include <UtilityClasses/NoCopy.hpp>
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <ranges>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <typeindex>
 #include <unordered_map>
+#include <vector>
 
 namespace SF::Engine
 {
@@ -22,11 +30,19 @@ namespace SF::Engine
     };
 
     class Transform;
-    // todo: add entity to name index
+    class EntityRegistry;
+
     class Entity
     {
     public:
-        Entity(const string &entityName, Entity *parent = nullptr);
+        /**
+         * @brief Parenting is NOT done through the constructor. Use
+         *        Entity::AddChild / EntityRegistry::CreateChildEntity, which
+         *        set the parent and put the entity into the parent's children.
+         *        (A constructor-side parent pointer left the entity claiming a
+         *        parent that didn't own it.)
+         */
+        explicit Entity(const string &entityName);
 
         virtual ~Entity()                 = default;
         Entity(const Entity &)            = delete;
@@ -49,7 +65,7 @@ namespace SF::Engine
         bool IsMarkedForRemoval() const { return markedForRemoval; }
         void MarkForRemoval() { markedForRemoval = true; }
 
-        bool HasTag(const std::string &tag) { return ranges::find(tags, tag) != tags.end(); }
+        bool HasTag(const std::string &tag) const { return ranges::find(tags, tag) != tags.end(); }
 
         void AddTag(const std::string &tag)
         {
@@ -61,7 +77,7 @@ namespace SF::Engine
                                                                                                       // engine so warn.
         }
 
-        void RemoveTag(std::string tag)
+        void RemoveTag(const std::string &tag)
         {
             if (ranges::find(tags, tag) != tags.end()) // found
                 std::erase(tags, tag);
@@ -71,9 +87,15 @@ namespace SF::Engine
 
         EntityId GetId() const { return id; }
         void SetId(EntityId newId) { id = newId; }
-        void SetName(const std::string &newName) { name = newName; }
 
-        // Used only by EntityRegistry::Reparent when detaching to root
+        /**
+         * @brief Sets the name. If the entity is registered, this routes through
+         *        EntityRegistry::RenameEntity so the name index stays valid.
+         *        Defined in Entity.cpp.
+         */
+        void SetName(const std::string &newName);
+
+        // Used only by EntityRegistry when detaching to root.
         // bypasses the "must already have a parent" assert in SetParent().
         void SetParentRaw(Entity *p) { parent = p; }
 
@@ -188,14 +210,14 @@ namespace SF::Engine
                 components.erase(it);
                 return true;
             }
-            // Fallback for base-type removal.
-            for (auto it2 = components.begin(); it2 != components.end(); ++it2)
+
+            // Fallback for base-type removal. Goes through RemoveComponentByType so
+            // a base type (e.g. RemoveComponent<Component>()) can never take out the
+            // Transform by matching it via dynamic_cast.
+            for (const auto &[ti, comp]: components)
             {
-                if (dynamic_cast<T *>(it2->second.get()))
-                {
-                    components.erase(it2);
-                    return true;
-                }
+                if (dynamic_cast<T *>(comp.get()))
+                    return RemoveComponentByType(ti);
             }
             return false;
         }
@@ -233,6 +255,7 @@ namespace SF::Engine
          *        so pass only T's non-parent constructor args here.
          */
         template<typename T = Entity, typename... Args>
+            requires std::is_constructible_v<T, Args...>
         T *AddChild(Args &&...args)
         {
             static_assert(std::is_base_of_v<Entity, T>, "T must derive from Entity");
@@ -247,23 +270,11 @@ namespace SF::Engine
          * @brief Adopts an already-existing, currently-unparented entity
          *        (e.g. handed off from a Scene's root list or from ReleaseChild()).
          */
-        Entity *AddChild(std::unique_ptr<Entity> child)
-        {
-            if (!child)
-                return nullptr;
-            assert(child->parent == nullptr && "Entity already has a parent; use SetParent() to reparent");
-
-            child->parent = this;
-            Entity *ptr   = child.get();
-            children.push_back(std::move(child));
-            return ptr;
-        }
+        Entity *AddChild(std::unique_ptr<Entity> child) { return AdoptChild(std::move(child)); }
 
         /**
          * @brief Adopts an already-existing, currently-unparented entity
          *        (e.g. handed off from a Scene's root list or from ReleaseChild()).
-         *        Renamed from AddChild to avoid overload ambiguity with the
-         *        templated AddChild<T>(Args&&...) above.
          */
         Entity *AdoptChild(std::unique_ptr<Entity> child)
         {
@@ -296,6 +307,8 @@ namespace SF::Engine
 
         /**
          * @brief Detaches and destroys `child` (and its whole subtree).
+         *        NOTE: this does not touch any registry. For registered entities
+         *        use EntityRegistry::DestroyEntity so lookup/name index are cleaned.
          */
         bool DestroyChild(Entity *child)
         {
@@ -310,7 +323,8 @@ namespace SF::Engine
 
         /**
          * @brief Returns true if `candidate` is this entity or one of its descendants.
-         *        Used to prevent reparenting cycles.
+         *        Reparenting `X` under `P` would create a cycle exactly when
+         *        X->IsSelfOrDescendant(P) is true.
          */
         bool IsSelfOrDescendant(const Entity *candidate) const
         {
@@ -325,31 +339,21 @@ namespace SF::Engine
         }
 
         /**
-         * @brief Moves this entity to be a child of `newParent`.
-         *        Only works for entities that already have a parent
-         *        (root entities owned by a Scene must be reparented via
-         *        the Scene, since Entity doesn't own itself).
+         * @brief Moves this entity under `newParent` (nullptr = make it a root).
+         *        Registered entities are forwarded to EntityRegistry::Reparent
+         *        (handles roots and the index). Unregistered entities must already
+         *        have a parent and a non-null newParent.
+         *        Returns false (and changes nothing) if the move was refused.
+         *        Defined in Entity.cpp.
          */
-        void SetParent(Entity *newParent)
-        {
-            if (newParent == parent)
-                return;
-            assert(newParent != this && "Entity cannot be its own parent");
-            assert((newParent == nullptr || !newParent->IsSelfOrDescendant(this)) &&
-                   "Reparenting would create a cycle");
-            assert(parent != nullptr && "This entity has no current parent; reparent it via the owning Scene instead");
+        bool SetParent(Entity *newParent);
 
-            std::unique_ptr<Entity> self = parent->ReleaseChild(this);
-            if (newParent)
-            {
-                newParent->AddChild(std::move(self));
-            } else
-            {
-                // Detaching to become a root entity: hand `self` off to
-                // wherever your Scene keeps root entities.
-                // e.g. scene->AdoptRoot(std::move(self));
-            }
-        }
+    private:
+        friend class EntityRegistry;
+
+        // Set by EntityRegistry while this entity is registered, null otherwise.
+        // Lets SetName / SetParent keep the registry consistent.
+        EntityRegistry *ownerRegistry = nullptr;
     };
 
     struct NameComponent
@@ -362,18 +366,56 @@ namespace SF::Engine
     public:
         EntityRegistry() = default;
 
+        EntityRegistry(const EntityRegistry &)            = delete;
+        EntityRegistry &operator=(const EntityRegistry &) = delete;
+
+        // Entities hold a back-pointer to their registry, so moving must re-point them.
+        EntityRegistry(EntityRegistry &&other) noexcept :
+            roots(std::move(other.roots)), lookup(std::move(other.lookup)), nameIndex(std::move(other.nameIndex)),
+            nextId(other.nextId)
+        {
+            other.Clear();
+            Rebind();
+        }
+
+        EntityRegistry &operator=(EntityRegistry &&other) noexcept
+        {
+            if (this != &other)
+            {
+                roots     = std::move(other.roots);
+                lookup    = std::move(other.lookup);
+                nameIndex = std::move(other.nameIndex);
+                nextId    = other.nextId;
+                other.Clear();
+                Rebind();
+            }
+            return *this;
+        }
+
+        /**
+         * @brief Destroys every entity and resets the registry to its initial state.
+         */
+        void Clear()
+        {
+            roots.clear();
+            lookup.clear();
+            nameIndex.clear();
+            nextId = 2;
+        }
+
         /**
          * @brief Creates a new root entity of type T, owned directly by the registry.
+         *        The constraint keeps calls like CreateEntity("name", parent) from being
+         *        hijacked by this template (string literal = exact match) when T can't be
+         *        built from those args; they fall through to the (name, parent) overload.
          */
         template<typename T = Entity, typename... Args>
+            requires std::is_constructible_v<T, Args...>
         T *CreateEntity(Args &&...args)
         {
-            EntityId id = nextId++;
             auto entity = std::make_unique<T>(std::forward<Args>(args)...);
-            entity->SetId(id);
-
-            T *ptr     = entity.get();
-            lookup[id] = ptr;
+            T *ptr      = entity.get();
+            RegisterEntity(ptr);
             roots.push_back(std::move(entity));
             return ptr;
         }
@@ -386,15 +428,14 @@ namespace SF::Engine
          *        `children`; mixing those up leaves the registry inconsistent.
          */
         template<typename T = Entity, typename... Args>
+            requires std::is_constructible_v<T, Args...>
         T *CreateChildEntity(Entity *parent, Args &&...args)
         {
             if (!parent)
                 return CreateEntity<T>(std::forward<Args>(args)...);
 
-            EntityId id = nextId++;
-            T *ptr      = parent->AddChild<T>(std::forward<Args>(args)...);
-            ptr->SetId(id);
-            lookup[id] = ptr;
+            T *ptr = parent->AddChild<T>(std::forward<Args>(args)...);
+            RegisterEntity(ptr);
             return ptr;
         }
 
@@ -408,10 +449,8 @@ namespace SF::Engine
             if (!parent)
                 return CreateEntity(name);
 
-            EntityId id = nextId++;
             Entity *ptr = parent->AddChild(name);
-            ptr->SetId(id);
-            lookup[id] = ptr;
+            RegisterEntity(ptr);
             return ptr;
         }
 
@@ -421,9 +460,11 @@ namespace SF::Engine
          */
         void DestroyEntity(Entity *entity)
         {
-            if (!entity)
+            if (!IsValid(entity))
                 return;
 
+            // Unregister first: this also clears ids/back-pointers while the
+            // whole subtree is still alive.
             UnregisterSubtree(entity);
 
             if (Entity *parent = entity->GetParent())
@@ -444,20 +485,48 @@ namespace SF::Engine
             return it != lookup.end() ? it->second : nullptr;
         }
 
+        /**
+         * @brief Returns one entity with this name, or nullptr. With duplicate
+         *        names, which one you get is unspecified; use FindAllByName.
+         */
+        Entity *FindByName(const std::string &name) const
+        {
+            auto it = nameIndex.find(name);
+            return it != nameIndex.end() ? it->second : nullptr;
+        }
+
+        std::vector<Entity *> FindAllByName(const std::string &name) const
+        {
+            std::vector<Entity *> out;
+            auto [first, last] = nameIndex.equal_range(name);
+            for (auto it = first; it != last; ++it)
+                out.push_back(it->second);
+            return out;
+        }
+
         const std::vector<std::unique_ptr<Entity>> &GetRoots() const { return roots; }
 
         /**
          * @brief Reparents `entity` under `newParent` (or to root if
-         *        newParent is nullptr), keeping the registry's lookup
-         *        table consistent. This is the version of reparenting
-         *        that Entity::SetParent alone can't do for root entities,
-         *        since Entity doesn't own itself.
+         *        newParent is nullptr), keeping the registry consistent.
+         *        Returns false and changes nothing if either entity isn't
+         *        registered here, or if the move would create a cycle.
          */
-        void Reparent(Entity *entity, Entity *newParent)
+        bool Reparent(Entity *entity, Entity *newParent)
         {
-            if (!entity || entity == newParent)
-                return;
-            assert((!newParent || !newParent->IsSelfOrDescendant(entity)) && "Reparenting would create a cycle");
+            if (!IsValid(entity) || (newParent && !IsValid(newParent)))
+                return false;
+
+            if (entity->GetParent() == newParent)
+                return true; // already there (also covers root -> root)
+
+            // Cycle iff newParent is the entity itself or lives inside its subtree.
+            if (newParent && entity->IsSelfOrDescendant(newParent))
+            {
+                Log::Warning("Reparent refused: '{}' can't be moved under itself or one of its descendants.",
+                             entity->GetName());
+                return false;
+            }
 
             std::unique_ptr<Entity> owned;
 
@@ -468,19 +537,25 @@ namespace SF::Engine
             {
                 auto it = ranges::find_if(roots,
                                           [entity](const std::unique_ptr<Entity> &e) { return e.get() == entity; });
-                assert(it != roots.end() && "Entity not tracked by this registry");
-                owned = std::move(*it);
-                roots.erase(it);
+                if (it != roots.end())
+                {
+                    owned = std::move(*it);
+                    roots.erase(it);
+                }
+            }
+
+            if (!owned)
+            {
+                Log::Warning("Reparent failed: '{}' isn't owned where the registry expected.", entity->GetName());
+                return false;
             }
 
             if (newParent)
-            {
-                newParent->AddChild(std::move(owned));
-            } else
-            {
-                owned->SetParentRaw(nullptr); // just clears the pointer, no reparent logic needed
-                roots.push_back(std::move(owned));
-            }
+                newParent->AdoptChild(std::move(owned));
+            else
+                roots.push_back(std::move(owned)); // ReleaseChild already nulled the parent pointer
+
+            return true;
         }
 
         /**
@@ -500,63 +575,55 @@ namespace SF::Engine
 
         void CleanupRemovedEntities()
         {
-            // Collect first; DestroyEntity mutates the containers we'd be iterating.
-            std::vector<Entity *> toRemove;
+            // Collect IDs, not pointers: destroying a marked parent also destroys
+            // marked descendants, and a raw pointer to one of those would dangle.
+            std::vector<EntityId> toRemove;
             ForEach(
                     [&](Entity *e)
                     {
                         if (e->IsMarkedForRemoval())
-                            toRemove.push_back(e);
+                            toRemove.push_back(e->GetId());
                     });
 
-            for (Entity *e: toRemove)
+            for (EntityId id: toRemove)
             {
-                if (!IsValid(e))
-                    continue;
-                DestroyEntity(e);
+                if (Entity *e = Find(id)) // null if already destroyed with an ancestor
+                    DestroyEntity(e);
             }
         }
 
-        bool IsValid(Entity *entity) const { return entity != nullptr && lookup.count(entity->GetId()) != 0; }
+        /**
+         * @brief True only if `entity` is the very entity registered under its id.
+         */
+        bool IsValid(const Entity *entity) const { return entity != nullptr && Find(entity->GetId()) == entity; }
 
-    private:
-        void VisitRecursive(Entity *entity, const std::function<void(Entity *)> &fn) const
-        {
-            fn(entity);
-            for (auto &child: entity->GetChildren())
-                VisitRecursive(child.get(), fn);
-        }
-
-        void UnregisterSubtree(Entity *entity)
-        {
-            lookup.erase(entity->GetId());
-            RemoveFromNameIndex(entity);
-            for (auto &child: entity->GetChildren())
-                UnregisterSubtree(child.get());
-        }
-
-        std::vector<std::unique_ptr<Entity>> roots;
-        std::unordered_map<EntityId, Entity *> lookup;
-        EntityId nextId = 2; // creates one at 1, and then 2, 0 = invalid.
-
-        std::unordered_multimap<std::string, Entity *> nameIndex; // supports duplicate names
-
-    public:
-        Entity *FindByName(const std::string &name) const
-        {
-            auto it = nameIndex.find(name);
-            return it != nameIndex.end() ? it->second : nullptr;
-        }
-
-        // Call this instead of entity->SetName() directly if you want
-        // the registry's index to stay valid.
+        // Prefer entity->SetName(), which routes here when the entity is registered.
         void RenameEntity(Entity *entity, const std::string &newName)
         {
+            if (!entity)
+                return;
+
+            if (!IsValid(entity)) // not ours: nothing to index
+            {
+                entity->name = newName;
+                return;
+            }
+
+            if (entity->name == newName)
+                return;
+
             RemoveFromNameIndex(entity);
-            entity->SetName(newName);
+            entity->name = newName;
             nameIndex.emplace(newName, entity);
         }
 
+        /**
+         * @brief Takes a root entity (and its subtree) OUT of the registry and hands
+         *        ownership to the caller. The subtree is unregistered (ids cleared,
+         *        removed from lookup and name index) so nothing here can dangle.
+         *        To move an entity under another parent, use Reparent instead.
+         *        Give it back with AdoptRoot.
+         */
         std::unique_ptr<Entity> RemoveRoot(Entity *entity)
         {
             auto it = ranges::find_if(roots,
@@ -568,26 +635,28 @@ namespace SF::Engine
             auto owned = std::move(*it);
             roots.erase(it);
 
+            UnregisterSubtree(owned.get());
             owned->SetParentRaw(nullptr);
 
             return owned;
         }
 
-    private:
-        void RemoveFromNameIndex(Entity *entity)
+        /**
+         * @brief Registers an unparented entity (and its subtree) as a new root,
+         *        assigning fresh ids and indexing names. Counterpart of RemoveRoot.
+         */
+        Entity *AdoptRoot(std::unique_ptr<Entity> entity)
         {
-            auto range = nameIndex.equal_range(entity->GetName());
-            for (auto it = range.first; it != range.second; ++it)
-            {
-                if (it->second == entity)
-                {
-                    nameIndex.erase(it);
-                    return;
-                }
-            }
+            if (!entity)
+                return nullptr;
+            assert(entity->GetParent() == nullptr && "AdoptRoot needs an unparented entity");
+
+            Entity *ptr = entity.get();
+            RegisterSubtree(ptr);
+            roots.push_back(std::move(entity));
+            return ptr;
         }
 
-    public:
         Entity *DuplicateEntity(Entity *source)
         {
             if (!source)
@@ -608,13 +677,74 @@ namespace SF::Engine
         }
 
     private:
+        void VisitRecursive(Entity *entity, const std::function<void(Entity *)> &fn) const
+        {
+            fn(entity);
+            for (auto &child: entity->GetChildren())
+                VisitRecursive(child.get(), fn);
+        }
+
+        // The single place an entity enters lookup + name index.
+        void RegisterEntity(Entity *entity)
+        {
+            const EntityId id = nextId++;
+            entity->SetId(id);
+            entity->ownerRegistry = this;
+            lookup[id]            = entity;
+            nameIndex.emplace(entity->GetName(), entity);
+        }
+
         void RegisterSubtree(Entity *entity)
         {
-            EntityId id = nextId++;
-            entity->SetId(id);
-            lookup[id] = entity;
+            RegisterEntity(entity);
             for (auto &child: entity->GetChildren())
                 RegisterSubtree(child.get());
         }
+
+        // The single place an entity leaves lookup + name index.
+        void UnregisterSubtree(Entity *entity)
+        {
+            RemoveFromNameIndex(entity);
+            lookup.erase(entity->GetId());
+            entity->SetId(InvalidEntityId);
+            entity->ownerRegistry = nullptr;
+            for (auto &child: entity->GetChildren())
+                UnregisterSubtree(child.get());
+        }
+
+        void RemoveFromNameIndex(Entity *entity)
+        {
+            auto range = nameIndex.equal_range(entity->GetName());
+            for (auto it = range.first; it != range.second; ++it)
+            {
+                if (it->second == entity)
+                {
+                    nameIndex.erase(it);
+                    return;
+                }
+            }
+
+            // Fallback: `name` is a public member, so someone may have renamed the
+            // entity without going through SetName. Find it by pointer instead.
+            for (auto it = nameIndex.begin(); it != nameIndex.end(); ++it)
+            {
+                if (it->second == entity)
+                {
+                    nameIndex.erase(it);
+                    return;
+                }
+            }
+        }
+
+        // Re-point every entity's back-pointer at this registry (after a move).
+        void Rebind()
+        {
+            ForEach([this](Entity *e) { e->ownerRegistry = this; });
+        }
+
+        std::vector<std::unique_ptr<Entity>> roots;
+        std::unordered_map<EntityId, Entity *> lookup;
+        std::unordered_multimap<std::string, Entity *> nameIndex; // supports duplicate names
+        EntityId nextId = 2;                                      // creates one at 1, and then 2, 0 = invalid.
     };
 } // namespace SF::Engine

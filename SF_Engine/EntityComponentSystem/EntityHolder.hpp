@@ -1,9 +1,11 @@
 #pragma once
 
-#include <Entity/Components/Component.hpp>
+#include <EntityComponentSystem/Component.hpp>
 #include <UtilityClasses/NoCopy.hpp>
 #include <cstdint>
+#include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include "Entity.hpp"
 
@@ -20,17 +22,23 @@ namespace SF::Engine
 
         Entity *GetEntity(const std::string &name) const { return registry.FindByName(name); }
 
+        std::vector<Entity *> GetEntities(const std::string &name) const { return registry.FindAllByName(name); }
+
         Entity *FindById(const EntityId id) { return registry.Find(id); }
 
         Entity *Duplicate(Entity *entity) { return registry.DuplicateEntity(entity); }
 
+        // Constrained so e.g. CreateEntity("name", parent) isn't captured by this template
+        // (exact match on the string literal) and instead reaches the (name, parent) overload.
         template<typename T = Entity, typename... Args>
+            requires std::is_constructible_v<T, Args...>
         T *CreateEntity(Args &&...args)
         {
             return registry.CreateEntity<T>(std::forward<Args>(args)...);
         }
 
         template<typename T = Entity, typename... Args>
+            requires std::is_constructible_v<T, Args...>
         T *CreateChildEntity(Entity *parent, Args &&...args)
         {
             return registry.CreateChildEntity<T>(parent, std::forward<Args>(args)...);
@@ -42,7 +50,7 @@ namespace SF::Engine
 
         void Remove(Entity *entity) { registry.MarkForRemoval(entity); }
 
-        void Clear() { registry = EntityRegistry{}; }
+        void Clear() { registry.Clear(); }
 
         uint32_t GetSize() const
         {
@@ -95,25 +103,12 @@ namespace SF::Engine
         EntityRegistry &GetRegistry() { return registry; }
         const EntityRegistry &GetRegistry() const { return registry; }
 
-        void Reparent(Entity *child, Entity *newParent)
-        {
-            if (!child || !newParent || child == newParent)
-                return;
-
-            std::unique_ptr<Entity> owned;
-
-            if (Entity *oldParent = child->GetParent())
-            {
-                owned = oldParent->ReleaseChild(child);
-            } else
-            {
-                owned = registry.RemoveRoot(child);
-            }
-
-            assert(owned && "Entity is not owned by the registry");
-
-            newParent->AdoptChild(std::move(owned));
-        }
+        /**
+         * @brief Moves `child` under `newParent`, or to the root list if newParent is nullptr.
+         *        Delegates to the registry, which refuses cycles and keeps lookup/name index
+         *        consistent. Returns false if the move was refused.
+         */
+        bool Reparent(Entity *child, Entity *newParent) { return registry.Reparent(child, newParent); }
 
     private:
         EntityRegistry registry;

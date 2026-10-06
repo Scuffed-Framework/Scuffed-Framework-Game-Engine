@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Entity/Components/Component.hpp>
+#include <EntityComponentSystem/Component.hpp>
 #include <Math/Math.hpp>
 #include <Physics/Frustum.hpp>
 #include <Physics/Ray.hpp>

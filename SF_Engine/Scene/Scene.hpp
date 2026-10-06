@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Entity/EntityHolder.hpp>
+#include <EntityComponentSystem/EntityHolder.hpp>
 #include <LowLevel/Rocket.hpp>
 #include <Rendering/Camera/Camera.hpp>
 #include "SystemHolder.hpp"

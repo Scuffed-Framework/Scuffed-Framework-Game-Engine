@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Entity/Components/Component.hpp>
+#include <EntityComponentSystem/Component.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <Rendering/Mesh/Vertex.hpp>
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>

@@ -1,5 +1,5 @@
 #include "Transform.hpp"
-#include <Entity/Entity.hpp>
+#include <EntityComponentSystem/Entity.hpp>
 #include <Math/BasicMath.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

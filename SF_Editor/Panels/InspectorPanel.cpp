@@ -1,6 +1,6 @@
 #include "InspectorPanel.hpp"
 #include <Configuration/Default/ImGuiDefaultWidgets.hpp>
-#include <Entity/Entity.hpp>
+#include <EntityComponentSystem/Entity.hpp>
 #include <Gui/ImGui/Declare_Widget.hpp>
 #include <Gui/ImGui/ocornut/imgui_internal.h>
 #include <Gui/ImGui/ocornut/imgui_stdlib.h>
@@ -239,4 +239,4 @@ namespace SF::Engine
     }
 
     void InspectorPanel::Refresh() { m_needsRefresh = true; }
-}
+} // namespace SF::Engine

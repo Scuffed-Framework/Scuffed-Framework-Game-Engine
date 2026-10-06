@@ -1,5 +1,5 @@
 #include "HierarchyPanel.hpp"
-#include <Entity/Entity.hpp>
+#include <EntityComponentSystem/Entity.hpp>
 #include <Gui/ImGui/ocornut/imgui_internal.h>
 #include <Scene/SceneManager.hpp>
 #include <utility>

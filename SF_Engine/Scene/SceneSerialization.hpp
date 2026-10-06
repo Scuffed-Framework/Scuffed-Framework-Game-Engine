@@ -1,7 +1,7 @@
 #pragma once
+#include <EntityComponentSystem/Entity.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <Math/BasicMath.hpp>
-#include <Entity/Entity.hpp>
 
 namespace SF::Engine
 {
@@ -47,10 +47,7 @@ namespace SF::Engine
         return out;
     }
 
-    inline void SerializeFloat(XMLNode &node, const std::string &name, const float &f)
-    {
-        node.SetAttribute(name, f);
-    }
+    inline void SerializeFloat(XMLNode &node, const std::string &name, const float &f) { node.SetAttribute(name, f); }
 
     inline float DeserializeFloat(const XMLNode &node, const std::string &name, float defaultVal = 0.0f)
     {
@@ -59,13 +56,13 @@ namespace SF::Engine
         return out;
     }
 
-    template <typename T>
+    template<typename T>
     void Serialize(XMLNode &node, const std::string &name, const T &value)
     {
         static_assert(sizeof(T) == 0, "Serialize<T> has no specialization for this type");
     }
 
-    template <typename T>
+    template<typename T>
     T Deserialize(const XMLNode &node, const std::string &name, const T &defaultVal = {})
     {
         static_assert(sizeof(T) == 0, "Deserialize<T> has no specialization for this type");

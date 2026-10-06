@@ -1,6 +1,6 @@
 #pragma once
-#include <Entity/Components/Component.hpp>
-#include <Entity/Entity.hpp>
+#include <EntityComponentSystem/Component.hpp>
+#include <EntityComponentSystem/Entity.hpp>
 #include <Gui/ImGui/StaticPanel.hpp>
 #include <Gui/ImGui/UIRegistry.hpp>
 #include <Gui/ImGui/ocornut/imgui.h>

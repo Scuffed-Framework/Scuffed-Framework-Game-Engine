@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Entity/Components/Component.hpp>
+#include <EntityComponentSystem/Component.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
 #include <Math/BasicMath.hpp>
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>

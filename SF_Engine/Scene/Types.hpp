@@ -1,12 +1,12 @@
 #pragma once
-#include <string>
-#include <memory>
-#include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/Lighting/LightingTypes.hpp>
+#include <EntityComponentSystem/Entity.hpp>
 #include <Math/Transform.hpp>
 #include <Rendering/Lighting/Light.hpp>
+#include <Rendering/Lighting/LightingTypes.hpp>
 #include <Rendering/Lighting/LitMeshPipelinePass.hpp>
-#include <Entity/Entity.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <memory>
+#include <string>
 
 namespace SF::Engine
 {
@@ -17,8 +17,7 @@ namespace SF::Engine
         bool enabled = true;
         std::string meshSourcePath; // e.g. "assets/meshes/cube.obj"
 
-        SceneObject(const std::string &objName, Entity *objParent = nullptr)
-            : Entity(objName, objParent)
+        SceneObject(const std::string &objName, Entity *objParent = nullptr) : Entity(objName, objParent)
         {
             Entity::AddComponent<MeshMaterial>();
         }
@@ -56,8 +55,7 @@ namespace SF::Engine
 
     struct SceneLight : public Entity, public Serializable
     {
-        SceneLight(const std::string &lightName, Entity *lightParent = nullptr)
-            : Entity(lightName, lightParent)
+        SceneLight(const std::string &lightName, Entity *lightParent = nullptr) : Entity(lightName, lightParent)
         {
             Entity::AddComponent<Light>();
         }

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "LightingTypes.hpp"
-#include <Rendering/Material/Color/Color.hpp>
-#include <Math/Vectors/Vector.hpp>
-#include <Math/BasicMath.hpp>
-#include <string>
+#include <EntityComponentSystem/Component.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
+#include <Math/BasicMath.hpp>
+#include <Math/Vectors/Vector.hpp>
+#include <Rendering/Material/Color/Color.hpp>
 #include <Scene/SceneSerialization.hpp>
-#include <Entity/Components/Component.hpp>
+#include <string>
+#include "LightingTypes.hpp"
 
 namespace SF::Engine
 {
@@ -19,14 +19,14 @@ namespace SF::Engine
     {
         Lighting::LightType type = Lighting::LightType::Point;
 
-        Vec3 position = {0, 0, 0};
-        Vec3 direction = {0, -1, 0}; // normalised, pointing away from source
-        Vec3 color = {1, 1, 1};      // linear RGB
-        float intensity = 1.0f;           // candela / lux
-        float radius = 10.0f;             // effective range (point/spot)
-        float innerConeAngleDeg = 30.0f;  // spot inner
-        float outerConeAngleDeg = 45.0f;  // spot outer
-        bool castShadow = false;
+        Vec3 position           = {0, 0, 0};
+        Vec3 direction          = {0, -1, 0}; // normalised, pointing away from source
+        Vec3 color              = {1, 1, 1};  // linear RGB
+        float intensity         = 1.0f;       // candela / lux
+        float radius            = 10.0f;      // effective range (point/spot)
+        float innerConeAngleDeg = 30.0f;      // spot inner
+        float outerConeAngleDeg = 45.0f;      // spot outer
+        bool castShadow         = false;
 
         std::string name;
 
@@ -34,15 +34,15 @@ namespace SF::Engine
         Lighting::GpuLight ToGpu() const
         {
             Lighting::GpuLight g{};
-            g.position = position;
-            g.radius = radius;
-            g.color = color;
-            g.intensity = intensity;
-            g.direction = normalize(direction);
+            g.position       = position;
+            g.radius         = radius;
+            g.color          = color;
+            g.intensity      = intensity;
+            g.direction      = normalize(direction);
             g.innerConeAngle = glm::cos(glm::radians(innerConeAngleDeg));
             g.outerConeAngle = glm::cos(glm::radians(outerConeAngleDeg));
-            g.type = static_cast<uint32_t>(type);
-            g.castShadow = castShadow ? 1.0f : 0.0f;
+            g.type           = static_cast<uint32_t>(type);
+            g.castShadow     = castShadow ? 1.0f : 0.0f;
             return g;
         }
 
@@ -50,7 +50,7 @@ namespace SF::Engine
         {
             Component::Serialize(node);
             node.SetAttribute("name", name);
-            node.SetAttribute("type", (int)type);
+            node.SetAttribute("type", (int) type);
             node.SetAttribute("intensity", intensity);
             node.SetAttribute("radius", radius);
             node.SetAttribute("innerConeAngleDeg", innerConeAngleDeg);
@@ -79,7 +79,7 @@ namespace SF::Engine
             node.GetAttribute("name", name);
             int t = 0;
             node.GetAttribute("type", t);
-            type = (Lighting::LightType)t;
+            type = (Lighting::LightType) t;
             node.GetAttribute("intensity", intensity);
             node.GetAttribute("radius", radius);
             node.GetAttribute("innerConeAngleDeg", innerConeAngleDeg);
@@ -112,4 +112,4 @@ namespace SF::Engine
         }
         [[nodiscard]] std::unique_ptr<Component> Clone() const override { return std::make_unique<Light>(*this); }
     };
-}
+} // namespace SF::Engine

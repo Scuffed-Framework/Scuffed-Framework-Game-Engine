@@ -1,9 +1,9 @@
 #pragma once
 
+#include <EntityComponentSystem/Component.hpp>
+#include <EntityComponentSystem/Entity.hpp>
 #include <Math/Transform.hpp>
 #include <Math/Vectors/Vector.hpp>
-#include <Entity/Entity.hpp>
-#include <Entity/Components/Component.hpp>
 #include <memory>
 #include "Audio.hpp"
 #include "SoundBuffer.hpp"
@@ -21,19 +21,17 @@ namespace SF::Engine
 
     public:
         AudioClip() = default;
-        explicit AudioClip(const DataInput &input,
-                           const Audio::Type &type = Audio::Type::General, bool begin = false,
+        explicit AudioClip(const DataInput &input, const Audio::Type &type = Audio::Type::General, bool begin = false,
                            bool loop = false, float gain = 1.0f, float pitch = 1.0f);
 
-        explicit AudioClip(std::shared_ptr<SoundBuffer> buffer,
-                   const Audio::Type &type = Audio::Type::General, bool begin = false,
-                   bool loop = false, float gain = 1.0f, float pitch = 1.0f);
+        explicit AudioClip(std::shared_ptr<SoundBuffer> buffer, const Audio::Type &type = Audio::Type::General,
+                           bool begin = false, bool loop = false, float gain = 1.0f, float pitch = 1.0f);
 
-        AudioClip(const AudioClip &) = delete;
+        AudioClip(const AudioClip &)            = delete;
         AudioClip &operator=(const AudioClip &) = delete;
         AudioClip(AudioClip &&other) noexcept;
         AudioClip &operator=(AudioClip &&other) noexcept;
-                   
+
         ~AudioClip() override;
 
         void Play(bool loop = false);
@@ -64,8 +62,8 @@ namespace SF::Engine
         Vec3 velocity{};
 
         Audio::Type type = Audio::Type::General;
-        float gain = 1.0f;
-        float pitch = 1.0f;
+        float gain       = 1.0f;
+        float pitch      = 1.0f;
         float length{};
     };
 
@@ -74,23 +72,28 @@ namespace SF::Engine
     public:
         static void Update(EntityRegistry &registry)
         {
-            registry.ForEach([](Entity *entity)
-                             {
-                auto* clip = entity->GetComponent<AudioClip>();
-                auto* transform = entity->GetComponent<Transform>();
-                if (clip && transform)
-                {
-                    clip->SetPosition(transform->GetPosition());
-                } });
+            registry.ForEach(
+                    [](Entity *entity)
+                    {
+                        auto *clip      = entity->GetComponent<AudioClip>();
+                        auto *transform = entity->GetComponent<Transform>();
+                        if (clip && transform)
+                        {
+                            clip->SetPosition(transform->GetPosition());
+                        }
+                    });
         }
 
         static void UpdateVolumes(EntityRegistry &registry)
         {
-            registry.ForEach([](Entity *entity){
-            if (auto* clip = entity->GetComponent<AudioClip>())
-            {
-                clip->SetGain(clip->GetGain()); // recompute with current Audio volume
-            } });
+            registry.ForEach(
+                    [](Entity *entity)
+                    {
+                        if (auto *clip = entity->GetComponent<AudioClip>())
+                        {
+                            clip->SetGain(clip->GetGain()); // recompute with current Audio volume
+                        }
+                    });
         }
     };
 }

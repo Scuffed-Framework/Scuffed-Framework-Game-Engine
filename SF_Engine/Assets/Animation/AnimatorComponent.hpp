@@ -1,5 +1,5 @@
 #pragma once
-#include <Entity/Components/Component.hpp>
+#include <EntityComponentSystem/Component.hpp>
 #include <map>
 #include "Animation.hpp"
 #include "Joint/AnimJoint.hpp"
