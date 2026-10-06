@@ -20,7 +20,7 @@
 
 namespace SF::Engine
 {
-    // can we move some boilerplate out of this?
+    // todo: can we move some boilerplate out of this class?
     class Scene : public virtual rocket::trackable, public Serializable
     {
         friend class SceneManager;
@@ -28,7 +28,7 @@ namespace SF::Engine
 
     public:
         explicit Scene(::std::unique_ptr<CameraController> &&cameraController, std::string name,
-                       SceneRendererConfig cfg = {});
+                       const SceneRendererConfig &cfg = {});
         virtual ~Scene();
 
         virtual void Start() = 0;

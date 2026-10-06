@@ -1,18 +1,18 @@
-#include "WindowManager.hpp"
 #include <Rendering/Material/Color/Color.hpp>
+#include "WindowManager.hpp"
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
 #if _PLATFORM_WINDOWS
-#pragma comment(lib, "dwmapi.lib")
-#include <GLFW/glfw3native.h>
-#include <dwmapi.h>
+    #pragma comment(lib, "dwmapi.lib")
+    #include <GLFW/glfw3native.h>
+    #include <dwmapi.h>
 #endif
 
-#include <algorithm>
-#include <Rendering/RenderSystem.hpp>
 #include <Gui/ImGui/ocornut/imgui.h>
 #include <Gui/ImGui/ocornut/imgui_impl_glfw.h>
+#include <Rendering/RenderSystem.hpp>
+#include <algorithm>
 
 namespace SF::Engine
 {
@@ -41,8 +41,7 @@ namespace SF::Engine
         {
             window->fullscreenSize = {width, height};
             window->onSize(window->fullscreenSize);
-        }
-        else
+        } else
         {
             window->size = {width, height};
             window->onSize(window->size);
@@ -51,7 +50,7 @@ namespace SF::Engine
 
     void CallbackWindowClose(GLFWwindow *glfwWindow)
     {
-        auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+        auto window    = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->closed = true;
         Engine::Get()->RequestClose();
         window->onClose();
@@ -59,23 +58,20 @@ namespace SF::Engine
 
     // Forward an input event to ImGui only when a context exists and is initialized.
     // Between window creation and SceneRenderer::Start(), ImGui isn't ready yet.
-    static inline bool ImGuiReady()
-    {
-        return ImGui::GetCurrentContext() != nullptr;
-    }
+    static inline bool ImGuiReady() { return ImGui::GetCurrentContext() != nullptr; }
 
     void CallbackWindowFocus(GLFWwindow *glfwWindow, int32_t focused)
     {
         if (ImGuiReady())
             ImGui_ImplGlfw_WindowFocusCallback(glfwWindow, focused);
-        auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+        auto window     = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->focused = static_cast<bool>(focused);
         window->onFocus(focused == GLFW_TRUE);
     }
 
     void CallbackWindowIconify(GLFWwindow *glfwWindow, int32_t iconified)
     {
-        auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+        auto window       = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->iconified = iconified;
         window->onIconify(iconified);
     }
@@ -128,7 +124,7 @@ namespace SF::Engine
     {
         if (ImGuiReady())
             ImGui_ImplGlfw_CursorEnterCallback(glfwWindow, entered);
-        auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+        auto window            = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->windowSelected = entered == GLFW_TRUE;
         window->onEnter(entered == GLFW_TRUE);
     }
@@ -143,14 +139,12 @@ namespace SF::Engine
         window->onDrop(files);
     }
 
-    void CallbackKey(GLFWwindow *glfwWindow, int32_t key, int32_t scancode, int32_t action,
-                    int32_t mods)
+    void CallbackKey(GLFWwindow *glfwWindow, int32_t key, int32_t scancode, int32_t action, int32_t mods)
     {
         if (ImGuiReady())
             ImGui_ImplGlfw_KeyCallback(glfwWindow, key, scancode, action, mods);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
-        window->onKey(static_cast<Key>(key), static_cast<InputAction>(action),
-                    Bitmask::Bitmask<InputMod>(mods));  
+        window->onKey(static_cast<Key>(key), static_cast<InputAction>(action), Bitmask::Bitmask<InputMod>(mods));
     }
 
     void CallbackMouseButton(GLFWwindow *glfwWindow, int32_t button, int32_t action, int32_t mods)
@@ -159,8 +153,8 @@ namespace SF::Engine
             ImGui_ImplGlfw_MouseButtonCallback(glfwWindow, button, action, mods);
         auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->onMouseButton(static_cast<MouseButton>(button), static_cast<InputAction>(action),
-                            Bitmask::Bitmask<InputMod>(mods));
-    }    
+                              Bitmask::Bitmask<InputMod>(mods));
+    }
 
     void CallbackChar(GLFWwindow *glfwWindow, uint32_t codepoint)
     {
@@ -174,7 +168,7 @@ namespace SF::Engine
     {
         if (ImGuiReady())
             ImGui_ImplGlfw_CursorPosCallback(glfwWindow, xpos, ypos);
-        auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+        auto window           = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->mousePosition = {xpos, ypos};
         window->onMousePosition(window->mousePosition);
     }
@@ -183,7 +177,7 @@ namespace SF::Engine
     {
         if (ImGuiReady())
             ImGui_ImplGlfw_ScrollCallback(glfwWindow, xoffset, yoffset);
-        auto window = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
+        auto window         = static_cast<Window *>(glfwGetWindowUserPointer(glfwWindow));
         window->mouseScroll = {xoffset, yoffset};
         window->onMouseScroll(window->mouseScroll);
     }
@@ -200,28 +194,13 @@ namespace SF::Engine
         return 0.0;
     }
 
-    Window::Window(std::size_t id)
-        : id(id),
-          window(nullptr),
-          size(800, 600), // ← FIX: Set a default size!
-          fullscreenSize(0, 0),
-          position(0, 0),
-          title("Default Window"), // ← Also give it a default title
-          borderless(false),
-          resizable(false),
-          floating(false),
-          fullscreen(false),
-          closed(false),
-          focused(false),
-          iconified(false),
-          windowSelected(false),
-          cursorHidden(false),
-          mouseLastPosition(0.0, 0.0),
-          mousePosition(0.0, 0.0),
-          mousePositionDelta(0.0, 0.0),
-          mouseLastScroll(0.0, 0.0),
-          mouseScroll(0.0, 0.0),
-          mouseScrollDelta(0.0, 0.0)
+    Window::Window(std::size_t id) :
+        id(id), window(nullptr), size(800, 600),                       // ← FIX: Set a default size!
+        fullscreenSize(0, 0), position(0, 0), title("Default Window"), // ← Also give it a default title
+        borderless(false), resizable(false), floating(false), fullscreen(false), closed(false), focused(false),
+        iconified(false), windowSelected(false), cursorHidden(false), mouseLastPosition(0.0, 0.0),
+        mousePosition(0.0, 0.0), mousePositionDelta(0.0, 0.0), mouseLastScroll(0.0, 0.0), mouseScroll(0.0, 0.0),
+        mouseScrollDelta(0.0, 0.0)
     {
         // Clear any previous hints or set fresh ones
         glfwDefaultWindowHints();
@@ -299,10 +278,10 @@ namespace SF::Engine
         // Raw pixel delta : do NOT scale by engine delta time.
         // Consumers (e.g. EditorCamera) apply their own sensitivity and dt scaling.
         mousePositionDelta = mousePosition - mouseLastPosition;
-        mouseLastPosition = mousePosition;
+        mouseLastPosition  = mousePosition;
 
         mouseScrollDelta = mouseScroll - mouseLastScroll;
-        mouseLastScroll = mouseScroll;
+        mouseLastScroll  = mouseScroll;
     }
 
     void Window::SetSize(const IVec2 &size)
@@ -335,7 +314,7 @@ namespace SF::Engine
         std::vector<std::unique_ptr<Bitmap>> bitmaps;
         std::vector<GLFWimage> icons;
 
-        for (const auto &filename : filenames)
+        for (const auto &filename: filenames)
         {
             auto bitmap = std::make_unique<Bitmap>(filename);
 
@@ -343,9 +322,9 @@ namespace SF::Engine
                 continue;
 
             GLFWimage icon = {};
-            icon.width = bitmap->GetSize().x;
-            icon.height = bitmap->GetSize().y;
-            icon.pixels = bitmap->GetData().get();
+            icon.width     = bitmap->GetSize().x;
+            icon.height    = bitmap->GetSize().y;
+            icon.pixels    = bitmap->GetData().get();
             icons.emplace_back(icon);
             bitmaps.emplace_back(std::move(bitmap));
         }
@@ -376,7 +355,7 @@ namespace SF::Engine
 
     void Window::SetFullscreen(bool fullscreen, Monitor *monitor)
     {
-        auto selected = monitor ? monitor : GetCurrentMonitor();
+        auto selected  = monitor ? monitor : GetCurrentMonitor();
         auto videoMode = selected->GetVideoMode();
 
         this->fullscreen = fullscreen;
@@ -384,15 +363,12 @@ namespace SF::Engine
         if (fullscreen)
         {
             fullscreenSize = {videoMode.width, videoMode.height};
-            glfwSetWindowMonitor(window, selected->GetMonitor(), 0, 0, fullscreenSize.x,
-                                 fullscreenSize.y, GLFW_DONT_CARE);
-        }
-        else
-        {
-            position = ((IVec2(videoMode.width, videoMode.height) - IVec2(size)) / 2) +
-                       selected->GetPosition();
-            glfwSetWindowMonitor(window, nullptr, position.x, position.y, size.x, size.y,
+            glfwSetWindowMonitor(window, selected->GetMonitor(), 0, 0, fullscreenSize.x, fullscreenSize.y,
                                  GLFW_DONT_CARE);
+        } else
+        {
+            position = ((IVec2(videoMode.width, videoMode.height) - IVec2(size)) / 2) + selected->GetPosition();
+            glfwSetWindowMonitor(window, nullptr, position.x, position.y, size.x, size.y, GLFW_DONT_CARE);
         }
 
         onFullscreen(fullscreen);
@@ -403,29 +379,21 @@ namespace SF::Engine
         if (!iconified && iconify)
         {
             glfwIconifyWindow(window);
-        }
-        else if (iconified && !iconify)
+        } else if (iconified && !iconify)
         {
             glfwRestoreWindow(window);
         }
     }
 
-    std::string Window::GetClipboard() const
-    {
-        return glfwGetClipboardString(window);
-    }
+    std::string Window::GetClipboard() const { return glfwGetClipboardString(window); }
 
-    void Window::SetClipboard(const std::string &string) const
-    {
-        glfwSetClipboardString(window, string.c_str());
-    }
+    void Window::SetClipboard(const std::string &string) const { glfwSetClipboardString(window, string.c_str()); }
 
     void Window::SetCursorHidden(bool hidden)
     {
         if (cursorHidden != hidden)
         {
-            glfwSetInputMode(window, GLFW_CURSOR,
-                             hidden ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+            glfwSetInputMode(window, GLFW_CURSOR, hidden ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 
             if (!hidden && cursorHidden)
                 SetMousePosition(mousePosition);
@@ -434,10 +402,7 @@ namespace SF::Engine
         cursorHidden = hidden;
     }
 
-    void Window::SetCursor(const Cursor *cursor)
-    {
-        glfwSetCursor(window, cursor ? cursor->cursor : nullptr);
-    }
+    void Window::SetCursor(const Cursor *cursor) { glfwSetCursor(window, cursor ? cursor->cursor : nullptr); }
 
     InputAction Window::GetKey(Key key) const
     {
@@ -454,262 +419,262 @@ namespace SF::Engine
     void Window::SetMousePosition(const DVec2 &mousePosition)
     {
         this->mouseLastPosition = mousePosition;
-        this->mousePosition = mousePosition;
+        this->mousePosition     = mousePosition;
         glfwSetCursorPos(window, mousePosition.x, mousePosition.y);
     }
 
     void Window::SetMouseScroll(const DVec2 &mouseScroll)
     {
         this->mouseLastScroll = mouseScroll;
-        this->mouseScroll = mouseScroll;
+        this->mouseScroll     = mouseScroll;
     }
 
     std::string Window::ToString(Key key)
     {
         switch (key)
         {
-        case Key::Space:
-            return "Space";
-        case Key::Apostrophe:
-            return "Apostrophe";
-        case Key::Comma:
-            return "Comma";
-        case Key::Minus:
-            return "Minus";
-        case Key::Period:
-            return "Period";
-        case Key::Slash:
-            return "Slash";
-        case Key::_0:
-            return "0";
-        case Key::_1:
-            return "1";
-        case Key::_2:
-            return "2";
-        case Key::_3:
-            return "3";
-        case Key::_4:
-            return "4";
-        case Key::_5:
-            return "5";
-        case Key::_6:
-            return "6";
-        case Key::_7:
-            return "7";
-        case Key::_8:
-            return "8";
-        case Key::_9:
-            return "9";
-        case Key::Semicolon:
-            return "Semicolon";
-        case Key::Equal:
-            return "Equal";
-        case Key::A:
-            return "A";
-        case Key::B:
-            return "B";
-        case Key::C:
-            return "C";
-        case Key::D:
-            return "D";
-        case Key::E:
-            return "E";
-        case Key::F:
-            return "F";
-        case Key::G:
-            return "G";
-        case Key::H:
-            return "H";
-        case Key::I:
-            return "I";
-        case Key::J:
-            return "J";
-        case Key::K:
-            return "K";
-        case Key::L:
-            return "L";
-        case Key::M:
-            return "M";
-        case Key::N:
-            return "N";
-        case Key::O:
-            return "O";
-        case Key::P:
-            return "P";
-        case Key::Q:
-            return "Q";
-        case Key::R:
-            return "R";
-        case Key::S:
-            return "S";
-        case Key::T:
-            return "T";
-        case Key::U:
-            return "U";
-        case Key::V:
-            return "V";
-        case Key::W:
-            return "W";
-        case Key::X:
-            return "X";
-        case Key::Y:
-            return "Y";
-        case Key::Z:
-            return "Z";
-        case Key::LeftBracket:
-            return "Left Bracket";
-        case Key::Backslash:
-            return "Backslash";
-        case Key::RightBracket:
-            return "Right Bracket";
-        case Key::GraveAccent:
-            return "Grave Accent";
-        case Key::World1:
-            return "World1";
-        case Key::World2:
-            return "World2";
-        case Key::Escape:
-            return "Escape";
-        case Key::Enter:
-            return "Enter";
-        case Key::Tab:
-            return "Tab";
-        case Key::Backspace:
-            return "Backspace";
-        case Key::Insert:
-            return "Insert";
-        case Key::Delete:
-            return "Delete";
-        case Key::Right:
-            return "Right";
-        case Key::Left:
-            return "Left";
-        case Key::Down:
-            return "Down";
-        case Key::Up:
-            return "Up";
-        case Key::PageUp:
-            return "Page Up";
-        case Key::PageDown:
-            return "Page Down";
-        case Key::Home:
-            return "Home";
-        case Key::End:
-            return "End";
-        case Key::CapsLock:
-            return "Caps Lock";
-        case Key::ScrollLock:
-            return "Scroll Lock";
-        case Key::NumLock:
-            return "Num Lock";
-        case Key::PrintScreen:
-            return "Print Screen";
-        case Key::Pause:
-            return "Pause";
-        case Key::F1:
-            return "F1";
-        case Key::F2:
-            return "F2";
-        case Key::F3:
-            return "F3";
-        case Key::F4:
-            return "F4";
-        case Key::F5:
-            return "F5";
-        case Key::F6:
-            return "F6";
-        case Key::F7:
-            return "F7";
-        case Key::F8:
-            return "F8";
-        case Key::F9:
-            return "F9";
-        case Key::F10:
-            return "F10";
-        case Key::F11:
-            return "F11";
-        case Key::F12:
-            return "F12";
-        case Key::F13:
-            return "F13";
-        case Key::F14:
-            return "F14";
-        case Key::F15:
-            return "F15";
-        case Key::F16:
-            return "F16";
-        case Key::F17:
-            return "F17";
-        case Key::F18:
-            return "F18";
-        case Key::F19:
-            return "F19";
-        case Key::F20:
-            return "F20";
-        case Key::F21:
-            return "F21";
-        case Key::F22:
-            return "F22";
-        case Key::F23:
-            return "F23";
-        case Key::F24:
-            return "F24";
-        case Key::F25:
-            return "F25";
-        case Key::Numpad0:
-            return "Numpad 0";
-        case Key::Numpad1:
-            return "Numpad 1";
-        case Key::Numpad2:
-            return "Numpad 2";
-        case Key::Numpad3:
-            return "Numpad 3";
-        case Key::Numpad4:
-            return "Numpad 4";
-        case Key::Numpad5:
-            return "Numpad 5";
-        case Key::Numpad6:
-            return "Numpad 6";
-        case Key::Numpad7:
-            return "Numpad 7";
-        case Key::Numpad8:
-            return "Numpad 8";
-        case Key::Numpad9:
-            return "Numpad 9";
-        case Key::NumpadDecimal:
-            return "Numpad Decimal";
-        case Key::NumpadDivide:
-            return "Numpad Divide";
-        case Key::NumpadMultiply:
-            return "Numpad Multiply";
-        case Key::NumpadSubtract:
-            return "Numpad Subtract";
-        case Key::NumpadAdd:
-            return "Numpad Add";
-        case Key::NumpadEnter:
-            return "Numpad Enter";
-        case Key::NumpadEqual:
-            return "Numpad Equal";
-        case Key::ShiftLeft:
-            return "Shift Left";
-        case Key::ControlLeft:
-            return "Control Left";
-        case Key::AltLeft:
-            return "Alt Left";
-        case Key::SuperLeft:
-            return "Super Left";
-        case Key::ShiftRight:
-            return "Shift Right";
-        case Key::ControlRight:
-            return "Control Right";
-        case Key::AltRight:
-            return "Alt Right";
-        case Key::SuperRight:
-            return "Super Right";
-        case Key::Menu:
-            return "Menu";
-        default:
-            return "Undefined";
+            case Key::Space:
+                return "Space";
+            case Key::Apostrophe:
+                return "Apostrophe";
+            case Key::Comma:
+                return "Comma";
+            case Key::Minus:
+                return "Minus";
+            case Key::Period:
+                return "Period";
+            case Key::Slash:
+                return "Slash";
+            case Key::_0:
+                return "0";
+            case Key::_1:
+                return "1";
+            case Key::_2:
+                return "2";
+            case Key::_3:
+                return "3";
+            case Key::_4:
+                return "4";
+            case Key::_5:
+                return "5";
+            case Key::_6:
+                return "6";
+            case Key::_7:
+                return "7";
+            case Key::_8:
+                return "8";
+            case Key::_9:
+                return "9";
+            case Key::Semicolon:
+                return "Semicolon";
+            case Key::Equal:
+                return "Equal";
+            case Key::A:
+                return "A";
+            case Key::B:
+                return "B";
+            case Key::C:
+                return "C";
+            case Key::D:
+                return "D";
+            case Key::E:
+                return "E";
+            case Key::F:
+                return "F";
+            case Key::G:
+                return "G";
+            case Key::H:
+                return "H";
+            case Key::I:
+                return "I";
+            case Key::J:
+                return "J";
+            case Key::K:
+                return "K";
+            case Key::L:
+                return "L";
+            case Key::M:
+                return "M";
+            case Key::N:
+                return "N";
+            case Key::O:
+                return "O";
+            case Key::P:
+                return "P";
+            case Key::Q:
+                return "Q";
+            case Key::R:
+                return "R";
+            case Key::S:
+                return "S";
+            case Key::T:
+                return "T";
+            case Key::U:
+                return "U";
+            case Key::V:
+                return "V";
+            case Key::W:
+                return "W";
+            case Key::X:
+                return "X";
+            case Key::Y:
+                return "Y";
+            case Key::Z:
+                return "Z";
+            case Key::LeftBracket:
+                return "Left Bracket";
+            case Key::Backslash:
+                return "Backslash";
+            case Key::RightBracket:
+                return "Right Bracket";
+            case Key::GraveAccent:
+                return "Grave Accent";
+            case Key::World1:
+                return "World1";
+            case Key::World2:
+                return "World2";
+            case Key::Escape:
+                return "Escape";
+            case Key::Enter:
+                return "Enter";
+            case Key::Tab:
+                return "Tab";
+            case Key::Backspace:
+                return "Backspace";
+            case Key::Insert:
+                return "Insert";
+            case Key::Delete:
+                return "Delete";
+            case Key::Right:
+                return "Right";
+            case Key::Left:
+                return "Left";
+            case Key::Down:
+                return "Down";
+            case Key::Up:
+                return "Up";
+            case Key::PageUp:
+                return "Page Up";
+            case Key::PageDown:
+                return "Page Down";
+            case Key::Home:
+                return "Home";
+            case Key::End:
+                return "End";
+            case Key::CapsLock:
+                return "Caps Lock";
+            case Key::ScrollLock:
+                return "Scroll Lock";
+            case Key::NumLock:
+                return "Num Lock";
+            case Key::PrintScreen:
+                return "Print Screen";
+            case Key::Pause:
+                return "Pause";
+            case Key::F1:
+                return "F1";
+            case Key::F2:
+                return "F2";
+            case Key::F3:
+                return "F3";
+            case Key::F4:
+                return "F4";
+            case Key::F5:
+                return "F5";
+            case Key::F6:
+                return "F6";
+            case Key::F7:
+                return "F7";
+            case Key::F8:
+                return "F8";
+            case Key::F9:
+                return "F9";
+            case Key::F10:
+                return "F10";
+            case Key::F11:
+                return "F11";
+            case Key::F12:
+                return "F12";
+            case Key::F13:
+                return "F13";
+            case Key::F14:
+                return "F14";
+            case Key::F15:
+                return "F15";
+            case Key::F16:
+                return "F16";
+            case Key::F17:
+                return "F17";
+            case Key::F18:
+                return "F18";
+            case Key::F19:
+                return "F19";
+            case Key::F20:
+                return "F20";
+            case Key::F21:
+                return "F21";
+            case Key::F22:
+                return "F22";
+            case Key::F23:
+                return "F23";
+            case Key::F24:
+                return "F24";
+            case Key::F25:
+                return "F25";
+            case Key::Numpad0:
+                return "Numpad 0";
+            case Key::Numpad1:
+                return "Numpad 1";
+            case Key::Numpad2:
+                return "Numpad 2";
+            case Key::Numpad3:
+                return "Numpad 3";
+            case Key::Numpad4:
+                return "Numpad 4";
+            case Key::Numpad5:
+                return "Numpad 5";
+            case Key::Numpad6:
+                return "Numpad 6";
+            case Key::Numpad7:
+                return "Numpad 7";
+            case Key::Numpad8:
+                return "Numpad 8";
+            case Key::Numpad9:
+                return "Numpad 9";
+            case Key::NumpadDecimal:
+                return "Numpad Decimal";
+            case Key::NumpadDivide:
+                return "Numpad Divide";
+            case Key::NumpadMultiply:
+                return "Numpad Multiply";
+            case Key::NumpadSubtract:
+                return "Numpad Subtract";
+            case Key::NumpadAdd:
+                return "Numpad Add";
+            case Key::NumpadEnter:
+                return "Numpad Enter";
+            case Key::NumpadEqual:
+                return "Numpad Equal";
+            case Key::ShiftLeft:
+                return "Shift Left";
+            case Key::ControlLeft:
+                return "Control Left";
+            case Key::AltLeft:
+                return "Alt Left";
+            case Key::SuperLeft:
+                return "Super Left";
+            case Key::ShiftRight:
+                return "Shift Right";
+            case Key::ControlRight:
+                return "Control Right";
+            case Key::AltRight:
+                return "Alt Right";
+            case Key::SuperRight:
+                return "Super Right";
+            case Key::Menu:
+                return "Menu";
+            default:
+                return "Undefined";
         }
     }
 
@@ -719,8 +684,7 @@ namespace SF::Engine
 
         int area2 = std::abs(l2.x - r2.x) * std::abs(l2.y - r2.y);
 
-        int areaI = (std::min(r1.x, r2.x) - std::max(l1.x, l2.x)) *
-                    (std::min(r1.y, r2.y) - std::max(l1.y, l2.y));
+        int areaI = (std::min(r1.x, r2.x) - std::max(l1.x, l2.x)) * (std::min(r1.y, r2.y) - std::max(l1.y, l2.y));
 
         return area1 + area2 - areaI;
     }
@@ -730,7 +694,7 @@ namespace SF::Engine
         if (fullscreen)
         {
             auto glfwMonitor = glfwGetWindowMonitor(window);
-            for (const auto &monitor : WindowManager::Get()->GetMonitors())
+            for (const auto &monitor: WindowManager::Get()->GetMonitors())
             {
                 if (monitor->monitor == glfwMonitor)
                     return monitor.get();
@@ -740,13 +704,13 @@ namespace SF::Engine
         std::multimap<int32_t, const Monitor *> rankedMonitor;
         auto where = rankedMonitor.end();
 
-        for (const auto &monitor : WindowManager::Get()->GetMonitors())
+        for (const auto &monitor: WindowManager::Get()->GetMonitors())
         {
-            where = rankedMonitor.insert(
-                where, {OverlappingArea(monitor->GetWorkareaPosition(),
-                                        monitor->GetWorkareaPosition() + monitor->GetWorkareaSize(),
-                                        position, position + size),
-                        monitor.get()});
+            where = rankedMonitor.insert(where,
+                                         {OverlappingArea(monitor->GetWorkareaPosition(),
+                                                          monitor->GetWorkareaPosition() + monitor->GetWorkareaSize(),
+                                                          position, position + size),
+                                          monitor.get()});
         }
 
         if (!rankedMonitor.empty() && rankedMonitor.begin()->first > 0)
@@ -755,22 +719,21 @@ namespace SF::Engine
         return nullptr;
     }
 
-    VkResult Window::CreateSurface(const VkInstance &instance,
-                                   const VkAllocationCallbacks *allocator,
+    VkResult Window::CreateSurface(const VkInstance &instance, const VkAllocationCallbacks *allocator,
                                    VkSurfaceKHR *surface) const
     {
         return glfwCreateWindowSurface(instance, window, allocator, surface);
     }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 
     void Window::SetTitleColor(Color col)
     {
 #if _PLATFORM_WINDOWS
         HWND hwnd = glfwGetWin32Window(window);
 
-        DWORD color =
-            (DWORD(col.b * 255.0f) << 16) |
-            (DWORD(col.g * 255.0f) << 8) |
-            DWORD(col.r * 255.0f);
+        DWORD color = (DWORD(col.b * 255.0f) << 16) | (DWORD(col.g * 255.0f) << 8) | DWORD(col.r * 255.0f);
 
         DwmSetWindowAttribute(hwnd, DWMWA_CAPTION_COLOR, &color, sizeof(color));
 #endif
@@ -782,4 +745,5 @@ namespace SF::Engine
         DwmSetWindowAttribute(glfwGetWin32Window(window), DWMWA_BORDER_COLOR, &color, sizeof(color));
 #endif
     }
-}
+#pragma GCC diagnostic pop
+} // namespace SF::Engine

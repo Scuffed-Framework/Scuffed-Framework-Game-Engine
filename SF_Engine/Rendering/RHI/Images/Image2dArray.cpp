@@ -21,7 +21,6 @@ namespace SF::Engine
 
         mipLevels = mipmap ? GetMipLevels(this->extent) : 1;
 
-        VmaAllocationInfo allocInfo;
         CreateImage(image, allocation, this->extent, format, samples, VK_IMAGE_TILING_OPTIMAL, this->usage,
                     VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, this->arrayLayers, VK_IMAGE_TYPE_2D);
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
@@ -47,7 +46,6 @@ namespace SF::Engine
 
         mipLevels = mipmap ? GetMipLevels(extent) : 1;
 
-        VmaAllocationInfo allocInfo;
         CreateImage(image, allocation, this->extent, format, samples, VK_IMAGE_TILING_OPTIMAL, this->usage,
                     VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, this->arrayLayers, VK_IMAGE_TYPE_2D);
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
@@ -104,8 +102,8 @@ namespace SF::Engine
             CreateMipmaps(image, extent, format, layout, mipLevels, 0, arrayLayers);
         } else
         {
-            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
-                                  VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout, VK_IMAGE_ASPECT_COLOR_BIT,
+                                  mipLevels, 0, arrayLayers, 0);
         }
         Image::GenerateTexId();
     }
@@ -125,4 +123,4 @@ namespace SF::Engine
 
         CopyBufferToImage(bufferStaging.GetBuffer(), image, extent, 1, arrayLayer);
     }
-}
+} // namespace SF::Engine

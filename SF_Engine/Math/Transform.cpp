@@ -1,7 +1,11 @@
 #include "Transform.hpp"
 #include <EntityComponentSystem/Entity.hpp>
 #include <Math/BasicMath.hpp>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #include <glm/gtc/matrix_transform.hpp>
+#pragma GCC diagnostic pop
 
 namespace SF::Engine
 {

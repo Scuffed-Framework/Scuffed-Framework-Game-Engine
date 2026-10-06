@@ -2,7 +2,11 @@
 #include <Gui/ImGui/Declare_Widget.hpp>
 #include <Gui/ImGui/ocornut/imgui.h>
 #include <cstdio>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #include <glm/gtc/type_ptr.hpp>
+#pragma GCC diagnostic pop
 
 namespace SF::Engine
 {

@@ -6,8 +6,12 @@
 #include <Rendering/SharedFunctions.hpp>
 #include <Rendering/SharedSamplers.hpp>
 #include <Rendering/Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp>
-#include <glm/gtc/constants.hpp>
+
 #include "CloudPipelinePass.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#include <glm/gtc/constants.hpp>
+#pragma GCC diagnostic pop
 
 namespace SF::Engine
 {
@@ -525,7 +529,7 @@ namespace SF::Engine
         ++framesSinceStart_;
     }
 
-    void CloudPipelinePass::Render(const CommandBuffer &cmd) {}
+    void CloudPipelinePass::Render(const CommandBuffer &) {}
 
     void CloudPipelinePass::UpdateCloudUBO()
     {

@@ -399,8 +399,8 @@ namespace SF::Engine
         // of SSR touches "hdr" again until Render() draws into it later
         // this same frame as an actual subpass.
         {
-            VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(),
-                                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
+            // VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(),
+            // VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo hdrII{VK_NULL_HANDLE, colorImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
             (void) hdrII;
 
@@ -489,7 +489,7 @@ namespace SF::Engine
             temporalSet_[cur]->BindDescriptor(cmd);
             SharedSamplers::BindSharedSamplerSet(cmd, temporalPipeline_->GetPipelineLayout(),
                                                  VK_PIPELINE_BIND_POINT_COMPUTE);
-            temporalPipeline_->Dispatch(cmd, full,{ 8, 8, 1});
+            temporalPipeline_->Dispatch(cmd, full, {8, 8, 1});
 
             for (auto *img: writeTargets)
             {

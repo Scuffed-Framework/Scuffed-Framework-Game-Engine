@@ -40,6 +40,8 @@ namespace SF::Engine
                     attachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
                     attachmentDescription.format      = surfaceFormat;
                     break;
+                case RhiAttachment::Type::RenderPass:
+                    break;
             }
 
             attachmentDescriptions.emplace_back(attachmentDescription);
@@ -174,4 +176,4 @@ namespace SF::Engine
     }
 
     RhiRenderpass::~RhiRenderpass() { vkDestroyRenderPass(logicalDevice, renderpass, nullptr); }
-}
+} // namespace SF::Engine

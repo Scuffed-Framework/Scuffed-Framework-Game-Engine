@@ -63,7 +63,7 @@ namespace SF::Engine
 
         void PreRender(const CommandBuffer &cmd);
 
-        void Render(const CommandBuffer &cmd) override;
+        void Render(const CommandBuffer &) override;
 
         void DrawImGuiPanel();
 

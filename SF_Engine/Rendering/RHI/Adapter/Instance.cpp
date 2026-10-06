@@ -13,9 +13,8 @@ namespace SF::Engine
             "VK_LAYER_KHRONOS_validation"}; // "VK_LAYER_RENDERDOC_Capture"
 
     VKAPI_ATTR VkBool32 VKAPI_CALL CallbackDebug(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                                 VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-                                                 const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                                                 void *pUserData)
+                                                 VkDebugUtilsMessageTypeFlagsEXT,
+                                                 const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *)
     {
         // Store message in a local variable to avoid lifetime issues with fmt constexpr evaluation
         const char *msg = pCallbackData->pMessage;

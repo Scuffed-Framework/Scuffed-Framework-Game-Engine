@@ -44,13 +44,11 @@ namespace SF::Engine
 
         mipLevels = mipmap ? GetMipLevels(this->extent) : 1;
 
-        VmaAllocationInfo allocInfo;
         CreateImage(image, allocation, this->extent, format, samples, VK_IMAGE_TILING_OPTIMAL, this->usage,
                     VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, 1, VK_IMAGE_TYPE_2D);
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
         CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_2D, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, 1, 0);
-        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0,
-                              1, 0);
+        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, 1, 0);
     }
 
     Image2d::Image2d(std::unique_ptr<Bitmap> &&bitmap, VkFormat format, VkImageLayout layout, VkImageUsageFlags usage,
@@ -80,7 +78,6 @@ namespace SF::Engine
         components = loadBitmap->GetBytesPerPixel();
         mipLevels  = mipmap ? GetMipLevels(extent) : 1;
 
-        VmaAllocationInfo allocInfo;
         CreateImage(image, allocation, this->extent, format, samples, VK_IMAGE_TILING_OPTIMAL, this->usage,
                     VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, 1, VK_IMAGE_TYPE_2D);
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
@@ -105,8 +102,8 @@ namespace SF::Engine
             CreateMipmaps(image, extent, format, layout, mipLevels, 0, 1);
         } else
         {
-            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
-                                  VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, 1, 0);
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout, VK_IMAGE_ASPECT_COLOR_BIT,
+                                  mipLevels, 0, 1, 0);
         }
         Image::GenerateTexId();
     }
@@ -168,4 +165,4 @@ namespace SF::Engine
                 throw std::runtime_error("Image2d::BytesPerPixelForFormat: unhandled VkFormat");
         }
     }
-}
+} // namespace SF::Engine

@@ -156,7 +156,7 @@ namespace SF::Engine
             // without presenting, so during an interactive resize (a rebuild nearly every Update)
             // no frame was ever presented and the compositor kept showing the stale old-size image
             // with an uncovered black / garbage border where the window had grown.
-            RecreatePass(0, *renderer->renderStages.front());
+            RecreatePass();
         }
 
         for (auto [id, swapchain]: Enumerate(swapchains))
@@ -261,7 +261,7 @@ namespace SF::Engine
 
             if (wentStale)
             {
-                RecreatePass(id, *renderer->renderStages.front());
+                RecreatePass();
                 return;
             }
         }
@@ -361,9 +361,8 @@ namespace SF::Engine
         VkImage dstImage;
         VmaAllocation dstImageMemory;
 
-        auto supportsBlit = Image::CopyImage(swapchains[id]->GetActiveImage(), dstImage, dstImageMemory,
-                                             surfaces[id]->GetFormat().format, {size.x, size.y, 1},
-                                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, 0);
+        Image::CopyImage(swapchains[id]->GetActiveImage(), dstImage, dstImageMemory, surfaces[id]->GetFormat().format,
+                         {size.x, size.y, 1}, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, 0);
 
         VkImageSubresource imageSubresource{};
         imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -514,7 +513,7 @@ namespace SF::Engine
         }
     }
 
-    void RenderSystem::RecreatePass(std::size_t id, RhiRenderStage &renderStage)
+    void RenderSystem::RecreatePass()
     {
         VkExtent2D displayExtent = {WindowManager::Get()->GetWindow(0)->GetSize().x,
                                     WindowManager::Get()->GetWindow(0)->GetSize().y};
@@ -581,9 +580,9 @@ namespace SF::Engine
         // window, and a render area/viewport larger than the framebuffer is UB (GPU hang).
         const UVec2 stageExtent = renderStage.GetEffectiveExtent(*swapchain);
         VkExtent2D scExtent     = {stageExtent.x, stageExtent.y};
-        VkRect2D renderArea = {};
-        renderArea.offset   = {0, 0};
-        renderArea.extent   = scExtent;
+        VkRect2D renderArea     = {};
+        renderArea.offset       = {0, 0};
+        renderArea.extent       = scExtent;
 
         VkViewport viewport = {};
         viewport.x          = 0.0f;

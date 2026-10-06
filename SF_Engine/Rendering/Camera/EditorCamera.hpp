@@ -5,7 +5,6 @@
 #include <Rendering/Camera/Camera.hpp>
 #include <algorithm>
 #include <cmath>
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace SF::Engine
 {

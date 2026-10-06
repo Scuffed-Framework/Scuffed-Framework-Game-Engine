@@ -103,7 +103,6 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             -Wunused-parameter
             -ludev
             -Wno-unknown-pragmas
-            -Wno-pragma-messages
     )
 endif ()
 # Ensure Conan generators path is available to all subdirectories

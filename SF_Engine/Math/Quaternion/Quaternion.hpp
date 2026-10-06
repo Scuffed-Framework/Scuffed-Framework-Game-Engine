@@ -1,5 +1,9 @@
 #pragma once
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #include <glm/gtc/quaternion.hpp>
+#pragma GCC diagnostic pop
+
 #include "../Math.hpp"
 
 namespace SF::Engine

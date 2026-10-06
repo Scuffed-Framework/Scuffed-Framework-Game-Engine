@@ -192,8 +192,8 @@ namespace SF::Engine
                     ready.insert(dependent);
         }
 
-        const auto survivingCount = static_cast<size_t>(
-                std::count_if(nodes.begin(), nodes.end(), [](const auto &node) { return !node.IsCulled(); }));
+        const auto survivingCount =
+                static_cast<size_t>(ranges::count_if(nodes, [](const auto &node) { return !node.IsCulled(); }));
 
         if (order.size() != survivingCount)
             Log::Error("FrameGraph::Compile: cycle detected among surviving passes ({} of {} passes could be "
@@ -342,15 +342,20 @@ namespace SF::Engine
         if (!any)
             return;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         VkMemoryBarrier2 barrier{VK_STRUCTURE_TYPE_MEMORY_BARRIER_2};
+        barrier.pNext         = nullptr;
         barrier.srcStageMask  = srcStage;
         barrier.srcAccessMask = srcAccess;
         barrier.dstStageMask  = dstStage;
         barrier.dstAccessMask = dstAccess;
 
         VkDependencyInfo dependencyInfo{VK_STRUCTURE_TYPE_DEPENDENCY_INFO};
+        dependencyInfo.pNext              = nullptr;
         dependencyInfo.memoryBarrierCount = 1;
         dependencyInfo.pMemoryBarriers    = &barrier;
+#pragma GCC diagnostic pop
 
         vkCmdPipelineBarrier2(commandBuffer, &dependencyInfo);
     }

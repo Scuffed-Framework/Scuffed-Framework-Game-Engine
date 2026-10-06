@@ -9,6 +9,9 @@
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/SharedFunctions.hpp>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 namespace SF::Engine
 {
     OceanTessellationPipelinePass::OceanTessellationPipelinePass(Pipeline::Stage stage,
@@ -469,3 +472,4 @@ namespace SF::Engine
     }
 
 } // namespace SF::Engine
+#pragma GCC diagnostic pop

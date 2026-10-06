@@ -7,7 +7,11 @@
 #include <Rendering/RenderSystem.hpp>
 #include <Scene/Scene.hpp>
 #include <chrono>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #include <glm/gtc/matrix_transform.hpp>
+#pragma GCC diagnostic pop
 
 namespace SF::Engine
 {

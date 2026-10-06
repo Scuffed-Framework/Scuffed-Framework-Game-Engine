@@ -6,14 +6,14 @@
 #include <Gui/ImGui/ocornut/imgui.h>
 #include <Gui/ImGui/ocornut/imgui_internal.h>
 #include <LowLevel/Reflection/RTTI/RTTICast.hpp>
-#include <Rendering/RHI/Images/ImageAsset.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 #include <algorithm>
 #include <cctype>
 #include <unordered_map>
 
 // X.h leaks this
 #ifdef None
-#undef None
+    #undef None
 #endif
 
 namespace SF::Engine

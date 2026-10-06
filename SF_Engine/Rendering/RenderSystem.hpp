@@ -182,7 +182,7 @@ namespace SF::Engine
         // Render loop helpers
         void RecreateSwapchain();
         void RecreateCommandBuffers(size_t surfaceId);
-        void RecreatePass(size_t surfaceId, RhiRenderStage &renderStage);
+        void RecreatePass();
         void RecreateAttachmentsMap();
 
         bool StartRenderpass(size_t surfaceId, RhiRenderStage &renderStage);

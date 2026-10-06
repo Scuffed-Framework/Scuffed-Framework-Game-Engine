@@ -5,6 +5,8 @@
 #include <utility>
 #include "Image.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 namespace SF::Engine
 {
     Cubemap::Cubemap(std::filesystem::path filename, std::string fileSuffix, VkFilter filter,
@@ -166,12 +168,13 @@ namespace SF::Engine
             CreateMipmaps(image, extent, format, layout, mipLevels, 0, arrayLayers);
         } else if (loadBitmap)
         {
-            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
-                                  VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout, VK_IMAGE_ASPECT_COLOR_BIT,
+                                  mipLevels, 0, arrayLayers, 0);
         } else
         {
-            TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT,
-                                  mipLevels, 0, arrayLayers, 0);
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0,
+                                  arrayLayers, 0);
         }
     }
 } // namespace SF::Engine
+#pragma GCC diagnostic pop

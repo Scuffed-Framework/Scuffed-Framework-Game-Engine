@@ -41,10 +41,13 @@
 #include <Math/BasicMath.hpp>
 #include <cstdio>
 #include <functional>
-#include <glm/gtc/type_ptr.hpp>
 #include <typeindex>
 #include <unordered_map>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#include <glm/gtc/type_ptr.hpp>
+#pragma GCC diagnostic pop
 namespace SF::Engine
 {
 

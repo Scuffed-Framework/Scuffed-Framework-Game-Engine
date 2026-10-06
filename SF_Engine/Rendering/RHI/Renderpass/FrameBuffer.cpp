@@ -3,6 +3,7 @@
 #include <Rendering/FrameGraph/Stage.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include "RhiRenderpass.hpp"
+#include "Scene/Types.hpp"
 
 namespace SF::Engine
 {
@@ -27,6 +28,8 @@ namespace SF::Engine
                             extent, attachment.GetFormat(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_FILTER_LINEAR,
                             VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, attachmentSamples));
+                    break;
+                case RhiAttachment::Type::RenderPass:
                     break;
                 case RhiAttachment::Type::Depth:
                     imageAttachments.emplace_back(nullptr);
@@ -58,6 +61,8 @@ namespace SF::Engine
                     case RhiAttachment::Type::Swapchain:
                         attachments.emplace_back(swapchain.GetImageViews().at(i));
                         break;
+                    case RhiAttachment::Type::RenderPass:
+                        break;
                 }
             }
 
@@ -79,4 +84,4 @@ namespace SF::Engine
         for (const auto &framebuffer: framebuffer)
             vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
     }
-}
+} // namespace SF::Engine
