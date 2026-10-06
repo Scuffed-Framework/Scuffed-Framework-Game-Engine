@@ -1,6 +1,7 @@
 #pragma once
-
-#define VK_NO_PROTOTYPES
+#ifndef VK_NO_PROTOTYPES
+    #define VK_NO_PROTOTYPES
+#endif
 #define IMGUI_IMPL_VULKAN_NO_PROTOTYPES
 #include <volk.h>
 

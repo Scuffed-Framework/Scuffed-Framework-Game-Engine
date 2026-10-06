@@ -17,10 +17,7 @@ namespace SF::Engine
         bool enabled = true;
         std::string meshSourcePath; // e.g. "assets/meshes/cube.obj"
 
-        SceneObject(const std::string &objName, Entity *objParent = nullptr) : Entity(objName, objParent)
-        {
-            Entity::AddComponent<MeshMaterial>();
-        }
+        SceneObject(const std::string &objName) : Entity(objName) { AddComponent<MeshMaterial>(); }
 
         void Serialize(XMLNode &node) const override
         {
@@ -55,10 +52,7 @@ namespace SF::Engine
 
     struct SceneLight : public Entity, public Serializable
     {
-        SceneLight(const std::string &lightName, Entity *lightParent = nullptr) : Entity(lightName, lightParent)
-        {
-            Entity::AddComponent<Light>();
-        }
+        SceneLight(const std::string &lightName) : Entity(lightName) { AddComponent<Light>(); }
 
         void Serialize(XMLNode &node) const override
         {
@@ -86,4 +80,4 @@ namespace SF::Engine
                 Entity::GetComponent<Light>()->Deserialize(lNode);
         }
     };
-}
+} // namespace SF::Engine

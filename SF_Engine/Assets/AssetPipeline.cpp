@@ -14,7 +14,7 @@ namespace SF::Engine
         return factories;
     }
 
-    void AssetController::RegisterFactory(AssetType type, const std::string &rttiTypeName, AssetFactoryFn factory)
+    void AssetController::RegisterFactory(const std::string &rttiTypeName, AssetFactoryFn factory)
     {
         auto &factories = Factories();
         if (factories.contains(rttiTypeName))
@@ -77,7 +77,7 @@ namespace SF::Engine
 
             int rawType{};
             assetNode.GetAttribute("Type", rawType);
-            const AssetType assetType = static_cast<AssetType>(rawType);
+            // const AssetType assetType = static_cast<AssetType>(rawType);
 
             std::string concreteType;
             assetNode.GetAttribute("ConcreteType", concreteType);

@@ -55,6 +55,7 @@ find_package(tinyexr CONFIG REQUIRED)
 find_package(openfbx REQUIRED)
 find_package(WebP CONFIG REQUIRED) # Conan libwebp -> WebP-config.cmake, targets WebP::*
 find_package(TinyOBJLoader REQUIRED)
+find_package(opusfile REQUIRED)
 
 if (WIN32)
     find_package(DirectX-Headers REQUIRED)
@@ -239,6 +240,7 @@ target_link_libraries(SF_Engine PUBLIC
         tinyexr::tinyexr
         WebP::webp
         WebP::webpdemux
+        opusfile::opusfile
 )
 
 if (TARGET utf8cpp::utf8cpp)

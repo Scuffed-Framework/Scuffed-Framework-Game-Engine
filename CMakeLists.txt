@@ -90,6 +90,7 @@ if (MSVC)
             /ignore:4098
             /ignore:4217
             /ignore:4286
+            /ignore:4068
     )
 
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -103,6 +104,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             -Wunused-variable
             -Wunused-parameter
             -ludev
+            -Wno-unknown-pragmas
     )
 endif ()
 # Ensure Conan generators path is available to all subdirectories

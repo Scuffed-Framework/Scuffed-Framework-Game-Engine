@@ -111,7 +111,7 @@ namespace SF::Engine
         void ProjectLoaded();
         void Shutdown() override { assets_.clear(); }
 
-        static void RegisterFactory(AssetType type, const string &rttiTypeName, AssetFactoryFn factory);
+        static void RegisterFactory(const string &rttiTypeName, AssetFactoryFn factory);
 
         void SaveAll();
         void SaveManifest();
@@ -148,9 +148,9 @@ namespace SF::Engine
         static_assert(is_base_of_v<AssetBase, T>, "AssetRegistrar<T> requires T to derive from AssetBase "
                                                   "(this includes Asset<Payload> and ImageAssetBase<TImage> leaves)");
 
-        explicit AssetRegistrar(AssetType type)
+        explicit AssetRegistrar()
         {
-            AssetController::RegisterFactory(type, T::RTTI_TypeName(), [] { return make_shared<T>(); });
+            AssetController::RegisterFactory(T::RTTI_TypeName(), [] { return make_shared<T>(); });
         }
     };
 } // namespace SF::Engine

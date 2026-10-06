@@ -46,7 +46,7 @@ namespace SF::Engine
 
         static void PNGReadCallback(png_structp png_ptr, png_bytep data, png_size_t length);
         static void PNGWriteCallback(png_structp png_ptr, png_bytep data, png_size_t length);
-        static void PNGFlushCallback(png_structp png_ptr);
+        static void PNGFlushCallback(png_structp);
 
         static void PNGMemoryReadCallback(png_structp png_ptr, png_bytep data, png_size_t length);
 

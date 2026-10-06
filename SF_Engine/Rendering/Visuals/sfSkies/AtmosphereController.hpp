@@ -39,7 +39,7 @@ namespace SF::Engine
                         AtmosphereEntry{name, data, factory_(stage_, data.params), {0.0f, 0.0f, 0.0f}, true});
         }
 
-        void Update(float DeltaTime) override
+        void Update(float /*DeltaTime*/) override
         {
             // this would be for clouds->SetFrameData(...);
         }

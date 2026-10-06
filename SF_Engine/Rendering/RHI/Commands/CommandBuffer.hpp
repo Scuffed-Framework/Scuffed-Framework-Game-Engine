@@ -1,11 +1,13 @@
 #pragma once
 
-#define VK_NO_PROTOTYPES
+#ifndef VK_NO_PROTOTYPES
+    #define VK_NO_PROTOTYPES
+#endif
 
 #include "CommandPool.hpp"
 
-#include <vulkan/vulkan.h>
 #include <memory>
+#include <vulkan/vulkan.h>
 
 namespace SF::Engine
 {
@@ -52,23 +54,13 @@ namespace SF::Engine
          * executed.
          * @param fence A optional fence that is signaled once the command buffer has completed.
          */
-        void Submit(const VkSemaphore& waitSemaphore = VK_NULL_HANDLE,
-                    const VkSemaphore& signalSemaphore = VK_NULL_HANDLE,
-                    VkFence fence = VK_NULL_HANDLE);
+        void Submit(const VkSemaphore &waitSemaphore   = VK_NULL_HANDLE,
+                    const VkSemaphore &signalSemaphore = VK_NULL_HANDLE, VkFence fence = VK_NULL_HANDLE);
 
-        operator const VkCommandBuffer&() const
-        {
-            return commandBuffer;
-        }
+        operator const VkCommandBuffer &() const { return commandBuffer; }
 
-        const VkCommandBuffer& GetCommandBuffer() const
-        {
-            return commandBuffer;
-        }
-        bool IsRunning() const
-        {
-            return running;
-        }
+        const VkCommandBuffer &GetCommandBuffer() const { return commandBuffer; }
+        bool IsRunning() const { return running; }
 
     private:
         VkQueue GetQueue() const;
@@ -77,6 +69,6 @@ namespace SF::Engine
 
         VkQueueFlagBits queueType;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
-        bool running = false;
+        bool running                  = false;
     };
-}
+} // namespace SF::Engine

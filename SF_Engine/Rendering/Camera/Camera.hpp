@@ -17,6 +17,7 @@ namespace SF::Engine
     class Camera : public Component::Registrar<Camera>
     {
     public:
+        using Component::Update;
         Camera() :
             nearPlane(0.1f), farPlane(1000.0f), fieldOfView(Mathematics::Radians(45.0f)), inverseZ(true),
             infiniteFarPlane(true), viewRay(false, {0.5f, 0.5f})

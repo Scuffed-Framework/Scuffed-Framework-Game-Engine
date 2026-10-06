@@ -1,20 +1,16 @@
 #include "AudioClip.hpp"
 
 #ifdef _PLATFORM_MACOS
-#include <OpenAL/al.h>
+    #include <OpenAL/al.h>
 #else
-#include <al.h>
+    #include <al.h>
 #endif
 #include <iostream>
 
 namespace SF::Engine
 {
-    AudioClip::AudioClip(const DataInput &input, const Audio::Type &type, bool begin, bool loop, float gain, float pitch)
-        : buffer(SoundBuffer::Create(input)),
-          type(type),
-          gain(gain),
-          pitch(pitch),
-          source(0)
+    AudioClip::AudioClip(const DataInput &input, const Audio::Type &type, bool begin, bool loop, float gain,
+                         float pitch) : buffer(SoundBuffer::Create(input)), type(type), gain(gain), pitch(pitch)
     {
         alGenSources(1, &source);
         alSourcei(source, AL_BUFFER, buffer->GetBuffer());
@@ -27,13 +23,8 @@ namespace SF::Engine
             Play(loop);
     }
 
-    AudioClip::AudioClip(std::shared_ptr<SoundBuffer> buffer, const Audio::Type &type,
-                         bool begin, bool loop, float gain, float pitch)
-        : buffer(std::move(buffer)),
-          type(type),
-          gain(gain),
-          pitch(pitch),
-          source(0)
+    AudioClip::AudioClip(std::shared_ptr<SoundBuffer> buffer, const Audio::Type &type, bool begin, bool loop,
+                         float gain, float pitch) : buffer(std::move(buffer)), type(type), gain(gain), pitch(pitch)
     {
         if (!this->buffer)
         {
@@ -52,10 +43,9 @@ namespace SF::Engine
             Play(loop);
     }
 
-    AudioClip::AudioClip(AudioClip &&other) noexcept
-        : buffer(std::move(other.buffer)), source(other.source),
-          position(other.position), direction(other.direction), velocity(other.velocity),
-          type(other.type), gain(other.gain), pitch(other.pitch), length(other.length)
+    AudioClip::AudioClip(AudioClip &&other) noexcept :
+        buffer(std::move(other.buffer)), source(other.source), position(other.position), direction(other.direction),
+        velocity(other.velocity), type(other.type), gain(other.gain), pitch(other.pitch), length(other.length)
     {
         other.source = 0;
     }
@@ -69,15 +59,15 @@ namespace SF::Engine
                 alDeleteSources(1, &source);
                 Audio::CheckAl(alGetError());
             }
-            buffer = std::move(other.buffer);
-            source = other.source;
-            position = other.position;
-            direction = other.direction;
-            velocity = other.velocity;
-            type = other.type;
-            gain = other.gain;
-            pitch = other.pitch;
-            length = other.length;
+            buffer       = std::move(other.buffer);
+            source       = other.source;
+            position     = other.position;
+            direction    = other.direction;
+            velocity     = other.velocity;
+            type         = other.type;
+            gain         = other.gain;
+            pitch        = other.pitch;
+            length       = other.length;
             other.source = 0;
         }
         return *this;
@@ -171,4 +161,4 @@ namespace SF::Engine
         alSourcef(source, AL_PITCH, pitch);
         Audio::CheckAl(alGetError());
     }
-}
+} // namespace SF::Engine

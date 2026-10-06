@@ -55,14 +55,14 @@ namespace SF::Engine
         }
     }
 
-    void BitmapPNG::PNGFlushCallback(png_structp png_ptr)
+    void BitmapPNG::PNGFlushCallback(png_structp)
     {
         // File class handles flushing internally, nothing to do here
     }
 
     void BitmapPNG::PNGMemoryReadCallback(png_structp png_ptr, png_bytep data, png_size_t length)
     {
-        MemoryReadState *state = static_cast<MemoryReadState *>(png_get_io_ptr(png_ptr));
+        auto *state = static_cast<MemoryReadState *>(png_get_io_ptr(png_ptr));
 
         if (state->offset + length > state->size)
         {

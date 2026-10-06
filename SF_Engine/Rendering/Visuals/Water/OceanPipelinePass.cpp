@@ -1,6 +1,7 @@
-#define VK_NO_PROTOTYPES
+#ifndef VK_NO_PROTOTYPES
+    #define VK_NO_PROTOTYPES
+#endif
 
-#define SF_OCEAN_DEBUG_LOG
 
 #include "OceanPipelinePass.hpp"
 #include <Rendering/Mesh/Vertex.hpp> // PatchVertex::GetVertexInput()
@@ -423,39 +424,6 @@ namespace SF::Engine
         // planet sphere. planetCenter is vec3(0) in render coordinates
         // (frameData_.cameraPos is therefore already planet-relative).
         clipmapMesh_->RegenerateAt(frameData_.cameraPos, frameData_.planetCenter, frameData_.planetRadius);
-
-#ifdef SF_OCEAN_DEBUG_LOG
-        {
-            static int s_logCount = 0;
-            if (s_logCount < 5)
-            {
-                ++s_logCount;
-                printf("[OceanDebug] === Frame %d ===\n", s_logCount);
-                printf("[OceanDebug] cameraPos=(%.3f,%.3f,%.3f)\n", frameData_.cameraPos.x, frameData_.cameraPos.y,
-                       frameData_.cameraPos.z);
-                printf("[OceanDebug] planetCenter=(%.3f,%.3f,%.3f) planetRadius=%.3f\n", frameData_.planetCenter.x,
-                       frameData_.planetCenter.y, frameData_.planetCenter.z, frameData_.planetRadius);
-
-                Vec3 up     = frameData_.cameraPos - frameData_.planetCenter;
-                float upLen = glm::length(up);
-                if (upLen > 1e-5f)
-                    up /= upLen;
-                else
-                    up = Vec3(0, 1, 0);
-                Vec3 surfacePoint = frameData_.planetCenter + up * frameData_.planetRadius;
-
-                Vec4 clip = frameData_.viewProj * Vec4(surfacePoint, 1.0f);
-                printf("[OceanDebug] surfacePoint=(%.3f,%.3f,%.3f) distToCam=%.3f\n", surfacePoint.x, surfacePoint.y,
-                       surfacePoint.z, glm::length(frameData_.cameraPos - surfacePoint));
-                printf("[OceanDebug] clip=(%.6f,%.6f,%.6f,%.6f) ndc=(%.6f,%.6f,%.6f)\n", clip.x, clip.y, clip.z, clip.w,
-                       clip.w != 0.0f ? clip.x / clip.w : 0.0f, clip.w != 0.0f ? clip.y / clip.w : 0.0f,
-                       clip.w != 0.0f ? clip.z / clip.w : 0.0f);
-
-                Vec4 camClip = frameData_.viewProj * Vec4(frameData_.cameraPos, 1.0f);
-                printf("[OceanDebug] camClip=(%.6f,%.6f,%.6f,%.6f)\n", camClip.x, camClip.y, camClip.z, camClip.w);
-            }
-        }
-#endif
     }
 
     void OceanTessellationPipelinePass::updateUBO()

@@ -14,7 +14,6 @@ namespace SF::Engine::Animation
         ApplicationTime animTime;
         unique_ptr<Animation> animation = nullptr;
 
-
     public:
         void Reset() override;
 
@@ -28,6 +27,6 @@ namespace SF::Engine::Animation
         [[nodiscard]] pair<Keyframe, Keyframe> GetSurroundingKeyframes() const;
         [[nodiscard]] float CalculateProgression(const Keyframe &previousFrame, const Keyframe &nextFrame) const;
 
-        void PlayAnimation(const Joint &Root, vector<Mat4> &Matrices) {}
+        // void PlayAnimation(const Joint &Root, vector<Mat4> &Matrices) {}
     };
 } // namespace SF::Engine::Animation

@@ -1,10 +1,12 @@
 #pragma once
 
 #include <thread>
-#define VK_NO_PROTOTYPES
+#ifndef VK_NO_PROTOTYPES
+    #define VK_NO_PROTOTYPES
+#endif
 
-#include <volk.h>
 #include <UtilityClasses/Export.hpp>
+#include <volk.h>
 
 namespace SF::Engine
 {
@@ -14,26 +16,17 @@ namespace SF::Engine
     class CommandPool
     {
     public:
-        explicit CommandPool(const std::thread::id& threadId = std::this_thread::get_id());
+        explicit CommandPool(const std::thread::id &threadId = std::this_thread::get_id());
 
         ~CommandPool();
 
-        operator const VkCommandPool&() const
-        {
-            return commandPool;
-        }
+        operator const VkCommandPool &() const { return commandPool; }
 
-        const VkCommandPool& GetCommandPool() const
-        {
-            return commandPool;
-        }
-        const std::thread::id& GetThreadId() const
-        {
-            return threadId;
-        }
+        const VkCommandPool &GetCommandPool() const { return commandPool; }
+        const std::thread::id &GetThreadId() const { return threadId; }
 
     private:
         VkCommandPool commandPool = VK_NULL_HANDLE;
         std::thread::id threadId;
     };
-}
+} // namespace SF::Engine

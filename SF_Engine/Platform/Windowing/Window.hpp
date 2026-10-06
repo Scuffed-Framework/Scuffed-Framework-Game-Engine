@@ -1,6 +1,8 @@
 #pragma once
 
-#define VK_NO_PROTOTYPES
+#ifndef VK_NO_PROTOTYPES
+    #define VK_NO_PROTOTYPES
+#endif
 
 #include <LowLevel/Bitmask.hpp>
 #include <LowLevel/Rocket.hpp>

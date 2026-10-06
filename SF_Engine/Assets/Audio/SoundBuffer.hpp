@@ -47,8 +47,7 @@ namespace SF::Engine
             template<typename... Args>
             static bool Register(Args &&...names)
             {
-                for (std::string &&name: {names...})
-                    SoundBufferFactory::Registry()[name] = std::make_pair(&T::Load, &T::Write);
+                ((SoundBufferFactory::Registry()[std::string(names)] = std::make_pair(&T::Load, &T::Write)), ...);
                 return true;
             }
         };
