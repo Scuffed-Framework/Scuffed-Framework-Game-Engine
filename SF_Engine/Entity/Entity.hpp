@@ -22,6 +22,7 @@ namespace SF::Engine
     };
 
     class Transform;
+    // todo: add entity to name index
     class Entity
     {
     public:
@@ -529,6 +530,7 @@ namespace SF::Engine
         void UnregisterSubtree(Entity *entity)
         {
             lookup.erase(entity->GetId());
+            RemoveFromNameIndex(entity);
             for (auto &child: entity->GetChildren())
                 UnregisterSubtree(child.get());
         }

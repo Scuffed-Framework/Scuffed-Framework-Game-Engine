@@ -260,14 +260,3 @@ target_include_directories(SF_Engine PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
-#
-# Shaders
-#
-set(SF_ENGINE_SHADER_OUT_DIR "${CMAKE_BINARY_DIR}/Shaders")
-
-add_custom_target(SF_CopyShaders ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/Shaders"
-        "${SF_ENGINE_SHADER_OUT_DIR}"
-        COMMENT "[SF] Copying engine shaders"
-)

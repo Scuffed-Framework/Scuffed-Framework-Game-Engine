@@ -27,7 +27,7 @@ namespace SF::Engine
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
         CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_2D_ARRAY, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0,
                         arrayLayers, 0);
-        TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0,
+        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0,
                               arrayLayers, 0);
         Image::GenerateTexId();
     }
@@ -55,7 +55,7 @@ namespace SF::Engine
                         arrayLayers, 0);
 
         // Transition to transfer dst for uploading
-        TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                               VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
 
         // Create staging buffer - replicate the bitmap data for all array layers
@@ -104,7 +104,7 @@ namespace SF::Engine
             CreateMipmaps(image, extent, format, layout, mipLevels, 0, arrayLayers);
         } else
         {
-            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
                                   VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
         }
         Image::GenerateTexId();

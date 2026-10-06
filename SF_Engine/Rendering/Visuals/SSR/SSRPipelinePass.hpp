@@ -8,6 +8,7 @@
 #include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
+#include <Rendering/Visuals/HiZ/HiZPipelinePass.hpp>
 
 #include <Math/BasicMath.hpp>
 #include <cstdint>
@@ -110,6 +111,10 @@ namespace SF::Engine
 
         void DrawImGuiPanel();
 
+        // Hi-Z provider for Trace.shader's traversal. Must be set (and must run earlier in the
+        // frame than this pass) or PreRender() is skipped. Not owned.
+        void SetHiZ(HiZPipelinePass *hiz) { hiz_ = hiz; }
+
         static bool isWindowOpen;
 
         // --- Stage toggles : each corresponds to a box in the architecture
@@ -121,8 +126,8 @@ namespace SF::Engine
 
         // --- Tunables (mirrors SSRParams; kept here as the ImGui-editable
         // source of truth, written into ssrUBO_ every frame in PreRender). ---
-        int maxSteps                   = 32;
-        float thickness                = 0.35f; // view-space units
+        int maxSteps                   = 64;    // max Hi-Z traversal iterations
+        float thickness                = 0.1f;  // world-space distance over which hit confidence fades to 0
         float strideScale              = 1.0f;
         float maxRoughness             = 0.85f;
         float intensity                = 1.0f;
@@ -147,6 +152,9 @@ namespace SF::Engine
         void UpdateUBO();
 
         LightManager &lm_;
+
+        HiZPipelinePass *hiz_  = nullptr;
+        uint64_t hizGeneration_ = ~0ull; // last HiZPipelinePass::GetGeneration() written into traceSet_
 
         std::unique_ptr<UniformBuffer> ssrUBO_;
 

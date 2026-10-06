@@ -18,7 +18,6 @@ float3 DiffuseLambertian(
     return albedo * NdotL * INV_PI * diffuseResponse;
 }
 
-
 float3 NormalizedDisneyDiffuse(
     float3 albedo,
     float3 normal,

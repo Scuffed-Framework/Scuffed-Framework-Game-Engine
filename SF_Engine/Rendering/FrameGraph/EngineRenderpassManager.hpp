@@ -2,9 +2,9 @@
 
 #include <Rendering/RHI/Commands/CommandBuffer.hpp>
 #include <Rendering/RHI/Pipelines/Pipeline.hpp>
-#include "EngineRenderpassInitRegistry.hpp"
 #include <UtilityClasses/NoCopy.hpp>
 #include <UtilityClasses/TypeInformation.hpp>
+#include "EngineRenderpassInitRegistry.hpp"
 
 namespace SF::Engine
 {
@@ -26,9 +26,9 @@ namespace SF::Engine
          * Called once per frame BEFORE the renderpass for this stage begins.
          * Use for compute dispatches, barriers, or any work that must happen
          * outside a renderpass (e.g. cluster culling). Default: no-op.
-         * @param commandBuffer The open command buffer (outside any renderpass).
+         * @input CommandBuffer The open command buffer (outside any renderpass).
          */
-        virtual void PreRender(const CommandBuffer &commandBuffer) {}
+        virtual void PreRender(const CommandBuffer &) {}
 
         /**
          * Runs the render pipeline in the current renderpass.

@@ -6,7 +6,7 @@ namespace SF::Engine
     {
     public:
         virtual ~Controller() = default;
-        virtual void Update(float dt) {}
+        virtual void Update(float /*DeltaTime*/) {}
         virtual void Initialize() {}
         virtual void Shutdown() {}
     };

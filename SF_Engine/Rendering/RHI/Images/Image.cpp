@@ -26,12 +26,11 @@ namespace SF::Engine
 
         vkDestroyImageView(*logicalDevice, view, nullptr);
         vkDestroySampler(*logicalDevice, sampler, nullptr);
-        vmaFreeMemory(*alloc, allocation);
-        vkDestroyImage(*logicalDevice, image, nullptr);
+        vmaDestroyImage(*alloc, image, allocation); // frees image + memory together
     }
 
     WriteDescriptorSetInformation Image::GetWriteDescriptor(uint32_t binding, VkDescriptorType descriptorType,
-                                                            const std::optional<OffsetSize> &offsetSize) const
+                                                            const std::optional<OffsetSize> &) const
     {
         VkDescriptorImageInfo imageInfo = {};
         imageInfo.sampler               = sampler;
@@ -55,9 +54,10 @@ namespace SF::Engine
         VkDescriptorSetLayoutBinding descriptorSetLayoutBinding = {};
         descriptorSetLayoutBinding.binding                      = binding;
         descriptorSetLayoutBinding.descriptorType               = descriptorType;
-        descriptorSetLayoutBinding.descriptorCount              = 1;
+        descriptorSetLayoutBinding.descriptorCount              = count;
         descriptorSetLayoutBinding.stageFlags                   = stage;
         descriptorSetLayoutBinding.pImmutableSamplers           = nullptr;
+
         return descriptorSetLayoutBinding;
     }
 
@@ -66,11 +66,10 @@ namespace SF::Engine
         auto logicalDevice  = RenderSystem::Get()->GetLogicalDevice();
         VmaAllocator *alloc = RenderSystem::Get()->GetAllocator();
 
-        UVec2 size(int32_t(extent.x >> mipLevel), int32_t(extent.y >> mipLevel));
+        UVec2 size(static_cast<int32_t>(extent.x >> mipLevel), static_cast<int32_t>(extent.y >> mipLevel));
 
-        VkImage dstImage;
-        VmaAllocation dstAllocation   = VK_NULL_HANDLE;
-        VkDeviceMemory dstImageMemory = VK_NULL_HANDLE;
+        VkImage dstImage            = VK_NULL_HANDLE;
+        VmaAllocation dstAllocation = VK_NULL_HANDLE;
         CopyImage(image, dstImage, dstAllocation, format, {size.x, size.y, 1}, layout, mipLevel, arrayLayer);
 
         VkImageSubresource dstImageSubresource = {};
@@ -81,17 +80,21 @@ namespace SF::Engine
         VkSubresourceLayout dstSubresourceLayout;
         vkGetImageSubresourceLayout(*logicalDevice, dstImage, &dstImageSubresource, &dstSubresourceLayout);
 
-        auto bitmap = std::make_unique<Bitmap>(std::make_unique<uint8_t[]>(dstSubresourceLayout.size), size);
+        // CopyImage always creates the destination as R8G8B8A8_UNORM.
+        constexpr size_t bytesPerPixel = 4;
+        const size_t rowBytes          = static_cast<size_t>(size.x) * bytesPerPixel;
+        auto pixels                    = std::make_unique<uint8_t[]>(rowBytes * size.y);
 
-        void *data;
-        vkMapMemory(*logicalDevice, dstImageMemory, dstSubresourceLayout.offset, dstSubresourceLayout.size, 0, &data);
-        std::memcpy(bitmap->GetData().get(), data, static_cast<std::size_t>(dstSubresourceLayout.size));
-        vkUnmapMemory(*logicalDevice, dstImageMemory);
+        void *mapped = nullptr;
+        RenderSystem::CheckVkResult(vmaMapMemory(*alloc, dstAllocation, &mapped));
+        const auto *src = static_cast<const uint8_t *>(mapped) + dstSubresourceLayout.offset;
+        for (uint32_t y = 0; y < size.y; ++y)
+            std::memcpy(pixels.get() + y * rowBytes, src + y * dstSubresourceLayout.rowPitch, rowBytes);
+        vmaUnmapMemory(*alloc, dstAllocation);
 
-        vkFreeMemory(*logicalDevice, dstImageMemory, nullptr);
-        vkDestroyImage(*logicalDevice, dstImage, nullptr);
+        vmaDestroyImage(*alloc, dstImage, dstAllocation);
 
-        return bitmap;
+        return std::make_unique<Bitmap>(std::move(pixels), size);
     }
 
     uint32_t Image::GetMipLevels(const UVec3 &extent)
@@ -123,7 +126,7 @@ namespace SF::Engine
         static const std::vector<VkFormat> DEPTH_FORMATS = {VK_FORMAT_D16_UNORM,         VK_FORMAT_X8_D24_UNORM_PACK32,
                                                             VK_FORMAT_D32_SFLOAT,        VK_FORMAT_D16_UNORM_S8_UINT,
                                                             VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT};
-        return std::find(DEPTH_FORMATS.begin(), DEPTH_FORMATS.end(), format) != std::end(DEPTH_FORMATS);
+        return ranges::find(DEPTH_FORMATS, format) != std::end(DEPTH_FORMATS);
     }
 
     bool Image::HasStencil(VkFormat format)
@@ -131,7 +134,7 @@ namespace SF::Engine
         static const std::vector<VkFormat> STENCIL_FORMATS = {VK_FORMAT_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT,
                                                               VK_FORMAT_D24_UNORM_S8_UINT,
                                                               VK_FORMAT_D32_SFLOAT_S8_UINT};
-        return std::find(STENCIL_FORMATS.begin(), STENCIL_FORMATS.end(), format) != std::end(STENCIL_FORMATS);
+        return ranges::find(STENCIL_FORMATS, format) != std::end(STENCIL_FORMATS);
     }
 
     void Image::CreateImage(VkImage &image, VmaAllocation &allocation, const UVec3 &extent, VkFormat format,
@@ -167,8 +170,6 @@ namespace SF::Engine
         RenderSystem::CheckVkResult(result);
         if (image == VK_NULL_HANDLE)
             throw std::runtime_error("vmaCreateImage succeeded but image handle is null");
-        Log::Info("CreateImage: handle=0x{:x} format={} {}x{}x{}", (uint64_t) image, (int) format, extent.x, extent.y,
-                  extent.z);
     }
 
     void Image::CreateImageSampler(VkSampler &sampler, VkFilter filter, VkSamplerAddressMode addressMode,
@@ -256,12 +257,15 @@ namespace SF::Engine
                                  nullptr, 0, nullptr, 1, &barrier0);
 
             VkImageBlit imageBlit                   = {};
-            imageBlit.srcOffsets[1]                 = {int32_t(extent.x >> (i - 1)), int32_t(extent.y >> (i - 1)), 1};
+            imageBlit.srcOffsets[1]                 = {.x = static_cast<int32_t>(extent.x >> (i - 1)),
+                                                       .y = static_cast<int32_t>(extent.y >> (i - 1)),
+                                                       .z = 1};
             imageBlit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
             imageBlit.srcSubresource.mipLevel       = i - 1;
             imageBlit.srcSubresource.baseArrayLayer = baseArrayLayer;
             imageBlit.srcSubresource.layerCount     = layerCount;
-            imageBlit.dstOffsets[1]                 = {int32_t(extent.x >> i), int32_t(extent.y >> i), 1};
+            imageBlit.dstOffsets[1]                 = {
+                                    .x = static_cast<int32_t>(extent.x >> i), .y = static_cast<int32_t>(extent.y >> i), .z = 1};
             imageBlit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
             imageBlit.dstSubresource.mipLevel       = i;
             imageBlit.dstSubresource.baseArrayLayer = baseArrayLayer;
@@ -307,9 +311,9 @@ namespace SF::Engine
         commandBuffer.SubmitIdle();
     }
 
-    void Image::TransitionImageLayout(const VkImage &image, VkFormat format, VkImageLayout srcImageLayout,
-                                      VkImageLayout dstImageLayout, VkImageAspectFlags imageAspect, uint32_t mipLevels,
-                                      uint32_t baseMipLevel, uint32_t layerCount, uint32_t baseArrayLayer)
+    void Image::TransitionImageLayout(const VkImage &image, VkImageLayout srcImageLayout, VkImageLayout dstImageLayout,
+                                      VkImageAspectFlags imageAspect, uint32_t mipLevels, uint32_t baseMipLevel,
+                                      uint32_t layerCount, uint32_t baseArrayLayer)
     {
         CommandBuffer commandBuffer(true); // must begin before recording
 
@@ -352,6 +356,7 @@ namespace SF::Engine
                 imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
                 break;
             case VK_IMAGE_LAYOUT_GENERAL:
+                // todo: remove dstaccessmask here
                 imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
                 imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
                 break;
@@ -561,7 +566,7 @@ namespace SF::Engine
         ::SF::RTTI::SerializeContext::Instance().Load(*this, reader);
     }
 
-    void BindStorageImage(DescriptorSet &ds, Image *img)
+    inline void BindStorageImage(DescriptorSet &ds, Image *img)
     {
         VkDescriptorImageInfo imgInfo{};
         imgInfo.sampler     = img->GetSampler();
@@ -592,11 +597,12 @@ namespace SF::Engine
             root.SetAttribute("Filter", static_cast<int>(texture->GetFilter()));
             root.SetAttribute("AddressMode", static_cast<int>(texture->GetAddressMode()));
             root.SetAttribute("Format", static_cast<int>(texture->GetFormat()));
-            // root.SetAttribute("Samples", static_cast<int>(texture->GetSamples()));
-            // root.SetAttribute("MipLevels", static_cast<int>(texture->GetMipLevels()));
-            // root.SetAttribute("ArrayLayers", static_cast<int>(texture->GetArrayLevels()));
+            root.SetAttribute("Samples", static_cast<int>(texture->GetSamples()));
+            root.SetAttribute("MipLevels", static_cast<int>(texture->GetMipLevels()));
+            root.SetAttribute("ArrayLayers", static_cast<int>(texture->GetArrayLevels()));
             root.SetAttribute("UsageBits", static_cast<int>(texture->GetUsage()));
             root.SetAttribute("Layout", static_cast<int>(texture->GetLayout()));
+            root.SetAttribute("Anisotropic", texture->IsAnisotropic());
         }
 
         if (!writer->SaveToFile((GetEngineAssetsPath() / (name + ".xml")).string()))

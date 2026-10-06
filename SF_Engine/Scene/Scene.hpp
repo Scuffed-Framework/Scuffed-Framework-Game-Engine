@@ -20,6 +20,7 @@
 
 namespace SF::Engine
 {
+    // can we move some boilerplate out of this?
     class Scene : public virtual rocket::trackable, public Serializable
     {
         friend class SceneManager;
@@ -63,9 +64,9 @@ namespace SF::Engine
         std::vector<Entity *> QueryAllEntities();
 
         void RemoveEntity(Entity *entity) { entities.Remove(entity); }
-        void AddEntity(std::string name, Entity *parent = nullptr)
+        void AddEntity(const std::string &name, Entity *parent = nullptr)
         {
-            if (parent = (nullptr))
+            if ((parent = (nullptr)))
                 entities.CreateEntity(name);
             else
                 entities.CreateChildEntity(parent, name);

@@ -9,15 +9,16 @@
 
 namespace SF::Engine
 {
-    // TODO: replace all write methods with stdbuffer (some sort of EBML) write. loading audio types is for editor, stdbuffer is for built games.
+    // TODO: replace all write methods with stdbuffer (some sort of EBML) write. loading audio types is for editor,
+    // stdbuffer is for built games.
     /**
      * @brief Factory base for registering sound buffer loaders by file extension.
      */
-    template <typename Base>
+    template<typename Base>
     class SoundBufferFactory
     {
     public:
-        using TLoadMethod = std::function<void(Base &, const DataInput &)>;
+        using TLoadMethod  = std::function<void(Base &, const DataInput &)>;
         using TWriteMethod = std::function<void(const Base &, const std::filesystem::path &)>;
         using TRegistryMap = std::unordered_map<std::string, std::pair<TLoadMethod, TWriteMethod>>;
 
@@ -35,7 +36,7 @@ namespace SF::Engine
         /**
          * @brief CRTP helper for registering derived loaders.
          */
-        template <typename T>
+        template<typename T>
         class Registrar
         {
         protected:
@@ -43,10 +44,10 @@ namespace SF::Engine
              * @brief Registers load/write methods for given file extensions.
              * @param names File extensions (e.g., ".wav", ".ogg").
              */
-            template <typename... Args>
+            template<typename... Args>
             static bool Register(Args &&...names)
             {
-                for (std::string &&name : {names...})
+                for (std::string &&name: {names...})
                     SoundBufferFactory::Registry()[name] = std::make_pair(&T::Load, &T::Write);
                 return true;
             }
@@ -79,7 +80,7 @@ namespace SF::Engine
          * @brief Creates a buffer filled with a procedurally generated waveform.
          */
         static std::shared_ptr<SoundBuffer> CreateWave(ALuint waveType, float frequency = 440.0f,
-                                                         float durationSeconds = 1.0f, uint32_t sampleRate = 44100);
+                                                       float durationSeconds = 1.0f, uint32_t sampleRate = 44100);
 
         /**
          * @brief Constructs a sound buffer.
@@ -90,26 +91,17 @@ namespace SF::Engine
         ~SoundBuffer();
 
         // Delete copy operations (OpenAL buffer is non-copyable resource)
-        SoundBuffer(const SoundBuffer &) = delete;
+        SoundBuffer(const SoundBuffer &)            = delete;
         SoundBuffer &operator=(const SoundBuffer &) = delete;
 
         // Move operations
         SoundBuffer(SoundBuffer &&other) noexcept;
         SoundBuffer &operator=(SoundBuffer &&other) noexcept;
 
-        std::type_index GetTypeIndex() const
-        {
-            return typeid(SoundBuffer);
-        }
+        [[nodiscard]] std::type_index GetTypeIndex() const { return typeid(SoundBuffer); }
 
-        const DataInput &Getinput() const
-        {
-            return input;
-        }
-        uint32_t GetBuffer() const
-        {
-            return buffer;
-        }
+        [[nodiscard]] const DataInput &Getinput() const { return input; }
+        [[nodiscard]] uint32_t GetBuffer() const { return buffer; }
         void SetBuffer(uint32_t buffer);
 
         /**
@@ -124,4 +116,4 @@ namespace SF::Engine
         static std::unordered_map<DataInput, std::weak_ptr<SoundBuffer>> cache;
         static std::mutex cacheMutex;
     };
-}
+} // namespace SF::Engine

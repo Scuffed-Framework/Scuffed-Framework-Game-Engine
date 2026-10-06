@@ -53,9 +53,9 @@ namespace SF::Engine
 
         [[nodiscard]] WriteDescriptorSetInformation
         GetWriteDescriptor(uint32_t binding, VkDescriptorType descriptorType,
-                           const std::optional<OffsetSize> &offsetSize) const override;
+                           const std::optional<OffsetSize> &nulloptPLEASE) const override;
         static VkDescriptorSetLayoutBinding GetDescriptorSetLayout(uint32_t binding, VkDescriptorType descriptorType,
-                                                                   VkShaderStageFlags stage, uint32_t count);
+                                                                   VkShaderStageFlags stage, uint32_t count = 1);
 
         /**
          * Copies the images pixels from memory to a bitmap. If this method is called from multiple threads at the same
@@ -80,6 +80,11 @@ namespace SF::Engine
         [[nodiscard]] const VmaAllocation &GetAllocation() { return allocation; }
         [[nodiscard]] const VkSampler &GetSampler() const { return sampler; }
         [[nodiscard]] const VkImageView &GetView() const { return view; }
+
+        void SetFilter(VkFilter newFilter) { filter = newFilter; }
+        void SetSamples(VkSampleCountFlagBits value) { samples = value; }
+        void SetMipMapLevels(uint32_t value) { mipLevels = value; }
+        void SetArrayLayers(uint32_t value) { arrayLayers = value; }
 
         static uint32_t GetMipLevels(const UVec3 &extent);
 
@@ -121,7 +126,7 @@ namespace SF::Engine
         static void CreateMipmaps(const VkImage &image, const UVec3 &extent, VkFormat format,
                                   VkImageLayout dstImageLayout, uint32_t mipLevels, uint32_t baseArrayLayer,
                                   uint32_t layerCount);
-        static void TransitionImageLayout(const VkImage &image, VkFormat format, VkImageLayout srcImageLayout,
+        static void TransitionImageLayout(const VkImage &image, VkImageLayout srcImageLayout,
                                           VkImageLayout dstImageLayout, VkImageAspectFlags imageAspect,
                                           uint32_t mipLevels, uint32_t baseMipLevel, uint32_t layerCount,
                                           uint32_t baseArrayLayer);
@@ -164,7 +169,8 @@ namespace SF::Engine
          */
         void GenerateTexId()
         {
-            imguiTexId = (ImTextureID) ImGui_ImplVulkan_AddTexture(GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            imguiTexId = reinterpret_cast<ImTextureID>(
+                    ImGui_ImplVulkan_AddTexture(GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
         }
 
     public:
@@ -210,18 +216,20 @@ namespace SF::Engine
                              uint32_t mipLevel = 0, uint32_t arrayLayer = 0)
     {
         VkImageMemoryBarrier b{};
-        b.sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        b.pNext         = nullptr;
-        b.srcAccessMask = srcAccess, b.subresourceRange.aspectMask = aspect;
+        b.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        b.pNext                           = nullptr;
+        b.srcAccessMask                   = srcAccess;
+        b.subresourceRange.aspectMask     = aspect;
         b.subresourceRange.baseMipLevel   = mipLevel;
         b.subresourceRange.levelCount     = 1;
         b.subresourceRange.baseArrayLayer = arrayLayer;
         b.subresourceRange.layerCount     = 1;
-        b.dstAccessMask = dstAccess, b.oldLayout = oldLayout;
-        b.newLayout           = newLayout;
-        b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        b.image               = image;
+        b.dstAccessMask                   = dstAccess;
+        b.oldLayout                       = oldLayout;
+        b.newLayout                       = newLayout;
+        b.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        b.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        b.image                           = image;
         vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &b);
     }
 
@@ -230,19 +238,21 @@ namespace SF::Engine
                                   VkPipelineStageFlags dstStage, uint32_t layerCount,
                                   VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT)
     {
-        VkImageMemoryBarrier b{
-                .sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .pNext               = nullptr,
-                .srcAccessMask       = srcAccess,
-                .dstAccessMask       = dstAccess,
-                .oldLayout           = oldLayout,
-                .newLayout           = newLayout,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .image               = image,
-        };
-        b.subresourceRange.aspectMask = aspect, b.subresourceRange.baseMipLevel = 0, b.subresourceRange.levelCount = 1,
-        b.subresourceRange.baseArrayLayer = 0, b.subresourceRange.layerCount = layerCount,
+        VkImageMemoryBarrier b{};
+        b.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        b.pNext                           = nullptr;
+        b.srcAccessMask                   = srcAccess;
+        b.dstAccessMask                   = dstAccess;
+        b.oldLayout                       = oldLayout;
+        b.newLayout                       = newLayout;
+        b.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        b.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        b.image                           = image;
+        b.subresourceRange.aspectMask     = aspect;
+        b.subresourceRange.baseMipLevel   = 0;
+        b.subresourceRange.levelCount     = 1;
+        b.subresourceRange.baseArrayLayer = 0;
+        b.subresourceRange.layerCount     = layerCount,
 
         vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &b);
     }
@@ -429,7 +439,7 @@ namespace SF::Engine
         [[nodiscard]] bool IsMipmap() const { return mipmap; }
         [[nodiscard]] uint32_t GetComponents() const { return components; }
 
-        void Serialize(XMLNode &node) const
+        void Serialize(XMLNode &node) const override
         {
             Image::Serialize(node);
             node.SetAttribute("filename", filename.string());
@@ -437,7 +447,7 @@ namespace SF::Engine
             node.SetAttribute("mipmap", mipmap);
         }
 
-        void Deserialize(const XMLNode &node)
+        void Deserialize(const XMLNode &node) override
         {
             Image::Deserialize(node);
             std::string f;
@@ -581,7 +591,7 @@ namespace SF::Engine
             Image::Serialize(node);
             node.SetAttribute("anisotropic", anisotropic_);
             node.SetAttribute("mipmap", mipmap_);
-            node.SetAttribute("voxelSize", (int) voxelSize_);
+            node.SetAttribute("voxelSize", static_cast<int>(voxelSize_));
         }
 
         void Deserialize(const XMLNode &node) override
@@ -591,7 +601,7 @@ namespace SF::Engine
             node.GetAttribute("mipmap", mipmap_);
             int vs;
             node.GetAttribute("voxelSize", vs);
-            voxelSize_ = (size_t) vs;
+            voxelSize_ = static_cast<size_t>(vs);
         }
 
     private:
@@ -627,48 +637,65 @@ namespace SF::Engine
 
         bool Load(std::span<const uint8_t> payload) override
         {
+            // TODO: parse `payload` into the XML module here (see note below).
+            XMLNode root = XMLModule::Get()->GetRootNode();
+            AssetBase::Deserialize(root);
+
+            std::string file;
+            root.GetAttribute("Filename", file);
+            filename = file;
             if (filename.empty())
                 return false;
-
-            XMLModule *writer = XMLModule::Get();
-            XMLNode root      = writer->GetRootNode();
-            AssetBase::Deserialize(root);
 
             auto bitmap = std::make_unique<Bitmap>(filename);
             if (!bitmap || !*bitmap)
                 return false;
 
-            int rawFormat{}, rawLayout{}, rawUsage{}, rawFilter{}, rawAddressMode{}, samples{}, mips{}, arrayLevels{};
+            // Real defaults, so a missing attribute doesn't become 0 / UNDEFINED.
+            uint32_t rawFormat      = VK_FORMAT_R8G8B8A8_UNORM;
+            uint32_t rawLayout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            uint32_t rawUsage       = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+            uint32_t rawFilter      = VK_FILTER_LINEAR;
+            uint32_t rawAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            uint32_t samples        = VK_SAMPLE_COUNT_1_BIT;
+            uint32_t arrayLayers    = 1;
+            bool aniso = false, mipmap = false;
+
             root.GetAttribute("Format", rawFormat);
             root.GetAttribute("Layout", rawLayout);
             root.GetAttribute("UsageBits", rawUsage);
             root.GetAttribute("Filter", rawFilter);
             root.GetAttribute("AddressMode", rawAddressMode);
+            root.GetAttribute("Samples", samples);
+            root.GetAttribute("ArrayLayers", arrayLayers);
+            root.GetAttribute("Anisotropic", aniso);
+            root.GetAttribute("Mipmap", mipmap);
 
-            auto format      = static_cast<VkFormat>(rawFormat);
-            auto layout      = static_cast<VkImageLayout>(rawLayout);
-            auto usage       = static_cast<VkImageUsageFlags>(rawUsage);
-            auto filter      = static_cast<VkFilter>(rawFilter);
-            auto addressMode = static_cast<VkSamplerAddressMode>(rawAddressMode);
+            const auto format      = static_cast<VkFormat>(rawFormat);
+            const auto layout      = static_cast<VkImageLayout>(rawLayout);
+            const auto usage       = static_cast<VkImageUsageFlags>(rawUsage);
+            const auto filter      = static_cast<VkFilter>(rawFilter);
+            const auto addressMode = static_cast<VkSamplerAddressMode>(rawAddressMode);
+            const auto sampleBits  = static_cast<VkSampleCountFlagBits>(samples);
 
-            if constexpr (std::is_same_v<TImage, Image2d> || std::is_same_v<TImage, Cubemap>)
+            try
             {
-                texture = std::make_shared<TImage>(std::move(bitmap), format, layout, usage, filter, addressMode);
-            } else if constexpr (std::is_same_v<TImage, Image2dArray>)
+                if constexpr (std::is_same_v<TImage, Image2d> || std::is_same_v<TImage, Cubemap>)
+                    texture = std::make_shared<TImage>(std::move(bitmap), format, layout, usage, filter, addressMode,
+                                                       sampleBits, aniso, mipmap);
+                else if constexpr (std::is_same_v<TImage, Image2dArray>)
+                    texture = std::make_shared<TImage>(std::move(bitmap), arrayLayers, format, layout, usage, filter,
+                                                       addressMode, aniso, mipmap);
+                else if constexpr (std::is_same_v<TImage, Image3d>)
+                    return false; // TODO: 3D texture saving
+                else
+                    static_assert(!sizeof(TImage), "ImageAsset<TImage>::Load: no loading strategy");
+            } catch (const std::exception &e)
             {
-                int rawLayerCount{1};
-                root.GetAttribute("ArrayLayers", rawLayerCount);
-                texture = std::make_shared<TImage>(std::move(bitmap), static_cast<uint32_t>(rawLayerCount), format,
-                                                   layout, usage, filter, addressMode);
-            } else if constexpr (std::is_same_v<TImage, Image3d>)
-            {
-                // TODO: Saving 3d textures
+                Log::Error("ImageAsset load failed for '{}': {}", filename.string(), e.what());
+                texture.reset();
                 return false;
-            } else
-            {
-                static_assert(!sizeof(TImage), "ImageAsset<TImage>::Load: no loading strategy for this TImage");
             }
-
             return texture != nullptr;
         }
 

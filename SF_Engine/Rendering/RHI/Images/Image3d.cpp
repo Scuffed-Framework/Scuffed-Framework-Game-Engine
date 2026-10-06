@@ -82,7 +82,6 @@ namespace SF::Engine
 
         TransitionImageLayout(
             image,
-            format,
             VK_IMAGE_LAYOUT_UNDEFINED,
             layout,
             VK_IMAGE_ASPECT_COLOR_BIT,

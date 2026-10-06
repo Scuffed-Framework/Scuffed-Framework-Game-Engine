@@ -49,7 +49,7 @@ namespace SF::Engine
                     VMA_MEMORY_USAGE_GPU_ONLY, mipLevels, 1, VK_IMAGE_TYPE_2D);
         CreateImageSampler(sampler, filter, addressMode, anisotropic, mipLevels);
         CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_2D, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, 1, 0);
-        TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0,
+        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0,
                               1, 0);
     }
 
@@ -87,7 +87,7 @@ namespace SF::Engine
         CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_2D, format, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, 1, 0);
 
         // Transition to transfer dst for uploading
-        TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                               VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, 1, 0);
 
         // Create staging buffer and upload data
@@ -105,7 +105,7 @@ namespace SF::Engine
             CreateMipmaps(image, extent, format, layout, mipLevels, 0, 1);
         } else
         {
-            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
                                   VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, 1, 0);
         }
         Image::GenerateTexId();

@@ -1,4 +1,5 @@
 #CORE
+1. Improve renderer
 2. Shader hot-reloading (at some point)
 3. Finish AssetSystem
 4. FIX SSR
@@ -31,11 +32,12 @@ LAST Web build support
 
 #Editor:
 finish panels, cmd, explorer, black profiler bar, profiler
+fix duplication and reparenting, add **FOLDERS and their color / icon menus**
+asset importers (sponza, Amazon Lumberyard café)
 finish shader wizard
-sponza
-Amazon Lumberyard café
+
 
 API Notes:
 Render() called on already active renderpass, PreRender() before active.
 
-todo: rename every SF:: to ScuffedFramework::
+todo maybe: before feature-ssr merge, rename every SF:: to ScuffedFramework::

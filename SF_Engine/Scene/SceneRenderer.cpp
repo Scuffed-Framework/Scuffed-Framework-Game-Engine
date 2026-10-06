@@ -49,7 +49,12 @@ namespace SF::Engine
         // Stage 1, subpass 0 : Deferred lighting resolve -> hdr.
         auto *deferredLight = AddPipelinePass<DeferredLightPipelinePass>(Pipeline::Stage{1, 0}, *lightManager_);
 
+        // Hi-Z pyramid for SSR's traversal. Stage{1,0} so its PreRender runs after the gbuffer
+        // renderpass (gbuf_depth readable) and before SSR's (Stage{1,1}).
+        hiz_ = AddPipelinePass<HiZPipelinePass>(Pipeline::Stage{1, 0});
+
         ssr_ = AddPipelinePass<SSRPipelinePass>(Pipeline::Stage{1, 1}, *lightManager_);
+        ssr_->SetHiZ(hiz_);
 
         // Stage 1, subpass 2 : Transparent forward pass.
         auto *forwardTransparent =

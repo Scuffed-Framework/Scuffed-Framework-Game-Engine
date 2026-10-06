@@ -79,8 +79,8 @@ namespace SF::Engine
 
         void RemoveAtmosphere(const std::string &name)
         {
-            auto newEnd = remove_if(entries_.begin(), entries_.end(),
-                                    [&name](const AtmosphereEntry &e) { return e.name == name; });
+            const auto newEnd =
+                    ranges::remove_if(entries_, [&name](const AtmosphereEntry &e) { return e.name == name; }).begin();
             entries_.erase(newEnd, entries_.end());
         }
 

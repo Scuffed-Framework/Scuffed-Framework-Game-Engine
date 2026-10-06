@@ -4,6 +4,7 @@
 #include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/Renderer.hpp>
+#include <Rendering/Visuals/HiZ/HiZPipelinePass.hpp>
 #include <Rendering/Visuals/SSR/SSRPipelinePass.hpp>
 #include <Rendering/Visuals/sfSkies/AtmosphereController.hpp>
 #include <Rendering/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
@@ -95,6 +96,7 @@ namespace SF::Engine
         std::unique_ptr<LightManager> lightManager_;
         GBufferPass *gbuffer_                 = nullptr;
         SSRPipelinePass *ssr_                 = nullptr;
+        HiZPipelinePass *hiz_                 = nullptr;
         CloudPipelinePass *cloudPass_         = nullptr;
         ClusterCullPipelinePass *clusterCull_ = nullptr;
 

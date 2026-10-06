@@ -29,7 +29,7 @@ namespace SF::Engine
             startup.SetContent(StartupScene ? StartupScene->GetName() : "");
         }
 
-        void Deserialize(const XMLNode &node) override
+        void Deserialize(const XMLNode &) override
         {
             // once we've loaded the game binaries and searched the rscs for the EngineConfig then we'll run
             // Engine::Get()->Configure(cfg); // not ref cuz the function should unload cfg

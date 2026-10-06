@@ -1,13 +1,126 @@
 #include "Project.hpp"
-#include <functional>
-#include <algorithm>
-#include <numeric>
-#include <fstream>
-#include <Gui/ImGui/GuiMembers.hpp>
 #include <Assets/AssetPipeline.hpp>
+#include <Gui/ImGui/GuiMembers.hpp>
+#include <algorithm>
+#include <fstream>
+#include <functional>
+#include <numeric>
 
 namespace SF::Engine
 {
+    namespace
+    {
+        enum class Mode
+        {
+            Open,
+            Create
+        };
+
+        Mode s_mode         = Mode::Open;
+        int s_selectedIndex = -1;
+
+        char s_newName[256]   = "";
+        char s_newFolder[512] = "";
+        char s_newDesc[1024]  = "";
+
+        std::vector<ProjectLoadInfo> s_recentProjects;
+        bool s_recentLoaded = false;
+
+        std::vector<ProjectTemplate> s_templates;
+        bool s_templatesLoaded = false;
+
+        std::string s_statusMsg;
+        float s_statusTimer             = 0.0f;
+        constexpr float kStatusDuration = 3.0f; // seconds
+
+        void SetStatus(const char *msg)
+        {
+            s_statusMsg   = msg;
+            s_statusTimer = kStatusDuration;
+        }
+
+        void TickStatus(float dt)
+        {
+            if (s_statusTimer > 0.0f)
+                s_statusTimer -= dt;
+        }
+
+        void EnsureRecentProjectsLoaded()
+        {
+            if (s_recentLoaded)
+                return;
+            // TODO: read from a registry / xml side-car file on disk.
+            s_recentLoaded = true;
+        }
+
+        void EnsureTemplatesLoaded()
+        {
+            if (s_templatesLoaded)
+                return;
+            // TODO: scan engine templates directory and populate s_templates.
+            s_templatesLoaded = true;
+        }
+
+        // Draw a preview image, or a grey placeholder when img == nullptr.
+        void DrawPreviewImage(const Image2d *img, Vec2 size)
+        {
+            Vec2 cursor    = ImGui::GetCursorScreenPos();
+            ImDrawList *dl = ImGui::GetWindowDrawList();
+
+            if (img)
+            {
+                // Wire up texture handle here:
+                // ImGui::Image((ImTextureID)(intptr_t)img->GetTextureID(), size);
+                // For now draw a tinted placeholder so it looks distinct.
+                dl->AddRectFilled(cursor, {cursor.x + size.x, cursor.y + size.y}, IM_COL32(30, 50, 70, 255));
+                dl->AddRect(cursor, {cursor.x + size.x, cursor.y + size.y}, IM_COL32(80, 140, 200, 255));
+                const char *lbl = "Preview";
+                Vec2 lsize      = ImGui::CalcTextSize(lbl);
+                dl->AddText({cursor.x + (size.x - lsize.x) * 0.5f, cursor.y + (size.y - lsize.y) * 0.5f},
+                            IM_COL32(80, 140, 200, 255), lbl);
+            } else
+            {
+                dl->AddRectFilled(cursor, {cursor.x + size.x, cursor.y + size.y}, IM_COL32(45, 45, 45, 255));
+                dl->AddRect(cursor, {cursor.x + size.x, cursor.y + size.y}, IM_COL32(100, 100, 100, 255));
+                const char *lbl = "No Preview";
+                Vec2 lsize      = ImGui::CalcTextSize(lbl);
+                dl->AddText({cursor.x + (size.x - lsize.x) * 0.5f, cursor.y + (size.y - lsize.y) * 0.5f},
+                            IM_COL32(130, 130, 130, 255), lbl);
+            }
+            ImGui::Dummy(size);
+        }
+
+        // Returns true on double-click (caller should treat as "confirm").
+        bool SelectableItem(const std::string &label, bool selected, int index)
+        {
+            if (ImGui::Selectable(label.c_str(), selected, ImGuiSelectableFlags_AllowDoubleClick))
+            {
+                s_selectedIndex = index;
+                if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    return true;
+            }
+            return false;
+        }
+
+        // Translate a ProjectResult to a human-readable string.
+        const char *ResultString(ProjectResult r)
+        {
+            switch (r)
+            {
+                case ProjectResult::Success:
+                    return "Success.";
+                case ProjectResult::NotFound:
+                    return "Error: file not found.";
+                case ProjectResult::InvalidFormat:
+                    return "Error: invalid project format.";
+                case ProjectResult::VersionMismatch:
+                    return "Error: version mismatch.";
+                default:
+                    return "Error: unknown failure.";
+            }
+        }
+    } // namespace
+
     template class ModuleRegistrar<ProjectManager>; // idk why
 
     // ProjectManager::CreateProject
@@ -16,8 +129,7 @@ namespace SF::Engine
     //   <path>/
     //     <name>.projxml     ← project XML descriptor
 
-    ProjectResult ProjectManager::CreateProject(const std::string &name,
-                                                const std::filesystem::path &path,
+    ProjectResult ProjectManager::CreateProject(const std::string &name, const std::filesystem::path &path,
                                                 const std::string &desc)
     {
         if (name.empty())
@@ -42,9 +154,9 @@ namespace SF::Engine
         writer->SetRootNode("Project"); // creates the xmlDoc + root element
         XMLNode root = writer->GetRootNode();
 
-        auto proj = std::make_unique<Project>();
-        proj->name = name;
-        proj->Path = xmlPath;
+        auto proj         = std::make_unique<Project>();
+        proj->name        = name;
+        proj->Path        = xmlPath;
         proj->description = desc;
         proj->Serialize(root); // writes name + projectFilePath attributes
 
@@ -54,14 +166,14 @@ namespace SF::Engine
         proj->projectXML = File(xmlPath); // keep the File handle for later use
 
         ProjectLoadInfo info;
-        info.name = name;
+        info.name        = name;
         info.description = desc;
         info.projectPath = xmlPath;
         s_recentProjects.insert(s_recentProjects.begin(), std::move(info));
 
         delete currentLoadedProject;
         currentLoadedProject = proj.release();
-        projectWindowOpen = false;
+        projectWindowOpen    = false;
         AssetController::Get()->ProjectLoaded();
         return ProjectResult::Success;
     }
@@ -85,7 +197,7 @@ namespace SF::Engine
             return ProjectResult::InvalidFormat;
 
         // 2. Deserialise into a new Project.
-        auto proj = std::make_unique<Project>();
+        auto proj        = std::make_unique<Project>();
         proj->projectXML = File(xmlPath);
         proj->Deserialize(root); // reads name + projectFilePath
 
@@ -94,17 +206,15 @@ namespace SF::Engine
 
         // 3. Update recent-projects list (bubble to front or insert).
         auto it = std::find_if(s_recentProjects.begin(), s_recentProjects.end(),
-                               [&](const ProjectLoadInfo &p)
-                               { return p.projectPath == xmlPath; });
+                               [&](const ProjectLoadInfo &p) { return p.projectPath == xmlPath; });
         if (it == s_recentProjects.end())
         {
             ProjectLoadInfo info;
-            info.name = proj->name;
+            info.name        = proj->name;
             info.description = proj->description;
             info.projectPath = xmlPath;
             s_recentProjects.insert(s_recentProjects.begin(), std::move(info));
-        }
-        else
+        } else
         {
             std::rotate(s_recentProjects.begin(), it, it + 1);
         }
@@ -112,7 +222,7 @@ namespace SF::Engine
         // 4. Swap in the loaded project.
         delete currentLoadedProject;
         currentLoadedProject = proj.release();
-        projectWindowOpen = false;
+        projectWindowOpen    = false;
         AssetController::Get()->ProjectLoaded();
         return ProjectResult::Success;
     }
@@ -129,8 +239,7 @@ namespace SF::Engine
             TickStatus(ImGui::GetIO().DeltaTime);
 
             ImGuiIO &io = ImGui::GetIO();
-            ImGui::SetNextWindowPos({io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f},
-                                    ImGuiCond_Once, {0.5f, 0.5f});
+            ImGui::SetNextWindowPos({io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f}, ImGuiCond_Once, {0.5f, 0.5f});
             ImGui::SetNextWindowSize({860.0f, 520.0f}, ImGuiCond_Once);
             ImGui::SetNextWindowSizeConstraints({640.0f, 400.0f}, {1400.0f, 900.0f});
 
@@ -140,13 +249,13 @@ namespace SF::Engine
                 return;
             }
 
-            const float totalW = ImGui::GetContentRegionAvail().x;
-            const float totalH = ImGui::GetContentRegionAvail().y;
-            const float listW = totalW * 0.60f;
+            const float totalW  = ImGui::GetContentRegionAvail().x;
+            const float totalH  = ImGui::GetContentRegionAvail().y;
+            const float listW   = totalW * 0.60f;
             const float detailW = totalW - listW - ImGui::GetStyle().ItemSpacing.x;
             // Footer: tab buttons row + optional status row
-            const float footerH = ImGui::GetFrameHeightWithSpacing() * 2.0f + 8.0f;
-            const float listH = totalH - footerH;
+            const float footerH    = ImGui::GetFrameHeightWithSpacing() * 2.0f + 8.0f;
+            const float listH      = totalH - footerH;
             const Vec2 previewSize = {detailW, detailW * 0.5625f}; // 16:9
 
             ImGui::BeginChild("##LeftPanel", {listW, listH}, false);
@@ -161,15 +270,14 @@ namespace SF::Engine
                         if (s_recentProjects.empty())
                         {
                             ImGui::TextDisabled("No recent projects found.");
-                        }
-                        else
+                        } else
                         {
                             std::vector<int> sorted(s_recentProjects.size());
                             std::iota(sorted.begin(), sorted.end(), 0);
-                            std::sort(sorted.begin(), sorted.end(), [](int a, int b)
-                                      { return s_recentProjects[a].name < s_recentProjects[b].name; });
+                            std::sort(sorted.begin(), sorted.end(),
+                                      [](int a, int b) { return s_recentProjects[a].name < s_recentProjects[b].name; });
 
-                            for (int idx : sorted)
+                            for (int idx: sorted)
                             {
                                 const auto &proj = s_recentProjects[idx];
                                 ImGui::PushID(idx);
@@ -195,21 +303,19 @@ namespace SF::Engine
                                 ImGui::PopID();
                             }
                         }
-                    }
-                    else // Mode::Create – template list
+                    } else // Mode::Create – template list
                     {
                         if (s_templates.empty())
                         {
                             ImGui::TextDisabled("No templates available.");
-                        }
-                        else
+                        } else
                         {
                             std::vector<int> sorted(s_templates.size());
                             std::iota(sorted.begin(), sorted.end(), 0);
-                            std::sort(sorted.begin(), sorted.end(), [](int a, int b)
-                                      { return s_templates[a].name < s_templates[b].name; });
+                            std::sort(sorted.begin(), sorted.end(),
+                                      [](int a, int b) { return s_templates[a].name < s_templates[b].name; });
 
-                            for (int idx : sorted)
+                            for (int idx: sorted)
                             {
                                 ImGui::PushID(idx);
                                 SelectableItem(s_templates[idx].name, s_selectedIndex == idx, idx);
@@ -227,14 +333,13 @@ namespace SF::Engine
             {
                 if (s_mode == Mode::Open)
                 {
-                    const Image2d *img =
-                        (s_selectedIndex >= 0 && s_selectedIndex < (int)s_recentProjects.size())
-                            ? s_recentProjects[s_selectedIndex].aFrame.get()
-                            : nullptr;
+                    const Image2d *img = (s_selectedIndex >= 0 && s_selectedIndex < (int) s_recentProjects.size())
+                                                 ? s_recentProjects[s_selectedIndex].aFrame.get()
+                                                 : nullptr;
                     DrawPreviewImage(img, previewSize);
 
                     ImGui::Spacing();
-                    if (s_selectedIndex >= 0 && s_selectedIndex < (int)s_recentProjects.size())
+                    if (s_selectedIndex >= 0 && s_selectedIndex < (int) s_recentProjects.size())
                     {
                         const auto &p = s_recentProjects[s_selectedIndex];
                         ImGui::TextWrapped("Name:  %s", p.name.c_str());
@@ -244,19 +349,17 @@ namespace SF::Engine
                             ImGui::Spacing();
                             ImGui::TextWrapped("%s", p.description.c_str());
                         }
-                    }
-                    else
+                    } else
                     {
                         ImGui::TextDisabled("Select a project to see details.");
                     }
                     if (ImGui::Button("Browse"))
                     {
                         IGFD::FileDialogConfig cfg;
-                        cfg.path = ".";
+                        cfg.path  = ".";
                         cfg.flags = ImGuiFileDialogFlags_Modal;
                         ImGui::SetNextWindowSize(Vec2(700, 500));
-                        ImGuiFileDialog::Instance()->OpenDialog(
-                            "FindProjDir", "Find Project", ".projxml", cfg);
+                        ImGuiFileDialog::Instance()->OpenDialog("FindProjDir", "Find Project", ".projxml", cfg);
                     }
                     // Handle ImGuiFileDialog result.
                     if (ImGuiFileDialog::Instance()->Display("FindProjDir"))
@@ -268,17 +371,15 @@ namespace SF::Engine
                         }
                         ImGuiFileDialog::Instance()->Close();
                     }
-                }
-                else // Mode::Create
+                } else // Mode::Create
                 {
-                    const Image2d *img =
-                        (s_selectedIndex >= 0 && s_selectedIndex < (int)s_templates.size())
-                            ? s_templates[s_selectedIndex].ExampleImage.get()
-                            : nullptr;
+                    const Image2d *img = (s_selectedIndex >= 0 && s_selectedIndex < (int) s_templates.size())
+                                                 ? s_templates[s_selectedIndex].ExampleImage.get()
+                                                 : nullptr;
                     DrawPreviewImage(img, previewSize);
 
                     ImGui::Spacing();
-                    if (s_selectedIndex >= 0 && s_selectedIndex < (int)s_templates.size())
+                    if (s_selectedIndex >= 0 && s_selectedIndex < (int) s_templates.size())
                         ImGui::TextWrapped("%s", s_templates[s_selectedIndex].description.c_str());
 
                     ImGui::Spacing();
@@ -292,18 +393,18 @@ namespace SF::Engine
                     ImGui::Spacing();
 
                     // --- Folder + Browse ---
-                    const float browseW = ImGui::CalcTextSize("Browse").x + ImGui::GetStyle().FramePadding.x * 2.0f + 8.0f;
+                    const float browseW =
+                            ImGui::CalcTextSize("Browse").x + ImGui::GetStyle().FramePadding.x * 2.0f + 8.0f;
                     ImGui::SetNextItemWidth(-browseW - ImGui::GetStyle().ItemSpacing.x);
                     InputTextWithHint("##ProjFolder", "Project Folder *", s_newFolder, sizeof(s_newFolder));
                     ImGui::SameLine();
                     if (ImGui::Button("Browse"))
                     {
                         IGFD::FileDialogConfig cfg;
-                        cfg.path = ".";
+                        cfg.path  = ".";
                         cfg.flags = ImGuiFileDialogFlags_Modal;
                         ImGui::SetNextWindowSize(Vec2(700, 500));
-                        ImGuiFileDialog::Instance()->OpenDialog(
-                            "ChooseProjDir", "Choose Project Folder", nullptr, cfg);
+                        ImGuiFileDialog::Instance()->OpenDialog("ChooseProjDir", "Choose Project Folder", nullptr, cfg);
                     }
 
                     // Handle ImGuiFileDialog result.
@@ -327,7 +428,7 @@ namespace SF::Engine
                     if (s_newDesc[0] == '\0' && !ImGui::IsItemActive())
                     {
                         ImDrawList *dl = ImGui::GetWindowDrawList();
-                        Vec2 pos = ImGui::GetItemRectMin();
+                        Vec2 pos       = ImGui::GetItemRectMin();
                         pos.x += ImGui::GetStyle().FramePadding.x;
                         pos.y += ImGui::GetStyle().FramePadding.y;
                         dl->AddText(pos, ImGui::GetColorU32(ImGuiCol_TextDisabled), "Description (optional)");
@@ -344,10 +445,8 @@ namespace SF::Engine
             {
                 if (active)
                 {
-                    ImGui::PushStyleColor(ImGuiCol_Button,
-                                          ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,
-                                          ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
                 }
                 bool clicked = ImGui::Button(label);
                 if (active)
@@ -357,7 +456,7 @@ namespace SF::Engine
 
             if (StyledTabButton("Open Project", s_mode == Mode::Open) && s_mode != Mode::Open)
             {
-                s_mode = Mode::Open;
+                s_mode          = Mode::Open;
                 s_selectedIndex = -1;
             }
 
@@ -365,11 +464,11 @@ namespace SF::Engine
 
             if (StyledTabButton("Create Project", s_mode == Mode::Create) && s_mode != Mode::Create)
             {
-                s_mode = Mode::Create;
+                s_mode          = Mode::Create;
                 s_selectedIndex = -1;
-                s_newName[0] = '\0';
-                s_newFolder[0] = '\0';
-                s_newDesc[0] = '\0';
+                s_newName[0]    = '\0';
+                s_newFolder[0]  = '\0';
+                s_newDesc[0]    = '\0';
             }
 
             // -- Confirm button (right side) --
@@ -377,9 +476,8 @@ namespace SF::Engine
             const float actionW = ImGui::CalcTextSize(actionLabel).x + ImGui::GetStyle().FramePadding.x * 2.0f + 16.0f;
             ImGui::SameLine(totalW - actionW);
 
-            const bool canAct = (s_mode == Mode::Open)
-                                    ? (s_selectedIndex >= 0)
-                                    : (s_newName[0] != '\0' && s_newFolder[0] != '\0');
+            const bool canAct =
+                    (s_mode == Mode::Open) ? (s_selectedIndex >= 0) : (s_newName[0] != '\0' && s_newFolder[0] != '\0');
 
             if (!canAct)
                 ImGui::BeginDisabled();
@@ -390,20 +488,19 @@ namespace SF::Engine
 
                 if (s_mode == Mode::Open)
                 {
-                    if (s_selectedIndex >= 0 && s_selectedIndex < (int)s_recentProjects.size())
+                    if (s_selectedIndex >= 0 && s_selectedIndex < (int) s_recentProjects.size())
                         result = LoadProject(s_recentProjects[s_selectedIndex].projectPath);
-                }
-                else
+                } else
                 {
-                    result = CreateProject(std::string(s_newName),
-                                           std::filesystem::path(s_newFolder) / s_newName, s_newDesc);
+                    result = CreateProject(std::string(s_newName), std::filesystem::path(s_newFolder) / s_newName,
+                                           s_newDesc);
                     if (result == ProjectResult::Success)
                     {
                         // Clear fields on success.
-                        s_newName[0] = '\0';
-                        s_newFolder[0] = '\0';
-                        s_newDesc[0] = '\0';
-                        s_mode = Mode::Open; // flip back to open tab
+                        s_newName[0]    = '\0';
+                        s_newFolder[0]  = '\0';
+                        s_newDesc[0]    = '\0';
+                        s_mode          = Mode::Open; // flip back to open tab
                         s_selectedIndex = -1;
                     }
                 }
@@ -428,13 +525,10 @@ namespace SF::Engine
 
     bool ProjectManager::Initialize()
     {
-        UIRegistry::Get().Register([this]
-                                   { DrawProjectManagerWindow(); });
+        UIRegistry::Get().Register([this] { DrawProjectManagerWindow(); });
         return true;
     }
 
-    void ProjectManager::Update()
-    {
-    }
+    void ProjectManager::Update() {}
 
 } // namespace SF::Engine

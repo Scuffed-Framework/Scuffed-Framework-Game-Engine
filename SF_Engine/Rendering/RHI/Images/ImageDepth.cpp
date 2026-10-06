@@ -28,7 +28,7 @@ namespace SF::Engine
         CreateImageSampler(sampler, filter, addressMode, false, 1);
         CreateImageView(image, view, VK_IMAGE_VIEW_TYPE_2D, format, VK_IMAGE_ASPECT_DEPTH_BIT, 1, 0,
                         1, 0);
-        TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, layout, aspectMask, 1, 0, 1,
+        TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, layout, aspectMask, 1, 0, 1,
                               0);
     }
 }

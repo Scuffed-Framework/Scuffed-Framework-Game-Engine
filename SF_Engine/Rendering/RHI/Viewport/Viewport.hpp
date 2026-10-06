@@ -11,6 +11,7 @@
 
 namespace SF::Engine
 {
+    // this shit is just black
     class SceneViewport : NoCopy
     {
     public:

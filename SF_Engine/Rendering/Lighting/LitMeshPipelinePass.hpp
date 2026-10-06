@@ -58,6 +58,7 @@ namespace SF::Engine
             aoFactor        = 1.0f;
             emissiveFactor  = 0.0f;
         }
+        std::unique_ptr<Component> Clone() const override { return std::make_unique<MeshMaterial>(*this); }
 
         void Serialize(XMLNode &node) const override
         {

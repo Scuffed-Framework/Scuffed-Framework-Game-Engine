@@ -3,7 +3,7 @@
 namespace SF::Engine
 {
     SceneViewport::SceneViewport(UVec2 extent) :
-        desiredExtent(extent), pendingFree(kFramesInFlight), retired(kFramesInFlight)
+        pendingFree(kFramesInFlight), retired(kFramesInFlight), desiredExtent(extent)
     {
         CreateImages(extent);
     }
@@ -88,7 +88,9 @@ namespace SF::Engine
             return;
 
         VkImageLayout old = currentLayout;
-        VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+        VkImageMemoryBarrier barrier{};
+        barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.pNext               = nullptr;
         barrier.oldLayout           = old;
         barrier.newLayout           = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -108,32 +110,39 @@ namespace SF::Engine
 
     void SceneViewport::BeginRendering(VkCommandBuffer cmd, VkClearColorValue clear)
     {
-        VkRenderingAttachmentInfo colorAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        VkRenderingAttachmentInfo colorAttachment{};
+        colorAttachment.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         colorAttachment.imageView        = color->GetView();
         colorAttachment.imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         colorAttachment.loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachment.storeOp          = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachment.pNext            = nullptr;
         colorAttachment.clearValue.color = clear;
+        colorAttachment.pNext            = nullptr;
 
-        VkRenderingAttachmentInfo depthAttachment{VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO};
+        VkRenderingAttachmentInfo depthAttachment{};
+        depthAttachment.sType                   = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         depthAttachment.imageView               = depth->GetView();
         depthAttachment.imageLayout             = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         depthAttachment.loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp                 = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachment.clearValue.depthStencil = {1.0f, 0};
+        depthAttachment.pNext                   = nullptr;
 
-        VkExtent2D extent{currentExtent.x, currentExtent.y};
+        const VkExtent2D extent{.width = currentExtent.x, .height = currentExtent.y};
 
-        VkRenderingInfo renderingInfo{VK_STRUCTURE_TYPE_RENDERING_INFO};
-        renderingInfo.renderArea           = {{0, 0}, extent};
+        VkRenderingInfo renderingInfo{};
+        renderingInfo.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        renderingInfo.renderArea           = {.offset = {.x = 0, .y = 0}, .extent = extent};
         renderingInfo.layerCount           = 1;
         renderingInfo.colorAttachmentCount = 1;
         renderingInfo.pColorAttachments    = &colorAttachment;
         renderingInfo.pDepthAttachment     = &depthAttachment;
+        renderingInfo.pNext                = nullptr;
 
         vkCmdBeginRendering(cmd, &renderingInfo);
 
-        VkViewport vp{0.0f, 0.0f, (float) extent.width, (float) extent.height, 0.0f, 1.0f};
+        VkViewport vp{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f};
         VkRect2D scissor{{0, 0}, extent};
         vkCmdSetViewport(cmd, 0, 1, &vp);
         vkCmdSetScissor(cmd, 0, 1, &scissor);
@@ -146,7 +155,8 @@ namespace SF::Engine
         if (currentLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             return;
 
-        VkImageMemoryBarrier barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+        VkImageMemoryBarrier barrier{};
+        barrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         barrier.oldLayout           = currentLayout;
         barrier.newLayout           = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;

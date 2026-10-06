@@ -127,7 +127,7 @@ namespace SF::Engine
 
         if (loadBitmap || mipmap)
         {
-            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                   VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
         }
 
@@ -166,11 +166,11 @@ namespace SF::Engine
             CreateMipmaps(image, extent, format, layout, mipLevels, 0, arrayLayers);
         } else if (loadBitmap)
         {
-            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
                                   VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, 0, arrayLayers, 0);
         } else
         {
-            TransitionImageLayout(image, format, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT,
+            TransitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, layout, VK_IMAGE_ASPECT_COLOR_BIT,
                                   mipLevels, 0, arrayLayers, 0);
         }
     }

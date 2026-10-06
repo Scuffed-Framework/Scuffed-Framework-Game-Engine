@@ -297,6 +297,9 @@ namespace SF::Engine
         auto *colorImg  = dynamic_cast<const Image2d *>(rs->GetAttachment("hdr"));
         if (!depthImg || !normalImg || !pbrImg || !colorImg)
             return;
+        // Trace.shader needs the Hi-Z pyramid (HiZPipelinePass runs earlier in this same stage).
+        if (!hiz_ || !hiz_->GetPyramid())
+            return;
 
         UpdateUBO();
 
@@ -326,6 +329,10 @@ namespace SF::Engine
         descGeneration_               = gbufGeneration;
         const bool refreshSlotDescs   = (gbufGeneration != slotDescGeneration_[cur]);
         slotDescGeneration_[cur]      = gbufGeneration;
+
+        // The Hi-Z pyramid image is recreated on resize; traceSet_ binding 8 must follow it.
+        const bool hizChanged = (hiz_->GetGeneration() != hizGeneration_);
+        hizGeneration_        = hiz_->GetGeneration();
 
         // RayGen : rewrite gbuffer reads (attachment pointers can change on
         // resize), transition rayDir/rayData to GENERAL, dispatch.
@@ -395,23 +402,21 @@ namespace SF::Engine
             VkDescriptorImageInfo depthII{VK_NULL_HANDLE, depthImg->GetView(),
                                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
             VkDescriptorImageInfo hdrII{VK_NULL_HANDLE, colorImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+            (void) hdrII;
 
-            VkWriteDescriptorSet writes[2]{};
-            writes[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writes[0].dstSet          = traceSet_->GetDescriptorSet();
-            writes[0].dstBinding      = 1;
-            writes[0].descriptorCount = 1;
-            writes[0].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            writes[0].pImageInfo      = &depthII;
-
-            writes[1].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            writes[1].dstSet          = traceSet_->GetDescriptorSet();
-            writes[1].dstBinding      = 3;
-            writes[1].descriptorCount = 1;
-            writes[1].descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            writes[1].pImageInfo      = &hdrII;
-            if (refreshDescs)
-                DescriptorSet::Update({writes[0], writes[1]});
+            // 1 = depth, 2 = world normal (back-face hit rejection), 3 = last frame's hdr,
+            // 8 = Hi-Z pyramid (permanently GENERAL, see HiZPipelinePass).
+            if (refreshDescs || hizChanged)
+            {
+                auto traceGbufWrites =
+                        DescriptorSetWriteBuilder(*traceSet_)
+                                .Image(1, depthImg->GetView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
+                                .Image(2, normalImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                .Image(3, colorImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                .Image(8, hiz_->GetPyramid()->GetView(), VK_IMAGE_LAYOUT_GENERAL)
+                                .Build();
+                traceGbufWrites.Apply();
+            }
 
             Image2d *writeTargets[2] = {traceColorRT_.get(), traceHitRT_.get()};
             for (auto *img: writeTargets)
@@ -610,8 +615,9 @@ namespace SF::Engine
         ImGui::Checkbox("Spatial Filter", &spatialEnabled);
         ImGui::Checkbox("Probe Fallback", &probeFallbackEnabled);
         ImGui::Separator();
-        ImGui::SliderInt("Max Steps", &maxSteps, 4, 128);
-        ImGui::SliderFloat("Thickness (view-space)", &thickness, 0.01f, 2.0f);
+        ImGui::SliderInt("Max Hi-Z Iterations", &maxSteps, 8, 256);
+        ImGui::SliderFloat("Hit Thickness (world units)", &thickness, 0.005f, 2.0f);
+        ImGui::TextDisabled("Stride Scale / Binary Search: unused by Hi-Z trace");
         ImGui::SliderFloat("Stride Scale", &strideScale, 0.1f, 4.0f);
         ImGui::SliderInt("Binary Search Steps", &binarySearchSteps, 0, 12);
         ImGui::SliderFloat("Max Roughness", &maxRoughness, 0.0f, 1.0f);
