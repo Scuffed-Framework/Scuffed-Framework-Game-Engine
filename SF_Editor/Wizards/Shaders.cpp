@@ -110,7 +110,7 @@ namespace SF::Engine
         ImGui::EndPopup();
     }
 
-    void CreateShaderInclude(std::filesystem::path path, const std::string &incGaurdName)
+    void CreateShaderInclude(std::filesystem::path path)
     {
         File inc(std::move(path));
         FileWriter writer(inc);
@@ -118,6 +118,7 @@ namespace SF::Engine
         writer << "\n";
         writer << "// Your Logic Here\n";
         writer << "\n";
+        writer << "#endif   \n";
         inc.Close();
         showCSI = false;
     }
@@ -132,7 +133,7 @@ namespace SF::Engine
         }
 
         if (ImGui::Button("Create"))
-            CreateShaderInclude(path, name);
+            CreateShaderInclude(path);
         ImGui::EndPopup();
     }
 } // namespace SF::Engine
