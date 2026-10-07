@@ -86,6 +86,7 @@ class SfEngineConan(ConanFile):
         self.requires("tinyexr/1.0.7")
         self.requires("libwebp/1.6.0")
         self.requires("opusfile/0.12")
+        self.requires("fastgltf/0.9.1")
 
     def layout(self):
         cmake_layout(self)
