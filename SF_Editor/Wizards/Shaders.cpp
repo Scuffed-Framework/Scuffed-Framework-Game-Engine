@@ -114,12 +114,10 @@ namespace SF::Engine
     {
         File inc(std::move(path));
         FileWriter writer(inc);
-        writer << "#ifndef " + incGaurdName + "_INCLUDE\n";
-        writer << "#define " + incGaurdName + "_INCLUDE\n";
+        writer << "#pragma once\n";
         writer << "\n";
-        writer << "// Your Logic\n";
+        writer << "// Your Logic Here\n";
         writer << "\n";
-        writer << "#endif   \n";
         inc.Close();
         showCSI = false;
     }
