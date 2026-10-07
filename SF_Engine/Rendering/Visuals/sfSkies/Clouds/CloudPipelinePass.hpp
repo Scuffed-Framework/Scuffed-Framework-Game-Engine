@@ -61,7 +61,7 @@ namespace SF::Engine
         void SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos, const Vec3 &planetPos,
                           const Vec3 &sunDir, Vec2 screenSize);
 
-        void PreRender(const CommandBuffer &cmd);
+        void PreRender(const CommandBuffer &cmd) override;
 
         void Render(const CommandBuffer &) override;
 

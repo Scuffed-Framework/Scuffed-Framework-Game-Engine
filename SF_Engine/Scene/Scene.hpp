@@ -228,5 +228,4 @@ namespace SF::Engine
         void RemoveEntitySubtree(Entity *rootEntity);
     };
 
-    inline Scene *GetCurrentScene();
 } // namespace SF::Engine

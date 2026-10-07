@@ -40,4 +40,6 @@ namespace SF::Engine
         std::unique_ptr<Scene> pendingScene;
         bool sceneStarted = false;
     };
+
+    inline Scene *GetCurrentScene() { return SceneManager::Get()->GetScene(); }
 } // namespace SF::Engine
