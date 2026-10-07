@@ -227,4 +227,6 @@ namespace SF::Engine
         std::pair<int, int> FindParentRef(Entity *e) const;
         void RemoveEntitySubtree(Entity *rootEntity);
     };
+
+    inline Scene *GetCurrentScene();
 } // namespace SF::Engine

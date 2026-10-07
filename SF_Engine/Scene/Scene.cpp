@@ -336,4 +336,6 @@ namespace SF::Engine
         ClearEntities();
     }
 
+    Scene *GetCurrentScene() { return SceneManager::Get()->GetScene(); }
+
 } // namespace SF::Engine

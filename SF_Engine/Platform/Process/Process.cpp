@@ -277,7 +277,7 @@ namespace SF::Engine
         return result;
     }
 
-    Process::Process(ProcessID pid) : m_PID(pid), Handle(pid.Value) {}
+    Process::Process(const ProcessID pid) : Handle(pid.Value), m_PID(pid) {}
 
     ProcessID Process::GetPID() const noexcept { return m_PID; }
 

@@ -55,7 +55,8 @@ namespace SF::Engine
 
         for (size_t i = 0; i < visibleEntities.size(); i++)
         {
-            Vec2 rowMin = Vec2(windowPos.x + contentMin.x, ImGui::GetCursorScreenPos().y + i * rowHeight);
+            Vec2 rowMin =
+                    Vec2(windowPos.x + contentMin.x, ImGui::GetCursorScreenPos().y + static_cast<float>(i) * rowHeight);
             Vec2 rowMax = Vec2(windowPos.x + contentMax.x, rowMin.y + rowHeight);
 
             drawList->AddRectFilled(rowMin, rowMax, (i % 2 == 0) ? colEven : colOdd);
@@ -150,8 +151,8 @@ namespace SF::Engine
             if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ENTITY"))
             {
                 EntityId draggedId = *static_cast<const EntityId *>(payload->Data);
-                // Handle reparenting in your registry
-                // registry.Reparent(draggedEntity, entity);
+                GetCurrentScene()->GetEntities()->Reparent(GetCurrentScene()->GetEntities()->FindById(draggedId),
+                                                           entity);
             }
             ImGui::EndDragDropTarget();
         }
