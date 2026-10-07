@@ -1,14 +1,11 @@
 #include "XMLModule.hpp"
 #include <Engine/Log/Log.hpp>
-#include <sstream>
 #include <cstdarg>
 #include <cstdio>
+#include <sstream>
 
 namespace SF::Engine
 {
-
-    // XMLNode
-
     std::string XMLNode::GetName() const
     {
         if (!node || !node->name)
@@ -70,8 +67,7 @@ namespace SF::Engine
         {
             out = std::stoi(s);
             return true;
-        }
-        catch (...)
+        } catch (...)
         {
             return false;
         }
@@ -86,8 +82,7 @@ namespace SF::Engine
         {
             out = std::stof(s);
             return true;
-        }
-        catch (...)
+        } catch (...)
         {
             return false;
         }
@@ -108,15 +103,11 @@ namespace SF::Engine
     {
         if (!node)
             return;
-        xmlSetProp(node,
-                   reinterpret_cast<const xmlChar *>(name.c_str()),
+        xmlSetProp(node, reinterpret_cast<const xmlChar *>(name.c_str()),
                    reinterpret_cast<const xmlChar *>(value.c_str()));
     }
 
-    void XMLNode::SetAttribute(const std::string &name, int value)
-    {
-        SetAttribute(name, std::to_string(value));
-    }
+    void XMLNode::SetAttribute(const std::string &name, int value) { SetAttribute(name, std::to_string(value)); }
 
     void XMLNode::SetAttribute(const std::string &name, float value)
     {
@@ -161,8 +152,7 @@ namespace SF::Engine
         {
             if (n->type != XML_ELEMENT_NODE)
                 continue;
-            if (name.empty() ||
-                std::string(reinterpret_cast<const char *>(n->name)) == name)
+            if (name.empty() || std::string(reinterpret_cast<const char *>(n->name)) == name)
                 return {n, doc};
         }
         return {};
@@ -177,8 +167,7 @@ namespace SF::Engine
         {
             if (n->type != XML_ELEMENT_NODE)
                 continue;
-            if (name.empty() ||
-                std::string(reinterpret_cast<const char *>(n->name)) == name)
+            if (name.empty() || std::string(reinterpret_cast<const char *>(n->name)) == name)
                 result.emplace_back(n, doc);
         }
         return result;
@@ -188,10 +177,7 @@ namespace SF::Engine
     {
         if (!node)
             return {};
-        xmlNodePtr child = xmlNewChild(
-            node, nullptr,
-            reinterpret_cast<const xmlChar *>(name.c_str()),
-            nullptr);
+        xmlNodePtr child = xmlNewChild(node, nullptr, reinterpret_cast<const xmlChar *>(name.c_str()), nullptr);
         return {child, doc};
     }
 
@@ -199,10 +185,8 @@ namespace SF::Engine
     {
         if (!node)
             return {};
-        xmlNodePtr child = xmlNewChild(
-            node, nullptr,
-            reinterpret_cast<const xmlChar *>(name.c_str()),
-            reinterpret_cast<const xmlChar *>(content.c_str()));
+        xmlNodePtr child = xmlNewChild(node, nullptr, reinterpret_cast<const xmlChar *>(name.c_str()),
+                                       reinterpret_cast<const xmlChar *>(content.c_str()));
         return {child, doc};
     }
 
@@ -274,9 +258,8 @@ namespace SF::Engine
     bool XMLModule::LoadFromString(const std::string &content)
     {
         Clear();
-        document = xmlReadMemory(
-            content.c_str(), static_cast<int>(content.size()),
-            "noname.xml", nullptr, XML_PARSE_NOBLANKS);
+        document = xmlReadMemory(content.c_str(), static_cast<int>(content.size()), "noname.xml", nullptr,
+                                 XML_PARSE_NOBLANKS);
         if (!document)
         {
             SetError("Failed to parse XML string");
@@ -291,7 +274,7 @@ namespace SF::Engine
         if (!document)
             return {};
         xmlChar *buf = nullptr;
-        int size = 0;
+        int size     = 0;
         xmlDocDumpFormatMemoryEnc(document, &buf, &size, "UTF-8", 1);
         if (!buf)
             return {};
@@ -302,26 +285,19 @@ namespace SF::Engine
 
     // Root node
 
-    XMLNode XMLModule::GetRootNode() const
-    {
-        return {rootNode, document};
-    }
+    XMLNode XMLModule::GetRootNode() const { return {rootNode, document}; }
 
     void XMLModule::SetRootNode(const std::string &rootName)
     {
         Clear();
         document = xmlNewDoc(reinterpret_cast<const xmlChar *>("1.0"));
-        rootNode = xmlNewNode(nullptr,
-                              reinterpret_cast<const xmlChar *>(rootName.c_str()));
+        rootNode = xmlNewNode(nullptr, reinterpret_cast<const xmlChar *>(rootName.c_str()));
         xmlDocSetRootElement(document, rootNode);
     }
 
     // Static value helpers
 
-    std::string XMLModule::SerializeValue(int value)
-    {
-        return std::to_string(value);
-    }
+    std::string XMLModule::SerializeValue(int value) { return std::to_string(value); }
 
     std::string XMLModule::SerializeValue(float value)
     {
@@ -331,15 +307,9 @@ namespace SF::Engine
         return ss.str();
     }
 
-    std::string XMLModule::SerializeValue(bool value)
-    {
-        return value ? "true" : "false";
-    }
+    std::string XMLModule::SerializeValue(bool value) { return value ? "true" : "false"; }
 
-    std::string XMLModule::SerializeValue(const std::string &value)
-    {
-        return value;
-    }
+    std::string XMLModule::SerializeValue(const std::string &value) { return value; }
 
     bool XMLModule::DeserializeValue(const std::string &str, int &out)
     {
@@ -347,8 +317,7 @@ namespace SF::Engine
         {
             out = std::stoi(str);
             return true;
-        }
-        catch (...)
+        } catch (...)
         {
             return false;
         }
@@ -360,8 +329,7 @@ namespace SF::Engine
         {
             out = std::stof(str);
             return true;
-        }
-        catch (...)
+        } catch (...)
         {
             return false;
         }
@@ -379,49 +347,12 @@ namespace SF::Engine
         return true;
     }
 
-    std::string XMLModule::SerializeValue(const UUID &value)
-    {
-        return value.ToString();
-    }
+    std::string XMLModule::SerializeValue(const UUID &value) { return value.ToString(); }
 
     bool XMLModule::DeserializeValue(const std::string &str, UUID &out)
     {
         out = UUID::FromString(str);
         return true;
     }
-
-    template <typename T>
-    void XMLNode::SetAttribute(const std::string &name, const T &value)
-    {
-        SetAttribute(name, XMLModule::SerializeValue(value));
-    }
-    template <typename T>
-    bool XMLNode::GetChildContent(const std::string &childName, T &out) const
-    {
-        XMLNode child = GetChild(childName);
-        if (!child.IsValid())
-            return false;
-        return XMLModule::DeserializeValue(child.GetContent(), out);
-    }
-
-    template <typename T>
-    void XMLNode::SetChildContent(const std::string &childName, const T &value)
-    {
-        std::string serialized = XMLModule::SerializeValue(value);
-        XMLNode child = GetChild(childName);
-        if (child.IsValid())
-            child.SetContent(serialized);
-        else
-            AddChild(childName, serialized);
-    }
-    template <typename T>
-    bool XMLNode::GetAttribute(const std::string &name, T &out) const
-    {
-        std::string raw;
-        if (!GetAttribute(name, raw))
-            return false;
-        return XMLModule::DeserializeValue(raw, out);
-    }
-
 
 } // namespace SF::Engine

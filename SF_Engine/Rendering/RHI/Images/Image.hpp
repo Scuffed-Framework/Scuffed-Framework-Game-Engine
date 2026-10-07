@@ -252,7 +252,7 @@ namespace SF::Engine
         b.subresourceRange.baseMipLevel   = 0;
         b.subresourceRange.levelCount     = 1;
         b.subresourceRange.baseArrayLayer = 0;
-        b.subresourceRange.layerCount     = layerCount,
+        b.subresourceRange.layerCount     = layerCount;
 
         vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &b);
     }
@@ -635,7 +635,7 @@ namespace SF::Engine
 
         void Save() override;
 
-        bool Load(std::span<const uint8_t> payload) override
+        bool Load(std::span<const uint8_t> /*payload*/) override
         {
             // TODO: parse `payload` into the XML module here (see note below).
             XMLNode root = XMLModule::Get()->GetRootNode();

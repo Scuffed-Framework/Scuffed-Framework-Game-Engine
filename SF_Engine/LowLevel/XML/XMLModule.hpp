@@ -158,6 +158,56 @@ namespace SF::Engine
         void SetError(const std::string &error);
         static void ErrorHandler(void *ctx, const char *msg, ...);
     };
+
+    template<typename T>
+    void XMLNode::SetAttribute(const std::string &name, const T &value)
+    {
+        if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+            SetAttribute(name, std::to_string(value));
+        else
+            SetAttribute(name, XMLModule::SerializeValue(value));
+    }
+
+    template<typename T>
+    bool XMLNode::GetAttribute(const std::string &name, T &out) const
+    {
+        std::string raw;
+        if (!GetAttribute(name, raw))
+            return false;
+
+        if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+        {
+            T value{};
+            const char *end      = raw.data() + raw.size();
+            const auto [ptr, ec] = std::from_chars(raw.data(), end, value);
+            if (ec != std::errc{} || ptr != end) // bad digits, trailing junk, or out of range
+                return false;
+            out = value;
+            return true;
+        } else
+        {
+            return XMLModule::DeserializeValue(raw, out);
+        }
+    }
+    template<typename T>
+    bool XMLNode::GetChildContent(const std::string &childName, T &out) const
+    {
+        XMLNode child = GetChild(childName);
+        if (!child.IsValid())
+            return false;
+        return XMLModule::DeserializeValue(child.GetContent(), out);
+    }
+
+    template<typename T>
+    void XMLNode::SetChildContent(const std::string &childName, const T &value)
+    {
+        std::string serialized = XMLModule::SerializeValue(value);
+        XMLNode child          = GetChild(childName);
+        if (child.IsValid())
+            child.SetContent(serialized);
+        else
+            AddChild(childName, serialized);
+    }
 } // namespace SF::Engine
 
 // Include implementation

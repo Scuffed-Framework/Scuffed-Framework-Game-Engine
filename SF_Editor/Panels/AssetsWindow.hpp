@@ -115,7 +115,7 @@ namespace SF::Engine
         std::shared_ptr<Image2d> CppLogo;
 
         void DrawFolderTile(const std::filesystem::path &folderPath, int index);
-        void DrawFolderNameField(const std::filesystem::path &folderPath, float width);
+        void DrawFolderNameField(float width);
         void DrawDeleteFolderConfirmPopup();
 
         std::filesystem::path CreateUniqueFolder(const std::filesystem::path &parent, const std::string &baseName);

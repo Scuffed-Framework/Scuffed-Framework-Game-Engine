@@ -103,8 +103,7 @@ namespace SF::Engine
 
         Window *window{};
 
-        explicit Application(ApplicationInfo info, const Version &version = {1, 0, 0}) :
-            Info(std::make_unique<ApplicationInfo>(std::move(info)))
+        explicit Application(ApplicationInfo info) : Info(std::make_unique<ApplicationInfo>(std::move(info)))
         {
             auto exeDir = GetExecutablePath().parent_path();
             std::filesystem::current_path(exeDir);

@@ -183,7 +183,7 @@ namespace SF::Engine
         ImGui::PopItemWidth();
     }
 
-    bool InspectorPanel::DrawComponentField(const std::string &label, SF::Engine::Component *component)
+    bool InspectorPanel::DrawComponentField(const std::string & /*label*/, SF::Engine::Component *component)
     {
         if (!component)
             return false;

@@ -1,8 +1,8 @@
 #include "AssetsWindow.hpp"
 #include <Engine/Project/Project.hpp>
 #include <Gui/ImGui/GuiMembers.hpp>
-#include "../Wizards/Shaders.hpp"
 #include <Gui/ImGui/ocornut/imgui_impl_vulkan.h>
+#include "../Wizards/Shaders.hpp"
 #include "Panels.hpp"
 
 namespace SF::Engine
@@ -373,7 +373,7 @@ namespace SF::Engine
         if (isSelected)
         {
             Vec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_HeaderActive];
-            bgColor.w      = 0.3f;
+            bgColor.w    = 0.3f;
             ImGui::PushStyleColor(ImGuiCol_Button, bgColor);
         }
 
@@ -490,7 +490,7 @@ namespace SF::Engine
                             (m_inlineEditMode == InlineEditMode::RenameFolder && m_inlineEditPath == folderPath);
                     if (isEditingThis)
                     {
-                        DrawFolderNameField(folderPath, -1); // -1 = fill remaining column width
+                        DrawFolderNameField(-1); // -1 = fill remaining column width
                     } else if (ImGui::Selectable(name.c_str(), false,
                                                  ImGuiSelectableFlags_SpanAllColumns |
                                                          ImGuiSelectableFlags_AllowDoubleClick))
@@ -632,7 +632,6 @@ namespace SF::Engine
         if (asset->texture)
         {
             auto &tex    = asset->texture;
-            auto extent  = tex->GetExtent();
             auto preview = GetOrCreatePreview(asset->uuid, tex);
 
             if (preview.isValid && preview.textureID)
@@ -968,7 +967,7 @@ namespace SF::Engine
         return preview;
     }
 
-    void AssetBrowser::DrawFolderNameField(const std::filesystem::path &folderPath, float width)
+    void AssetBrowser::DrawFolderNameField(float width)
     {
         ImGui::SetNextItemWidth(width);
 
@@ -981,9 +980,7 @@ namespace SF::Engine
         bool confirmed = ImGui::InputText("##inlinefoldername", m_inlineEditBuffer, sizeof(m_inlineEditBuffer),
                                           ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
 
-        if (confirmed)
-            CommitInlineFolderRename();
-        else if (ImGui::IsItemDeactivated()) // clicked away without pressing Enter -> commit, like Unity
+        if (confirmed || ImGui::IsItemDeactivated()) // clicked away without pressing Enter -> commit, like Unity
             CommitInlineFolderRename();
     }
 
@@ -1011,7 +1008,7 @@ namespace SF::Engine
 
         if (isEditingThis)
         {
-            DrawFolderNameField(folderPath, thumbnailSize.x);
+            DrawFolderNameField(thumbnailSize.x);
         } else
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + thumbnailSize.x);
