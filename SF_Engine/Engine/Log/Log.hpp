@@ -3,8 +3,8 @@
 #include <cassert>
 #include <filesystem>
 #include <memory>
-#include <sstream>
 #include <string_view>
+#include <utility>
 
 #include <Math/Time/Time.hpp>
 
@@ -15,6 +15,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     /**
      * @brief A logging class used in Engine, will write output to the standard stream and into a
      * file.
@@ -83,10 +84,28 @@ namespace SF::Engine
         template<typename... Args>
         static void Out(fmt::format_string<Args...> fmt, Args &&...args)
         {
-            auto &loggerRef = GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = GetLogger())
             {
                 loggerRef->info(fmt, std::forward<Args>(args)...);
+            }
+        }
+
+        // examples:
+        // Log::Print({Log::Styles::Bold, Log::Colours::Cyan}, "Loaded {} meshes", 12);
+        // Log::Print({Log::Styles::Underlined, Log::Colours::LightGreen}, "Shader compiled");
+        /**@brief print a message with custom style & color
+         *@param styleAndColour {Log::Styles::MY_STYLE. Log::Colors::MY_COLOR}
+         *@param fmt message
+         */
+        template<typename... Args>
+        static void Print(std::pair<std::string_view, std::string_view> styleAndColour, fmt::format_string<Args...> fmt,
+                          Args &&...args)
+        {
+            if (auto &loggerRef = GetLogger())
+            {
+                const auto &[style, colour] = styleAndColour;
+                loggerRef->info("{}{}{}{}", style, colour, fmt::format(fmt, std::forward<Args>(args)...),
+                                Styles::Reset);
             }
         }
 
@@ -97,8 +116,7 @@ namespace SF::Engine
         template<typename... Args>
         static void Debug(fmt::format_string<Args...> fmt, Args &&...args)
         {
-            auto &loggerRef = GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = GetLogger())
             {
                 loggerRef->debug(fmt, std::forward<Args>(args)...);
             }
@@ -111,8 +129,7 @@ namespace SF::Engine
         template<typename... Args>
         static void Info(fmt::format_string<Args...> fmt, Args &&...args)
         {
-            auto &loggerRef = GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = GetLogger())
             {
                 loggerRef->info(fmt, std::forward<Args>(args)...);
             }
@@ -125,8 +142,7 @@ namespace SF::Engine
         template<typename... Args>
         static void Warning(fmt::format_string<Args...> fmt, Args &&...args)
         {
-            auto &loggerRef = GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = GetLogger())
             {
                 loggerRef->warn(fmt, std::forward<Args>(args)...);
             }
@@ -139,8 +155,7 @@ namespace SF::Engine
         template<typename... Args>
         static void Error(fmt::format_string<Args...> fmt, Args &&...args)
         {
-            auto &loggerRef = GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = GetLogger())
             {
                 loggerRef->error(fmt, std::forward<Args>(args)...);
             }
@@ -153,8 +168,7 @@ namespace SF::Engine
         template<typename... Args>
         static void Critical(fmt::format_string<Args...> fmt, Args &&...args)
         {
-            auto &loggerRef = GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = GetLogger())
             {
                 loggerRef->critical(fmt, std::forward<Args>(args)...);
             }
@@ -171,8 +185,7 @@ namespace SF::Engine
         {
             if (!expr)
             {
-                auto &loggerRef = GetLogger();
-                if (loggerRef)
+                if (auto &loggerRef = GetLogger())
                 {
                     loggerRef->critical("Assertion failed: {}", fmt::format(fmt, std::forward<Args>(args)...));
                 }
@@ -226,8 +239,7 @@ namespace SF::Engine
         template<typename... Args>
         void WriteOut(fmt::format_string<Args...> fmt, Args &&...args) const
         {
-            auto &loggerRef = Log::GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = Log::GetLogger())
             {
                 loggerRef->info(FormatMessage(fmt, std::forward<Args>(args)...));
             }
@@ -236,8 +248,7 @@ namespace SF::Engine
         template<typename... Args>
         void WriteInfo(fmt::format_string<Args...> fmt, Args &&...args) const
         {
-            auto &loggerRef = Log::GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = Log::GetLogger())
             {
                 loggerRef->info("INFO: {}", FormatMessage(fmt, std::forward<Args>(args)...));
             }
@@ -246,8 +257,7 @@ namespace SF::Engine
         template<typename... Args>
         void WriteDebug(fmt::format_string<Args...> fmt, Args &&...args) const
         {
-            auto &loggerRef = Log::GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = Log::GetLogger())
             {
                 loggerRef->debug("DEBUG: {}", FormatMessage(fmt, std::forward<Args>(args)...));
             }
@@ -256,8 +266,7 @@ namespace SF::Engine
         template<typename... Args>
         void WriteWarning(fmt::format_string<Args...> fmt, Args &&...args) const
         {
-            auto &loggerRef = Log::GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = Log::GetLogger())
             {
                 loggerRef->warn("WARN: {}", FormatMessage(fmt, std::forward<Args>(args)...));
             }
@@ -266,8 +275,7 @@ namespace SF::Engine
         template<typename... Args>
         void WriteError(fmt::format_string<Args...> fmt, Args &&...args) const
         {
-            auto &loggerRef = Log::GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = Log::GetLogger())
             {
                 loggerRef->error("ERROR: {}", FormatMessage(fmt, std::forward<Args>(args)...));
             }
@@ -276,8 +284,7 @@ namespace SF::Engine
         template<typename... Args>
         void WriteCritical(fmt::format_string<Args...> fmt, Args &&...args) const
         {
-            auto &loggerRef = Log::GetLogger();
-            if (loggerRef)
+            if (auto &loggerRef = Log::GetLogger())
             {
                 loggerRef->critical("CRITICAL: {}", FormatMessage(fmt, std::forward<Args>(args)...));
             }
