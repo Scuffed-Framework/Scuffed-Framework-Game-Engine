@@ -6,10 +6,10 @@
 namespace SF::Engine
 {
     using namespace std;
-    struct GameInfo
+    struct AppInfo
     {
     public:
-        const string name;
+        string name;
         Version version;
     };
 } // namespace SF::Engine
