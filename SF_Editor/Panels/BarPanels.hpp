@@ -16,6 +16,8 @@
 namespace SF::Engine
 {
     class Camera;
+    class AudioClip;
+    class SoundBuffer;
 
     class BarPanels : public StaticSingleInstancePanel<BarPanels>
     {
@@ -30,6 +32,9 @@ namespace SF::Engine
 
     private:
         size_t reg;
+        void TestAudio(uint32_t dat, float freq, float time);
+        std::shared_ptr<SoundBuffer> buffer;
+        std::shared_ptr<AudioClip> clip;
 
         void DrawMenuBar();
 

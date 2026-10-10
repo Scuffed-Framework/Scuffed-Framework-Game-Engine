@@ -14,6 +14,7 @@
 namespace SF::Engine
 {
     float freq, time;
+
     void BarPanels::Draw()
     {
         DrawMenuBar();
@@ -21,15 +22,12 @@ namespace SF::Engine
         DrawEngineStatusBar();
     }
 
-    void TestAudio(ALuint dat, float freq, float time)
+    void BarPanels::TestAudio(uint32_t dat, float freq, float time)
     {
-        static std::shared_ptr<SoundBuffer> buffer;
-        static AudioClip clip;
-
         buffer = SoundBuffer::CreateWave(dat, freq, time);
-        clip   = AudioClip(buffer);
-        clip.SetEnabled(true);
-        clip.Play();
+        clip   = std::make_shared<AudioClip>(buffer);
+        clip->SetEnabled(true);
+        clip->Play();
     }
 
     void BarPanels::DrawMenuBar()
