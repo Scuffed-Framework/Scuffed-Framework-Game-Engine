@@ -127,8 +127,8 @@ namespace SF::Engine
         {
             Image::InsertImageMemoryBarrier(cmd, pyramid_->GetImage(), src, dst, VK_IMAGE_LAYOUT_GENERAL,
                                             VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
-                                            levelCount_, 0, 1, 0);
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                            VK_IMAGE_ASPECT_COLOR_BIT, levelCount_, 0, 1, 0);
         };
 
         // Last frame's SSR Trace reads must finish before this frame overwrites the pyramid.
