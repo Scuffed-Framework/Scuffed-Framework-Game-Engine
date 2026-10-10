@@ -106,6 +106,25 @@ namespace SF::Engine
             std::is_pointer_v<T> || is_unique_ptr_v<T> || is_shared_ptr_v<T> || is_weak_ptr_v<T>;
 
     template<typename T>
+    struct is_smart_pointer : false_type
+    {
+    };
+    template<typename T>
+    struct is_smart_pointer<unique_ptr<T>> : true_type
+    {
+    };
+    template<typename T>
+    struct is_smart_pointer<shared_ptr<T>> : true_type
+    {
+    };
+    template<typename T>
+    struct is_smart_pointer<weak_ptr<T>> : true_type
+    {
+    };
+    template<typename T>
+    constexpr bool is_smart_pointer_v = is_smart_pointer<remove_cvref_t<T>>::value;
+
+    template<typename T>
     static T *to_address(T *obj) noexcept
     {
         return obj;
