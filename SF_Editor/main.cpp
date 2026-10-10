@@ -25,7 +25,5 @@ int main()
 
     app.AppLoop();
 
-    std::cout << "AppLoop returned\n";
-
     return 0;
 }

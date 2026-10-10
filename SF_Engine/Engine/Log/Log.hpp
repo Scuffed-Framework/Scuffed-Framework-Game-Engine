@@ -13,6 +13,11 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+// X11 headers are this engine's no1 enemy
+#ifdef Success
+    #undef Success
+#endif
+
 namespace SF::Engine
 {
     using namespace std;
@@ -35,7 +40,7 @@ namespace SF::Engine
             constexpr static std::string_view Hidden     = "\033[8m";
         };
 
-        struct Colours
+        struct Colors
         {
             constexpr static std::string_view Default = "\033[0m";
 
@@ -91,8 +96,8 @@ namespace SF::Engine
         }
 
         // examples:
-        // Log::Print({Log::Styles::Bold, Log::Colours::Cyan}, "Loaded {} meshes", 12);
-        // Log::Print({Log::Styles::Underlined, Log::Colours::LightGreen}, "Shader compiled");
+        // Log::Print({Log::Styles::Bold, Log::Colors::Cyan}, "Loaded {} meshes", 12);
+        // Log::Print({Log::Styles::Underlined, Log::Colors::LightGreen}, "Shader compiled");
         /**@brief print a message with custom style & color
          *@param styleAndColour {Log::Styles::MY_STYLE. Log::Colors::MY_COLOR}
          *@param fmt message
