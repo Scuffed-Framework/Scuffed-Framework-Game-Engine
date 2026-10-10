@@ -16,7 +16,7 @@ namespace SF::Engine::Animation
         {
         }
 
-        const ApplicationTime &GetLength() const { return length; }
-        const std::vector<Keyframe> &GetKeyframes() const { return keyframes; }
+        [[nodiscard]] const ApplicationTime &GetLength() const { return length; }
+        [[nodiscard]] const std::vector<Keyframe> &GetKeyframes() const { return keyframes; }
     };
 } // namespace SF::Engine::Animation

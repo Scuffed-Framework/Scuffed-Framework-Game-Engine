@@ -1,52 +1,41 @@
 #pragma once
+#include <Commands/CommandsWindow.hpp>
 #include <Engine/Application/Application.hpp>
+#include "Panels/AssetsWindow.hpp"
+#include "Panels/BarPanels.hpp"
 #include "Panels/HierarchyPanel.hpp"
 #include "Panels/InspectorPanel.hpp"
-#include "Panels/BarPanels.hpp"
-#include "Panels/AssetsWindow.hpp"
-#include <Commands/CommandsWindow.hpp>
 
 namespace SF::Engine
 {
-    class EditorInfo : public ::SF::Engine::GameInfo
+    class EditorInfo : public ::SF::Engine::AppInfo
     {
     public:
-        EditorInfo() : GameInfo{/*Name*/ {"SF Level Editor"}, /*Version*/ {1, 0, 0}} {};
+        EditorInfo() : AppInfo{/*Name*/ {"SF Level Editor"}, /*Version*/ {1, 0, 0}} {};
     };
 
-    class EditorApplication : public Application<EditorInfo>
+    class EditorApplication : public Application
     {
     public:
-        EditorApplication()
-            : Application(EditorInfo{}),
-              hierarchy(std::make_unique<HierarchyPanel>()),
-              inspector(std::make_unique<InspectorPanel>()),
-              panels(std::make_unique<BarPanels>()),
-              assetBrowser(std::make_unique<AssetBrowser>()),
-              cmdWindow(std::make_unique<CommandWindow>())
+        EditorApplication() :
+            Application(std::make_unique<EditorInfo>()), hierarchy(std::make_unique<HierarchyPanel>()),
+            inspector(std::make_unique<InspectorPanel>()), panels(std::make_unique<BarPanels>()),
+            assetBrowser(std::make_unique<AssetBrowser>()), cmdWindow(std::make_unique<CommandWindow>())
         {
         }
 
         InitializationReturn Init() override
         {
-            const auto result = Application::Init();
 
-            if (result != InitializationReturn::Success)
+            if (const auto result = Application::Init(); result != InitializationReturn::Success)
                 return result;
 
-            hierarchy->SetOnEntitySelected(
-                [this](Entity *entity)
-                {
-                    inspector->SetEntity(entity);
-                });
+            hierarchy->SetOnEntitySelected([this](Entity *entity) { inspector->SetEntity(entity); });
 
             return InitializationReturn::Success;
         }
 
-        void Update() override
-        {
-            Application::Update();
-        }
+        void Update() override { Application::Update(); }
 
     private:
         std::unique_ptr<HierarchyPanel> hierarchy;
@@ -55,4 +44,4 @@ namespace SF::Engine
         std::unique_ptr<AssetBrowser> assetBrowser;
         std::unique_ptr<CommandWindow> cmdWindow;
     };
-}
+} // namespace SF::Engine

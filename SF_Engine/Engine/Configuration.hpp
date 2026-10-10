@@ -1,16 +1,29 @@
 #pragma once
 #include <Configuration/Configurable.hpp>
-#include <Engine/Log/Log.hpp>
 #include <Scene/Scene.hpp>
+#include "InitGame/AppInfo.hpp"
 
 namespace SF::Engine
 {
+    class Version;
     struct EngineConfig : Serializable
     {
     public:
         struct LogConfig
         {
             bool Disable;
+        };
+
+        struct BuildConfiguration
+        {
+            bool RSC_ENCRYPTION          = true;
+            bool RSC_SEGMENT_KEYS        = true;
+            bool RSC_MANIFEST_ENCRYPTION = true;
+            bool RSC_SIGNATURES          = true;
+            bool RSC_OBFUSCATION         = true;
+            bool RSC_MEMORY_PROTECTION   = false;
+            bool RSC_ANTICHEAT           = false;
+            bool RSC_STREAMING           = true;
         };
 
         // Scalable Multi-threaded Adaptive Rendering Technology

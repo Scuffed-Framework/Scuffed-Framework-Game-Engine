@@ -27,7 +27,7 @@
 
 #include <Platform/PlatformIncludes.hpp>
 #include "Configuration.hpp"
-#include "InitGame/GameInfo.hpp"
+#include "InitGame/AppInfo.hpp"
 #include "InitGame/GameInstance.hpp"
 #include "VersionSemantic.hpp"
 
@@ -118,11 +118,11 @@ namespace SF::Engine
 
     private:
         UpdateClock<> ups, fps;
-        GameInfo *gameInfo;
+        AppInfo *gameInfo;
 
     public:
-        void SetGameInfo(GameInfo *info) { gameInfo = info; }
-        [[nodiscard]] GameInfo *GetGameInfo() const { return gameInfo; }
+        void SetGameInfo(AppInfo *info) { gameInfo = info; }
+        [[nodiscard]] AppInfo *GetGameInfo() const { return gameInfo; }
         [[nodiscard]] const std::string &GetApplicationName() const noexcept { return GetGameInfo()->name; }
         [[nodiscard]] Version &GetApplicationVersion() const { return GetGameInfo()->version; }
 
