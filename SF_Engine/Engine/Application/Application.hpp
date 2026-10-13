@@ -52,7 +52,6 @@ namespace SF::Engine
     {
         friend class Engine;
 
-    private:
         WindowManager *wndMgr  = nullptr;
         RenderSystem *renderer = nullptr;
         SceneManager *sceneMgr = nullptr;
@@ -134,9 +133,8 @@ namespace SF::Engine
          */
         [[nodiscard]] bool IsStarted() const noexcept { return started_; }
 
-        [[nodiscard]] std::vector<File> GetAllModules() const;
-
-        [[nodiscard]] std::filesystem::path GetExecutablePath() const { return GetExecutablePathImpl(); }
+        static std::vector<File> GetAllModules();
+        static std::filesystem::path GetExecutablePath() { return GetExecutablePathImpl(); }
 
     protected:
         virtual void OnShutdown() {} // optional override point, no-op by default

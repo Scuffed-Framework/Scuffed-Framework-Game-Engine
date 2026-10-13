@@ -24,6 +24,9 @@ namespace SF::Engine
             bool RSC_MEMORY_PROTECTION   = false;
             bool RSC_ANTICHEAT           = false;
             bool RSC_STREAMING           = true;
+
+            AppInfo Engine;
+            AppInfo Game;
         };
 
         // Scalable Multi-threaded Adaptive Rendering Technology

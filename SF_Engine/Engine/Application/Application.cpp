@@ -180,7 +180,7 @@ namespace SF::Engine
         Info->version = version;
     }
 
-    std::vector<File> Application::GetAllModules() const
+    std::vector<File> Application::GetAllModules()
     {
         std::vector<File> result;
 

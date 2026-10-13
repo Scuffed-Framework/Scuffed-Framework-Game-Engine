@@ -10,6 +10,7 @@ namespace SF::Engine
 {
     namespace
     {
+        constexpr int ProjectFileVersion = 1;
         enum class Mode
         {
             Open,
@@ -123,107 +124,84 @@ namespace SF::Engine
 
     template class ModuleRegistrar<ProjectManager>; // idk why
 
+
+    ProjectResult ProjectManager::SaveProject() const
+    {
+        if (!currentLoadedProject)
+            return ProjectResult::NotFound;
+
+        std::error_code ec;
+        std::filesystem::create_directories(currentLoadedProject->Path.parent_path(), ec);
+        if (ec)
+            return ProjectResult::UnknownError;
+
+        auto *xml = XMLModule::Get();
+        xml->SetRootNode("SFProject");
+        XMLNode root = xml->GetRootNode();
+        root.SetAttribute("version", ProjectFileVersion);
+        currentLoadedProject->Serialize(root);
+
+        return xml->SaveToFile(currentLoadedProject->Path.string()) ? ProjectResult::Success
+                                                                    : ProjectResult::UnknownError;
+    }
+
+
     // ProjectManager::CreateProject
     //
     // Directory layout created on disk:
     //   <path>/
-    //     <name>.projxml     ← project XML descriptor
+    //     <name>.projxml     <- project XML descriptor
 
     ProjectResult ProjectManager::CreateProject(const std::string &name, const std::filesystem::path &path,
                                                 const std::string &desc)
     {
-        if (name.empty())
-            return ProjectResult::InvalidFormat;
+        namespace fs        = std::filesystem;
+        const fs::path root = path / name; // `path` is the parent folder chosen in the dialog
 
-        // 1. Create the directory.
         std::error_code ec;
-        std::filesystem::create_directories(path, ec);
-        std::filesystem::create_directories(path / "Assets", ec);
-        std::filesystem::create_directories(path / "Logs", ec);
-        std::filesystem::create_directories(path / "Cache", ec);
-        std::filesystem::create_directories(path / "Build", ec);
+        for (const char *sub: {"Assets", "Logs", "Cache", "Build"})
+        {
+            fs::create_directories(root / sub, ec);
+            if (ec)
+                return ProjectResult::UnknownError;
+        }
 
-        if (ec)
-            return ProjectResult::UnknownError;
+        auto project         = std::make_unique<Project>();
+        project->name        = name;
+        project->description = desc;
+        project->Path        = root / (name + ProjectFileExtension);
 
-        std::filesystem::path xmlPath = path / (name + ".projxml");
-        if (std::filesystem::exists(xmlPath))
-            return ProjectResult::InvalidFormat; // already exists
+        auto previous        = std::move(currentLoadedProject);
+        currentLoadedProject = std::move(project);
 
-        XMLModule *writer = XMLModule::Get();
-        writer->SetRootNode("Project"); // creates the xmlDoc + root element
-        XMLNode root = writer->GetRootNode();
-
-        auto proj         = std::make_unique<Project>();
-        proj->name        = name;
-        proj->Path        = xmlPath;
-        proj->description = desc;
-        proj->Serialize(root); // writes name + projectFilePath attributes
-
-        if (!writer->SaveToFile(xmlPath.string()))
-            return ProjectResult::UnknownError;
-
-        proj->projectXML = File(xmlPath); // keep the File handle for later use
-
-        ProjectLoadInfo info;
-        info.name        = name;
-        info.description = desc;
-        info.projectPath = xmlPath;
-        s_recentProjects.insert(s_recentProjects.begin(), std::move(info));
-
-        delete currentLoadedProject;
-        currentLoadedProject = proj.release();
-        projectWindowOpen    = false;
-        AssetController::Get()->ProjectLoaded();
-        return ProjectResult::Success;
+        const ProjectResult r = SaveProject();
+        if (r != ProjectResult::Success)
+            currentLoadedProject = std::move(previous); // don't leave an unsaved project active
+        return r;
     }
+
 
     ProjectResult ProjectManager::LoadProject(const std::filesystem::path &path)
     {
-        std::filesystem::path xmlPath = path;
-        if (std::filesystem::is_directory(xmlPath))
-            xmlPath = xmlPath / (xmlPath.filename().string() + ".projxml");
-
-        if (!std::filesystem::exists(xmlPath))
+        if (!std::filesystem::exists(path))
             return ProjectResult::NotFound;
 
-        // 1. Parse the XML file.
-        XMLModule *reader = XMLModule::Get();
-        if (!reader->LoadFromFile(xmlPath.string()))
+        auto *xml = XMLModule::Get();
+        if (!xml->LoadFromFile(path.string()))
             return ProjectResult::InvalidFormat;
 
-        XMLNode root = reader->GetRootNode();
-        if (root.GetName() != "Project")
+        XMLNode root = xml->GetRootNode();
+        if (!root.IsValid() || !root.GetChild("Project").IsValid())
             return ProjectResult::InvalidFormat;
 
-        // 2. Deserialise into a new Project.
-        auto proj        = std::make_unique<Project>();
-        proj->projectXML = File(xmlPath);
-        proj->Deserialize(root); // reads name + projectFilePath
+        int version = 0;
+        if (!root.GetAttribute("version", version) || version != ProjectFileVersion)
+            return ProjectResult::VersionMismatch;
 
-        if (proj->name.empty())
-            return ProjectResult::InvalidFormat;
-
-        // 3. Update recent-projects list (bubble to front or insert).
-        auto it = std::find_if(s_recentProjects.begin(), s_recentProjects.end(),
-                               [&](const ProjectLoadInfo &p) { return p.projectPath == xmlPath; });
-        if (it == s_recentProjects.end())
-        {
-            ProjectLoadInfo info;
-            info.name        = proj->name;
-            info.description = proj->description;
-            info.projectPath = xmlPath;
-            s_recentProjects.insert(s_recentProjects.begin(), std::move(info));
-        } else
-        {
-            std::rotate(s_recentProjects.begin(), it, it + 1);
-        }
-
-        // 4. Swap in the loaded project.
-        delete currentLoadedProject;
-        currentLoadedProject = proj.release();
-        projectWindowOpen    = false;
-        AssetController::Get()->ProjectLoaded();
+        auto project = std::make_unique<Project>();
+        project->Deserialize(root);
+        project->Path        = path; // trust where we actually opened it from, not the stored path
+        currentLoadedProject = std::move(project);
         return ProjectResult::Success;
     }
 
@@ -237,13 +215,23 @@ namespace SF::Engine
 
             // Tick status timer using ImGui's delta time.
             TickStatus(ImGui::GetIO().DeltaTime);
+            auto Finish = [this](ProjectResult r)
+            {
+                SetStatus(ResultString(r));
+                if (r == ProjectResult::Success)
+                {
+                    projectWindowOpen = false;
+                    s_selectedIndex   = -1;
+                }
+                return r;
+            };
 
             ImGuiIO &io = ImGui::GetIO();
             ImGui::SetNextWindowPos({io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f}, ImGuiCond_Once, {0.5f, 0.5f});
             ImGui::SetNextWindowSize({860.0f, 520.0f}, ImGuiCond_Once);
             ImGui::SetNextWindowSizeConstraints({640.0f, 400.0f}, {1400.0f, 900.0f});
 
-            if (!ImGui::Begin("Project Manager##PMWin", nullptr, ImGuiWindowFlags_NoCollapse))
+            if (!ImGui::Begin("Project Manager##PMWin", &projectWindowOpen, ImGuiWindowFlags_NoCollapse))
             {
                 ImGui::End();
                 return;
@@ -274,8 +262,8 @@ namespace SF::Engine
                         {
                             std::vector<int> sorted(s_recentProjects.size());
                             std::iota(sorted.begin(), sorted.end(), 0);
-                            std::sort(sorted.begin(), sorted.end(),
-                                      [](int a, int b) { return s_recentProjects[a].name < s_recentProjects[b].name; });
+                            ranges::sort(sorted, [](int a, int b)
+                                         { return s_recentProjects[a].name < s_recentProjects[b].name; });
 
                             for (int idx: sorted)
                             {
@@ -287,8 +275,7 @@ namespace SF::Engine
                                     // Double-click: open immediately.
                                     if (!proj.projectPath.empty())
                                     {
-                                        auto r = LoadProject(proj.projectPath);
-                                        SetStatus(ResultString(r));
+                                        Finish(LoadProject(proj.projectPath));
                                     }
                                 }
 
@@ -312,8 +299,8 @@ namespace SF::Engine
                         {
                             std::vector<int> sorted(s_templates.size());
                             std::iota(sorted.begin(), sorted.end(), 0);
-                            std::sort(sorted.begin(), sorted.end(),
-                                      [](int a, int b) { return s_templates[a].name < s_templates[b].name; });
+                            ranges::sort(sorted,
+                                         [](int a, int b) { return s_templates[a].name < s_templates[b].name; });
 
                             for (int idx: sorted)
                             {
@@ -333,13 +320,14 @@ namespace SF::Engine
             {
                 if (s_mode == Mode::Open)
                 {
-                    const Image2d *img = (s_selectedIndex >= 0 && s_selectedIndex < (int) s_recentProjects.size())
-                                                 ? s_recentProjects[s_selectedIndex].aFrame.get()
-                                                 : nullptr;
+                    const Image2d *img =
+                            (s_selectedIndex >= 0 && s_selectedIndex < static_cast<int>(s_recentProjects.size()))
+                                    ? s_recentProjects[s_selectedIndex].aFrame.get()
+                                    : nullptr;
                     DrawPreviewImage(img, previewSize);
 
                     ImGui::Spacing();
-                    if (s_selectedIndex >= 0 && s_selectedIndex < (int) s_recentProjects.size())
+                    if (s_selectedIndex >= 0 && s_selectedIndex < static_cast<int>(s_recentProjects.size()))
                     {
                         const auto &p = s_recentProjects[s_selectedIndex];
                         ImGui::TextWrapped("Name:  %s", p.name.c_str());
@@ -358,28 +346,27 @@ namespace SF::Engine
                         IGFD::FileDialogConfig cfg;
                         cfg.path  = ".";
                         cfg.flags = ImGuiFileDialogFlags_Modal;
-                        ImGui::SetNextWindowSize(Vec2(700, 500));
-                        ImGuiFileDialog::Instance()->OpenDialog("FindProjDir", "Find Project", ".projxml", cfg);
+                        ImGuiFileDialog::Instance()->OpenDialog("FindProjDir", "Find Project",
+                                                                ProjectFileExtension.data(), cfg);
                     }
-                    // Handle ImGuiFileDialog result.
-                    if (ImGuiFileDialog::Instance()->Display("FindProjDir"))
+                    if (ImGuiFileDialog::Instance()->Display("FindProjDir", ImGuiWindowFlags_NoCollapse,
+                                                             Vec2(700, 500)))
                     {
                         if (ImGuiFileDialog::Instance()->IsOk())
-                        {
-                            std::string chosen = ImGuiFileDialog::Instance()->GetCurrentPath();
-                            LoadProject(chosen);
-                        }
+                            Finish(LoadProject(
+                                    ImGuiFileDialog::Instance()->GetFilePathName())); // the file, not the folder
                         ImGuiFileDialog::Instance()->Close();
                     }
                 } else // Mode::Create
                 {
-                    const Image2d *img = (s_selectedIndex >= 0 && s_selectedIndex < (int) s_templates.size())
-                                                 ? s_templates[s_selectedIndex].ExampleImage.get()
-                                                 : nullptr;
+                    const Image2d *img =
+                            (s_selectedIndex >= 0 && s_selectedIndex < static_cast<int>(s_templates.size()))
+                                    ? s_templates[s_selectedIndex].ExampleImage.get()
+                                    : nullptr;
                     DrawPreviewImage(img, previewSize);
 
                     ImGui::Spacing();
-                    if (s_selectedIndex >= 0 && s_selectedIndex < (int) s_templates.size())
+                    if (s_selectedIndex >= 0 && s_selectedIndex < static_cast<int>(s_templates.size()))
                         ImGui::TextWrapped("%s", s_templates[s_selectedIndex].description.c_str());
 
                     ImGui::Spacing();
@@ -408,7 +395,8 @@ namespace SF::Engine
                     }
 
                     // Handle ImGuiFileDialog result.
-                    if (ImGuiFileDialog::Instance()->Display("ChooseProjDir"))
+                    if (ImGuiFileDialog::Instance()->Display("ChooseProjDir", ImGuiWindowFlags_NoCollapse,
+                                                             Vec2(700, 500)))
                     {
                         if (ImGuiFileDialog::Instance()->IsOk())
                         {
@@ -484,33 +472,24 @@ namespace SF::Engine
 
             if (ImGui::Button(actionLabel))
             {
-                ProjectResult result = ProjectResult::UnknownError;
-
                 if (s_mode == Mode::Open)
                 {
-                    if (s_selectedIndex >= 0 && s_selectedIndex < (int) s_recentProjects.size())
-                        result = LoadProject(s_recentProjects[s_selectedIndex].projectPath);
+                    if (s_selectedIndex >= 0 && s_selectedIndex < static_cast<int>(s_recentProjects.size()))
+                        Finish(LoadProject(s_recentProjects[s_selectedIndex].projectPath));
                 } else
                 {
-                    result = CreateProject(std::string(s_newName), std::filesystem::path(s_newFolder) / s_newName,
-                                           s_newDesc);
-                    if (result == ProjectResult::Success)
+                    // pass the PARENT folder; CreateProject makes <folder>/<name>/
+                    if (Finish(CreateProject(s_newName, s_newFolder, s_newDesc)) == ProjectResult::Success)
                     {
-                        // Clear fields on success.
-                        s_newName[0]    = '\0';
-                        s_newFolder[0]  = '\0';
-                        s_newDesc[0]    = '\0';
-                        s_mode          = Mode::Open; // flip back to open tab
-                        s_selectedIndex = -1;
+                        s_newName[0] = s_newFolder[0] = s_newDesc[0] = '\0';
+                        s_mode                                       = Mode::Open;
                     }
                 }
-                SetStatus(ResultString(result));
             }
 
             if (!canAct)
                 ImGui::EndDisabled();
 
-            // -- Status bar (below buttons) --
             if (s_statusTimer > 0.0f)
             {
                 ImGui::Spacing();

@@ -228,4 +228,6 @@ namespace SF::Engine
         void RemoveEntitySubtree(Entity *rootEntity);
     };
 
+    inline constexpr string_view SceneFileExtension = ".scene";
+
 } // namespace SF::Engine

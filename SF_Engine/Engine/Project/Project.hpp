@@ -14,6 +14,7 @@
 
 namespace SF::Engine
 {
+    constexpr string_view ProjectFileExtension = ".projxml";
     struct ProjectTemplate
     {
         std::shared_ptr<Image2d> ExampleImage;
@@ -50,7 +51,6 @@ namespace SF::Engine
         std::string name;
         std::filesystem::path Path;
         std::string description;
-        File projectXML;
 
         void Serialize(XMLNode &node) const override
         {
@@ -59,7 +59,7 @@ namespace SF::Engine
             projNode.SetAttribute("projectFilePath", Path.string());
             projNode.SetAttribute("Description", description);
         }
-        void Deserialize(const XMLNode &node)
+        void Deserialize(const XMLNode &node) override
         {
             XMLNode projNode = node.GetChild("Project");
             projNode.GetAttribute("name", name);
@@ -80,23 +80,38 @@ namespace SF::Engine
                                     const std::string &desc);
         ProjectResult LoadProject(const std::filesystem::path &path);
 
+        [[nodiscard]] ProjectResult SaveProject() const;
+
         void Update() override;
         bool Initialize() override;
         void DrawProjectManagerWindow();
+        void OpenProjectManagerWindow() { projectWindowOpen = true; }
 
-        bool IsAProjectLoaded() const { return currentLoadedProject != nullptr; }
+        [[nodiscard]] bool IsAProjectLoaded() const { return currentLoadedProject != nullptr; }
 
-        std::filesystem::path GetProjectPath() { return currentLoadedProject->Path.parent_path(); }
-        std::filesystem::path GetProjectAssetPath() { return currentLoadedProject->Path.parent_path() / "Assets"; }
-        std::filesystem::path GetProjectLogPath() { return currentLoadedProject->Path.parent_path() / "Logs"; }
-        std::filesystem::path GetProjectCachePath() { return currentLoadedProject->Path.parent_path() / "Cache"; }
-        std::filesystem::path GetProjectBuildPath() { return currentLoadedProject->Path.parent_path() / "Build"; }
+        [[nodiscard]] std::filesystem::path GetProjectPath() const { return currentLoadedProject->Path.parent_path(); }
+        [[nodiscard]] std::filesystem::path GetProjectAssetPath() const
+        {
+            return currentLoadedProject->Path.parent_path() / "Assets";
+        }
+        [[nodiscard]] std::filesystem::path GetProjectLogPath() const
+        {
+            return currentLoadedProject->Path.parent_path() / "Logs";
+        }
+        [[nodiscard]] std::filesystem::path GetProjectCachePath() const
+        {
+            return currentLoadedProject->Path.parent_path() / "Cache";
+        }
+        [[nodiscard]] std::filesystem::path GetProjectBuildPath() const
+        {
+            return currentLoadedProject->Path.parent_path() / "Build";
+        }
 
-        Project *GetCurrentProject() { return currentLoadedProject; }
+        [[nodiscard]] Project *GetCurrentProject() const { return currentLoadedProject.get(); }
 
     private:
-        Project *currentLoadedProject = nullptr;
-        bool projectWindowOpen        = true; // true by default
+        std::unique_ptr<Project> currentLoadedProject;
+        bool projectWindowOpen = true; // true by default
     };
 
 
