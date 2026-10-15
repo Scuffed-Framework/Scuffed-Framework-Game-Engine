@@ -18,6 +18,14 @@
 #include <Controllers/CameraController.hpp>
 #include <Rendering/RHI/Images/Image.hpp>
 
+#include <chrono>
+#include <filesystem>
+#include <functional>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 namespace SF::Engine
 {
     // todo: can we move some boilerplate out of this class?
@@ -27,8 +35,12 @@ namespace SF::Engine
         friend class SceneRenderer;
 
     public:
+        static constexpr int kSceneVersion = 2;
+
+        // populateDefaults = false lets subclasses start from an empty scene instead of
+        // getting the sun / point light / cube / floor.
         explicit Scene(::std::unique_ptr<CameraController> &&cameraController, std::string name,
-                       const SceneRendererConfig &cfg = {});
+                       const SceneRendererConfig &cfg = {}, bool populateDefaults = true);
         virtual ~Scene();
 
         virtual void Start() = 0;
@@ -63,10 +75,12 @@ namespace SF::Engine
         EntityHolder *GetEntities() { return &entities; }
         std::vector<Entity *> QueryAllEntities();
 
-        void RemoveEntity(Entity *entity) { entities.Remove(entity); }
+        // Also purges SceneObject / SceneLight caches for the entity and its whole subtree.
+        void RemoveEntity(Entity *entity);
+
         void AddEntity(const std::string &name, Entity *parent = nullptr)
         {
-            if ((parent = (nullptr)))
+            if (!parent)
                 entities.CreateEntity(name);
             else
                 entities.CreateChildEntity(parent, name);
@@ -76,6 +90,8 @@ namespace SF::Engine
             auto *child     = entities.FindById(childId);
             auto *newParent = entities.FindById(newParentId);
             if (!child || !newParent || child == newParent)
+                return;
+            if (IsAncestorOrSelf(child, newParent)) // would create a cycle
                 return;
             entities.Reparent(child, newParent);
         }
@@ -117,8 +133,16 @@ namespace SF::Engine
             return GetRenderer()->GetPipelinePass<T>();
         }
 
-        void SaveXML(const std::string &filename = "scene.xml");
-        void ReadXML(const std::string &filename = "scene.xml");
+        // Atomic save (temp file + rename).
+        bool SaveXML(const std::string &filename = "scene.xml");
+        // Returns false if the file couldn't be parsed or was written by a newer version.
+        // Prefer OpenScene() (deferred, safe mid-frame) over calling this directly on a live scene.
+        bool ReadXML(const std::string &filename = "scene.xml");
+
+        // File this scene was loaded from / saved to. Empty if none. Lives and dies with the scene.
+        const std::filesystem::path &GetPath() const { return scenePath_; }
+        void SetPath(std::filesystem::path p) { scenePath_ = std::move(p); }
+        void ClearPath() { scenePath_.clear(); }
 
         void Initialize();
 
@@ -133,16 +157,27 @@ namespace SF::Engine
             ClearEntities();
             objects_.clear();
             lights_.clear();
+            selectedObj_   = -1;
+            selectedLight_ = -1;
+            // The renderer is owned by RenderSystem and gets replaced by the next scene;
+            // don't keep dangling pointers to it or its passes.
+            sceneRenderer_ = nullptr;
+            litPass_       = nullptr;
+            atmoPass_      = nullptr;
+            cloudPass_     = nullptr;
         }
 
     protected:
-        // Subclasses can set these before Initialize() to opt into features.
+        // Subclasses can set these before Initialize() to opt out of / into features.
+        // atmosphereEnabled defaults to true to preserve the previous always-on behaviour.
+        // sunEnabled is currently reserved (not read by Scene).
         bool sunEnabled        = false;
-        bool atmosphereEnabled = false;
+        bool atmosphereEnabled = true;
 
     private:
         bool started_     = false;
         bool initialized_ = false;
+        bool lastLoadOk_  = true;
 
         SceneRendererConfig rendererCfg_;
         SceneRenderer *sceneRenderer_ = nullptr;
@@ -169,6 +204,10 @@ namespace SF::Engine
         int selectedObj_   = -1;
         int selectedLight_ = -1;
 
+        std::filesystem::path scenePath_;
+
+        // NOTE: uses the local Transform::position / rotation. For parented lights this is
+        // wrong if Transform is local-space; swap in the world-space accessor if you have one.
         void SyncLightTransforms()
         {
             for (auto &sl: lights_)
@@ -194,10 +233,21 @@ namespace SF::Engine
                 GetLightManager()->AddLight(*sl->GetComponent<Light>());
         }
 
+        void PopulateDefaults(); // sun, point light, cube, floor
+        static void ResolveBuiltinMesh(SceneObject *obj);
+
+        static bool IsAncestorOrSelf(const Entity *anc, const Entity *e)
+        {
+            for (; e; e = e->GetParent())
+                if (e == anc)
+                    return true;
+            return false;
+        }
+
         std::string name;
 
     public:
-        std::string GetName() { return name; }
+        std::string GetName() const { return name; }
         static const ImageDepth *GetDepthTexture();
 
         SceneObject *AddObject(const std::string &name, Entity *parent = nullptr);
@@ -223,8 +273,15 @@ namespace SF::Engine
         std::vector<SceneObject *> objects_;
         std::vector<SceneLight *> lights_;
 
+        // entity -> {kind, index}; kind: 1 = objects_[index], 2 = lights_[index]
+        using IndexMap = std::unordered_map<const Entity *, std::pair<int, int>>;
+
+        // Returns the nearest SceneObject/SceneLight ancestor (plain Entity ancestors are skipped,
+        // since they are not serialized).
         // kind: 0 = root, 1 = objects_[index] is the parent, 2 = lights_[index] is the parent
-        std::pair<int, int> FindParentRef(Entity *e) const;
+        static std::pair<int, int> FindParentRef(Entity *e, const IndexMap &idx);
+
+        void PurgeFromCaches(Entity *rootEntity);
         void RemoveEntitySubtree(Entity *rootEntity);
     };
 

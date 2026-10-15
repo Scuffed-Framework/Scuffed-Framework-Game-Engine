@@ -405,7 +405,7 @@ namespace SF::Engine
         auto *cam    = CameraController::Get().GetActive();
         auto *window = WindowManager::Get()->GetWindow(0);
 
-        float dt = static_cast<float>(Engine::Get()->GetDelta().AsMilliseconds());
+        float dt = std::chrono::duration<float, std::milli>(Engine::Get()->GetDelta()).count();
         accumulatedTime_ += dt;
 
         float aspect = window->GetAspectRatio();
@@ -432,8 +432,9 @@ namespace SF::Engine
     void OceanTessellationPipelinePass::updateUBO()
     {
         OceanFFTSpectrumUBO spectrumUBO{};
-        spectrumUBO.frameTime      = accumulatedTime_ * 0.001f; // ms -> s
-        spectrumUBO.deltaTime      = static_cast<float>(Engine::Get()->GetDelta().AsSeconds());
+        spectrumUBO.frameTime = accumulatedTime_ * 0.001f; // ms -> s
+        spectrumUBO.deltaTime =
+                static_cast<float>(std::chrono::duration<double, std::milli>(Engine::Get()->GetDelta()).count());
         spectrumUBO.A              = fftSettings_.damping;
         spectrumUBO.gravity        = fftSettings_.gravity;
         spectrumUBO.repeatTime     = fftSettings_.repeatTime;

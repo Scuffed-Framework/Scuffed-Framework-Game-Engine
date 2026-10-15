@@ -97,11 +97,12 @@ namespace SF::Engine
 
     void UpdateSharedCameraData()
     {
+        float raw_nano                      = static_cast<float>(GetDeltaTime().count());
         SharedCameraData.screenHeight       = GetScreenSize().y;
         SharedCameraData.screenWidth        = GetScreenSize().x;
         SharedCameraData.aspectRatio        = SharedCameraData.screenWidth / SharedCameraData.screenHeight;
         SharedCameraData.cameraPosition     = GetCameraPosition4();
-        SharedCameraData.deltaTime          = GetDeltaTime().AsMilliseconds();
+        SharedCameraData.deltaTime          = static_cast<float>(Milliseconds(raw_nano / 1000000.0f).count());
         SharedCameraData.inverseProjection  = GetInvProjection();
         SharedCameraData.inverseView        = GetInvView();
         SharedCameraData.viewProjection     = GetProjection();

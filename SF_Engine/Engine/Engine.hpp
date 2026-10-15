@@ -67,8 +67,8 @@ namespace SF::Engine
          * @param startUpURL URL of a local map scene, or a server that will send one.
          */
         explicit Engine(std::string argv0, ModuleFilter &&moduleFilter = {},
-                        URL startUpURL = URL("map://startup")); // TODO: Make startup look through scene metadata to
-                                                                // find "<StartUpScene>true</StartupScene>"
+                        const URL &startUpURL = URL("map://startup")); // TODO: Make startup look through scene metadata
+                                                                       // to find "<StartUpScene>true</StartupScene>"
 
         ~Engine() override;
 
@@ -108,17 +108,17 @@ namespace SF::Engine
          * Gets the delta (seconds) between updates.
          * @return The delta between updates.
          */
-        [[nodiscard]] const ApplicationTime &GetDelta() const { return deltaUpdate.change; }
+        [[nodiscard]] const DurationAsNanoseconds &GetDelta() const { return deltaUpdate.change; }
 
         /**
          * Gets the delta (seconds) between renders.
          * @return The delta between renders.
          */
-        [[nodiscard]] const ApplicationTime &GetDeltaRender() const { return deltaRender.change; }
+        [[nodiscard]] const DurationAsNanoseconds &GetDeltaRender() const { return deltaRender.change; }
 
     private:
         UpdateClock<> ups, fps;
-        AppInfo *gameInfo;
+        AppInfo *gameInfo{};
 
     public:
         void SetGameInfo(AppInfo *info) { gameInfo = info; }

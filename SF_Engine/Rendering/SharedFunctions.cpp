@@ -47,7 +47,8 @@ namespace SF::Engine
         // this on HiDPI displays, and anything here feeds GPU resource sizing
         // and per-pixel screen-space math (SSR's images + its screenSize UBO
         // field) that must match the real swapchain/gbuffer resolution.
-        return Vec2(WindowManager::Get()->GetWindow(0)->GetFramebufferSize().x, WindowManager::Get()->GetWindow(0)->GetFramebufferSize().y);
+        return Vec2(WindowManager::Get()->GetWindow(0)->GetFramebufferSize().x,
+                    WindowManager::Get()->GetWindow(0)->GetFramebufferSize().y);
     }
 
     Mat4 GetView() { return CameraController::Get().GetActive()->GetView(); }
@@ -75,13 +76,9 @@ namespace SF::Engine
     }
 
     Vec3 GetCameraPosition() { return CameraController::Get().GetActive()->GetPosition(); }
-    Vec4 GetCameraPosition4() { return Vec4(CameraController::Get().GetActive()->GetPosition(), 1.0f); }
+    Vec4 GetCameraPosition4() { return {CameraController::Get().GetActive()->GetPosition(), 1.0f}; }
 
-    ApplicationTime GetDeltaTime() { return Engine::Get()->GetDelta(); }
-
-    double GetDeltaTimeMilliS() { return Engine::Get()->GetDelta().AsMilliseconds(); }
-    int64_t GetDeltaTimeMicroS() { return Engine::Get()->GetDelta().AsMicroseconds(); }
-    int64_t GetDeltaTimeNanoS() { return Engine::Get()->GetDelta().AsNanoseconds(); }
+    DurationAsNanoseconds GetDeltaTime() { return Engine::Get()->GetDelta(); }
 
     const Image2d *GetSceneHDR()
     {
@@ -113,4 +110,4 @@ namespace SF::Engine
     {
         return dynamic_cast<const Image2d *>(RenderSystem::Get()->GetAttachment("gbuf_albedo"));
     }
-}
+} // namespace SF::Engine

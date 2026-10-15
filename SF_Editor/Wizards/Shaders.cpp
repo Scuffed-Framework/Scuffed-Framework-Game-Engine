@@ -1,5 +1,5 @@
 #include "Shaders.hpp"
-#include <Gui/ImGui/GuiMembers.hpp>
+#include <Gui/ImGui/CommonGuiFunctions.hpp>
 #include <LowLevel/FileSystem/File.hpp>
 #include <Rendering/RHI/Shaders/ShaderAsset.hpp>
 #include <utility>
@@ -76,38 +76,39 @@ namespace SF::Engine
 
     void ShowCreateShaderWizard(std::filesystem::path path)
     {
-        ImGui::BeginPopup("Create Shader");
-
-        if (InputTextWithHint("##Name", &tmp, &name))
-            path = path / (name + ".shader");
-
-        auto ToggleStage = [](std::vector<std::string> &stages, const char *stage, bool enabled)
+        if (ImGui::BeginPopup("Create Shader"))
         {
-            if (const auto it = std::ranges::find(stages, stage); enabled && it == stages.end())
-                stages.emplace_back(stage);
-            else if (!enabled && it != stages.end())
-                stages.erase(it);
-        };
+            if (InputTextWithHint("##Name", &tmp, &name))
+                path = path / (name + ".shader");
 
-        if (ImGui::Checkbox("Vertex", &hasV))
-            ToggleStage(stages, "Vertex", hasV);
+            auto ToggleStage = [](std::vector<std::string> &stages, const char *stage, bool enabled)
+            {
+                if (const auto it = std::ranges::find(stages, stage); enabled && it == stages.end())
+                    stages.emplace_back(stage);
+                else if (!enabled && it != stages.end())
+                    stages.erase(it);
+            };
 
-        if (ImGui::Checkbox("Fragment", &hasF))
-            ToggleStage(stages, "Fragment", hasF);
+            if (ImGui::Checkbox("Vertex", &hasV))
+                ToggleStage(stages, "Vertex", hasV);
 
-        if (ImGui::Checkbox("Tesselation Control", &hasTC))
-            ToggleStage(stages, "TessCtrl", hasTC);
+            if (ImGui::Checkbox("Fragment", &hasF))
+                ToggleStage(stages, "Fragment", hasF);
 
-        if (ImGui::Checkbox("Tesselation Evaluation", &hasTE))
-            ToggleStage(stages, "TessEval", hasTE);
+            if (ImGui::Checkbox("Tesselation Control", &hasTC))
+                ToggleStage(stages, "TessCtrl", hasTC);
 
-        if (ImGui::Checkbox("Compute", &hasCompute))
-            ToggleStage(stages, "Compute", hasCompute);
+            if (ImGui::Checkbox("Tesselation Evaluation", &hasTE))
+                ToggleStage(stages, "TessEval", hasTE);
 
-        if (ImGui::Button("Create"))
-            CreateShaderWithStages(stages, path, name);
+            if (ImGui::Checkbox("Compute", &hasCompute))
+                ToggleStage(stages, "Compute", hasCompute);
 
-        ImGui::EndPopup();
+            if (ImGui::Button("Create"))
+                CreateShaderWithStages(stages, path, name);
+
+            ImGui::EndPopup();
+        }
     }
 
     void CreateShaderInclude(std::filesystem::path path)

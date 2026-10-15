@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -103,12 +104,10 @@ namespace SF::Engine
         static bool Delete(const std::string &path);
         bool Delete();
 
-        static bool Copy(const std::string &source, const std::string &destination,
-                         bool overwrite = false);
+        static bool Copy(const std::string &source, const std::string &destination, bool overwrite = false);
         bool CopyTo(const std::string &destination, bool overwrite = false) const;
 
-        static bool Move(const std::string &source, const std::string &destination,
-                         bool overwrite = false);
+        static bool Move(const std::string &source, const std::string &destination, bool overwrite = false);
         bool MoveTo(const std::string &destination, bool overwrite = false);
 
         static bool Rename(const std::string &oldPath, const std::string &newPath);
@@ -131,10 +130,9 @@ namespace SF::Engine
         static bool CreateDirectory(const std::string &path);
         static bool DeleteDirectory(const std::string &path, bool recursive = false);
 
-        static std::vector<File> GetFiles(const std::string &directory,
-                                          const std::string &pattern = "*", bool recursive = false);
-        static std::vector<File> GetDirectories(const std::string &directory,
-                                                bool recursive = false);
+        static std::vector<File> GetFiles(const std::string &directory, const std::string &pattern = "*",
+                                          bool recursive = false);
+        static std::vector<File> GetDirectories(const std::string &directory, bool recursive = false);
 
         // Utility functions
         static std::string GetCurrentDirectory();
@@ -157,7 +155,7 @@ namespace SF::Engine
         fs::path m_path;
         std::fstream m_stream;
         mutable size_t m_cachedSize = 0;
-        bool m_isOpen = false;
+        bool m_isOpen               = false;
 
         std::ios::openmode ConvertMode(FileMode mode) const;
         void UpdateCache();
@@ -192,10 +190,10 @@ namespace SF::Engine
         explicit FileReader(File file);
         explicit FileReader(const std::string &path);
 
-        template <typename T>
+        template<typename T>
         T Read();
 
-        template <typename T>
+        template<typename T>
         FileReader &operator>>(T &value);
 
         bool IsEOF();
@@ -213,10 +211,10 @@ namespace SF::Engine
         explicit FileWriter(File file, FileMode mode = FileMode::Write);
         explicit FileWriter(const std::string &path, FileMode mode = FileMode::Write);
 
-        template <typename T>
+        template<typename T>
         void Write(const T &value);
 
-        template <typename T>
+        template<typename T>
         FileWriter &operator<<(const T &value);
 
         void Flush();
@@ -241,24 +239,24 @@ namespace SF::Engine
         [[nodiscard]] const uint8_t *GetData() const;
         uint8_t *GetData();
 
-        template <typename T>
+        template<typename T>
         const T *GetAs() const;
 
         void Flush();
 
     private:
 #ifdef _PLATFORM_WINDOWS
-        void *m_fileHandle = nullptr;
+        void *m_fileHandle    = nullptr;
         void *m_mappingHandle = nullptr;
 #else
         int m_fileDescriptor = -1;
 #endif
         uint8_t *m_data = nullptr;
-        size_t m_size = 0;
+        size_t m_size   = 0;
         size_t m_offset = 0;
 
         uint8_t *m_mappingData = nullptr;
-        size_t m_mappingSize = 0;
+        size_t m_mappingSize   = 0;
     };
 
     // File watcher for monitoring file changes
@@ -302,34 +300,16 @@ namespace SF::Engine
 
     inline File::File(fs::path path) : m_path(std::move(path)) {}
 
-    inline bool File::Exists() const
-    {
-        return fs::exists(m_path);
-    }
+    inline bool File::Exists() const { return fs::exists(m_path); }
 
-    inline bool File::Exists(const std::string &path)
-    {
-        return fs::exists(path);
-    }
-    inline bool File::Exists(const std::filesystem::path &path)
-    {
-        return fs::exists(path);
-    }
+    inline bool File::Exists(const std::string &path) { return fs::exists(path); }
+    inline bool File::Exists(const std::filesystem::path &path) { return fs::exists(path); }
 
-    inline std::string File::GetName() const
-    {
-        return m_path.filename().string();
-    }
+    inline std::string File::GetName() const { return m_path.filename().string(); }
 
-    inline std::string File::GetExtension() const
-    {
-        return m_path.extension().string();
-    }
+    inline std::string File::GetExtension() const { return m_path.extension().string(); }
 
-    inline std::string File::GetFullPath() const
-    {
-        return fs::absolute(m_path).string();
-    }
+    inline std::string File::GetFullPath() const { return fs::absolute(m_path).string(); }
 
     inline size_t File::GetSize() const
     {
@@ -340,23 +320,14 @@ namespace SF::Engine
         return m_cachedSize;
     }
 
-    inline bool File::IsRegularFile() const
-    {
-        return fs::is_regular_file(m_path);
-    }
+    inline bool File::IsRegularFile() const { return fs::is_regular_file(m_path); }
 
-    inline bool File::IsDirectory() const
-    {
-        return fs::is_directory(m_path);
-    }
+    inline bool File::IsDirectory() const { return fs::is_directory(m_path); }
 
-    inline File::operator bool() const
-    {
-        return m_isOpen && m_stream.good();
-    }
+    inline File::operator bool() const { return m_isOpen && m_stream.good(); }
 
     // Template implementations
-    template <typename T>
+    template<typename T>
     T FileReader::Read()
     {
         T value;
@@ -364,27 +335,27 @@ namespace SF::Engine
         return value;
     }
 
-    template <typename T>
+    template<typename T>
     FileReader &FileReader::operator>>(T &value)
     {
         value = Read<T>();
         return *this;
     }
 
-    template <typename T>
+    template<typename T>
     void FileWriter::Write(const T &value)
     {
         m_file.Write(&value, sizeof(T));
     }
 
-    template <typename T>
+    template<typename T>
     FileWriter &FileWriter::operator<<(const T &value)
     {
         Write(value);
         return *this;
     }
 
-    template <typename T>
+    template<typename T>
     const T *MemoryMappedFile::GetAs() const
     {
         return reinterpret_cast<const T *>(m_data);
@@ -392,7 +363,7 @@ namespace SF::Engine
 
     struct DataInput
     {
-        File *file = nullptr;
+        File *file   = nullptr;
         void *memory = nullptr;
     };
 
@@ -401,11 +372,19 @@ namespace SF::Engine
         return lhs.file == rhs.file && lhs.memory == rhs.memory;
     }
 
+    inline std::string SanitizeFileName(std::string s)
+    {
+        for (char &c: s)
+            if (std::strchr("<>:\"/\\|?*", c) || static_cast<unsigned char>(c) < 32)
+                c = '_';
+        return s.empty() ? "Untitled" : s;
+    }
+
 } // namespace SF::Engine
 
 namespace std
 {
-    template <>
+    template<>
     struct hash<SF::Engine::DataInput>
     {
         size_t operator()(const SF::Engine::DataInput &d) const noexcept
@@ -415,4 +394,4 @@ namespace std
             return h1 ^ (h2 << 1);
         }
     };
-}
+} // namespace std

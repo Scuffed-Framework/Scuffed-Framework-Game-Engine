@@ -1,6 +1,7 @@
 #include "Project.hpp"
 #include <Assets/AssetPipeline.hpp>
-#include <Gui/ImGui/GuiMembers.hpp>
+#include <Gui/ImGui/CommonGuiFunctions.hpp>
+#include <Gui/ImGui/UIRegistry.hpp>
 #include <algorithm>
 #include <fstream>
 #include <functional>

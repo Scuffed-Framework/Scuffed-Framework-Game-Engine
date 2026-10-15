@@ -29,8 +29,13 @@ namespace SF::Engine
 
             if (const auto result = Application::Init(); result != InitializationReturn::Success)
                 return result;
-
-            hierarchy->SetOnEntitySelected([this](Entity *entity) { inspector->SetEntity(entity); });
+            SetOnSceneReplaced([this] { inspector->SetEntity(nullptr); });
+            hierarchy->SetOnEntitySelected(
+                    [this](Entity *entity)
+                    {
+                        inspector->SetEntity(entity);
+                        hierarchy->SetSelectedEntity(nullptr);
+                    });
 
             return InitializationReturn::Success;
         }

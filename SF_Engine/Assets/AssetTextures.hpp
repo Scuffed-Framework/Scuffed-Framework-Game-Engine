@@ -127,6 +127,60 @@ namespace SF::Engine
             BitmapSvg::LoadFromMemory(*bitmap, svg, {size, size});
             return std::make_shared<Image2d>(std::move(bitmap));
         }
+        inline std::string LogoBody()
+        {
+            return R"svg(
+<defs>
+  <radialGradient id="planet" cx="0.35" cy="0.3" r="0.85">
+    <stop offset="0"    stop-color="#5CC8FF"/>
+    <stop offset="0.55" stop-color="#1F7FE0"/>
+    <stop offset="1"    stop-color="#0A2F7A"/>
+  </radialGradient>
+</defs>
+<g transform="rotate(-28 128 128)">
+  <!-- rest of the orbit; the planet hides the part behind it -->
+  <path d="M37.9 148A104 40 0 1 1 225.7 141.7" fill="none" stroke="#FF3B30"
+        stroke-opacity="0.25" stroke-width="4"/>
+
+  <!-- planet -->
+  <circle cx="128" cy="128" r="60" fill="url(#planet)"/>
+  <path d="M96 108c10-12 28-10 34 0s-2 20-14 20-26-6-20-20z" fill="#5FBF6B" fill-opacity="0.8"/>
+  <path d="M138 144c8-6 20 0 18 10s-14 14-20 6 0-12 2-16z" fill="#5FBF6B" fill-opacity="0.8"/>
+  <circle cx="128" cy="128" r="60" fill="none" stroke="#9BDDFF" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- trail: oldest to newest, getting brighter toward the capsule -->
+  <g fill="none" stroke="#FF3B30" stroke-width="7">
+    <path d="M225.7 141.7A104 40 0 0 1 180 162.64"   stroke-opacity="0.3"/>
+    <path d="M180 162.64A104 40 0 0 1 101.08 166.64" stroke-opacity="0.6"/>
+    <path d="M101.08 166.64A104 40 0 0 1 37.9 148"   stroke-opacity="1"/>
+  </g>
+
+  <!-- capsule, nose pointing along the direction of travel -->
+  <g transform="translate(37.9 148) rotate(213.7) scale(1.5)">
+    <path d="M-8 -6L-15 -10V10L-8 6Z" fill="#8D99A6"/>
+    <path d="M16 0C9 -3 1 -9 -8 -11V11C1 9 9 3 16 0Z" fill="#F4F6F8"/>
+    <circle cx="1" cy="0" r="3.2" fill="#007FFF"/>
+  </g>
+</g>
+)svg";
+        }
+
+        // Scene icon: the logo on a transparent background.
+        inline std::string SceneSvg() { return Svg(LogoBody()); }
+
+        // Engine icon: same logo on a dark rounded tile with a few stars.
+        inline std::string EngineSvg()
+        {
+            std::string body = R"svg(
+<rect x="8" y="8" width="240" height="240" rx="48" fill="#0E1624"/>
+<g fill="#ffffff" fill-opacity="0.6">
+  <circle cx="40" cy="48" r="2"/><circle cx="212" cy="64" r="1.6"/>
+  <circle cx="200" cy="214" r="2"/><circle cx="52" cy="206" r="1.4"/>
+</g>
+)svg";
+            body += LogoBody();
+            return Svg(body);
+        }
     } // namespace EmbeddedIcons
 
     // Same entry points as before; the optional size gives crisp icons at any resolution.
@@ -161,5 +215,13 @@ namespace SF::Engine
     inline std::shared_ptr<Image2d> GetCppLogo(uint32_t size = 256)
     {
         return EmbeddedIcons::Construct(EmbeddedIcons::CppSvg(), size);
+    }
+    inline std::shared_ptr<Image2d> GetSceneLogo(uint32_t size = 256)
+    {
+        return EmbeddedIcons::Construct(EmbeddedIcons::SceneSvg(), size);
+    }
+    inline std::shared_ptr<Image2d> GetEngineLogo(uint32_t size = 256)
+    {
+        return EmbeddedIcons::Construct(EmbeddedIcons::EngineSvg(), size);
     }
 } // namespace SF::Engine

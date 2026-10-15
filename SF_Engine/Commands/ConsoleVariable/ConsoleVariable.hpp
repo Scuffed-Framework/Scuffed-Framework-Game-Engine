@@ -37,7 +37,7 @@ namespace SF::Engine
         V Value;
         V LastValue;
 
-        ConsoleVariable(string mod, string nm, V defaultValue);
+        ConsoleVariable(string module, string name, V defaultValue);
         ~ConsoleVariable() override = default;
 
         [[nodiscard]] bool DidValueChange() const override { return !(Value == LastValue); }

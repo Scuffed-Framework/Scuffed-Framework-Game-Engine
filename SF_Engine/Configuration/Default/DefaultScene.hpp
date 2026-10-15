@@ -1,6 +1,6 @@
 #pragma once
-#include <Scene/Scene.hpp>
 #include <Controllers/CameraController.hpp>
+#include <Scene/Scene.hpp>
 
 namespace SF::Engine
 {
@@ -19,18 +19,18 @@ namespace SF::Engine
     class DefaultScene : public Scene
     {
     public:
-        DefaultScene()
-            : Scene(std::make_unique<CameraController>(),
-                    "Default Scene",
-                    SceneRendererConfig{
-                        .enableAtmosphere = true})
+        DefaultScene() :
+            Scene(std::make_unique<CameraController>(), "Default Scene", SceneRendererConfig{.enableAtmosphere = true})
         {
         }
 
-        void Start() override
+        explicit DefaultScene(const string &name) :
+            Scene(std::make_unique<CameraController>(), name, SceneRendererConfig{.enableAtmosphere = true})
         {
         }
+
+        void Start() override {}
 
         bool IsPaused() const override { return false; }
     };
-}
+} // namespace SF::Engine

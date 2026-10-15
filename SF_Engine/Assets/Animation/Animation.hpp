@@ -7,16 +7,16 @@ namespace SF::Engine::Animation
     using namespace std;
     class Animation
     {
-        ApplicationTime length;
+        DurationAsMilliseconds length;
         vector<Keyframe> keyframes;
 
     public:
-        Animation(const ApplicationTime &length, std::vector<Keyframe> keyframes) :
+        Animation(const DurationAsMilliseconds &length, std::vector<Keyframe> keyframes) :
             length(length), keyframes(std::move(keyframes))
         {
         }
 
-        [[nodiscard]] const ApplicationTime &GetLength() const { return length; }
+        [[nodiscard]] const DurationAsMilliseconds &GetLength() const { return length; }
         [[nodiscard]] const std::vector<Keyframe> &GetKeyframes() const { return keyframes; }
     };
 } // namespace SF::Engine::Animation

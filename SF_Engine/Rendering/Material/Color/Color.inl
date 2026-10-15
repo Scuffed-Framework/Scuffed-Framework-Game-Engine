@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SF>
+#include <Globals.hpp>
 #include "Color.hpp"
 namespace SF::Engine
 {

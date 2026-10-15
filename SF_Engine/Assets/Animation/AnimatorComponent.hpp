@@ -11,7 +11,6 @@ namespace SF::Engine::Animation
     class AnimatorComponent : public Component::Registrar<AnimatorComponent>
     {
         bool playing = false;
-        ApplicationTime animTime;
         unique_ptr<Animation> animation = nullptr;
 
     public:

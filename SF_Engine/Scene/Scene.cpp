@@ -11,7 +11,10 @@
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 
 #include <Math/BasicMath.hpp>
+#include <algorithm>
 #include <chrono>
+#include <filesystem>
+#include <functional>
 #include <string>
 
 #include <Assets/Bitmaps/Bitmap.hpp>
@@ -23,13 +26,33 @@
 
 namespace SF::Engine
 {
-    Scene::Scene(std::unique_ptr<CameraController> &&cameraController, std::string name,
-                 const SceneRendererConfig &cfg) :
+    Scene::Scene(std::unique_ptr<CameraController> &&cameraController, std::string name, const SceneRendererConfig &cfg,
+                 bool populateDefaults) :
         rendererCfg_(cfg), cameraController_(std::move(cameraController)), name(std::move(name))
+    {
+        if (populateDefaults)
+            PopulateDefaults();
+
+        lastFrameTime_ = std::chrono::steady_clock::now();
+    }
+
+    void Scene::ResolveBuiltinMesh(SceneObject *obj)
+    {
+        if (!obj || obj->mesh || obj->meshSourcePath.empty())
+            return;
+        if (obj->meshSourcePath == "__cube__")
+            obj->mesh = MeshFactory::CreateCube();
+        else if (obj->meshSourcePath == "__sphere__")
+            obj->mesh = MeshFactory::CreateSphere();
+        else if (obj->meshSourcePath == "__quad__")
+            obj->mesh = MeshFactory::CreateQuad();
+        // Non-builtin mesh paths are expected to be loaded by the asset layer.
+    }
+
+    void Scene::PopulateDefaults()
     {
         AddLight("Sun", Lighting::LightType::Directional, {1.0f, 1.0f, 1.0f}, 3.0f, {0.0f, 5.0f, 0.0f},
                  {0.0f, 0.0f, 0.0f});
-
         AddLight("Point", Lighting::LightType::Point, {1, 1, 1}, 10.0, {0, 20, 0}, {0, 0, 0});
 
         SceneObject *cube                                   = AddObject("Cube");
@@ -46,46 +69,50 @@ namespace SF::Engine
         floor->GetComponent<MeshMaterial>()->metallicFactor  = 0.0f;
         floor->GetComponent<Transform>()->scale              = {1000.0f, 1.0f, 1000.0f};
 
-        lastFrameTime_ = std::chrono::steady_clock::now();
+        // Meshes are normally created lazily in Initialize(); if we're already
+        // initialized (e.g. loading an empty file at runtime) do it now.
+        if (initialized_)
+        {
+            ResolveBuiltinMesh(cube);
+            ResolveBuiltinMesh(floor);
+        }
     }
 
     void Scene::Initialize()
     {
         if (initialized_)
             return;
+
+        auto *rs = RenderSystem::Get();
+        if (!rs)
+            return; // not ready yet; SceneManager::Update retries next frame
+
         initialized_ = true;
 
-        SceneRendererConfig cfg               = rendererCfg_;
-        cfg.enableAtmosphere                  = true;
-        cfg.atmosphereParams.bottomRadius     = 6371000.0f;
-        cfg.atmosphereParams.topRadius        = 6471000.0f;
-        cfg.atmosphereParams.sunIntensity     = 40.0f;
-        cfg.atmosphereParams.renderUnitRadius = cfg.atmosphereParams.bottomRadius;
+        SceneRendererConfig cfg = rendererCfg_;
+        if (atmosphereEnabled && !cfg.enableAtmosphere)
+        {
+            cfg.enableAtmosphere                  = true;
+            cfg.atmosphereParams.bottomRadius     = 6371000.0f;
+            cfg.atmosphereParams.topRadius        = 6471000.0f;
+            cfg.atmosphereParams.sunIntensity     = 40.0f;
+            cfg.atmosphereParams.renderUnitRadius = cfg.atmosphereParams.bottomRadius;
+        }
 
         auto ownedRenderer = std::make_unique<SceneRenderer>(cfg);
-        sceneRenderer_     = ownedRenderer.get();
+        sceneRenderer_     = ownedRenderer.get(); // only assigned once ownership is guaranteed below
         ImGuiPipelinePass::SetTargetStage(Pipeline::Stage{2, 0});
 
-        if (auto *rs = RenderSystem::Get())
-        {
-            rs->SetRenderer(std::move(ownedRenderer));
-            rs->ResetRenderStages();
-            rs->GetRenderer()->Start();
-            rs->GetRenderer()->SetStarted(true);
-        }
+        rs->SetRenderer(std::move(ownedRenderer));
+        rs->ResetRenderStages();
+        rs->GetRenderer()->Start();
+        rs->GetRenderer()->SetStarted(true);
 
         for (auto *obj: objects_)
-        {
-            if (!obj->mesh && !obj->meshSourcePath.empty())
-            {
-                if (obj->meshSourcePath == "__cube__")
-                    obj->mesh = MeshFactory::CreateCube();
-                else if (obj->meshSourcePath == "__sphere__")
-                    obj->mesh = MeshFactory::CreateSphere();
-                else if (obj->meshSourcePath == "__quad__")
-                    obj->mesh = MeshFactory::CreateQuad();
-            }
-        }
+            ResolveBuiltinMesh(obj);
+
+        SyncLightTransforms();
+        RebuildLightManager();
     }
 
     SceneObject *Scene::AddObject(const std::string &name, Entity *parent)
@@ -148,7 +175,7 @@ namespace SF::Engine
         return ptr;
     }
 
-    void Scene::RemoveEntitySubtree(Entity *rootEntity)
+    void Scene::PurgeFromCaches(Entity *rootEntity)
     {
         if (!rootEntity)
             return;
@@ -169,8 +196,25 @@ namespace SF::Engine
             else if (auto *light = dynamic_cast<SceneLight *>(e))
                 lights_.erase(std::remove(lights_.begin(), lights_.end(), light), lights_.end());
         }
+    }
 
+    void Scene::RemoveEntitySubtree(Entity *rootEntity)
+    {
+        if (!rootEntity)
+            return;
+
+        PurgeFromCaches(rootEntity);
         entities.GetRegistry().DestroyEntity(rootEntity);
+        RebuildLightManager();
+    }
+
+    void Scene::RemoveEntity(Entity *entity)
+    {
+        if (!entity)
+            return;
+
+        PurgeFromCaches(entity);
+        entities.Remove(entity);
         RebuildLightManager();
     }
 
@@ -185,22 +229,15 @@ namespace SF::Engine
             RemoveEntitySubtree(light);
     }
 
-    std::pair<int, int> Scene::FindParentRef(Entity *e) const
+    std::pair<int, int> Scene::FindParentRef(Entity *e, const IndexMap &idx)
     {
-        Entity *p = e ? e->GetParent() : nullptr;
-        if (!p)
-            return {0, -1};
-        if (auto *obj = dynamic_cast<SceneObject *>(p))
+        // Walk up past plain (unserialized) entities to the nearest serialized ancestor,
+        // so hierarchy survives a round trip instead of silently flattening to root.
+        for (Entity *p = e ? e->GetParent() : nullptr; p; p = p->GetParent())
         {
-            auto it = std::find(objects_.begin(), objects_.end(), obj);
-            if (it != objects_.end())
-                return {1, (int) std::distance(objects_.begin(), it)};
-        }
-        if (auto *light = dynamic_cast<SceneLight *>(p))
-        {
-            auto it = std::find(lights_.begin(), lights_.end(), light);
-            if (it != lights_.end())
-                return {2, (int) std::distance(lights_.begin(), it)};
+            auto it = idx.find(p);
+            if (it != idx.end())
+                return it->second;
         }
         return {0, -1};
     }
@@ -224,30 +261,62 @@ namespace SF::Engine
 
     void Scene::Serialize(XMLNode &node) const
     {
-        node.SetAttribute("version", 2);
+        node.SetAttribute("version", kSceneVersion);
+        if (!name.empty())
+            node.SetAttribute("name", name);
+
+        IndexMap idx;
+        idx.reserve(objects_.size() + lights_.size());
+        for (size_t i = 0; i < objects_.size(); i++)
+            idx[objects_[i]] = {1, (int) i};
+        for (size_t i = 0; i < lights_.size(); i++)
+            idx[lights_[i]] = {2, (int) i};
+
         for (size_t i = 0; i < objects_.size(); i++)
         {
-            XMLNode n        = node.AddChild("Object");
-            auto [kind, idx] = FindParentRef(objects_[i]);
+            XMLNode n       = node.AddChild("Object");
+            auto [kind, pi] = FindParentRef(objects_[i], idx);
             n.SetAttribute("parentKind", kind);
-            n.SetAttribute("parentIndex", idx);
+            n.SetAttribute("parentIndex", pi);
             objects_[i]->Serialize(n);
         }
         for (size_t i = 0; i < lights_.size(); i++)
         {
-            XMLNode n        = node.AddChild("Light");
-            auto [kind, idx] = FindParentRef(lights_[i]);
+            XMLNode n       = node.AddChild("Light");
+            auto [kind, pi] = FindParentRef(lights_[i], idx);
             n.SetAttribute("parentKind", kind);
-            n.SetAttribute("parentIndex", idx);
+            n.SetAttribute("parentIndex", pi);
             lights_[i]->Serialize(n);
         }
     }
 
     void Scene::Deserialize(const XMLNode &node)
     {
+        XMLNode root = node;
+
+        // version: absent (-1) = blank/new file, otherwise the file was written by Serialize().
+        int version = -1;
+        root.GetAttribute("version", version);
+        if (version > kSceneVersion)
+        {
+            // Written by a newer build; refuse without touching the live scene.
+            lastLoadOk_ = false;
+            return;
+        }
+        lastLoadOk_ = true;
+
+        // OpenScene() deserializes into the *live* scene (not via SceneManager::SetScene),
+        // so the previous contents must be cleared here.
         objects_.clear();
         lights_.clear();
         entities.Clear();
+        selectedObj_   = -1;
+        selectedLight_ = -1;
+
+        std::string sceneName;
+        root.GetAttribute("name", sceneName);
+        if (!sceneName.empty())
+            name = sceneName;
 
         struct PendingParent
         {
@@ -257,19 +326,12 @@ namespace SF::Engine
         };
         std::vector<PendingParent> pending;
 
-        for (XMLNode n: node.GetChildren("Object"))
+        for (XMLNode n: root.GetChildren("Object"))
         {
             SceneObject *obj = entities.CreateEntity<SceneObject>(std::string()); // name set by Deserialize below
             obj->Deserialize(n);
-            if (!obj->meshSourcePath.empty())
-            {
-                if (obj->meshSourcePath == "__cube__")
-                    obj->mesh = MeshFactory::CreateCube();
-                else if (obj->meshSourcePath == "__sphere__")
-                    obj->mesh = MeshFactory::CreateSphere();
-                else if (obj->meshSourcePath == "__quad__")
-                    obj->mesh = MeshFactory::CreateQuad();
-            }
+            if (initialized_) // GPU resources only once the renderer exists; Initialize() handles the rest
+                ResolveBuiltinMesh(obj);
 
             int parentKind = 0, parentIndex = -1;
             n.GetAttribute("parentKind", parentKind);
@@ -279,7 +341,7 @@ namespace SF::Engine
             objects_.push_back(obj);
         }
 
-        for (XMLNode n: node.GetChildren("Light"))
+        for (XMLNode n: root.GetChildren("Light"))
         {
             SceneLight *light = entities.CreateEntity<SceneLight>(std::string());
             light->Deserialize(n);
@@ -296,25 +358,65 @@ namespace SF::Engine
         // an object can reference a parent that's deserialized later in the file.
         for (auto &p: pending)
         {
+            Entity *parent = nullptr;
             if (p.kind == 1 && p.index >= 0 && p.index < (int) objects_.size())
-                entities.GetRegistry().Reparent(p.entity, objects_[p.index]);
+                parent = objects_[p.index];
             else if (p.kind == 2 && p.index >= 0 && p.index < (int) lights_.size())
-                entities.GetRegistry().Reparent(p.entity, lights_[p.index]);
+                parent = lights_[p.index];
+
+            // Skip self-parenting and cycles from corrupt files.
+            if (parent && !IsAncestorOrSelf(p.entity, parent))
+                entities.GetRegistry().Reparent(p.entity, parent);
         }
 
+        // Only a file with no version attribute (blank / brand new) gets defaults.
+        // A saved scene that was deliberately emptied stays empty.
+        if (version < 0 && objects_.empty() && lights_.empty())
+            PopulateDefaults();
+
+        SyncLightTransforms();
         RebuildLightManager();
     }
 
-    void Scene::SaveXML(const std::string &filename)
+    bool Scene::SaveXML(const std::string &filename)
     {
-        if (auto *xml = XMLModule::Get())
-            xml->Serialize("Scene", *this, filename);
+        namespace fs = std::filesystem;
+
+        auto *xml = XMLModule::Get();
+        if (!xml)
+            return false;
+
+        // Write to a temp file and rename so a crash/failed write can't corrupt the existing scene.
+        const fs::path target(filename);
+        fs::path tmp = target;
+        tmp += ".tmp";
+
+        std::error_code ec;
+        if (!xml->Serialize("Scene", *this, tmp.string()))
+        {
+            fs::remove(tmp, ec);
+            return false;
+        }
+
+        fs::rename(tmp, target, ec); // replaces an existing target
+        if (ec)
+        {
+            std::error_code ec2;
+            fs::remove(tmp, ec2);
+            return false;
+        }
+        return true;
     }
 
-    void Scene::ReadXML(const std::string &filename)
+    bool Scene::ReadXML(const std::string &filename)
     {
-        if (auto *xml = XMLModule::Get())
-            xml->Deserialize(filename, *this);
+        auto *xml = XMLModule::Get();
+        if (!xml)
+            return false;
+
+        lastLoadOk_   = true;
+        const bool ok = xml->Deserialize(filename, *this);
+        return ok && lastLoadOk_;
     }
 
     void Scene::ClearSystems() { systems.Clear(); }

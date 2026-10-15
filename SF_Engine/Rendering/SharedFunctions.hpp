@@ -1,11 +1,11 @@
 #pragma once
 #include <Math/BasicMath.hpp>
+#include <Math/Time/Time.hpp>
 #include <string>
 
 namespace SF::Engine
 {
     // too many :(
-    struct ApplicationTime;
     class ImageDepth;
     class Image2d;
     struct CameraUBO;
@@ -25,7 +25,7 @@ namespace SF::Engine
     Vec4 GetCameraDirection();
     Vec3 GetCameraPosition();
     Vec4 GetCameraPosition4();
-    ApplicationTime GetDeltaTime();
+    DurationAsNanoseconds GetDeltaTime();
     double GetDeltaTimeMilliS();
     int64_t GetDeltaTimeMicroS();
     int64_t GetDeltaTimeNanoS();
@@ -33,7 +33,7 @@ namespace SF::Engine
     const Image2d *GetSceneHDR();
     const ImageDepth *GetSceneDepth(const std::string &attachmentName = "gbuf_depth");
 
-    const Image2d* GetGBufferAlbedo();
+    const Image2d *GetGBufferAlbedo();
 
-    void BindSharedCameraData(int bind, int count, DescriptorSet* set);
-}
+    void BindSharedCameraData(int bind, int count, DescriptorSet *set);
+} // namespace SF::Engine
