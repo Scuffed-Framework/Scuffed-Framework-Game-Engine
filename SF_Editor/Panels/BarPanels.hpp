@@ -12,6 +12,7 @@
 
 #include <Gui/ImGui/StaticPanel.hpp>
 #include <Gui/ImGui/ocornut/imgui_stdlib.h>
+#include "../Tests/Audio/AudioTests.hpp"
 
 namespace SF::Engine
 {
@@ -19,12 +20,14 @@ namespace SF::Engine
     class AudioClip;
     class SoundBuffer;
 
-    class BarPanels : public StaticSingleInstancePanel<BarPanels>
+
+    class BarPanels : public StaticSingleInstancePanel<BarPanels> // (and tests)
     {
     public:
         BarPanels()
         {
-            reg = UIRegistry::Get().Register([this] { Draw(); });
+            reg        = UIRegistry::Get().Register([this] { Draw(); });
+            audioTests = std::make_unique<AudioTests>();
         };
         ~BarPanels() { UIRegistry::Get().Unregister(reg); };
 
@@ -37,12 +40,12 @@ namespace SF::Engine
         std::shared_ptr<AudioClip> clip;
 
         void DrawMenuBar();
-
-        void DrawObjectNode(EntityId entityId);
-        void DrawFolderNode(EntityId entityId);
-        void AddFolder(const std::string &name, Entity *parent);
+        void DrawAudioTools();
 
         void DrawEngineStatusBar();
         void DrawExecutingPasses();
+
+        // tests:
+        std::unique_ptr<AudioTests> audioTests;
     };
 } // namespace SF::Engine
