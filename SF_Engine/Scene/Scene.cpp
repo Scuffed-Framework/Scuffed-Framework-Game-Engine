@@ -1,12 +1,12 @@
 #include "Scene.hpp"
-#include <Gui/ImGui/ImGuiSFERenderPass.hpp>
+#include <Gui/ImGui/ImGuiSFERenderpass.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/FrameGraph/Stage.hpp>
 #include <Rendering/Lighting/Lighting.hpp>
 #include <Rendering/Lighting/LightingTypes.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
 #include <Rendering/Renderer.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereSFERenderPass.hpp>
+#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereSFERenderpass.hpp>
 
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 
@@ -101,7 +101,7 @@ namespace SF::Engine
 
         auto ownedRenderer = std::make_unique<SceneRenderer>(cfg);
         sceneRenderer_     = ownedRenderer.get(); // only assigned once ownership is guaranteed below
-        ImGuiSFERenderPass::SetTargetStage(Pipeline::Stage{2, 0});
+        ImGuiSFERenderpass::SetTargetStage(Pipeline::Stage{2, 0});
 
         rs->SetRenderer(std::move(ownedRenderer));
         rs->ResetRenderStages();

@@ -6,7 +6,7 @@
 #include <Rendering/Mesh/MeshFactory.hpp>
 #include <Rendering/RHI/Renderpass/FullscreenPass.hpp>
 #include <Rendering/Renderer.hpp>
-#include <Rendering/Visuals/SSR/SSRSFERenderPass.hpp>
+#include <Rendering/Visuals/SSR/SSRSFERenderpass.hpp>
 
 #include <Math/BasicMath.hpp>
 #include <chrono>
@@ -37,10 +37,10 @@ namespace SF::Engine
             lightManager_ = std::make_unique<LightManager>();
 
             // Compute cluster cull runs in PreRender (before renderpass)
-            clusterCull_ = AddSFERenderPass<ClusterCullSFERenderPass>(Pipeline::Stage{0, 0}, *lightManager_);
+            clusterCull_ = AddSFERenderpass<ClusterCullSFERenderpass>(Pipeline::Stage{0, 0}, *lightManager_);
 
             // Forward lit pass
-            litPass_ = AddSFERenderPass<LitMeshSFERenderPass>(Pipeline::Stage{0, 0}, *lightManager_);
+            litPass_ = AddSFERenderpass<LitMeshSFERenderpass>(Pipeline::Stage{0, 0}, *lightManager_);
 
             // Default lights
             Light sun{};
@@ -76,12 +76,12 @@ namespace SF::Engine
         }
 
         LightManager *GetLightManager() { return lightManager_.get(); }
-        LitMeshSFERenderPass *GetLitPass() { return litPass_; }
+        LitMeshSFERenderpass *GetLitPass() { return litPass_; }
 
     private:
         std::unique_ptr<LightManager> lightManager_;
-        ClusterCullSFERenderPass *clusterCull_ = nullptr;
-        LitMeshSFERenderPass *litPass_         = nullptr;
+        ClusterCullSFERenderpass *clusterCull_ = nullptr;
+        LitMeshSFERenderpass *litPass_         = nullptr;
         std::unique_ptr<Mesh> demoMesh_;
     };
 
@@ -123,16 +123,16 @@ namespace SF::Engine
 
             // Stage 0, subpass 0 : GBuffer geometry
             // ClusterCull runs in PreRender for stage 0 (before GBuffer renderpass)
-            AddSFERenderPass<ClusterCullSFERenderPass>(Pipeline::Stage{0, 0}, *lightManager_);
-            gbuffer_ = AddSFERenderPass<GBufferPass>(Pipeline::Stage{0, 0}, *lightManager_);
+            AddSFERenderpass<ClusterCullSFERenderpass>(Pipeline::Stage{0, 0}, *lightManager_);
+            gbuffer_ = AddSFERenderpass<GBufferPass>(Pipeline::Stage{0, 0}, *lightManager_);
 
             // Stage 1, subpass 0 : Deferred lighting resolve
-            AddSFERenderPass<DeferredLightSFERenderPass>(Pipeline::Stage{1, 0}, *lightManager_);
-            ssr_ = AddSFERenderPass<SSRSFERenderPass>(Pipeline::Stage{1, 1}, *lightManager_);
-            AddSFERenderPass<ForwardTransparentSFERenderPass>(Pipeline::Stage{1, 1}, *lightManager_);
+            AddSFERenderpass<DeferredLightSFERenderpass>(Pipeline::Stage{1, 0}, *lightManager_);
+            ssr_ = AddSFERenderpass<SSRSFERenderpass>(Pipeline::Stage{1, 1}, *lightManager_);
+            AddSFERenderpass<ForwardTransparentSFERenderpass>(Pipeline::Stage{1, 1}, *lightManager_);
 
             // Stage 1, subpass 2 : Tonemap hdr → swapchain
-            AddSFERenderPass<FullscreenPass>(Pipeline::Stage{1, 2}, "hdr", "Shaders/CompositeSampler.shader");
+            AddSFERenderpass<FullscreenPass>(Pipeline::Stage{1, 2}, "hdr", "Shaders/CompositeSampler.shader");
 
             // Default lights
             Light sun{};
@@ -157,11 +157,11 @@ namespace SF::Engine
 
         SF::Engine::LightManager *GetLightManager() const { return lightManager_.get(); }
         SF::Engine::GBufferPass *GetGBuffer() const { return gbuffer_; }
-        SF::Engine::SSRSFERenderPass *GetSSR() const { return ssr_; }
+        SF::Engine::SSRSFERenderpass *GetSSR() const { return ssr_; }
 
     private:
         std::unique_ptr<SF::Engine::LightManager> lightManager_;
         SF::Engine::GBufferPass *gbuffer_  = nullptr;
-        SF::Engine::SSRSFERenderPass *ssr_ = nullptr;
+        SF::Engine::SSRSFERenderpass *ssr_ = nullptr;
     };
 } // namespace SF::Engine

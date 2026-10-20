@@ -3,7 +3,7 @@
 #include <Rendering/SharedSamplers.hpp>
 namespace SF::Engine
 {
-    //  helpers (same pattern as LitMeshSFERenderPass)
+    //  helpers (same pattern as LitMeshSFERenderpass)
     static VkWriteDescriptorSet GBufWUbo(VkDescriptorSet d, uint32_t b, const VkDescriptorBufferInfo *i)
     {
         VkWriteDescriptorSet w{};

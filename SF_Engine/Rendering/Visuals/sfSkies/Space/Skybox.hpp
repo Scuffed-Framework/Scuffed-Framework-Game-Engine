@@ -11,23 +11,23 @@
 
 namespace SF::Engine
 {
-    class SkyboxSFERenderPass : public EngineRenderpass
+    class SkyboxSFERenderpass : public EngineRenderpass
     {
         inline static bool s_registered = []()
         {
             EngineRenderpassInitRegistry::Get().Register(
                     [](EngineRenderpassManager &mgr)
                     {
-                        mgr.Add<SkyboxSFERenderPass>(Pipeline::Stage{0, 0},
-                                                     std::make_unique<SkyboxSFERenderPass>(Pipeline::Stage{0, 0}));
+                        mgr.Add<SkyboxSFERenderpass>(Pipeline::Stage{0, 0},
+                                                     std::make_unique<SkyboxSFERenderpass>(Pipeline::Stage{0, 0}));
                     });
             return true;
         }();
 
     public:
-        explicit SkyboxSFERenderPass(Pipeline::Stage stage);
+        explicit SkyboxSFERenderpass(Pipeline::Stage stage);
 
-        ~SkyboxSFERenderPass() override = default;
+        ~SkyboxSFERenderpass() override = default;
 
         void Render(const CommandBuffer &commandBuffer) override;
 

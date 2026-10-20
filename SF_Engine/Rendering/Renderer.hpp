@@ -26,54 +26,54 @@ namespace SF::Engine
         virtual void Update() = 0;
 
         /**
-         * Checks whether a SFERenderPass exists or not.
-         * @tparam T The SFERenderPass type.
-         * @return If the SFERenderPass has the System.
+         * Checks whether a SFERenderpass exists or not.
+         * @tparam T The SFERenderpass type.
+         * @return If the SFERenderpass has the System.
          */
         template<typename T>
-        bool HasSFERenderPass() const
+        bool HasSFERenderpass() const
         {
             return PassManager.Has<T>();
         }
 
         /**
-         * Gets a SFERenderPass.
-         * @tparam T The SFERenderPass type.
-         * @return The SFERenderPass.
+         * Gets a SFERenderpass.
+         * @tparam T The SFERenderpass type.
+         * @return The SFERenderpass.
          */
         template<typename T>
-        T *GetSFERenderPass() const
+        T *GetSFERenderpass() const
         {
             return PassManager.Get<T>();
         }
 
         /**
-         * Adds a SFERenderPass.
-         * @tparam T The SFERenderPass type.
+         * Adds a SFERenderpass.
+         * @tparam T The SFERenderpass type.
          * @tparam Args The constructor arg types.
-         * @param pipelineStage The SFERenderPass pipeline stage.
+         * @param pipelineStage The SFERenderpass pipeline stage.
          * @param args The constructor arguments.
          */
         template<typename T, typename... Args>
-        T *AddSFERenderPass(const Pipeline::Stage &pipelineStage, Args &&...args)
+        T *AddSFERenderpass(const Pipeline::Stage &pipelineStage, Args &&...args)
         {
             return PassManager.Add<T>(pipelineStage, std::make_unique<T>(pipelineStage, std::forward<Args>(args)...));
         }
 
         /**
-         * Removes a SFERenderPass.
-         * @tparam T The SFERenderPass type.
+         * Removes a SFERenderpass.
+         * @tparam T The SFERenderpass type.
          */
         template<typename T>
-        void RemoveSFERenderPass()
+        void RemoveSFERenderpass()
         {
             PassManager.Remove<T>();
         }
 
         /**
-         * Clears all SFERenderPasses.
+         * Clears all SFERenderpasses.
          */
-        void ClearSFERenderPasss() { PassManager.Clear(); }
+        void ClearSFERenderpasss() { PassManager.Clear(); }
 
         bool IsStarted() const { return started; }
         void SetStarted(bool s) { started = s; }
@@ -91,13 +91,13 @@ namespace SF::Engine
             renderStages.emplace_back(std::move(renderStage));
         }
 
-        EngineRenderpassManager *GetSFERenderPassManager() { return &PassManager; }
+        EngineRenderpassManager *GetSFERenderpassManager() { return &PassManager; }
         /*
                  The frame graph is opt-in per pass: only passes registered via GetFrameGraph().AddPass()
                  are touched by Compile()'s culling/ordering/barriers. A pass never handed to the graph
                  keeps running exactly as EngineRenderpassManager always ran it (enabled, order 0).
                  See SceneRenderer::Start() for which passes are actually wired up and why (buffer-only
-                 passes like ClusterCullSFERenderPass are deliberately left out; the graph only models
+                 passes like ClusterCullSFERenderpass are deliberately left out; the graph only models
                  image resources today).
         */
         FrameGraph &GetFrameGraph() { return frameGraph; }

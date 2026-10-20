@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 #include "LightManager.hpp"
-#include "LitMeshSFERenderPass.hpp" // reuses MeshMaterial and LitPushConstants
+#include "LitMeshSFERenderpass.hpp" // reuses MeshMaterial and LitPushConstants
 
 namespace SF::Engine
 {
@@ -17,7 +17,7 @@ namespace SF::Engine
      * @brief Geometry pass : writes the GBuffer (deferred pipeline).
      *
      * Use this with LightingRenderer's deferred path.
-     * For simple forward rendering, use LitMeshSFERenderPass instead.
+     * For simple forward rendering, use LitMeshSFERenderpass instead.
      *
      * Render stage expected (stage 0):
      *   attach 0  "gbuf_depth"  Depth

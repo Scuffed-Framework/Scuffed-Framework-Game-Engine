@@ -1,5 +1,5 @@
 #include "SceneRenderer.hpp"
-#include <Gui/ImGui/ImGuiSFERenderPass.hpp>
+#include <Gui/ImGui/ImGuiSFERenderpass.hpp>
 #include <Gui/ImGui/UIRegistry.hpp>
 #include <Math/Transform.hpp>
 #include <Platform/Windowing/WindowManager.hpp>
@@ -47,35 +47,35 @@ namespace SF::Engine
         lightManager_ = std::make_unique<LightManager>();
 
 
-        clusterCull_ = AddSFERenderPass<ClusterCullSFERenderPass>(Pipeline::Stage{0, 0}, *lightManager_);
-        gbuffer_     = AddSFERenderPass<GBufferPass>(Pipeline::Stage{0, 0}, *lightManager_);
+        clusterCull_ = AddSFERenderpass<ClusterCullSFERenderpass>(Pipeline::Stage{0, 0}, *lightManager_);
+        gbuffer_     = AddSFERenderpass<GBufferPass>(Pipeline::Stage{0, 0}, *lightManager_);
 
         // Stage 1, subpass 0 : Deferred lighting resolve -> hdr.
-        auto *deferredLight = AddSFERenderPass<DeferredLightSFERenderPass>(Pipeline::Stage{1, 0}, *lightManager_);
+        auto *deferredLight = AddSFERenderpass<DeferredLightSFERenderpass>(Pipeline::Stage{1, 0}, *lightManager_);
 
         // Hi-Z pyramid for SSR's traversal. Stage{1,0} so its PreRender runs after the gbuffer
         // renderpass (gbuf_depth readable) and before SSR's (Stage{1,1}).
-        hiz_ = AddSFERenderPass<HiZSFERenderPass>(Pipeline::Stage{1, 0});
+        hiz_ = AddSFERenderpass<HiZSFERenderpass>(Pipeline::Stage{1, 0});
 
         // Environment probe (sky cubemap, GGX-prefiltered) for SSR misses / rough surfaces. Same
         // stage as the atmosphere with a high order, so its PreRender runs after the atmosphere has
         // baked the SkyView LUT and before SSR's (Stage{1,1}).
-        probe_ = AddSFERenderPass<ReflectionProbeSFERenderPass>(Pipeline::Stage{1, 0});
+        probe_ = AddSFERenderpass<ReflectionProbeSFERenderpass>(Pipeline::Stage{1, 0});
 
-        ssr_ = AddSFERenderPass<SSRSFERenderPass>(Pipeline::Stage{1, 1}, *lightManager_);
+        ssr_ = AddSFERenderpass<SSRSFERenderpass>(Pipeline::Stage{1, 1}, *lightManager_);
         ssr_->SetHiZ(hiz_);
         ssr_->SetReflectionProbe(probe_);
 
         // Stage 1, subpass 2 : Transparent forward pass.
         auto *forwardTransparent =
-                AddSFERenderPass<ForwardTransparentSFERenderPass>(Pipeline::Stage{1, 2}, *lightManager_);
+                AddSFERenderpass<ForwardTransparentSFERenderpass>(Pipeline::Stage{1, 2}, *lightManager_);
 
         auto *composite =
-                AddSFERenderPass<FullscreenPass>(Pipeline::Stage{2, 0}, "hdr", "Shaders/CompositeSampler.shader");
+                AddSFERenderpass<FullscreenPass>(Pipeline::Stage{2, 0}, "hdr", "Shaders/CompositeSampler.shader");
 
         atmoController = std::make_unique<AtmosphereController>(
                 Pipeline::Stage{1, 0}, [this](const Pipeline::Stage &s, const AtmosphereParams &p)
-                { return AddSFERenderPass<AtmosphereSFERenderPass>(s, p); });
+                { return AddSFERenderpass<AtmosphereSFERenderpass>(s, p); });
 
         if (config_.enableAtmosphere)
         {
@@ -83,17 +83,17 @@ namespace SF::Engine
             // TODO: load from xml
             atmoController->AddAtmosphere("Earth", earthData, earthPos);
 
-            cloudPass_ = AddSFERenderPass<CloudSFERenderPass>(Pipeline::Stage{1, 0}, earthData);
+            cloudPass_ = AddSFERenderpass<CloudSFERenderpass>(Pipeline::Stage{1, 0}, earthData);
 
             // disable cloud pass cuz its broken
             cloudPass_->SetEnabled(false);
             // disable cloud pass cuz its broken
         }
 
-        GetSFERenderPassManager()->RunInitCallbacks();
+        GetSFERenderpassManager()->RunInitCallbacks();
 
         // Only the passes above that touch image resources genuinely shared across pass
-        // boundaries get registered; see the ClusterCullSFERenderPass comment above and the
+        // boundaries get registered; see the ClusterCullSFERenderpass comment above and the
         // per-pass notes below for what's deliberately left out and why.
         auto &graph = GetFrameGraph();
 
@@ -117,7 +117,7 @@ namespace SF::Engine
 
         graph.Create(deferredLightNode, hdr, ResourceUsage::ColorAttachment);
 
-        if (auto *atmosphere = GetSFERenderPassManager()->Get<AtmosphereSFERenderPass>())
+        if (auto *atmosphere = GetSFERenderpassManager()->Get<AtmosphereSFERenderpass>())
         {
             auto &atmosphereNode = graph.AddPass("Atmosphere", *atmosphere);
             graph.Write(atmosphereNode, hdr, ResourceUsage::ColorAttachment);
@@ -155,7 +155,7 @@ namespace SF::Engine
         {
             uiCallbackSet_ = true;
 
-            if (auto *imgui = GetSFERenderPassManager()->Get<ImGuiSFERenderPass>())
+            if (auto *imgui = GetSFERenderpassManager()->Get<ImGuiSFERenderpass>())
             {
                 imgui->SetDrawCallback([this, scene]() { UIRegistry::Get().DrawAll(); });
             }
@@ -244,12 +244,12 @@ namespace SF::Engine
         // back to the same analytic sky/ground SSR/deferred ambient use.
         if (probe_)
         {
-            probe_->SetAtmosphere(GetSFERenderPassManager()->Get<AtmosphereSFERenderPass>());
+            probe_->SetAtmosphere(GetSFERenderpassManager()->Get<AtmosphereSFERenderpass>());
             if (ssr_)
                 probe_->SetAnalyticSky(ssr_->ambientSkyColor, ssr_->ambientIntensity, ssr_->ambientGroundColor);
         }
 
-        // Legacy single-planet centre, still used by CloudSFERenderPass until it's
+        // Legacy single-planet centre, still used by CloudSFERenderpass until it's
         // converted to per-planet data like AtmosphereController.
         Vec3 planetCentre = {0.0f, -6371000.0f, 0.0f};
 

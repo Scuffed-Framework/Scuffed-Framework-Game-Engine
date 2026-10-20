@@ -1,11 +1,11 @@
 #pragma once
 
-#include "ClusterCullSFERenderPass.hpp"
-#include "DeferredLightSFERenderPass.hpp"
-#include "ForwardTransparentSFERenderPass.hpp"
+#include "ClusterCullSFERenderpass.hpp"
+#include "DeferredLightSFERenderpass.hpp"
+#include "ForwardTransparentSFERenderpass.hpp"
 #include "GBufferPass.hpp"
 #include "LightManager.hpp"
-#include "LitMeshSFERenderPass.hpp"
+#include "LitMeshSFERenderpass.hpp"
 
 #include <Scene/Types.hpp>
 

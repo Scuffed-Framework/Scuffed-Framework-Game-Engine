@@ -13,7 +13,7 @@ namespace SF::Engine
         // 256×64 is the standard starter size
         explicit TransmittanceLUT(uint32_t width = 256, uint32_t height = 64);
 
-        // Returns the baked texture  pass to AtmosphereSFERenderPass
+        // Returns the baked texture  pass to AtmosphereSFERenderpass
         Image2d *GetTexture() const { return texture_.get(); }
 
         // Call once after construction (or when params change)

@@ -4,11 +4,11 @@
 #include <Rendering/Mesh/Mesh.hpp>
 #include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/Renderer.hpp>
-#include <Rendering/Visuals/HiZ/HiZSFERenderPass.hpp>
-#include <Rendering/Visuals/ReflectionProbe/ReflectionProbeSFERenderPass.hpp>
-#include <Rendering/Visuals/SSR/SSRSFERenderPass.hpp>
+#include <Rendering/Visuals/HiZ/HiZSFERenderpass.hpp>
+#include <Rendering/Visuals/ReflectionProbe/ReflectionProbeSFERenderpass.hpp>
+#include <Rendering/Visuals/SSR/SSRSFERenderpass.hpp>
 #include <Rendering/Visuals/sfSkies/AtmosphereController.hpp>
-#include <Rendering/Visuals/sfSkies/Clouds/CloudSFERenderPass.hpp>
+#include <Rendering/Visuals/sfSkies/Clouds/CloudSFERenderpass.hpp>
 
 #include <Rendering/FrameGraph/EngineRenderpassInitRegistry.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
@@ -83,10 +83,10 @@ namespace SF::Engine
         // Accessors
         LightManager *GetLightManager() const { return lightManager_.get(); }
         GBufferPass *GetGBuffer() const { return gbuffer_; }
-        SSRSFERenderPass *GetSSR() const { return ssr_; }
-        CloudSFERenderPass *GetCloudPass() const { return cloudPass_; }
+        SSRSFERenderpass *GetSSR() const { return ssr_; }
+        CloudSFERenderpass *GetCloudPass() const { return cloudPass_; }
         AtmosphereController *GetAtmosphereController() const { return atmoController.get(); }
-        ClusterCullSFERenderPass *GetClusterCull() const { return clusterCull_; }
+        ClusterCullSFERenderpass *GetClusterCull() const { return clusterCull_; }
 
         std::unique_ptr<AtmosphereController> atmoController;
 
@@ -96,11 +96,11 @@ namespace SF::Engine
 
         std::unique_ptr<LightManager> lightManager_;
         GBufferPass *gbuffer_                  = nullptr;
-        SSRSFERenderPass *ssr_                 = nullptr;
-        HiZSFERenderPass *hiz_                 = nullptr;
-        ReflectionProbeSFERenderPass *probe_   = nullptr;
-        CloudSFERenderPass *cloudPass_         = nullptr;
-        ClusterCullSFERenderPass *clusterCull_ = nullptr;
+        SSRSFERenderpass *ssr_                 = nullptr;
+        HiZSFERenderpass *hiz_                 = nullptr;
+        ReflectionProbeSFERenderpass *probe_   = nullptr;
+        CloudSFERenderpass *cloudPass_         = nullptr;
+        ClusterCullSFERenderpass *clusterCull_ = nullptr;
 
         bool uiCallbackSet_   = false;
         uint32_t lastScreenH_ = 600, lastScreenW_ = 800;

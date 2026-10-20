@@ -83,7 +83,7 @@ namespace SF::Engine::Lighting
         Vec4 sunDirIntensity; // .xyz = towardSun, .w = intensity (0 at night)
 
         // Ambient (image-based) term: two-colour sky/ground model, matching
-        // SSRSFERenderPass::ambientSkyColor/ambientGroundColor/ambientIntensity so a
+        // SSRSFERenderpass::ambientSkyColor/ambientGroundColor/ambientIntensity so a
         // surface's diffuse ambient and its SSR-reflected sky colour agree instead of
         // ambient being an unrelated flat constant. Sourced from SSR's own ImGui-tunable
         // values in SceneRenderer::RenderScene (falls back to SSR's own defaults if no

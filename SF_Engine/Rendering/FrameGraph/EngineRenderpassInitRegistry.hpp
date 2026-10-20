@@ -30,7 +30,7 @@ namespace SF::Engine
     };
 
     template<typename TDerived>
-    class SFERenderPassAutoInit
+    class SFERenderpassAutoInit
     {
         template<typename T, typename = void>
         struct HasPreInit : std::false_type
