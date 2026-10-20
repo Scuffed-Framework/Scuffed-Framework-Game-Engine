@@ -25,11 +25,11 @@ namespace SF::Engine
      * GBuffer image descriptors are refreshed lazily when attachment pointers change
      * (i.e. after swapchain recreation).
      */
-    class DeferredLightPipelinePass : public EngineRenderpass
+    class DeferredLightSFERenderPass : public EngineRenderpass
     {
     public:
-        explicit DeferredLightPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
-        ~DeferredLightPipelinePass() override = default;
+        explicit DeferredLightSFERenderPass(Pipeline::Stage stage, LightManager &lightManager);
+        ~DeferredLightSFERenderPass() override = default;
 
         void Render(const CommandBuffer &commandBuffer) override;
         void RefreshGBufferDescriptors();

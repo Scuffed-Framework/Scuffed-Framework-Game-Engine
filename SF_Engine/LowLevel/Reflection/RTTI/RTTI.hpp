@@ -4,24 +4,24 @@
 //
 // Usage:
 //
-//   class IPipelinePass
+//   class ISFERenderPass
 //   {
-//       SF_RTTI_BASE(IPipelinePass)
+//       SF_RTTI_BASE(ISFERenderPass)
 //   public:
-//       virtual ~IPipelinePass() = default;
+//       virtual ~ISFERenderPass() = default;
 //       virtual void Execute() = 0;
 //   };
 //
-//   class ComputePipelinePass : public IPipelinePass
+//   class ComputeSFERenderPass : public ISFERenderPass
 //   {
-//       SF_RTTI(ComputePipelinePass, IPipelinePass)
+//       SF_RTTI(ComputeSFERenderPass, ISFERenderPass)
 //   public:
 //       void Execute() override { /* ... */ }
 //   };
 //
-//   class AtmosphereLUTPass : public ComputePipelinePass
+//   class AtmosphereLUTPass : public ComputeSFERenderPass
 //   {
-//       SF_RTTI(AtmosphereLUTPass, ComputePipelinePass)
+//       SF_RTTI(AtmosphereLUTPass, ComputeSFERenderPass)
 //   public:
 //       void Bake() { /* ... */ }
 //   };

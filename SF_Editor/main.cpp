@@ -1,16 +1,9 @@
 #include <Engine/Engine.hpp>
-#include <Gui/ImGui/ImGuiPipelinePass.hpp>
-#include <Platform/Windowing/WindowManager.hpp>
-#include <Rendering/RenderSystem.hpp>
-#include <Scene/SceneManager.hpp>
-
-#include <filesystem>
-#include <iostream>
-
 #include "Application/LevelEditor.hpp"
 
 int main()
 {
+    // TODO: engine should create the editor
     SF::Engine::EditorApplication app;
 
     if (auto result = app.Init(); result != SF::Engine::EditorApplication::Success)

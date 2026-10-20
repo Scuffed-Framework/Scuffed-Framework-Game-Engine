@@ -18,7 +18,7 @@
 namespace SF::Engine
 {
     /**
-     * @brief PipelinePass that performs a fullscreen blit/post-process pass.
+     * @brief SFERenderPass that performs a fullscreen blit/post-process pass.
      *
      * Uses a single fullscreen triangle (no VBO) to sample a source texture
      * and write it into the current render target (typically the swapchain).
@@ -27,7 +27,7 @@ namespace SF::Engine
      * Add a second render stage to your Renderer that has:
      *   - Attachment{0, "scene", Attachment::Type::Image}   <- the resolved scene colour
      *   - Attachment{1, "swapchain", Attachment::Type::Swapchain}
-     * Then AddPipelinePass<FullscreenPass>({stageIndex, 0}, "scene");
+     * Then AddSFERenderPass<FullscreenPass>({stageIndex, 0}, "scene");
      *
      * The source attachment name is resolved each frame via RenderSystem::GetAttachment().
      */

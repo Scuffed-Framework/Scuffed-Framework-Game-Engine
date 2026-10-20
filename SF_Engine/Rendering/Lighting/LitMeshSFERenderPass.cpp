@@ -1,4 +1,4 @@
-#include "LitMeshPipelinePass.hpp"
+#include "LitMeshSFERenderPass.hpp"
 
 #include <Assets/Bitmaps/Bitmap.hpp>
 #include <Rendering/RHI/Images/Image.hpp>
@@ -63,7 +63,7 @@ namespace SF::Engine
                 VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLE_COUNT_1_BIT, false, false);
     }
 
-    LitMeshPipelinePass::LitMeshPipelinePass(Pipeline::Stage stage, LightManager &lightManager) :
+    LitMeshSFERenderPass::LitMeshSFERenderPass(Pipeline::Stage stage, LightManager &lightManager) :
         EngineRenderpass(stage), lm_(lightManager)
     {
         pipeline_ = std::make_unique<RhiRenderPipeline>(
@@ -85,17 +85,17 @@ namespace SF::Engine
         WriteMaterialDescriptors(empty);
     }
 
-    void LitMeshPipelinePass::Submit(std::shared_ptr<Mesh> mesh, const MeshMaterial &material, const Mat4 &transform)
+    void LitMeshSFERenderPass::Submit(std::shared_ptr<Mesh> mesh, const MeshMaterial &material, const Mat4 &transform)
     {
         drawList_.push_back({std::move(mesh), material, transform});
     }
 
-    void LitMeshPipelinePass::Submit(const MeshInstance &instance)
+    void LitMeshSFERenderPass::Submit(const MeshInstance &instance)
     {
         drawList_.push_back({instance.mesh, instance.material, instance.transform});
     }
 
-    void LitMeshPipelinePass::WriteFrameDescriptors()
+    void LitMeshSFERenderPass::WriteFrameDescriptors()
     {
         VkDescriptorBufferInfo frameInfo{lm_.GetFrameUBO().GetBuffer(), 0, VK_WHOLE_SIZE};
         VkDescriptorBufferInfo lightInfo{lm_.GetLightSSBO().GetBuffer(), 0, VK_WHOLE_SIZE};
@@ -110,7 +110,7 @@ namespace SF::Engine
         });
     }
 
-    void LitMeshPipelinePass::WriteMaterialDescriptors(const MeshMaterial &mat)
+    void LitMeshSFERenderPass::WriteMaterialDescriptors(const MeshMaterial &mat)
     {
         Image2d *albedo   = mat.albedo ? mat.albedo.get() : fallbackWhite_.get();
         Image2d *normal   = mat.normal ? mat.normal.get() : fallbackNormal_.get();
@@ -130,7 +130,7 @@ namespace SF::Engine
         });
     }
 
-    void LitMeshPipelinePass::Render(const CommandBuffer &commandBuffer)
+    void LitMeshSFERenderPass::Render(const CommandBuffer &commandBuffer)
     {
         if (drawList_.empty())
             return;

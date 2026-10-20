@@ -7,7 +7,7 @@
 #include <Rendering/SharedSamplers.hpp>
 #include <Rendering/Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp>
 
-#include "CloudPipelinePass.hpp"
+#include "CloudSFERenderPass.hpp"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpragmas"
 #include <glm/gtc/constants.hpp>
@@ -15,9 +15,9 @@
 
 namespace SF::Engine
 {
-    bool CloudPipelinePass::isWindowOpen = true;
+    bool CloudSFERenderPass::isWindowOpen = true;
 
-    CloudPipelinePass::CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data) :
+    CloudSFERenderPass::CloudSFERenderPass(Pipeline::Stage stage, AtmosphereData &data) :
         EngineRenderpass(stage), data_(data)
     {
         EngineRenderpass::SetOrder(100);
@@ -139,7 +139,7 @@ namespace SF::Engine
         isWindowOpen = true;
     }
 
-    void CloudPipelinePass::BindDescriptors()
+    void CloudSFERenderPass::BindDescriptors()
     {
         // --- Raymarch set ---
         auto raymarchWrites =
@@ -208,8 +208,8 @@ namespace SF::Engine
         }
     }
 
-    void CloudPipelinePass::SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos,
-                                         const Vec3 &planetPos, const Vec3 &sunDir, Vec2 screenSize)
+    void CloudSFERenderPass::SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos,
+                                          const Vec3 &planetPos, const Vec3 &sunDir, Vec2 screenSize)
     {
         const Vec3 sd = glm::length(sunDir) > 1e-6f ? normalize(sunDir) : Vec3(0.577f, 0.577f, 0.577f);
         cachedSunDir_ = sd;
@@ -229,7 +229,7 @@ namespace SF::Engine
         data_.ubo.sunCol           = Vec4(1);
     }
 
-    void CloudPipelinePass::PreRender(const CommandBuffer &cmd)
+    void CloudSFERenderPass::PreRender(const CommandBuffer &cmd)
     {
         if (!enabled)
             return;
@@ -529,9 +529,9 @@ namespace SF::Engine
         ++framesSinceStart_;
     }
 
-    void CloudPipelinePass::Render(const CommandBuffer &) {}
+    void CloudSFERenderPass::Render(const CommandBuffer &) {}
 
-    void CloudPipelinePass::UpdateCloudUBO()
+    void CloudSFERenderPass::UpdateCloudUBO()
     {
         CloudUBO ubo{};
 
@@ -558,7 +558,7 @@ namespace SF::Engine
         cloudUBO_->Update(ubo);
     }
 
-    void CloudPipelinePass::DrawImGuiPanel()
+    void CloudSFERenderPass::DrawImGuiPanel()
     {
         if (!isWindowOpen)
             return;

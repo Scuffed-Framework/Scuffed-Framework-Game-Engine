@@ -1,4 +1,4 @@
-#include "ClusterCullPipelinePass.hpp"
+#include "ClusterCullSFERenderPass.hpp"
 #include <Rendering/RenderSystem.hpp>
 #include "LightingTypes.hpp"
 
@@ -29,7 +29,7 @@ namespace SF::Engine
         return w;
     }
 
-    ClusterCullPipelinePass::ClusterCullPipelinePass(Pipeline::Stage stage, LightManager &lm)
+    ClusterCullSFERenderPass::ClusterCullSFERenderPass(Pipeline::Stage stage, LightManager &lm)
         : EngineRenderpass(stage), lm_(lm)
     {
         buildPipeline_ = std::make_unique<ComputePipeline>("Shaders/Lighting/ClusterBuild.shader");
@@ -64,7 +64,7 @@ namespace SF::Engine
         }
     }
 
-    void ClusterCullPipelinePass::InsertComputeToComputeBarrier(
+    void ClusterCullSFERenderPass::InsertComputeToComputeBarrier(
         const CommandBuffer &commandBuffer) const
     {
         VkMemoryBarrier b{};
@@ -77,7 +77,7 @@ namespace SF::Engine
                              0, 1, &b, 0, nullptr, 0, nullptr);
     }
 
-    void ClusterCullPipelinePass::InsertComputeToFragmentBarrier(
+    void ClusterCullSFERenderPass::InsertComputeToFragmentBarrier(
         const CommandBuffer &commandBuffer) const
     {
         // Ensure light index + list SSBOs are visible to the fragment shader
@@ -91,7 +91,7 @@ namespace SF::Engine
                              0, 1, &b, 0, nullptr, 0, nullptr);
     }
 
-    void ClusterCullPipelinePass::DispatchBuild(const CommandBuffer &commandBuffer)
+    void ClusterCullSFERenderPass::DispatchBuild(const CommandBuffer &commandBuffer)
     {
         buildPipeline_->BindPipeline(commandBuffer);
         buildDescSet_->BindDescriptor(commandBuffer);
@@ -99,7 +99,7 @@ namespace SF::Engine
                       Lighting::CLUSTER_X, Lighting::CLUSTER_Y, Lighting::CLUSTER_Z);
     }
 
-    void ClusterCullPipelinePass::DispatchCull(const CommandBuffer &commandBuffer)
+    void ClusterCullSFERenderPass::DispatchCull(const CommandBuffer &commandBuffer)
     {
         cullPipeline_->BindPipeline(commandBuffer);
         cullDescSet_->BindDescriptor(commandBuffer);
@@ -108,7 +108,7 @@ namespace SF::Engine
         vkCmdDispatch(commandBuffer, groups, 1, 1);
     }
 
-    void ClusterCullPipelinePass::PreRender(const CommandBuffer &commandBuffer)
+    void ClusterCullSFERenderPass::PreRender(const CommandBuffer &commandBuffer)
     {
         // Phase 1: build cluster AABBs (only when dirty : first frame or resize)
         if (clustersDirty_)

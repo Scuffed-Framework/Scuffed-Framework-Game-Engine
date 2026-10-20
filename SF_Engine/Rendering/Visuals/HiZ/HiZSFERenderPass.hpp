@@ -18,7 +18,7 @@ namespace SF::Engine
      *
      * Reversed-Z: near = 1, far -> 0, so max-reduction keeps the CLOSEST depth of each cell.
      *
-     * Pure compute, stage-less like ClusterCullPipelinePass: all real work happens in
+     * Pure compute, stage-less like ClusterCullSFERenderPass: all real work happens in
      * PreRender(); Render() is a no-op. Must be registered at a stage whose PreRender runs AFTER
      * the gbuffer renderpass has finished (so gbuf_depth is in DEPTH_STENCIL_READ_ONLY_OPTIMAL)
      * and BEFORE whatever consumes GetPyramid() -- SceneRenderer registers it at Stage{1, 0},
@@ -35,11 +35,11 @@ namespace SF::Engine
      * One dispatch + barrier per mip level, not a single SPD-style pass: simpler, and the cost is
      * a handful of tiny dispatches.
      */
-    class HiZPipelinePass : public EngineRenderpass
+    class HiZSFERenderPass : public EngineRenderpass
     {
     public:
-        explicit HiZPipelinePass(Pipeline::Stage stage);
-        ~HiZPipelinePass() override;
+        explicit HiZSFERenderPass(Pipeline::Stage stage);
+        ~HiZSFERenderPass() override;
 
         void PreRender(const CommandBuffer &commandBuffer) override;
         void Render(const CommandBuffer &) override {}
@@ -74,11 +74,11 @@ namespace SF::Engine
         // levelSets_[k>0]: binding 0 = pyramid mip k-1 (sampled), binding 1 = pyramid mip k.
         std::vector<std::unique_ptr<DescriptorSet>> levelSets_;
 
-        VkDevice device_ = VK_NULL_HANDLE;
+        VkDevice device_           = VK_NULL_HANDLE;
         VkImageView lastDepthView_ = VK_NULL_HANDLE;
 
-        uint32_t levelCount_  = 0;
-        uint64_t generation_  = 0;
+        uint32_t levelCount_ = 0;
+        uint64_t generation_ = 0;
         UVec2 allocatedRes_{0, 0}; // pyramid_'s own resolution (half the depth buffer's)
     };
 } // namespace SF::Engine

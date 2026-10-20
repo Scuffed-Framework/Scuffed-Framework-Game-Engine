@@ -1,4 +1,4 @@
-#include "ImGuiPipelinePass.hpp"
+#include "ImGuiSFERenderPass.hpp"
 
 #include <Platform/Windowing/WindowManager.hpp>
 #include <Rendering/FrameGraph/Stage.hpp>
@@ -15,11 +15,11 @@
 
 namespace SF::Engine
 {
-    ImGuiPipelinePass::ImGuiPipelinePass(Pipeline::Stage stage) : EngineRenderpass(stage) { Init(); }
+    ImGuiSFERenderPass::ImGuiSFERenderPass(Pipeline::Stage stage) : EngineRenderpass(stage) { Init(); }
 
-    ImGuiPipelinePass::~ImGuiPipelinePass() { Shutdown(); }
+    ImGuiSFERenderPass::~ImGuiSFERenderPass() { Shutdown(); }
 
-    void ImGuiPipelinePass::CreateDescriptorPool()
+    void ImGuiSFERenderPass::CreateDescriptorPool()
     {
         auto *logDevice = RenderSystem::Get()->GetLogicalDevice();
 
@@ -35,7 +35,7 @@ namespace SF::Engine
         RenderSystem::CheckVkResult(vkCreateDescriptorPool(*logDevice, &poolInfo, nullptr, &imguiPool_));
     }
 
-    void ImGuiPipelinePass::Init()
+    void ImGuiSFERenderPass::Init()
     {
         if (s_backendInitialized)
         {
@@ -51,11 +51,11 @@ namespace SF::Engine
         auto *window       = WindowManager::Get()->GetWindow(0);
 
         if (!window)
-            throw std::runtime_error("ImGuiPipelinePass: no window available");
+            throw std::runtime_error("ImGuiSFERenderPass: no window available");
 
         GLFWwindow *glfwWindow = window->GetWindow();
         if (!glfwWindow)
-            throw std::runtime_error("ImGuiPipelinePass: null GLFWwindow");
+            throw std::runtime_error("ImGuiSFERenderPass: null GLFWwindow");
 
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
@@ -63,13 +63,13 @@ namespace SF::Engine
         ImGui::StyleColorsDark();
 
         if (!ImGui_ImplGlfw_InitForVulkan(glfwWindow, /*install_callbacks=*/false))
-            throw std::runtime_error("ImGuiPipelinePass: ImGui_ImplGlfw_InitForVulkan failed");
+            throw std::runtime_error("ImGuiSFERenderPass: ImGui_ImplGlfw_InitForVulkan failed");
 
         CreateDescriptorPool();
 
         const auto *renderStage = renderSystem->GetRenderStage(GetStage().first);
         if (!renderStage || !renderStage->GetRenderpass())
-            throw std::runtime_error("ImGuiPipelinePass: render stage / renderpass not ready");
+            throw std::runtime_error("ImGuiSFERenderPass: render stage / renderpass not ready");
 
         const VkRenderPass vkRenderPass = renderStage->GetRenderpass()->GetRenderpass();
 
@@ -96,7 +96,7 @@ namespace SF::Engine
                 renderStage->IsMultisampled(GetStage().second) ? physDevice->GetMsaaSamples() : VK_SAMPLE_COUNT_1_BIT;
 
         if (!ImGui_ImplVulkan_Init(&initInfo))
-            throw std::runtime_error("ImGuiPipelinePass: ImGui_ImplVulkan_Init failed");
+            throw std::runtime_error("ImGuiSFERenderPass: ImGui_ImplVulkan_Init failed");
 
         initialized_         = true;
         s_backendInitialized = true;
@@ -104,7 +104,7 @@ namespace SF::Engine
         ImGuiDefaultStyle::SetStyle();
     }
 
-    void ImGuiPipelinePass::Shutdown()
+    void ImGuiSFERenderPass::Shutdown()
     {
         if (!initialized_)
             return;
@@ -125,13 +125,13 @@ namespace SF::Engine
         s_backendInitialized = false;
     }
 
-    void ImGuiPipelinePass::BuildUI()
+    void ImGuiSFERenderPass::BuildUI()
     {
         if (drawCallback_)
             drawCallback_();
     }
 
-    void ImGuiPipelinePass::Render(const CommandBuffer &commandBuffer)
+    void ImGuiSFERenderPass::Render(const CommandBuffer &commandBuffer)
     {
         if (!initialized_)
             return;

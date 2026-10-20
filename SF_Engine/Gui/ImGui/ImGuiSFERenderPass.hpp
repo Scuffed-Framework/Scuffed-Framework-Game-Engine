@@ -20,20 +20,20 @@
 namespace SF::Engine
 {
     /**
-     * @brief PipelinePass that integrates Dear ImGui into the SF render pipeline.
+     * @brief SFERenderPass that integrates Dear ImGui into the SF render pipeline.
      *
      * Setup:
-     * Add this PipelinePass LAST within a subpass so it composites on top:
+     * Add this SFERenderPass LAST within a subpass so it composites on top:
      *
-     *     AddPipelinePass<ImGuiPipelinePass>(Pipeline::Stage{0, 0});
+     *     AddSFERenderPass<ImGuiSFERenderPass>(Pipeline::Stage{0, 0});
      *
      * Inject per-frame UI via a callback or by subclassing and overriding BuildUI():
      *
-     *     GetPipelinePass<ImGuiPipelinePass>()->SetDrawCallback([](){
+     *     GetSFERenderPass<ImGuiSFERenderPass>()->SetDrawCallback([](){
      *         ImGui::ShowDemoWindow();
      *     });
      */
-    class ImGuiPipelinePass : public EngineRenderpass
+    class ImGuiSFERenderPass : public EngineRenderpass
     {
     public:
         static void SetTargetStage(Pipeline::Stage stage) { s_targetStage = stage; }
@@ -45,18 +45,20 @@ namespace SF::Engine
         {
             EngineRenderpassInitRegistry::Get().Register(
                     [](EngineRenderpassManager &mgr)
-                    { mgr.Add<ImGuiPipelinePass>(s_targetStage, std::make_unique<ImGuiPipelinePass>(s_targetStage)); });
+                    {
+                        mgr.Add<ImGuiSFERenderPass>(s_targetStage, std::make_unique<ImGuiSFERenderPass>(s_targetStage));
+                    });
             return true;
         }();
 
     public:
         using DrawCallback = std::function<void()>;
 
-        explicit ImGuiPipelinePass(Pipeline::Stage stage);
-        ~ImGuiPipelinePass() override;
+        explicit ImGuiSFERenderPass(Pipeline::Stage stage);
+        ~ImGuiSFERenderPass() override;
 
-        ImGuiPipelinePass(const ImGuiPipelinePass &)            = delete;
-        ImGuiPipelinePass &operator=(const ImGuiPipelinePass &) = delete;
+        ImGuiSFERenderPass(const ImGuiSFERenderPass &)            = delete;
+        ImGuiSFERenderPass &operator=(const ImGuiSFERenderPass &) = delete;
 
         void Render(const CommandBuffer &commandBuffer) override;
 

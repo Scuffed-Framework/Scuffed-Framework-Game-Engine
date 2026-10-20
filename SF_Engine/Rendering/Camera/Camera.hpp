@@ -45,6 +45,7 @@ namespace SF::Engine
         {
             if (!window)
                 return;
+            lastAspect_ = window->GetAspectRatio();
             CachePrevViewProjection();
         };
 
@@ -132,6 +133,7 @@ namespace SF::Engine
         Mat4 viewMatrix{};
         Mat4 projectionMatrix{};
         Mat4 prevViewProjection{1.0f}; // last frame's VP, snapshotted before this frame's update
+        float lastAspect_ = 16.0f / 9.0f; // aspect of the window this camera last updated against
 
         Frustum viewFrustum;
         Ray viewRay;
@@ -146,12 +148,17 @@ namespace SF::Engine
         [[nodiscard]] const Mat4 &GetPrevViewProjection() const { return prevViewProjection; }
 
         /**
-         * Snapshots the current viewMatrix/projectionMatrix into prevViewProjection.
-         * MUST be called by derived Update() implementations BEFORE recomputing
-         * viewMatrix/projectionMatrix for the new frame, or the previous-frame value
-         * will just be whatever was already there (stale/garbage on frame 0).
+         * Snapshots the CURRENT view-projection into prevViewProjection.
+         * MUST be called by derived Update() implementations BEFORE moving/rotating the camera for the
+         * new frame (Camera::Update does it, and derived classes call it first), so the snapshot is the
+         * matrix the previous frame was actually rendered with.
+         *
+         * Uses GetProjection()/GetView() -- the same functions SharedFunctions feeds the GPU with. The
+         * viewMatrix/projectionMatrix MEMBERS are not maintained by EditorCamera (they stay zero), and
+         * snapshotting those made prevViewProjection a zero matrix: every temporal consumer (SSR hit
+         * reprojection, temporal accumulation) then reprojected everything to the screen centre.
          */
-        void CachePrevViewProjection() { prevViewProjection = projectionMatrix * viewMatrix; }
+        void CachePrevViewProjection() { prevViewProjection = GetProjection(lastAspect_) * GetView(); }
 
         void SetPosition(Vec3 p) { position = p; }
 

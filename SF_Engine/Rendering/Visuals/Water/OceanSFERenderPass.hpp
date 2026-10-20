@@ -112,25 +112,25 @@ namespace SF::Engine
     static_assert(sizeof(OceanTessellationFrameUBO) == 384,
                   "OceanTessellationFrameUBO size mismatch. Check std140 padding");
 
-    class OceanTessellationPipelinePass : public EngineRenderpass
+    class OceanTessellationSFERenderPass : public EngineRenderpass
     {
         /*
         inline static bool s_registered = []()
         {
-            PipelinePassInitRegistry::Get().Register(
-                [](PipelinePassManager &mgr)
+            SFERenderPassInitRegistry::Get().Register(
+                [](SFERenderPassManager &mgr)
                 {
-                    mgr.Add<OceanTessellationPipelinePass>(
+                    mgr.Add<OceanTessellationSFERenderPass>(
                         Pipeline::Stage{0, 0}, // was {0, 1}
-                        std::make_unique<OceanTessellationPipelinePass>(
+                        std::make_unique<OceanTessellationSFERenderPass>(
                             Pipeline::Stage{0, 0})); // was {0, 1}
                 });
             return true;
         }();*/
 
     public:
-        explicit OceanTessellationPipelinePass(Pipeline::Stage stage, const OceanTessellationParams &params = {});
-        ~OceanTessellationPipelinePass() override = default;
+        explicit OceanTessellationSFERenderPass(Pipeline::Stage stage, const OceanTessellationParams &params = {});
+        ~OceanTessellationSFERenderPass() override = default;
 
         void Render(const CommandBuffer &commandBuffer) override;
 

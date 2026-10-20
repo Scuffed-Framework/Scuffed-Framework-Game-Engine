@@ -149,14 +149,14 @@ namespace SF::Engine
     };
 
     /**
-     * @brief Forward-lit opaque mesh PipelinePass using Lit.shader.
+     * @brief Forward-lit opaque mesh SFERenderPass using Lit.shader.
      *
      * This is the single-pass equivalent of "Lit" in Unity or the default
      * material in Unreal. It evaluates the full clustered light list per-fragment
      * and applies Cook-Torrance PBR + ACES tonemap.
      *
      * Usage:
-     *   auto* litPass = AddPipelinePass<LitMeshPipelinePass>({stageIdx, 0}, *lightManager);
+     *   auto* litPass = AddSFERenderPass<LitMeshSFERenderPass>({stageIdx, 0}, *lightManager);
      *   litPass->Submit(myMesh, myMaterial, modelMatrix);
      *   // Each frame the Submit list is drawn then cleared.
      *
@@ -170,11 +170,11 @@ namespace SF::Engine
      *   bind 6  sampler2D pbrMap       │
      *   bind 7  sampler2D emissiveMap  ┘
      */
-    class LitMeshPipelinePass : public EngineRenderpass
+    class LitMeshSFERenderPass : public EngineRenderpass
     {
     public:
-        explicit LitMeshPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
-        ~LitMeshPipelinePass() override = default;
+        explicit LitMeshSFERenderPass(Pipeline::Stage stage, LightManager &lightManager);
+        ~LitMeshSFERenderPass() override = default;
 
         /// Queue a mesh+material+transform for drawing this frame.
         void Submit(std::shared_ptr<Mesh> mesh, const MeshMaterial &material, const Mat4 &transform);

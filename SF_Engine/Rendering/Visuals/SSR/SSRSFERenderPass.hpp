@@ -8,7 +8,8 @@
 #include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
-#include <Rendering/Visuals/HiZ/HiZPipelinePass.hpp>
+#include <Rendering/Visuals/HiZ/HiZSFERenderPass.hpp>
+#include <Rendering/Visuals/ReflectionProbe/ReflectionProbeSFERenderPass.hpp>
 
 #include <Math/BasicMath.hpp>
 #include <cstdint>
@@ -62,6 +63,8 @@ namespace SF::Engine
         Temporal   = 3,
         Spatial    = 4,
         Confidence = 5,
+        HitMask    = 6, // Trace: R = validated hit, G = confidence (black = all rays missed)
+        HiZ        = 7, // Hi-Z pyramid viewer; level = binarySearchSteps (0 = depth buffer)
     };
 
     /**
@@ -75,7 +78,7 @@ namespace SF::Engine
      * loadOp=VK_ATTACHMENT_LOAD_OP_CLEAR (RenderPass.cpp), and PreRender for
      * every subpass in a render stage runs before that render stage's
      * renderpass begins. A compute dispatch that read-modify-writes "hdr"
-     * from PreRender; the way CloudPipelinePass's Composite step does;
+     * from PreRender; the way CloudSFERenderPass's Composite step does;
      * gets unconditionally clobbered by that clear the instant the
      * renderpass starts, before anything downstream ever sees it.
      *
@@ -100,11 +103,11 @@ namespace SF::Engine
      * resolved image sitting in SHADER_READ_ONLY_OPTIMAL at that point).
      * Only the *write* side needed to move.
      */
-    class SSRPipelinePass : public EngineRenderpass
+    class SSRSFERenderPass : public EngineRenderpass
     {
     public:
-        explicit SSRPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
-        ~SSRPipelinePass() override = default;
+        explicit SSRSFERenderPass(Pipeline::Stage stage, LightManager &lightManager);
+        ~SSRSFERenderPass() override = default;
 
         void PreRender(const CommandBuffer &cmd) override;
         void Render(const CommandBuffer &cmd) override;
@@ -113,7 +116,11 @@ namespace SF::Engine
 
         // Hi-Z provider for Trace.shader's traversal. Must be set (and must run earlier in the
         // frame than this pass) or PreRender() is skipped. Not owned.
-        void SetHiZ(HiZPipelinePass *hiz) { hiz_ = hiz; }
+        void SetHiZ(HiZSFERenderPass *hiz) { hiz_ = hiz; }
+
+        // Environment probe Trace.shader samples on misses / for rough surfaces. Must be set (and
+        // must run earlier in the frame than this pass) or PreRender() is skipped. Not owned.
+        void SetReflectionProbe(ReflectionProbeSFERenderPass *probe) { probe_ = probe; }
 
         static bool isWindowOpen;
 
@@ -126,8 +133,8 @@ namespace SF::Engine
 
         // --- Tunables (mirrors SSRParams; kept here as the ImGui-editable
         // source of truth, written into ssrUBO_ every frame in PreRender). ---
-        int maxSteps                   = 64;    // max Hi-Z traversal iterations
-        float thickness                = 0.1f;  // world-space distance over which hit confidence fades to 0
+        int maxSteps                   = 64;   // max Hi-Z traversal iterations
+        float thickness                = 0.1f; // world-space distance over which hit confidence fades to 0
         float strideScale              = 1.0f;
         float maxRoughness             = 0.85f;
         float intensity                = 1.0f;
@@ -149,12 +156,15 @@ namespace SF::Engine
         void EnsureResourcesSized(UVec2 required);
         void CreatePipelines(Pipeline::Stage stage);
         void BindStaticDescriptors();
-        void UpdateUBO();
+        void UpdateUBO(UVec2 resolution);
 
         LightManager &lm_;
 
-        HiZPipelinePass *hiz_  = nullptr;
-        uint64_t hizGeneration_ = ~0ull; // last HiZPipelinePass::GetGeneration() written into traceSet_
+        HiZSFERenderPass *hiz_  = nullptr;
+        uint64_t hizGeneration_ = ~0ull; // last HiZSFERenderPass::GetGeneration() written into traceSet_
+
+        ReflectionProbeSFERenderPass *probe_ = nullptr;
+        uint64_t probeGeneration_ = ~0ull; // last ReflectionProbeSFERenderPass::GetGeneration() written into traceSet_
 
         std::unique_ptr<UniformBuffer> ssrUBO_;
 
@@ -171,6 +181,7 @@ namespace SF::Engine
         const Image2d *compositeLastAlbedo_   = nullptr;
         const Image2d *compositeLastPbr_      = nullptr;
         uint64_t compositeLastGeneration_     = 0;
+        uint64_t compositeHizGeneration_ = ~0ull; // HiZ pyramid generation last written into compositeSet_ binding 9
 
         static constexpr uint32_t kFramesInFlight = 3;
 
@@ -197,7 +208,7 @@ namespace SF::Engine
         UVec2 allocatedRes_{0, 0};
 
         // Intra-frame scratch : written and consumed within the same
-        // PreRender() call, so; like CloudPipelinePass's cloudRenderRT_/
+        // PreRender() call, so; like CloudSFERenderPass's cloudRenderRT_/
         // cloudDepthRT_/cloudFogRT_; these do NOT need per-frame-in-flight
         // ping-ponging; the pipeline barriers inserted between dispatches
         // already provide correct ordering across frames on a single queue.
@@ -208,7 +219,7 @@ namespace SF::Engine
         std::unique_ptr<Image2d> filteredRT_;   // rgb=denoised, a=confidence; read by Render()
 
         // Carries state across frames -> must be ping-ponged (same
-        // reasoning as CloudPipelinePass's reconColor_/reconDepth_/reconFog_).
+        // reasoning as CloudSFERenderPass's reconColor_/reconDepth_/reconFog_).
         std::unique_ptr<Image2d> accumColor_[kFramesInFlight];   // rgb + a=confidence
         std::unique_ptr<Image2d> accumMoments_[kFramesInFlight]; // r=mean g=mean2 b=historyCount a=hitMask
 

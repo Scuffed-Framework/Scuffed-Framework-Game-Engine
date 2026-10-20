@@ -1,4 +1,4 @@
-#include "HiZPipelinePass.hpp"
+#include "HiZSFERenderPass.hpp"
 
 #include <Rendering/RHI/Descriptors/DescriptorSetBuilder.hpp>
 #include <Rendering/RenderSystem.hpp>
@@ -8,7 +8,7 @@
 
 namespace SF::Engine
 {
-    HiZPipelinePass::HiZPipelinePass(Pipeline::Stage stage) : EngineRenderpass(stage)
+    HiZSFERenderPass::HiZSFERenderPass(Pipeline::Stage stage) : EngineRenderpass(stage)
     {
         // Lowest order within its stage: runs before SSR (order 50) and anything else in {1,x}.
         EngineRenderpass::SetOrder(0);
@@ -22,13 +22,13 @@ namespace SF::Engine
             levelSets_.push_back(std::make_unique<DescriptorSet>(*downsamplePipeline_));
     }
 
-    HiZPipelinePass::~HiZPipelinePass()
+    HiZSFERenderPass::~HiZSFERenderPass()
     {
         // Views must die before pyramid_ (member destruction runs after this body).
         DestroyMipViews();
     }
 
-    void HiZPipelinePass::DestroyMipViews()
+    void HiZSFERenderPass::DestroyMipViews()
     {
         if (device_ == VK_NULL_HANDLE)
             return;
@@ -40,7 +40,7 @@ namespace SF::Engine
         mipViews_.clear();
     }
 
-    void HiZPipelinePass::CreatePyramid(UVec2 pyramidRes)
+    void HiZSFERenderPass::CreatePyramid(UVec2 pyramidRes)
     {
         // R32_SFLOAT: same precision as the 32-bit depth buffer, so no precision lost to the
         // reduction. mipmap=true allocates the full chain and moves every mip to GENERAL.
@@ -49,11 +49,11 @@ namespace SF::Engine
                                              VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLE_COUNT_1_BIT, false, true);
         pyramid_->SetLayout(VK_IMAGE_LAYOUT_GENERAL);
 
-        levelCount_  = std::min(pyramid_->GetMipLevels(), kMaxLevels);
+        levelCount_   = std::min(pyramid_->GetMipLevels(), kMaxLevels);
         allocatedRes_ = pyramidRes;
     }
 
-    void HiZPipelinePass::CreateMipViews()
+    void HiZSFERenderPass::CreateMipViews()
     {
         mipViews_.resize(levelCount_, VK_NULL_HANDLE);
         for (uint32_t k = 0; k < levelCount_; ++k)
@@ -63,7 +63,7 @@ namespace SF::Engine
         }
     }
 
-    void HiZPipelinePass::BuildDescriptors()
+    void HiZSFERenderPass::BuildDescriptors()
     {
         for (uint32_t k = 0; k < levelCount_; ++k)
         {
@@ -77,7 +77,7 @@ namespace SF::Engine
         lastDepthView_ = VK_NULL_HANDLE;
     }
 
-    void HiZPipelinePass::EnsureSized(UVec2 depthRes)
+    void HiZSFERenderPass::EnsureSized(UVec2 depthRes)
     {
         if (depthRes.x == 0 || depthRes.y == 0)
             return;
@@ -101,7 +101,7 @@ namespace SF::Engine
         ++generation_;
     }
 
-    void HiZPipelinePass::PreRender(const CommandBuffer &cmd)
+    void HiZSFERenderPass::PreRender(const CommandBuffer &cmd)
     {
         auto *depthImg = dynamic_cast<const ImageDepth *>(RenderSystem::Get()->GetAttachment("gbuf_depth"));
         if (!depthImg)
@@ -112,7 +112,7 @@ namespace SF::Engine
             return;
 
         // gbuf_depth's tracked layout after stage 0's renderpass ends is
-        // DEPTH_STENCIL_READ_ONLY_OPTIMAL (same assumption SSRPipelinePass makes).
+        // DEPTH_STENCIL_READ_ONLY_OPTIMAL (same assumption SSRSFERenderPass makes).
         if (depthImg->GetView() != lastDepthView_)
         {
             DescriptorSetWriteBuilder(*levelSets_[0])
@@ -127,7 +127,8 @@ namespace SF::Engine
         {
             Image::InsertImageMemoryBarrier(cmd, pyramid_->GetImage(), src, dst, VK_IMAGE_LAYOUT_GENERAL,
                                             VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |
+                                                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                             VK_IMAGE_ASPECT_COLOR_BIT, levelCount_, 0, 1, 0);
         };
 

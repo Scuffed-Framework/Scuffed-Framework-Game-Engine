@@ -12,7 +12,7 @@
 
 #include <Math/BasicMath.hpp>
 #include <memory>
-#include "../../Water/OceanPipelinePass.hpp"
+#include "../../Water/OceanSFERenderPass.hpp"
 
 #include "LUT/AtmoLUTs.hpp"
 
@@ -22,18 +22,18 @@ namespace SF::Engine
     // atmoColorRT_ image (never touches "hdr" directly). AtmosphereComposite
     // .shader then blends that into "hdr" as a real fullscreen-triangle
     // subpass draw in Render() - same PreRender-computes/Render-draws split
-    // SSRPipelinePass uses, and for the identical reason: every attachment
+    // SSRSFERenderPass uses, and for the identical reason: every attachment
     // in this engine's renderpasses uses loadOp=VK_ATTACHMENT_LOAD_OP_CLEAR,
     // and PreRender for a whole render stage runs before that stage's
     // renderpass (and its clear) even begins. Writing "hdr" directly from
     // PreRender, as this pass used to, got unconditionally wiped by that
     // clear before DeferredLight's subpass - let alone this pass's own
     // subpass - ever ran.
-    class AtmospherePipelinePass : public EngineRenderpass
+    class AtmosphereSFERenderPass : public EngineRenderpass
     {
     public:
-        explicit AtmospherePipelinePass(Pipeline::Stage stage, const AtmosphereParams &params = {});
-        ~AtmospherePipelinePass() override = default;
+        explicit AtmosphereSFERenderPass(Pipeline::Stage stage, const AtmosphereParams &params = {});
+        ~AtmosphereSFERenderPass() override = default;
 
         // Bakes LUTs and dispatches atmo_cs into atmoColorRT_. Does not
         // touch "hdr".
@@ -54,6 +54,10 @@ namespace SF::Engine
 
         AtmosphereParams &GetParams() { return params_; }
         [[nodiscard]] const AtmosphereParams &GetParams() const { return params_; }
+
+        // This frame's atmosphere UBO contents (camera/sun in atmosphere space). Read by
+        // ReflectionProbeSFERenderPass so the probe samples the sky with the exact same view/sun data.
+        [[nodiscard]] const AtmosphereFrameUBO &GetFrameData() const { return frameData_; }
 
     private:
         void CreateComposite(Pipeline::Stage stage);

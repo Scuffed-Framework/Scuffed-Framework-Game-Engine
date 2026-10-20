@@ -1,4 +1,4 @@
-#include "AtmospherePipelinePass.hpp"
+#include "AtmosphereSFERenderPass.hpp"
 #include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
 #include <Rendering/RHI/Descriptors/DescriptorSetBuilder.hpp>
 #include <Rendering/RenderSystem.hpp>
@@ -7,10 +7,10 @@
 
 namespace SF::Engine
 {
-    AtmospherePipelinePass::AtmospherePipelinePass(Pipeline::Stage stage, const AtmosphereParams &params) :
+    AtmosphereSFERenderPass::AtmosphereSFERenderPass(Pipeline::Stage stage, const AtmosphereParams &params) :
         EngineRenderpass(stage), params_(params)
     {
-        // Must draw strictly after DeferredLightPipelinePass within subpass
+        // Must draw strictly after DeferredLightSFERenderPass within subpass
         // 0 (both share stage {1,0}): geometry-hit aerial perspective blends
         // onto whatever is already in "hdr", and that needs to be
         // DeferredLight's actual lit output, not the post-clear black it'd
@@ -88,7 +88,7 @@ namespace SF::Engine
         CreateComposite(stage);
     }
 
-    void AtmospherePipelinePass::CreateComposite(Pipeline::Stage stage)
+    void AtmosphereSFERenderPass::CreateComposite(Pipeline::Stage stage)
     {
         compositePipeline_ = std::make_unique<RhiRenderPipeline>(
                 stage, "Shaders/Atmosphere/AtmosphereComposite.shader", std::vector<Shader::VertexInput>{},
@@ -105,7 +105,7 @@ namespace SF::Engine
         Writes.Apply();
     }
 
-    void AtmospherePipelinePass::EnsureColorRTSized(UVec2 required)
+    void AtmosphereSFERenderPass::EnsureColorRTSized(UVec2 required)
     {
         if (required.x == 0 || required.y == 0)
             return;
@@ -145,7 +145,7 @@ namespace SF::Engine
                 .Apply();
     }
 
-    void AtmospherePipelinePass::SetSceneBuffers()
+    void AtmosphereSFERenderPass::SetSceneBuffers()
     {
         const Image2d *sceneColor =
                 GetSceneHDR(); // "hdr" attachment; only used to know it exists / for extent tracking now
@@ -176,7 +176,7 @@ namespace SF::Engine
         Writes.Apply();
     }
 
-    void AtmospherePipelinePass::SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos,
+    void AtmosphereSFERenderPass::SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos,
                                               const Vec3 &planetPos, const Vec3 &sunDir, Vec2 screenSize)
     {
         const Vec3 sd = glm::length(sunDir) > 1e-6f ? normalize(sunDir) : Vec3(0.577f, 0.577f, 0.577f);
@@ -225,7 +225,7 @@ namespace SF::Engine
         }
     } // namespace
 
-    void AtmospherePipelinePass::PreRender(const CommandBuffer &commandBuffer)
+    void AtmosphereSFERenderPass::PreRender(const CommandBuffer &commandBuffer)
     {
         SetSceneBuffers();
 
@@ -259,7 +259,7 @@ namespace SF::Engine
                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
     }
 
-    void AtmospherePipelinePass::Render(const CommandBuffer &commandBuffer)
+    void AtmosphereSFERenderPass::Render(const CommandBuffer &commandBuffer)
     {
         if (!lastColor_)
             return;

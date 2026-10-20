@@ -1,4 +1,4 @@
-#include "ForwardTransparentPipelinePass.hpp"
+#include "ForwardTransparentSFERenderPass.hpp"
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/Mesh/Vertex.hpp>
 
@@ -41,7 +41,7 @@ namespace SF::Engine
         return w;
     }
 
-    ForwardTransparentPipelinePass::ForwardTransparentPipelinePass(Pipeline::Stage stage,
+    ForwardTransparentSFERenderPass::ForwardTransparentSFERenderPass(Pipeline::Stage stage,
                                                                    LightManager &lightManager)
         : EngineRenderpass(stage), lm_(lightManager)
     {
@@ -73,7 +73,7 @@ namespace SF::Engine
         });
     }
 
-    void ForwardTransparentPipelinePass::RefreshSceneDescriptors()
+    void ForwardTransparentSFERenderPass::RefreshSceneDescriptors()
     {
         auto *rs = RenderSystem::Get();
         auto *hdr = dynamic_cast<const Image2d *>(rs->GetAttachment("hdr"));
@@ -105,14 +105,14 @@ namespace SF::Engine
         });
     }
 
-    void ForwardTransparentPipelinePass::BeginFrame(const CommandBuffer &commandBuffer)
+    void ForwardTransparentSFERenderPass::BeginFrame(const CommandBuffer &commandBuffer)
     {
         RefreshSceneDescriptors();
         pipeline_->BindPipeline(commandBuffer);
         descSet_->BindDescriptor(commandBuffer);
     }
 
-    void ForwardTransparentPipelinePass::Render(const CommandBuffer & /*commandBuffer*/)
+    void ForwardTransparentSFERenderPass::Render(const CommandBuffer & /*commandBuffer*/)
     {
         // Scene system calls BeginFrame() then issues per-object draws externally.
     }

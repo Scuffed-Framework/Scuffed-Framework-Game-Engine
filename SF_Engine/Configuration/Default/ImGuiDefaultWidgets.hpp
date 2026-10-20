@@ -3,7 +3,7 @@
 #include <Gui/ImGui/ocornut/imgui.h>
 #include <Math/Transform.hpp>
 #include <Rendering/Lighting/Light.hpp>
-#include <Rendering/Lighting/LitMeshPipelinePass.hpp> // MeshMaterial
+#include <Rendering/Lighting/LitMeshSFERenderPass.hpp> // MeshMaterial
 
 namespace SF::Engine
 {

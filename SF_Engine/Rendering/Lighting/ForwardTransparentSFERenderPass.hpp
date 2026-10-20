@@ -42,11 +42,11 @@ namespace SF::Engine
      * Call BeginFrame() once per frame from your scene/mesh system, then issue
      * per-object draw calls with push constants for model matrix + material.
      */
-    class ForwardTransparentPipelinePass : public EngineRenderpass
+    class ForwardTransparentSFERenderPass : public EngineRenderpass
     {
     public:
-        explicit ForwardTransparentPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
-        ~ForwardTransparentPipelinePass() override = default;
+        explicit ForwardTransparentSFERenderPass(Pipeline::Stage stage, LightManager &lightManager);
+        ~ForwardTransparentSFERenderPass() override = default;
 
         void Render(const CommandBuffer &commandBuffer) override;
         void BeginFrame(const CommandBuffer &commandBuffer);

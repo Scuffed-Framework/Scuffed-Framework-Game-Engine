@@ -464,7 +464,7 @@ namespace SF::Engine
         ImGui::Begin("Pipeline Controller", &ShowExecutingPasses);
 
         // todo: fix
-        // for (PipelinePass *pass : SceneManager::Get()->GetScene()->GetPipelinePass())
+        // for (SFERenderPass *pass : SceneManager::Get()->GetScene()->GetSFERenderPass())
         // {
         //     ImGui::PushID(pass);
         //     bool enabled = pass->IsEnabled();

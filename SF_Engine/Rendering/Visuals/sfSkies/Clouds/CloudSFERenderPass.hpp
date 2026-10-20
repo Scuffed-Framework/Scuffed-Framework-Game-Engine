@@ -52,11 +52,11 @@ namespace SF::Engine
     static_assert(sizeof(CloudUBO) == 80, "CloudUBO size mismatch - check cpu/gpu side");
     static_assert(sizeof(CloudUBO) % 16 == 0, "CloudUBO must satisfy std140 alignment");
 
-    class CloudPipelinePass : public EngineRenderpass
+    class CloudSFERenderPass : public EngineRenderpass
     {
     public:
-        explicit CloudPipelinePass(Pipeline::Stage stage, AtmosphereData &data);
-        ~CloudPipelinePass() override = default;
+        explicit CloudSFERenderPass(Pipeline::Stage stage, AtmosphereData &data);
+        ~CloudSFERenderPass() override = default;
 
         void SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos, const Vec3 &planetPos,
                           const Vec3 &sunDir, Vec2 screenSize);

@@ -3,100 +3,85 @@
 #include <Rendering/SharedSamplers.hpp>
 namespace SF::Engine
 {
-    //  helpers (same pattern as LitMeshPipelinePass)
-    static VkWriteDescriptorSet GBufWUbo(VkDescriptorSet d, uint32_t b,
-                                         const VkDescriptorBufferInfo *i)
+    //  helpers (same pattern as LitMeshSFERenderPass)
+    static VkWriteDescriptorSet GBufWUbo(VkDescriptorSet d, uint32_t b, const VkDescriptorBufferInfo *i)
     {
         VkWriteDescriptorSet w{};
-        w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w.dstSet = d;
-        w.dstBinding = b;
+        w.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w.dstSet          = d;
+        w.dstBinding      = b;
         w.descriptorCount = 1;
-        w.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        w.pBufferInfo = i;
+        w.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        w.pBufferInfo     = i;
         return w;
     }
     // GBuffer.shader declares its material inputs as plain Texture2D (bindings
     // 1-4) plus one separate SamplerState (binding 5); not a combined
     // image-sampler; so the descriptor writes/layout must be SAMPLED_IMAGE,
     // not COMBINED_IMAGE_SAMPLER.
-    static VkWriteDescriptorSet GBufWImg(VkDescriptorSet d, uint32_t b,
-                                         const VkDescriptorImageInfo *i)
+    static VkWriteDescriptorSet GBufWImg(VkDescriptorSet d, uint32_t b, const VkDescriptorImageInfo *i)
     {
         VkWriteDescriptorSet w{};
-        w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w.dstSet = d;
-        w.dstBinding = b;
+        w.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w.dstSet          = d;
+        w.dstBinding      = b;
         w.descriptorCount = 1;
-        w.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        w.pImageInfo = i;
+        w.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        w.pImageInfo      = i;
         return w;
     }
-    static VkWriteDescriptorSet GBufWSampler(VkDescriptorSet d, uint32_t b,
-                                             const VkDescriptorImageInfo *i)
+    static VkWriteDescriptorSet GBufWSampler(VkDescriptorSet d, uint32_t b, const VkDescriptorImageInfo *i)
     {
         VkWriteDescriptorSet w{};
-        w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        w.dstSet = d;
-        w.dstBinding = b;
+        w.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        w.dstSet          = d;
+        w.dstBinding      = b;
         w.descriptorCount = 1;
-        w.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        w.pImageInfo = i;
+        w.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
+        w.pImageInfo      = i;
         return w;
     }
     static VkDescriptorImageInfo GBufImgInfo(const Image2d *img)
     {
         VkDescriptorImageInfo ii{};
-        ii.sampler = VK_NULL_HANDLE; // SAMPLED_IMAGE : sampler comes from binding 5, not per-texture
-        ii.imageView = img->GetView();
+        ii.sampler     = VK_NULL_HANDLE; // SAMPLED_IMAGE : sampler comes from binding 5, not per-texture
+        ii.imageView   = img->GetView();
         ii.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         return ii;
     }
 
     //  ctor
-    GBufferPass::GBufferPass(Pipeline::Stage stage, LightManager &lightManager)
-        : EngineRenderpass(stage), lm_(lightManager)
+    GBufferPass::GBufferPass(Pipeline::Stage stage, LightManager &lightManager) :
+        EngineRenderpass(stage), lm_(lightManager)
     {
         pipeline_ = std::make_unique<RhiRenderPipeline>(
-            stage,
-            "Shaders/Lighting/GBuffer.shader",
-            std::vector<Shader::VertexInput>{Vertex::GetVertexInput()},
-            std::vector<Shader::Define>{},
-            RhiRenderPipeline::Mode::MRT,
-            RhiRenderPipeline::Depth::ReadWrite,
-            VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-            VK_POLYGON_MODE_FILL,
-            VK_CULL_MODE_BACK_BIT,
-            VK_FRONT_FACE_COUNTER_CLOCKWISE,
-            false,
-            std::vector<VkDescriptorSetLayout>{},
-            // A G-buffer must overwrite, never blend. This used to fall through to the
-            // RhiRenderPipeline default (PremultipliedAlpha: src*1 + dst*(1-srcA)), so every
-            // attachment whose shader-output alpha wasn't 1 accumulated onto the clear value /
-            // previous overdraw instead of replacing it -- gbuf_pbr's alpha is *emission*, and
-            // gbuf_normal is a 2-channel RG output with no defined alpha at all.
-            RhiRenderPipeline::Blend::Opaque);
+                stage, "Shaders/Lighting/GBuffer.shader", std::vector<Shader::VertexInput>{Vertex::GetVertexInput()},
+                std::vector<Shader::Define>{}, RhiRenderPipeline::Mode::MRT, RhiRenderPipeline::Depth::ReadWrite,
+                VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT,
+                VK_FRONT_FACE_COUNTER_CLOCKWISE, false, std::vector<VkDescriptorSetLayout>{},
+                // A G-buffer must overwrite, never blend. This used to fall through to the
+                // RhiRenderPipeline default (PremultipliedAlpha: src*1 + dst*(1-srcA)), so every
+                // attachment whose shader-output alpha wasn't 1 accumulated onto the clear value /
+                // previous overdraw instead of replacing it -- gbuf_pbr's alpha is *emission*, and
+                // gbuf_normal is a 2-channel RG output with no defined alpha at all.
+                RhiRenderPipeline::Blend::Opaque);
 
         descSet_ = std::make_unique<DescriptorSet>(*pipeline_);
 
         // 1×1 fallback textures
         UVec2 one{1, 1};
         fallbackWhite_ = std::make_unique<Image2d>(
-            one, VK_FORMAT_R8G8B8A8_UNORM,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-            VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            VK_SAMPLE_COUNT_1_BIT, false, false);
+                one, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_FILTER_NEAREST,
+                VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLE_COUNT_1_BIT, false, false);
 
         uint8_t whitePixels[4] = {255, 255, 255, 255};
         fallbackWhite_->SetPixels(whitePixels, 1, 0);
 
         fallbackNormal_ = std::make_unique<Image2d>(
-            one, VK_FORMAT_R8G8B8A8_UNORM,
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-            VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT,
-            VK_SAMPLE_COUNT_1_BIT, false, false);
+                one, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_FILTER_NEAREST,
+                VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLE_COUNT_1_BIT, false, false);
 
         uint8_t normalPixels[4] = {128, 128, 255, 255};
         fallbackNormal_->SetPixels(normalPixels, 1, 0);
@@ -105,9 +90,7 @@ namespace SF::Engine
     }
 
     //  Submit
-    void GBufferPass::Submit(std::shared_ptr<Mesh> mesh,
-                             const MeshMaterial &material,
-                             const Mat4 &transform)
+    void GBufferPass::Submit(std::shared_ptr<Mesh> mesh, const MeshMaterial &material, const Mat4 &transform)
     {
         drawList_.push_back({std::move(mesh), material, transform});
     }
@@ -121,17 +104,17 @@ namespace SF::Engine
         samplerInfo.sampler = SharedSamplers::GetLinearRepeatSampler();
 
         DescriptorSet::Update({
-            GBufWUbo(descSet_->GetDescriptorSet(), 0, &frameInfo),
-            GBufWSampler(descSet_->GetDescriptorSet(), 5, &samplerInfo),
+                GBufWUbo(descSet_->GetDescriptorSet(), 0, &frameInfo),
+                GBufWSampler(descSet_->GetDescriptorSet(), 5, &samplerInfo),
         });
     }
 
     //  WriteMaterialDescriptors
     void GBufferPass::WriteMaterialDescriptors(const MeshMaterial &mat)
     {
-        Image2d *albedo = mat.albedo ? mat.albedo.get() : fallbackWhite_.get();
-        Image2d *normal = mat.normal ? mat.normal.get() : fallbackNormal_.get();
-        Image2d *pbr = mat.pbr ? mat.pbr.get() : fallbackWhite_.get();
+        Image2d *albedo   = mat.albedo ? mat.albedo.get() : fallbackWhite_.get();
+        Image2d *normal   = mat.normal ? mat.normal.get() : fallbackNormal_.get();
+        Image2d *pbr      = mat.pbr ? mat.pbr.get() : fallbackWhite_.get();
         Image2d *emissive = mat.emissive ? mat.emissive.get() : fallbackWhite_.get();
 
         VkDescriptorImageInfo ai = GBufImgInfo(albedo);
@@ -140,10 +123,10 @@ namespace SF::Engine
         VkDescriptorImageInfo ei = GBufImgInfo(emissive);
 
         DescriptorSet::Update({
-            GBufWImg(descSet_->GetDescriptorSet(), 1, &ai),
-            GBufWImg(descSet_->GetDescriptorSet(), 2, &ni),
-            GBufWImg(descSet_->GetDescriptorSet(), 3, &pi),
-            GBufWImg(descSet_->GetDescriptorSet(), 4, &ei),
+                GBufWImg(descSet_->GetDescriptorSet(), 1, &ai),
+                GBufWImg(descSet_->GetDescriptorSet(), 2, &ni),
+                GBufWImg(descSet_->GetDescriptorSet(), 3, &pi),
+                GBufWImg(descSet_->GetDescriptorSet(), 4, &ei),
         });
     }
 
@@ -154,28 +137,26 @@ namespace SF::Engine
             return;
 
         pipeline_->BindPipeline(commandBuffer);
-        
-        for (auto &dc : drawList_)
+
+        for (auto &dc: drawList_)
         {
             WriteMaterialDescriptors(dc.material);
             descSet_->BindDescriptor(commandBuffer);
             LitPushConstants pc{};
-            pc.model = dc.transform;
-            pc.baseColor = dc.material.baseColor;
+            pc.model           = dc.transform;
+            pc.baseColor       = dc.material.baseColor;
             pc.roughnessFactor = dc.material.roughnessFactor;
-            pc.metallicFactor = dc.material.metallicFactor;
-            pc.aoFactor = dc.material.aoFactor;
-            pc.emissiveFactor = dc.material.emissiveFactor;
+            pc.metallicFactor  = dc.material.metallicFactor;
+            pc.aoFactor        = dc.material.aoFactor;
+            pc.emissiveFactor  = dc.material.emissiveFactor;
 
-            vkCmdPushConstants(
-                commandBuffer,
-                pipeline_->GetPipelineLayout(),
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0, sizeof(LitPushConstants), &pc);
+            vkCmdPushConstants(commandBuffer, pipeline_->GetPipelineLayout(),
+                               VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(LitPushConstants),
+                               &pc);
 
             dc.mesh->Draw(commandBuffer);
         }
 
         drawList_.clear();
     }
-}
+} // namespace SF::Engine

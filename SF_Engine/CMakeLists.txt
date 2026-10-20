@@ -29,9 +29,6 @@ include(FetchContent)
 #
 find_package(OpenAL CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
-find_package(OpenCLHeaders REQUIRED)
-find_package(OpenCLHeadersCpp REQUIRED)
-find_package(OpenCLICDLoader REQUIRED)
 find_package(freetype CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
@@ -57,11 +54,6 @@ find_package(WebP CONFIG REQUIRED) # Conan libwebp -> WebP-config.cmake, targets
 find_package(TinyOBJLoader REQUIRED)
 find_package(opusfile REQUIRED)
 find_package(fastgltf REQUIRED)
-
-if (WIN32)
-    find_package(DirectX-Headers REQUIRED)
-    find_package(D3D12MemoryAllocator CONFIG REQUIRED)
-endif ()
 
 #
 # Sources
@@ -215,9 +207,6 @@ endif ()
 target_link_libraries(SF_Engine PUBLIC
         OpenAL::OpenAL
         assimp::assimp
-        OpenCL::Headers
-        OpenCL::HeadersCpp
-        OpenCL::OpenCL
         Freetype::Freetype
         glfw
         glm::glm
@@ -254,8 +243,7 @@ if (SF_HAS_SLANG)
 endif ()
 
 if (WIN32)
-    target_link_libraries(SF_Engine PUBLIC Microsoft::DirectX-Headers)
-    target_link_libraries(SF_Engine PRIVATE GPUOpen::D3D12MemoryAllocator)
+
 elseif (UNIX AND NOT APPLE)
     target_link_libraries(SF_Engine PRIVATE evdev udev)
 endif ()
@@ -263,4 +251,3 @@ endif ()
 target_include_directories(SF_Engine PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-

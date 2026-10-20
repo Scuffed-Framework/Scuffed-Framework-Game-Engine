@@ -4,7 +4,7 @@ namespace SF::Engine
 {
     void EngineRenderpassManager::Clear() { stages.clear(); }
 
-    void EngineRenderpassManager::RemovePipelinePassStage(const TypeId &id)
+    void EngineRenderpassManager::RemoveSFERenderPassStage(const TypeId &id)
     {
         for (auto it = stages.begin(); it != stages.end();)
         {
@@ -25,9 +25,9 @@ namespace SF::Engine
             if (stageIndex.first != stage)
                 continue;
 
-            if (auto &PipelinePass = PipelinePasses[typeId])
-                if (PipelinePass->IsEnabled())
-                    PipelinePass->PreRender(commandBuffer);
+            if (auto &SFERenderPass = SFERenderPasses[typeId])
+                if (SFERenderPass->IsEnabled())
+                    SFERenderPass->PreRender(commandBuffer);
         }
     }
 
@@ -40,11 +40,11 @@ namespace SF::Engine
                 continue;
             }
 
-            if (auto &PipelinePass = PipelinePasses[typeId])
+            if (auto &SFERenderPass = SFERenderPasses[typeId])
             {
-                if (PipelinePass->IsEnabled())
+                if (SFERenderPass->IsEnabled())
                 {
-                    PipelinePass->Render(commandBuffer);
+                    SFERenderPass->Render(commandBuffer);
                 }
             }
         }

@@ -5,10 +5,10 @@ namespace SF::Engine
     inline VkDescriptorSetLayout CreateDescriptorSetLayout(const VkDescriptorSetLayoutCreateInfo &createInfo)
     {
         VkDescriptorSetLayout layout = VK_NULL_HANDLE;
-        const auto device = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice();
+        const auto device            = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice();
 
         const VkResult result = vkCreateDescriptorSetLayout(device, &createInfo, nullptr, &layout);
-        RenderSystem::RenderSystem::CheckVkResult(result);
+        RenderSystem::CheckVkResult(result);
 
         return layout;
     }
@@ -17,10 +17,10 @@ namespace SF::Engine
     inline VkDescriptorPool CreateDescriptorPool(const VkDescriptorPoolCreateInfo &createInfo)
     {
         VkDescriptorPool pool = VK_NULL_HANDLE;
-        auto device = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice();
+        auto device           = RenderSystem::Get()->GetLogicalDevice()->GetLogicalDevice();
 
         VkResult result = vkCreateDescriptorPool(device, &createInfo, nullptr, &pool);
-        RenderSystem::RenderSystem::CheckVkResult(result);
+        RenderSystem::CheckVkResult(result);
 
         return pool;
     }
@@ -44,4 +44,4 @@ namespace SF::Engine
             vkDestroyDescriptorPool(device, pool, nullptr);
         }
     }
-}
+} // namespace SF::Engine

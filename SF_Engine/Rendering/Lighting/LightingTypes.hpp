@@ -5,17 +5,17 @@
 
 namespace SF::Engine::Lighting
 {
-    static constexpr uint32_t MAX_LIGHTS = 4096;
+    static constexpr uint32_t MAX_LIGHTS             = 4096;
     static constexpr uint32_t MAX_LIGHTS_PER_CLUSTER = 128;
-    static constexpr uint32_t CLUSTER_X = 16;
-    static constexpr uint32_t CLUSTER_Y = 9;
-    static constexpr uint32_t CLUSTER_Z = 24;
-    static constexpr uint32_t CLUSTER_COUNT = CLUSTER_X * CLUSTER_Y * CLUSTER_Z;
+    static constexpr uint32_t CLUSTER_X              = 16;
+    static constexpr uint32_t CLUSTER_Y              = 9;
+    static constexpr uint32_t CLUSTER_Z              = 24;
+    static constexpr uint32_t CLUSTER_COUNT          = CLUSTER_X * CLUSTER_Y * CLUSTER_Z;
 
     enum class LightType : uint32_t
     {
-        Point = 0,
-        Spot = 1,
+        Point       = 0,
+        Spot        = 1,
         Directional = 2,
     };
 
@@ -83,7 +83,7 @@ namespace SF::Engine::Lighting
         Vec4 sunDirIntensity; // .xyz = towardSun, .w = intensity (0 at night)
 
         // Ambient (image-based) term: two-colour sky/ground model, matching
-        // SSRPipelinePass::ambientSkyColor/ambientGroundColor/ambientIntensity so a
+        // SSRSFERenderPass::ambientSkyColor/ambientGroundColor/ambientIntensity so a
         // surface's diffuse ambient and its SSR-reflected sky colour agree instead of
         // ambient being an unrelated flat constant. Sourced from SSR's own ImGui-tunable
         // values in SceneRenderer::RenderScene (falls back to SSR's own defaults if no
@@ -93,4 +93,4 @@ namespace SF::Engine::Lighting
         Vec4 ambientGroundColor; // .rgb = ground colour, .a = unused
     };
     static_assert(sizeof(GpuFrameData) % 16 == 0);
-}
+} // namespace SF::Engine::Lighting

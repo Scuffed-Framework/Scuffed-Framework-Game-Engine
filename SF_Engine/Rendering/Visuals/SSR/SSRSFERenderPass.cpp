@@ -1,15 +1,15 @@
-#include "SSRPipelinePass.hpp"
 #include <Gui/ImGui/ocornut/imgui.h>
 #include <Rendering/RHI/Descriptors/DescriptorSetBuilder.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/SharedFunctions.hpp>
 #include <Rendering/SharedSamplers.hpp>
+#include "SSRSFERenderPass.hpp"
 
 namespace SF::Engine
 {
-    bool SSRPipelinePass::isWindowOpen = true;
+    bool SSRSFERenderPass::isWindowOpen = true;
 
-    SSRPipelinePass::SSRPipelinePass(Pipeline::Stage stage, LightManager &lightManager) :
+    SSRSFERenderPass::SSRSFERenderPass(Pipeline::Stage stage, LightManager &lightManager) :
         EngineRenderpass(stage), lm_(lightManager)
     {
         EngineRenderpass::SetOrder(50);
@@ -25,7 +25,7 @@ namespace SF::Engine
         isWindowOpen = true;
     }
 
-    void SSRPipelinePass::CreateResources()
+    void SSRSFERenderPass::CreateResources()
     {
         UVec2 fullRes = UVec2(static_cast<uint32_t>(GetScreenSize().x), static_cast<uint32_t>(GetScreenSize().y));
 
@@ -63,7 +63,7 @@ namespace SF::Engine
         CreateScreenSizedResources(fullRes);
     }
 
-    void SSRPipelinePass::CreateScreenSizedResources(UVec2 resolution)
+    void SSRSFERenderPass::CreateScreenSizedResources(UVec2 resolution)
     {
         auto makeRT = [&](const UVec2 &res)
         {
@@ -122,7 +122,7 @@ namespace SF::Engine
         allocatedRes_ = resolution;
     }
 
-    void SSRPipelinePass::EnsureResourcesSized(UVec2 required)
+    void SSRSFERenderPass::EnsureResourcesSized(UVec2 required)
     {
         if (required == allocatedRes_ || required.x == 0 || required.y == 0)
             return;
@@ -167,7 +167,7 @@ namespace SF::Engine
         compositeLastPbr_    = nullptr;
     }
 
-    void SSRPipelinePass::CreatePipelines(Pipeline::Stage stage)
+    void SSRSFERenderPass::CreatePipelines(Pipeline::Stage stage)
     {
         rayGenPipeline_   = std::make_unique<ComputePipeline>("Shaders/SSR/RayGen.shader");
         tracePipeline_    = std::make_unique<ComputePipeline>("Shaders/SSR/Trace.shader");
@@ -192,7 +192,7 @@ namespace SF::Engine
         }
     }
 
-    void SSRPipelinePass::BindStaticDescriptors()
+    void SSRSFERenderPass::BindStaticDescriptors()
     {
         auto rayGenWrites =
                 DescriptorSetWriteBuilder(*rayGenSet_)
@@ -218,8 +218,11 @@ namespace SF::Engine
                                        .Buffer(0, ssrUBO_->GetBuffer())
                                        .Image(5, filteredRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                                        .Image(6, rayDirRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                       .Image(7, traceColorRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                                       .Image(8, traceHitRT_->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                                        .Build();
         compositeWrites.Apply();
+        compositeHizGeneration_ = ~0ull; // binding 9 (pyramid) is rewritten from Render()
         BindSharedCameraData(kSSRCameraBind, 1, compositeSet_.get());
 
         for (uint32_t i = 0; i < kFramesInFlight; ++i)
@@ -250,10 +253,13 @@ namespace SF::Engine
         }
     }
 
-    void SSRPipelinePass::UpdateUBO()
+    void SSRSFERenderPass::UpdateUBO(UVec2 resolution)
     {
         SSRParams p{};
-        p.screenSize    = GetScreenSize();
+        // The dispatch/image resolution actually in use ("hdr"'s extent), NOT the window's: every
+        // shader derives uv, Hi-Z level sizes and texel coords from this, so it must agree exactly
+        // with the images being traced.
+        p.screenSize    = Vec2(static_cast<float>(resolution.x), static_cast<float>(resolution.y));
         p.invScreenSize = Vec2(1.0f / p.screenSize.x, 1.0f / p.screenSize.y);
 
         p.maxSteps    = maxSteps;
@@ -285,7 +291,7 @@ namespace SF::Engine
         ssrUBO_->Update(p);
     }
 
-    void SSRPipelinePass::PreRender(const CommandBuffer &cmd)
+    void SSRSFERenderPass::PreRender(const CommandBuffer &cmd)
     {
         if (!enabled)
             return;
@@ -297,14 +303,17 @@ namespace SF::Engine
         auto *colorImg  = dynamic_cast<const Image2d *>(rs->GetAttachment("hdr"));
         if (!depthImg || !normalImg || !pbrImg || !colorImg)
             return;
-        // Trace.shader needs the Hi-Z pyramid (HiZPipelinePass runs earlier in this same stage).
+        // Trace.shader needs the Hi-Z pyramid (HiZSFERenderPass runs earlier in this same stage).
         if (!hiz_ || !hiz_->GetPyramid())
             return;
-
-        UpdateUBO();
+        // ...and the environment probe it samples on misses / for rough surfaces.
+        if (!probe_ || !probe_->GetCubemap())
+            return;
 
         auto ext = colorImg->GetExtent();
         UVec3 full{ext.x, ext.y, 1};
+
+        UpdateUBO(UVec2{ext.x, ext.y});
 
         // Reallocate rayDirRT_/traceColorRT_/filteredRT_/accumColor_/accumMoments_ if "hdr"'s
         // resolution has changed since they were last (re)created; they used to be sized once
@@ -333,6 +342,10 @@ namespace SF::Engine
         // The Hi-Z pyramid image is recreated on resize; traceSet_ binding 8 must follow it.
         const bool hizChanged = (hiz_->GetGeneration() != hizGeneration_);
         hizGeneration_        = hiz_->GetGeneration();
+
+        // Same for the reflection probe cube (traceSet_ binding 9).
+        const bool probeChanged = (probe_->GetGeneration() != probeGeneration_);
+        probeGeneration_        = probe_->GetGeneration();
 
         // RayGen : rewrite gbuffer reads (attachment pointers can change on
         // resize), transition rayDir/rayData to GENERAL, dispatch.
@@ -405,15 +418,18 @@ namespace SF::Engine
             (void) hdrII;
 
             // 1 = depth, 2 = world normal (back-face hit rejection), 3 = last frame's hdr,
-            // 8 = Hi-Z pyramid (permanently GENERAL, see HiZPipelinePass).
-            if (refreshDescs || hizChanged)
+            // 10 = Hi-Z pyramid (permanently GENERAL, see HiZSFERenderPass),
+            // 11 = reflection probe cube (permanently GENERAL, see ReflectionProbeSFERenderPass).
+            // NOT 8/9: those numbers are taken by the shared samplers, see the note in Trace.shader.
+            if (refreshDescs || hizChanged || probeChanged)
             {
                 auto traceGbufWrites =
                         DescriptorSetWriteBuilder(*traceSet_)
                                 .Image(1, depthImg->GetView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL)
                                 .Image(2, normalImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
                                 .Image(3, colorImg->GetView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                                .Image(8, hiz_->GetPyramid()->GetView(), VK_IMAGE_LAYOUT_GENERAL)
+                                .Image(10, hiz_->GetPyramid()->GetView(), VK_IMAGE_LAYOUT_GENERAL)
+                                .Image(11, probe_->GetCubemap()->GetView(), VK_IMAGE_LAYOUT_GENERAL)
                                 .Build();
                 traceGbufWrites.Apply();
             }
@@ -551,7 +567,7 @@ namespace SF::Engine
         ++framesSinceStart_;
     }
 
-    void SSRPipelinePass::Render(const CommandBuffer &cmd)
+    void SSRSFERenderPass::Render(const CommandBuffer &cmd)
     {
         if (!enabled)
             return;
@@ -597,6 +613,16 @@ namespace SF::Engine
             DescriptorSet::Update({writes[0], writes[1], writes[2], writes[3]});
         }
 
+        // Debug-only Hi-Z viewer binding (Composite.shader binding 9); the pyramid is recreated on resize.
+        if (hiz_ && hiz_->GetPyramid() && hiz_->GetGeneration() != compositeHizGeneration_)
+        {
+            compositeHizGeneration_ = hiz_->GetGeneration();
+            DescriptorSetWriteBuilder(*compositeSet_)
+                    .Image(9, hiz_->GetPyramid()->GetView(), VK_IMAGE_LAYOUT_GENERAL)
+                    .Build()
+                    .Apply();
+        }
+
         compositePipeline_->BindPipeline(cmd);
         compositeSet_->BindDescriptor(cmd);
         SharedSamplers::BindSharedSamplerSet(cmd, compositePipeline_->GetPipelineLayout(),
@@ -604,7 +630,7 @@ namespace SF::Engine
         vkCmdDraw(cmd, 3, 1, 0, 0);
     }
 
-    void SSRPipelinePass::DrawImGuiPanel()
+    void SSRSFERenderPass::DrawImGuiPanel()
     {
         if (!isWindowOpen)
             return;
@@ -613,13 +639,13 @@ namespace SF::Engine
         ImGui::Checkbox("Enabled", &enabled);
         ImGui::Checkbox("Temporal Accumulation", &temporalEnabled);
         ImGui::Checkbox("Spatial Filter", &spatialEnabled);
-        ImGui::Checkbox("Probe Fallback", &probeFallbackEnabled);
+        ImGui::Checkbox("Probe Fallback (environment probe on miss)", &probeFallbackEnabled);
         ImGui::Separator();
         ImGui::SliderInt("Max Hi-Z Iterations", &maxSteps, 8, 256);
         ImGui::SliderFloat("Hit Thickness (world units)", &thickness, 0.005f, 2.0f);
-        ImGui::TextDisabled("Stride Scale / Binary Search: unused by Hi-Z trace");
+        ImGui::TextDisabled("Stride Scale: unused by Hi-Z trace");
         ImGui::SliderFloat("Stride Scale", &strideScale, 0.1f, 4.0f);
-        ImGui::SliderInt("Binary Search Steps", &binarySearchSteps, 0, 12);
+        ImGui::SliderInt("Hi-Z Debug Level (0 = depth)", &binarySearchSteps, 0, 12);
         ImGui::SliderFloat("Max Roughness", &maxRoughness, 0.0f, 1.0f);
         ImGui::SliderFloat("Intensity", &intensity, 0.0f, 4.0f);
         ImGui::Separator();
@@ -632,7 +658,8 @@ namespace SF::Engine
         ImGui::ColorEdit3("Ambient Ground Color", &ambientGroundColor.x);
         ImGui::SliderFloat("Ambient Intensity", &ambientIntensity, 0.0f, 4.0f);
         ImGui::Separator();
-        const char *debugNames[] = {"None", "Ray Direction", "Trace Raw", "Temporal", "Spatial (Final)", "Confidence"};
+        const char *debugNames[] = {"None",       "Ray Direction",  "Trace Raw", "Temporal", "Spatial (Final)",
+                                    "Confidence", "Trace Hit Mask", "Hi-Z Level"};
         int dbgIdx               = static_cast<int>(debugView);
         if (ImGui::Combo("Debug View", &dbgIdx, debugNames, IM_ARRAYSIZE(debugNames)))
             debugView = static_cast<SSRDebugView>(dbgIdx);

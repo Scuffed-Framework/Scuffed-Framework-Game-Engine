@@ -3,7 +3,7 @@
 #include <Math/Transform.hpp>
 #include <Rendering/Lighting/Light.hpp>
 #include <Rendering/Lighting/LightingTypes.hpp>
-#include <Rendering/Lighting/LitMeshPipelinePass.hpp>
+#include <Rendering/Lighting/LitMeshSFERenderPass.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
 #include <memory>
 #include <string>

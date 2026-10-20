@@ -14,7 +14,7 @@ namespace SF::Engine
     //  aerialPerspTransGB_         rg16f    3-D   .rg  = T.gb
     //  aerialPerspRange_           r32f     2-D   per-XY-texel distToTravel
     //
-    //  Call Bake() every frame from AtmospherePipelinePass::PreRender(), passing
+    //  Call Bake() every frame from AtmosphereSFERenderPass::PreRender(), passing
     //  the current AtmosphereFrameUBO.  The bake is cheap: 4×4 workgroups ×
     //  32 slice iterations = negligible GPU time.
     class AerialPerspectiveLUT

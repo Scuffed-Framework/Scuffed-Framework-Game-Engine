@@ -1,4 +1,4 @@
-#include "DeferredLightPipelinePass.hpp"
+#include "DeferredLightSFERenderPass.hpp"
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/SharedSamplers.hpp>
 
@@ -65,7 +65,7 @@ namespace SF::Engine
     }
 
     //  ctor
-    DeferredLightPipelinePass::DeferredLightPipelinePass(Pipeline::Stage stage,
+    DeferredLightSFERenderPass::DeferredLightSFERenderPass(Pipeline::Stage stage,
                                                          LightManager &lightManager)
         : EngineRenderpass(stage), lm_(lightManager)
     {
@@ -111,7 +111,7 @@ namespace SF::Engine
     }
 
     //  refresh GBuffer image descriptors
-    void DeferredLightPipelinePass::RefreshGBufferDescriptors()
+    void DeferredLightSFERenderPass::RefreshGBufferDescriptors()
     {
         auto *rs = RenderSystem::Get();
         auto *albedo = dynamic_cast<const Image2d *>(rs->GetAttachment("gbuf_albedo"));
@@ -157,7 +157,7 @@ namespace SF::Engine
     }
 
     //  render
-    void DeferredLightPipelinePass::Render(const CommandBuffer &commandBuffer)
+    void DeferredLightSFERenderPass::Render(const CommandBuffer &commandBuffer)
     {
         RefreshGBufferDescriptors();
         pipeline_->BindPipeline(commandBuffer);

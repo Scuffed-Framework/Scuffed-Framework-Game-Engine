@@ -3,19 +3,19 @@
 #endif
 
 
-#include "OceanPipelinePass.hpp"
 #include <Rendering/Mesh/Vertex.hpp> // PatchVertex::GetVertexInput()
 #include <Rendering/RHI/Shaders/Parser/Parser.hpp>
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/SharedFunctions.hpp>
+#include "OceanSFERenderPass.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 namespace SF::Engine
 {
-    OceanTessellationPipelinePass::OceanTessellationPipelinePass(Pipeline::Stage stage,
-                                                                 const OceanTessellationParams &params) :
+    OceanTessellationSFERenderPass::OceanTessellationSFERenderPass(Pipeline::Stage stage,
+                                                                   const OceanTessellationParams &params) :
         EngineRenderpass(stage), params_(params)
     {
         clipmapMesh_ = std::make_unique<OceanClipmapMesh>(
@@ -119,7 +119,7 @@ namespace SF::Engine
         }
     }
 
-    void OceanTessellationPipelinePass::RebuildMesh()
+    void OceanTessellationSFERenderPass::RebuildMesh()
     {
         clipmapMesh_ = std::make_unique<OceanClipmapMesh>(
                 /*ringCount=*/5,
@@ -127,7 +127,7 @@ namespace SF::Engine
                 /*patchCount=*/params_.patchCount);
     }
 
-    void OceanTessellationPipelinePass::setupDescriptorSet()
+    void OceanTessellationSFERenderPass::setupDescriptorSet()
     {
         descSet_ = std::make_unique<DescriptorSet>(*pipeline_);
 
@@ -166,7 +166,7 @@ namespace SF::Engine
         DescriptorSet::Update({uboWrite, dispWrite, slopeWrite});
     }
 
-    void OceanTessellationPipelinePass::setupComputeDescriptorSets()
+    void OceanTessellationSFERenderPass::setupComputeDescriptorSets()
     {
         VkDescriptorBufferInfo spectrumBufInfo{spectrumUBO_->GetBuffer(), 0, VK_WHOLE_SIZE};
         VkDescriptorBufferInfo paramsBufInfo{spectrumParamsBuf_->GetBuffer(), 0, VK_WHOLE_SIZE};
@@ -287,7 +287,7 @@ namespace SF::Engine
         }
     }
 
-    void OceanTessellationPipelinePass::SetParams(const OceanTessellationParams &params)
+    void OceanTessellationSFERenderPass::SetParams(const OceanTessellationParams &params)
     {
         const bool meshChanged =
                 (params.patchCount != params_.patchCount) || (params.patchExtent != params_.patchExtent);
@@ -301,7 +301,7 @@ namespace SF::Engine
         }
     }
 
-    void OceanTessellationPipelinePass::syncParamsToFrameData()
+    void OceanTessellationSFERenderPass::syncParamsToFrameData()
     {
         // Wave
         frameData_.waveAmplitude  = params_.waveAmplitude;
@@ -344,7 +344,7 @@ namespace SF::Engine
         frameData_.normalStrength = fftSettings_.normalStrength.x;
     }
 
-    void OceanTessellationPipelinePass::RunFFTPass(const CommandBuffer &cmd)
+    void OceanTessellationSFERenderPass::RunFFTPass(const CommandBuffer &cmd)
     {
         const uint32_t N                        = fftSettings_.N;
         constexpr VkPipelineStageFlags kCompute = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
@@ -400,7 +400,7 @@ namespace SF::Engine
         // correctly frame to frame.
     }
 
-    void OceanTessellationPipelinePass::UpdateFrameData()
+    void OceanTessellationSFERenderPass::UpdateFrameData()
     {
         auto *cam    = CameraController::Get().GetActive();
         auto *window = WindowManager::Get()->GetWindow(0);
@@ -429,7 +429,7 @@ namespace SF::Engine
         clipmapMesh_->RegenerateAt(frameData_.cameraPos, frameData_.planetCenter, frameData_.planetRadius);
     }
 
-    void OceanTessellationPipelinePass::updateUBO()
+    void OceanTessellationSFERenderPass::updateUBO()
     {
         OceanFFTSpectrumUBO spectrumUBO{};
         spectrumUBO.frameTime = accumulatedTime_ * 0.001f; // ms -> s
@@ -460,7 +460,7 @@ namespace SF::Engine
         ubo_->Update(frameData_);
     }
 
-    void OceanTessellationPipelinePass::Render(const CommandBuffer &commandBuffer)
+    void OceanTessellationSFERenderPass::Render(const CommandBuffer &commandBuffer)
     {
         UpdateFrameData();
         updateUBO();

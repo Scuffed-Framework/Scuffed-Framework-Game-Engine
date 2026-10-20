@@ -105,7 +105,7 @@ namespace SF::Engine
      *     configuration (one EmitterParams per active emitter, re-uploaded each frame).
      *   - An atomic freelist counter buffer on the GPU for lock-free dead-particle
      *     recycling inside the compute shader (no CPU readback required).
-     *   - Rendering is left to an injected pipeline pass (ParticlePipelinePass)
+     *   - Rendering is left to an injected pipeline pass (ParticleSFERenderPass)
      *     that reads the same particle buffer; the system itself has no render
      *     pipeline dependency.
      *

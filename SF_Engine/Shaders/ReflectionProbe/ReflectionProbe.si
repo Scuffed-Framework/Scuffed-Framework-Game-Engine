@@ -1,0 +1,44 @@
+#ifndef REFLECTION_PROBE_SI
+#define REFLECTION_PROBE_SI
+
+// Shared definitions for the reflection probe (ReflectionProbePipelinePass).
+//
+// The probe is a single RGBA16F cubemap with a prefiltered mip chain:
+//   mip 0            = raw radiance, one texel per direction
+//   mip m (1..MaxMip) = GGX-prefiltered with perceptual roughness = m / kProbeMaxMip
+// so a consumer picks   mip = perceptualRoughness * kProbeMaxMip   and gets a roughness-correct
+// environment sample with a single (trilinear) fetch -- no per-pixel lobe sampling needed.
+//
+// kProbeMaxMip MUST equal (ReflectionProbePipelinePass::kMipCount - 1) on the C++ side.
+static const float kProbeMaxMip = 5.0;
+
+// Texel centre (uv in [0,1], origin top-left) of a cube face -> world direction.
+// Face order matches the Vulkan array-layer order: +X, -X, +Y, -Y, +Z, -Z, and the
+// per-face (sc, tc, ma) selection table from the Vulkan spec ("Cube Map Face Selection"),
+// inverted, so that sampling a TextureCube with the returned direction reads this very texel.
+float3 ProbeCubeDir(uint face, float2 uv)
+{
+    float sc = uv.x * 2.0 - 1.0;
+    float tc = uv.y * 2.0 - 1.0;
+    float3 d;
+    if (face == 0u)
+        d = float3(1.0, -tc, -sc);
+    else if (face == 1u)
+        d = float3(-1.0, -tc, sc);
+    else if (face == 2u)
+        d = float3(sc, 1.0, tc);
+    else if (face == 3u)
+        d = float3(sc, -1.0, -tc);
+    else if (face == 4u)
+        d = float3(sc, -tc, 1.0);
+    else
+        d = float3(-sc, -tc, -1.0);
+    return normalize(d);
+}
+
+float ProbeRoughnessToMip(float perceptualRoughness)
+{
+    return saturate(perceptualRoughness) * kProbeMaxMip;
+}
+
+#endif // REFLECTION_PROBE_SI

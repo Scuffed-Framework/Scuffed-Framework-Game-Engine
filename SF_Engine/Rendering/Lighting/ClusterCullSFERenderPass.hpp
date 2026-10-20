@@ -9,7 +9,7 @@
 namespace SF::Engine
 {
     /**
-     * @brief Two-phase compute PipelinePass: cluster AABB build + light culling.
+     * @brief Two-phase compute SFERenderPass: cluster AABB build + light culling.
      *
      * Both phases run in PreRender() : which executes OUTSIDE the renderpass
      * (the engine calls PreRender before vkCmdBeginRenderPass). This is the only
@@ -27,11 +27,11 @@ namespace SF::Engine
      * A compute→compute memory barrier separates phases 1 and 2, and a final
      * compute→fragment barrier ensures light lists are visible to the lighting pass.
      */
-    class ClusterCullPipelinePass : public EngineRenderpass
+    class ClusterCullSFERenderPass : public EngineRenderpass
     {
     public:
-        explicit ClusterCullPipelinePass(Pipeline::Stage stage, LightManager &lightManager);
-        ~ClusterCullPipelinePass() override = default;
+        explicit ClusterCullSFERenderPass(Pipeline::Stage stage, LightManager &lightManager);
+        ~ClusterCullSFERenderPass() override = default;
 
         /// Called before the renderpass : safe for compute dispatches.
         void PreRender(const CommandBuffer &commandBuffer) override;

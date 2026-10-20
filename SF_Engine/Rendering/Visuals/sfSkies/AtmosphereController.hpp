@@ -1,7 +1,7 @@
 #pragma once
 #include <Controllers/Controller.hpp>
 #include <Math/KVP.hpp>
-#include "Atmosphere/AtmospherePipelinePass.hpp"
+#include "Atmosphere/AtmosphereSFERenderPass.hpp"
 
 #include <functional>
 #include <string>
@@ -14,15 +14,15 @@ namespace SF::Engine
     {
         std::string name;
         AtmosphereData data;
-        AtmospherePipelinePass *pass = nullptr;
-        Vec3 planetPos               = {0.0f, 0.0f, 0.0f};
-        bool active                  = true;
+        AtmosphereSFERenderPass *pass = nullptr;
+        Vec3 planetPos                = {0.0f, 0.0f, 0.0f};
+        bool active                   = true;
     };
 
     class AtmosphereController : public StaticController<AtmosphereController>
     {
     public:
-        using PassFactory = std::function<AtmospherePipelinePass *(Pipeline::Stage, const AtmosphereParams &)>;
+        using PassFactory = std::function<AtmosphereSFERenderPass *(Pipeline::Stage, const AtmosphereParams &)>;
 
         explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory) :
             stage_(std::move(stage)), factory_(std::move(factory))

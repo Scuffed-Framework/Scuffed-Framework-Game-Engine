@@ -47,11 +47,27 @@ void sampleAerialPerspective(float2 screenUV, float sceneDist,
     float maxDist = max(aerialPerspRange.SampleLevel(screenUV, 0.0).r, 0.001);
     float t = clamp(sqrt(sceneDist / maxDist), 0.0, 1.0);
 
-    float4 ct = aerialPerspColorRGBTransR.SampleLevel(float3(screenUV, t), 0.0);
-    float2 tgb = aerialPerspTransGB.SampleLevel(float3(screenUV, t), 0.0).rg;
+    // Slice i of the AP volume holds the in-scatter/transmittance accumulated from the camera out to
+    // ((i+1)/N)^2 * maxDist (see AerialPerspectiveLUT.shader), but texel i is CENTRED at (i+0.5)/N.
+    // Sampling at w = t therefore lands half a slice too deep, and for anything nearer than slice 0's
+    // far edge (d0 = maxDist/N^2, hundreds of metres along a horizon ray) the clamp returns slice 0's
+    // FULL accumulated haze. That is what painted a view-direction gradient (bright band at the
+    // horizon, darker below) onto nearby geometry no matter how close it was.
+    // Fix: sample at the true slice position, and for d < d0 scale linearly from nothing at d = 0
+    // (optical depth is linear in distance over a short run) instead of pretending slice 0 is d = 0.
+    uint lutW, lutH, lutD;
+    aerialPerspColorRGBTransR.GetDimensions(lutW, lutH, lutD);
+    float sliceCount = float(max(lutD, 1u));
 
-    outScatter = ct.rgb;
-    outTransmit = float3(ct.a, tgb.r, tgb.g);
+    float nearFade = saturate(t * sliceCount);
+    nearFade *= nearFade; // (t*N)^2 == sceneDist / d0
+    float w = clamp(t - 0.5 / sliceCount, 0.5 / sliceCount, 1.0 - 0.5 / sliceCount);
+
+    float4 ct = aerialPerspColorRGBTransR.SampleLevel(float3(screenUV, w), 0.0);
+    float2 tgb = aerialPerspTransGB.SampleLevel(float3(screenUV, w), 0.0).rg;
+
+    outScatter = ct.rgb * nearFade;
+    outTransmit = lerp(float3(1.0, 1.0, 1.0), float3(ct.a, tgb.r, tgb.g), nearFade);
 }
 
 float depthToViewDist(float depth, float2 ndc)

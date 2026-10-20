@@ -5,12 +5,12 @@
 #include <Rendering/Camera/Camera.hpp>
 #include "SystemHolder.hpp"
 
-#include <Rendering/Lighting/LitMeshPipelinePass.hpp>
+#include <Rendering/Lighting/LitMeshSFERenderPass.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/AtmospherePipelinePass.hpp>
+#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereSFERenderPass.hpp>
 
 #include <LowLevel/XML/XMLModule.hpp>
-#include <Rendering/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
+#include <Rendering/Visuals/sfSkies/Clouds/CloudSFERenderPass.hpp>
 #include <Scene/SceneRenderer.hpp>
 #include <Scene/Types.hpp>
 #include "SceneSerialization.hpp"
@@ -119,18 +119,18 @@ namespace SF::Engine
         SceneRenderer *GetRenderer() const { return sceneRenderer_; }
 
         template<typename T, typename... Args>
-        T *InjectPipelinePass(const Pipeline::Stage &stage, Args &&...args)
+        T *InjectSFERenderPass(const Pipeline::Stage &stage, Args &&...args)
         {
-            assert(sceneRenderer_ && "InjectPipelinePass called before renderer is ready");
-            return sceneRenderer_->AddPipelinePass<T>(stage, std::forward<Args>(args)...);
+            assert(sceneRenderer_ && "InjectSFERenderPass called before renderer is ready");
+            return sceneRenderer_->AddSFERenderPass<T>(stage, std::forward<Args>(args)...);
         }
 
         template<typename T>
-        T *GetPipelinePass() const
+        T *GetSFERenderPass() const
         {
             if (!sceneRenderer_)
                 return nullptr;
-            return GetRenderer()->GetPipelinePass<T>();
+            return GetRenderer()->GetSFERenderPass<T>();
         }
 
         // Atomic save (temp file + rename).
@@ -187,9 +187,9 @@ namespace SF::Engine
 
         std::unique_ptr<CameraController> cameraController_;
 
-        LitMeshPipelinePass *litPass_     = nullptr;
-        AtmospherePipelinePass *atmoPass_ = nullptr;
-        CloudPipelinePass *cloudPass_     = nullptr;
+        LitMeshSFERenderPass *litPass_     = nullptr;
+        AtmosphereSFERenderPass *atmoPass_ = nullptr;
+        CloudSFERenderPass *cloudPass_     = nullptr;
 
         float elapsed_       = 0.0f;
         uint32_t frameIndex_ = 0;
