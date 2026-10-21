@@ -186,7 +186,7 @@ static void stbiw__writefv(stbi__write_context *s, const char *fmt, va_list v)
 
 static void stbiw__writef(stbi__write_context *s, const char *fmt, ...)
 {
-    va_list v;
+    va_list v = {};
     va_start(v, fmt);
     stbiw__writefv(s, fmt, v);
     va_end(v);
@@ -299,7 +299,7 @@ static int stbiw__outfile(stbi__write_context *s, int rgb_dir, int vdir, int x, 
         return 0;
     } else
     {
-        va_list v;
+        va_list v = {};
         va_start(v, fmt);
         stbiw__writefv(s, fmt, v);
         va_end(v);
@@ -391,7 +391,7 @@ static int stbi_write_tga_core(stbi__write_context *s, int x, int y, int comp, v
                         const unsigned char *prev = begin;
                         for (k = i + 2; k < x && len < 128; ++k)
                         {
-                            if (memcmp(prev, row + k * comp, comp))
+                            if (memcmp(prev, row + k * comp, comp) != 0)
                             {
                                 prev += comp;
                                 ++len;
@@ -464,7 +464,7 @@ STBIWDEF int stbi_write_tga(char const *filename, int x, int y, int comp, const 
 
 #define stbiw__max(a, b) ((a) > (b) ? (a) : (b))
 
-static void stbiw__linear_to_rgbe(unsigned char *rgbe, float *linear)
+static void stbiw__linear_to_rgbe(unsigned char *rgbe, const float *linear)
 {
     int exponent;
     float maxcomp = stbiw__max(linear[0], stbiw__max(linear[1], linear[2]));
@@ -474,7 +474,7 @@ static void stbiw__linear_to_rgbe(unsigned char *rgbe, float *linear)
         rgbe[0] = rgbe[1] = rgbe[2] = rgbe[3] = 0;
     } else
     {
-        float normalize = (float) frexp(maxcomp, &exponent) * 256.0f / maxcomp;
+        float normalize = frexpf(maxcomp, &exponent) * 256.0f / maxcomp;
 
         rgbe[0] = (unsigned char) (linear[0] * normalize);
         rgbe[1] = (unsigned char) (linear[1] * normalize);
@@ -500,7 +500,7 @@ static void stbiw__write_dump_data(stbi__write_context *s, int length, unsigned 
 }
 
 static void stbiw__write_hdr_scanline(stbi__write_context *s, int width, int ncomp, unsigned char *scratch,
-                                      float *scanline)
+                                      const float *scanline)
 {
     unsigned char scanlineheader[4] = {2, 2, 0, 0};
     unsigned char rgbe[4];
@@ -677,7 +677,7 @@ STBIWDEF int stbi_write_hdr(char const *filename, int x, int y, int comp, const 
 static void *stbiw__sbgrowf(void **arr, int increment, int itemsize)
 {
     int m   = *arr ? 2 * stbiw__sbm(*arr) + increment : increment + 1;
-    void *p = STBIW_REALLOC_SIZED(*arr ? stbiw__sbraw(*arr) : 0,
+    void *p = STBIW_REALLOC_SIZED(*arr ? stbiw__sbraw(*arr) : nullptr,
                                   *arr ? (stbiw__sbm(*arr) * itemsize + sizeof(int) * 2) : 0,
                                   itemsize * m + sizeof(int) * 2);
     STBIW_ASSERT(p);
@@ -713,7 +713,7 @@ static int stbiw__zlib_bitrev(int code, int codebits)
     return res;
 }
 
-static unsigned int stbiw__zlib_countm(unsigned char *a, unsigned char *b, int limit)
+static unsigned int stbiw__zlib_countm(const unsigned char *a, const unsigned char *b, int limit)
 {
     int i;
     for (i = 0; i < limit && i < 258; ++i)
@@ -722,7 +722,7 @@ static unsigned int stbiw__zlib_countm(unsigned char *a, unsigned char *b, int l
     return i;
 }
 
-static unsigned int stbiw__zhash(unsigned char *data)
+static unsigned int stbiw__zhash(const unsigned char *data)
 {
     stbiw_uint32 hash = data[0] + (data[1] << 8) + (data[2] << 16);
     hash ^= hash << 3;
@@ -770,10 +770,10 @@ STBIWDEF unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, in
                                        6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13};
     unsigned int bitbuf             = 0;
     int i, j, bitcount = 0;
-    unsigned char *out          = NULL;
+    unsigned char *out          = nullptr;
     unsigned char ***hash_table = (unsigned char ***) STBIW_MALLOC(stbiw__ZHASH * sizeof(unsigned char **));
     if (hash_table == NULL)
-        return NULL;
+        return nullptr;
     if (quality < 5)
         quality = 5;
 
@@ -783,21 +783,21 @@ STBIWDEF unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, in
     stbiw__zlib_add(1, 2);    // BTYPE = 1 -- fixed huffman
 
     for (i = 0; i < stbiw__ZHASH; ++i)
-        hash_table[i] = NULL;
+        hash_table[i] = nullptr;
 
     i = 0;
     while (i < data_len - 3)
     {
         // hash next 3 bytes of data to be compressed
-        int h = stbiw__zhash(data + i) & (stbiw__ZHASH - 1), best = 3;
-        unsigned char *bestloc = 0;
+        int h = (int) stbiw__zhash(data + i) & (stbiw__ZHASH - 1), best = 3;
+        unsigned char *bestloc = nullptr;
         unsigned char **hlist  = hash_table[h];
         int n                  = stbiw__sbcount(hlist);
         for (j = 0; j < n; ++j)
         {
             if (hlist[j] - data > i - 32768)
             { // if entry lies within window
-                int d = stbiw__zlib_countm(hlist[j], data + i, data_len - i);
+                int d = (int) stbiw__zlib_countm(hlist[j], data + i, data_len - i);
                 if (d >= best)
                 {
                     best    = d;
@@ -816,17 +816,17 @@ STBIWDEF unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, in
         if (bestloc)
         {
             // "lazy matching" - check match at *next* byte, and if it's better, do cur byte as literal
-            h     = stbiw__zhash(data + i + 1) & (stbiw__ZHASH - 1);
+            h     = (int) stbiw__zhash(data + i + 1) & (stbiw__ZHASH - 1);
             hlist = hash_table[h];
             n     = stbiw__sbcount(hlist);
             for (j = 0; j < n; ++j)
             {
                 if (hlist[j] - data > i - 32767)
                 {
-                    int e = stbiw__zlib_countm(hlist[j], data + i + 1, data_len - i - 1);
+                    int e = (int) stbiw__zlib_countm(hlist[j], data + i + 1, data_len - i - 1);
                     if (e > best)
                     { // if next match is better, bail on current match
-                        bestloc = NULL;
+                        bestloc = nullptr;
                         break;
                     }
                 }
@@ -895,7 +895,7 @@ STBIWDEF unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, in
 #endif // STBIW_ZLIB_COMPRESS
 }
 
-static unsigned int stbiw__crc32(unsigned char *buffer, int len)
+static unsigned int stbiw__crc32(const unsigned char *buffer, int len)
 {
 #ifdef STBIW_CRC32
     return STBIW_CRC32(buffer, len);
@@ -984,19 +984,19 @@ static void stbiw__encode_png_line(unsigned char *pixels, int stride_bytes, int 
         switch (type)
         {
             case 1:
-                line_buffer[i] = z[i];
+                line_buffer[i] = (char) z[i];
                 break;
             case 2:
-                line_buffer[i] = z[i] - z[i - signed_stride];
+                line_buffer[i] = (signed char) z[i] - z[i - signed_stride];
                 break;
             case 3:
-                line_buffer[i] = z[i] - (z[i - signed_stride] >> 1);
+                line_buffer[i] = (signed char) z[i] - (z[i - signed_stride] >> 1);
                 break;
             case 4:
                 line_buffer[i] = (signed char) (z[i] - stbiw__paeth(0, z[i - signed_stride], 0));
                 break;
             case 5:
-                line_buffer[i] = z[i];
+                line_buffer[i] = (char) z[i];
                 break;
             case 6:
                 line_buffer[i] = z[i];
@@ -1038,8 +1038,6 @@ STBIWDEF unsigned char *stbi_write_png_to_mem(const unsigned char *pixels, int s
     int force_filter     = stbi_write_force_png_filter;
     int ctype[5]         = {-1, 0, 4, 2, 6};
     unsigned char sig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
-    unsigned char *out, *o, *filt, *zlib;
-    signed char *line_buffer;
     int j, zlen;
 
     if (stride_bytes == 0)
@@ -1050,14 +1048,14 @@ STBIWDEF unsigned char *stbi_write_png_to_mem(const unsigned char *pixels, int s
         force_filter = -1;
     }
 
-    filt = (unsigned char *) STBIW_MALLOC((x * n + 1) * y);
+    unsigned char *filt = STBIW_MALLOC((x * n + 1) * y);
     if (!filt)
-        return 0;
-    line_buffer = (signed char *) STBIW_MALLOC(x * n);
+        return nullptr;
+    signed char *line_buffer = STBIW_MALLOC(x * n);
     if (!line_buffer)
     {
         STBIW_FREE(filt);
-        return 0;
+        return nullptr;
     }
     for (j = 0; j < y; ++j)
     {
@@ -1068,13 +1066,13 @@ STBIWDEF unsigned char *stbi_write_png_to_mem(const unsigned char *pixels, int s
             stbiw__encode_png_line((unsigned char *) (pixels), stride_bytes, x, y, j, n, force_filter, line_buffer);
         } else
         { // Estimate the best filter by running through all of them:
-            int best_filter = 0, best_filter_val = 0x7fffffff, est, i;
+            int best_filter = 0, best_filter_val = 0x7fffffff, i;
             for (filter_type = 0; filter_type < 5; filter_type++)
             {
                 stbiw__encode_png_line((unsigned char *) (pixels), stride_bytes, x, y, j, n, filter_type, line_buffer);
 
                 // Estimate the entropy of the line using this filter; the less, the better.
-                est = 0;
+                int est = 0;
                 for (i = 0; i < x * n; ++i)
                 {
                     est += abs((signed char) line_buffer[i]);
@@ -1096,18 +1094,18 @@ STBIWDEF unsigned char *stbi_write_png_to_mem(const unsigned char *pixels, int s
         STBIW_MEMMOVE(filt + j * (x * n + 1) + 1, line_buffer, x * n);
     }
     STBIW_FREE(line_buffer);
-    zlib = stbi_zlib_compress(filt, y * (x * n + 1), &zlen, stbi_write_png_compression_level);
+    unsigned char *zlib = stbi_zlib_compress(filt, y * (x * n + 1), &zlen, stbi_write_png_compression_level);
     STBIW_FREE(filt);
     if (!zlib)
-        return 0;
+        return nullptr;
 
     // each tag requires 12 bytes of overhead
-    out = (unsigned char *) STBIW_MALLOC(8 + 12 + 13 + 12 + zlen + 12);
+    unsigned char *out = (unsigned char *) STBIW_MALLOC(8 + 12 + 13 + 12 + zlen + 12);
     if (!out)
-        return 0;
+        return nullptr;
     *out_len = 8 + 12 + 13 + 12 + zlen + 12;
 
-    o = out;
+    unsigned char *o = out;
     STBIW_MEMMOVE(o, sig, 8);
     o += 8;
     stbiw__wp32(o, 13); // header length
@@ -1271,12 +1269,12 @@ static void stbiw__jpg_calcBits(int val, unsigned short bits[2])
 }
 
 static int stbiw__jpg_processDU(stbi__write_context *s, int *bitBuf, int *bitCnt, float *CDU, int du_stride,
-                                float *fdtbl, int DC, const unsigned short HTDC[256][2],
+                                const float *fdtbl, int DC, const unsigned short HTDC[256][2],
                                 const unsigned short HTAC[256][2])
 {
     const unsigned short EOB[2]       = {HTAC[0x00][0], HTAC[0x00][1]};
     const unsigned short M16zeroes[2] = {HTAC[0xF0][0], HTAC[0xF0][1]};
-    int dataOff, i, j, n, diff, end0pos, x, y;
+    int dataOff, i, j, n, diff, x, y;
     int DU[64];
 
     // DCT rows
@@ -1319,7 +1317,7 @@ static int stbiw__jpg_processDU(stbi__write_context *s, int *bitBuf, int *bitCnt
         stbiw__jpg_writeBits(s, bitBuf, bitCnt, bits);
     }
     // Encode ACs
-    end0pos = 63;
+    int end0pos = 63;
     for (; (end0pos > 0) && (DU[end0pos] == 0); --end0pos)
     {
     }
@@ -1494,8 +1492,8 @@ static int stbi_write_jpg_core(stbi__write_context *s, int width, int height, in
     {
         for (col = 0; col < 8; ++col, ++k)
         {
-            fdtbl_Y[k]  = 1 / (YTable[stbiw__jpg_ZigZag[k]] * aasf[row] * aasf[col]);
-            fdtbl_UV[k] = 1 / (UVTable[stbiw__jpg_ZigZag[k]] * aasf[row] * aasf[col]);
+            fdtbl_Y[k]  = 1 / ((float) YTable[stbiw__jpg_ZigZag[k]] * aasf[row] * aasf[col]);
+            fdtbl_UV[k] = 1 / ((float) UVTable[stbiw__jpg_ZigZag[k]] * aasf[row] * aasf[col]);
         }
     }
 
