@@ -43,6 +43,7 @@
 000-Build-Debug-x64/
 000-Build-Release-x64/
 .vscode/
+.idea/
 build/
 Logs/
 Programs/
