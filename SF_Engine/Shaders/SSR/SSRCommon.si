@@ -35,6 +35,8 @@
 #define SSR_DEBUG_TEMPORAL   3
 #define SSR_DEBUG_SPATIAL    4
 #define SSR_DEBUG_CONFIDENCE 5
+#define SSR_DEBUG_HITMASK    6   // trace hit mask (R) + hit confidence (G), pre-temporal
+#define SSR_DEBUG_HIZ        7   // Hi-Z pyramid; level chosen with SSRParams.binarySearchSteps (0 = depth buffer)
 
 // std140-compatible, matches SSRParams in SSRPipelinePass.hpp exactly
 // (7 x 16-byte rows — see the static_assert next to the C++ definition).
@@ -94,10 +96,15 @@ float3 SSR_OctDecodeNormal(float2 f)
 // Reconstruct.shader / GBuffer.shader elsewhere in the engine — this
 // un-projects in two steps: clip -> view (inverseProjection), then
 // view -> world (inverseView).
+// Y convention: Camera::GetProjection() already negates p[1][1] (Vulkan Y-flip), so NDC y is
+// ALREADY screen-down (ndc.y = -1 is the top row, matching uv.y = 0). The mapping is therefore
+// plain ndc = uv*2-1 with NO extra flip -- exactly what DeferredLight.shader's worldPosFromDepth
+// does. An earlier version of these helpers flipped Y a second time, which silently mirrored
+// every reconstructed position / projected UV vertically.
 float3 SSR_WorldPosFromDepth(float2 uv, float depth, float4x4 invProj, float4x4 invView)
 {
     float safeDepth = max(depth, 1e-6);
-    float4 clip = float4(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, safeDepth, 1.0);
+    float4 clip = float4(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0, safeDepth, 1.0);
     float4 viewPosH = mul(invProj, clip);
     float3 viewPos = viewPosH.xyz / viewPosH.w;
     float4 wp = mul(invView, float4(viewPos, 1.0));
@@ -107,7 +114,7 @@ float3 SSR_WorldPosFromDepth(float2 uv, float depth, float4x4 invProj, float4x4 
 float3 SSR_ViewPosFromDepth(float2 uv, float depth, float4x4 invProj)
 {
     float safeDepth = max(depth, 1e-6);
-    float4 clip = float4(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, safeDepth, 1.0);
+    float4 clip = float4(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0, safeDepth, 1.0);
     float4 vp = mul(invProj, clip);
     return vp.xyz / vp.w;
 }
@@ -127,7 +134,7 @@ float3 SSR_WorldToScreenUV(float3 worldPos, float4x4 viewProj)
 {
     float4 clip = mul(viewProj, float4(worldPos, 1.0));
     float3 ndc = clip.xyz / max(clip.w, 1e-6);
-    float2 uv = float2(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5);
+    float2 uv = float2(ndc.x * 0.5 + 0.5, ndc.y * 0.5 + 0.5); // projection already Y-flipped, see above
     return float3(uv, ndc.z);
 }
 

@@ -28,14 +28,22 @@
 //   binding 5   Texture2D      inRayData       (from RayGen, r=roughnessA g=metallic b=skyMask a=pdf)
 //   binding 6   RWTexture2D<float4> imgTraceColor (rgb=radiance, a=confidence)
 //   binding 7   RWTexture2D<float4> imgTraceHit   (r=hitMask, g=hitWorldDist, b=pdf, a=unused)
-//   binding 8   Texture2D      hizPyramid      (R32F max-depth pyramid, GENERAL layout)
+//   binding 10  Texture2D      hizPyramid      (R32F max-depth pyramid, GENERAL layout)
+//   binding 11  TextureCube    probeCube       (prefiltered environment probe, GENERAL layout)
 //   binding 31  ConstantBuffer Camera (shared)
+//
+// BINDING NUMBERS 0-9 vs THE SHARED SAMPLERS: Shader::ReflectFromSPIRV flattens the descriptor
+// bindings of EVERY set into one set-0 layout, de-duplicated by binding number. The shared samplers
+// (Common/Samplers.si, set 1) occupy bindings 0-9, so a sampler this shader actually uses can
+// clobber a set-0 resource that has the same number (that is what broke hizPyramid at 8 once the
+// mip-filter sampler, also 8, was used). New set-0 resources here therefore start at 10.
 //
 // SSRParams usage: maxSteps = max Hi-Z traversal iterations, thickness = world-space distance
 // over which hit confidence falls to zero. strideScale / binarySearchSteps /
 // depthBufferThicknessBias are no longer used by this stage.
 #include "SSR/SSRCommon.si"
 #include "Common/Samplers.si"
+#include "ReflectionProbe/ReflectionProbe.si"
 
 [[vk::binding(0, 0)]] ConstantBuffer<SSRParams> kSSR;
 [[vk::binding(1, 0)]] Texture2D gbufDepth;
@@ -45,22 +53,21 @@
 [[vk::binding(5, 0)]] Texture2D inRayData;
 [[vk::binding(6, 0)]] RWTexture2D<float4> imgTraceColor;
 [[vk::binding(7, 0)]] RWTexture2D<float4> imgTraceHit;
-[[vk::binding(8, 0)]] Texture2D hizPyramid;
+[[vk::binding(10, 0)]] Texture2D hizPyramid;
+[[vk::binding(11, 0)]] TextureCube probeCube;
 [[vk::binding(SSR_CAMERA_BIND, 0)]] ConstantBuffer<Camera> kCam;
 
 static const float kFltMax = 3.402823466e+38;
 
-// Analytic two-colour sky/ambient probe. This is the "environment fallback"
-// referenced in the architecture doc — a placeholder that keeps SSR fully
-// self-contained (no hard dependency on the sfSkies/atmosphere subsystem).
-// A richer probe (e.g. the atmosphere SkyView LUT, or a baked reflection
-// probe grid) can be swapped in later without touching Trace.shader's
-// control flow — only this function needs to change.
-float3 ProbeFallback(float3 rayDirWorld)
+// Environment lookup into the reflection probe cube (see ReflectionProbePipelinePass): what a ray
+// sees when the screen-space trace has nothing to say -- a miss, a ray that left the screen, or a
+// surface too rough to trace. `mip` selects the prefiltered roughness level (0 = raw radiance).
+float3 ProbeFallback(float3 dir, float mip)
 {
-    float t = saturate(rayDirWorld.y * 0.5 + 0.5);
-    float3 sky = lerp(kSSR.ambientGroundColor, kSSR.ambientSkyColor, t);
-    return sky * kSSR.ambientIntensity;
+    float3 c = probeCube.SampleLevel(linearClampEdgeMipFilterSampler, dir, mip).rgb;
+    if (anyBadFloat(c))
+        return float3(0.0, 0.0, 0.0);
+    return c;
 }
 
 // ---------------------------------------------------------------------
@@ -246,14 +253,20 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
 
     float pdf = rayData.a;
 
-    // Too-rough pixel: rayDir4.xyz is the surface NORMAL (see RayGen.shader), not a reflection
-    // direction -- skip the trace and read the probe with the smoothly-varying normal.
+    // Too-rough pixel: RayGen skipped the lobe sample and put the surface NORMAL in rayDir4.xyz (and
+    // the perceptual roughness in rayData.r). No trace: look up the mirror direction in the
+    // prefiltered probe at that roughness. The prefilter already integrates the whole lobe, so this
+    // is smooth and noise-free -- and it replaces the entire march for these pixels.
     if (bTooRough)
     {
         if (kSSR.bProbeFallbackEnabled != 0)
         {
-            float3 probeColor = ProbeFallback(normalize(rayDir4.xyz));
-            imgTraceColor[workPos] = float4(probeColor, 0.6);
+            float3 N = normalize(rayDir4.xyz);
+            float3 wp = SSR_WorldPosFromDepth(uv, depth, kCam.inverseProjection, kCam.inverseView);
+            float3 V = normalize(kCam.cameraPosition.xyz - wp);
+            float3 R = reflect(-V, N);
+            float3 probeColor = ProbeFallback(R, ProbeRoughnessToMip(rayData.r));
+            imgTraceColor[workPos] = float4(probeColor, 1.0);
         }
         else
         {
@@ -290,7 +303,8 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
     float3 ndcEnd = clipEnd.xyz / max(clipEnd.w, 1e-6);
 
     float3 ssStart = float3(uv, depth);
-    float3 ssEnd = float3(ndcEnd.x * 0.5 + 0.5, 0.5 - ndcEnd.y * 0.5, ndcEnd.z);
+    // Projection is already Y-flipped (see SSRCommon.si), so ndc.y maps straight to screen-down uv.y.
+    float3 ssEnd = float3(ndcEnd.x * 0.5 + 0.5, ndcEnd.y * 0.5 + 0.5, ndcEnd.z);
     float3 ssDir = ssEnd - ssStart;
 
     bool bHit = false;
@@ -333,16 +347,19 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
         }
     }
 
+    // The direction was importance-sampled from the specular lobe (and is accumulated over frames by
+    // the temporal pass), so read the RAW cube (mip 0): sampling a roughness-prefiltered mip as well
+    // would blur the lobe twice.
     float3 probeColor = float3(0.0, 0.0, 0.0);
     if (kSSR.bProbeFallbackEnabled != 0)
-        probeColor = ProbeFallback(rayDirWorld);
+        probeColor = ProbeFallback(rayDirWorld, 0.0);
 
     if (bHit)
     {
         // Partial confidence blends toward the probe instead of fading to black.
         if (kSSR.bProbeFallbackEnabled != 0)
         {
-            imgTraceColor[workPos] = float4(lerp(probeColor, hitColor, confidence), lerp(0.6, 1.0, confidence));
+            imgTraceColor[workPos] = float4(lerp(probeColor, hitColor, confidence), 1.0);
         }
         else
         {
@@ -352,7 +369,7 @@ void main(uint3 dispatchThreadID : SV_DispatchThreadID)
     }
     else if (kSSR.bProbeFallbackEnabled != 0)
     {
-        imgTraceColor[workPos] = float4(probeColor, 0.6);
+        imgTraceColor[workPos] = float4(probeColor, 1.0);
         imgTraceHit[workPos] = float4(0.0, 0.0, pdf, 0.0);
     }
     else

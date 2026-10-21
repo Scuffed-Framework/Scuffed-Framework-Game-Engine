@@ -33,6 +33,9 @@
 //   binding 4   Texture2D      gbufPBR
 //   binding 5   Texture2D      inFiltered  (final SSR result, rgb + a=confidence)
 //   binding 6   Texture2D      dbgRayDir   (RayGen output, for SSR_DEBUG_RAYDIR)
+//   binding 7   Texture2D      dbgTraceColor (Trace output rgb=radiance a=confidence, debug only)
+//   binding 8   Texture2D      dbgTraceHit   (Trace output r=hitMask g=hitDist b=pdf, debug only)
+//   binding 9   Texture2D      dbgHiz        (Hi-Z pyramid, level L>=1 = mip L-1, debug only)
 //   binding 31  ConstantBuffer Camera (shared)
 // Sampling uses the shared sampler set (set=1), same as the compute stages.
 #include "SSR/SSRCommon.si"
@@ -45,6 +48,9 @@
 [[vk::binding(4, 0)]] Texture2D gbufPBR;
 [[vk::binding(5, 0)]] Texture2D inFiltered;
 [[vk::binding(6, 0)]] Texture2D dbgRayDir;
+[[vk::binding(7, 0)]] Texture2D dbgTraceColor;
+[[vk::binding(8, 0)]] Texture2D dbgTraceHit;
+[[vk::binding(9, 0)]] Texture2D dbgHiz;
 [[vk::binding(SSR_CAMERA_BIND, 0)]] ConstantBuffer<Camera> kCam;
 
 struct VSOutput
@@ -81,8 +87,42 @@ float4 fragmentMain(VSOutput input) : SV_Target
         if (kSSR.debugView == SSR_DEBUG_RAYDIR)
             return float4(dbgRayDir.Load(int3(workPos, 0)).xyz * 0.5 + 0.5, 1.0);
 
+        // Raw trace output, before temporal/spatial: what Trace.shader itself produced.
+        if (kSSR.debugView == SSR_DEBUG_TRACE_RAW)
+            return float4(dbgTraceColor.Load(int3(workPos, 0)).rgb, 1.0);
+
+        // R = Trace found+validated a screen-space hit, G = its confidence. Black = every ray missed.
+        if (kSSR.debugView == SSR_DEBUG_HITMASK)
+        {
+            float hitMask = dbgTraceHit.Load(int3(workPos, 0)).r;
+            float conf = dbgTraceColor.Load(int3(workPos, 0)).a;
+            return float4(hitMask, hitMask > 0.5 ? conf : 0.0, 0.0, 1.0);
+        }
+
+        // Hi-Z viewer: level 0 = depth buffer, level L>=1 = pyramid mip L-1 (resolution screen >> L).
+        // Reversed-Z values are tiny away from the camera, so show sqrt(sqrt(z)) to keep detail.
+        if (kSSR.debugView == SSR_DEBUG_HIZ)
+        {
+            int lvl = max(kSSR.binarySearchSteps, 0);
+            float z;
+            if (lvl == 0)
+            {
+                z = depth;
+            }
+            else
+            {
+                uint hw, hh, hl;
+                dbgHiz.GetDimensions(0, hw, hh, hl);
+                int mip = min(lvl - 1, int(hl) - 1);
+                int2 c = int2(workPos) >> (mip + 1);
+                z = dbgHiz.Load(int3(c, mip)).r;
+            }
+            float v = sqrt(sqrt(saturate(z)));
+            return float4(v, v, v, 1.0);
+        }
+
         float3 dbg = float3(0.0, 0.0, 0.0);
-        if (kSSR.debugView == SSR_DEBUG_SPATIAL || kSSR.debugView == SSR_DEBUG_TEMPORAL || kSSR.debugView == SSR_DEBUG_TRACE_RAW)
+        if (kSSR.debugView == SSR_DEBUG_SPATIAL || kSSR.debugView == SSR_DEBUG_TEMPORAL)
             dbg = inFiltered.Load(int3(workPos, 0)).rgb;
         else if (kSSR.debugView == SSR_DEBUG_CONFIDENCE)
             dbg = float3(inFiltered.Load(int3(workPos, 0)).a, 0.0, 0.0);

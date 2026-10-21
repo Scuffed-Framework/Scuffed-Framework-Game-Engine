@@ -34,7 +34,7 @@ namespace SF::Engine
 
     void AssetController::ProjectLoaded()
     {
-        if (assets_.size() == 0)
+        if (assets_.empty())
             assets_.clear();
 
         const std::filesystem::path assetsRoot = ProjectManager::Get()->GetProjectAssetPath();
