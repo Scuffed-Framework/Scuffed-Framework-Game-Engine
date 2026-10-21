@@ -68,7 +68,7 @@ namespace SF::Matroska
 
         void initialize_writer(std::ostream &out)
         {
-            writer_ = std::make_unique<StreamingWriter>(out, schema_);
+            writer_ = std::make_unique<StreamingWriter>(out);
             write_ebml_header();
             writer_->begin_unknown(ids::Segment, 8);
             segmentDataStart_ = writer_->tell();

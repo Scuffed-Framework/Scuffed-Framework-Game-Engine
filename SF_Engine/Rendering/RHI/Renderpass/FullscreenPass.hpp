@@ -1,0 +1,60 @@
+#pragma once
+
+#ifndef VK_NO_PROTOTYPES
+    #define VK_NO_PROTOTYPES
+#endif
+
+#include <volk.h>
+
+#include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
+#include <Rendering/RHI/Commands/CommandBuffer.hpp>
+#include <Rendering/RHI/Descriptors/DescriptorSet.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
+#include <Rendering/RHI/Memory/Buffer.hpp>
+#include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
+#include <memory>
+#include <string>
+
+namespace SF::Engine
+{
+    /**
+     * @brief SFERenderpass that performs a fullscreen blit/post-process pass.
+     *
+     * Uses a single fullscreen triangle (no VBO) to sample a source texture
+     * and write it into the current render target (typically the swapchain).
+     *
+     * Usage:
+     * Add a second render stage to your Renderer that has:
+     *   - Attachment{0, "scene", Attachment::Type::Image}   <- the resolved scene colour
+     *   - Attachment{1, "swapchain", Attachment::Type::Swapchain}
+     * Then AddSFERenderpass<FullscreenPass>({stageIndex, 0}, "scene");
+     *
+     * The source attachment name is resolved each frame via RenderSystem::GetAttachment().
+     */
+    class FullscreenPass : public EngineRenderpass
+    {
+    public:
+        /**
+         * @param stage          Pipeline stage (renderStageIndex, subpassIndex).
+         * @param sourceAttachment  Name of the Image attachment to blit from.
+         * @param shaderPath     Path to the .shader file (defaults to the built-in one).
+         */
+        explicit FullscreenPass(Pipeline::Stage stage, std::string sourceAttachment = "scene",
+                                const std::filesystem::path &shaderPath = "Shaders/CompositeSampler.shader");
+
+        ~FullscreenPass() override = default;
+
+        void Render(const CommandBuffer &commandBuffer) override;
+
+    private:
+        std::string sourceAttachment_;
+        std::unique_ptr<RhiRenderPipeline> pipeline_;
+        std::unique_ptr<DescriptorSet> descriptorSet_;
+
+        // Tracks the last image pointer / attachment generation so we only rewrite descriptors on
+        // change. Pointer alone is NOT enough: a freed Image2d's address is routinely reused by the
+        // next rebuild's allocation, which left this set pointing at a destroyed view (GPU hang).
+        const Image2d *lastBoundImage_ = nullptr;
+        uint64_t lastGeneration_       = 0;
+    };
+} // namespace SF::Engine

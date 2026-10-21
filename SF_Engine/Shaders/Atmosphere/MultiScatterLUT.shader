@@ -1,5 +1,8 @@
 #include "Atmosphere/Atmosphere.si"
 
+#define THIS_IS_A_CERTIFIED_HOOD_CLASSIC_I_MEAN_THE_BINDLESS_IMPL
+#include "Common/Bindless.slang"
+
 const static int SPHERE_SAMPLES = 64; // must equal local_size_z
 
 [[vk::binding(0, 0)]]
@@ -26,6 +29,7 @@ float3 fibonacciDir(int i)
 }
 
 [numthreads(1, 1, SPHERE_SAMPLES)]
+[shader("compute")]
 void main(uint3 groupID : SV_GroupID, uint3 localID : SV_GroupThreadID)
 {
     int2 lutSize;

@@ -1,5 +1,9 @@
 #pragma once
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
 #include <glm/gtc/quaternion.hpp>
+#pragma GCC diagnostic pop
+
 #include "../Math.hpp"
 
 namespace SF::Engine
@@ -8,7 +12,7 @@ namespace SF::Engine
 }
 namespace std
 {
-    template <>
+    template<>
     struct hash<SF::Engine::Quaternion>
     {
         size_t operator()(const SF::Engine::Quaternion &matrix) const noexcept
@@ -21,4 +25,4 @@ namespace std
             return seed;
         }
     };
-}
+} // namespace std

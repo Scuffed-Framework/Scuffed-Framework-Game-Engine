@@ -1,83 +1,83 @@
 #pragma once
-#include <string>
-#include <memory>
-#include <Graphics/Mesh/Mesh.hpp>
-#include <Graphics/Lighting/LightingTypes.hpp>
+#include <EntityComponentSystem/Entity.hpp>
 #include <Math/Transform.hpp>
-#include <Graphics/Lighting/Light.hpp>
-#include <Graphics/Lighting/LitMeshPipelinePass.hpp>
+#include <Rendering/Lighting/Light.hpp>
+#include <Rendering/Lighting/LightingTypes.hpp>
+#include <Rendering/Lighting/LitMeshSFERenderpass.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <memory>
+#include <string>
 
 namespace SF::Engine
 {
-    struct SceneObject : public Serializable
+    struct SceneObject : public Entity, public Serializable
     {
     public:
-        std::string name;
-        Transform transform;
-        MeshMaterial material;
         std::shared_ptr<Mesh> mesh;
         bool enabled = true;
+        std::string meshSourcePath; // e.g. "assets/meshes/cube.obj"
+
+        SceneObject(const std::string &objName) : Entity(objName) { AddComponent<MeshMaterial>(); }
 
         void Serialize(XMLNode &node) const override
         {
-            node.SetAttribute("name", name);
+            node.SetAttribute("name", GetName());
             node.SetAttribute("enabled", enabled);
-            // Store a path or primitive shortcut so Deserialize can reconstruct the mesh
             node.SetAttribute("mesh", meshSourcePath);
 
             XMLNode tNode = node.AddChild("transform");
-            transform.Serialize(tNode);
+            Entity::GetComponent<Transform>()->Serialize(tNode);
 
             XMLNode matNode = node.AddChild("material");
-            material.Serialize(matNode);
+            Entity::GetComponent<MeshMaterial>()->Serialize(matNode);
         }
 
         void Deserialize(const XMLNode &node) override
         {
-            node.GetAttribute("name", name);
+            std::string n;
+            node.GetAttribute("name", n);
+            SetName(n);
             node.GetAttribute("enabled", enabled);
             node.GetAttribute("mesh", meshSourcePath); // caller loads the asset
 
             XMLNode tNode = node.GetChild("transform");
             if (tNode.IsValid())
-                transform.Deserialize(tNode);
+                Entity::GetComponent<Transform>()->Deserialize(tNode);
 
             XMLNode matNode = node.GetChild("material");
             if (matNode.IsValid())
-                material.Deserialize(matNode);
+                Entity::GetComponent<MeshMaterial>()->Deserialize(matNode);
         }
-
-        std::string meshSourcePath; // e.g. "assets/meshes/cube.obj"
     };
 
-    struct SceneLight : public Serializable
+    struct SceneLight : public Entity, public Serializable
     {
-        std::string name;
-        Transform transform;
-        Light light;
+        SceneLight(const std::string &lightName) : Entity(lightName) { AddComponent<Light>(); }
 
         void Serialize(XMLNode &node) const override
         {
-            node.SetAttribute("name", name);
+            node.SetAttribute("name", GetName());
 
             XMLNode tNode = node.AddChild("transform");
-            transform.Serialize(tNode);
+            Entity::GetComponent<Transform>()->Serialize(tNode);
 
             XMLNode lNode = node.AddChild("light");
-            light.Serialize(lNode); // implement similarly
+            Entity::GetComponent<Light>()->Serialize(lNode);
         }
 
         void Deserialize(const XMLNode &node) override
         {
-            node.GetAttribute("name", name);
+            std::string n;
+            node.GetAttribute("name", n);
+            SetName(n);
 
             XMLNode tNode = node.GetChild("transform");
             if (tNode.IsValid())
-                transform.Deserialize(tNode);
+                Entity::GetComponent<Transform>()->Deserialize(tNode);
 
             XMLNode lNode = node.GetChild("light");
             if (lNode.IsValid())
-                light.Deserialize(lNode);
+                Entity::GetComponent<Light>()->Deserialize(lNode);
         }
     };
-}
+} // namespace SF::Engine

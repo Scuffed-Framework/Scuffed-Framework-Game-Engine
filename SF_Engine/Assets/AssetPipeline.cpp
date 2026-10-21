@@ -1,100 +1,127 @@
 #include "AssetPipeline.hpp"
 
-#include <Filesystem/File.hpp>
 #include <Engine/Log/Log.hpp>
-#include <XML/XMLModule.hpp>
+#include <Engine/Project/Project.hpp>
+#include <LowLevel/FileSystem/File.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
+#include <assimp/Importer.hpp>
 
 namespace SF::Engine
 {
-    std::unordered_map<AssetType, AssetFactoryFn> &AssetController::Factories()
+    std::unordered_map<std::string, AssetFactoryFn> &AssetController::Factories()
     {
-        static std::unordered_map<AssetType, AssetFactoryFn> factories;
+        static std::unordered_map<std::string, AssetFactoryFn> factories;
         return factories;
     }
 
-    void AssetController::RegisterFactory(AssetType type, AssetFactoryFn factory)
+    void AssetController::RegisterFactory(const std::string &rttiTypeName, AssetFactoryFn factory)
     {
         auto &factories = Factories();
-
-        if (factories.contains(type))
+        if (factories.contains(rttiTypeName))
         {
-            Log::Error("AssetController: factory for AssetType {} registered more than once; ignoring duplicate.", static_cast<int>(type));
+            Log::Error("AssetController: factory for '{}' registered more than once; ignoring duplicate.",
+                       rttiTypeName);
             return;
         }
-
-        factories.emplace(type, std::move(factory));
+        factories.emplace(rttiTypeName, std::move(factory));
     }
 
-    void AssetController::Initialize()
+    bool AssetController::Initialize()
     {
-        assets_.clear();
+        assets_ = vector<shared_ptr<AssetBase>>();
+        return true;
+    }
 
-        constexpr const char *kManifestPath = "Assets/AssetManifest.xml";
+    void AssetController::ProjectLoaded()
+    {
+        if (assets_.empty())
+            assets_.clear();
 
-        if (!File::Exists(kManifestPath))
+        const std::filesystem::path assetsRoot = ProjectManager::Get()->GetProjectAssetPath();
+        if (!std::filesystem::exists(assetsRoot))
         {
-            Log::Warning("AssetController: no manifest found at '{}', starting with an empty asset set.",
-                         kManifestPath);
+            Log::Warning("AssetController: assets folder '{}' does not exist yet.", assetsRoot.string());
             return;
         }
 
-        XMLModule* reader = XMLModule::Get();
-        if (!reader->LoadFromFile(kManifestPath))
-        {
-            Log::Error("AssetController: failed to parse manifest '{}': {}",
-                       kManifestPath, reader->GetLastError());
-            return;
-        }
-
-        XMLNode root = reader->GetRootNode();
         const auto &factories = Factories();
+        std::error_code ec;
 
-        for (XMLNode entry : root.GetChildren("Asset"))
+        for (auto it = std::filesystem::recursive_directory_iterator(assetsRoot, ec);
+             it != std::filesystem::recursive_directory_iterator(); it.increment(ec))
         {
-            int rawType{};
-            entry.GetAttribute("Type", rawType);
-            const AssetType assetType = static_cast<AssetType>(rawType);
+            if (ec)
+            {
+                Log::Error("AssetController: error scanning '{}': {}", assetsRoot.string(), ec.message());
+                break;
+            }
+            if (it->is_directory() || it->path().extension() != ".meta")
+                continue;
 
-            auto factoryIt = factories.find(assetType);
+            const std::filesystem::path &metaPath = it->path();
+
+            XMLModule *reader = XMLModule::Get();
+            if (!reader->LoadFromFile(metaPath.string()))
+            {
+                Log::Error("AssetController: failed to parse meta '{}': {}", metaPath.string(), reader->GetLastError());
+                continue;
+            }
+
+            XMLNode metaRoot  = reader->GetRootNode();
+            XMLNode assetNode = metaRoot.GetChild("Asset");
+            if (!assetNode.IsValid())
+            {
+                Log::Error("AssetController: meta '{}' has no <Asset> node; skipping.", metaPath.string());
+                continue;
+            }
+
+            int rawType{};
+            assetNode.GetAttribute("Type", rawType);
+            // const AssetType assetType = static_cast<AssetType>(rawType);
+
+            std::string concreteType;
+            assetNode.GetAttribute("ConcreteType", concreteType);
+
+            auto factoryIt = factories.find(concreteType);
             if (factoryIt == factories.end())
             {
                 std::string name;
-                entry.GetAttribute("Name", name);
-                Log::Error("AssetController: no factory registered for AssetType {} (asset '{}'); skipping.",
-                           static_cast<int>(assetType), name);
+                assetNode.GetAttribute("Name", name);
+                Log::Error("AssetController: no factory for type '{}' (asset '{}'); skipping.", concreteType, name);
                 continue;
             }
 
             std::shared_ptr<AssetBase> asset = factoryIt->second();
 
-            entry.GetAttribute("Name", asset->name);
-            asset->type = assetType;
-            entry.GetAttribute("GUID", asset->guid);
+            // "Foo.shader.meta" -> "Foo.shader" (only the trailing .meta is stripped)
+            std::filesystem::path assetDataPath = metaPath;
+            assetDataPath.replace_extension();
+
+            asset->assetPath = assetDataPath;
+            asset->Deserialize(metaRoot);
 
             assets_.push_back(std::move(asset));
         }
 
-        Log::Info("AssetController: loaded {} asset entries from manifest.", assets_.size());
+        Log::Info("AssetController: loaded {} assets from '{}'.", assets_.size(), assetsRoot.string());
     }
 
     void AssetController::SaveAll()
     {
-        for (auto &asset : assets_)
+        for (auto &asset: assets_)
         {
             if (!asset)
-            {
                 continue;
-            }
-
-            asset->Save();
+            asset->Save();     // write the payload/data file
+            asset->SaveMeta(); // write just this asset's .meta sidecar
         }
     }
 
-    std::shared_ptr<AssetBase> AssetController::FindByGUID(const GUID &guid) const
+    std::shared_ptr<AssetBase> AssetController::FindByUUID(const UUID &guid) const
     {
-        for (const auto &asset : assets_)
+        for (const auto &asset: assets_)
         {
-            if (asset && asset->guid == guid)
+            if (asset && asset->uuid == guid)
             {
                 return asset;
             }
@@ -105,7 +132,7 @@ namespace SF::Engine
 
     std::shared_ptr<AssetBase> AssetController::FindByName(std::string_view name) const
     {
-        for (const auto &asset : assets_)
+        for (const auto &asset: assets_)
         {
             if (asset && asset->name == name)
             {
@@ -115,4 +142,30 @@ namespace SF::Engine
 
         return nullptr;
     }
-}
+
+    void AssetController::SaveManifest()
+    {
+        if (!ProjectManager::Get()->IsAProjectLoaded())
+        {
+            Log::Warning("AssetController: SaveManifest called with no project loaded; ignoring.");
+            return;
+        }
+
+        const std::filesystem::path manifestPath = ProjectManager::Get()->GetProjectAssetPath() / "AssetManifest.xml";
+
+        XMLModule *writer = XMLModule::Get();
+        writer->SetRootNode("AssetManifest");
+        XMLNode root = writer->GetRootNode();
+
+        for (const auto &asset: assets_)
+        {
+            if (asset)
+                asset->Serialize(root);
+        }
+
+        if (!writer->SaveToFile(manifestPath.string()))
+        {
+            Log::Error("AssetController: failed to save asset manifest to '{}'", manifestPath.string());
+        }
+    }
+} // namespace SF::Engine

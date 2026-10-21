@@ -78,7 +78,7 @@ namespace SF::Matroska
         inline constexpr SF::EBML::Identifier DisplayHeight{0x54BA};
         inline constexpr SF::EBML::Identifier DisplayUnit{0x54B2};
         inline constexpr SF::EBML::Identifier AspectRatioType{0x54B3};
-        inline constexpr SF::EBML::Identifier ColourSpace{0x2EB524};
+        inline constexpr SF::EBML::Identifier ColorSpace{0x2EB524};
         inline constexpr SF::EBML::Identifier GammaValue{0x2FB523};
         inline constexpr SF::EBML::Identifier FrameRate{0x2383E3};
 
@@ -170,5 +170,5 @@ namespace SF::Matroska
         inline constexpr SF::EBML::Identifier BitsPerChannel{0x55B2};
         inline constexpr SF::EBML::Identifier Projection{0x7670};
         inline constexpr SF::EBML::Identifier ProjectionType{0x7671};
-    }
-}
+    } // namespace ids
+} // namespace SF::Matroska

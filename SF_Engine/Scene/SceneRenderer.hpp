@@ -1,16 +1,18 @@
 #pragma once
-#include <Graphics/Renderer.hpp>
-#include <Graphics/Stage.hpp>
-#include <Graphics/Lighting/ClusterCullPipelinePass.hpp>
-#include <Graphics/Lighting/LitMeshPipelinePass.hpp>
-#include <Graphics/Mesh/Mesh.hpp>
-#include <Graphics/Images/Image2d.hpp>
-#include <Graphics/Stage.hpp>
-#include <Graphics/Visuals/sfSkies/Clouds/CloudPipelinePass.hpp>
-#include <Graphics/Visuals/sfSkies/AtmosphereController.hpp>
+#include <Rendering/FrameGraph/Stage.hpp>
+#include <Rendering/Lighting/Lighting.hpp>
+#include <Rendering/Mesh/Mesh.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
+#include <Rendering/Renderer.hpp>
+#include <Rendering/Visuals/HiZ/HiZSFERenderpass.hpp>
+#include <Rendering/Visuals/ReflectionProbe/ReflectionProbeSFERenderpass.hpp>
+#include <Rendering/Visuals/SSR/SSRSFERenderpass.hpp>
+#include <Rendering/Visuals/sfSkies/AtmosphereController.hpp>
+#include <Rendering/Visuals/sfSkies/Clouds/CloudSFERenderpass.hpp>
 
-#include <Graphics/PipelinePassInit.hpp>
-#include <Graphics/RenderPass/FullscreenPass.hpp>
+#include <Rendering/FrameGraph/EngineRenderpassInitRegistry.hpp>
+#include <Rendering/Mesh/MeshFactory.hpp>
+#include <Rendering/RHI/Renderpass/FullscreenPass.hpp>
 
 namespace SF::Engine
 {
@@ -18,13 +20,13 @@ namespace SF::Engine
 
     struct SceneRendererConfig
     {
-        bool enableAtmosphere = false; 
+        bool enableAtmosphere                       = false;
         AtmosphereParams atmosphereParams /*Earth*/ = []
         {
             AtmosphereParams ap;
-            ap.bottomRadius = 6371000.0f;
-            ap.topRadius = 6471000.0f;
-            ap.sunIntensity = 40.0f;
+            ap.bottomRadius     = 6371000.0f;
+            ap.topRadius        = 6471000.0f;
+            ap.sunIntensity     = 40.0f;
             ap.renderUnitRadius = 6371000.0f;
             return ap;
         }();
@@ -33,59 +35,42 @@ namespace SF::Engine
     class SceneRenderer : public Renderer
     {
     public:
-        SceneRenderer(SceneRendererConfig cfg = {}) : config_(std::move(cfg))
+        explicit SceneRenderer(const SceneRendererConfig &cfg = {}) : config_(cfg)
         {
-            // Stage 0: opaque forward pass — depth + offscreen HDR color
-            AddRenderStage(std::make_unique<RenderStage>(
-                std::vector<Attachment>{
-                    Attachment{0, "gbuf_depth", Attachment::Type::Depth},
-                    Attachment{1, "hdr", Attachment::Type::Image,
-                               false, VK_FORMAT_R16G16B16A16_SFLOAT,
-                               Color{0.0f, 0.0f, 0.0f, 1.0f}},
-                },
-                std::vector<SubpassType>{
-                    SubpassType{0, {0, 1}},
-                }));
+            // todo: replace this shit with a render graph
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "gbuf_depth", RhiAttachment::Type::Depth},
+                            RhiAttachment{1, "gbuf_albedo", RhiAttachment::Type::Image, false,
+                                          VK_FORMAT_R8G8B8A8_UNORM},
+                            RhiAttachment{2, "gbuf_normal", RhiAttachment::Type::Image, false, VK_FORMAT_R16G16_SNORM},
+                            RhiAttachment{3, "gbuf_pbr", RhiAttachment::Type::Image, false, VK_FORMAT_R8G8B8A8_UNORM},
+                    },
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0, 1, 2, 3}},
+                    }));
 
-            // Stage 1: composite (atmosphere+clouds, or plain blit) → swapchain
-            AddRenderStage(std::make_unique<RenderStage>(
-                std::vector<Attachment>{
-                    Attachment{0, "swapchain", Attachment::Type::Swapchain},
-                },
-                std::vector<SubpassType>{
-                    SubpassType{0, {0}},
-                }));
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "hdr", RhiAttachment::Type::Image, false, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                          Color{0.0f, 0.0f, 0.0f, 1.0f}},
+                    },
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0}}, // deferred lighting (+ atmosphere/clouds) → hdr
+                            RhiSubpassType{1, {0}}, // SSR composite (additive blend) → hdr
+                            RhiSubpassType{2, {0}}, // forward transparent → hdr
+                    }));
+
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "swapchain", RhiAttachment::Type::Swapchain},
+                    },
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0}},
+                    }));
         }
 
-        void Start() override
-        {
-            lightManager_ = std::make_unique<LightManager>();
-
-            // Stage 0: Opaque geometry safely renders into scene_color + gbuf_depth (scene_color is hdr)
-            AddPipelinePass<ClusterCullPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
-            litPass_ = AddPipelinePass<LitMeshPipelinePass>(Pipeline::Stage{0, 0}, *lightManager_);
-
-            atmoController = std::make_unique<AtmosphereController>(
-            Pipeline::Stage{1, 0},
-            [this](Pipeline::Stage s, const AtmosphereParams &p) { return AddPipelinePass<AtmospherePipelinePass>(s, p); });
-
-            if (config_.enableAtmosphere)
-            {
-                Vec3 earthPos = {0.0f, -config_.atmosphereParams.bottomRadius, 0.0f};
-                // TODO: load from xml
-                atmoController->AddAtmosphere("Earth", earthData, earthPos);
-
-                cloudPass_ = AddPipelinePass<CloudPipelinePass>(Pipeline::Stage{1, 0}, earthData);
-
-                // disable cloud pass cuz its fucked
-                cloudPass_->SetEnabled(false);
-                // disable cloud pass cuz its fucked
-
-                AddPipelinePass<FullscreenPass>(Pipeline::Stage{1, 0}, "hdr", "Shaders/FullscreenPass.shader");
-            }
-
-            GetPipelinePassManager()->RunInitCallbacks();
-        }
+        void Start() override;
 
         void Update() override {} // Heavy per-frame work is driven by RenderScene()
 
@@ -96,21 +81,28 @@ namespace SF::Engine
         Image2d *GetHdrColorTarget();
 
         // Accessors
-        LightManager *GetLightManager() { return lightManager_.get(); }
-        LitMeshPipelinePass *GetLitPass() { return litPass_; }
-        CloudPipelinePass *GetCloudPass() { return cloudPass_; }
-        AtmosphereController *GetAtmosphereController() { return atmoController.get(); }
+        LightManager *GetLightManager() const { return lightManager_.get(); }
+        GBufferPass *GetGBuffer() const { return gbuffer_; }
+        SSRSFERenderpass *GetSSR() const { return ssr_; }
+        CloudSFERenderpass *GetCloudPass() const { return cloudPass_; }
+        AtmosphereController *GetAtmosphereController() const { return atmoController.get(); }
+        ClusterCullSFERenderpass *GetClusterCull() const { return clusterCull_; }
 
         std::unique_ptr<AtmosphereController> atmoController;
 
     private:
         SceneRendererConfig config_;
-        AtmosphereData earthData{ config_.atmosphereParams, {} };
+        AtmosphereData earthData{config_.atmosphereParams, {}};
 
         std::unique_ptr<LightManager> lightManager_;
-        LitMeshPipelinePass *litPass_ = nullptr;
-        CloudPipelinePass *cloudPass_ = nullptr;
+        GBufferPass *gbuffer_                  = nullptr;
+        SSRSFERenderpass *ssr_                 = nullptr;
+        HiZSFERenderpass *hiz_                 = nullptr;
+        ReflectionProbeSFERenderpass *probe_   = nullptr;
+        CloudSFERenderpass *cloudPass_         = nullptr;
+        ClusterCullSFERenderpass *clusterCull_ = nullptr;
 
-        bool uiCallbackSet_ = false;
+        bool uiCallbackSet_   = false;
+        uint32_t lastScreenH_ = 600, lastScreenW_ = 800;
     };
-}
+} // namespace SF::Engine

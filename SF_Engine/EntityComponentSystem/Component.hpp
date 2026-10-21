@@ -1,0 +1,61 @@
+#pragma once
+
+#include <UtilityClasses/StreamFactory.hpp>
+
+namespace SF::Engine
+{
+    class Entity;
+    /**
+     * @brief Class that represents a functional component attached to entity.
+     */
+    class Component : public StreamFactory<Component>, public Serializable
+    {
+        SF_RTTI(Component, Serializable, StreamFactory<Component>)
+    public:
+        virtual ~Component() = default;
+
+        virtual void Start() {}
+        virtual void Update() {}
+        virtual void Reset() {}
+        [[nodiscard]] virtual TypeId GetTypeId() const             = 0;
+        [[nodiscard]] virtual std::string_view GetTypeName() const = 0;
+
+        [[nodiscard]] bool IsEnabled() const { return enabled; }
+        void SetEnabled(bool enable) { this->enabled = enable; }
+
+        [[nodiscard]] bool IsRemoved() const { return removed; }
+        void SetRemoved(bool removed) { this->removed = removed; }
+
+        [[nodiscard]] Entity *GetOwner() const { return owner; }
+        void SetOwner(Entity *entity) { this->owner = entity; }
+
+        [[nodiscard]] virtual std::unique_ptr<Component> Clone() const { return nullptr; }
+
+        // TODO: yeah so like do something with this and replace the declare widgets file
+        virtual void DrawEditorFields() {}
+
+    private:
+        bool started  = false;
+        bool enabled  = true;
+        bool removed  = false;
+        Entity *owner = nullptr;
+
+    public:
+        void Serialize(XMLNode &node) const override
+        {
+            XMLNode component = node.AddChild("Component");
+            component.SetAttribute("started", started);
+            component.SetAttribute("enabled", enabled);
+            component.SetAttribute("removed", removed);
+            // owner is runtime only
+        }
+
+        void Deserialize(const XMLNode &node) override
+        {
+            XMLNode component = node.GetChild("Component");
+            component.GetAttribute("started", started);
+            component.GetAttribute("enabled", enabled);
+            component.GetAttribute("removed", removed);
+        }
+    };
+} // namespace SF::Engine

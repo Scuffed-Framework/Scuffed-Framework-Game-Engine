@@ -1,0 +1,182 @@
+#include "../FrameGraph/Stage.hpp"
+#include <Platform/Windowing/WindowManager.hpp>
+#include "../RHI/Images/Image.hpp"
+#include "../RenderSystem.hpp"
+
+namespace SF::Engine
+{
+    RhiRenderStage::RhiRenderStage(std::vector<RhiAttachment> images, std::vector<RhiSubpassType> subpasses,
+                                   const RhiViewport &viewport) :
+        attachments(std::move(images)), subpasses(std::move(subpasses)), viewport(viewport)
+    {
+        // Scan attachments to find the depth and swapchain attachments
+        for (const auto &attachment: attachments)
+        {
+            if (attachment.GetType() == RhiAttachment::Type::Depth)
+                depthAttachment = attachment;
+            else if (attachment.GetType() == RhiAttachment::Type::Swapchain)
+                swapchainAttachment = attachment;
+        }
+
+        // Build clear values and per-subpass metadata
+        for (const auto &subpass: this->subpasses)
+        {
+            uint32_t colorCount = 0; // excludes depth : this is what RenderPipeline::CreatePipelineMrt()
+                                     // uses to size pColorBlendState, which must match the real
+                                     // VkSubpassDescription::colorAttachmentCount (Renderpass.cpp
+                                     // already separates depth into pDepthStencilAttachment, so a
+                                     // depth-inclusive count here mismatches it).
+            bool multisampled = false;
+
+            for (auto bindingIndex: subpass.GetAttachmentBindings())
+            {
+                auto att = GetAttachment(bindingIndex);
+                if (!att)
+                    continue;
+
+                VkClearValue clearValue = {};
+                if (att->GetType() == RhiAttachment::Type::Depth)
+                {
+                    clearValue.depthStencil = {0.0f, 0};
+                } else
+                {
+                    auto c           = att->GetClearColor();
+                    clearValue.color = {c.r, c.g, c.b, c.a};
+                    colorCount++;
+                }
+                clearValues.emplace_back(clearValue);
+
+                if (att->IsMultisampled())
+                    multisampled = true;
+            }
+
+            subpassAttachmentCount.emplace_back(colorCount);
+            subpassMultisampled.emplace_back(multisampled);
+        }
+    }
+
+    void RhiRenderStage::Update()
+    {
+        auto lastRenderArea = renderArea;
+
+        renderArea.SetOffset(viewport.GetOffset());
+
+        if (viewport.GetSize())
+            renderArea.SetExtent(UVec2(viewport.GetScale() * Vec2(*viewport.GetSize())));
+        else
+            renderArea.SetExtent(UVec2(viewport.GetScale() * Vec2(WindowManager::Get()->GetWindow(0)->GetSize())));
+
+        // Don't mark as out of date with a zero extent : window is probably minimized.
+        // Rebuilding with zero extent creates an invalid framebuffer and crashes.
+        if (renderArea.GetExtent().x == 0 || renderArea.GetExtent().y == 0)
+        {
+            outOfDate = false;
+            return;
+        }
+
+        renderArea.SetAspectRatio(static_cast<float>(renderArea.GetExtent().x) /
+                                  static_cast<float>(renderArea.GetExtent().y));
+        renderArea.SetExtent(renderArea.GetExtent() + renderArea.GetOffset());
+
+        outOfDate = renderArea != lastRenderArea;
+    }
+
+    UVec2 RhiRenderStage::GetEffectiveExtent(const RhiSwapchain &swapchain) const
+    {
+        UVec2 extent = renderArea.GetExtent();
+        if (swapchainAttachment)
+        {
+            // The swapchain stage must cover the swapchain images exactly: smaller leaves an
+            // uncleared/black strip along the edge, larger is invalid (framebuffer > attachments).
+            // Fullscreen composite passes sample by UV, so a window-vs-swapchain size mismatch of
+            // a few pixels just rescales instead of tearing.
+            const VkExtent2D sc = swapchain.GetExtent();
+            extent              = UVec2{sc.width, sc.height};
+        }
+        return extent;
+    }
+
+    void RhiRenderStage::Rebuild(const RhiSwapchain &swapchain)
+    {
+        auto physicalDevice = RenderSystem::Get()->GetPhysicalDevice();
+        auto logicalDevice  = RenderSystem::Get()->GetLogicalDevice();
+        auto surface        = RenderSystem::Get()->GetSurface(0);
+
+        auto msaaSamples = physicalDevice->GetMsaaSamples();
+        const UVec2 fbExtent = GetEffectiveExtent(swapchain);
+        Log::Info("RenderStage::Rebuild extent={}x{}", fbExtent.x, fbExtent.y);
+
+        if (depthAttachment)
+        {
+            Log::Info("Creating ImageDepth");
+            depthStencil = std::make_unique<ImageDepth>(
+                    fbExtent, depthAttachment->IsMultisampled() ? msaaSamples : VK_SAMPLE_COUNT_1_BIT);
+            Log::Info("ImageDepth created");
+        }
+
+        // Always recreate the renderpass so it uses the correct depth format.
+        // The old guard `if (!renderpass)` caused it to reuse a stale renderpass
+        // built before depthStencil existed, producing VK_FORMAT_R4G4_UNORM_PACK8.
+        Log::Info("Creating Renderpass");
+        renderpass = std::make_unique<RhiRenderpass>(*logicalDevice, *this,
+                                                     depthStencil ? depthStencil->GetFormat() : VK_FORMAT_UNDEFINED,
+                                                     surface->GetFormat().format, msaaSamples);
+        Log::Info("Renderpass created");
+
+        Log::Info("Creating Framebuffer");
+        framebuffer = std::make_unique<Framebuffer>(*logicalDevice, swapchain, *this, *renderpass, depthStencil.get(),
+                                                    fbExtent, msaaSamples);
+        Log::Info("Framebuffer created");
+        outOfDate = false;
+
+        descriptors.clear();
+        auto where = descriptors.end();
+
+        for (const auto &image: attachments)
+        {
+            if (image.GetType() == RhiAttachment::Type::Depth)
+                where = descriptors.insert(where, {image.GetName(), depthStencil.get()});
+            else
+                where = descriptors.insert(where, {image.GetName(), framebuffer->GetAttachment(image.GetBinding())});
+        }
+    }
+
+    std::optional<RhiAttachment> RhiRenderStage::GetAttachment(const std::string &name) const
+    {
+        for (const auto &attachment: attachments)
+        {
+            if (attachment.GetName() == name)
+            {
+                return attachment;
+            }
+        }
+        return std::nullopt;
+    }
+
+    std::optional<RhiAttachment> RhiRenderStage::GetAttachment(uint32_t binding) const
+    {
+        for (const auto &attachment: attachments)
+        {
+            if (attachment.GetBinding() == binding)
+            {
+                return attachment;
+            }
+        }
+        return std::nullopt;
+    }
+
+    const Descriptor *RhiRenderStage::GetDescriptor(const std::string &name) const
+    {
+        auto it = descriptors.find(name);
+        if (it != descriptors.end())
+        {
+            return it->second;
+        }
+        return nullptr;
+    }
+
+    const VkFramebuffer &RhiRenderStage::GetActiveFramebuffer(uint32_t activeSwapchainImage) const
+    {
+        return framebuffer->GetFramebuffer()[activeSwapchainImage];
+    }
+} // namespace SF::Engine

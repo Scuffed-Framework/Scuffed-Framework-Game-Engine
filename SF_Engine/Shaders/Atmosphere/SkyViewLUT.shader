@@ -13,6 +13,7 @@ RWTexture2D<float4> skyViewLUT;
 ConstantBuffer<SkyViewUBO> pc;
 
 [numthreads(8, 8, 1)]
+[shader("compute")]
 void main(uint3 globalThreadID : SV_DispatchThreadID)
 {
     int2 coord = int2(globalThreadID.xy);
@@ -22,14 +23,15 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
 
     float2 uv = (float2(coord) + 0.5) / float2(size);
 
-    float h = pc.bottomRadius + max(pc.cameraHeight, 1.0);
-    float3 viewPos = float3(0.0, h, 0.0);
-    float3 up = float3(0.0, 1.0, 0.0);
+    float h = max(length(pc.camPos.xyz), pc.bottomRadius + 1.0);
+    float3 viewPos = normalize(pc.camPos.xyz) * h;
+    float3 up = normalize(viewPos);
 
     float3 sunDir = normalize(pc.sunDir.xyz);
     float3 sunHoriz = sunDir - dot(sunDir, up) * up;
     float sunHLen = length(sunHoriz);
-    float3 sunProj = (sunHLen > 1e-4) ? (sunHoriz / sunHLen) : float3(1.0, 0.0, 0.0);
+
+    float3 sunProj = (sunHLen > 1e-4) ? (sunHoriz / sunHLen) : arbitraryPerp(up);
     float3 perpAxis = cross(up, sunProj);
 
     float phi = uv.x * kPI;

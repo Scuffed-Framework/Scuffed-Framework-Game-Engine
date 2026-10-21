@@ -1,26 +1,21 @@
 #pragma once
-#include "Commands.hpp"
-#include <Gui/UIRegistry.hpp>
-#include <string>
-#include <vector>
+#include <Gui/ImGui/UIRegistry.hpp>
 #include <deque>
+#include "Commands.hpp"
 
 namespace SF::Engine
 {
+    using namespace std;
     class CommandWindow
     {
     public:
         CommandWindow()
         {
-            m_uiHandle = UIRegistry::Get().Register([this]
-                                                    { DrawCommandConsole(); });
+            m_uiHandle = UIRegistry::Get().Register([this] { DrawCommandConsole(); });
             RegisterBuiltins();
         }
 
-        ~CommandWindow()
-        {
-            UIRegistry::Get().Unregister(m_uiHandle);
-        }
+        ~CommandWindow() { UIRegistry::Get().Unregister(m_uiHandle); }
 
         void DrawCommandConsole();
 
@@ -29,24 +24,24 @@ namespace SF::Engine
 
         void StopAllExecution();
 
-        bool IsInputCmdInRegistry(const std::string &in) const;
+        bool IsInputCmdInRegistry(const string &in) const;
 
     private:
         void RegisterBuiltins();
-        void ParseAndExecute(const std::string &raw);
+        void ParseAndExecute(const string &raw);
 
         // Parsed input: "scene.open levels/test.scene" → {"scene.open", {"levels/test.scene"}}
         struct ParsedCmd
         {
-            std::string name;
-            std::vector<std::string> args;
+            string name;
+            vector<string> args;
         };
-        static ParsedCmd Parse(const std::string &raw);
+        static ParsedCmd Parse(const string &raw);
 
-        std::size_t m_uiHandle;            // whatever UIRegistry::Register returns
-        std::deque<std::string> m_history; // arrow-key recall
-        std::string m_inputBuf;            // ImGui InputText buffer
-        std::string m_pendingExec;         // set when user hits Enter, consumed next frame
+        size_t m_uiHandle;       // whatever UIRegistry::Register returns
+        deque<string> m_history; // arrow-key recall
+        string m_inputBuf;       // ImGui InputText buffer
+        string m_pendingExec;    // set when user hits Enter, consumed next frame
         bool m_scrollToBottom = false;
 
         struct LogEntry
@@ -58,10 +53,10 @@ namespace SF::Engine
                 Warning,
                 Error
             } level;
-            std::string text;
+            string text;
         };
-        std::vector<LogEntry> m_log;
+        vector<LogEntry> m_log;
 
         static constexpr size_t k_maxHistory = 64;
     };
-}
+} // namespace SF::Engine

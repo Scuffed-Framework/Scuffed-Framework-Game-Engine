@@ -1,24 +1,44 @@
-# SHADERS
-1. Fix clouds
-2. Probed Stochastic SSR
-3. RTGI
-4. fix atmosphere color bands in night area + >100km bugging when night far from 0 0 0
-
-
-
 #CORE
-1. SPLASH SCREEN
-2. Update the .sh scripts (haven't for like 4 months)
-3. make more beginner friendly than unity (big api improvements)
-4. Terrain
-5. HDR rendering (and in hdr window (might need fullscreen))
-6. Clouds C++
-7. Bindless shader resources like DAXA
+NOW: PipelinePass -> some not shit name (prolly just Pass)
+1. Improve renderer
+2. Shader hot-reloading (at some point)
+3. Finish AssetSystem
+4. FIX SSR
+5. make more beginner-friendly than unity (big api improvements) while still having full control
+6. Clouds
+7. Full PBR
+8. fix atmosphere dual/tri color bands in night area
+9. HDR rendering (and in hdr window (might need fullscreen))
+10. Terrain
+11. Bindless shader resources
+12. multi window support
+13. Lumen-style Radiance Cache with Screen Probe Gather GI (Diffuse & Specular). (https://github.com/qiutang98/chord) "Simple RadianceCache with ScreenProbe GI"
+14. Finish ParticleSystem
+15. Documentation
+16. Animation
+17. Lua/C++ scripting
+18. Programmable Gui by XML (its like HTML, maybe wrap imgui, or custom, or both.)
+19. full engine XML configuration system
+20. Full build system including building rsc(s) and an executable, executable will load engine config and games.
+21. Multiplayer support
+22. System showing what privileges the game needs
+23. multi API RHI
+24. Render Graph
+
+LAST Web build support
+
+1000. SPLASH SCREEN
+
+#QOL
 
 #Editor:
-Panels, cmd, explorer, black profiler bar, profiler
-sponza
-amazon lumberyard cafe
+finish panels, cmd, explorer, black profiler bar, profiler
+fix duplication and reparenting, add **FOLDERS and their color / icon menus**
+asset importers (sponza, Amazon Lumberyard café)
+finish shader wizard
 
-API Issues:
-Render() called on already active renderpass
+
+API Notes:
+Render() called on already active renderpass, PreRender() before active.
+
+todo maybe: before feature-ssr merge, rename every SF:: to ScuffedFramework::

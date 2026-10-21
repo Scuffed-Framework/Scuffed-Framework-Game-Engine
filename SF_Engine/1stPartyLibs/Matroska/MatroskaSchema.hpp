@@ -8,7 +8,7 @@ namespace SF::Matroska
     inline EBML::Schema create_matroska_schema()
     {
         using namespace EBML;
-        
+
         Schema schema;
         schema.set(EBML::ids::EBML, Element::Kind::Master);
         schema.set(EBML::ids::EBMLVersion, Element::Kind::UInt);
@@ -20,12 +20,10 @@ namespace SF::Matroska
         schema.set(EBML::ids::DocTypeReadVersion, Element::Kind::UInt);
         schema.set(EBML::ids::Void, Element::Kind::Binary);
         schema.set(EBML::ids::CRC32, Element::Kind::Binary);
-        schema.add_children(EBML::ids::EBML, {
-            EBML::ids::EBMLVersion, EBML::ids::EBMLReadVersion,
-            EBML::ids::EBMLMaxIDLength, EBML::ids::EBMLMaxSizeLength,
-            EBML::ids::DocType, EBML::ids::DocTypeVersion,
-            EBML::ids::DocTypeReadVersion
-        });
+        schema.add_children(EBML::ids::EBML,
+                            {EBML::ids::EBMLVersion, EBML::ids::EBMLReadVersion, EBML::ids::EBMLMaxIDLength,
+                             EBML::ids::EBMLMaxSizeLength, EBML::ids::DocType, EBML::ids::DocTypeVersion,
+                             EBML::ids::DocTypeReadVersion});
 
         // Register all element kinds
         // Master elements
@@ -105,7 +103,7 @@ namespace SF::Matroska
         schema.set(ids::DisplayHeight, Element::Kind::UInt);
         schema.set(ids::DisplayUnit, Element::Kind::UInt);
         schema.set(ids::AspectRatioType, Element::Kind::UInt);
-        schema.set(ids::ColourSpace, Element::Kind::Binary);
+        schema.set(ids::ColorSpace, Element::Kind::Binary);
         schema.set(ids::GammaValue, Element::Kind::Float);
         schema.set(ids::FrameRate, Element::Kind::Float);
         schema.set(ids::SamplingFrequency, Element::Kind::Float);
@@ -178,85 +176,91 @@ namespace SF::Matroska
         // element in real-world files (muxers use them for padding/checksums
         // wherever convenient), so they're added everywhere below rather
         // than declared once.
-        schema.add_children(ids::Segment, {
-            ids::SeekHead, ids::Info, ids::Tracks, ids::Cluster, ids::Cues, ids::Attachments, ids::Chapters, ids::Tags,
-            EBML::ids::Void, EBML::ids::CRC32
-        });
-        
-        schema.add_children(ids::Cluster, {
-            ids::Timecode, ids::SilentTracks, ids::Position, ids::PrevSize, ids::BlockGroup, ids::SimpleBlock,
-            EBML::ids::Void, EBML::ids::CRC32
-        });
-        
-        schema.add_children(ids::BlockGroup, {
-            ids::Block, ids::BlockVirtual, ids::BlockAdditions, ids::BlockDuration, ids::ReferenceBlock,
-            ids::ReferenceVirtual, ids::CodecState, ids::DiscardPadding, ids::Slices,
-            EBML::ids::Void
-        });
-        
-        schema.add_children(ids::Tracks, { ids::TrackEntry, EBML::ids::Void, EBML::ids::CRC32 });
-        
-        schema.add_children(ids::TrackEntry, {
-            ids::TrackNumber, ids::TrackUID, ids::TrackType, ids::TrackEnabled, ids::TrackDefault,
-            ids::TrackForced, ids::TrackLacing, ids::MinCache, ids::MaxCache, ids::DefaultDuration,
-            ids::DefaultDecodedFieldDuration, ids::TrackTimecodeScale, ids::TrackOffset,
-            ids::MaxBlockAdditionID, ids::Name, ids::Language, ids::CodecID, ids::CodecPrivate,
-            ids::CodecName, ids::CodecDecodeAll, ids::TrackOverlay, ids::CodecDelay, ids::SeekPreRoll,
-            ids::Video, ids::Audio, ids::ContentEncodings, EBML::ids::Void
-        });
-        
-        schema.add_children(ids::Video, {
-            ids::FlagInterlaced, ids::FieldOrder, ids::StereoMode, ids::AlphaMode, ids::OldStereoMode,
-            ids::PixelWidth, ids::PixelHeight, ids::PixelCropBottom, ids::PixelCropTop,
-            ids::PixelCropLeft, ids::PixelCropRight, ids::DisplayWidth, ids::DisplayHeight,
-            ids::DisplayUnit, ids::AspectRatioType, ids::ColourSpace, ids::GammaValue, ids::FrameRate,
-            ids::Colour, ids::Projection
-        });
-        
-        schema.add_children(ids::Audio, {
-            ids::SamplingFrequency, ids::OutputSamplingFrequency, ids::Channels, ids::BitDepth
-        });
+        schema.add_children(ids::Segment,
+                            {ids::SeekHead, ids::Info, ids::Tracks, ids::Cluster, ids::Cues, ids::Attachments,
+                             ids::Chapters, ids::Tags, EBML::ids::Void, EBML::ids::CRC32});
 
-        schema.add_children(ids::Colour, { ids::MatrixCoefficients, ids::BitsPerChannel });
-        schema.add_children(ids::Projection, { ids::ProjectionType });
+        schema.add_children(ids::Cluster, {ids::Timecode, ids::SilentTracks, ids::Position, ids::PrevSize,
+                                           ids::BlockGroup, ids::SimpleBlock, EBML::ids::Void, EBML::ids::CRC32});
 
-        schema.add_children(ids::ContentEncodings, { ids::ContentEncoding });
-        schema.add_children(ids::ContentEncoding, {
-            ids::ContentEncodingOrder, ids::ContentEncodingScope, ids::ContentEncodingType, ids::ContentEncryption
-        });
-        
-        schema.add_children(ids::Cues, { ids::CuePoint, EBML::ids::Void, EBML::ids::CRC32 });
-        schema.add_children(ids::CuePoint, { ids::CueTime, ids::CueTrackPositions });
-        schema.add_children(ids::CueTrackPositions, {
-            ids::CueTrack, ids::CueClusterPosition, ids::CueRelativePosition, ids::CueDuration,
-            ids::CueBlockNumber, ids::CueCodecState, ids::CueReference
-        });
-        
-        schema.add_children(ids::SeekHead, { ids::Seek, EBML::ids::Void, EBML::ids::CRC32 });
-        schema.add_children(ids::Seek, { ids::SeekID, ids::SeekPosition });
-        schema.add_children(ids::Info, {
-            ids::TimecodeScale, ids::Duration, ids::MuxingApp, ids::WritingApp, ids::DateUTC,
-            ids::SegmentUID, ids::Title, ids::SegmentFilename, ids::PrevUID, ids::PrevFilename, ids::NextUID,
-            ids::NextFilename, ids::SegmentFamily, ids::ChapterTranslate, ids::TimecodeScaleDenominator,
-            EBML::ids::Void
-        });
+        schema.add_children(ids::BlockGroup, {ids::Block, ids::BlockVirtual, ids::BlockAdditions, ids::BlockDuration,
+                                              ids::ReferenceBlock, ids::ReferenceVirtual, ids::CodecState,
+                                              ids::DiscardPadding, ids::Slices, EBML::ids::Void});
 
-        schema.add_children(ids::Attachments, { ids::AttachedFile, EBML::ids::Void, EBML::ids::CRC32 });
-        schema.add_children(ids::AttachedFile, {
-            ids::FileDescription, ids::FileName, ids::FileMediaType, ids::FileData, ids::FileUID
-        });
+        schema.add_children(ids::Tracks, {ids::TrackEntry, EBML::ids::Void, EBML::ids::CRC32});
 
-        schema.add_children(ids::Chapters, { ids::EditionEntry, EBML::ids::Void, EBML::ids::CRC32 });
-        schema.add_children(ids::EditionEntry, { ids::ChapterAtom });
-        schema.add_children(ids::ChapterAtom, {
-            ids::ChapterUID, ids::ChapterTimeStart, ids::ChapterTimeEnd, ids::ChapterDisplay, ids::ChapterAtom
-        });
-        schema.add_children(ids::ChapterDisplay, { ids::ChapString, ids::ChapLanguage });
+        schema.add_children(ids::TrackEntry, {ids::TrackNumber,
+                                              ids::TrackUID,
+                                              ids::TrackType,
+                                              ids::TrackEnabled,
+                                              ids::TrackDefault,
+                                              ids::TrackForced,
+                                              ids::TrackLacing,
+                                              ids::MinCache,
+                                              ids::MaxCache,
+                                              ids::DefaultDuration,
+                                              ids::DefaultDecodedFieldDuration,
+                                              ids::TrackTimecodeScale,
+                                              ids::TrackOffset,
+                                              ids::MaxBlockAdditionID,
+                                              ids::Name,
+                                              ids::Language,
+                                              ids::CodecID,
+                                              ids::CodecPrivate,
+                                              ids::CodecName,
+                                              ids::CodecDecodeAll,
+                                              ids::TrackOverlay,
+                                              ids::CodecDelay,
+                                              ids::SeekPreRoll,
+                                              ids::Video,
+                                              ids::Audio,
+                                              ids::ContentEncodings,
+                                              EBML::ids::Void});
 
-        schema.add_children(ids::Tags, { ids::Tag, EBML::ids::Void, EBML::ids::CRC32 });
-        schema.add_children(ids::Tag, { ids::Targets, ids::SimpleTag });
-        schema.add_children(ids::Targets, { ids::TargetTypeValue, ids::CueTrack });
-        schema.add_children(ids::SimpleTag, { ids::TagName, ids::TagString, ids::SimpleTag });
+        schema.add_children(ids::Video,
+                            {ids::FlagInterlaced, ids::FieldOrder,    ids::StereoMode,      ids::AlphaMode,
+                             ids::OldStereoMode,  ids::PixelWidth,    ids::PixelHeight,     ids::PixelCropBottom,
+                             ids::PixelCropTop,   ids::PixelCropLeft, ids::PixelCropRight,  ids::DisplayWidth,
+                             ids::DisplayHeight,  ids::DisplayUnit,   ids::AspectRatioType, ids::ColorSpace,
+                             ids::GammaValue,     ids::FrameRate,     ids::Colour,          ids::Projection});
+
+        schema.add_children(ids::Audio,
+                            {ids::SamplingFrequency, ids::OutputSamplingFrequency, ids::Channels, ids::BitDepth});
+
+        schema.add_children(ids::Colour, {ids::MatrixCoefficients, ids::BitsPerChannel});
+        schema.add_children(ids::Projection, {ids::ProjectionType});
+
+        schema.add_children(ids::ContentEncodings, {ids::ContentEncoding});
+        schema.add_children(ids::ContentEncoding, {ids::ContentEncodingOrder, ids::ContentEncodingScope,
+                                                   ids::ContentEncodingType, ids::ContentEncryption});
+
+        schema.add_children(ids::Cues, {ids::CuePoint, EBML::ids::Void, EBML::ids::CRC32});
+        schema.add_children(ids::CuePoint, {ids::CueTime, ids::CueTrackPositions});
+        schema.add_children(ids::CueTrackPositions,
+                            {ids::CueTrack, ids::CueClusterPosition, ids::CueRelativePosition, ids::CueDuration,
+                             ids::CueBlockNumber, ids::CueCodecState, ids::CueReference});
+
+        schema.add_children(ids::SeekHead, {ids::Seek, EBML::ids::Void, EBML::ids::CRC32});
+        schema.add_children(ids::Seek, {ids::SeekID, ids::SeekPosition});
+        schema.add_children(ids::Info, {ids::TimecodeScale, ids::Duration, ids::MuxingApp, ids::WritingApp,
+                                        ids::DateUTC, ids::SegmentUID, ids::Title, ids::SegmentFilename, ids::PrevUID,
+                                        ids::PrevFilename, ids::NextUID, ids::NextFilename, ids::SegmentFamily,
+                                        ids::ChapterTranslate, ids::TimecodeScaleDenominator, EBML::ids::Void});
+
+        schema.add_children(ids::Attachments, {ids::AttachedFile, EBML::ids::Void, EBML::ids::CRC32});
+        schema.add_children(ids::AttachedFile,
+                            {ids::FileDescription, ids::FileName, ids::FileMediaType, ids::FileData, ids::FileUID});
+
+        schema.add_children(ids::Chapters, {ids::EditionEntry, EBML::ids::Void, EBML::ids::CRC32});
+        schema.add_children(ids::EditionEntry, {ids::ChapterAtom});
+        schema.add_children(ids::ChapterAtom, {ids::ChapterUID, ids::ChapterTimeStart, ids::ChapterTimeEnd,
+                                               ids::ChapterDisplay, ids::ChapterAtom});
+        schema.add_children(ids::ChapterDisplay, {ids::ChapString, ids::ChapLanguage});
+
+        schema.add_children(ids::Tags, {ids::Tag, EBML::ids::Void, EBML::ids::CRC32});
+        schema.add_children(ids::Tag, {ids::Targets, ids::SimpleTag});
+        schema.add_children(ids::Targets, {ids::TargetTypeValue, ids::CueTrack});
+        schema.add_children(ids::SimpleTag, {ids::TagName, ids::TagString, ids::SimpleTag});
 
         return schema;
     }

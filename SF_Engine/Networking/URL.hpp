@@ -1,12 +1,12 @@
 
 #pragma once
-#include <string>
 #include <optional>
-#include <stdexcept>
 #include <regex>
+#include <stdexcept>
+#include <string>
 namespace SF::Engine
 {
-
+    using namespace std;
     /**
      * @brief A fully parsed URL used by the engine to locate scenes, maps,
      *        prefabs, and remote level data.
@@ -29,16 +29,16 @@ namespace SF::Engine
      *   - fragment:   Optional fragment (#something)
      *
      * Behavior:
-     *   - An invalid URL will throw std::invalid_argument.
+     *   - An invalid URL will throw invalid_argument.
      *   - A schemeless URL is rejected because freedom is illegal.
      */
     struct URL
     {
-        std::string scheme;
-        std::string authority;
-        std::string path;
-        std::optional<std::string> query;
-        std::optional<std::string> fragment;
+        string scheme;
+        string authority;
+        string path;
+        optional<string> query;
+        optional<string> fragment;
 
         URL() = default;
 
@@ -46,17 +46,14 @@ namespace SF::Engine
          * @brief Parses a URL string into its components.
          * @param url The user-provided URL.
          */
-        explicit URL(const std::string &url)
-        {
-            parse(url);
-        }
+        explicit URL(const string &url) { parse(url); }
 
         /**
          * @brief Constructs a human-readable version of the URL.
          */
-        [[nodiscard]] std::string ToString() const
+        [[nodiscard]] string ToString() const
         {
-            std::string out = scheme + "://";
+            string out = scheme + "://";
 
             if (!authority.empty())
                 out += authority;
@@ -75,26 +72,17 @@ namespace SF::Engine
         /**
          * @brief Returns true if the scheme is "http" or "https".
          */
-        [[nodiscard]] bool IsRemote() const
-        {
-            return scheme == "http" || scheme == "https";
-        }
+        [[nodiscard]] bool IsRemote() const { return scheme == "http" || scheme == "https"; }
 
         /**
          * @brief Returns true if the scheme is "map".
          */
-        [[nodiscard]] bool IsMap() const
-        {
-            return scheme == "map";
-        }
+        [[nodiscard]] bool IsMap() const { return scheme == "map"; }
 
         /**
          * @brief Returns true if the scheme is "file".
          */
-        [[nodiscard]] bool IsFile() const
-        {
-            return scheme == "file";
-        }
+        [[nodiscard]] bool IsFile() const { return scheme == "file"; }
 
     private:
         /**
@@ -105,28 +93,27 @@ namespace SF::Engine
          *
          * Explanation intentionally omitted to torture future maintainers.
          */
-        void parse(const std::string &url)
+        void parse(const string &url)
         {
-            static const std::regex urlRegex(
-                R"(^([a-zA-Z][a-zA-Z0-9+.-]*)://([^/?#]*)?([^?#]*)(?:\?([^#]*))?(?:#(.*))?)");
+            static const regex urlRegex(R"(^([a-zA-Z][a-zA-Z0-9+.-]*)://([^/?#]*)?([^?#]*)(?:\?([^#]*))?(?:#(.*))?)");
 
-            std::smatch match;
-            if (!std::regex_match(url, match, urlRegex))
-                throw std::invalid_argument("Invalid URL: " + url);
+            smatch match;
+            if (!regex_match(url, match, urlRegex))
+                throw invalid_argument("Invalid URL: " + url);
 
-            scheme = match[1].str();
+            scheme    = match[1].str();
             authority = match[2].str();
-            path = match[3].str();
+            path      = match[3].str();
             if (match[4].matched)
                 query = match[4].str();
             if (match[5].matched)
                 fragment = match[5].str();
 
             if (scheme.empty())
-                throw std::invalid_argument("URL missing scheme: " + url);
+                throw invalid_argument("URL missing scheme: " + url);
 
             if (path.empty())
                 path = "/";
         }
     };
-}
+} // namespace SF::Engine

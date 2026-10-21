@@ -1,0 +1,582 @@
+#pragma once
+
+#include <Engine/Module.hpp>
+#include <Platform/Windowing/Surface.hpp>
+#include <Platform/Windowing/WindowManager.hpp>
+#include "RHI/Adapter/Instance.hpp"
+#include "RHI/Adapter/LogicalDevice.hpp"
+#include "RHI/Adapter/PhysicalDevice.hpp"
+#include "RHI/Bindless/Bindless.hpp"
+#include "RHI/Commands/CommandBuffer.hpp"
+#include "RHI/Commands/CommandPool.hpp"
+#include "RHI/Renderpass/RhiSwapchain.hpp"
+#include "Renderer.hpp"
+
+#include <Communication/Delegates/MultiCastDelegate.hpp>
+#include <UtilityClasses/NoCopy.hpp>
+
+#include <filesystem>
+#include <span>
+#include <thread>
+
+namespace SF::Engine
+{
+    using namespace std;
+    /**
+     * @brief Module that manages the Vulkan instance, devices, surfaces, and rendering
+     * infrastructure.
+     */
+    class BindlessManager;
+
+    class RenderSystem final : public ModuleRegistrar<RenderSystem>
+    {
+        friend class ModuleRegistrar<RenderSystem>;
+        REGISTER_MODULE(RenderSystem, Module::Stage::Render, Module::Requires<WindowManager>{});
+
+    public:
+        RenderSystem();
+        ~RenderSystem() override;
+
+        void PostInit();
+        void PreShutdown();
+
+        // Module interface implementation
+        void Update() override;
+
+        Module::Stage GetStage() const override { return Module::Stage::Render; }
+        TypeId GetTypeId() const override { return TypeInfo<Module>::GetTypeId<RenderSystem>(); }
+        string_view GetName() const override { return "RenderSystem"; }
+
+        /**
+         * @brief Convert Vulkan result to string (for debugging)
+         */
+        static string StrVkResult(VkResult result);
+
+        /**
+         * @brief Check Vulkan result and throw on error
+         */
+        static void CheckVkResult(VkResult result);
+
+        /**
+         * @brief Takes a screenshot of the current swapchain image
+         */
+        void CaptureScreenshot(const filesystem::path &filename, size_t surfaceId = 0) const;
+
+        /**
+         * @brief Get or create command pool for current thread
+         */
+        const shared_ptr<CommandPool> &GetCommandPool(const thread::id &threadId = this_thread::get_id());
+
+        /**
+         * @brief Get render stage by index
+         */
+        const RhiRenderStage *GetRenderStage(uint32_t index) const;
+
+        /**
+         * @brief Get attachment descriptor by name
+         */
+        const Descriptor *GetAttachment(const string &name) const;
+
+        /**
+         * @brief Incremented every time render-stage attachments are rebuilt. Passes that cache
+         * descriptors pointing at attachment images must compare THIS, not attachment pointers:
+         * freed Image2d objects' addresses are routinely reused by the next allocation, so a
+         * pointer compare can falsely report "unchanged" and leave a descriptor on a destroyed view.
+         */
+        uint64_t GetAttachmentGeneration() const noexcept { return attachmentGeneration; }
+
+        // Device and resource accessors
+        const Instance *GetInstance() const noexcept { return instance.get(); }
+        const PhysicalDevice *GetPhysicalDevice() const noexcept { return physicalDevice.get(); }
+        const LogicalDevice *GetLogicalDevice() const noexcept { return logicalDevice.get(); }
+        VkPipelineCache GetPipelineCache() const noexcept { return pipelineCache; }
+
+        /**
+         * @brief Get surface by index
+         */
+        const Surface *GetSurface(size_t id) const noexcept
+        {
+            return id < surfaces.size() ? surfaces[id].get() : nullptr;
+        }
+
+        /**
+         * @brief Get swapchain by index
+         */
+        const RhiSwapchain *GetSwapchain(size_t id) const noexcept
+        {
+            return id < swapchains.size() ? swapchains[id].get() : nullptr;
+        }
+
+        void SetFramebufferResized(size_t id) const
+        {
+            if (id < perSurfaceBuffers.size() && perSurfaceBuffers[id])
+                perSurfaceBuffers[id]->framebufferResized = true;
+        }
+
+        /**
+         * @brief Get number of surfaces
+         */
+        size_t GetSurfaceCount() const noexcept { return surfaces.size(); }
+
+        void SetRenderer(unique_ptr<Renderer> &&r) { renderer = std::move(r); }
+
+        Renderer *GetRenderer() const noexcept { return renderer.get(); }
+
+        BindlessManager *GetBindlessManager() const { return bindlessMgr.get(); }
+
+        /**
+         * @brief Rebuild render stages, swapchain, and framebuffers.
+         * Safe to call from Stage::Normal (outside the render loop).
+         */
+        void ResetRenderStages();
+
+        uint32_t GetVkAPIVersion();
+
+    private:
+        /**
+         * @brief Per-surface synchronization and command buffers
+         */
+        struct PerSurfaceBuffers
+        {
+            vector<VkSemaphore> presentCompletes;
+            vector<VkSemaphore> renderCompletes;
+            vector<VkFence> flightFences;
+            vector<unique_ptr<CommandBuffer>> commandBuffers;
+
+            size_t currentFrame     = 0;
+            bool framebufferResized = false;
+        };
+
+        // Helper to enumerate with index
+        template<typename Container>
+        static auto Enumerate(Container &container)
+        {
+            struct Iterator
+            {
+                size_t index;
+                Container::iterator iter;
+
+                auto operator*() { return make_pair(index, ref(*iter)); }
+                Iterator &operator++()
+                {
+                    ++index;
+                    ++iter;
+                    return *this;
+                }
+                bool operator!=(const Iterator &other) const { return iter != other.iter; }
+            };
+
+            struct EnumerateWrapper
+            {
+                Container &cont;
+                auto begin() { return Iterator{0, cont.begin()}; }
+                auto end() { return Iterator{0, cont.end()}; }
+            };
+
+            return EnumerateWrapper{container};
+        }
+
+        // Initialization helpers
+        void CreatePipelineCache();
+
+        // Render loop helpers
+        void RecreateSwapchain();
+        void RecreateCommandBuffers(size_t surfaceId);
+        void RecreatePass();
+        void RecreateAttachmentsMap();
+
+        bool StartRenderpass(size_t surfaceId, RhiRenderStage &renderStage);
+        void EndRenderpass(size_t surfaceId, RhiRenderStage &renderStage);
+
+        // Core Vulkan objects
+        unique_ptr<Instance> instance;
+        unique_ptr<PhysicalDevice> physicalDevice;
+        unique_ptr<LogicalDevice> logicalDevice;
+        VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+
+        // Surfaces and swapchains
+        vector<unique_ptr<Surface>> surfaces;
+        vector<unique_ptr<RhiSwapchain>> swapchains;
+        vector<unique_ptr<PerSurfaceBuffers>> perSurfaceBuffers;
+
+        // Rendering
+        unique_ptr<Renderer> renderer;
+        unordered_map<string, const Descriptor *> attachments;
+        uint64_t attachmentGeneration = 1;
+
+        // Command pool management
+        unordered_map<thread::id, shared_ptr<CommandPool>> commandPools;
+
+        // Timing for command pool purging
+        ElapsedTime elapsedPurge;
+
+        VmaAllocator alloc;
+
+        // additional stuff
+        unique_ptr<BindlessManager> bindlessMgr;
+
+    public:
+        VmaAllocator *GetAllocator() { return &alloc; }
+
+        MulticastDelegate<VkCommandBuffer, size_t> &OnRecordViewports() { return onRecordViewports; }
+
+    private:
+        MulticastDelegate<VkCommandBuffer, size_t> onRecordViewports;
+    };
+
+    /**
+     * @brief Concepts for Vulkan handles
+     */
+    template<typename T>
+    concept VulkanHandle = requires(T t) {
+        { t } -> convertible_to<uint64_t>;
+    } || is_pointer_v<T>;
+
+    /**
+     * @brief RAII wrapper for Vulkan handles with custom deleters
+     */
+    template<VulkanHandle T, auto Deleter>
+    class VulkanResource
+    {
+    public:
+        VulkanResource() = default;
+
+        explicit VulkanResource(T handle) noexcept : m_handle(handle) {}
+
+        ~VulkanResource()
+        {
+            if (m_handle)
+                Deleter(m_handle);
+        }
+
+        // Delete copy
+        VulkanResource(const VulkanResource &)            = delete;
+        VulkanResource &operator=(const VulkanResource &) = delete;
+
+        // Allow move
+        VulkanResource(VulkanResource &&other) noexcept : m_handle(exchange(other.m_handle, T{})) {}
+
+        VulkanResource &operator=(VulkanResource &&other) noexcept
+        {
+            if (this != &other)
+            {
+                if (m_handle)
+                    Deleter(m_handle);
+                m_handle = exchange(other.m_handle, T{});
+            }
+            return *this;
+        }
+
+        [[nodiscard]] T get() const noexcept { return m_handle; }
+        [[nodiscard]] T *ptr() noexcept { return &m_handle; }
+        [[nodiscard]] operator T() const noexcept { return m_handle; }
+        [[nodiscard]] explicit operator bool() const noexcept { return m_handle != T{}; }
+
+        T release() noexcept { return exchange(m_handle, T{}); }
+
+        void reset(T newHandle = T{}) noexcept
+        {
+            if (m_handle)
+                Deleter(m_handle);
+            m_handle = newHandle;
+        }
+
+    private:
+        T m_handle{};
+    };
+
+    /**
+     * @brief Vulkan version helpers
+     */
+    namespace VulkanVersion
+    {
+        constexpr uint32_t Make(uint32_t major, uint32_t minor, uint32_t patch = 0) noexcept
+        {
+            return VK_MAKE_API_VERSION(0, major, minor, patch);
+        }
+
+        constexpr uint32_t GetMajor(uint32_t version) noexcept { return VK_API_VERSION_MAJOR(version); }
+
+        constexpr uint32_t GetMinor(uint32_t version) noexcept { return VK_API_VERSION_MINOR(version); }
+
+        constexpr uint32_t GetPatch(uint32_t version) noexcept { return VK_API_VERSION_PATCH(version); }
+
+        constexpr auto Vulkan_1_0 = VK_API_VERSION_1_0;
+        constexpr auto Vulkan_1_1 = VK_API_VERSION_1_1;
+        constexpr auto Vulkan_1_2 = VK_API_VERSION_1_2;
+        constexpr auto Vulkan_1_3 = VK_API_VERSION_1_3;
+    } // namespace VulkanVersion
+
+    /**
+     * @brief Extension and feature queries using C++20 ranges
+     */
+    namespace VulkanFeatures
+    {
+        /**
+         * @brief Check if extensions are supported
+         */
+        inline bool AreExtensionsSupported(span<const char *const> required,
+                                           span<const VkExtensionProperties> available)
+        {
+            return ranges::all_of(required,
+                                  [&](const char *req)
+                                  {
+                                      return ranges::any_of(
+                                              available, [req](const auto &ext)
+                                              { return string_view(req) == string_view(ext.extensionName); });
+                                  });
+        }
+
+        /**
+         * @brief Get missing extensions
+         */
+        inline vector<string_view> GetMissingExtensions(span<const char *const> required,
+                                                        span<const VkExtensionProperties> available)
+        {
+            vector<string_view> missing;
+
+            for (const char *req: required)
+            {
+                if (!ranges::any_of(available, [req](const auto &ext)
+                                    { return string_view(req) == string_view(ext.extensionName); }))
+                {
+                    missing.emplace_back(req);
+                }
+            }
+
+            return missing;
+        }
+    } // namespace VulkanFeatures
+
+    /**
+     * @brief Modern command buffer recording with RAII
+     */
+    class ScopedCommandBuffer
+    {
+    public:
+        explicit ScopedCommandBuffer(CommandBuffer &cmd, VkCommandBufferUsageFlags flags = 0) : m_cmd(cmd)
+        {
+            VkCommandBufferBeginInfo beginInfo = {};
+            beginInfo.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            beginInfo.flags                    = flags;
+            vkBeginCommandBuffer(m_cmd, &beginInfo);
+        }
+
+        ~ScopedCommandBuffer() { vkEndCommandBuffer(m_cmd); }
+
+        // Delete copy and move
+        ScopedCommandBuffer(const ScopedCommandBuffer &)            = delete;
+        ScopedCommandBuffer &operator=(const ScopedCommandBuffer &) = delete;
+        ScopedCommandBuffer(ScopedCommandBuffer &&)                 = delete;
+        ScopedCommandBuffer &operator=(ScopedCommandBuffer &&)      = delete;
+
+        [[nodiscard]] operator VkCommandBuffer() const noexcept { return m_cmd; }
+        [[nodiscard]] VkCommandBuffer get() const noexcept { return m_cmd; }
+
+    private:
+        CommandBuffer &m_cmd;
+    };
+
+    /**
+     * @brief Modern render pass recording with dynamic rendering (Vulkan 1.3+)
+     */
+    class ScopedDynamicRendering
+    {
+    public:
+        ScopedDynamicRendering(VkCommandBuffer cmd, const VkRenderingInfo &renderingInfo) : m_cmd(cmd)
+        {
+            vkCmdBeginRendering(m_cmd, &renderingInfo);
+        }
+
+        ~ScopedDynamicRendering() { vkCmdEndRendering(m_cmd); }
+
+        ScopedDynamicRendering(const ScopedDynamicRendering &)            = delete;
+        ScopedDynamicRendering &operator=(const ScopedDynamicRendering &) = delete;
+        ScopedDynamicRendering(ScopedDynamicRendering &&)                 = delete;
+        ScopedDynamicRendering &operator=(ScopedDynamicRendering &&)      = delete;
+
+    private:
+        VkCommandBuffer m_cmd;
+    };
+
+    /**
+     * @brief Modern indirect indexed rendering command recording with RAII
+     *
+     * Records a single indirect indexed draw command or multiple with count
+     */
+    class IndirectIndexedRendering : NoCopy, NoMove
+    {
+    public:
+        /**
+         * @brief Construct for single indirect draw
+         *
+         * @param cmd Command buffer to record to
+         * @param buffer Buffer containing draw commands
+         * @param offset Offset into the buffer
+         * @param stride Stride between commands (must be at least sizeof(VkDrawIndexedIndirectCommand))
+         */
+        IndirectIndexedRendering(VkCommandBuffer cmd, VkBuffer buffer, VkDeviceSize offset,
+                                 uint32_t stride = sizeof(VkDrawIndexedIndirectCommand)) :
+            m_cmd(cmd), m_buffer(buffer), m_offset(offset), m_drawCount(1), m_stride(stride)
+        {
+            vkCmdDrawIndexedIndirect(m_cmd, m_buffer, m_offset, m_drawCount, m_stride);
+        }
+
+        /**
+         * @brief Construct for multiple indirect draws
+         *
+         * @param cmd Command buffer to record to
+         * @param buffer Buffer containing draw commands
+         * @param offset Offset into the buffer
+         * @param drawCount Number of draws to execute
+         * @param stride Stride between commands
+         */
+        IndirectIndexedRendering(VkCommandBuffer cmd, VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount,
+                                 uint32_t stride) :
+            m_cmd(cmd), m_buffer(buffer), m_offset(offset), m_drawCount(drawCount), m_stride(stride)
+        {
+            vkCmdDrawIndexedIndirect(m_cmd, m_buffer, m_offset, m_drawCount, m_stride);
+        };
+
+        /**
+         * @brief Get the command buffer
+         */
+        [[nodiscard]] VkCommandBuffer get() const noexcept { return m_cmd; }
+
+        /**
+         * @brief Get the buffer containing draw commands
+         */
+        [[nodiscard]] VkBuffer getBuffer() const noexcept { return m_buffer; }
+
+        /**
+         * @brief Get the number of draws that will be executed
+         */
+        [[nodiscard]] uint32_t getDrawCount() const noexcept { return m_drawCount; }
+
+    private:
+        VkCommandBuffer m_cmd;
+        VkBuffer m_buffer;
+        VkDeviceSize m_offset;
+        uint32_t m_drawCount;
+        uint32_t m_stride;
+    };
+
+    /**
+     * @brief Extended version with indirect count buffer support (Vulkan 1.2+)
+     *
+     * Uses vkCmdDrawIndexedIndirectCount for when the draw count is on the GPU
+     */
+    class IndirectIndexedCountRendering : NoCopy, NoMove
+    {
+    public:
+        /**
+         * @brief Construct for indirect draws with GPU-controlled count
+         *
+         * @param cmd Command buffer to record to
+         * @param buffer Buffer containing draw commands
+         * @param offset Offset into the buffer
+         * @param countBuffer Buffer containing the draw count
+         * @param countBufferOffset Offset into the count buffer
+         * @param maxDrawCount Maximum number of draws to execute
+         * @param stride Stride between commands
+         */
+        IndirectIndexedCountRendering(VkCommandBuffer cmd, VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer,
+                                      VkDeviceSize countBufferOffset, uint32_t maxDrawCount,
+                                      uint32_t stride = sizeof(VkDrawIndexedIndirectCommand)) :
+            m_cmd(cmd), m_buffer(buffer), m_offset(offset), m_countBuffer(countBuffer),
+            m_countBufferOffset(countBufferOffset), m_maxDrawCount(maxDrawCount), m_stride(stride)
+        {
+            vkCmdDrawIndexedIndirectCount(m_cmd, m_buffer, m_offset, m_countBuffer, m_countBufferOffset, m_maxDrawCount,
+                                          m_stride);
+        }
+
+        /**
+         * @brief Get the command buffer
+         */
+        [[nodiscard]] VkCommandBuffer get() const noexcept { return m_cmd; }
+
+        /**
+         * @brief Get the buffer containing draw commands
+         */
+        [[nodiscard]] VkBuffer getBuffer() const noexcept { return m_buffer; }
+
+        /**
+         * @brief Get the buffer containing the draw count
+         */
+        [[nodiscard]] VkBuffer getCountBuffer() const noexcept { return m_countBuffer; }
+
+        /**
+         * @brief Get the maximum number of draws that can be executed
+         */
+        [[nodiscard]] uint32_t getMaxDrawCount() const noexcept { return m_maxDrawCount; }
+
+    private:
+        VkCommandBuffer m_cmd;
+        VkBuffer m_buffer;
+        VkDeviceSize m_offset;
+        VkBuffer m_countBuffer;
+        VkDeviceSize m_countBufferOffset;
+        uint32_t m_maxDrawCount;
+        uint32_t m_stride;
+    };
+
+    /**
+     * @brief Helper function to create an indirect draw command structure
+     */
+    [[nodiscard]] inline VkDrawIndexedIndirectCommand
+    MakeIndexedIndirectCommand(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset,
+                               uint32_t firstInstance) noexcept
+    {
+        return VkDrawIndexedIndirectCommand{.indexCount    = indexCount,
+                                            .instanceCount = instanceCount,
+                                            .firstIndex    = firstIndex,
+                                            .vertexOffset  = vertexOffset,
+                                            .firstInstance = firstInstance};
+    }
+
+    /**
+     * @brief Concept to check if a type supports indirect rendering
+     */
+    template<typename T>
+    concept IndirectRenderingCommand = requires(T t, VkCommandBuffer cmd) {
+        { t.record(cmd) } -> same_as<void>;
+    };
+
+    /**
+     * @brief Batch multiple indirect rendering commands
+     */
+    class IndirectBatch
+    {
+    public:
+        explicit IndirectBatch(VkCommandBuffer cmd) : m_cmd(cmd) {}
+
+        template<IndirectRenderingCommand... Commands>
+        void record(Commands &&...cmds)
+        {
+            (cmds.record(m_cmd), ...);
+        }
+
+        /**
+         * @brief Record a single indirect indexed draw
+         */
+        void drawIndexedIndirect(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount = 1,
+                                 uint32_t stride = sizeof(VkDrawIndexedIndirectCommand)) const
+        {
+            vkCmdDrawIndexedIndirect(m_cmd, buffer, offset, drawCount, stride);
+        }
+
+        /**
+         * @brief Record indirect indexed draws with count buffer
+         */
+        void drawIndexedIndirectCount(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer,
+                                      VkDeviceSize countBufferOffset, uint32_t maxDrawCount,
+                                      uint32_t stride = sizeof(VkDrawIndexedIndirectCommand))
+        {
+            vkCmdDrawIndexedIndirectCount(m_cmd, buffer, offset, countBuffer, countBufferOffset, maxDrawCount, stride);
+        }
+
+    private:
+        VkCommandBuffer m_cmd;
+    };
+
+} // namespace SF::Engine

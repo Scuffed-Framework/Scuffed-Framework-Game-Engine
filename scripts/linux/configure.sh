@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Parse args
+BUILD_TYPE="Debug"
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -d) BUILD_TYPE="Debug" ;;
+        -r) BUILD_TYPE="Release" ;;
+    esac
+    shift
+done
+
+echo "==> Build type: $BUILD_TYPE"
+
+echo "==> Running Conan..."
+conan install . -s build_type=$BUILD_TYPE --build=missing
+
+echo "==> Running CMake configure..."
+cmake -B "000-Build-$BUILD_TYPE-x64" -DCMAKE_BUILD_TYPE=$BUILD_TYPE -S .
+
+echo "==> Configure complete"

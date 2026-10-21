@@ -1,20 +1,23 @@
 #pragma once
 #include <UtilityClasses/RegistryBase.hpp>
-#include <string>
+#include <concepts>
 #include <memory>
+#include <ranges>
+#include <string>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
-#include <concepts>
+
 
 namespace SF::Engine
 {
+    using namespace std;
     struct Commandlet
     {
-        std::string name;
-        std::vector<std::string> args;
+        string name;
+        vector<string> args;
         virtual void Execute() = 0;
-        virtual ~Commandlet() = default;
+        virtual ~Commandlet()  = default;
     };
 
     class CommandletRegistry : public Registry<CommandletRegistry>
@@ -22,35 +25,34 @@ namespace SF::Engine
         friend class Registry<CommandletRegistry>;
 
     public:
-        template <typename T>
-        std::shared_ptr<Commandlet> Register()
+        template<typename T>
+        shared_ptr<Commandlet> Register()
         {
-            static_assert(std::derived_from<T, Commandlet>, "T must derive from Commandlet");
+            static_assert(derived_from<T, Commandlet>, "T must derive from Commandlet");
 
-            auto id = std::type_index(typeid(T));
-            if (auto it = commandlets_.find(id); it != commandlets_.end())
+            auto id = type_index(typeid(T));
+            if (const auto it = commandlets_.find(id); it != commandlets_.end())
                 return it->second;
 
-            auto cmd = std::make_shared<T>(); // consistent name
+            auto cmd = make_shared<T>();
             commandlets_.emplace(id, cmd);
             return cmd;
         }
 
-        void Unregister(std::shared_ptr<Commandlet> cmd) // match the type
+        void Unregister(shared_ptr<Commandlet> cmd)
         {
-            std::erase_if(commandlets_, [&cmd](const auto &entry) // capture cmd
-                          { return entry.second == cmd; });
+            erase_if(commandlets_, [&cmd](const auto &entry) // capture cmd
+                     { return entry.second == cmd; });
         }
 
-        std::shared_ptr<Commandlet> FindByName(const std::string &name) const
+        shared_ptr<Commandlet> FindByName(const string &name) const
         {
-            for (auto &[id, cmd] : commandlets_)
+            for (const auto &cmd: commandlets_ | views::values)
                 if (cmd->name == name)
                     return cmd;
             return nullptr;
         }
 
-    private:
-        std::unordered_map<std::type_index, std::shared_ptr<Commandlet>> commandlets_;
+        unordered_map<type_index, shared_ptr<Commandlet>> commandlets_;
     };
-}
+} // namespace SF::Engine

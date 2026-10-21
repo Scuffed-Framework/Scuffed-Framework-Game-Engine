@@ -1,5 +1,8 @@
 #pragma once
 
+#include <Engine/Log/Log.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
+#include <UtilityClasses/TypeInformation.hpp>
 #include <functional>
 #include <memory>
 #include <string>
@@ -7,31 +10,30 @@
 #include <unordered_map>
 #include <utility>
 
-#include <Engine/Log/Log.hpp>
-#include <UtilityClasses/TypeInformation.hpp>
-
 namespace SF::Engine
 {
+    using namespace std;
     /**
      * @brief Factory for creating stream-based objects by name
      * @tparam Base Base class for all creatable types
      * @tparam Args Constructor arguments for created objects
      */
-    template <typename Base, typename... Args>
+    template<typename Base, typename... Args>
     class StreamFactory
     {
+        SF_RTTI_BASE(StreamFactory)
     public:
-        using CreateReturn = std::unique_ptr<Base>;
-        using CreateFunction = std::function<CreateReturn(Args...)>;
-        using RegistryMap = std::unordered_map<std::string, CreateFunction>;
+        using CreateReturn   = unique_ptr<Base>;
+        using CreateFunction = function<CreateReturn(Args...)>;
+        using RegistryMap    = unordered_map<string, CreateFunction>;
 
         virtual ~StreamFactory() = default;
 
         // For factories with arguments
-        static CreateReturn Create(std::string_view name, Args... args)
+        static CreateReturn Create(string_view name, Args... args)
             requires(sizeof...(Args) > 0)
         {
-            const std::string nameStr(name);
+            const string nameStr(name);
             auto it = Registry().find(nameStr);
 
             if (it == Registry().end())
@@ -40,14 +42,14 @@ namespace SF::Engine
                 return nullptr;
             }
 
-            return it->second(std::forward<Args>(args)...);
+            return it->second(forward<Args>(args)...);
         }
 
         // For factories with no arguments
-        static CreateReturn Create(std::string_view name)
+        static CreateReturn Create(string_view name)
             requires(sizeof...(Args) == 0)
         {
-            const std::string nameStr(name);
+            const string nameStr(name);
             auto it = Registry().find(nameStr);
 
             if (it == Registry().end())
@@ -65,51 +67,41 @@ namespace SF::Engine
             return impl;
         }
 
-        static bool IsRegistered(std::string_view name)
+        static bool IsRegistered(string_view name)
         {
-            const std::string nameStr(name);
-            return Registry().find(nameStr) != Registry().end();
+            const string nameStr(name);
+            return Registry().contains(nameStr);
         }
 
-        template <typename T>
+        template<typename T>
         class Registrar : public Base
         {
         public:
-            TypeId GetTypeId() const override
-            {
-                return TypeInfo<Base>::template GetTypeId<T>();
-            }
+            [[nodiscard]] TypeId GetTypeId() const override { return TypeInfo<Base>::template GetTypeId<T>(); }
 
-            std::string_view GetTypeName() const override
-            {
-                return s_name;
-            }
+            [[nodiscard]] string_view GetTypeName() const override { return s_name; }
+
+            ~Registrar() = default;
 
         protected:
-            static bool Register(std::string_view name)
+            static bool Register(string_view name)
             {
                 s_name = name;
 
                 if constexpr (sizeof...(Args) == 0)
                 {
-                    StreamFactory::Registry()[std::string(name)] = []() -> CreateReturn
-                    {
-                        return std::make_unique<T>();
-                    };
-                }
-                else
+                    StreamFactory::Registry()[string(name)] = []() -> CreateReturn { return make_unique<T>(); };
+                } else
                 {
-                    StreamFactory::Registry()[std::string(name)] = [](Args... args) -> CreateReturn
-                    {
-                        return std::make_unique<T>(std::forward<Args>(args)...);
-                    };
+                    StreamFactory::Registry()[string(name)] = [](Args... args) -> CreateReturn
+                    { return make_unique<T>(forward<Args>(args)...); };
                 }
 
                 return true;
             }
 
         private:
-            inline static std::string_view s_name;
+            inline static string_view s_name;
         };
     };
 
@@ -117,8 +109,7 @@ namespace SF::Engine
  * @brief Helper macro for registering stream types
  * Usage: REGISTER_STREAM(MyStream, "MyStreamName")
  */
-#define REGISTER_STREAM(StreamClass, StreamName)  \
-    inline static bool StreamClass##_registered = \
-        StreamClass::Register(StreamName)
+#define REGISTER_STREAM(StreamClass, StreamName)                                                                       \
+    inline static bool StreamClass##_registered = StreamClass::Register(StreamName)
 
 } // namespace SF::Engine

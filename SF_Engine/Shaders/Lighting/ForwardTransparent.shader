@@ -98,7 +98,9 @@ VSOutput vertexMain(VSInput input)
 
 float distGGX(float NdH, float a)
 {
-    float a2 = a * a * a * a; float d = NdH * NdH * (a2 - 1.0) + 1.0; return a2 / (PI * d * d);
+    float a2 = a * a; // Correct: roughness squared
+    float d = NdH * NdH * (a2 - 1.0) + 1.0;
+    return a2 / (PI * d * d);
 }
 float geomSGGX(float NdX, float a)
 {
