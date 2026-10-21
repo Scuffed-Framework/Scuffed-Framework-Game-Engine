@@ -1,10 +1,9 @@
 #pragma once
-#include <functional>
 #include "NoCopy.hpp"
 
 namespace SF::Engine
 {
-    template <typename Derived>
+    template<typename Derived>
     class Registry : NoMove, NoCopy
     {
     public:
@@ -14,4 +13,4 @@ namespace SF::Engine
             return instance;
         }
     };
-}
+} // namespace SF::Engine

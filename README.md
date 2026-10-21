@@ -1,4 +1,5 @@
 # Scuffed-Framework-Game-Engine
+
 Repository of the game engine.
 
 
@@ -9,12 +10,20 @@ Repository of the game engine.
 ![Issues](https://img.shields.io/github/issues/Scuffed-Framework/Scuffed-Framework-Game-Engine.svg?style=for-the-badge)
 ![License](https://img.shields.io/github/license/Scuffed-Framework/Scuffed-Framework-Game-Engine.svg?style=for-the-badge)
 
-
-
-
 #Building:
+
 1. Make sure you have Conan installed
 2. Open a terminal in the root of the project
 3. Run ./scripts/external/export
 4. Run ./scripts/configure
 5. Run ./scripts/build
+
+## Star History
+
+<a href="https://star-history.dera.page/Scuffed-Framework/Scuffed-Framework-Game-Engine">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Scuffed-Framework/Scuffed-Framework-Game-Engine&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Scuffed-Framework/Scuffed-Framework-Game-Engine" />
+   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=Scuffed-Framework/Scuffed-Framework-Game-Engine" />
+ </picture>
+</a>

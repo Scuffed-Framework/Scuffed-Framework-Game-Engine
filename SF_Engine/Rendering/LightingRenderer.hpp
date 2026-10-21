@@ -1,0 +1,167 @@
+#pragma once
+
+#include <Platform/Windowing/WindowManager.hpp>
+#include <Rendering/FrameGraph/Stage.hpp>
+#include <Rendering/Lighting/Lighting.hpp>
+#include <Rendering/Mesh/MeshFactory.hpp>
+#include <Rendering/RHI/Renderpass/FullscreenPass.hpp>
+#include <Rendering/Renderer.hpp>
+#include <Rendering/Visuals/SSR/SSRSFERenderpass.hpp>
+
+#include <Math/BasicMath.hpp>
+#include <chrono>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#include <glm/gtc/matrix_transform.hpp>
+#pragma GCC diagnostic pop
+
+namespace SF::Engine
+{
+    class ForwardLitRenderer : public Renderer
+    {
+    public:
+        ForwardLitRenderer()
+        {
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "depth", RhiAttachment::Type::Depth},
+                            RhiAttachment{1, "swapchain", RhiAttachment::Type::Swapchain},
+                    },
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0, 1}},
+                    }));
+        }
+
+        void Start() override
+        {
+            lightManager_ = std::make_unique<LightManager>();
+
+            // Compute cluster cull runs in PreRender (before renderpass)
+            clusterCull_ = AddSFERenderpass<ClusterCullSFERenderpass>(Pipeline::Stage{0, 0}, *lightManager_);
+
+            // Forward lit pass
+            litPass_ = AddSFERenderpass<LitMeshSFERenderpass>(Pipeline::Stage{0, 0}, *lightManager_);
+
+            // Default lights
+            Light sun{};
+            sun.type      = Lighting::LightType::Directional;
+            sun.direction = normalize(Vec3(-0.5f, -1.0f, -0.3f));
+            sun.color     = {1.0f, 0.95f, 0.85f};
+            sun.intensity = 3.0f;
+            lightManager_->AddLight(sun);
+
+            Light blue{};
+            blue.type      = Lighting::LightType::Point;
+            blue.position  = {4.0f, 3.0f, 4.0f};
+            blue.color     = {0.3f, 0.6f, 1.0f};
+            blue.intensity = 20.0f;
+            blue.radius    = 15.0f;
+            lightManager_->AddLight(blue);
+
+            Light orange{};
+            orange.type      = Lighting::LightType::Point;
+            orange.position  = {-4.0f, 2.0f, -2.0f};
+            orange.color     = {1.0f, 0.4f, 0.2f};
+            orange.intensity = 15.0f;
+            orange.radius    = 12.0f;
+            lightManager_->AddLight(orange);
+
+            // Demo mesh
+            demoMesh_ = SF::Engine::MeshFactory::CreateSphere();
+        }
+
+        void Update() override
+        {
+            // litPass_->Submit();
+        }
+
+        LightManager *GetLightManager() { return lightManager_.get(); }
+        LitMeshSFERenderpass *GetLitPass() { return litPass_; }
+
+    private:
+        std::unique_ptr<LightManager> lightManager_;
+        ClusterCullSFERenderpass *clusterCull_ = nullptr;
+        LitMeshSFERenderpass *litPass_         = nullptr;
+        std::unique_ptr<Mesh> demoMesh_;
+    };
+
+    class LightingRenderer : public Renderer
+    {
+    public:
+        LightingRenderer()
+        {
+            // Stage 0: GBuffer (off-screen MRT, no swapchain)
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "gbuf_depth", RhiAttachment::Type::Depth},
+                            RhiAttachment{1, "gbuf_albedo", RhiAttachment::Type::Image, false,
+                                          VK_FORMAT_R8G8B8A8_UNORM},
+                            RhiAttachment{2, "gbuf_normal", RhiAttachment::Type::Image, false, VK_FORMAT_R16G16_SNORM},
+                            RhiAttachment{3, "gbuf_pbr", RhiAttachment::Type::Image, false, VK_FORMAT_R8G8B8A8_UNORM},
+                    },
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0, 1, 2, 3}},
+                    }));
+
+            // Stage 1: Lighting + Transparent + Tonemap
+            AddRenderStage(std::make_unique<RhiRenderStage>(
+                    std::vector<RhiAttachment>{
+                            RhiAttachment{0, "hdr", RhiAttachment::Type::Image, false, VK_FORMAT_R16G16B16A16_SFLOAT,
+                                          Color{0.0f, 0.0f, 0.0f, 1.0f}},
+                            RhiAttachment{1, "swapchain", RhiAttachment::Type::Swapchain},
+                    },
+                    std::vector<RhiSubpassType>{
+                            RhiSubpassType{0, {0}}, // deferred lighting → hdr
+                            RhiSubpassType{1, {0}}, // forward transparent → hdr
+                            RhiSubpassType{2, {1}}, // tonemap → swapchain
+                    }));
+        }
+
+        void Start() override
+        {
+            lightManager_ = std::make_unique<LightManager>();
+
+            // Stage 0, subpass 0 : GBuffer geometry
+            // ClusterCull runs in PreRender for stage 0 (before GBuffer renderpass)
+            AddSFERenderpass<ClusterCullSFERenderpass>(Pipeline::Stage{0, 0}, *lightManager_);
+            gbuffer_ = AddSFERenderpass<GBufferPass>(Pipeline::Stage{0, 0}, *lightManager_);
+
+            // Stage 1, subpass 0 : Deferred lighting resolve
+            AddSFERenderpass<DeferredLightSFERenderpass>(Pipeline::Stage{1, 0}, *lightManager_);
+            ssr_ = AddSFERenderpass<SSRSFERenderpass>(Pipeline::Stage{1, 1}, *lightManager_);
+            AddSFERenderpass<ForwardTransparentSFERenderpass>(Pipeline::Stage{1, 1}, *lightManager_);
+
+            // Stage 1, subpass 2 : Tonemap hdr → swapchain
+            AddSFERenderpass<FullscreenPass>(Pipeline::Stage{1, 2}, "hdr", "Shaders/CompositeSampler.shader");
+
+            // Default lights
+            Light sun{};
+            sun.type      = Lighting::LightType::Directional;
+            sun.direction = normalize(Vec3(-0.5f, -1.0f, -0.3f));
+            sun.color     = {1.0f, 0.95f, 0.85f};
+            sun.intensity = 3.0f;
+            lightManager_->AddLight(sun);
+
+            Light fill{};
+            fill.type      = Lighting::LightType::Point;
+            fill.position  = {4.0f, 3.0f, 4.0f};
+            fill.color     = {0.3f, 0.6f, 1.0f};
+            fill.intensity = 20.0f;
+            fill.radius    = 15.0f;
+            lightManager_->AddLight(fill);
+        }
+
+        void Update() override {}
+
+        static Image2d *GetHdrColorTarget();
+
+        SF::Engine::LightManager *GetLightManager() const { return lightManager_.get(); }
+        SF::Engine::GBufferPass *GetGBuffer() const { return gbuffer_; }
+        SF::Engine::SSRSFERenderpass *GetSSR() const { return ssr_; }
+
+    private:
+        std::unique_ptr<SF::Engine::LightManager> lightManager_;
+        SF::Engine::GBufferPass *gbuffer_  = nullptr;
+        SF::Engine::SSRSFERenderpass *ssr_ = nullptr;
+    };
+} // namespace SF::Engine

@@ -47,3 +47,5 @@ build/
 Logs/
 Programs/
 Claude_EXAMPLES/
+.idea/
+/SF_Engine/RHI/RPI/

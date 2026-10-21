@@ -1,0 +1,143 @@
+// GGX.si
+// GGX/Trowbridge-Reitz normal distribution, Smith-correlated shadow-masking, anisotropic
+// variants, and importance sampling. Ported from O3DE's GGX.azsli.
+#pragma once
+#include "Common/Math.si"
+
+#define GGX_EPSILON 1e-8
+
+float NormalDistributionGGX(
+    const float NdotH,
+    const float roughnessA2)
+{
+    float denominator = (NdotH * roughnessA2 - NdotH) * NdotH + 1.0;
+
+    return roughnessA2 / (PI_ * denominator * denominator);
+}
+
+
+float GeometricShadowingMaskingGGXCorrelated(
+    const float NdotV,
+    const float NdotL,
+    const float roughnessA2)
+{
+    // Frostbite course notes:
+    // https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/course-notes-moving-frostbite-to-pbr-v32.pdf
+
+    float ggxV =
+        NdotL
+        * sqrt((-NdotV * roughnessA2 + NdotV) * NdotV + roughnessA2);
+
+    float ggxL =
+        NdotV
+        * sqrt((-NdotL * roughnessA2 + NdotL) * NdotL + roughnessA2);
+
+    return 0.5 / max(ggxV + ggxL, GGX_EPSILON);
+}
+
+
+float NormalDistibution_AnisotropicGGX(
+    const float NdotH,
+    const float3 h,
+    const float3 t,
+    const float3 b,
+    const float2 anisotropyFactors)
+{
+    const float atFactor = anisotropyFactors.x;
+    const float abFactor = anisotropyFactors.y;
+
+    float TdotH = dot(t, h);
+    float BdotH = dot(b, h);
+
+    float a2 = atFactor * abFactor;
+
+    float3 v = float3(
+        abFactor * TdotH,
+        atFactor * BdotH,
+        a2 * NdotH
+    );
+
+    float v2 = dot(v, v);
+    float w2 = a2 / max(GGX_EPSILON, v2);
+
+    return a2 * w2 * w2 * (1.0 / PI_);
+}
+
+
+float ShadowingMasking_AnisotropicSmithGGXCorrelated(
+    const float3 t,
+    const float3 b,
+    const float3 toCamera,
+    const float3 toLight,
+    const float NdotV,
+    const float NdotL,
+    const float2 anisotropyFactors)
+{
+    const float atFactor = anisotropyFactors.x;
+    const float abFactor = anisotropyFactors.y;
+
+    float TdotV = dot(t, toCamera);
+    float BdotV = dot(b, toCamera);
+
+    float TdotL = dot(t, toLight);
+    float BdotL = dot(b, toLight);
+
+    float lambdaV =
+        NdotL
+        * length(float3(
+            atFactor * TdotV,
+            abFactor * BdotV,
+            NdotV
+        ));
+
+    float lambdaL =
+        NdotV
+        * length(float3(
+            atFactor * TdotL,
+            abFactor * BdotL,
+            NdotL
+        ));
+
+    float shadowing = 0.5 / (lambdaV + lambdaL);
+
+    return min(shadowing, F16MAX);
+}
+
+
+float3 ImportanceSampleGGX(
+    const float2 xi,
+    const float roughnessA,
+    const float3 normal)
+{
+    float roughnessA2 = roughnessA * roughnessA;
+
+    float phi = 2.0 * PI_ * xi.x;
+
+    float cosTheta =
+        sqrt((1.0 - xi.y)
+        / (1.0 + (roughnessA2 - 1.0) * xi.y));
+
+    float sinTheta =
+        sqrt(1.0 - cosTheta * cosTheta);
+
+    float3 microNormalTS = float3(
+        sinTheta * cos(phi),
+        sinTheta * sin(phi),
+        cosTheta
+    );
+
+    float3 up =
+        abs(normal.z) < 0.999
+        ? float3(0.0, 0.0, 1.0)
+        : float3(1.0, 0.0, 0.0);
+
+    float3 tangent = normalize(cross(up, normal));
+    float3 bitangent = cross(normal, tangent);
+
+    float3 microNormal =
+        tangent * microNormalTS.x
+        + bitangent * microNormalTS.y
+        + normal * microNormalTS.z;
+
+    return microNormal;
+}

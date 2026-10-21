@@ -1,6 +1,4 @@
 #pragma once
-#include <memory>
-#include <TemplateLibrary/Any.hpp>
 
 namespace SF::Engine
 {
@@ -8,32 +6,23 @@ namespace SF::Engine
     {
     public:
         virtual ~Controller() = default;
-        virtual void Update(float dt) {}
+        virtual void Update(float /*DeltaTime*/) {}
         virtual void Initialize() {}
         virtual void Shutdown() {}
     };
 
-    template <typename T>
+    template<typename T>
     class StaticController : public Controller
     {
     public:
-        static T &Get()
-        {
-            return *s_instance;
-        }
+        static T &Get() { return *s_instance; }
 
     protected:
-        StaticController()
-        {
-            s_instance = static_cast<T *>(this);
-        }
+        StaticController() { s_instance = static_cast<T *>(this); }
 
-        ~StaticController()
-        {
-            s_instance = nullptr;
-        }
+        ~StaticController() { s_instance = nullptr; }
 
     private:
         inline static T *s_instance = nullptr;
     };
-}
+} // namespace SF::Engine

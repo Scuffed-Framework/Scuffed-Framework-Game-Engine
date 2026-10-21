@@ -1,5 +1,14 @@
 #ifndef MATH_S
 #define MATH_S
+
+#define PI_ 3.14159265358979
+#define INV_PI 0.31830988618379
+#define F_EPSILON 1.1920929e-07f
+
+#define F16MAX 0x7BFF
+#define F16MIN 0.000061035       // google clanker didnt tell me hex
+#define F16_MIN_SUBNORMAL 0x0001 // 2^-24 = 0.000000059604644775390625
+
 float3x3 inverse3x3(float3x3 m)
 {
     float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];

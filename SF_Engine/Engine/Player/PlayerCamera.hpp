@@ -1,6 +1,6 @@
 #pragma once
-#include <Camera/Camera.hpp>
-#include <Entity/Entity.hpp>
+#include <EntityComponentSystem/Entity.hpp>
+#include <Rendering/Camera/Camera.hpp>
 
 namespace SF::Engine
 {

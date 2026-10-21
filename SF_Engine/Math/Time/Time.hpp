@@ -32,14 +32,20 @@
 /* OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                              */
 /******************************************************************************/
 #pragma once
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 
+#include <Globals.hpp>
+#include <algorithm>
 #include <chrono>
-#include <string>
-#include <iomanip>
-#include <sstream>
-#include <concepts>
-#include <functional>
 #include <cmath>
+#include <cstdint>
+#include <functional>
+#include <iomanip>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <utility>
 
 namespace SF::Engine
 {
@@ -48,290 +54,94 @@ namespace SF::Engine
     /**
      * @brief Concept for duration-like types
      */
-    template <typename T>
+    template<typename T>
     concept DurationLike = requires(T t) {
         { std::chrono::duration_cast<std::chrono::microseconds>(t) };
     };
 
+    template<typename Period, typename Rep = int64_t>
+    using Duration  = std::chrono::duration<Rep, Period>;
+    using Clock     = std::chrono::steady_clock;
+    using TimePoint = Clock::time_point;
+
+    using DurationAsSeconds      = std::chrono::duration<double>; // Period defaults to ratio<1>
+    using DurationAsMilliseconds = Duration<std::milli>;
+    using DurationAsMicroseconds = Duration<std::micro>;
+    using DurationAsNanoseconds  = Duration<std::nano>;
+
+
+    /**
+     * @brief Gets the current date/time as a formatted string
+     * @param format The format string (uses std::put_time format)
+     * @return The formatted date/time string
+     */
+    [[nodiscard]] static std::string GetDateTime(std::string_view format = "%Y-%m-%d %H:%M:%S")
+    {
+        auto now   = std::chrono::system_clock::now();
+        auto timeT = std::chrono::system_clock::to_time_t(now);
+
+        std::stringstream ss;
+        ss << std::put_time(std::localtime(&timeT), format.data());
+        return ss.str();
+    }
+
+    /**
+     * @brief Gets the current time since application start (steady clock)
+     * @return The current time
+     */
+    [[nodiscard]] inline TimePoint ClockNow() noexcept
+    {
+        static const auto s_epoch = Clock::now();
+        return TimePoint(Clock::now() - s_epoch);
+    }
+
+    /**
+     * @brief Creates a time value from seconds
+     * @param seconds Number of seconds
+     * @return DurationAsSeconds value constructed from seconds
+     */
+    template<typename Rep = double>
+    [[nodiscard]] static constexpr DurationAsSeconds Seconds(Rep seconds) noexcept
+    {
+        return DurationAsSeconds(seconds);
+    }
+
+    /**
+     * @brief Creates a time value from milliseconds
+     * @param milliseconds Number of milliseconds
+     * @return DurationAsSeconds value constructed from milliseconds
+     */
+    template<typename Rep = int32_t>
+    [[nodiscard]] static constexpr DurationAsMilliseconds Milliseconds(Rep milliseconds) noexcept
+    {
+        return std::chrono::round<DurationAsMilliseconds>(std::chrono::duration<Rep, std::milli>(milliseconds));
+    }
+
+    /**
+     * @brief Creates a time value from microseconds
+     * @param microseconds Number of microseconds
+     * @return DurationAsSeconds value constructed from microseconds
+     */
+    template<typename Rep = int64_t>
+    [[nodiscard]] static constexpr DurationAsMicroseconds Microseconds(Rep microseconds) noexcept
+    {
+        return std::chrono::round<DurationAsMicroseconds>(std::chrono::duration<Rep, std::micro>(microseconds));
+    }
+
+    /**
+     * @brief Creates a time value from nanoseconds
+     * @param nanoseconds Number of nanoseconds
+     * @return DurationAsSeconds value constructed from nanoseconds
+     */
+    template<typename Rep = int64_t>
+    [[nodiscard]] static constexpr DurationAsNanoseconds Nanoseconds(Rep nanoseconds) noexcept
+    {
+        return std::chrono::round<DurationAsNanoseconds>(std::chrono::duration<Rep, std::nano>(nanoseconds));
+    }
+
     /**
      * @brief Represents a time value stored in microseconds with high precision
      */
-    // ApplicationTime
-    class ApplicationTime
-    {
-    public:
-        using Clock = std::chrono::steady_clock;
-        using Duration = std::chrono::microseconds;
-
-        constexpr ApplicationTime() noexcept = default;
-
-        /**
-         * @brief Creates a new time from a chrono duration
-         * @param duration The duration
-         */
-        template <typename Rep, typename Period>
-        constexpr ApplicationTime(const std::chrono::duration<Rep, Period> &duration) noexcept
-            : m_value(std::chrono::duration_cast<Duration>(duration))
-        {
-        }
-
-        /**
-         * @brief Creates a time value from seconds
-         * @param seconds Number of seconds
-         * @return ApplicationTime value constructed from seconds
-         */
-        template <typename Rep = double>
-        [[nodiscard]] static constexpr ApplicationTime Seconds(Rep seconds) noexcept
-        {
-            return ApplicationTime(std::chrono::duration<Rep>(seconds));
-        }
-
-        /**
-         * @brief Creates a time value from milliseconds
-         * @param milliseconds Number of milliseconds
-         * @return ApplicationTime value constructed from milliseconds
-         */
-        template <typename Rep = int32_t>
-        [[nodiscard]] static constexpr ApplicationTime Milliseconds(Rep milliseconds) noexcept
-        {
-            return ApplicationTime(std::chrono::duration<Rep, std::milli>(milliseconds));
-        }
-
-        /**
-         * @brief Creates a time value from microseconds
-         * @param microseconds Number of microseconds
-         * @return ApplicationTime value constructed from microseconds
-         */
-        template <typename Rep = int64_t>
-        [[nodiscard]] static constexpr ApplicationTime Microseconds(Rep microseconds) noexcept
-        {
-            return ApplicationTime(std::chrono::duration<Rep, std::micro>(microseconds));
-        }
-
-        /**
-         * @brief Creates a time value from nanoseconds
-         * @param nanoseconds Number of nanoseconds
-         * @return ApplicationTime value constructed from nanoseconds
-         */
-        template <typename Rep = int64_t>
-        [[nodiscard]] static constexpr ApplicationTime Nanoseconds(Rep nanoseconds) noexcept
-        {
-            return ApplicationTime(std::chrono::duration<Rep, std::nano>(nanoseconds));
-        }
-
-        /**
-         * @brief Gets the time value as seconds
-         * @return ApplicationTime in seconds
-         */
-        template <typename T = double>
-        [[nodiscard]] constexpr T AsSeconds() const noexcept
-        {
-            return std::chrono::duration<T>(m_value).count();
-        }
-
-        /**
-         * @brief Gets the time value as milliseconds
-         * @return ApplicationTime in milliseconds
-         */
-        template <typename T = double>
-        [[nodiscard]] constexpr T AsMilliseconds() const noexcept
-        {
-            return std::chrono::duration<T, std::milli>(m_value).count();
-        }
-
-        /**
-         * @brief Gets the time value as microseconds
-         * @return ApplicationTime in microseconds
-         */
-        template <typename T = int64_t>
-        [[nodiscard]] constexpr T AsMicroseconds() const noexcept
-        {
-            return std::chrono::duration_cast<std::chrono::duration<T, std::micro>>(m_value).count();
-        }
-
-        /**
-         * @brief Gets the time value as nanoseconds
-         * @return ApplicationTime in nanoseconds
-         */
-        template <typename T = int64_t>
-        [[nodiscard]] constexpr T AsNanoseconds() const noexcept
-        {
-            return std::chrono::duration_cast<std::chrono::duration<T, std::nano>>(m_value).count();
-        }
-
-        /**
-         * @brief Gets the underlying duration
-         * @return The duration value
-         */
-        [[nodiscard]] constexpr Duration GetDuration() const noexcept
-        {
-            return m_value;
-        }
-
-        /**
-         * @brief Checks if this time is zero
-         * @return True if zero
-         */
-        [[nodiscard]] constexpr bool IsZero() const noexcept
-        {
-            return m_value == Duration::zero();
-        }
-
-        /**
-         * @brief Checks if this time is negative
-         * @return True if negative
-         */
-        [[nodiscard]] constexpr bool IsNegative() const noexcept
-        {
-            return m_value < Duration::zero();
-        }
-
-        /**
-         * @brief Checks if this time is positive
-         * @return True if positive
-         */
-        [[nodiscard]] constexpr bool IsPositive() const noexcept
-        {
-            return m_value > Duration::zero();
-        }
-
-        /**
-         * @brief Gets the absolute value of this time
-         * @return The absolute time
-         */
-        [[nodiscard]] constexpr ApplicationTime Abs() const noexcept
-        {
-            return ApplicationTime(m_value < Duration::zero() ? -m_value : m_value);
-        }
-
-        /**
-         * @brief Modulo operation with another time
-         * @param other The divisor
-         * @return The remainder
-         */
-        [[nodiscard]] constexpr ApplicationTime Mod(const ApplicationTime &other) const noexcept
-        {
-            return ApplicationTime(Duration(m_value.count() % other.m_value.count()));
-        }
-
-        /**
-         * @brief Gets the current time since application start (steady clock)
-         * @return The current time
-         */
-        [[nodiscard]] static ApplicationTime Now() noexcept
-        {
-            static const auto s_epoch = Clock::now();
-            return std::chrono::duration_cast<Duration>(Clock::now() - s_epoch);
-        }
-
-        /**
-         * @brief Gets the current system time (wall clock)
-         * @return The current system time
-         */
-        [[nodiscard]] static ApplicationTime SystemNow() noexcept
-        {
-            auto now = std::chrono::system_clock::now();
-            return std::chrono::duration_cast<Duration>(now.time_since_epoch());
-        }
-
-        /**
-         * @brief Gets the current date/time as a formatted string
-         * @param format The format string (uses std::put_time format)
-         * @return The formatted date/time string
-         */
-        [[nodiscard]] static std::string GetDateTime(std::string_view format = "%Y-%m-%d %H:%M:%S")
-        {
-            auto now = std::chrono::system_clock::now();
-            auto timeT = std::chrono::system_clock::to_time_t(now);
-
-            std::stringstream ss;
-            ss << std::put_time(std::localtime(&timeT), format.data());
-            return ss.str();
-        }
-
-        /**
-         * @brief Formats this time duration as a human-readable string
-         * @return Formatted time string (e.g., "1.234s" or "123.4ms")
-         */
-        [[nodiscard]] std::string ToString() const
-        {
-            auto abs_us = std::abs(m_value.count());
-            std::ostringstream oss;
-            oss << std::fixed << std::setprecision(3);
-
-            if (abs_us >= 1'000'000) // >= 1 second
-            {
-                oss << AsSeconds() << "s";
-            }
-            else if (abs_us >= 1'000) // >= 1 millisecond
-            {
-                oss << AsMilliseconds() << "ms";
-            }
-            else // < 1 millisecond
-            {
-                oss << m_value.count() << "μs";
-            }
-
-            return oss.str();
-        }
-
-        /**
-         * @brief Convert to any chrono duration type
-         */
-        template <typename Rep, typename Period>
-        [[nodiscard]] constexpr operator std::chrono::duration<Rep, Period>() const noexcept
-        {
-            return std::chrono::duration_cast<std::chrono::duration<Rep, Period>>(m_value);
-        }
-
-        // Comparison operators
-        [[nodiscard]] constexpr bool operator==(const ApplicationTime &rhs) const noexcept = default;
-        [[nodiscard]] constexpr auto operator<=>(const ApplicationTime &rhs) const noexcept = default;
-
-        // Unary operators
-        [[nodiscard]] constexpr ApplicationTime operator-() const noexcept;
-        [[nodiscard]] constexpr ApplicationTime operator+() const noexcept;
-
-        // Arithmetic operators
-        friend constexpr ApplicationTime operator+(const ApplicationTime &lhs, const ApplicationTime &rhs) noexcept;
-        friend constexpr ApplicationTime operator-(const ApplicationTime &lhs, const ApplicationTime &rhs) noexcept;
-
-        template <std::floating_point T>
-        friend constexpr ApplicationTime operator*(const ApplicationTime &lhs, T rhs) noexcept;
-
-        template <std::integral T>
-        friend constexpr ApplicationTime operator*(const ApplicationTime &lhs, T rhs) noexcept;
-
-        template <std::floating_point T>
-        friend constexpr ApplicationTime operator*(T lhs, const ApplicationTime &rhs) noexcept;
-
-        template <std::integral T>
-        friend constexpr ApplicationTime operator*(T lhs, const ApplicationTime &rhs) noexcept;
-
-        template <std::floating_point T>
-        friend constexpr ApplicationTime operator/(const ApplicationTime &lhs, T rhs) noexcept;
-
-        template <std::integral T>
-        friend constexpr ApplicationTime operator/(const ApplicationTime &lhs, T rhs) noexcept;
-
-        friend constexpr double operator/(const ApplicationTime &lhs, const ApplicationTime &rhs) noexcept;
-
-        // Compound assignment operators
-        constexpr ApplicationTime &operator+=(const ApplicationTime &rhs) noexcept;
-        constexpr ApplicationTime &operator-=(const ApplicationTime &rhs) noexcept;
-
-        template <typename T>
-        constexpr ApplicationTime &operator*=(T rhs) noexcept;
-
-        template <typename T>
-        constexpr ApplicationTime &operator/=(T rhs) noexcept;
-
-        // Stream operator
-        friend std::ostream &operator<<(std::ostream &os, const ApplicationTime &time);
-
-    private:
-        Duration m_value{};
-    };
 
     /**
      * @brief Tracks elapsed time and counts intervals
@@ -339,45 +149,50 @@ namespace SF::Engine
     class ElapsedTime
     {
     public:
-        explicit ElapsedTime(const ApplicationTime &interval = ApplicationTime::Seconds(-1)) noexcept
-            : m_startTime(ApplicationTime::Now()), m_interval(interval)
+        ElapsedTime() noexcept : ElapsedTime(Nanoseconds(-1)) {}
+
+        template<typename Rep, typename Period>
+        explicit ElapsedTime(const std::chrono::duration<Rep, Period> &interval) noexcept :
+            m_startTime(Clock::now()), m_interval(std::chrono::round<DurationAsNanoseconds>(interval))
         {
         }
 
         uint32_t GetElapsed() noexcept
         {
-            auto now = ApplicationTime::Now();
-            auto elapsed = static_cast<uint32_t>((now - m_startTime) / m_interval);
+            const auto now = Clock::now();
 
+            if (m_interval.count() <= 0)
+            {
+                m_startTime = now;
+                return 1;
+            }
+
+            const auto elapsed = static_cast<uint32_t>((now - m_startTime) / m_interval);
             if (elapsed > 0)
                 m_startTime = now;
 
             return elapsed;
         }
 
-        [[nodiscard]] ApplicationTime GetElapsedTime() const noexcept
-        {
-            return ApplicationTime::Now() - m_startTime;
-        }
+        [[nodiscard]] DurationAsNanoseconds GetElapsedTime() const noexcept { return Clock::now() - m_startTime; }
 
-        bool HasElapsed() noexcept
-        {
-            return GetElapsed() > 0;
-        }
+        bool HasElapsed() noexcept { return GetElapsed() > 0; }
 
-        void Reset() noexcept
-        {
-            m_startTime = ApplicationTime::Now();
-        }
+        void Reset() noexcept { m_startTime = Clock::now(); }
 
-        [[nodiscard]] const ApplicationTime &GetStartTime() const noexcept { return m_startTime; }
-        void SetStartTime(const ApplicationTime &startTime) noexcept { m_startTime = startTime; }
-        [[nodiscard]] const ApplicationTime &GetInterval() const noexcept { return m_interval; }
-        void SetInterval(const ApplicationTime &interval) noexcept { m_interval = interval; }
+        [[nodiscard]] TimePoint GetStartTime() const noexcept { return m_startTime; }
+        void SetStartTime(const TimePoint &startTime) noexcept { m_startTime = startTime; }
+        [[nodiscard]] const DurationAsNanoseconds &GetInterval() const noexcept { return m_interval; }
+
+        template<typename Rep, typename Period>
+        void SetInterval(const std::chrono::duration<Rep, Period> &interval) noexcept
+        {
+            m_interval = std::chrono::round<DurationAsNanoseconds>(interval);
+        }
 
     private:
-        ApplicationTime m_startTime;
-        ApplicationTime m_interval;
+        TimePoint m_startTime;
+        DurationAsNanoseconds m_interval;
     };
 
     /**
@@ -386,21 +201,15 @@ namespace SF::Engine
     class ScopedTimer
     {
     public:
-        using CallbackFn = std::function<void(ApplicationTime)>;
+        using CallbackFn = std::function<void(TimePoint)>;
 
-        explicit ScopedTimer(CallbackFn callback) noexcept
-            : m_callback(std::move(callback)), m_start(ApplicationTime::Now())
-        {
-        }
+        explicit ScopedTimer(CallbackFn callback) noexcept : m_callback(std::move(callback)), m_start(Clock::now()) {}
 
-        explicit ScopedTimer(ApplicationTime &result) noexcept
-            : m_result(&result), m_start(ApplicationTime::Now())
-        {
-        }
+        explicit ScopedTimer(TimePoint &result) noexcept : m_result(&result), m_start(Clock::now()) {}
 
         ~ScopedTimer()
         {
-            auto elapsed = ApplicationTime::Now() - m_start;
+            TimePoint elapsed = TimePoint(Clock::now() - m_start);
 
             if (m_callback)
                 m_callback(elapsed);
@@ -409,15 +218,15 @@ namespace SF::Engine
                 *m_result = elapsed;
         }
 
-        ScopedTimer(const ScopedTimer &) = delete;
+        ScopedTimer(const ScopedTimer &)            = delete;
         ScopedTimer &operator=(const ScopedTimer &) = delete;
-        ScopedTimer(ScopedTimer &&) = delete;
-        ScopedTimer &operator=(ScopedTimer &&) = delete;
+        ScopedTimer(ScopedTimer &&)                 = delete;
+        ScopedTimer &operator=(ScopedTimer &&)      = delete;
 
     private:
         CallbackFn m_callback;
-        ApplicationTime *m_result = nullptr;
-        ApplicationTime m_start;
+        TimePoint *m_result = nullptr;
+        TimePoint m_start;
     };
 
     /**
@@ -432,8 +241,8 @@ namespace SF::Engine
         {
             if (!m_running)
             {
-                m_running = true;
-                m_startTime = ApplicationTime::Now();
+                m_running   = true;
+                m_startTime = Clock::now();
             }
         }
 
@@ -442,15 +251,15 @@ namespace SF::Engine
             if (m_running)
             {
                 m_running = false;
-                m_elapsed += ApplicationTime::Now() - m_startTime;
+                m_elapsed += Clock::now() - m_startTime;
             }
         }
 
         void Reset() noexcept
         {
-            m_running = false;
-            m_elapsed = ApplicationTime::Seconds(0);
-            m_startTime = ApplicationTime::Seconds(0);
+            m_running   = false;
+            m_elapsed   = DurationAsNanoseconds(0);
+            m_startTime = TimePoint(DurationAsNanoseconds(0));
         }
 
         void Restart() noexcept
@@ -459,19 +268,19 @@ namespace SF::Engine
             Start();
         }
 
-        [[nodiscard]] ApplicationTime GetElapsed() const noexcept
+        [[nodiscard]] DurationAsNanoseconds GetElapsed() const noexcept
         {
             if (m_running)
-                return m_elapsed + (ApplicationTime::Now() - m_startTime);
+                return m_elapsed + (Clock::now() - m_startTime);
             return m_elapsed;
         }
 
         [[nodiscard]] bool IsRunning() const noexcept { return m_running; }
 
     private:
-        bool m_running = false;
-        ApplicationTime m_elapsed = ApplicationTime::Seconds(0);
-        ApplicationTime m_startTime = ApplicationTime::Seconds(0);
+        bool m_running                  = false;
+        DurationAsNanoseconds m_elapsed = DurationAsNanoseconds(0);
+        TimePoint m_startTime           = TimePoint(DurationAsNanoseconds(0));
     };
 
     /**
@@ -480,20 +289,20 @@ namespace SF::Engine
     class FPSCounter
     {
     public:
-        explicit FPSCounter(const ApplicationTime &updateInterval = ApplicationTime::Seconds(1)) noexcept
-            : m_updateInterval(updateInterval), m_lastUpdate(ApplicationTime::Now())
+        explicit FPSCounter(const DurationAsNanoseconds &updateInterval = DurationAsNanoseconds(1s)) noexcept :
+            m_updateInterval(updateInterval), m_lastUpdate(Clock::now())
         {
         }
 
         void Update() noexcept
         {
             m_frameCount++;
-            auto now = ApplicationTime::Now();
-            auto elapsed = now - m_lastUpdate;
+            const auto now     = Clock::now();
+            const auto elapsed = now - m_lastUpdate;
 
             if (elapsed >= m_updateInterval)
             {
-                m_fps = static_cast<double>(m_frameCount) / elapsed.AsSeconds();
+                m_fps        = static_cast<double>(m_frameCount) / std::chrono::duration<double>(elapsed).count();
                 m_frameCount = 0;
                 m_lastUpdate = now;
             }
@@ -501,16 +310,13 @@ namespace SF::Engine
 
         [[nodiscard]] double GetFPS() const noexcept { return m_fps; }
 
-        [[nodiscard]] double GetFrameTime() const noexcept
-        {
-            return m_fps > 0.0 ? 1000.0 / m_fps : 0.0;
-        }
+        [[nodiscard]] double GetFrameTime() const noexcept { return m_fps > 0.0 ? 1000.0 / m_fps : 0.0; }
 
     private:
-        ApplicationTime m_updateInterval;
-        ApplicationTime m_lastUpdate;
+        DurationAsNanoseconds m_updateInterval;
+        TimePoint m_lastUpdate;
         uint32_t m_frameCount = 0;
-        double m_fps = 0.0;
+        double m_fps          = 0.0;
     };
 
     class DeltaTime
@@ -518,23 +324,23 @@ namespace SF::Engine
     public:
         void Update()
         {
-            currentFrameTime = ApplicationTime::Now();
-            change = currentFrameTime - lastFrameTime;
-            lastFrameTime = currentFrameTime;
+            currentFrameTime = Clock::now();
+            change           = currentFrameTime - lastFrameTime;
+            lastFrameTime    = currentFrameTime;
         }
 
-        ApplicationTime currentFrameTime;
-        ApplicationTime lastFrameTime;
-        ApplicationTime change;
+        TimePoint currentFrameTime;
+        TimePoint lastFrameTime;
+        DurationAsNanoseconds change;
     };
 
-    template <typename ClockType = std::chrono::steady_clock>
+    template<typename ClockType = std::chrono::steady_clock>
     class UpdateClock
     {
     public:
-        using clock = ClockType;
-        using time_point = typename clock::time_point;
-        using duration = typename clock::duration;
+        using clock      = ClockType;
+        using time_point = clock::time_point;
+        using duration   = clock::duration;
 
         uint32_t value_ = 0;
 
@@ -547,11 +353,11 @@ namespace SF::Engine
             ++valueTemp_;
 
             const auto currentSeconds = std::chrono::floor<std::chrono::seconds>(time);
-            const auto lastSeconds = std::chrono::floor<std::chrono::seconds>(valueTime_);
+            const auto lastSeconds    = std::chrono::floor<std::chrono::seconds>(valueTime_);
 
             if (currentSeconds > lastSeconds)
             {
-                value_ = std::exchange(valueTemp_, 0);
+                value_     = std::exchange(valueTemp_, 0);
                 valueTime_ = time;
 
                 if (rateCallback_)
@@ -566,22 +372,14 @@ namespace SF::Engine
             return std::nullopt;
         }
 
-        std::optional<uint32_t> Update(const ApplicationTime &time)
+        std::optional<uint32_t> Update(const DurationAsNanoseconds &time)
         {
-            const auto seconds = std::chrono::duration_cast<duration>(
-                std::chrono::duration<double>(time.AsSeconds()));
-            return Update(time_point{} + seconds);
+            return Update(time_point{} + std::chrono::duration_cast<duration>(time));
         }
 
-        [[nodiscard]] constexpr uint32_t GetRate() const noexcept
-        {
-            return value_;
-        }
+        [[nodiscard]] constexpr uint32_t GetRate() const noexcept { return value_; }
 
-        [[nodiscard]] constexpr uint32_t GetCurrentPartialCount() const noexcept
-        {
-            return valueTemp_;
-        }
+        [[nodiscard]] constexpr uint32_t GetCurrentPartialCount() const noexcept { return valueTemp_; }
 
         [[nodiscard]] duration GetElapsedInCurrentSecond(const time_point &currentTime = clock::now()) const
         {
@@ -610,25 +408,16 @@ namespace SF::Engine
 
         void Reset() noexcept
         {
-            value_ = 0;
+            value_     = 0;
             valueTemp_ = 0;
             valueTime_ = time_point{};
         }
 
-        void SetRateCallback(RateCallback callback)
-        {
-            rateCallback_ = std::move(callback);
-        }
+        void SetRateCallback(RateCallback callback) { rateCallback_ = std::move(callback); }
 
-        [[nodiscard]] constexpr operator uint32_t() const noexcept
-        {
-            return value_;
-        }
+        [[nodiscard]] constexpr operator uint32_t() const noexcept { return value_; }
 
-        [[nodiscard]] auto MakeScopedUpdater()
-        {
-            return ScopedUpdater(*this);
-        }
+        [[nodiscard]] auto MakeScopedUpdater() { return ScopedUpdater(*this); }
 
     private:
         uint32_t valueTemp_ = 0;
@@ -640,14 +429,11 @@ namespace SF::Engine
         public:
             explicit ScopedUpdater(UpdateClock &counter) : counter_(counter) {}
 
-            ~ScopedUpdater()
-            {
-                counter_.Update();
-            }
+            ~ScopedUpdater() { counter_.Update(); }
 
-            ScopedUpdater(const ScopedUpdater &) = delete;
-            ScopedUpdater &operator=(const ScopedUpdater &) = delete;
-            ScopedUpdater(ScopedUpdater &&) noexcept = default;
+            ScopedUpdater(const ScopedUpdater &)                = delete;
+            ScopedUpdater &operator=(const ScopedUpdater &)     = delete;
+            ScopedUpdater(ScopedUpdater &&) noexcept            = default;
             ScopedUpdater &operator=(ScopedUpdater &&) noexcept = default;
 
         private:
@@ -655,7 +441,7 @@ namespace SF::Engine
         };
     };
 
-    template <typename ClockType = std::chrono::steady_clock>
+    template<typename ClockType = std::chrono::steady_clock>
     class RateTracker : public UpdateClock<ClockType>
     {
     public:
@@ -664,9 +450,9 @@ namespace SF::Engine
 
         struct Statistics
         {
-            uint32_t minRate = 0;
-            uint32_t maxRate = 0;
-            double averageRate = 0.0;
+            uint32_t minRate     = 0;
+            uint32_t maxRate     = 0;
+            double averageRate   = 0.0;
             uint32_t sampleCount = 0;
         };
 
@@ -682,26 +468,19 @@ namespace SF::Engine
             return result;
         }
 
-        [[nodiscard]] const Statistics &GetStatistics() const noexcept
-        {
-            return stats_;
-        }
+        [[nodiscard]] const Statistics &GetStatistics() const noexcept { return stats_; }
 
-        void ResetStatistics() noexcept
-        {
-            stats_ = Statistics{};
-        }
+        void ResetStatistics() noexcept { stats_ = Statistics{}; }
 
     private:
         void UpdateStatistics(uint32_t newRate)
         {
             if (stats_.sampleCount == 0)
             {
-                stats_.minRate = newRate;
-                stats_.maxRate = newRate;
+                stats_.minRate     = newRate;
+                stats_.maxRate     = newRate;
                 stats_.averageRate = static_cast<double>(newRate);
-            }
-            else
+            } else
             {
                 stats_.minRate = std::min(stats_.minRate, newRate);
                 stats_.maxRate = std::max(stats_.maxRate, newRate);
@@ -716,9 +495,8 @@ namespace SF::Engine
         Statistics stats_;
     };
 
-    template <typename ClockType>
+    template<typename ClockType>
     UpdateClock(ClockType) -> UpdateClock<ClockType>;
 
-}
-
-#include "Time.inl"
+} // namespace SF::Engine
+#pragma GCC diagnostic pop

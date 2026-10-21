@@ -3,19 +3,7 @@
 
 namespace SF::Engine::Scripting::Lua
 {
-    void LuaEngine::Init()
-    {
-        lua_.open_libraries(
-            sol::lib::base,
-            sol::lib::math,
-            sol::lib::table,
-            sol::lib::string,
-            sol::lib::coroutine);
-    }
+    bool LuaEngine::Initialize() { return true; }
 
-    void LuaEngine::Shutdown()
-    {
-        loadedModules_.clear();
-        lua_.collect_garbage();
-    }
-}
+    void LuaEngine::Shutdown() {}
+} // namespace SF::Engine::Scripting::Lua

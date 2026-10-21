@@ -1,0 +1,669 @@
+#define VMA_DEBUG_LOG
+#include <string>
+#include <vector>
+
+#include "RenderSystem.hpp"
+
+#include <cstring>
+
+#include <Platform/Windowing/WindowManager.hpp>
+#include "PipelineRenderer.hpp"
+#include "SharedSamplers.hpp"
+
+#include <Rendering/Camera/Camera.hpp>
+#include "SharedFunctions.hpp"
+#include "Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp"
+
+namespace SF::Engine
+{
+    RenderSystem::RenderSystem() :
+        instance(std::make_unique<Instance>()), physicalDevice(std::make_unique<PhysicalDevice>(*instance)),
+        logicalDevice(std::make_unique<LogicalDevice>(*instance, *physicalDevice)), elapsedPurge(5s)
+    {
+        WindowManager::Get()->OnAddWindow().connect(
+                [this](Window *window, bool)
+                {
+                    surfaces.emplace_back(
+                            std::make_unique<Surface>(*instance, *physicalDevice, *logicalDevice, *window));
+                });
+
+        VmaAllocatorCreateInfo allocatorCreateInfo = {};
+        allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_2;
+        allocatorCreateInfo.physicalDevice         = &*physicalDevice->GetPhysicalDevice();
+        allocatorCreateInfo.device                 = *logicalDevice;
+        allocatorCreateInfo.instance               = *instance;
+
+        VmaVulkanFunctions vmaVulkanFunctions    = {};
+        vmaVulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+        vmaVulkanFunctions.vkGetDeviceProcAddr   = vkGetDeviceProcAddr;
+        allocatorCreateInfo.pVulkanFunctions     = &vmaVulkanFunctions;
+
+        Log::Info("Creating VMA allocator");
+        VkResult vmaResult = vmaCreateAllocator(&allocatorCreateInfo, &alloc);
+        if (vmaResult != VK_SUCCESS)
+            throw std::runtime_error("Failed to create VMA allocator: " + StrVkResult(vmaResult));
+        Log::Info("VMA allocator created");
+
+        CreatePipelineCache();
+        Log::Info("Pipeline cache created");
+        Log::Info("RenderSystem fully initialized");
+    }
+
+    void RenderSystem::PostInit()
+    {
+        SharedSamplers::CreateSamplers();
+        bindlessMgr = std::make_unique<BindlessManager>();
+        CreateSharedCameraBuffer();
+        AtmoLUTs::Init();
+    }
+
+    void RenderSystem::PreShutdown()
+    {
+        if (bindlessMgr)
+            bindlessMgr->FlushAllPendingFrees();
+        DestroySharedCameraBuffer();
+        AtmoLUTs::Shutdown();
+        SharedSamplers::DestroySamplers();
+    }
+
+    RenderSystem::~RenderSystem()
+    {
+        if (logicalDevice && *logicalDevice != VK_NULL_HANDLE)
+        {
+            if (VkResult res = vkDeviceWaitIdle(*logicalDevice); res == VK_ERROR_DEVICE_LOST)
+            {
+                Log::Critical("[RenderSystem] Device was lost prior to shutdown; exiting immediately, no cleanup.");
+                _Exit(EXIT_FAILURE);
+            }
+        }
+
+        renderer = nullptr;
+        swapchains.clear();
+        PreShutdown();
+        vkDestroyPipelineCache(*logicalDevice, pipelineCache, nullptr);
+        vmaDestroyAllocator(alloc);
+        commandPools.clear();
+        for (auto &perSurfaceBuffer: perSurfaceBuffers)
+        {
+            for (std::size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
+            {
+                vkDestroyFence(*logicalDevice, perSurfaceBuffer->flightFences[i], nullptr);
+                vkDestroySemaphore(*logicalDevice, perSurfaceBuffer->renderCompletes[i], nullptr);
+                vkDestroySemaphore(*logicalDevice, perSurfaceBuffer->presentCompletes[i], nullptr);
+            }
+            perSurfaceBuffer->commandBuffers.clear();
+        }
+    }
+
+    void UpdateSharedCameraData()
+    {
+        float raw_nano                      = static_cast<float>(GetDeltaTime().count());
+        SharedCameraData.screenHeight       = GetScreenSize().y;
+        SharedCameraData.screenWidth        = GetScreenSize().x;
+        SharedCameraData.aspectRatio        = SharedCameraData.screenWidth / SharedCameraData.screenHeight;
+        SharedCameraData.cameraPosition     = GetCameraPosition4();
+        SharedCameraData.deltaTime          = static_cast<float>(Milliseconds(raw_nano / 1000000.0f).count());
+        SharedCameraData.inverseProjection  = GetInvProjection();
+        SharedCameraData.inverseView        = GetInvView();
+        SharedCameraData.viewProjection     = GetProjection();
+        SharedCameraData.prevViewProjection = GetPrevViewProjection(); // :)
+        SharedCameraData.view               = GetView();
+        GetSharedCameraBuffer().Update(SharedCameraData);
+    }
+
+    void RenderSystem::Update()
+    {
+        auto mainWindow = WindowManager::Get()->GetWindow(0);
+
+        // Early return if window is closing, iconified, or invalid size
+        if (!renderer || !mainWindow || mainWindow->ShouldClose() || mainWindow->IsIconified())
+            return;
+
+        auto windowSize = mainWindow->GetSize();
+        if (windowSize.x == 0 || windowSize.y == 0)
+            return;
+
+        if (!renderer->started)
+        {
+            ResetRenderStages();
+            renderer->Start();
+            renderer->started = true;
+        }
+
+        renderer->Update();
+
+        UpdateSharedCameraData();
+
+        if (auto *bindless = GetBindlessManager())
+            bindless->Tick();
+
+        for (auto &renderStage: renderer->renderStages)
+            renderStage->Update();
+
+        bool anyOutOfDate = false;
+        for (auto &renderStage: renderer->renderStages)
+        {
+            if (renderStage->IsOutOfDate())
+            {
+                anyOutOfDate = true;
+                break;
+            }
+        }
+
+        if (anyOutOfDate)
+        {
+            // Rebuild ALL stages (and the swapchain if needed) for the new window size, then fall
+            // through and render + present THIS frame at the new size. Previously this returned
+            // without presenting, so during an interactive resize (a rebuild nearly every Update)
+            // no frame was ever presented and the compositor kept showing the stale old-size image
+            // with an uncovered black / garbage border where the window had grown.
+            RecreatePass();
+        }
+
+        for (auto [id, swapchain]: Enumerate(swapchains))
+        {
+            auto &perSurfaceBuffer = perSurfaceBuffers[id];
+
+            // NOTE: removed the standalone vkWaitForFences(..., UINT64_MAX) that used to
+            // sit here. AcquireNextImage() already waits on this exact fence internally,
+            // with a bounded 1s timeout that converts a timeout into VK_ERROR_OUT_OF_DATE_KHR.
+            // The UINT64_MAX wait here had no such escape hatch: if the fence's paired
+            // Submit() was ever skipped (see the StartRenderpass failure case below,
+            // pre-fix), this call would hang forever with the window fully frozen.
+            auto acquireResult =
+                    swapchain->AcquireNextImage(perSurfaceBuffer->presentCompletes[perSurfaceBuffer->currentFrame],
+                                                perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
+
+            static int s_consecutiveTimeouts = 0;
+            if (acquireResult == VK_TIMEOUT)
+            {
+                // The in-flight fence didn't signal within the bounded wait: presentation/GPU is
+                // stalled (e.g. compositor holding frames during an interactive resize). This is
+                // NOT an out-of-date swapchain; recreating here destroys sync objects still in
+                // flight. Skip this frame and try again. Only if it stays stuck (a skipped Submit
+                // leaves the fence unsignaled forever) fall back to a full recreate.
+                if (++s_consecutiveTimeouts < 8)
+                    return;
+                Log::Warning("[RenderSystem] Frame fence timed out {} times in a row; recreating swapchain.",
+                             s_consecutiveTimeouts);
+                s_consecutiveTimeouts = 0;
+                RecreateSwapchain();
+                return;
+            }
+            s_consecutiveTimeouts = 0;
+
+            if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR)
+            {
+                RecreateSwapchain();
+                return;
+            }
+
+            if (acquireResult == VK_ERROR_DEVICE_LOST)
+            {
+                Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST during AcquireNextImage; exiting immediately.");
+                _Exit(EXIT_FAILURE);
+            }
+
+            if (acquireResult == VK_SUBOPTIMAL_KHR)
+            {
+                perSurfaceBuffer->framebufferResized = true;
+            } else if (acquireResult != VK_SUCCESS)
+            {
+                Log::Error("Failed to acquire swap chain image!\n");
+                return;
+            }
+
+            Pipeline::Stage stage;
+            bool wentStale = false;
+
+            for (auto &renderStage: renderer->renderStages)
+            {
+                auto &commandBuffer = perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
+
+                if (!commandBuffer->IsRunning())
+                    commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
+
+                if (id == 0) // once per frame, not once per surface
+                    onRecordViewports.Broadcast(*commandBuffer, perSurfaceBuffer->currentFrame);
+
+                for (const auto &subpass: renderStage->GetSubpasses())
+                {
+                    stage.second = subpass.GetBinding();
+                    renderer->PassManager.PreRenderStage(stage, *commandBuffer);
+                }
+                stage.second = 0;
+
+                // Frame-graph-driven resource barriers: this is the only point guaranteed to run
+                // after every PreRender() for this render stage (compute dispatches, etc.) and
+                // before its renderpass and therefore its attachments' LOAD_OP_CLEAR
+                // begins. Barriers can't be recorded once vkCmdBeginRenderPass has run, so this
+                // has to happen here, not inside any individual pass. A no-op for any render
+                // stage with no passes registered in the frame graph.
+                renderer->GetFrameGraph().EmitPendingBarriers(stage.first, *commandBuffer);
+
+                if (!StartRenderpass(id, *renderStage))
+                {
+                    wentStale = true;
+                    break;
+                }
+
+                for (const auto &subpass: renderStage->GetSubpasses())
+                {
+                    stage.second = subpass.GetBinding();
+                    renderer->PassManager.RenderStage(stage, *commandBuffer);
+
+                    if (subpass.GetBinding() != renderStage->GetSubpasses().back().GetBinding())
+                        vkCmdNextSubpass(*commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+                }
+
+                EndRenderpass(id, *renderStage);
+                stage.first++;
+            }
+
+            if (wentStale)
+            {
+                RecreatePass();
+                return;
+            }
+        }
+
+        if (elapsedPurge.GetElapsed() != 0)
+        {
+            for (auto it = commandPools.begin(); it != commandPools.end();)
+            {
+                if ((*it).second.use_count() <= 1)
+                {
+                    it = commandPools.erase(it);
+                    continue;
+                }
+                ++it;
+            }
+        }
+    }
+
+    std::string RenderSystem::StrVkResult(VkResult result)
+    {
+        switch (result)
+        {
+            case VK_SUCCESS:
+                return "Success";
+            case VK_NOT_READY:
+                return "A fence or query has not yet completed";
+            case VK_TIMEOUT:
+                return "A wait operation has not completed in the specified time";
+            case VK_EVENT_SET:
+                return "An event is signaled";
+            case VK_EVENT_RESET:
+                return "An event is unsignaled";
+            case VK_INCOMPLETE:
+                return "A return array was too small for the result";
+            case VK_ERROR_OUT_OF_HOST_MEMORY:
+                return "A host memory allocation has failed";
+            case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+                return "A device memory allocation has failed";
+            case VK_ERROR_INITIALIZATION_FAILED:
+                return "Initialization of an object could not be completed for "
+                       "implementation-specific reasons";
+            case VK_ERROR_DEVICE_LOST:
+                return "The logical or physical device has been lost";
+            case VK_ERROR_MEMORY_MAP_FAILED:
+                return "Mapping of a memory object has failed";
+            case VK_ERROR_LAYER_NOT_PRESENT:
+                return "A requested layer is not present or could not be loaded";
+            case VK_ERROR_EXTENSION_NOT_PRESENT:
+                return "A requested extension is not supported";
+            case VK_ERROR_FEATURE_NOT_PRESENT:
+                return "A requested feature is not supported";
+            case VK_ERROR_INCOMPATIBLE_DRIVER:
+                return "The requested version of Vulkan is not supported by the driver or is "
+                       "otherwise incompatible";
+            case VK_ERROR_TOO_MANY_OBJECTS:
+                return "Too many objects of the type have already been created";
+            case VK_ERROR_FORMAT_NOT_SUPPORTED:
+                return "A requested format is not supported on this device";
+            case VK_ERROR_SURFACE_LOST_KHR:
+                return "A surface is no longer available";
+            case VK_SUBOPTIMAL_KHR:
+                return "A swapchain no longer matches the surface properties exactly, but can "
+                       "still be used";
+            case VK_ERROR_OUT_OF_DATE_KHR:
+                return "A surface has changed in such a way that it is no longer compatible with "
+                       "the swapchain";
+            case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
+                return "The display used by a swapchain does not use the same presentable image "
+                       "layout";
+            case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
+                return "The requested window is already connected to a VkSurfaceKHR, or to some "
+                       "other non-Vulkan API";
+            case VK_ERROR_VALIDATION_FAILED_EXT:
+                return "A validation layer found an error";
+            default:
+                return "Unknown Vulkan error";
+        }
+    }
+
+    void RenderSystem::CheckVkResult(VkResult result)
+    {
+        if (result >= 0)
+            return;
+        if (result == VK_ERROR_DEVICE_LOST)
+        {
+            Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST detected; exiting immediately, no cleanup.");
+            _Exit(EXIT_FAILURE);
+        }
+
+        throw std::runtime_error("Vulkan error: " + StrVkResult(result));
+    }
+
+    void RenderSystem::CaptureScreenshot(const std::filesystem::path &filename, std::size_t id) const
+    {
+        auto size = WindowManager::Get()->GetWindow(0)->GetSize();
+
+        VkImage dstImage;
+        VmaAllocation dstImageMemory;
+
+        Image::CopyImage(swapchains[id]->GetActiveImage(), dstImage, dstImageMemory, surfaces[id]->GetFormat().format,
+                         {size.x, size.y, 1}, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 0, 0);
+
+        VkImageSubresource imageSubresource{};
+        imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+        VkSubresourceLayout dstSubresourceLayout{};
+        vkGetImageSubresourceLayout(*logicalDevice, dstImage, &imageSubresource, &dstSubresourceLayout);
+
+        Bitmap bitmap(std::make_unique<uint8_t[]>(dstSubresourceLayout.size), size);
+
+        void *data = nullptr;
+        vmaMapMemory(alloc, dstImageMemory, &data);
+
+        std::memcpy(bitmap.GetData().get(), static_cast<uint8_t *>(data) + dstSubresourceLayout.offset,
+                    static_cast<size_t>(dstSubresourceLayout.size));
+
+        vmaUnmapMemory(alloc, dstImageMemory);
+        vmaDestroyImage(alloc, dstImage, dstImageMemory);
+        bitmap.Write(filename);
+    }
+
+    const RhiRenderStage *RenderSystem::GetRenderStage(uint32_t index) const
+    {
+        if (renderer)
+            return renderer->GetRenderStage(index);
+        return nullptr;
+    }
+
+    const Descriptor *RenderSystem::GetAttachment(const std::string &name) const
+    {
+        if (auto it = attachments.find(name); it != attachments.end())
+            return it->second;
+        return nullptr;
+    }
+
+    const std::shared_ptr<CommandPool> &RenderSystem::GetCommandPool(const std::thread::id &threadId)
+    {
+        if (auto it = commandPools.find(threadId); it != commandPools.end())
+            return it->second;
+        return commandPools.emplace(threadId, std::make_shared<CommandPool>(threadId)).first->second;
+    }
+
+    void RenderSystem::CreatePipelineCache()
+    {
+        VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
+        pipelineCacheCreateInfo.sType                     = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+        CheckVkResult(vkCreatePipelineCache(*logicalDevice, &pipelineCacheCreateInfo, nullptr, &pipelineCache));
+    }
+
+    void RenderSystem::ResetRenderStages()
+    {
+        // Update render stages first so extents are populated from the window size
+        for (const auto &renderStage: renderer->renderStages)
+            renderStage->Update();
+
+        RecreateSwapchain();
+
+        for (const auto [id, swapchain]: Enumerate(swapchains))
+        {
+            auto &perSurfaceBuffer = perSurfaceBuffers[id];
+            if (perSurfaceBuffer->flightFences.size() != swapchain->GetImageCount())
+                RecreateCommandBuffers(id);
+
+            for (const auto &renderStage: renderer->renderStages)
+                renderStage->Rebuild(*swapchain);
+        }
+
+        RecreateAttachmentsMap();
+    }
+
+    void RenderSystem::RecreateSwapchain()
+    {
+        // Wait until the window has a valid size (handles minimize/restore)
+        auto window = WindowManager::Get()->GetWindow(0);
+        while (window->GetSize().x == 0 || window->GetSize().y == 0)
+            glfwWaitEvents();
+
+        if (window->ShouldClose())
+            return;
+
+        RenderSystem::CheckVkResult(vkDeviceWaitIdle(*logicalDevice));
+
+        VkExtent2D displayExtent = {WindowManager::Get()->GetWindow(0)->GetSize().x,
+                                    WindowManager::Get()->GetWindow(0)->GetSize().y};
+        swapchains.resize(surfaces.size());
+        perSurfaceBuffers.resize(surfaces.size());
+        for (const auto [id, surface]: Enumerate(surfaces))
+        {
+            swapchains[id] = std::make_unique<RhiSwapchain>(*physicalDevice, *surface, *logicalDevice, displayExtent,
+                                                            swapchains[id].get());
+
+            // Explicitly destroy semaphores and fences before replacing the buffer set.
+            // Simply assigning a new PerSurfaceBuffers leaks them because the Vulkan
+            // handles are plain VkSemaphore/VkFence values with no RAII wrappers.
+            if (perSurfaceBuffers[id])
+            {
+                auto &psb = *perSurfaceBuffers[id];
+                for (std::size_t i = 0; i < psb.flightFences.size(); i++)
+                {
+                    vkDestroyFence(*logicalDevice, psb.flightFences[i], nullptr);
+                    vkDestroySemaphore(*logicalDevice, psb.renderCompletes[i], nullptr);
+                    vkDestroySemaphore(*logicalDevice, psb.presentCompletes[i], nullptr);
+                }
+                psb.flightFences.clear();
+                psb.renderCompletes.clear();
+                psb.presentCompletes.clear();
+                psb.commandBuffers.clear();
+            }
+
+            perSurfaceBuffers[id] = std::make_unique<PerSurfaceBuffers>();
+            RecreateCommandBuffers(id);
+        }
+
+        RenderSystem::CheckVkResult(vkDeviceWaitIdle(*logicalDevice));
+    }
+
+    void RenderSystem::RecreateCommandBuffers(std::size_t id)
+    {
+        auto &swapchain        = swapchains[id];
+        auto &perSurfaceBuffer = perSurfaceBuffers[id];
+
+        for (std::size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
+        {
+            vkDestroyFence(*logicalDevice, perSurfaceBuffer->flightFences[i], nullptr);
+            vkDestroySemaphore(*logicalDevice, perSurfaceBuffer->renderCompletes[i], nullptr);
+            vkDestroySemaphore(*logicalDevice, perSurfaceBuffer->presentCompletes[i], nullptr);
+        }
+
+        perSurfaceBuffer->presentCompletes.resize(swapchain->GetImageCount());
+        perSurfaceBuffer->renderCompletes.resize(swapchain->GetImageCount());
+        perSurfaceBuffer->flightFences.resize(swapchain->GetImageCount());
+        perSurfaceBuffer->commandBuffers.resize(swapchain->GetImageCount());
+
+        VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+        semaphoreCreateInfo.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+        VkFenceCreateInfo fenceCreateInfo = {};
+        fenceCreateInfo.sType             = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCreateInfo.flags             = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        for (std::size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
+        {
+            CheckVkResult(vkCreateSemaphore(*logicalDevice, &semaphoreCreateInfo, nullptr,
+                                            &perSurfaceBuffer->presentCompletes[i]));
+            CheckVkResult(vkCreateSemaphore(*logicalDevice, &semaphoreCreateInfo, nullptr,
+                                            &perSurfaceBuffer->renderCompletes[i]));
+            CheckVkResult(vkCreateFence(*logicalDevice, &fenceCreateInfo, nullptr, &perSurfaceBuffer->flightFences[i]));
+            perSurfaceBuffer->commandBuffers[i] = std::make_unique<CommandBuffer>(false);
+        }
+    }
+
+    void RenderSystem::RecreatePass()
+    {
+        VkExtent2D displayExtent = {WindowManager::Get()->GetWindow(0)->GetSize().x,
+                                    WindowManager::Get()->GetWindow(0)->GetSize().y};
+
+        CheckVkResult(vkQueueWaitIdle(logicalDevice->GetGraphicsQueue()));
+
+        bool needsSwapchainRecreate = false;
+        for (const auto [sid, swapchain]: Enumerate(swapchains))
+        {
+            auto &psb = perSurfaceBuffers[sid];
+            // Check ALL stages for a swapchain attachment, not just the one
+            // passed in; RecreatePass may be invoked with any stage as the
+            // trigger, and that stage might not be the one that owns swapchain.
+            bool anyStageHasSwapchain = std::any_of(renderer->renderStages.begin(), renderer->renderStages.end(),
+                                                    [](const auto &rs) { return rs->HasSwapchain(); });
+
+            if (anyStageHasSwapchain && (psb->framebufferResized || !swapchain->IsSameExtent(displayExtent)))
+            {
+                needsSwapchainRecreate = true;
+            }
+        }
+
+        if (needsSwapchainRecreate)
+            RecreateSwapchain();
+
+        for (const auto [sid, swapchain]: Enumerate(swapchains))
+        {
+            if (perSurfaceBuffers[sid]->flightFences.size() != swapchain->GetImageCount())
+                RecreateCommandBuffers(sid);
+
+            for (const auto &stage: renderer->renderStages)
+                stage->Rebuild(*swapchain);
+        }
+
+        RecreateAttachmentsMap();
+    }
+
+    void RenderSystem::RecreateAttachmentsMap()
+    {
+        ++attachmentGeneration;
+        attachments.clear();
+
+        for (const auto &renderStage: renderer->renderStages)
+            attachments.insert(renderStage->descriptors.begin(), renderStage->descriptors.end());
+    }
+
+    bool RenderSystem::StartRenderpass(std::size_t id, RhiRenderStage &renderStage)
+    {
+        // Staleness is now handled up-front in Update(), so this should never
+        // be true here. Kept as a safety net only; no RecreatePass call,
+        // since calling it mid-loop is what caused the resize deadlock.
+        if (renderStage.IsOutOfDate())
+            return false;
+
+        auto &swapchain        = swapchains[id];
+        auto &perSurfaceBuffer = perSurfaceBuffers[id];
+        auto &commandBuffer    = perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
+
+        if (!commandBuffer->IsRunning())
+            commandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
+
+        // Use the stage's own framebuffer extent (clamped to the swapchain for swapchain stages),
+        // NOT the raw swapchain extent: non-swapchain stages' attachments are sized from the
+        // window, and a render area/viewport larger than the framebuffer is UB (GPU hang).
+        const UVec2 stageExtent = renderStage.GetEffectiveExtent(*swapchain);
+        VkExtent2D scExtent     = {stageExtent.x, stageExtent.y};
+        VkRect2D renderArea     = {};
+        renderArea.offset       = {0, 0};
+        renderArea.extent       = scExtent;
+
+        VkViewport viewport = {};
+        viewport.x          = 0.0f;
+        viewport.y          = 0.0f;
+        viewport.width      = static_cast<float>(scExtent.width);
+        viewport.height     = static_cast<float>(scExtent.height);
+        viewport.minDepth   = 0.0f;
+        viewport.maxDepth   = 1.0f;
+        vkCmdSetViewport(*commandBuffer, 0, 1, &viewport);
+
+        VkRect2D scissor = {};
+        scissor.offset   = renderArea.offset;
+        scissor.extent   = renderArea.extent;
+        vkCmdSetScissor(*commandBuffer, 0, 1, &scissor);
+
+        auto clearValues = renderStage.GetClearValues();
+
+        VkRenderPassBeginInfo renderPassBeginInfo = {};
+        renderPassBeginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass            = *renderStage.GetRenderpass();
+        renderPassBeginInfo.framebuffer           = renderStage.GetActiveFramebuffer(swapchain->GetActiveImageIndex());
+        renderPassBeginInfo.renderArea            = renderArea;
+        renderPassBeginInfo.clearValueCount       = static_cast<uint32_t>(clearValues.size());
+        renderPassBeginInfo.pClearValues          = clearValues.data();
+        vkCmdBeginRenderPass(*commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        return true;
+    }
+
+    void RenderSystem::EndRenderpass(std::size_t id, RhiRenderStage &renderStage)
+    {
+        auto presentQueue      = logicalDevice->GetPresentQueue();
+        auto &swapchain        = swapchains[id];
+        auto &perSurfaceBuffer = perSurfaceBuffers[id];
+        auto &commandBuffer    = perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
+
+        vkCmdEndRenderPass(*commandBuffer);
+
+        if (!renderStage.HasSwapchain())
+            return;
+
+        commandBuffer->End();
+        commandBuffer->Submit(perSurfaceBuffer->presentCompletes[perSurfaceBuffer->currentFrame],
+                              perSurfaceBuffer->renderCompletes[perSurfaceBuffer->currentFrame],
+                              perSurfaceBuffer->flightFences[perSurfaceBuffer->currentFrame]);
+
+        auto presentResult = swapchain->QueuePresent(presentQueue,
+                                                     perSurfaceBuffer->renderCompletes[perSurfaceBuffer->currentFrame]);
+        if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR ||
+            presentResult == VK_ERROR_SURFACE_LOST_KHR)
+        {
+            perSurfaceBuffer->framebufferResized = true;
+        } else if (presentResult == VK_ERROR_DEVICE_LOST)
+        {
+            Log::Critical("[RenderSystem] VK_ERROR_DEVICE_LOST during QueuePresent; exiting immediately.");
+            _Exit(EXIT_FAILURE);
+        } else if (presentResult != VK_SUCCESS)
+        {
+            CheckVkResult(presentResult);
+            Log::Error("Failed to present swap chain image!\n");
+        }
+
+        perSurfaceBuffer->currentFrame = (perSurfaceBuffer->currentFrame + 1) % swapchain->GetImageCount();
+    }
+
+    uint32_t RenderSystem::GetVkAPIVersion()
+    {
+        uint32_t apiVersion = 0;
+
+        // vkEnumerateInstanceVersion is available in Vulkan 1.1+
+        if (vkEnumerateInstanceVersion(&apiVersion) == VK_SUCCESS)
+        {
+            uint32_t major = VK_API_VERSION_MAJOR(apiVersion);
+            uint32_t minor = VK_API_VERSION_MINOR(apiVersion);
+            uint32_t patch = VK_API_VERSION_PATCH(apiVersion);
+
+            return VK_MAKE_VERSION(major, minor, patch);
+        } else
+        {
+            return VK_API_VERSION_1_0;
+        }
+    }
+} // namespace SF::Engine

@@ -1,14 +1,14 @@
 #pragma once
-#include <Gui/ocornut/imgui.h>
+#include <Gui/ImGui/ocornut/imgui.h>
 #include "AssetPipeline.hpp"
 
 namespace SF::Engine
 {
     inline namespace Wizards
     {
-        template <class T = AssetBase>
+        template<class T = AssetBase>
         void CreateAssetWizard()
         {
         }
-    }
+    } // namespace Wizards
 }

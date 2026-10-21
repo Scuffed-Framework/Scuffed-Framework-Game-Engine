@@ -8,7 +8,7 @@ struct AtmoUBO
     float4x4 invProj;
     float4x4 invView;
     float4 cameraPos;
-    float4 planetPos;   
+    float4 planetPos;
     float4 sunDir;
     float bottomRadius;
     float topRadius;
@@ -21,29 +21,26 @@ struct AtmoUBO
 struct SkyViewUBO
 {
     float4 sunDir;
-    float cameraHeight;
+    float4 camPos;
     float bottomRadius;
     float topRadius;
-    float _pad;
+    float4 pad0_;
 };
 
 const static float kPI = 3.14159265358979;
 
-
-
-
 // TODO: buffer
 const static float BOTTOM_RADIUS = 6371000.0; // Earth surface radius (metres)
-const static float TOP_RADIUS    = 6471000.0; // Atmosphere top radius (metres)
-const static int   STEPS         = 40;        // Transmittance LUT ray-march steps
+const static float TOP_RADIUS = 6471000.0;    // Atmosphere top radius (metres)
+const static int STEPS = 40;                  // Transmittance LUT ray-march steps
 // Rayleigh: Earth standard values (Bruneton & Neyret 2008).
 // The blue/red ratio (~5.7×) is what gives the sky its colour.
 // Original values were correct here; kept as-is.
-const static float3  RAY_BETA          = float3(5.80245e-6, 1.35579e-5, 3.31084e-5);
+const static float3 RAY_BETA = float3(5.80245e-6, 1.35579e-5, 3.31084e-5);
 
-const static float3  MIE_BETA          = float3(3.996e-6);
+const static float3 MIE_BETA = float3(3.996e-6);
 
-const static float3 AMBIENT_BETA      = float3(0.0);
+const static float3 AMBIENT_BETA = float3(0.0);
 
 // Ozone absorption: REBALANCED.
 // Original: float3(2.04e-5, 4.97e-5, 1.95e-6)
@@ -51,37 +48,45 @@ const static float3 AMBIENT_BETA      = float3(0.0);
 // band that produces the characteristic cyan limb colour.  Real ozone absorption
 // peaks at ~600nm (red/orange), is fmoderate at ~550nm (green), and nearly zero
 // at ~450nm (blue).  Values scaled to match the Hillaire 2020 reference.
-const static float3  ABSORPTION_BETA   = float3(0.65e-6, 1.881e-5, 0.085e-6);
+const static float3 ABSORPTION_BETA = float3(0.65e-6, 1.881e-5, 0.085e-6);
 
 // Mie asymmetry: INCREASED from 0.8 → 0.85.
 // Keeps forward-scattering glow tight around the sun disk so it doesn't
 // spill into a broad grey halo that desaturates the rest of the sky.
-const static float G                 = 0.85;
+const static float G = 0.85;
 
 // Rayleigh scale height: unchanged (8 km is Earth standard).
-const static float HEIGHT_RAY        = 8e3;
+const static float HEIGHT_RAY = 8e3;
 
 // Mie scale height: INCREASED from 1.0 km → 1.2 km.
 // 1.0 km concentrated aerosols too close to the surface, creating a thick
 // brown/purple band at the horizon.  1.2 km gives a smoother, thinner haze layer.
-const static float HEIGHT_MIE        = 1.2e3;
+const static float HEIGHT_MIE = 1.2e3;
 
 const static float HEIGHT_ABSORPTION = 30e3;
-const static float ABSORPTION_FALLOFF= 4e3;
-const static int   PRIMARY_STEPS     = 64;
+const static float ABSORPTION_FALLOFF = 4e3;
+const static int PRIMARY_STEPS = 64;
 
 // ------------------------------------------------------------------
 // Transmittance LUT UV: sqrt-warp on height so the dense lower
 // atmosphere gets more texels. u=0 ground, u=1 atmo top.
 // ------------------------------------------------------------------
+
+float interleavedGradientNoise(float2 pixelCoord)
+{
+    float3 magic = float3(0.06711056, 0.00583715, 52.9829189);
+    return frac(magic.z * frac(dot(pixelCoord, magic.xy)));
+}
+
 float heightToU(float height, float bottomRadius, float topRadius)
 {
     float t = clamp((height - bottomRadius) / (topRadius - bottomRadius), 0.0, 1.0);
     return sqrt(t);
 }
 
-float uToHeight(float u, float Rbot, float Rtop) {
-    float t = u * u;   // exact inverse of sqrt in heightToU, u² undoes sqrt(t)
+float uToHeight(float u, float Rbot, float Rtop)
+{
+    float t = u * u; // exact inverse of sqrt in heightToU, u² undoes sqrt(t)
     return Rbot + t * (Rtop - Rbot);
 }
 
@@ -95,8 +100,42 @@ float2 atmosUV(float height, float cosSun, float bottomRadius, float topRadius)
 float3 sampleTransmittance(Sampler2D lut, float height, float cosSun,
                            float bottomRadius, float topRadius)
 {
+    float ratio = bottomRadius / height;
+    float cosHorizon = -sqrt(max(0.0, 1.0 - ratio * ratio));
+    float shadow = smoothstep(cosHorizon - 0.015, cosHorizon + 0.015, cosSun);
+    if (shadow <= 0.0)
+        return float3(0.0);
+
     float2 uv = atmosUV(height, cosSun, bottomRadius, topRadius);
     return lut.SampleLevel(uv, 0.0).rgb;
+}
+float3 getSpaceTransmittance(Sampler2D lut, float3 pos, float3 dir, float bottomRadius, float topRadius)
+{
+    float r = length(pos);
+
+    // If inside the atmosphere, standard LUT lookup
+    if (r <= topRadius) {
+        float cosZ = dot(pos / r, dir);
+        return sampleTransmittance(lut, r, cosZ, bottomRadius, topRadius);
+    }
+
+    // Raycast to check if the ray hits the atmosphere from space
+    float2 atmoHit = raySphereIntersect(pos, dir, topRadius);
+    if (atmoHit.y < 0.0) return float3(1.0); // Misses completely
+
+    // Check if the planet blocks the sun
+    float2 gndHit = raySphereIntersect(pos, dir, bottomRadius);
+    if (gndHit.x > 0.0) return float3(0.0); // Eclipsed by planet
+
+    // Ray passes completely through the atmosphere.
+    // Find the closest point to the planet's center (perigee).
+    float dPerigee = -dot(pos, dir);
+    float3 perigeePt = pos + dir * dPerigee;
+    float rPerigee = length(perigeePt);
+
+    // Transmittance is symmetric. Evaluate from perigee outward, and square it.
+    float3 T = sampleTransmittance(lut, rPerigee, 0.0, bottomRadius, topRadius);
+    return T * T;
 }
 
 float3 sampleMultiScatter(Sampler2D lut, float height, float cosSun,
@@ -106,29 +145,29 @@ float3 sampleMultiScatter(Sampler2D lut, float height, float cosSun,
     return lut.SampleLevel(uv, 0.0).rgb;
 }
 
-
 float2 raySphereIntersect(float3 start, float3 dir, float radius)
 {
     float a = dot(dir, dir);
     float b = 2.0 * dot(dir, start);
-    
+
     // PRECISION FIX: Avoid dot(start, start)
     float h = length(start);
     float c = (h - radius) * (h + radius);
-    
-    float d = b*b - 4.0*a*c;
-    
+
+    float d = b * b - 4.0 * a * c;
+
     // Using negative numbers is safer than 1e5 for misses
-    if (d < 0.0) return float2(-1.0, -2.0); 
-    
-    return float2((-b - sqrt(d)) / (2.0*a),
-                (-b + sqrt(d)) / (2.0*a));
+    if (d < 0.0)
+        return float2(-1.0, -2.0);
+
+    return float2((-b - sqrt(d)) / (2.0 * a),
+                  (-b + sqrt(d)) / (2.0 * a));
 }
 
 float skyViewEncodeV(float theta, float camR, float botRadius)
 {
     float ratio = botRadius / camR;
-    float sinHorizon   = -sqrt(max(0.0, 1.0 - ratio * ratio));
+    float sinHorizon = -sqrt(max(0.0, 1.0 - ratio * ratio));
     float thetaHorizon = asin(clamp(sinHorizon, -1.0, 1.0));
 
     if (theta < thetaHorizon)
@@ -147,7 +186,7 @@ float skyViewEncodeV(float theta, float camR, float botRadius)
 
 float skyViewDecodeV(float v, float camR, float botRadius)
 {
-    float sinHorizon   = -sqrt(max(0.0, 1.0 - (botRadius * botRadius) / (camR * camR)));
+    float sinHorizon = -sqrt(max(0.0, 1.0 - (botRadius * botRadius) / (camR * camR)));
     float thetaHorizon = asin(clamp(sinHorizon, -1.0, 1.0));
 
     if (v < 0.5)
@@ -173,89 +212,92 @@ float3 calculateScattering(
 {
     float a = dot(dir, dir);
     float b = 2.0 * dot(dir, start);
-    
+
     // PRECISION FIX
     float h = length(start);
     float c = (h - atmosRadius) * (h + atmosRadius);
-    
-    float d = b*b - 4.0*a*c;
-    if (d < 0.0) { transmittance = float3(1.0); return float3(0.0); }
+
+    float d = b * b - 4.0 * a * c;
+    if (d < 0.0)
+    {
+        transmittance = float3(1.0);
+        return float3(0.0);
+    }
 
     float2 rayLength = float2(
-        max((-b - sqrt(d)) / (2.0*a), 0.0),
-        min((-b + sqrt(d)) / (2.0*a), maxDist));
-    if (rayLength.x > rayLength.y) { transmittance = float3(1.0); return float3(0.0); }
+        max((-b - sqrt(d)) / (2.0 * a), 0.0),
+        min((-b + sqrt(d)) / (2.0 * a), maxDist));
+    if (rayLength.x > rayLength.y)
+    {
+        transmittance = float3(1.0);
+        return float3(0.0);
+    }
 
     // Exponential step distribution: steps cluster near the ray origin where
     // atmospheric density is highest and changes fastest.
-    float totalLen  = rayLength.y - rayLength.x;
-    const float EXP_K  = 10.0;
-    float logScale  = log(1.0 + EXP_K);
+    float totalLen = rayLength.y - rayLength.x;
+    const float EXP_K = 10.0;
+    float logScale = log(1.0 + EXP_K);
 
     float3 totalRay = float3(0.0);
     float3 totalMie = float3(0.0);
-    float3 totalMS  = float3(0.0);
-    float3 optI     = float3(0.0);
+    float3 totalMS = float3(0.0);
+    float3 optI = float3(0.0);
 
-    float mu     = dot(dir, lightDir);
-    float mumu   = mu * mu;
-    float gg     = G * G;
+    float mu = dot(dir, lightDir);
+    float mumu = mu * mu;
+    float gg = G * G;
     float phaseR = 3.0 / (16.0 * kPI) * (1.0 + mumu);
-    float phaseM = 3.0 / (8.0  * kPI) * ((1.0 - gg) * (mumu + 1.0))
-                   / (pow(1.0 + gg - 2.0*mu*G, 1.5) * (2.0 + gg));
+    float phaseM = 3.0 / (8.0 * kPI) * ((1.0 - gg) * (mumu + 1.0)) / (pow(1.0 + gg - 2.0 * mu * G, 1.5) * (2.0 + gg));
 
     for (int i = 0; i < PRIMARY_STEPS; i++)
     {
-        float s0   = float(i)     / float(PRIMARY_STEPS);
-        float s1   = float(i + 1) / float(PRIMARY_STEPS);
-        float t0   = totalLen * (exp(s0 * logScale) - 1.0) / EXP_K;
-        float t1   = totalLen * (exp(s1 * logScale) - 1.0) / EXP_K;
-        float dt   = t1 - t0;
-        float tMid = rayLength.x + (t0 + t1) * 0.5;
+        float s0 = float(i) / float(PRIMARY_STEPS);
+        float s1 = float(i + 1) / float(PRIMARY_STEPS);
+        float t0 = totalLen * (exp(s0 * logScale) - 1.0) / EXP_K;
+        float t1 = totalLen * (exp(s1 * logScale) - 1.0) / EXP_K;
+        float dt = t1 - t0;
 
-        float3  posI    = start + dir * tMid;
+        float tMid = rayLength.x + t0 + (dt * 0.5);
+
+        float3 posI = start + dir * tMid;
         float heightI = length(posI) - planetRadius;
 
-        float3  density = float3(exp(-heightI / HEIGHT_RAY),
-                             exp(-heightI / HEIGHT_MIE),
-                             0.0);
-        float denom   = (HEIGHT_ABSORPTION - heightI) / ABSORPTION_FALLOFF;
-        density.z     = (1.0 / (denom*denom + 1.0)) * density.x;
-        density      *= dt;
-        optI         += density;
+        float3 density = float3(exp(-heightI / HEIGHT_RAY),
+                                exp(-heightI / HEIGHT_MIE),
+                                0.0);
+        float denom = (HEIGHT_ABSORPTION - heightI) / ABSORPTION_FALLOFF;
+        density.z = (1.0 / (denom * denom + 1.0)) * density.x;
+        density *= dt;
+        optI += density;
 
         float3 camTrans = exp(
-            - RAY_BETA        * optI.x
-            - MIE_BETA        * optI.y
-            - ABSORPTION_BETA * optI.z);
+            -RAY_BETA * optI.x - MIE_BETA * optI.y - ABSORPTION_BETA * optI.z);
 
         float cosSunI = dot(normalize(posI), lightDir);
-        float hI      = length(posI);
+        float hI = length(posI);
         float3 sunTrans = sampleTransmittance(transmittanceLUT, hI, cosSunI,
-                                            planetRadius, atmosRadius);
+                                              planetRadius, atmosRadius);
 
         float3 attn = camTrans * sunTrans;
         totalRay += density.x * attn;
         totalMie += density.y * attn;
 
-        float3 ms      = sampleMultiScatter(multiScatterLUT, hI, cosSunI,
-                                          planetRadius, atmosRadius);
-        float3 sigma_s = RAY_BETA * (density.x / dt)
-                     + MIE_BETA * (density.y / dt);
+        float3 ms = sampleMultiScatter(multiScatterLUT, hI, cosSunI,
+                                       planetRadius, atmosRadius);
+        float3 sigma_s = RAY_BETA * (density.x / dt) + MIE_BETA * (density.y / dt);
         totalMS += camTrans * sigma_s * ms * dt;
     }
 
-    transmittance = exp(-(MIE_BETA        * optI.y
-                        + RAY_BETA        * optI.x
-                        + ABSORPTION_BETA * optI.z));
+    transmittance = exp(-(MIE_BETA * optI.y + RAY_BETA * optI.x + ABSORPTION_BETA * optI.z));
 
-    return (phaseR * RAY_BETA * totalRay
-          + phaseM * MIE_BETA * totalMie
-          + totalMS
-          + optI.x * AMBIENT_BETA) * lightIntensity;
+    return (phaseR * RAY_BETA * totalRay + phaseM * MIE_BETA * totalMie + totalMS + optI.x * AMBIENT_BETA) * lightIntensity;
 }
 
-float fromUnitToSubUvs(float u, float resolution) { return (u + 0.5f / resolution) * (resolution / (resolution + 1.0f)); }
+float fromUnitToSubUvs(float u, float resolution)
+{
+    return (u + 0.5f / resolution) * (resolution / (resolution + 1.0f));
+}
 
 void skyViewLutParamsToUv(
     in const AtmoUBO atmosphere,

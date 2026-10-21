@@ -1,9 +1,9 @@
 #include "SceneLoading.hpp"
-#include <Camera/EditorCamera.hpp>
-#include <Default/DefaultScene.hpp>
+#include <Rendering/Camera/EditorCamera.hpp>
+#include <Configuration/Default/DefaultScene.hpp>
 #include <Engine/Log/Log.hpp>
-#include <Filesystem/File.hpp>
-#include <XML/XMLModule.hpp>
+#include <LowLevel/FileSystem/File.hpp>
+#include <LowLevel/XML/XMLModule.hpp>
 
 #include <fstream>
 #include <sstream>

@@ -1,30 +1,31 @@
 #include "Engine.hpp"
-#include <Default/DefaultScene.hpp>
-#include <Scene/SceneManager.hpp>
-#include <Project/Project.hpp>
+#include <Configuration/Default/DefaultScene.hpp>
+#include <Engine/Project/Project.hpp>
 #include <GameScript/LuaEngine.hpp>
+#include <Scene/SceneManager.hpp>
+#include <ranges>
+
+#ifdef Always
+    #undef Always
+#endif
 
 namespace SF::Engine
 {
     Engine *Engine::Instance = nullptr;
 
-    Engine::Engine(std::string argv0, ModuleFilter &&moduleFilter, URL startUpURL)
-        : argv0(std::move(argv0)),
-          version{Engine_VERSION_MAJOR, Engine_VERSION_MINOR, Engine_VERSION_PATCH},
-          fpsLimit(-1.0f),
-          running(true),
-          elapsedUpdate(15.77ms),
-          elapsedRender(-1s)
+    Engine::Engine(std::string argv0, ModuleFilter &&moduleFilter, const URL &startUpURL) :
+        argv0(std::move(argv0)), version{Engine_VERSION_MAJOR, Engine_VERSION_MINOR, Engine_VERSION_PATCH},
+        fpsLimit(-1.0f), running(true), elapsedUpdate(15.77ms), elapsedRender(-1s)
     {
         Instance = this;
-        Log::Init(ApplicationTime::GetDateTime("Logs/%Y%m%d%H%M%S.txt"));
+        Log::Init(GetDateTime("Logs/%Y%m%d%H%M%S.txt"));
 
         // Create modules from registry
         for (auto it = Module::Registry().begin(); it != Module::Registry().end(); ++it)
             CreateModule(it, moduleFilter);
 
         // Initialize all modules
-        for (auto &[id, module] : modules)
+        for (auto &module: modules | views::values)
         {
             if (module && !module->Initialize())
             {
@@ -32,8 +33,8 @@ namespace SF::Engine
             }
         }
 
-        // annoying as fuck, I know. Getting the logical device inside the RenderSystem constructor is too early,
-        // so we have to call this after the RenderSystem is fully initialized. I don't like it either.
+        // annoying, getting the logical device inside the RenderSystem constructor is too early,
+        // so we have to call this after the RenderSystem is fully initialized.
         RenderSystem::Get()->PostInit();
 
         gameInstance = std::make_unique<GameInstance>();
@@ -42,8 +43,7 @@ namespace SF::Engine
         std::unique_ptr<Scene> startupScene;
 
         // Only attempt a network/file load if the URL isn't the placeholder default
-        const bool isDefaultURL = (startUpURL.scheme == "map" &&
-                                   startUpURL.authority == "startup");
+        const bool isDefaultURL = (startUpURL.scheme == "map" && startUpURL.authority == "startup");
         if (!isDefaultURL)
         {
             try
@@ -52,19 +52,16 @@ namespace SF::Engine
                 if (result.success)
                 {
                     startupScene = std::move(result.scene);
-                    Log::Info("Engine: startup scene loaded from '{}'",
-                              startUpURL.ToString());
+                    Log::Info("Engine: startup scene loaded from '{}'", startUpURL.ToString());
                     if (gameInstance)
                         gameInstance->OnCreate();
-                }
-                else
+                } else
                 {
                     Log::Warning("Engine: startup scene load failed ({}), "
                                  "using DefaultScene",
                                  result.error);
                 }
-            }
-            catch (const std::exception &e)
+            } catch (const std::exception &e)
             {
                 Log::Warning("Engine: startup scene exception ({}), "
                              "using DefaultScene",
@@ -88,10 +85,10 @@ namespace SF::Engine
         layerStack.Clear();
 
         // Shutdown modules in reverse order
-        for (auto it = modules.rbegin(); it != modules.rend(); ++it)
+        for (auto &[id, module]: std::views::reverse(modules))
         {
-            if (it->second)
-                it->second->Shutdown();
+            if (module)
+                module->Shutdown();
         }
 
         // Destroy modules - collect keys first, since DestroyModule erases from the map
@@ -110,7 +107,7 @@ namespace SF::Engine
     {
         while (running)
         {
-            elapsedRender.SetInterval(ApplicationTime::Seconds(1.0f / fpsLimit));
+            elapsedRender.SetInterval(Milliseconds(1.0f / fpsLimit));
 
             // Always-Update.
             UpdateStage(Module::Stage::Always);
@@ -118,7 +115,7 @@ namespace SF::Engine
             if (elapsedUpdate.GetElapsed() != 0)
             {
                 // Resets the timer.
-                ups.Update(ApplicationTime::Now());
+                ups.Update(ClockNow());
 
                 UpdateStage(Module::Stage::Pre);
 
@@ -133,22 +130,26 @@ namespace SF::Engine
             // Renders when needed.
             if (elapsedRender.GetElapsed() != 0)
             {
-                fps.Update(ApplicationTime::Now());
+                fps.Update(ClockNow());
 
                 UpdateStage(Module::Stage::Render);
 
                 deltaRender.Update();
             }
         }
-        vkDeviceWaitIdle(*RenderSystem::Get()->GetLogicalDevice());
+        if (VkResult r = vkDeviceWaitIdle(*RenderSystem::Get()->GetLogicalDevice()); r < 0)
+        {
+            Log::Critical("[Engine::Run] vkDeviceWaitIdle at loop exit failed: {}", RenderSystem::StrVkResult(r));
+            RenderSystem::CheckVkResult(r);
+        }
 
         return EXIT_SUCCESS;
     }
 
-    void Engine::CreateModule(Module::RegistryMap::const_iterator it, const ModuleFilter &filter)
+    void Engine::CreateModule(RegMap::const_iterator it, const ModuleFilter &filter)
     {
         // Check if module already exists
-        if (modules.find(it->first) != modules.end())
+        if (modules.contains(it->first))
             return;
 
         // Check if module is filtered out
@@ -156,7 +157,7 @@ namespace SF::Engine
             return;
 
         // Recursively create dependencies first
-        for (auto requireId : it->second.dependencies)
+        for (auto requireId: it->second.dependencies)
         {
             auto depIt = Module::Registry().find(requireId);
             if (depIt != Module::Registry().end())
@@ -166,15 +167,13 @@ namespace SF::Engine
         }
 
         // Create the module instance using the factory function
-        auto module = it->second.createFunc();
 
-        if (module)
+        if (auto module = it->second.createFunc())
         {
             Log::Info("Creating module: {}", it->second.name);
             modules[it->first] = std::move(module);
             moduleStages[it->second.stage].emplace_back(it->first);
-        }
-        else
+        } else
         {
             Log::Error("Failed to create module: {}", it->second.name);
         }
@@ -189,9 +188,9 @@ namespace SF::Engine
         // Capture stage BEFORE any recursion invalidates the iterator
         auto stage = it->second->GetStage();
 
-        for (const auto &[registrarId, registrar] : Module::Registry())
+        for (const auto &[registrarId, registrar]: Module::Registry())
         {
-            auto depIt = std::find(registrar.dependencies.begin(), registrar.dependencies.end(), id);
+            auto depIt = ranges::find(registrar.dependencies, id);
             if (depIt != registrar.dependencies.end())
                 DestroyModule(registrarId);
         }
@@ -202,22 +201,22 @@ namespace SF::Engine
             return; // already destroyed by recursive call
 
         auto &stageVec = moduleStages[stage]; // use captured stage, not it->second
-        stageVec.erase(std::remove(stageVec.begin(), stageVec.end(), id), stageVec.end());
+        std::erase(stageVec, id);
 
         modules.erase(it);
     }
 
-    void Engine::UpdateStage(Module::Stage stage)
+    void Engine::UpdateStage(ModuleStage stage)
     {
         auto stageIt = moduleStages.find(stage);
         if (stageIt == moduleStages.end())
             return;
 
-        for (auto &moduleId : stageIt->second)
+        for (auto &moduleId: stageIt->second)
         {
             auto modIt = modules.find(moduleId);
             if (modIt != modules.end() && modIt->second)
                 modIt->second->Update();
         }
     }
-}
+} // namespace SF::Engine

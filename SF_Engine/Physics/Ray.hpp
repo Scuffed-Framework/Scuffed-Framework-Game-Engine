@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Math/Matrix/Matrix4.hpp>
+#include <Math/Matrix/Matrix.hpp>
 #include <Math/Vectors/Vector.hpp>
 
 namespace SF::Engine

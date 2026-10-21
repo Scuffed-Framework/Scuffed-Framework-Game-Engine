@@ -1,0 +1,102 @@
+#pragma once
+#include <Controllers/Controller.hpp>
+#include <Math/KVP.hpp>
+#include "Atmosphere/AtmosphereSFERenderpass.hpp"
+
+#include <functional>
+#include <string>
+#include <utility>
+
+using namespace std;
+namespace SF::Engine
+{
+    struct AtmosphereEntry
+    {
+        std::string name;
+        AtmosphereData data;
+        AtmosphereSFERenderpass *pass = nullptr;
+        Vec3 planetPos                = {0.0f, 0.0f, 0.0f};
+        bool active                   = true;
+    };
+
+    class AtmosphereController : public StaticController<AtmosphereController>
+    {
+    public:
+        using PassFactory = std::function<AtmosphereSFERenderpass *(Pipeline::Stage, const AtmosphereParams &)>;
+
+        explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory) :
+            stage_(std::move(stage)), factory_(std::move(factory))
+        {
+        }
+
+        explicit AtmosphereController(Pipeline::Stage stage, PassFactory factory,
+                                      const vector<KeyValuePair<std::string, AtmosphereData>> &params) :
+            stage_(std::move(stage)), factory_(std::move(factory))
+        {
+            entries_.reserve(params.size());
+            for (const auto &[name, data]: params)
+                entries_.emplace_back(
+                        AtmosphereEntry{name, data, factory_(stage_, data.params), {0.0f, 0.0f, 0.0f}, true});
+        }
+
+        void Update(float /*DeltaTime*/) override
+        {
+            // this would be for clouds->SetFrameData(...);
+        }
+
+        void SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos, const Vec3 &sunDir,
+                          const Vec2 &screenSize)
+        {
+            for (auto &entry: entries_)
+            {
+                if (!entry.active || !entry.pass)
+                    continue;
+
+                entry.pass->SetFrameData(invProj, invView, cameraPos, entry.planetPos, sunDir, screenSize);
+            }
+        }
+
+        void SetActive(const std::string &name, bool active)
+        {
+            if (AtmosphereEntry *entry = Find(name))
+                entry->active = active;
+        }
+
+        void SetPlanetPosition(const std::string &name, const Vec3 &pos)
+        {
+            if (AtmosphereEntry *entry = Find(name))
+                entry->planetPos = pos;
+        }
+
+        void AddAtmosphere(const std::string &name, const AtmosphereData &data, const Vec3 &planetPos = {})
+        {
+            entries_.emplace_back(AtmosphereEntry{.name      = name,
+                                                  .data      = data,
+                                                  .pass      = factory_(stage_, data.params),
+                                                  .planetPos = planetPos,
+                                                  .active    = true});
+        }
+
+        void RemoveAtmosphere(const std::string &name)
+        {
+            const auto newEnd =
+                    ranges::remove_if(entries_, [&name](const AtmosphereEntry &e) { return e.name == name; }).begin();
+            entries_.erase(newEnd, entries_.end());
+        }
+
+        [[nodiscard]] bool Empty() const { return entries_.empty(); }
+
+    private:
+        AtmosphereEntry *Find(const std::string &name)
+        {
+            for (auto &entry: entries_)
+                if (entry.name == name)
+                    return &entry;
+            return nullptr;
+        }
+
+        Pipeline::Stage stage_;
+        PassFactory factory_;
+        vector<AtmosphereEntry> entries_;
+    };
+} // namespace SF::Engine

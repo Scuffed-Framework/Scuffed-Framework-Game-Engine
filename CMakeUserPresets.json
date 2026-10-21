@@ -22,7 +22,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
             },
             "toolchainFile": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake",
-            "binaryDir": "F:\\sf_gameengine\\build"
+            "binaryDir": "${sourceDir}/build"
         }
     ],
     "buildPresets": [
@@ -53,6 +53,7 @@
         }
     ],
     "include": [
+        "build/Debug/build/Debug/generators/CMakePresets.json",
         "build/Debug/generators/CMakePresets.json"
     ]
 }

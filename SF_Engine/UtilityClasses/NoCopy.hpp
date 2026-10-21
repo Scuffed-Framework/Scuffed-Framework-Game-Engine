@@ -68,3 +68,10 @@ namespace SF::Engine
         NoMove &operator=(NoMove &&) = delete;
     };
 }
+
+#define Disable_Copy_Constructors(cl) cl(const cl &) = delete; \
+    cl &operator=(const cl&) = delete;
+#define Disable_Move_Constructors(cl) cl(cl &&) = delete; \
+    cl &operator=(cl &&) = delete;
+#define Disable_Transfer_Constructors(cl) Disable_Copy_Constructors(cl)\
+    Disable_Move_Constructors(cl)
