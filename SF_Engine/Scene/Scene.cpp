@@ -6,7 +6,7 @@
 #include <Rendering/Lighting/LightingTypes.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>
 #include <Rendering/Renderer.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereSFERenderpass.hpp>
+#include <Rendering/Visuals/Sky/Atmosphere/AtmosphereSFERenderpass.hpp>
 
 #include <Rendering/FrameGraph/EngineRenderpassManager.hpp>
 

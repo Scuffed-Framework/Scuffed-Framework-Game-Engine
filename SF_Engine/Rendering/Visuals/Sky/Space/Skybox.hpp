@@ -7,7 +7,7 @@
 #include <memory>
 
 #include <Rendering/FrameGraph/EngineRenderpassInitRegistry.hpp>
-#include <Rendering/Visuals/sfSkies/TimeManager.hpp>
+#include <Rendering/Visuals/Sky/TimeManager.hpp>
 
 namespace SF::Engine
 {

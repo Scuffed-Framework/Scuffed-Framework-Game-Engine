@@ -2,6 +2,7 @@
 #include <Controllers/Controller.hpp>
 #include <Math/KVP.hpp>
 #include "Atmosphere/AtmosphereSFERenderpass.hpp"
+#include "Clouds/CloudSFERenderpass.hpp"
 
 #include <functional>
 #include <string>
@@ -12,11 +13,12 @@ namespace SF::Engine
 {
     struct AtmosphereEntry
     {
-        std::string name;
-        AtmosphereData data;
-        AtmosphereSFERenderpass *pass = nullptr;
-        Vec3 planetPos                = {0.0f, 0.0f, 0.0f};
-        bool active                   = true;
+        std::string name                    = "Earth";
+        AtmosphereData data                 = {};
+        AtmosphereSFERenderpass *atmosphere = nullptr;
+        CloudSFERenderpass *clouds          = nullptr;
+        Vec3 planetPos                      = {0.0f, 0.0f, 0.0f};
+        bool active                         = true;
     };
 
     class AtmosphereController : public StaticController<AtmosphereController>
@@ -36,7 +38,7 @@ namespace SF::Engine
             entries_.reserve(params.size());
             for (const auto &[name, data]: params)
                 entries_.emplace_back(
-                        AtmosphereEntry{name, data, factory_(stage_, data.params), {0.0f, 0.0f, 0.0f}, true});
+                        AtmosphereEntry{name, data, factory_(stage_, data.params), nullptr, {0.0f, 0.0f, 0.0f}, true});
         }
 
         void Update(float /*DeltaTime*/) override
@@ -49,10 +51,10 @@ namespace SF::Engine
         {
             for (auto &entry: entries_)
             {
-                if (!entry.active || !entry.pass)
+                if (!entry.active || !entry.atmosphere)
                     continue;
 
-                entry.pass->SetFrameData(invProj, invView, cameraPos, entry.planetPos, sunDir, screenSize);
+                entry.atmosphere->SetFrameData(invProj, invView, cameraPos, entry.planetPos, sunDir, screenSize);
             }
         }
 
@@ -70,11 +72,11 @@ namespace SF::Engine
 
         void AddAtmosphere(const std::string &name, const AtmosphereData &data, const Vec3 &planetPos = {})
         {
-            entries_.emplace_back(AtmosphereEntry{.name      = name,
-                                                  .data      = data,
-                                                  .pass      = factory_(stage_, data.params),
-                                                  .planetPos = planetPos,
-                                                  .active    = true});
+            entries_.emplace_back(AtmosphereEntry{.name       = name,
+                                                  .data       = data,
+                                                  .atmosphere = factory_(stage_, data.params),
+                                                  .planetPos  = planetPos,
+                                                  .active     = true});
         }
 
         void RemoveAtmosphere(const std::string &name)

@@ -5,7 +5,7 @@
 #include <Rendering/RenderSystem.hpp>
 #include <Rendering/SharedFunctions.hpp>
 #include <Rendering/SharedSamplers.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp>
+#include <Rendering/Visuals/Sky/Atmosphere/LUT/AtmoLUTs.hpp>
 
 #include "CloudSFERenderpass.hpp"
 #pragma GCC diagnostic push
@@ -17,10 +17,10 @@ namespace SF::Engine
 {
     bool CloudSFERenderpass::isWindowOpen = true;
 
-    CloudSFERenderpass::CloudSFERenderpass(Pipeline::Stage stage, AtmosphereData &data) :
+    CloudSFERenderpass::CloudSFERenderpass(const Pipeline::Stage &stage, AtmosphereData &data) :
         EngineRenderpass(stage), data_(data)
     {
-        EngineRenderpass::SetOrder(100);
+        SetOrder(100);
         uiHandle = UIRegistry::Get().Register([this] { DrawImGuiPanel(); });
 
         atmoUBO_  = std::make_unique<UniformBuffer>(sizeof(AtmosphereFrameUBO));
@@ -133,7 +133,7 @@ namespace SF::Engine
             reconFog_[i]->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 
-        // NOW call BindDescriptors() - images are already in SHADER_READ_ONLY_OPTIMAL
+        // NOW call BindDescriptors() since images are already in SHADER_READ_ONLY_OPTIMAL
         BindDescriptors();
 
         isWindowOpen = true;
@@ -246,9 +246,6 @@ namespace SF::Engine
         const uint32_t hist   = (frameSlot_ + kFramesInFlight - 1) % kFramesInFlight;
         const bool hasHistory = (framesSinceStart_ > 0);
 
-        // ===================================================================
-        // Transition scene color to GENERAL for compute write
-        // ===================================================================
         {
             VkImageLayout currentColorLayout = colorImg->GetLayout();
             if (currentColorLayout == VK_IMAGE_LAYOUT_UNDEFINED)
@@ -269,9 +266,6 @@ namespace SF::Engine
             }
         }
 
-        // ===================================================================
-        // Update composite set: scene color/depth targets
-        // ===================================================================
         {
             VkDescriptorImageInfo colorInfo{};
             colorInfo.sampler     = VK_NULL_HANDLE;
@@ -308,22 +302,19 @@ namespace SF::Engine
         auto qext = cloudRenderRT_->GetExtent();
         auto fext = colorImg->GetExtent();
 
-        // ===================================================================
-        // Raymarch pass
-        // ===================================================================
         {
             Image2d *quarterImages[3] = {cloudRenderRT_.get(), cloudDepthRT_.get(), cloudFogRT_.get()};
 
             // Pre-write barriers: transition to GENERAL
-            for (int i = 0; i < 3; ++i)
+            for (auto &quarterImage: quarterImages)
             {
-                VkImageLayout currentLayout = quarterImages[i]->GetLayout();
+                VkImageLayout currentLayout = quarterImage->GetLayout();
 
                 Image::InsertImageMemoryBarrier(
-                        cmd, quarterImages[i]->GetImage(), VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
+                        cmd, quarterImage->GetImage(), VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
                         currentLayout, VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
-                quarterImages[i]->SetLayout(VK_IMAGE_LAYOUT_GENERAL);
+                quarterImage->SetLayout(VK_IMAGE_LAYOUT_GENERAL);
             }
 
             // Dispatch raymarch
@@ -334,14 +325,14 @@ namespace SF::Engine
             raymarchPipeline_->Dispatch(cmd, UVec3(qext.x, qext.y, 1), {/*LOCAL_X=*/8, /*LOCAL_Y=*/8, /*LOCAL_Z=*/1});
 
             // Post-write barriers: transition to SHADER_READ_ONLY_OPTIMAL
-            for (int i = 0; i < 3; ++i)
+            for (auto &quarterImage: quarterImages)
             {
                 Image::InsertImageMemoryBarrier(
-                        cmd, quarterImages[i]->GetImage(), VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                        cmd, quarterImage->GetImage(), VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
                         VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                         VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
-                quarterImages[i]->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                quarterImage->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             }
 
             // Global memory barrier to ensure writes are visible
@@ -353,26 +344,20 @@ namespace SF::Engine
                                  &memoryBarrier, 0, nullptr, 0, nullptr);
         }
 
-        // ===================================================================
-        // Transition reconstruction targets to GENERAL for writing
-        // ===================================================================
         {
             Image2d *reconTargets[3] = {reconColor_[cur].get(), reconDepth_[cur].get(), reconFog_[cur].get()};
-            for (int i = 0; i < 3; ++i)
+            for (auto &reconTarget: reconTargets)
             {
-                VkImageLayout currentLayout = reconTargets[i]->GetLayout();
+                VkImageLayout currentLayout = reconTarget->GetLayout();
 
                 Image::InsertImageMemoryBarrier(
-                        cmd, reconTargets[i]->GetImage(), VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
+                        cmd, reconTarget->GetImage(), VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
                         currentLayout, VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
                         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, 1, 0);
-                reconTargets[i]->SetLayout(VK_IMAGE_LAYOUT_GENERAL);
+                reconTarget->SetLayout(VK_IMAGE_LAYOUT_GENERAL);
             }
         }
 
-        // ===================================================================
-        // Update reconstruction set descriptor
-        // ===================================================================
         {
             VkDescriptorImageInfo imageInfos[9]{};
             VkDescriptorBufferInfo bufferInfos[2]{};
@@ -452,9 +437,6 @@ namespace SF::Engine
             DescriptorSet::Update(std::vector<VkWriteDescriptorSet>(writes, writes + writeCount));
         }
 
-        // ===================================================================
-        // Update composite set to read reconstruction outputs
-        // ===================================================================
         {
             VkDescriptorImageInfo imageInfos[2]{};
 
@@ -484,9 +466,6 @@ namespace SF::Engine
             DescriptorSet::Update({writes[0], writes[1]});
         }
 
-        // ===================================================================
-        // Reconstruct pass
-        // ===================================================================
         reconstructPipeline_->BindPipeline(cmd);
         reconstructSet_[cur]->BindDescriptor(cmd);
         SharedSamplers::BindSharedSamplerSet(cmd, reconstructPipeline_->GetPipelineLayout(),
@@ -509,9 +488,6 @@ namespace SF::Engine
             }
         }
 
-        // ===================================================================
-        // Composite pass
-        // ===================================================================
         compositePipeline_->BindPipeline(cmd);
         compositeSet_[cur]->BindDescriptor(cmd);
         SharedSamplers::BindSharedSamplerSet(cmd, compositePipeline_->GetPipelineLayout(),

@@ -6,6 +6,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     struct WeatherParams
     {
         uint32_t resolution = 1024;
@@ -21,9 +22,9 @@ namespace SF::Engine
     public:
         explicit CloudNoiseLUTs(uint32_t width = 32, uint32_t height = 32, uint32_t depth = 1)
         {
-            BaseNoiseTexture_ = std::make_unique<SF::Engine::Image3d>(
-                    UVec3{width, height, depth}, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_GENERAL,
-                    VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+            BaseNoiseTexture_ =
+                    std::make_unique<Image3d>(UVec3{width, height, depth}, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_GENERAL,
+                                              VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
             DetailNoiseTexture_ =
                     std::make_unique<Image3d>(UVec3{width, height, depth}, VK_FORMAT_R8_UNORM, VK_IMAGE_LAYOUT_GENERAL,
@@ -84,10 +85,10 @@ namespace SF::Engine
             DescriptorSet::Update({w0, w1, w2, w3, b1});
         }
 
-        Image3d *GetBaseTexture() const { return BaseNoiseTexture_.get(); }
-        Image3d *GetDetailTexture() const { return DetailNoiseTexture_.get(); }
-        Image2d *GetCurlTexture() const { return CurlNoiseTexture_.get(); }
-        Image2d *GetWeatherTexture() const { return WeatherTexture_.get(); }
+        [[nodiscard]] Image3d *GetBaseTexture() const { return BaseNoiseTexture_.get(); }
+        [[nodiscard]] Image3d *GetDetailTexture() const { return DetailNoiseTexture_.get(); }
+        [[nodiscard]] Image2d *GetCurlTexture() const { return CurlNoiseTexture_.get(); }
+        [[nodiscard]] Image2d *GetWeatherTexture() const { return WeatherTexture_.get(); }
 
         void Bake(const CommandBuffer &cmd)
         {
@@ -170,23 +171,23 @@ namespace SF::Engine
         }
 
     private:
-        ::std::unique_ptr<Image3d> BaseNoiseTexture_;
-        ::std::unique_ptr<Image3d> DetailNoiseTexture_;
-        ::std::unique_ptr<Image2d> CurlNoiseTexture_;
-        ::std::unique_ptr<Image2d> WeatherTexture_;
+        unique_ptr<Image3d> BaseNoiseTexture_;
+        unique_ptr<Image3d> DetailNoiseTexture_;
+        unique_ptr<Image2d> CurlNoiseTexture_;
+        unique_ptr<Image2d> WeatherTexture_;
 
-        ::std::unique_ptr<ComputePipeline> pipelineA_;
-        ::std::unique_ptr<ComputePipeline> pipelineB_;
-        ::std::unique_ptr<ComputePipeline> pipelineC_;
-        ::std::unique_ptr<ComputePipeline> pipelineD_;
+        unique_ptr<ComputePipeline> pipelineA_;
+        unique_ptr<ComputePipeline> pipelineB_;
+        unique_ptr<ComputePipeline> pipelineC_;
+        unique_ptr<ComputePipeline> pipelineD_;
 
-        ::std::unique_ptr<DescriptorSet> descSetA_;
-        ::std::unique_ptr<DescriptorSet> descSetB_;
-        ::std::unique_ptr<DescriptorSet> descSetC_;
-        ::std::unique_ptr<DescriptorSet> descSetD_;
+        unique_ptr<DescriptorSet> descSetA_;
+        unique_ptr<DescriptorSet> descSetB_;
+        unique_ptr<DescriptorSet> descSetC_;
+        unique_ptr<DescriptorSet> descSetD_;
 
         WeatherParams params_;
-        ::std::unique_ptr<UniformBuffer> uboD_;
+        unique_ptr<UniformBuffer> uboD_;
         bool baked_ = false;
     };
 } // namespace SF::Engine

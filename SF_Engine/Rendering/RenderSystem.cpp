@@ -12,7 +12,7 @@
 
 #include <Rendering/Camera/Camera.hpp>
 #include "SharedFunctions.hpp"
-#include "Visuals/sfSkies/Atmosphere/LUT/AtmoLUTs.hpp"
+#include "Visuals/Sky/Atmosphere/LUT/AtmoLUTs.hpp"
 
 namespace SF::Engine
 {

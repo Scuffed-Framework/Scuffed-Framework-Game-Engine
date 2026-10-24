@@ -7,10 +7,10 @@
 
 #include <Rendering/Lighting/LitMeshSFERenderpass.hpp>
 #include <Rendering/Mesh/Mesh.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereSFERenderpass.hpp>
+#include <Rendering/Visuals/Sky/Atmosphere/AtmosphereSFERenderpass.hpp>
 
 #include <LowLevel/XML/XMLModule.hpp>
-#include <Rendering/Visuals/sfSkies/Clouds/CloudSFERenderpass.hpp>
+#include <Rendering/Visuals/Sky/Clouds/CloudSFERenderpass.hpp>
 #include <Scene/SceneRenderer.hpp>
 #include <Scene/Types.hpp>
 #include "SceneSerialization.hpp"

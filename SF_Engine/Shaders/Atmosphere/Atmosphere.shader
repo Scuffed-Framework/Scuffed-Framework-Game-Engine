@@ -24,21 +24,30 @@ Sampler2D sceneDepth;
 [[vk::binding(7, 0)]]
 RWTexture2D<float4> imgAtmoColor;
 
-float3 sunDisk(float3 rd, float3 sunDir, float sunIntensity,
+float3 sunDisk(float3 rd, float3 sunDir, float sunIlluminance,
                float3 viewPos, float bottomRadius, float topRadius)
 {
-    const float SUN_ANGULAR_RADIUS = 0.0045;
-    float cosAngle = dot(rd, sunDir);
-    float diskWeight = smoothstep(
-        cos(SUN_ANGULAR_RADIUS * 1.05),
-        cos(SUN_ANGULAR_RADIUS * 0.95),
-        cosAngle);
-    if (diskWeight <= 0.0)
+    const float SUN_R = 0.0045;               // angular radius (rad)
+    if (dot(rd, sunDir) <= 0.0)
         return float3(0.0);
-    float camR = length(viewPos);
-    float cosSun = dot(viewPos / camR, sunDir);
-    float3 T = getSpaceTransmittance(transmittanceLUT, viewPos, sunDir, bottomRadius, topRadius);
-    return diskWeight * sunIntensity * T;
+
+    float ang = length(cross(rd, sunDir));    // ~= angle, precise near 0
+    float disk = 1.0 - smoothstep(SUN_R * 0.95, SUN_R * 1.05, ang);
+    if (disk <= 0.0)
+        return float3(0.0);
+
+    // Mild limb darkening
+    float mu = sqrt(saturate(1.0 - (ang * ang) / (SUN_R * SUN_R)));
+    float limb = 0.55 + 0.45 * mu;
+
+    // Illuminance -> radiance
+    float solidAngle = kPI * SUN_R * SUN_R;
+    float3 radiance = sunIlluminance / solidAngle * limb;
+
+    // Per-pixel direction so the bottom of the disk is redder
+    float3 T = getSpaceTransmittance(transmittanceLUT, viewPos, rd,
+                                     bottomRadius, topRadius);
+    return disk * radiance * T;
 }
 
 void sampleAerialPerspective(float2 screenUV, float sceneDist,

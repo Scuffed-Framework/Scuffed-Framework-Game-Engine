@@ -9,7 +9,7 @@
 #include <Rendering/RHI/Images/Image.hpp>
 #include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereSFERenderpass.hpp>
+#include <Rendering/Visuals/Sky/Atmosphere/AtmosphereSFERenderpass.hpp>
 
 namespace SF::Engine
 {

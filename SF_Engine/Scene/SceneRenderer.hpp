@@ -7,8 +7,8 @@
 #include <Rendering/Visuals/HiZ/HiZSFERenderpass.hpp>
 #include <Rendering/Visuals/ReflectionProbe/ReflectionProbeSFERenderpass.hpp>
 #include <Rendering/Visuals/SSR/SSRSFERenderpass.hpp>
-#include <Rendering/Visuals/sfSkies/AtmosphereController.hpp>
-#include <Rendering/Visuals/sfSkies/Clouds/CloudSFERenderpass.hpp>
+#include <Rendering/Visuals/Sky/AtmosphereController.hpp>
+#include <Rendering/Visuals/Sky/Clouds/CloudSFERenderpass.hpp>
 
 #include <Rendering/FrameGraph/EngineRenderpassInitRegistry.hpp>
 #include <Rendering/Mesh/MeshFactory.hpp>

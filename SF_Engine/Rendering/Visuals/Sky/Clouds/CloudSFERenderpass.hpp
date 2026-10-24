@@ -8,7 +8,7 @@
 #include <Rendering/RHI/Memory/UniformBuffer.hpp>
 #include <Rendering/RHI/Pipelines/ComputePipeline.hpp>
 #include <Rendering/RHI/Pipelines/RhiRenderPipeline.hpp>
-#include <Rendering/Visuals/sfSkies/Atmosphere/AtmosphereParams.hpp>
+#include <Rendering/Visuals/Sky/Atmosphere/AtmosphereParams.hpp>
 #include "../Atmosphere/LUT/AerialPerspectiveLUT.hpp"
 #include "../Atmosphere/LUT/MultiScatterLUT.hpp"
 #include "../Atmosphere/LUT/TransmittanceLUT.hpp"
@@ -55,7 +55,7 @@ namespace SF::Engine
     class CloudSFERenderpass : public EngineRenderpass
     {
     public:
-        explicit CloudSFERenderpass(Pipeline::Stage stage, AtmosphereData &data);
+        explicit CloudSFERenderpass(const Pipeline::Stage &stage, AtmosphereData &data);
         ~CloudSFERenderpass() override = default;
 
         void SetFrameData(const Mat4 &invProj, const Mat4 &invView, const Vec3 &cameraPos, const Vec3 &planetPos,
@@ -84,8 +84,8 @@ namespace SF::Engine
         float percipitationBias   = 1.0f;
         float FadeDistance2d      = 1.0f;
         float fadeSmoothDist      = 1.0f;
-        float time;
-        float sdfRangeMetres;
+        float time{};
+        float sdfRangeMetres{};
         Vec2 Wind    = Vec2{0, 0};
         float Speed  = 0.0f;
         float unused = 0.0f;
@@ -95,7 +95,6 @@ namespace SF::Engine
     private:
         void BindDescriptors();
         void UpdateCloudUBO();
-        void PopulateDefaultCloudlets();
 
         AtmosphereData &data_;
         std::unique_ptr<UniformBuffer> atmoUBO_;  // binding=0
@@ -106,19 +105,12 @@ namespace SF::Engine
         std::unique_ptr<ComputePipeline> raymarchPipeline_;
         std::unique_ptr<ComputePipeline> reconstructPipeline_;
         std::unique_ptr<ComputePipeline> compositePipeline_;
-        std::unique_ptr<ComputePipeline> lensBufferPipeline_; // unused for now, per your note
 
         std::unique_ptr<DescriptorSet> raymarchSet_; // written once in BindDescriptors(), never re-written per frame
 
-        // Rewritten every frame in PreRender() (composite's binding 0/4, and the
-        // ping-ponged reconstruct/composite bindings) so they need one slot per
-        // frame-in-flight. The engine keeps 3 frames in flight, so 3 slots —
-        // matching reconColor_/reconDepth_/reconFog_ below. Index with
-        // frameSlot_ ("cur"), same as the ping-pong images.
         static constexpr uint32_t kFramesInFlight = 3;
         std::unique_ptr<DescriptorSet> reconstructSet_[kFramesInFlight];
         std::unique_ptr<DescriptorSet> compositeSet_[kFramesInFlight];
-        std::unique_ptr<DescriptorSet> lensBufferSet;
 
         Vec3 cachedSunDir_{0.577f, 0.577f, 0.577f};
         float totalTime_{0.0f};
@@ -133,11 +125,6 @@ namespace SF::Engine
         std::unique_ptr<Image2d> cloudDepthRT_;  // binding 14/15 r32f
         std::unique_ptr<Image2d> cloudFogRT_;    // binding 22/23 rgba16f
 
-        // Full-res reconstruction targets, cycled across kFramesInFlight slots for
-        // both temporal history and to avoid CPU-mutating a slot the GPU still has
-        // in flight.
-        // index [frameSlot_]      = "current" (written this frame, read by composite)
-        // index [frameSlot_ - 1]  = "history" (previous frame's current, read by reconstruct)
         std::unique_ptr<Image2d> reconColor_[kFramesInFlight]; // binding 12(write)/13(read)/18(history)
         std::unique_ptr<Image2d> reconDepth_[kFramesInFlight]; // binding 16(write)/17(read)/19(history)
         std::unique_ptr<Image2d> reconFog_[kFramesInFlight];   // binding 24(write)/25(read)/26(history)
