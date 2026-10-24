@@ -9,27 +9,19 @@ namespace SF::Engine
     {
     public:
         // Start possessed by the editor camera by default
-        CameraController() : possessed_(&editorCamera_)
-        {
-        }
+        CameraController() : possessed_(&editorCamera_) {}
 
         void SetFrameInput(Window *w, bool imguiWantsMouse, bool imguiWantsKeyboard)
         {
-            window = w;
-            this->imguiWantsMouse = imguiWantsMouse;
+            window                   = w;
+            this->imguiWantsMouse    = imguiWantsMouse;
             this->imguiWantsKeyboard = imguiWantsKeyboard;
         }
 
         // Possess any Camera, pass nullptr to fall back to editor cam
-        void Possess(Camera *cam)
-        {
-            possessed_ = cam ? cam : &editorCamera_;
-        }
+        void Possess(Camera *cam) { possessed_ = cam ? cam : &editorCamera_; }
 
-        void ReleaseToEditor()
-        {
-            possessed_ = &editorCamera_;
-        }
+        void ReleaseToEditor() { possessed_ = &editorCamera_; }
 
         // Drive the editor camera when it's active
         void Update(float dt) override
@@ -42,13 +34,13 @@ namespace SF::Engine
         Camera *GetActive() { return possessed_; }
         EditorCamera &GetEditorCamera() { return editorCamera_; }
 
-        bool IsEditorCameraActive() const { return possessed_ == &editorCamera_; }
+        [[nodiscard]] bool IsEditorCameraActive() const { return possessed_ == &editorCamera_; }
 
     private:
         EditorCamera editorCamera_;
         Camera *possessed_; // non-owning  lifetime managed by scene/pawn
-        Window *window;
-        bool imguiWantsMouse;
-        bool imguiWantsKeyboard;
+        Window *window          = nullptr;
+        bool imguiWantsMouse    = false;
+        bool imguiWantsKeyboard = false;
     };
-}
+} // namespace SF::Engine

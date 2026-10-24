@@ -15,14 +15,18 @@ namespace SF::Engine
     class StaticController : public Controller
     {
     public:
-        static T &Get() { return *s_instance; }
+        static T &Get() { return *instance; }
 
     protected:
-        StaticController() { s_instance = static_cast<T *>(this); }
+        StaticController() { instance = static_cast<T *>(this); }
 
-        ~StaticController() { s_instance = nullptr; }
+        ~StaticController()
+        {
+            if (instance == this)
+                instance = nullptr;
+        }
 
     private:
-        inline static T *s_instance = nullptr;
+        inline static T *instance = nullptr;
     };
 } // namespace SF::Engine

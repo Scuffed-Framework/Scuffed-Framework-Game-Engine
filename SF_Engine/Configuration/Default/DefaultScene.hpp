@@ -4,6 +4,16 @@
 
 namespace SF::Engine
 {
+    struct TemplateScene : Scene
+    {
+        explicit TemplateScene(const std::string &name) :
+            Scene(std::unique_ptr<CameraController>{}, name, SceneRendererConfig{}, /*populateDefaults=*/true)
+        {
+        }
+        void Start() override {}
+        bool IsPaused() const override { return false; }
+    };
+
     /**
      * @brief Ready-to-use scene shown when no startup scene is specified.
      *

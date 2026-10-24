@@ -176,9 +176,9 @@ namespace SF::Engine
 
         fs::path file = dir / (name + ext);
         for (int i = 1; fs::exists(file, ec); ++i)
-            file = dir / (name + " (" + std::to_string(i) + ")" + ext);
+            file = dir / (name + " (" + std::to_string(i) + ")" += ext);
 
-        DefaultScene tmp(name);
+        TemplateScene tmp(name);
         return tmp.SaveXML(file.string()) ? file : fs::path{};
     }
 
