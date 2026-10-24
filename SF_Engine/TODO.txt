@@ -1,5 +1,5 @@
 #CORE
-NOW: PipelinePass -> some not shit name (prolly just Pass)
+NOW: RTGI
 1. Improve renderer
 2. Shader hot-reloading (at some point)
 3. Finish AssetSystem
