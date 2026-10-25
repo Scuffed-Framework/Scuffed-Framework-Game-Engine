@@ -1,0 +1,134 @@
+Asset-Resource-Protocol (SF::Engine::ARP)
+protocol for loading and building assets using .rsc files and .asset side-car files.
+
+.rsc is encrypted, .asset contains metadata.
+ASSET FILE:
+
+A small metadata record associated with a resource. It tells the engine what the asset is, how to find it, and how to interpret it.
+- Stable asset ID.
+- Asset type and schema version.
+- Resource package ID and record locator.
+- Dependency IDs.
+- Import settings and content hashes where appropriate.
+- Editor-facing metadata.
+It should not contain decryption keys or decrypted copies of the payload.
+
+RSC FILE STRUCTURE:
+
+smallest possible build: (names obfuscated by POSTPROCESSOR)
+A standard RSC file targets 512mb. If it goes over, create an overflow RSC, AF1 + AF2.rsc or A1 + A2.rsc if the game is large enough to need like 50 rsc files.
+Segments A-F in AF.rsc
+Segments G-L in GL.rsc
+Segments M-R in MR.rsc
+Segments S-Z in SZ.rsc
+Builds could be 26 or more rsc files if the game is GTA 7.
+If it gets to that point, x64A1 or x64B5 can be used
+Example for AF.rsc
+Note that segment ordering **WILL BE RANDOMIZED**
+[ROOT MANIFEST]
+    [SEGMENT A]
+        [Key]
+        [DATA]
+            images
+            scripts
+            meshes
+            others
+    [SEGMENT B]
+        [Key]
+        [DATA]
+            images
+            scripts
+            meshes
+            others
+    [SEGMENT C]
+    [SEGMENT D]
+    [SEGMENT E]
+    [SEGMENT F]
+[\0]
+
+
+Steps to build a rsc:
+PREPROCESSOR: strip metadata, convert all video, sound, etc... into the engine's StdEBML format. Save those to disk as temporary build files (.tbf)
+COMPILER: (platform independent) combine every tbf into asset binary files (.rsc) and generate the StdEBML root manifest and decryption keys.
+POSTPROCESSOR(platform dependent): Generate executables (.exe, .desktop, .apk...) and encrypt StdEBML data. Insert master package manifest into encrypted text section
+
+
+
+The whole point of the rsc file is to make the exe do a lot of work to decrypt an asset, so no reverse engineers or skids get a hold of them.
+1. Bootstrap the executable. The executable initializes its asset-protection subsystem and decrypts protected bootstrap data and the embedded master manifest into memory.
+If the executable contains encrypted code or data sections, these are separate from the RSC payload encryption.
+2. Resolve the requested asset. Convert the requested name or path into a stable AssetID, using editor metadata in development
+or the packaged lookup registry in production.
+3. Locate the RSC package. Consult the master manifest to find the relevant package locator and segment identifier.
+Open the corresponding package and validate its container header and bounds.
+4. Authenticate the RSC root manifest. Use the executable's trusted asset-loading code to obtain the appropriate key material,
+authenticate the encrypted manifest, and decrypt it into a temporary buffer.
+5. Resolve the segment key. Find the segment's identifier and key metadata in the master manifest.
+Read the segment's encrypted key record from the designated location and derive or obtain the key needed to unwrap it.
+6. Locate the asset record. Use the authenticated manifest and segment directory to resolve the AssetID to a record offset and length.
+Validate those values before reading.
+7. Decrypt and authenticate the asset. Read the required record, verify its authentication tag, decrypt it, and decompress it if necessary.
+8. Load and protect the asset. Deserialize the plaintext into the engine's resource representation.
+Keep plaintext buffers short-lived where practical, enforce access controls, and let the studio implement additional runtime protection and anti-cheat measures
+
+
+TBF FILE:
+An intermediate, normalized asset produced by the preprocessor. It contains the cooked payload and the information the compiler needs to package it.
+- Standardized EBML representation.
+- Asset type, source hash, importer version.
+- Dependency references and build settings.
+- Optional precomputed compression or GPU-ready data.
+- Temporary compiler metadata.
+Delete it after a successful build unless build caching is enabled.
+
+RSC FILE:
+Runtime payload
+The binary resource package containing the encrypted EBML data.
+- Container header and format version.
+- Package ID and build ID.
+- Encrypted asset records or independently encrypted chunks.
+- Optional compression per record.
+- Authenticated directory/index data.
+- Encryption algorithm and key identifier.
+The runtime should be able to locate and load one asset without decrypting the entire package.
+
+
+
+
+
+
+
+
+
+
+
+build config:
+
+bool SF_RSC_ENCRYPTION=true;
+bool SF_RSC_SEGMENT_KEYS=true;
+bool SF_RSC_MANIFEST_ENCRYPTION=true;
+bool SF_RSC_SIGNATURES=true;
+bool SF_RSC_OBFUSCATION=true;
+bool SF_RSC_MEMORY_PROTECTION=false;
+bool SF_RSC_ANTICHEAT=false;
+bool SF_RSC_STREAMING=true;
+if(ImGui::Begin("Build Config"))
+{
+    ImGui::Checkbox("RSC Payload Encryption", &SF_RSC_ENCRYPTION);
+    ImGui::Checkbox("Per-segment keys", &SF_RSC_SEGMENT_KEYS);
+    ImGui::Checkbox("Manifest encryption", &SF_RSC_MANIFEST_ENCRYPTION);
+    ImGui::Checkbox("Package Cryptographic Signatures", &SF_RSC_SIGNATURES);
+    ImGui::Checkbox("Obfuscate RSC binaries", &SF_RSC_OBFUSCATION);
+    ImGui::Checkbox("Additional Memory Protections", &SF_RSC_MEMORY_PROTECTION);
+    ImGui::Checkbox("Additional Anticheat Measures", &SF_RSC_ANTICHEAT);
+    if(SF_RSC_ANTICHEAT == true)
+    {
+        std::string anticheatModuleName
+        ImGui::InputText("Name of Anticheat module to start automatically(ASAP)", &anticheatModuleName);
+        if(!BuildSystem::Get()->SetAnticheatModule(ModuleRegistrar::FindFromName(anticheatModuleName)))
+            ImGui::Text("Module not found!");
+    }
+    ImGui::Checkbox("Asynchronous Streaming", &SF_RSC_STREAMING);
+}
+
+Maybe put Engine configuration is in .text section
