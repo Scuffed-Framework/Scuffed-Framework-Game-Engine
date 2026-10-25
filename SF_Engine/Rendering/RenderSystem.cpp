@@ -17,15 +17,12 @@
 namespace SF::Engine
 {
     RenderSystem::RenderSystem() :
-        instance(std::make_unique<Instance>()), physicalDevice(std::make_unique<PhysicalDevice>(*instance)),
-        logicalDevice(std::make_unique<LogicalDevice>(*instance, *physicalDevice)), elapsedPurge(5s)
+        instance(make_unique<Instance>()), physicalDevice(make_unique<PhysicalDevice>(*instance)),
+        logicalDevice(make_unique<LogicalDevice>(*instance, *physicalDevice)), elapsedPurge(5s)
     {
         WindowManager::Get()->OnAddWindow().connect(
                 [this](Window *window, bool)
-                {
-                    surfaces.emplace_back(
-                            std::make_unique<Surface>(*instance, *physicalDevice, *logicalDevice, *window));
-                });
+                { surfaces.emplace_back(make_unique<Surface>(*instance, *physicalDevice, *logicalDevice, *window)); });
 
         VmaAllocatorCreateInfo allocatorCreateInfo = {};
         allocatorCreateInfo.vulkanApiVersion       = VK_API_VERSION_1_2;
@@ -41,7 +38,7 @@ namespace SF::Engine
         Log::Info("Creating VMA allocator");
         VkResult vmaResult = vmaCreateAllocator(&allocatorCreateInfo, &alloc);
         if (vmaResult != VK_SUCCESS)
-            throw std::runtime_error("Failed to create VMA allocator: " + StrVkResult(vmaResult));
+            throw runtime_error("Failed to create VMA allocator: " + StrVkResult(vmaResult));
         Log::Info("VMA allocator created");
 
         CreatePipelineCache();
@@ -52,12 +49,13 @@ namespace SF::Engine
     void RenderSystem::PostInit()
     {
         SharedSamplers::CreateSamplers();
-        bindlessMgr = std::make_unique<BindlessManager>();
+        bindlessMgr = make_unique<BindlessManager>();
+        config      = make_unique<SMARTRenderSystemConfig>();
         CreateSharedCameraBuffer();
         AtmoLUTs::Init();
     }
 
-    void RenderSystem::PreShutdown()
+    void RenderSystem::PreShutdown() const
     {
         if (bindlessMgr)
             bindlessMgr->FlushAllPendingFrees();
@@ -85,7 +83,7 @@ namespace SF::Engine
         commandPools.clear();
         for (auto &perSurfaceBuffer: perSurfaceBuffers)
         {
-            for (std::size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
+            for (size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
             {
                 vkDestroyFence(*logicalDevice, perSurfaceBuffer->flightFences[i], nullptr);
                 vkDestroySemaphore(*logicalDevice, perSurfaceBuffer->renderCompletes[i], nullptr);
@@ -95,12 +93,13 @@ namespace SF::Engine
         }
     }
 
-    void UpdateSharedCameraData()
+    static void UpdateSharedCameraData()
     {
-        float raw_nano                      = static_cast<float>(GetDeltaTime().count());
-        SharedCameraData.screenHeight       = GetScreenSize().y;
-        SharedCameraData.screenWidth        = GetScreenSize().x;
-        SharedCameraData.aspectRatio        = SharedCameraData.screenWidth / SharedCameraData.screenHeight;
+        float raw_nano                = static_cast<float>(GetDeltaTime().count());
+        SharedCameraData.screenHeight = static_cast<int>(GetScreenSize().y);
+        SharedCameraData.screenWidth  = static_cast<int>(GetScreenSize().x);
+        SharedCameraData.aspectRatio =
+                static_cast<float>(SharedCameraData.screenWidth) / static_cast<float>(SharedCameraData.screenHeight);
         SharedCameraData.cameraPosition     = GetCameraPosition4();
         SharedCameraData.deltaTime          = static_cast<float>(Milliseconds(raw_nano / 1000000.0f).count());
         SharedCameraData.inverseProjection  = GetInvProjection();
@@ -113,14 +112,13 @@ namespace SF::Engine
 
     void RenderSystem::Update()
     {
-        auto mainWindow = WindowManager::Get()->GetWindow(0);
+        const auto mainWindow = WindowManager::Get()->GetWindow(0);
 
         // Early return if window is closing, iconified, or invalid size
         if (!renderer || !mainWindow || mainWindow->ShouldClose() || mainWindow->IsIconified())
             return;
 
-        auto windowSize = mainWindow->GetSize();
-        if (windowSize.x == 0 || windowSize.y == 0)
+        if (auto windowSize = mainWindow->GetSize(); windowSize.x == 0 || windowSize.y == 0)
             return;
 
         if (!renderer->started)
@@ -137,11 +135,11 @@ namespace SF::Engine
         if (auto *bindless = GetBindlessManager())
             bindless->Tick();
 
-        for (auto &renderStage: renderer->renderStages)
+        for (const auto &renderStage: renderer->renderStages)
             renderStage->Update();
 
         bool anyOutOfDate = false;
-        for (auto &renderStage: renderer->renderStages)
+        for (const auto &renderStage: renderer->renderStages)
         {
             if (renderStage->IsOutOfDate())
             {
@@ -271,7 +269,7 @@ namespace SF::Engine
         {
             for (auto it = commandPools.begin(); it != commandPools.end();)
             {
-                if ((*it).second.use_count() <= 1)
+                if (it->second.use_count() <= 1)
                 {
                     it = commandPools.erase(it);
                     continue;
@@ -281,7 +279,7 @@ namespace SF::Engine
         }
     }
 
-    std::string RenderSystem::StrVkResult(VkResult result)
+    string RenderSystem::StrVkResult(const VkResult result)
     {
         switch (result)
         {
@@ -352,10 +350,10 @@ namespace SF::Engine
             _Exit(EXIT_FAILURE);
         }
 
-        throw std::runtime_error("Vulkan error: " + StrVkResult(result));
+        throw runtime_error("Vulkan error: " + StrVkResult(result));
     }
 
-    void RenderSystem::CaptureScreenshot(const std::filesystem::path &filename, std::size_t id) const
+    void RenderSystem::CaptureScreenshot(const filesystem::path &filename, size_t id) const
     {
         auto size = WindowManager::Get()->GetWindow(0)->GetSize();
 
@@ -371,13 +369,13 @@ namespace SF::Engine
         VkSubresourceLayout dstSubresourceLayout{};
         vkGetImageSubresourceLayout(*logicalDevice, dstImage, &imageSubresource, &dstSubresourceLayout);
 
-        Bitmap bitmap(std::make_unique<uint8_t[]>(dstSubresourceLayout.size), size);
+        Bitmap bitmap(make_unique<uint8_t[]>(dstSubresourceLayout.size), size);
 
         void *data = nullptr;
         vmaMapMemory(alloc, dstImageMemory, &data);
 
-        std::memcpy(bitmap.GetData().get(), static_cast<uint8_t *>(data) + dstSubresourceLayout.offset,
-                    static_cast<size_t>(dstSubresourceLayout.size));
+        memcpy(bitmap.GetData().get(), static_cast<uint8_t *>(data) + dstSubresourceLayout.offset,
+               static_cast<size_t>(dstSubresourceLayout.size));
 
         vmaUnmapMemory(alloc, dstImageMemory);
         vmaDestroyImage(alloc, dstImage, dstImageMemory);
@@ -391,18 +389,18 @@ namespace SF::Engine
         return nullptr;
     }
 
-    const Descriptor *RenderSystem::GetAttachment(const std::string &name) const
+    const Descriptor *RenderSystem::GetAttachment(const string &name) const
     {
-        if (auto it = attachments.find(name); it != attachments.end())
+        if (const auto it = attachments.find(name); it != attachments.end())
             return it->second;
         return nullptr;
     }
 
-    const std::shared_ptr<CommandPool> &RenderSystem::GetCommandPool(const std::thread::id &threadId)
+    const shared_ptr<CommandPool> &RenderSystem::GetCommandPool(const thread::id &threadId)
     {
         if (auto it = commandPools.find(threadId); it != commandPools.end())
             return it->second;
-        return commandPools.emplace(threadId, std::make_shared<CommandPool>(threadId)).first->second;
+        return commandPools.emplace(threadId, make_shared<CommandPool>(threadId)).first->second;
     }
 
     void RenderSystem::CreatePipelineCache()
@@ -451,8 +449,8 @@ namespace SF::Engine
         perSurfaceBuffers.resize(surfaces.size());
         for (const auto [id, surface]: Enumerate(surfaces))
         {
-            swapchains[id] = std::make_unique<RhiSwapchain>(*physicalDevice, *surface, *logicalDevice, displayExtent,
-                                                            swapchains[id].get());
+            swapchains[id] = make_unique<RhiSwapchain>(*physicalDevice, *surface, *logicalDevice, displayExtent,
+                                                       swapchains[id].get());
 
             // Explicitly destroy semaphores and fences before replacing the buffer set.
             // Simply assigning a new PerSurfaceBuffers leaks them because the Vulkan
@@ -460,7 +458,7 @@ namespace SF::Engine
             if (perSurfaceBuffers[id])
             {
                 auto &psb = *perSurfaceBuffers[id];
-                for (std::size_t i = 0; i < psb.flightFences.size(); i++)
+                for (size_t i = 0; i < psb.flightFences.size(); i++)
                 {
                     vkDestroyFence(*logicalDevice, psb.flightFences[i], nullptr);
                     vkDestroySemaphore(*logicalDevice, psb.renderCompletes[i], nullptr);
@@ -472,19 +470,19 @@ namespace SF::Engine
                 psb.commandBuffers.clear();
             }
 
-            perSurfaceBuffers[id] = std::make_unique<PerSurfaceBuffers>();
+            perSurfaceBuffers[id] = make_unique<PerSurfaceBuffers>();
             RecreateCommandBuffers(id);
         }
 
         RenderSystem::CheckVkResult(vkDeviceWaitIdle(*logicalDevice));
     }
 
-    void RenderSystem::RecreateCommandBuffers(std::size_t id)
+    void RenderSystem::RecreateCommandBuffers(size_t surfaceId) const
     {
-        auto &swapchain        = swapchains[id];
-        auto &perSurfaceBuffer = perSurfaceBuffers[id];
+        auto &swapchain        = swapchains[surfaceId];
+        auto &perSurfaceBuffer = perSurfaceBuffers[surfaceId];
 
-        for (std::size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
+        for (size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
         {
             vkDestroyFence(*logicalDevice, perSurfaceBuffer->flightFences[i], nullptr);
             vkDestroySemaphore(*logicalDevice, perSurfaceBuffer->renderCompletes[i], nullptr);
@@ -503,14 +501,14 @@ namespace SF::Engine
         fenceCreateInfo.sType             = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceCreateInfo.flags             = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        for (std::size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
+        for (size_t i = 0; i < perSurfaceBuffer->flightFences.size(); i++)
         {
             CheckVkResult(vkCreateSemaphore(*logicalDevice, &semaphoreCreateInfo, nullptr,
                                             &perSurfaceBuffer->presentCompletes[i]));
             CheckVkResult(vkCreateSemaphore(*logicalDevice, &semaphoreCreateInfo, nullptr,
                                             &perSurfaceBuffer->renderCompletes[i]));
             CheckVkResult(vkCreateFence(*logicalDevice, &fenceCreateInfo, nullptr, &perSurfaceBuffer->flightFences[i]));
-            perSurfaceBuffer->commandBuffers[i] = std::make_unique<CommandBuffer>(false);
+            perSurfaceBuffer->commandBuffers[i] = make_unique<CommandBuffer>(false);
         }
     }
 
@@ -524,12 +522,12 @@ namespace SF::Engine
         bool needsSwapchainRecreate = false;
         for (const auto [sid, swapchain]: Enumerate(swapchains))
         {
-            auto &psb = perSurfaceBuffers[sid];
+            const auto &psb = perSurfaceBuffers[sid];
             // Check ALL stages for a swapchain attachment, not just the one
             // passed in; RecreatePass may be invoked with any stage as the
             // trigger, and that stage might not be the one that owns swapchain.
-            bool anyStageHasSwapchain = std::any_of(renderer->renderStages.begin(), renderer->renderStages.end(),
-                                                    [](const auto &rs) { return rs->HasSwapchain(); });
+            const bool anyStageHasSwapchain =
+                    ranges::any_of(renderer->renderStages, [](const auto &rs) { return rs->HasSwapchain(); });
 
             if (anyStageHasSwapchain && (psb->framebufferResized || !swapchain->IsSameExtent(displayExtent)))
             {
@@ -561,7 +559,7 @@ namespace SF::Engine
             attachments.insert(renderStage->descriptors.begin(), renderStage->descriptors.end());
     }
 
-    bool RenderSystem::StartRenderpass(std::size_t id, RhiRenderStage &renderStage)
+    bool RenderSystem::StartRenderpass(size_t surfaceId, const RhiRenderStage &renderStage) const
     {
         // Staleness is now handled up-front in Update(), so this should never
         // be true here. Kept as a safety net only; no RecreatePass call,
@@ -569,8 +567,8 @@ namespace SF::Engine
         if (renderStage.IsOutOfDate())
             return false;
 
-        auto &swapchain        = swapchains[id];
-        auto &perSurfaceBuffer = perSurfaceBuffers[id];
+        auto &swapchain        = swapchains[surfaceId];
+        auto &perSurfaceBuffer = perSurfaceBuffers[surfaceId];
         auto &commandBuffer    = perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
 
         if (!commandBuffer->IsRunning())
@@ -579,11 +577,11 @@ namespace SF::Engine
         // Use the stage's own framebuffer extent (clamped to the swapchain for swapchain stages),
         // NOT the raw swapchain extent: non-swapchain stages' attachments are sized from the
         // window, and a render area/viewport larger than the framebuffer is UB (GPU hang).
-        const UVec2 stageExtent = renderStage.GetEffectiveExtent(*swapchain);
-        VkExtent2D scExtent     = {stageExtent.x, stageExtent.y};
-        VkRect2D renderArea     = {};
-        renderArea.offset       = {0, 0};
-        renderArea.extent       = scExtent;
+        const UVec2 stageExtent   = renderStage.GetEffectiveExtent(*swapchain);
+        const VkExtent2D scExtent = {stageExtent.x, stageExtent.y};
+        VkRect2D renderArea       = {};
+        renderArea.offset         = {0, 0};
+        renderArea.extent         = scExtent;
 
         VkViewport viewport = {};
         viewport.x          = 0.0f;
@@ -599,7 +597,7 @@ namespace SF::Engine
         scissor.extent   = renderArea.extent;
         vkCmdSetScissor(*commandBuffer, 0, 1, &scissor);
 
-        auto clearValues = renderStage.GetClearValues();
+        const auto &clearValues = renderStage.GetClearValues();
 
         VkRenderPassBeginInfo renderPassBeginInfo = {};
         renderPassBeginInfo.sType                 = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -613,12 +611,12 @@ namespace SF::Engine
         return true;
     }
 
-    void RenderSystem::EndRenderpass(std::size_t id, RhiRenderStage &renderStage)
+    void RenderSystem::EndRenderpass(const size_t surfaceId, const RhiRenderStage &renderStage) const
     {
-        auto presentQueue      = logicalDevice->GetPresentQueue();
-        auto &swapchain        = swapchains[id];
-        auto &perSurfaceBuffer = perSurfaceBuffers[id];
-        auto &commandBuffer    = perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
+        const auto presentQueue      = logicalDevice->GetPresentQueue();
+        const auto &swapchain        = swapchains[surfaceId];
+        const auto &perSurfaceBuffer = perSurfaceBuffers[surfaceId];
+        const auto &commandBuffer    = perSurfaceBuffer->commandBuffers[swapchain->GetActiveImageIndex()];
 
         vkCmdEndRenderPass(*commandBuffer);
 
@@ -661,9 +659,7 @@ namespace SF::Engine
             uint32_t patch = VK_API_VERSION_PATCH(apiVersion);
 
             return VK_MAKE_VERSION(major, minor, patch);
-        } else
-        {
-            return VK_API_VERSION_1_0;
         }
+        return VK_API_VERSION_1_0;
     }
 } // namespace SF::Engine

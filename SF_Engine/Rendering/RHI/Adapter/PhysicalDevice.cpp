@@ -1,7 +1,7 @@
 #include "PhysicalDevice.hpp"
 
-#include <fmt/format.h>
 #include <algorithm>
+#include <fmt/format.h>
 
 #include <Rendering/RenderSystem.hpp>
 #include "Instance.hpp"
@@ -9,9 +9,9 @@
 
 namespace SF::Engine
 {
-    static const std::vector<VkSampleCountFlagBits> STAGE_FLAG_BITS = {
-        VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_16_BIT,
-        VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_2_BIT};
+    static const std::vector<VkSampleCountFlagBits> STAGE_FLAG_BITS = {VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_32_BIT,
+                                                                       VK_SAMPLE_COUNT_16_BIT, VK_SAMPLE_COUNT_8_BIT,
+                                                                       VK_SAMPLE_COUNT_4_BIT,  VK_SAMPLE_COUNT_2_BIT};
 
     PhysicalDevice::PhysicalDevice(const Instance &instance) : instance(instance)
     {
@@ -35,8 +35,7 @@ namespace SF::Engine
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
         msaaSamples = GetMaxUsableSampleCount();
 
-        Log::Out(fmt::runtime("Selected Physical Device: {} \"{}\""), properties.deviceID,
-                 properties.deviceName);
+        Log::Out(fmt::runtime("Selected Physical Device: {} \"{}\""), properties.deviceID, properties.deviceName);
 
         LogDeviceInfo();
     }
@@ -62,31 +61,56 @@ namespace SF::Engine
         properties = properties2.properties;
 
         // who ever put multiline copying in vscode, you are sigma
-        indexingProperties.sType                                                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES;
-        indexingProperties.maxUpdateAfterBindDescriptorsInAllPools              = vulkan12Properties.maxUpdateAfterBindDescriptorsInAllPools;
-        indexingProperties.shaderUniformBufferArrayNonUniformIndexingNative     = vulkan12Properties.shaderUniformBufferArrayNonUniformIndexingNative;
-        indexingProperties.shaderSampledImageArrayNonUniformIndexingNative      = vulkan12Properties.shaderSampledImageArrayNonUniformIndexingNative;
-        indexingProperties.shaderStorageBufferArrayNonUniformIndexingNative     = vulkan12Properties.shaderStorageBufferArrayNonUniformIndexingNative;
-        indexingProperties.shaderStorageImageArrayNonUniformIndexingNative      = vulkan12Properties.shaderStorageImageArrayNonUniformIndexingNative;
-        indexingProperties.shaderInputAttachmentArrayNonUniformIndexingNative   = vulkan12Properties.shaderInputAttachmentArrayNonUniformIndexingNative;
-        indexingProperties.robustBufferAccessUpdateAfterBind                    = vulkan12Properties.robustBufferAccessUpdateAfterBind;
-        indexingProperties.quadDivergentImplicitLod                             = vulkan12Properties.quadDivergentImplicitLod;
-        indexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers         = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindSamplers;
-        indexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers   = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
-        indexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers   = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
-        indexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages    = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindSampledImages;
-        indexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages    = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindStorageImages;
-        indexingProperties.maxPerStageDescriptorUpdateAfterBindInputAttachments = vulkan12Properties.maxPerStageDescriptorUpdateAfterBindInputAttachments;
-        indexingProperties.maxPerStageUpdateAfterBindResources                  = vulkan12Properties.maxPerStageUpdateAfterBindResources;
-        indexingProperties.maxDescriptorSetUpdateAfterBindSamplers              = vulkan12Properties.maxDescriptorSetUpdateAfterBindSamplers;
-        indexingProperties.maxDescriptorSetUpdateAfterBindUniformBuffers        = vulkan12Properties.maxDescriptorSetUpdateAfterBindUniformBuffers;
-        indexingProperties.maxDescriptorSetUpdateAfterBindUniformBuffersDynamic = vulkan12Properties.maxDescriptorSetUpdateAfterBindUniformBuffersDynamic;
-        indexingProperties.maxDescriptorSetUpdateAfterBindStorageBuffers        = vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageBuffers;
-        indexingProperties.maxDescriptorSetUpdateAfterBindStorageBuffersDynamic = vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageBuffersDynamic;
-        indexingProperties.maxDescriptorSetUpdateAfterBindSampledImages         = vulkan12Properties.maxDescriptorSetUpdateAfterBindSampledImages;
-        indexingProperties.maxDescriptorSetUpdateAfterBindStorageImages         = vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageImages;
-        indexingProperties.maxDescriptorSetUpdateAfterBindInputAttachments      = vulkan12Properties.maxDescriptorSetUpdateAfterBindInputAttachments;
-        indexingProperties.pNext                                                = 0;
+        indexingProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES;
+        indexingProperties.maxUpdateAfterBindDescriptorsInAllPools =
+                vulkan12Properties.maxUpdateAfterBindDescriptorsInAllPools;
+        indexingProperties.shaderUniformBufferArrayNonUniformIndexingNative =
+                vulkan12Properties.shaderUniformBufferArrayNonUniformIndexingNative;
+        indexingProperties.shaderSampledImageArrayNonUniformIndexingNative =
+                vulkan12Properties.shaderSampledImageArrayNonUniformIndexingNative;
+        indexingProperties.shaderStorageBufferArrayNonUniformIndexingNative =
+                vulkan12Properties.shaderStorageBufferArrayNonUniformIndexingNative;
+        indexingProperties.shaderStorageImageArrayNonUniformIndexingNative =
+                vulkan12Properties.shaderStorageImageArrayNonUniformIndexingNative;
+        indexingProperties.shaderInputAttachmentArrayNonUniformIndexingNative =
+                vulkan12Properties.shaderInputAttachmentArrayNonUniformIndexingNative;
+        indexingProperties.robustBufferAccessUpdateAfterBind = vulkan12Properties.robustBufferAccessUpdateAfterBind;
+        indexingProperties.quadDivergentImplicitLod          = vulkan12Properties.quadDivergentImplicitLod;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindSamplers =
+                vulkan12Properties.maxPerStageDescriptorUpdateAfterBindSamplers;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindUniformBuffers =
+                vulkan12Properties.maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindStorageBuffers =
+                vulkan12Properties.maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindSampledImages =
+                vulkan12Properties.maxPerStageDescriptorUpdateAfterBindSampledImages;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindStorageImages =
+                vulkan12Properties.maxPerStageDescriptorUpdateAfterBindStorageImages;
+        indexingProperties.maxPerStageDescriptorUpdateAfterBindInputAttachments =
+                vulkan12Properties.maxPerStageDescriptorUpdateAfterBindInputAttachments;
+        indexingProperties.maxPerStageUpdateAfterBindResources = vulkan12Properties.maxPerStageUpdateAfterBindResources;
+        indexingProperties.maxDescriptorSetUpdateAfterBindSamplers =
+                vulkan12Properties.maxDescriptorSetUpdateAfterBindSamplers;
+        indexingProperties.maxDescriptorSetUpdateAfterBindUniformBuffers =
+                vulkan12Properties.maxDescriptorSetUpdateAfterBindUniformBuffers;
+        indexingProperties.maxDescriptorSetUpdateAfterBindUniformBuffersDynamic =
+                vulkan12Properties.maxDescriptorSetUpdateAfterBindUniformBuffersDynamic;
+        indexingProperties.maxDescriptorSetUpdateAfterBindStorageBuffers =
+                vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageBuffers;
+        indexingProperties.maxDescriptorSetUpdateAfterBindStorageBuffersDynamic =
+                vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageBuffersDynamic;
+        indexingProperties.maxDescriptorSetUpdateAfterBindSampledImages =
+                vulkan12Properties.maxDescriptorSetUpdateAfterBindSampledImages;
+        indexingProperties.maxDescriptorSetUpdateAfterBindStorageImages =
+                vulkan12Properties.maxDescriptorSetUpdateAfterBindStorageImages;
+        indexingProperties.maxDescriptorSetUpdateAfterBindInputAttachments =
+                vulkan12Properties.maxDescriptorSetUpdateAfterBindInputAttachments;
+        indexingProperties.pNext = nullptr;
+
+        uint32_t extensionCount = 0;
+        extensions.resize(extensionCount);
+
+        vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, extensions.data());
     }
 
     void PhysicalDevice::QueryDeviceFeatures()
@@ -104,20 +128,19 @@ namespace SF::Engine
 
         // Query base features with chain
         VkPhysicalDeviceFeatures2 features2 = {};
-        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        features2.pNext = &vulkan11Features;
+        features2.sType                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        features2.pNext                     = &vulkan11Features;
 
         vkGetPhysicalDeviceFeatures2(physicalDevice, &features2);
         features = features2.features;
     }
 
-    VkPhysicalDevice PhysicalDevice::ChoosePhysicalDevice(
-        const std::vector<VkPhysicalDevice> &devices)
+    VkPhysicalDevice PhysicalDevice::ChoosePhysicalDevice(const std::vector<VkPhysicalDevice> &devices)
     {
         // Store devices with their scores
         std::multimap<uint32_t, VkPhysicalDevice> rankedDevices;
 
-        for (const auto &device : devices)
+        for (const auto &device: devices)
         {
             uint32_t score = EnumeratePhysicalDevice(device);
             if (score > 0) // Only consider suitable devices
@@ -137,14 +160,13 @@ namespace SF::Engine
         uint32_t extensionPropertyCount;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionPropertyCount, nullptr);
         std::vector<VkExtensionProperties> extensionProperties(extensionPropertyCount);
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionPropertyCount,
-                                             extensionProperties.data());
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionPropertyCount, extensionProperties.data());
 
         // Verify all required extensions are present
-        for (const char *requiredExtension : LogicalDevice::DeviceExtensions)
+        for (const char *requiredExtension: LogicalDevice::DeviceExtensions)
         {
             bool found = false;
-            for (const auto &availableExtension : extensionProperties)
+            for (const auto &availableExtension: extensionProperties)
             {
                 if (strcmp(requiredExtension, availableExtension.extensionName) == 0)
                 {
@@ -165,15 +187,15 @@ namespace SF::Engine
 
         // Query Vulkan 1.2+ features for modern capabilities
         VkPhysicalDeviceVulkan12Features vk12Features = {};
-        vk12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        vk12Features.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
 
         VkPhysicalDeviceVulkan13Features vk13Features = {};
-        vk13Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-        vk12Features.pNext = &vk13Features;
+        vk13Features.sType                            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+        vk12Features.pNext                            = &vk13Features;
 
         VkPhysicalDeviceFeatures2 features2 = {};
-        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        features2.pNext = &vk12Features;
+        features2.sType                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        features2.pNext                     = &vk12Features;
         vkGetPhysicalDeviceFeatures2(device, &features2);
 
 #ifdef SF_DEBUG
@@ -185,21 +207,21 @@ namespace SF::Engine
         // Device type scoring (higher is better)
         switch (deviceProperties.deviceType)
         {
-        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-            score += 10000; // Dedicated GPU is best
-            break;
-        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-            score += 1000; // Integrated GPU is second best
-            break;
-        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-            score += 500; // Virtual GPU is acceptable
-            break;
-        case VK_PHYSICAL_DEVICE_TYPE_CPU:
-            score += 100; // CPU rendering is last resort
-            break;
-        default:
-            score += 50;
-            break;
+            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                score += 10000; // Dedicated GPU is best
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                score += 1000; // Integrated GPU is second best
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                score += 500; // Virtual GPU is acceptable
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                score += 100; // CPU rendering is last resort
+                break;
+            default:
+                score += 50;
+                break;
         }
 
         // Vulkan API version bonus
@@ -262,12 +284,18 @@ namespace SF::Engine
         return score;
     }
 
+    bool PhysicalDevice::IsExtensionSupported(string_view name) const
+    {
+        return ranges::any_of(extensions,
+                              [name](const VkExtensionProperties &ext) { return name == ext.extensionName; });
+    }
+
     VkSampleCountFlagBits PhysicalDevice::GetMaxUsableSampleCount() const
     {
         auto counts = std::min(properties.limits.framebufferColorSampleCounts,
                                properties.limits.framebufferDepthSampleCounts);
 
-        for (const auto &sampleFlag : STAGE_FLAG_BITS)
+        for (const auto &sampleFlag: STAGE_FLAG_BITS)
         {
             if (counts & sampleFlag)
                 return sampleFlag;
@@ -276,30 +304,29 @@ namespace SF::Engine
         return VK_SAMPLE_COUNT_1_BIT;
     }
 
-    void PhysicalDevice::LogVulkanDevice(
-        const VkPhysicalDeviceProperties &deviceProperties,
-        const std::vector<VkExtensionProperties> &extensionProperties)
+    void PhysicalDevice::LogVulkanDevice(const VkPhysicalDeviceProperties &deviceProperties,
+                                         const std::vector<VkExtensionProperties> &extensionProperties)
     {
         std::stringstream ss;
 
         // Device type
         switch (deviceProperties.deviceType)
         {
-        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-            ss << "Integrated";
-            break;
-        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-            ss << "Discrete";
-            break;
-        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-            ss << "Virtual";
-            break;
-        case VK_PHYSICAL_DEVICE_TYPE_CPU:
-            ss << "CPU";
-            break;
-        default:
-            ss << "Other (" << deviceProperties.deviceType << ")";
-            break;
+            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                ss << "Integrated";
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                ss << "Discrete";
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                ss << "Virtual";
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                ss << "CPU";
+                break;
+            default:
+                ss << "Other (" << deviceProperties.deviceType << ")";
+                break;
         }
 
         ss << " Physical Device: " << deviceProperties.deviceID;
@@ -307,24 +334,24 @@ namespace SF::Engine
         // Vendor
         switch (deviceProperties.vendorID)
         {
-        case 0x8086:
-            ss << " \"Intel\"";
-            break;
-        case 0x10DE:
-            ss << " \"NVIDIA\"";
-            break;
-        case 0x1002:
-            ss << " \"AMD\"";
-            break;
-        case 0x13B5:
-            ss << " \"ARM\"";
-            break;
-        case 0x5143:
-            ss << " \"Qualcomm\"";
-            break;
-        default:
-            ss << " \"0x" << std::hex << deviceProperties.vendorID << std::dec << "\"";
-            break;
+            case 0x8086:
+                ss << " \"Intel\"";
+                break;
+            case 0x10DE:
+                ss << " \"NVIDIA\"";
+                break;
+            case 0x1002:
+                ss << " \"AMD\"";
+                break;
+            case 0x13B5:
+                ss << " \"ARM\"";
+                break;
+            case 0x5143:
+                ss << " \"Qualcomm\"";
+                break;
+            default:
+                ss << " \"0x" << std::hex << deviceProperties.vendorID << std::dec << "\"";
+                break;
         }
 
         ss << " \"" << deviceProperties.deviceName << "\"\n";
@@ -341,10 +368,9 @@ namespace SF::Engine
         {
             ss << ((deviceProperties.driverVersion >> 22) & 0x3ff) << "."
                << ((deviceProperties.driverVersion >> 14) & 0xff) << "."
-               << ((deviceProperties.driverVersion >> 6) & 0xff) << "."
-               << (deviceProperties.driverVersion & 0x3f) << '\n';
-        }
-        else // Standard Vulkan version format
+               << ((deviceProperties.driverVersion >> 6) & 0xff) << "." << (deviceProperties.driverVersion & 0x3f)
+               << '\n';
+        } else // Standard Vulkan version format
         {
             ss << VK_VERSION_MAJOR(deviceProperties.driverVersion) << "."
                << VK_VERSION_MINOR(deviceProperties.driverVersion) << "."
@@ -372,33 +398,32 @@ namespace SF::Engine
         ss << "  Max Image Dimension 3D: " << properties.limits.maxImageDimension3D << '\n';
         ss << "  Max Sampler Anisotropy: " << properties.limits.maxSamplerAnisotropy << '\n';
         ss << "  Max Viewports: " << properties.limits.maxViewports << '\n';
-        ss << "  Max Compute Work Group Invocations: "
-           << properties.limits.maxComputeWorkGroupInvocations << '\n';
+        ss << "  Max Compute Work Group Invocations: " << properties.limits.maxComputeWorkGroupInvocations << '\n';
         ss << "  Max MSAA Samples: ";
 
         switch (msaaSamples)
         {
-        case VK_SAMPLE_COUNT_64_BIT:
-            ss << "64x";
-            break;
-        case VK_SAMPLE_COUNT_32_BIT:
-            ss << "32x";
-            break;
-        case VK_SAMPLE_COUNT_16_BIT:
-            ss << "16x";
-            break;
-        case VK_SAMPLE_COUNT_8_BIT:
-            ss << "8x";
-            break;
-        case VK_SAMPLE_COUNT_4_BIT:
-            ss << "4x";
-            break;
-        case VK_SAMPLE_COUNT_2_BIT:
-            ss << "2x";
-            break;
-        default:
-            ss << "1x";
-            break;
+            case VK_SAMPLE_COUNT_64_BIT:
+                ss << "64x";
+                break;
+            case VK_SAMPLE_COUNT_32_BIT:
+                ss << "32x";
+                break;
+            case VK_SAMPLE_COUNT_16_BIT:
+                ss << "16x";
+                break;
+            case VK_SAMPLE_COUNT_8_BIT:
+                ss << "8x";
+                break;
+            case VK_SAMPLE_COUNT_4_BIT:
+                ss << "4x";
+                break;
+            case VK_SAMPLE_COUNT_2_BIT:
+                ss << "2x";
+                break;
+            default:
+                ss << "1x";
+                break;
         }
         ss << '\n';
 
@@ -416,14 +441,10 @@ namespace SF::Engine
 
         // Modern features
         ss << "\nVulkan 1.2 Features:\n";
-        ss << "  Timeline Semaphore: " << (vulkan12Features.timelineSemaphore ? "Yes" : "No")
-           << '\n';
-        ss << "  Descriptor Indexing: " << (vulkan12Features.descriptorIndexing ? "Yes" : "No")
-           << '\n';
-        ss << "  Buffer Device Address: " << (vulkan12Features.bufferDeviceAddress ? "Yes" : "No")
-           << '\n';
-        ss << "  Scalar Block Layout: " << (vulkan12Features.scalarBlockLayout ? "Yes" : "No")
-           << '\n';
+        ss << "  Timeline Semaphore: " << (vulkan12Features.timelineSemaphore ? "Yes" : "No") << '\n';
+        ss << "  Descriptor Indexing: " << (vulkan12Features.descriptorIndexing ? "Yes" : "No") << '\n';
+        ss << "  Buffer Device Address: " << (vulkan12Features.bufferDeviceAddress ? "Yes" : "No") << '\n';
+        ss << "  Scalar Block Layout: " << (vulkan12Features.scalarBlockLayout ? "Yes" : "No") << '\n';
 
         ss << "\nVulkan 1.3 Features:\n";
         ss << "  Dynamic Rendering: " << (vulkan13Features.dynamicRendering ? "Yes" : "No") << '\n';
@@ -433,4 +454,4 @@ namespace SF::Engine
         // Use fmt::runtime to prevent constexpr evaluation
         Log::Out(fmt::runtime("{}"), ss.str());
     }
-}
+} // namespace SF::Engine

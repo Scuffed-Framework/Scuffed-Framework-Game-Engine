@@ -8,7 +8,6 @@ namespace SF::Engine
     class Version;
     struct EngineConfig : Serializable
     {
-    public:
         struct LogConfig
         {
             bool Disable;
@@ -27,12 +26,6 @@ namespace SF::Engine
 
             AppInfo Engine;
             AppInfo Game;
-        };
-
-        // Scalable Multi-threaded Adaptive Rendering Technology
-        struct SMARTRenderSystemConfig
-        {
-            bool VulkanValidationLayersAllowed;
         };
 
         unsigned int LongDoubleSize = sizeof(long double);

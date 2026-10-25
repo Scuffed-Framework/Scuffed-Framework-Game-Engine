@@ -8,6 +8,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     class Instance;
 
     class PhysicalDevice
@@ -17,7 +18,7 @@ namespace SF::Engine
     public:
         explicit PhysicalDevice(const Instance &instance);
 
-        explicit operator const VkPhysicalDevice &() const { return physicalDevice; }
+        operator const VkPhysicalDevice &() const { return physicalDevice; }
 
         [[nodiscard]] const VkPhysicalDevice &GetPhysicalDevice() const { return physicalDevice; }
         [[nodiscard]] const VkPhysicalDeviceProperties &GetProperties() const { return properties; }
@@ -48,20 +49,41 @@ namespace SF::Engine
         }
         [[nodiscard]] VkPhysicalDeviceProperties2 GetDeviceProperties2() const { return properties2; }
 
+        [[nodiscard]] bool Supports64BitAtomics() const
+        {
+            VkPhysicalDeviceVulkan12Features deviceFeatures12{};
+            deviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+            deviceFeatures12.pNext = nullptr;
+
+            VkPhysicalDeviceFeatures2 deviceFeatures2{};
+            deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+            deviceFeatures2.pNext = &deviceFeatures12;
+
+            vkGetPhysicalDeviceFeatures2(physicalDevice, &deviceFeatures2);
+
+            return (deviceFeatures12.shaderBufferInt64Atomics == VK_TRUE &&
+                    deviceFeatures12.shaderSharedInt64Atomics == VK_TRUE);
+        }
+
+        [[nodiscard]] bool IsExtensionSupported(string_view name) const;
+
+        [[nodiscard]] const vector<VkExtensionProperties> &GetExtensions() const { return extensions; }
+
     private:
         void QueryDeviceProperties();
         void QueryDeviceFeatures();
-        VkPhysicalDevice ChoosePhysicalDevice(const std::vector<VkPhysicalDevice> &devices);
+        VkPhysicalDevice ChoosePhysicalDevice(const vector<VkPhysicalDevice> &devices);
         static uint32_t EnumeratePhysicalDevice(const VkPhysicalDevice &device);
         [[nodiscard]] VkSampleCountFlagBits GetMaxUsableSampleCount() const;
         void LogDeviceInfo() const;
 
         static void LogVulkanDevice(const VkPhysicalDeviceProperties &deviceProperties,
-                                    const std::vector<VkExtensionProperties> &extensionProperties);
+                                    const vector<VkExtensionProperties> &extensionProperties);
 
         const Instance &instance;
 
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+        vector<VkExtensionProperties> extensions;
 
         // Core properties and features
         VkPhysicalDeviceProperties properties             = {};

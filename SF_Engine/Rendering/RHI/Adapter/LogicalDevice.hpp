@@ -8,6 +8,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     class Instance;
     class PhysicalDevice;
 
@@ -32,7 +33,7 @@ namespace SF::Engine
         [[nodiscard]] uint32_t GetComputeFamily() const { return computeFamily; }
         [[nodiscard]] uint32_t GetTransferFamily() const { return transferFamily; }
 
-        static const std::vector<const char *> DeviceExtensions;
+        static const vector<const char *> DeviceExtensions;
 
     private:
         void CreateQueueIndices();

@@ -22,12 +22,14 @@
 namespace SF::Engine
 {
     using namespace std;
+
+    class BindlessManager;
+    class SMARTRenderSystemConfig;
+
     /**
      * @brief Module that manages the Vulkan instance, devices, surfaces, and rendering
      * infrastructure.
      */
-    class BindlessManager;
-
     class RenderSystem final : public ModuleRegistrar<RenderSystem>
     {
         friend class ModuleRegistrar<RenderSystem>;
@@ -38,7 +40,7 @@ namespace SF::Engine
         ~RenderSystem() override;
 
         void PostInit();
-        void PreShutdown();
+        void PreShutdown() const;
 
         // Module interface implementation
         void Update() override;
@@ -130,7 +132,7 @@ namespace SF::Engine
          */
         void ResetRenderStages();
 
-        uint32_t GetVkAPIVersion();
+        static uint32_t GetVkAPIVersion();
 
     private:
         /**
@@ -181,12 +183,12 @@ namespace SF::Engine
 
         // Render loop helpers
         void RecreateSwapchain();
-        void RecreateCommandBuffers(size_t surfaceId);
+        void RecreateCommandBuffers(size_t surfaceId) const;
         void RecreatePass();
         void RecreateAttachmentsMap();
 
-        bool StartRenderpass(size_t surfaceId, RhiRenderStage &renderStage);
-        void EndRenderpass(size_t surfaceId, RhiRenderStage &renderStage);
+        bool StartRenderpass(size_t surfaceId, const RhiRenderStage &renderStage) const;
+        void EndRenderpass(size_t surfaceId, const RhiRenderStage &renderStage) const;
 
         // Core Vulkan objects
         unique_ptr<Instance> instance;
@@ -210,10 +212,10 @@ namespace SF::Engine
         // Timing for command pool purging
         ElapsedTime elapsedPurge;
 
-        VmaAllocator alloc;
+        VmaAllocator alloc = VK_NULL_HANDLE;
 
-        // additional stuff
         unique_ptr<BindlessManager> bindlessMgr;
+        unique_ptr<SMARTRenderSystemConfig> config;
 
     public:
         VmaAllocator *GetAllocator() { return &alloc; }
@@ -313,32 +315,34 @@ namespace SF::Engine
     namespace VulkanFeatures
     {
         /**
-         * @brief Check if extensions are supported
+         * @brief Check whether all specified extensions are supported.
+         * @param required Braced list of extension names.
+         * @return True if every required extension is supported.
          */
-        inline bool AreExtensionsSupported(span<const char *const> required,
-                                           span<const VkExtensionProperties> available)
+        inline bool AreExtensionsSupported(initializer_list<string_view> required)
         {
             return ranges::all_of(required,
-                                  [&](const char *req)
+                                  [&](string_view req)
                                   {
-                                      return ranges::any_of(
-                                              available, [req](const auto &ext)
-                                              { return string_view(req) == string_view(ext.extensionName); });
+                                      return ranges::any_of(RenderSystem::Get()->GetPhysicalDevice()->GetExtensions(),
+                                                            [&](const VkExtensionProperties &ext)
+                                                            { return req == ext.extensionName; });
                                   });
         }
 
         /**
-         * @brief Get missing extensions
+         * @brief Get missing extensions.
+         * @param required Braced list of extension names.
+         * @return Names of extensions not supported by the physical device.
          */
-        inline vector<string_view> GetMissingExtensions(span<const char *const> required,
-                                                        span<const VkExtensionProperties> available)
+        inline vector<string_view> GetMissingExtensions(initializer_list<string_view> required)
         {
             vector<string_view> missing;
 
-            for (const char *req: required)
+            for (string_view req: required)
             {
-                if (!ranges::any_of(available, [req](const auto &ext)
-                                    { return string_view(req) == string_view(ext.extensionName); }))
+                if (!ranges::any_of(RenderSystem::Get()->GetPhysicalDevice()->GetExtensions(),
+                                    [&](const VkExtensionProperties &ext) { return req == ext.extensionName; }))
                 {
                     missing.emplace_back(req);
                 }
@@ -346,7 +350,116 @@ namespace SF::Engine
 
             return missing;
         }
+
+        /**
+         * @brief Check whether a single extension is supported.
+         */
+        inline bool IsExtensionSupported(string_view name)
+        {
+            return RenderSystem::Get()->GetPhysicalDevice()->IsExtensionSupported(name);
+        }
+
     } // namespace VulkanFeatures
+
+    // Scalable Multi-threaded Adaptive Rendering Technology
+    class SMARTRenderSystemConfig
+    {
+    public:
+        bool VulkanValidationLayersAllowed = false;
+        struct EnabledExtensions
+        {
+            // Descriptor management
+            bool descriptor_heap     = VulkanFeatures::IsExtensionSupported("VK_EXT_descriptor_heap");
+            bool descriptor_buffer   = VulkanFeatures::IsExtensionSupported(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
+            bool descriptor_indexing = VulkanFeatures::IsExtensionSupported(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+            // Shader and pipeline functionality
+            bool shader_object = VulkanFeatures::IsExtensionSupported(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
+            bool extended_dynamic_state =
+                    VulkanFeatures::IsExtensionSupported(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
+            bool extended_dynamic_state2 =
+                    VulkanFeatures::IsExtensionSupported(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
+            bool extended_dynamic_state3 =
+                    VulkanFeatures::IsExtensionSupported(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
+
+            // Rendering
+            bool dynamic_rendering = VulkanFeatures::IsExtensionSupported("VK_KHR_dynamic_rendering");
+            bool synchronization2  = VulkanFeatures::IsExtensionSupported("VK_KHR_synchronization2");
+            bool maintenance4      = VulkanFeatures::IsExtensionSupported("VK_KHR_maintenance4");
+            bool maintenance5      = VulkanFeatures::IsExtensionSupported("VK_KHR_maintenance5");
+            bool maintenance6      = VulkanFeatures::IsExtensionSupported("VK_KHR_maintenance6");
+
+            // GPU-driven rendering
+            bool mesh_shader = VulkanFeatures::IsExtensionSupported("VK_EXT_mesh_shader");
+            bool device_generated_commands =
+                    VulkanFeatures::IsExtensionSupported(VK_EXT_DEVICE_GENERATED_COMMANDS_EXTENSION_NAME);
+
+            // Ray tracing
+            bool acceleration_structure =
+                    VulkanFeatures::IsExtensionSupported(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+            bool ray_tracing_pipeline =
+                    VulkanFeatures::IsExtensionSupported(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+            bool ray_query = VulkanFeatures::IsExtensionSupported(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+            bool deferred_host_operations =
+                    VulkanFeatures::IsExtensionSupported(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+
+            // Memory and synchronization
+            bool buffer_device_address =
+                    VulkanFeatures::IsExtensionSupported(VK_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+            bool memory_budget      = VulkanFeatures::IsExtensionSupported(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+            bool memory_priority    = VulkanFeatures::IsExtensionSupported(VK_EXT_MEMORY_PRIORITY_EXTENSION_NAME);
+            bool timeline_semaphore = VulkanFeatures::IsExtensionSupported(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
+
+            // Diagnostics
+            bool debug_utils = VulkanFeatures::IsExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        };
+
+        struct EnabledFeatures
+        {
+            // Descriptor management
+            bool DescriptorHeap                                = true;
+            bool DescriptorHeapCaptureReplay                   = false;
+            bool RuntimeDescriptorArray                        = true;
+            bool DescriptorBindingPartiallyBound               = true;
+            bool DescriptorBindingVariableDescriptorCount      = true;
+            bool DescriptorBindingSampledImageUpdateAfterBind  = true;
+            bool DescriptorBindingStorageBufferUpdateAfterBind = true;
+
+            // Shader capabilities
+            bool ShaderInt64              = true;
+            bool ShaderFloat64            = false;
+            bool ShaderInt16              = true;
+            bool ShaderFloat16            = true;
+            bool ShaderBufferInt64Atomics = false;
+            bool ShaderSharedInt64Atomics = false;
+
+            // Rendering
+            bool DynamicRendering  = true;
+            bool Synchronization2  = true;
+            bool FillModeNonSolid  = true;
+            bool WideLines         = false;
+            bool SamplerAnisotropy = true;
+            bool SampleRateShading = true;
+
+            // GPU-driven rendering
+            bool MultiDrawIndirect         = true;
+            bool DrawIndirectFirstInstance = true;
+            bool ShaderDrawParameters      = true;
+            bool MeshShader                = true;
+            bool TaskShader                = true;
+
+            // Ray tracing
+            bool AccelerationStructure = true;
+            bool RayTracingPipeline    = true;
+            bool RayQuery              = true;
+            bool BufferDeviceAddress   = true;
+
+            // Performance
+            bool TimelineSemaphore       = true;
+            bool Synchronization2Enabled = true;
+            bool MemoryPriority          = true;
+        };
+    };
 
     /**
      * @brief Modern command buffer recording with RAII
@@ -441,17 +554,17 @@ namespace SF::Engine
         /**
          * @brief Get the command buffer
          */
-        [[nodiscard]] VkCommandBuffer get() const noexcept { return m_cmd; }
+        [[nodiscard]] VkCommandBuffer Get() const noexcept { return m_cmd; }
 
         /**
          * @brief Get the buffer containing draw commands
          */
-        [[nodiscard]] VkBuffer getBuffer() const noexcept { return m_buffer; }
+        [[nodiscard]] VkBuffer GetBuffer() const noexcept { return m_buffer; }
 
         /**
          * @brief Get the number of draws that will be executed
          */
-        [[nodiscard]] uint32_t getDrawCount() const noexcept { return m_drawCount; }
+        [[nodiscard]] uint32_t GetDrawCount() const noexcept { return m_drawCount; }
 
     private:
         VkCommandBuffer m_cmd;
@@ -493,22 +606,22 @@ namespace SF::Engine
         /**
          * @brief Get the command buffer
          */
-        [[nodiscard]] VkCommandBuffer get() const noexcept { return m_cmd; }
+        [[nodiscard]] VkCommandBuffer Get() const noexcept { return m_cmd; }
 
         /**
          * @brief Get the buffer containing draw commands
          */
-        [[nodiscard]] VkBuffer getBuffer() const noexcept { return m_buffer; }
+        [[nodiscard]] VkBuffer GetBuffer() const noexcept { return m_buffer; }
 
         /**
          * @brief Get the buffer containing the draw count
          */
-        [[nodiscard]] VkBuffer getCountBuffer() const noexcept { return m_countBuffer; }
+        [[nodiscard]] VkBuffer GetCountBuffer() const noexcept { return m_countBuffer; }
 
         /**
          * @brief Get the maximum number of draws that can be executed
          */
-        [[nodiscard]] uint32_t getMaxDrawCount() const noexcept { return m_maxDrawCount; }
+        [[nodiscard]] uint32_t GetMaxDrawCount() const noexcept { return m_maxDrawCount; }
 
     private:
         VkCommandBuffer m_cmd;
@@ -551,7 +664,7 @@ namespace SF::Engine
         explicit IndirectBatch(VkCommandBuffer cmd) : m_cmd(cmd) {}
 
         template<IndirectRenderingCommand... Commands>
-        void record(Commands &&...cmds)
+        void Record(Commands &&...cmds)
         {
             (cmds.record(m_cmd), ...);
         }
@@ -559,7 +672,7 @@ namespace SF::Engine
         /**
          * @brief Record a single indirect indexed draw
          */
-        void drawIndexedIndirect(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount = 1,
+        void DrawIndexedIndirect(VkBuffer buffer, VkDeviceSize offset, uint32_t drawCount = 1,
                                  uint32_t stride = sizeof(VkDrawIndexedIndirectCommand)) const
         {
             vkCmdDrawIndexedIndirect(m_cmd, buffer, offset, drawCount, stride);
@@ -568,9 +681,9 @@ namespace SF::Engine
         /**
          * @brief Record indirect indexed draws with count buffer
          */
-        void drawIndexedIndirectCount(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer,
+        void DrawIndexedIndirectCount(VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer,
                                       VkDeviceSize countBufferOffset, uint32_t maxDrawCount,
-                                      uint32_t stride = sizeof(VkDrawIndexedIndirectCommand))
+                                      uint32_t stride = sizeof(VkDrawIndexedIndirectCommand)) const
         {
             vkCmdDrawIndexedIndirectCount(m_cmd, buffer, offset, countBuffer, countBufferOffset, maxDrawCount, stride);
         }
