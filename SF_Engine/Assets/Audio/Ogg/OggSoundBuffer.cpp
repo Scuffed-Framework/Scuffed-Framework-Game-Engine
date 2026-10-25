@@ -21,7 +21,7 @@ namespace SF::Engine
         int sampleRate = 0;
         short *output = nullptr;
 
-        int samplesPerChannel = stb_vorbis_decode_filename(input.file->GetName().c_str(), &channels,
+        int samplesPerChannel = stb_vorbis_decode_filename(input.file->GetFullPath().c_str(), &channels,
                                                              &sampleRate, &output);
 
         if (samplesPerChannel < 0 || output == nullptr)

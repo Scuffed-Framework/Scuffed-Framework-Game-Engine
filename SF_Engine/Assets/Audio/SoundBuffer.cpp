@@ -119,7 +119,8 @@ namespace SF::Engine
 
     void SoundBuffer::Load()
     {
-        if (!input.file->Exists() || input.memory == nullptr)
+        const bool hasFile = input.file != nullptr && input.file->Exists();
+        if (!hasFile && input.memory == nullptr)
         {
             std::cerr << "Cannot load sound buffer: input is empty" << std::endl;
             return;
@@ -131,7 +132,7 @@ namespace SF::Engine
             return;
         }
 
-        if (input.file != nullptr)
+        if (hasFile)
         {
             // Get file extension
             std::string extension = input.file->GetExtension();

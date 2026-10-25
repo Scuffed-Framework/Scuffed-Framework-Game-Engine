@@ -16,17 +16,17 @@ namespace SF::EBML
 
         // `rawWithMarker` must be a value as it appears on the wire, e.g.
         // 0x1A45DFA3 for \EBML, or 0xBF for \CRC32.
-        constexpr explicit Identifier(std::uint32_t rawWithMarker)
-            : m_value(rawWithMarker), m_length(length_of(rawWithMarker))
+        constexpr explicit Identifier(std::uint32_t rawWithMarker) :
+            m_value(rawWithMarker), m_length(length_of(rawWithMarker))
         {
         }
 
         friend constexpr bool operator==(const Identifier &, const Identifier &) = default;
 
-        constexpr std::uint32_t value() const noexcept { return m_value; }
-        constexpr std::uint8_t length() const noexcept { return m_length; }
+        [[nodiscard]] constexpr std::uint32_t value() const noexcept { return m_value; }
+        [[nodiscard]] constexpr std::uint8_t length() const noexcept { return m_length; }
 
-        std::vector<byte> encode() const { return encode_id(m_value, m_length); }
+        [[nodiscard]] std::vector<byte> encode() const { return encode_id(m_value, m_length); }
 
         static std::optional<Identifier> decode(std::span<const byte> data)
         {
@@ -34,7 +34,7 @@ namespace SF::EBML
             if (!v)
                 return std::nullopt;
             Identifier id;
-            id.m_value = v->value;
+            id.m_value  = v->value;
             id.m_length = v->length;
             return id;
         }

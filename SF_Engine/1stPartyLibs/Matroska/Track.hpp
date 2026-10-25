@@ -1,49 +1,50 @@
 #pragma once
 
-#include "../EBML/Element.hpp"
-#include "MatroskaIds.hpp"
-#include "Block.hpp" 
-#include <string>
+#include <chrono>
+#include <memory>
 #include <optional>
+#include <string>
 #include <variant>
 #include <vector>
-#include <memory>
-#include <chrono>
+#include "../EBML/Element.hpp"
+#include "Block.hpp"
+#include "MatroskaIds.hpp"
 
 using namespace SF::EBML;
 namespace SF::Matroska
 {
-    enum class TrackType : uint64_t
+    using namespace std;
+    enum class TrackType : uint8_t
     {
-        Video = 1,
-        Audio = 2,
-        Complex = 3,
-        Logo = 0x10,
+        Video    = 1,
+        Audio    = 2,
+        Complex  = 3,
+        Logo     = 0x10,
         Subtitle = 0x11,
-        Buttons = 0x12,
-        Control = 0x20,
+        Buttons  = 0x12,
+        Control  = 0x20,
         Metadata = 0x21
     };
 
     // Video track specific data
     struct VideoTrack
     {
-        uint64_t pixelWidth = 0;
-        uint64_t pixelHeight = 0;
-        uint64_t pixelCropTop = 0;
+        uint64_t pixelWidth      = 0;
+        uint64_t pixelHeight     = 0;
+        uint64_t pixelCropTop    = 0;
         uint64_t pixelCropBottom = 0;
-        uint64_t pixelCropLeft = 0;
-        uint64_t pixelCropRight = 0;
-        double frameRate = 0.0;
-        uint64_t displayWidth = 0;
-        uint64_t displayHeight = 0;
-        uint64_t displayUnit = 0;
-        bool interlaced = false;
-        bool stereoMode = false;
-        std::vector<byte> codecPrivate;
-        std::string codecID;
-        
-        bool validate() const
+        uint64_t pixelCropLeft   = 0;
+        uint64_t pixelCropRight  = 0;
+        double frameRate         = 0.0;
+        uint64_t displayWidth    = 0;
+        uint64_t displayHeight   = 0;
+        uint64_t displayUnit     = 0;
+        bool interlaced          = false;
+        bool stereoMode          = false;
+        vector<EBML::byte> codecPrivate;
+        string codecID;
+
+        [[nodiscard]] bool validate() const
         {
             if (pixelWidth == 0 || pixelHeight == 0)
                 return false;
@@ -55,14 +56,14 @@ namespace SF::Matroska
 
     struct AudioTrack
     {
-        double samplingFrequency = 8000.0;
+        double samplingFrequency         = 8000.0;
         uint64_t outputSamplingFrequency = 0;
-        uint64_t channels = 1;
-        uint64_t bitDepth = 0;
-        std::vector<byte> codecPrivate;
-        std::string codecID;
-        
-        bool validate() const
+        uint64_t channels                = 1;
+        uint64_t bitDepth                = 0;
+        vector<EBML::byte> codecPrivate;
+        string codecID;
+
+        [[nodiscard]] bool validate() const
         {
             if (samplingFrequency <= 0 || channels == 0)
                 return false;
@@ -74,56 +75,55 @@ namespace SF::Matroska
 
     struct SubtitleTrack
     {
-        std::string codecID;
-        bool forced = false;
+        string codecID;
+        bool forced       = false;
         bool defaultTrack = true;
-        std::vector<byte> codecPrivate;
+        vector<EBML::byte> codecPrivate;
     };
 
     // Enhanced Track with validation
     struct Track
     {
         uint64_t number = 0;
-        uint64_t uid = 0;
-        TrackType type = TrackType::Video;
-        std::string name;
-        std::string language = "eng";
-        std::string codecID;
-        bool enabled = true;
-        bool defaultTrack = true;
-        bool forced = false;
-        bool lacing = true;
-        std::chrono::nanoseconds defaultDuration = std::chrono::nanoseconds::zero();
-        std::chrono::nanoseconds codecDelay = std::chrono::nanoseconds::zero();
-        std::chrono::nanoseconds seekPreRoll = std::chrono::nanoseconds::zero();
+        uint64_t uid    = 0;
+        TrackType type  = TrackType::Video;
+        string name;
+        string language = "eng";
+        string codecID;
+        bool enabled                        = true;
+        bool defaultTrack                   = true;
+        bool forced                         = false;
+        bool lacing                         = true;
+        chrono::nanoseconds defaultDuration = chrono::nanoseconds::zero();
+        chrono::nanoseconds codecDelay      = chrono::nanoseconds::zero();
+        chrono::nanoseconds seekPreRoll     = chrono::nanoseconds::zero();
 
-        std::variant<VideoTrack, AudioTrack, SubtitleTrack, std::monostate> specific;
+        variant<VideoTrack, AudioTrack, SubtitleTrack, monostate> specific;
 
-        bool validate() const
+        [[nodiscard]] bool validate() const
         {
             if (number == 0 || uid == 0)
                 return false;
             if (codecID.empty())
                 return false;
-            
+
             if (type == TrackType::Video)
             {
-                if (auto* v = std::get_if<VideoTrack>(&specific))
+                if (auto *v = get_if<VideoTrack>(&specific))
                     return v->validate();
-            }
-            else if (type == TrackType::Audio)
+            } else if (type == TrackType::Audio)
             {
-                if (auto* a = std::get_if<AudioTrack>(&specific))
+                if (auto *a = get_if<AudioTrack>(&specific))
                     return a->validate();
             }
-            
+
             return true;
         }
     };
 
     // Build a TrackEntry element from a Track. Shared by MatroskaFile and
     // MatroskaMuxer so both can serialize tracks the same way.
-    inline Element create_track_entry(const Track& track)
+    inline Element create_track_entry(const Track &track)
     {
         auto entry = Element::make_master(ids::TrackEntry);
 
@@ -145,18 +145,15 @@ namespace SF::Matroska
         if (!track.lacing)
             entry.add(Element::make_uint(ids::TrackLacing, 0));
         if (track.defaultDuration.count() > 0)
-            entry.add(Element::make_uint(ids::DefaultDuration,
-                         static_cast<uint64_t>(track.defaultDuration.count())));
+            entry.add(Element::make_uint(ids::DefaultDuration, static_cast<uint64_t>(track.defaultDuration.count())));
         if (track.codecDelay.count() > 0)
-            entry.add(Element::make_uint(ids::CodecDelay,
-                         static_cast<uint64_t>(track.codecDelay.count())));
+            entry.add(Element::make_uint(ids::CodecDelay, static_cast<uint64_t>(track.codecDelay.count())));
         if (track.seekPreRoll.count() > 0)
-            entry.add(Element::make_uint(ids::SeekPreRoll,
-                         static_cast<uint64_t>(track.seekPreRoll.count())));
+            entry.add(Element::make_uint(ids::SeekPreRoll, static_cast<uint64_t>(track.seekPreRoll.count())));
 
         if (track.type == TrackType::Video)
         {
-            if (auto* video = std::get_if<VideoTrack>(&track.specific))
+            if (auto *video = get_if<VideoTrack>(&track.specific))
             {
                 if (!video->codecPrivate.empty())
                     entry.add(Element::make_binary(ids::CodecPrivate, video->codecPrivate));
@@ -189,10 +186,9 @@ namespace SF::Matroska
                     videoElement.add(Element::make_uint(ids::StereoMode, 1));
                 entry.add(std::move(videoElement));
             }
-        }
-        else if (track.type == TrackType::Audio)
+        } else if (track.type == TrackType::Audio)
         {
-            if (auto* audio = std::get_if<AudioTrack>(&track.specific))
+            if (auto *audio = get_if<AudioTrack>(&track.specific))
             {
                 if (!audio->codecPrivate.empty())
                     entry.add(Element::make_binary(ids::CodecPrivate, audio->codecPrivate));
@@ -217,17 +213,18 @@ namespace SF::Matroska
     struct BlockGroup
     {
         Block block;
-        std::vector<int64_t> referenceBlocks;
-        uint64_t duration = 0;
+        vector<int64_t> referenceBlocks;
+        uint64_t duration   = 0;
         uint64_t codecState = 0;
-        std::vector<byte> discardPadding;
+        vector<EBML::byte> discardPadding;
         ElementList additionalData;
-        
+
         bool is_b_frame() const
         {
-            for (auto ref : referenceBlocks)
-                if (ref < 0)
-                    return true;
+            if (ranges::any_of(referenceBlocks, [](const auto &ref) { return ref < 0; }))
+            {
+                return true;
+            }
             return false;
         }
 
@@ -244,54 +241,46 @@ namespace SF::Matroska
     // Frame with reference counting for better memory management
     struct SharedFrame
     {
-        std::shared_ptr<std::vector<byte>> data;
+        shared_ptr<vector<EBML::byte>> data;
         int64_t duration = 0;
-        
+
         SharedFrame() = default;
-        SharedFrame(const std::vector<byte>& d) 
-            : data(std::make_shared<std::vector<byte>>(d)) {}
-        SharedFrame(std::vector<byte>&& d) 
-            : data(std::make_shared<std::vector<byte>>(std::move(d))) {}
-        SharedFrame(const SharedFrame&) = default;
-        SharedFrame(SharedFrame&&) = default;
-        
-        SharedFrame& operator=(const SharedFrame&) = default;
-        SharedFrame& operator=(SharedFrame&&) = default;
-        
-        const std::vector<byte>& get() const { return *data; }
-        size_t size() const { return data ? data->size() : 0; }
-        bool empty() const { return !data || data->empty(); }
+        explicit SharedFrame(const vector<EBML::byte> &d) : data(make_shared<vector<EBML::byte>>(d)) {}
+        explicit SharedFrame(vector<EBML::byte> &&d) : data(make_shared<vector<EBML::byte>>(std::move(d))) {}
+        SharedFrame(const SharedFrame &) = default;
+        SharedFrame(SharedFrame &&)      = default;
+
+        SharedFrame &operator=(const SharedFrame &) = default;
+        SharedFrame &operator=(SharedFrame &&)      = default;
+
+        [[nodiscard]] const vector<EBML::byte> &get() const { return *data; }
+        [[nodiscard]] size_t size() const { return data ? data->size() : 0; }
+        [[nodiscard]] bool empty() const { return !data || data->empty(); }
     };
 
     // Enhanced Block with shared frames
     struct EnhancedBlock
     {
         uint64_t trackNumber = 0;
-        int16_t timecode = 0;
-        bool keyframe = true;
-        bool invisible = false;
-        bool discardable = false;
-        LacingType lacing = LacingType::None;
-        std::vector<SharedFrame> frames;
-        
-        void add_frame(std::vector<byte>&& data)
-        {
-            frames.emplace_back(std::move(data));
-        }
-        
-        void add_frame(const std::vector<byte>& data)
-        {
-            frames.emplace_back(data);
-        }
-        
-        void add_frame(std::shared_ptr<std::vector<byte>> data)
+        int16_t timecode     = 0;
+        bool keyframe        = true;
+        bool invisible       = false;
+        bool discardable     = false;
+        LacingType lacing    = LacingType::None;
+        vector<SharedFrame> frames;
+
+        void add_frame(vector<EBML::byte> &&data) { frames.emplace_back(std::move(data)); }
+
+        void add_frame(const vector<EBML::byte> &data) { frames.emplace_back(data); }
+
+        void add_frame(shared_ptr<vector<EBML::byte>> data)
         {
             SharedFrame frame;
             frame.data = std::move(data);
             frames.push_back(std::move(frame));
         }
-        
-        bool validate() const
+
+        [[nodiscard]] bool validate() const
         {
             if (trackNumber == 0 || frames.empty())
                 return false;
@@ -300,4 +289,4 @@ namespace SF::Matroska
             return true;
         }
     };
-}
+} // namespace SF::Matroska

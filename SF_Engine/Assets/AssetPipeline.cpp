@@ -1,10 +1,12 @@
 #include "AssetPipeline.hpp"
 
+#include <Assets/Audio/AudioAsset.hpp>
+#include <Assets/Models/MeshAsset.hpp>
 #include <Engine/Log/Log.hpp>
 #include <Engine/Project/Project.hpp>
 #include <LowLevel/FileSystem/File.hpp>
 #include <LowLevel/XML/XMLModule.hpp>
-#include <assimp/Importer.hpp>
+#include <Rendering/RHI/Images/Image.hpp>
 
 namespace SF::Engine
 {
@@ -26,16 +28,31 @@ namespace SF::Engine
         factories.emplace(rttiTypeName, std::move(factory));
     }
 
+    void AssetController::RegisterBuiltinFactories()
+    {
+        static bool registered = false;
+        if (registered)
+            return;
+        registered = true;
+
+        // Temporaries: constructing an AssetRegistrar is what registers the factory.
+        (void) AssetRegistrar<MeshAsset>{};
+        (void) AssetRegistrar<AudioAsset>{};
+        (void) AssetRegistrar<ImageAsset<Image2d>>{};
+    }
+
     bool AssetController::Initialize()
     {
+        RegisterBuiltinFactories();
         assets_ = vector<shared_ptr<AssetBase>>();
         return true;
     }
 
     void AssetController::ProjectLoaded()
     {
-        if (assets_.empty())
-            assets_.clear();
+        // Drop assets that came from a previous project's disk scan so reloading doesn't duplicate them.
+        // Procedural assets (no assetPath, e.g. engine LUTs registered at startup) are kept.
+        std::erase_if(assets_, [](const std::shared_ptr<AssetBase> &a) { return a && !a->assetPath.empty(); });
 
         const std::filesystem::path assetsRoot = ProjectManager::Get()->GetProjectAssetPath();
         if (!std::filesystem::exists(assetsRoot))
@@ -141,6 +158,34 @@ namespace SF::Engine
         }
 
         return nullptr;
+    }
+
+    std::shared_ptr<AssetBase> AssetController::FindByPath(const std::filesystem::path &path) const
+    {
+        if (path.empty())
+            return nullptr;
+
+        std::error_code ec;
+        const std::filesystem::path wanted = std::filesystem::weakly_canonical(path, ec);
+
+        for (const auto &asset: assets_)
+        {
+            if (!asset || asset->assetPath.empty())
+                continue;
+            if (asset->assetPath == path)
+                return asset;
+
+            std::error_code ec2;
+            if (!ec && std::filesystem::weakly_canonical(asset->assetPath, ec2) == wanted && !ec2)
+                return asset;
+        }
+        return nullptr;
+    }
+
+    void AssetController::AddAsset(std::shared_ptr<AssetBase> asset)
+    {
+        if (asset)
+            assets_.push_back(std::move(asset));
     }
 
     void AssetController::SaveManifest()

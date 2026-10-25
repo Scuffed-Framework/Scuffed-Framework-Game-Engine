@@ -1,23 +1,24 @@
 #pragma once
 
-#include "Identifier.hpp"
+#include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
+#include <mutex>
+#include <shared_mutex>
 #include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <variant>
 #include <vector>
-#include <mutex>
-#include <shared_mutex>
-#include <atomic>
-#include <algorithm>
+#include "Identifier.hpp"
 
 namespace SF::EBML
 {
-    using byte = std::uint8_t;
+    using namespace std;
+    using byte = uint8_t;
 
     // Forward declaration
     class Element;
@@ -25,132 +26,117 @@ namespace SF::EBML
     // Thread-safe element list with copy-on-write semantics
     class ElementList
     {
-    private:
-        mutable std::shared_mutex mutex_;
-        std::vector<Element> elements_;
+        mutable shared_mutex mutex_;
+        vector<Element> elements_;
 
     public:
         // NOTE: Element and ElementList are mutually referential (Element holds
         // an ElementList of children; ElementList holds a vector<Element>).
         // Any method here that needs to construct/copy/inspect an Element must
         // be defined out-of-line, after Element's definition later in this
-        // file - Element is only forward-declared at this point. Methods that
+        // file; Element is only forward-declared at this point. Methods that
         // don't touch Element itself (size/empty/clear, and the erase_if
         // template, whose instantiation is deferred until use) can stay inline.
         ElementList();
-        ElementList(const ElementList& other);
-        ElementList(ElementList&& other) noexcept;
-        ElementList& operator=(const ElementList& other);
+        ElementList(const ElementList &other);
+        ElementList(ElementList &&other) noexcept;
+        ElementList &operator=(const ElementList &other);
 
         void push_back(Element element);
         void insert(size_t pos, Element element);
 
         template<typename Predicate>
-        void erase_if(Predicate pred)
-        {
-            std::unique_lock lock(mutex_);
-            elements_.erase(std::remove_if(elements_.begin(), elements_.end(), pred),
-                           elements_.end());
-        }
+        void erase_if(Predicate pred);
 
-        size_t size() const
-        {
-            std::shared_lock lock(mutex_);
-            return elements_.size();
-        }
+        size_t size() const;
 
         bool empty() const
         {
-            std::shared_lock lock(mutex_);
+            shared_lock lock(mutex_);
             return elements_.empty();
         }
 
         // Find with shared lock
-        const Element* find(Identifier id) const;
+        const Element *find(Identifier id) const;
 
         // Non-const find with unique lock
-        Element* find_mutable(Identifier id);
+        Element *find_mutable(Identifier id);
 
         // Iterator support with locking
         class const_iterator
         {
-        private:
-            typename std::vector<Element>::const_iterator it_;
-            const ElementList* parent_;
+            vector<Element>::const_iterator it_;
+            const ElementList *parent_;
+
         public:
-            const_iterator(typename std::vector<Element>::const_iterator it, const ElementList* parent)
-                : it_(it), parent_(parent) {}
-            
-            const Element& operator*() const { return *it_; }
-            const Element* operator->() const { return &*it_; }
-            
-            const_iterator& operator++() { ++it_; return *this; }
-            const_iterator operator++(int) { auto tmp = *this; ++it_; return tmp; }
-            
-            bool operator==(const const_iterator& other) const { return it_ == other.it_; }
-            bool operator!=(const const_iterator& other) const { return it_ != other.it_; }
+            const_iterator(typename vector<Element>::const_iterator it, const ElementList *parent) :
+                it_(it), parent_(parent)
+            {
+            }
+
+            const Element &operator*() const { return *it_; }
+            const Element *operator->() const { return &*it_; }
+
+            const_iterator &operator++();
+            const_iterator operator++(int);
+
+            bool operator==(const const_iterator &other) const { return it_ == other.it_; }
+            bool operator!=(const const_iterator &other) const { return it_ != other.it_; }
         };
 
         const_iterator begin() const;
         const_iterator end() const;
 
         // Range-based access with lock (returns snapshot)
-        std::vector<Element> snapshot() const;
+        vector<Element> snapshot() const;
 
-        // Get mutable reference with lock (for serialization)
-        const std::vector<Element>& get_unsafe() const { return elements_; }
-        
         // Clear all elements
-        void clear()
-        {
-            std::unique_lock lock(mutex_);
-            elements_.clear();
-        }
+        void clear();
     };
 
     // Decode functions
-    inline std::uint64_t decode_uint(std::span<const byte> data)
+    inline uint64_t decode_uint(span<const byte> data)
     {
         if (data.size() > 8)
-            throw std::runtime_error("EBML integer element must be at most 8 bytes");
-        std::uint64_t v = 0;
-        for (byte b : data)
+            throw runtime_error("EBML integer element must be at most 8 bytes");
+        uint64_t v = 0;
+        for (byte b: data)
             v = (v << 8) | b;
         return v;
     }
 
-    inline std::int64_t decode_int(std::span<const byte> data)
+    inline int64_t decode_int(span<const byte> data)
     {
-        std::uint64_t v = decode_uint(data);
+        uint64_t v = decode_uint(data);
         if (!data.empty() && (data[0] & 0x80) && data.size() < 8)
-            v |= (~std::uint64_t{0}) << (data.size() * 8);
-        return static_cast<std::int64_t>(v);
+            v |= (~uint64_t{0}) << (data.size() * 8);
+        return static_cast<int64_t>(v);
     }
 
-    inline double decode_float(std::span<const byte> data)
+    inline double decode_float(span<const byte> data)
     {
         if (data.size() == 4)
         {
-            std::uint32_t bits = static_cast<std::uint32_t>(decode_uint(data));
+            auto bits = static_cast<uint32_t>(decode_uint(data));
             float f;
-            std::memcpy(&f, &bits, 4);
+            memcpy(&f, &bits, 4);
             return f;
         }
         if (data.size() == 8)
         {
-            std::uint64_t bits = decode_uint(data);
+            uint64_t bits = decode_uint(data);
             double d;
-            std::memcpy(&d, &bits, 8);
+            memcpy(&d, &bits, 8);
             return d;
         }
         if (data.empty())
             return 0.0;
-        throw std::runtime_error("EBML float element must be 0, 4 or 8 bytes");
+        throw runtime_error("EBML float element must be 0, 4 or 8 bytes");
     }
 
-    inline std::vector<byte> encode_uint(std::uint64_t v)
+    inline vector<byte> encode_uint(uint64_t v)
     {
-        std::vector<byte> out;
+        vector<byte> out;
         do
         {
             out.insert(out.begin(), static_cast<byte>(v & 0xFF));
@@ -159,46 +145,44 @@ namespace SF::EBML
         return out;
     }
 
-    inline std::vector<byte> encode_int(std::int64_t v)
+    inline vector<byte> encode_int(int64_t v)
     {
-        std::vector<byte> out;
-        std::uint64_t u = static_cast<std::uint64_t>(v);
+        vector<byte> out;
+        auto u        = static_cast<uint64_t>(v);
         bool negative = v < 0;
         while (true)
         {
             out.insert(out.begin(), static_cast<byte>(u & 0xFF));
-            bool leadingSignOk = negative ? (out.front() & 0x80) != 0
-                                          : (out.front() & 0x80) == 0;
-            std::uint64_t next = negative ? (u >> 8) | (~std::uint64_t{0} << 56)
-                                          : (u >> 8);
-            if (leadingSignOk && (negative ? next == (~std::uint64_t{0}) : next == 0))
+            bool leadingSignOk = negative ? (out.front() & 0x80) != 0 : (out.front() & 0x80) == 0;
+            uint64_t next      = negative ? (u >> 8) | (~uint64_t{0} << 56) : (u >> 8);
+            if (leadingSignOk && (negative ? next == (~uint64_t{0}) : next == 0))
                 break;
             u = next;
         }
         return out;
     }
 
-    inline std::vector<byte> encode_float(double v)
+    inline vector<byte> encode_float(double v)
     {
-        std::uint64_t bits;
-        std::memcpy(&bits, &v, 8);
+        uint64_t bits;
+        memcpy(&bits, &v, 8);
         auto out = encode_uint(bits);
         while (out.size() < 8)
             out.insert(out.begin(), 0);
         return out;
     }
 
-    inline std::vector<byte> encode_float32(float v)
+    inline vector<byte> encode_float32(float v)
     {
-        std::uint32_t bits;
-        std::memcpy(&bits, &v, 4);
+        uint32_t bits;
+        memcpy(&bits, &v, 4);
         auto out = encode_uint(bits);
         while (out.size() < 4)
             out.insert(out.begin(), 0);
         return out;
     }
 
-    inline constexpr std::int64_t kDateEpochOffsetNs = 978307200LL * 1'000'000'000LL;
+    inline constexpr int64_t kDateEpochOffsetNs = 978307200LL * 1'000'000'000LL;
 
     // Main Element class
     class Element
@@ -217,70 +201,80 @@ namespace SF::EBML
             Unknown
         };
 
-        static constexpr std::string_view kind_name(Kind k)
+        static constexpr string_view kind_name(Kind k)
         {
             switch (k)
             {
-                case Kind::Master: return "Master";
-                case Kind::UInt: return "UInt";
-                case Kind::Int: return "Int";
-                case Kind::Float: return "Float";
-                case Kind::String: return "String";
-                case Kind::Utf8: return "Utf8";
-                case Kind::Date: return "Date";
-                case Kind::Binary: return "Binary";
-                default: return "Unknown";
+                case Kind::Master:
+                    return "Master";
+                case Kind::UInt:
+                    return "UInt";
+                case Kind::Int:
+                    return "Int";
+                case Kind::Float:
+                    return "Float";
+                case Kind::String:
+                    return "String";
+                case Kind::Utf8:
+                    return "Utf8";
+                case Kind::Date:
+                    return "Date";
+                case Kind::Binary:
+                    return "Binary";
+                default:
+                    return "Unknown";
             }
         }
 
     private:
         Identifier m_id;
         Kind m_kind = Kind::Binary;
-        mutable std::shared_mutex mutex_;
-        std::variant<ElementList, std::vector<byte>> m_payload;
+        mutable shared_mutex mutex_;
+        variant<ElementList, vector<byte>> m_payload;
 
     public:
         Element() = default;
-        
-        Element(Identifier id, Kind kind, ElementList children)
-            : m_id(id), m_kind(kind), m_payload(std::move(children)) {}
-        
-        Element(Identifier id, Kind kind, std::vector<byte> data)
-            : m_id(id), m_kind(kind), m_payload(std::move(data)) {}
+
+        Element(Identifier id, Kind kind, ElementList children) : m_id(id), m_kind(kind), m_payload(std::move(children))
+        {
+        }
+
+        Element(Identifier id, Kind kind, vector<byte> data) : m_id(id), m_kind(kind), m_payload(std::move(data)) {}
 
         // Copy constructor (thread-safe)
-        Element(const Element& other)
-            : m_id(other.m_id), m_kind(other.m_kind)
+        Element(const Element &other) : m_id(other.m_id), m_kind(other.m_kind)
         {
-            std::shared_lock lock(other.mutex_);
+            shared_lock lock(other.mutex_);
             m_payload = other.m_payload;
         }
 
-        // Move constructor
-        Element(Element&& other) noexcept
-            : m_id(other.m_id), m_kind(other.m_kind), m_payload(std::move(other.m_payload)) {}
+        // std::move constructor
+        Element(Element &&other) noexcept :
+            m_id(other.m_id), m_kind(other.m_kind), m_payload(std::move(other.m_payload))
+        {
+        }
 
         // Assignment operators
-        Element& operator=(const Element& other)
+        Element &operator=(const Element &other)
         {
             if (this != &other)
             {
-                std::unique_lock lock1(mutex_, std::defer_lock);
-                std::shared_lock lock2(other.mutex_, std::defer_lock);
-                std::lock(lock1, lock2);
-                m_id = other.m_id;
-                m_kind = other.m_kind;
+                unique_lock lock1(mutex_, defer_lock);
+                shared_lock lock2(other.mutex_, defer_lock);
+                lock(lock1, lock2);
+                m_id      = other.m_id;
+                m_kind    = other.m_kind;
                 m_payload = other.m_payload;
             }
             return *this;
         }
 
-        Element& operator=(Element&& other) noexcept
+        Element &operator=(Element &&other) noexcept
         {
             if (this != &other)
             {
-                m_id = other.m_id;
-                m_kind = other.m_kind;
+                m_id      = other.m_id;
+                m_kind    = other.m_kind;
                 m_payload = std::move(other.m_payload);
             }
             return *this;
@@ -292,152 +286,102 @@ namespace SF::EBML
         bool is_master() const { return m_kind == Kind::Master; }
 
         // Children access with locking
-        ElementList& children() 
-        { 
-            return std::get<ElementList>(m_payload); 
-        }
-        
-        const ElementList& children() const 
-        { 
-            return std::get<ElementList>(m_payload); 
-        }
-        
-        void add(Element child) 
-        { 
-            children().push_back(std::move(child)); 
-        }
+        ElementList &children() { return get<ElementList>(m_payload); }
 
-        const Element* find(Identifier childId) const 
-        { 
-            return children().find(childId); 
-        }
-        
-        Element* find_mutable(Identifier childId) 
-        { 
-            return children().find_mutable(childId); 
-        }
+        const ElementList &children() const { return get<ElementList>(m_payload); }
+
+        void add(Element child) { children().push_back(std::move(child)); }
+
+        const Element *find(Identifier childId) const { return children().find(childId); }
+
+        Element *find_mutable(Identifier childId) { return children().find_mutable(childId); }
 
         // Raw data access
-        std::vector<byte>& raw() 
-        { 
-            return std::get<std::vector<byte>>(m_payload); 
-        }
-        
-        const std::vector<byte>& raw() const 
-        { 
-            return std::get<std::vector<byte>>(m_payload); 
-        }
+        vector<byte> &raw() { return get<vector<byte>>(m_payload); }
+
+        const vector<byte> &raw() const { return get<vector<byte>>(m_payload); }
 
         // Type-safe accessors with validation - FIXED: using static decode functions
-        std::uint64_t as_uint() const
+        uint64_t as_uint() const
         {
             if (m_kind != Kind::UInt)
-                throw std::runtime_error("Element is not a UInt");
+                throw runtime_error("Element is not a UInt");
             return decode_uint(raw());
         }
 
-        std::int64_t as_int() const
+        int64_t as_int() const
         {
             if (m_kind != Kind::Int)
-                throw std::runtime_error("Element is not an Int");
+                throw runtime_error("Element is not an Int");
             return decode_int(raw());
         }
 
         double as_float() const
         {
             if (m_kind != Kind::Float)
-                throw std::runtime_error("Element is not a Float");
+                throw runtime_error("Element is not a Float");
             return decode_float(raw());
         }
 
-        std::string as_string() const
+        string as_string() const
         {
             if (m_kind != Kind::String && m_kind != Kind::Utf8)
-                throw std::runtime_error("Element is not a String or Utf8");
+                throw runtime_error("Element is not a String or Utf8");
             return {raw().begin(), raw().end()};
         }
 
-        std::chrono::sys_time<std::chrono::nanoseconds> as_date() const
+        chrono::sys_time<chrono::nanoseconds> as_date() const
         {
             if (m_kind != Kind::Date)
-                throw std::runtime_error("Element is not a Date");
-            std::int64_t ns = decode_int(raw());
-            return std::chrono::sys_time<std::chrono::nanoseconds>{
-                std::chrono::nanoseconds{ns + kDateEpochOffsetNs}};
+                throw runtime_error("Element is not a Date");
+            int64_t ns = decode_int(raw());
+            return chrono::sys_time<chrono::nanoseconds>{chrono::nanoseconds{ns + kDateEpochOffsetNs}};
         }
 
         // Factory methods
-        static Element make_master(Identifier id)
+        static Element make_master(Identifier id) { return {id, Kind::Master, ElementList{}}; }
+
+        static Element make_uint(Identifier id, uint64_t v) { return {id, Kind::UInt, encode_uint(v)}; }
+
+        static Element make_int(Identifier id, int64_t v) { return {id, Kind::Int, encode_int(v)}; }
+
+        static Element make_float(Identifier id, double v) { return {id, Kind::Float, encode_float(v)}; }
+
+        static Element make_float32(Identifier id, float v) { return {id, Kind::Float, encode_float32(v)}; }
+
+        static Element make_date(Identifier id, chrono::sys_time<chrono::nanoseconds> tp)
         {
-            return Element(id, Kind::Master, ElementList{});
+            int64_t ns = tp.time_since_epoch().count() - kDateEpochOffsetNs;
+            return {id, Kind::Date, encode_int(ns)};
         }
 
-        static Element make_uint(Identifier id, std::uint64_t v)
+        static Element make_string(Identifier id, string_view v)
         {
-            return Element(id, Kind::UInt, encode_uint(v));
+            return {id, Kind::String, vector<byte>(v.begin(), v.end())};
         }
 
-        static Element make_int(Identifier id, std::int64_t v)
+        static Element make_utf8(Identifier id, string_view v)
         {
-            return Element(id, Kind::Int, encode_int(v));
+            return {id, Kind::Utf8, vector<byte>(v.begin(), v.end())};
         }
 
-        static Element make_float(Identifier id, double v)
-        {
-            return Element(id, Kind::Float, encode_float(v));
-        }
+        static Element make_binary(Identifier id, vector<byte> v) { return {id, Kind::Binary, std::move(v)}; }
 
-        static Element make_float32(Identifier id, float v)
-        {
-            return Element(id, Kind::Float, encode_float32(v));
-        }
-
-        static Element make_date(Identifier id, std::chrono::sys_time<std::chrono::nanoseconds> tp)
-        {
-            std::int64_t ns = tp.time_since_epoch().count() - kDateEpochOffsetNs;
-            return Element(id, Kind::Date, encode_int(ns));
-        }
-
-        static Element make_string(Identifier id, std::string_view v)
-        {
-            return Element(id, Kind::String, std::vector<byte>(v.begin(), v.end()));
-        }
-
-        static Element make_utf8(Identifier id, std::string_view v)
-        {
-            return Element(id, Kind::Utf8, std::vector<byte>(v.begin(), v.end()));
-        }
-
-        static Element make_binary(Identifier id, std::vector<byte> v)
-        {
-            return Element(id, Kind::Binary, std::move(v));
-        }
-
-        static Element make_leaf(Identifier id, Kind kind, std::vector<byte> data)
-        {
-            return Element(id, kind, std::move(data));
-        }
+        static Element make_leaf(Identifier id, Kind kind, vector<byte> data) { return {id, kind, std::move(data)}; }
 
         // Validation
         bool validate() const
         {
             if (m_kind == Kind::Master)
             {
-                for (const auto& child : children())
+                for (const auto &child: children())
                     if (!child.validate())
                         return false;
-            }
-            else if (m_kind == Kind::UInt || m_kind == Kind::Int)
-            {
-                if (raw().empty() || raw().size() > 8)
-                    return false;
-            }
-            else if (m_kind == Kind::Float)
+            } else if (m_kind == Kind::Float)
             {
                 if (raw().size() != 4 && raw().size() != 8)
                     return false;
-            }
-            else if (m_kind == Kind::Date)
+            } else if (m_kind == Kind::Date || m_kind == Kind::UInt || m_kind == Kind::Int)
             {
                 if (raw().empty() || raw().size() > 8)
                     return false;
@@ -446,29 +390,27 @@ namespace SF::EBML
         }
     };
 
-    // --- Out-of-line ElementList members that require Element to be complete ---
-
     inline ElementList::ElementList() = default;
 
-    inline ElementList::ElementList(const ElementList& other)
+    inline ElementList::ElementList(const ElementList &other)
     {
-        std::shared_lock lock(other.mutex_);
+        shared_lock lock(other.mutex_);
         elements_ = other.elements_;
     }
 
-    inline ElementList::ElementList(ElementList&& other) noexcept
+    inline ElementList::ElementList(ElementList &&other) noexcept
     {
-        std::unique_lock lock(other.mutex_);
+        unique_lock lock(other.mutex_);
         elements_ = std::move(other.elements_);
     }
 
-    inline ElementList& ElementList::operator=(const ElementList& other)
+    inline ElementList &ElementList::operator=(const ElementList &other)
     {
         if (this != &other)
         {
-            std::unique_lock lock1(mutex_, std::defer_lock);
-            std::shared_lock lock2(other.mutex_, std::defer_lock);
-            std::lock(lock1, lock2);
+            unique_lock lock1(mutex_, defer_lock);
+            shared_lock lock2(other.mutex_, defer_lock);
+            lock(lock1, lock2);
             elements_ = other.elements_;
         }
         return *this;
@@ -476,32 +418,32 @@ namespace SF::EBML
 
     inline void ElementList::push_back(Element element)
     {
-        std::unique_lock lock(mutex_);
+        unique_lock lock(mutex_);
         elements_.push_back(std::move(element));
     }
 
     inline void ElementList::insert(size_t pos, Element element)
     {
-        std::unique_lock lock(mutex_);
+        unique_lock lock(mutex_);
         if (pos <= elements_.size())
             elements_.insert(elements_.begin() + pos, std::move(element));
         else
-            throw std::out_of_range("Insert position out of range");
+            throw out_of_range("Insert position out of range");
     }
 
-    inline const Element* ElementList::find(Identifier id) const
+    inline const Element *ElementList::find(Identifier id) const
     {
-        std::shared_lock lock(mutex_);
-        for (const auto& e : elements_)
+        shared_lock lock(mutex_);
+        for (const auto &e: elements_)
             if (e.id() == id)
                 return &e;
         return nullptr;
     }
 
-    inline Element* ElementList::find_mutable(Identifier id)
+    inline Element *ElementList::find_mutable(Identifier id)
     {
-        std::unique_lock lock(mutex_);
-        for (auto& e : elements_)
+        unique_lock lock(mutex_);
+        for (auto &e: elements_)
             if (e.id() == id)
                 return &e;
         return nullptr;
@@ -509,19 +451,49 @@ namespace SF::EBML
 
     inline ElementList::const_iterator ElementList::begin() const
     {
-        std::shared_lock lock(mutex_);
-        return const_iterator(elements_.begin(), this);
+        shared_lock lock(mutex_);
+        return {elements_.begin(), this};
     }
 
     inline ElementList::const_iterator ElementList::end() const
     {
-        std::shared_lock lock(mutex_);
-        return const_iterator(elements_.end(), this);
+        shared_lock lock(mutex_);
+        return {elements_.end(), this};
     }
 
-    inline std::vector<Element> ElementList::snapshot() const
+    inline vector<Element> ElementList::snapshot() const
     {
-        std::shared_lock lock(mutex_);
+        shared_lock lock(mutex_);
         return elements_;
     }
-}
+
+    inline size_t ElementList::size() const
+    {
+        shared_lock lock(mutex_);
+        return elements_.size();
+    }
+    inline void ElementList::clear()
+    {
+        unique_lock lock(mutex_);
+        elements_.clear();
+    }
+
+    inline ElementList::const_iterator &ElementList::const_iterator::operator++()
+    {
+        ++it_;
+        return *this;
+    }
+
+    inline ElementList::const_iterator ElementList::const_iterator::operator++(int)
+    {
+        auto tmp = *this;
+        ++it_;
+        return tmp;
+    }
+    template<typename Predicate>
+    inline void ElementList::erase_if(Predicate pred)
+    {
+        unique_lock lock(mutex_);
+        std::erase_if(elements_, pred);
+    }
+} // namespace SF::EBML

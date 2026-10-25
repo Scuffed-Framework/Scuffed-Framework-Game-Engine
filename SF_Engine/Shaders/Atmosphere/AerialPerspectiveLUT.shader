@@ -126,7 +126,7 @@ void main(uint3 globalThreadID: SV_DispatchThreadID)
         float rhoOz = (1.0 / (ozDen * ozDen + 1.0)) * rhoRay;
 
         sigma_s = RAY_BETA * rhoRay + MIE_BETA * rhoMie;
-        sigma_t = sigma_s + ABSORPTION_BETA * rhoOz;
+        sigma_t = sigma_s + (MIE_EXT - MIE_BETA) * rhoMie + ABSORPTION_BETA * rhoOz;
 
         float3 T_step = exp(-sigma_t * stepSize);
         float3 weight = (float3(1.0) - T_step) / max(sigma_t, float3(1e-7));

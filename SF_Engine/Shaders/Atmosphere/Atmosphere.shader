@@ -28,6 +28,10 @@ float3 sunDisk(float3 rd, float3 sunDir, float sunIlluminance,
                float3 viewPos, float bottomRadius, float topRadius)
 {
     const float SUN_R = 0.0045;               // angular radius (rad)
+    // True solar radiance is ~1/(pi*SUN_R^2) = ~15700x the illuminance, which overflows RGBA16F
+    // (65504) and turns into inf/NaN in bloom. Clamp to something the HDR target can hold;
+    // tune together with exposure.
+    const float SUN_MAX_RADIANCE = 1.0e4;
     if (dot(rd, sunDir) <= 0.0)
         return float3(0.0);
 
@@ -42,7 +46,7 @@ float3 sunDisk(float3 rd, float3 sunDir, float sunIlluminance,
 
     // Illuminance -> radiance
     float solidAngle = kPI * SUN_R * SUN_R;
-    float3 radiance = sunIlluminance / solidAngle * limb;
+    float3 radiance = float3(min(sunIlluminance / solidAngle * limb, SUN_MAX_RADIANCE));
 
     // Per-pixel direction so the bottom of the disk is redder
     float3 T = getSpaceTransmittance(transmittanceLUT, viewPos, rd,
@@ -145,7 +149,7 @@ void atmo_cs(uint3 globalThreadID: SV_DispatchThreadID)
     // Inside atmosphere → SkyView LUT
     col = sampleSkyView(rd, viewPos, sunDir, camHeight, Rbot, skyViewLUT);
     col += sunDisk(rd, sunDir, sunI, viewPos, Rbot, Rtop);
-    col = 1.0 - exp(-col);
+    col = 1 - exp(-col);
 
     float cosSky = dot(normalize(viewPos), rd);
     float3 skyTrans = sampleTransmittance(transmittanceLUT, camHeight,

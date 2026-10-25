@@ -17,7 +17,7 @@ namespace SF::Engine
     void WaveSoundBuffer::Load(SoundBuffer &soundBuffer, const DataInput &input)
     {
         drwav wav;
-        if (!drwav_init_file(&wav, input.file->GetName().c_str(), nullptr))
+        if (!drwav_init_file(&wav, input.file->GetFullPath().c_str(), nullptr))
         {
             std::cerr << "Failed to open WAV file: " << input.file << std::endl;
             return;

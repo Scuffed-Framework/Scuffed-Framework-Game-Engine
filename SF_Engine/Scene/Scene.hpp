@@ -14,6 +14,7 @@
 #include <Scene/SceneRenderer.hpp>
 #include <Scene/Types.hpp>
 #include "SceneSerialization.hpp"
+#include <Assets/AssetPipeline.hpp>
 
 #include <Controllers/CameraController.hpp>
 #include <Rendering/RHI/Images/Image.hpp>
@@ -235,6 +236,7 @@ namespace SF::Engine
 
         void PopulateDefaults(); // sun, point light, cube, floor
         static void ResolveBuiltinMesh(SceneObject *obj);
+        static void ResolveAssetRefs(SceneObject *obj); // meshAsset / albedoAsset / audioAsset -> live resources
 
         static bool IsAncestorOrSelf(const Entity *anc, const Entity *e)
         {
@@ -260,6 +262,16 @@ namespace SF::Engine
 
         void RemoveObject(SceneObject *obj);
         void RemoveLight(SceneLight *light);
+
+        /**
+         * Places an imported asset in the scene at `position` (world units).
+         *  - MeshAsset : one SceneObject, or an empty SceneObject group with one child per part (multi-material).
+         *  - ImageAsset: a textured quad standing on `position`, aspect-correct, 1 unit tall.
+         *  - AudioAsset: an emitter SceneObject carrying an AudioClip (not auto-played).
+         * Returns the new (root) object, or nullptr if the asset can't be placed (type unsupported / load failed).
+         */
+        SceneObject *InstantiateAsset(const std::shared_ptr<AssetBase> &asset, const Vec3 &position,
+                                      Entity *parent = nullptr);
 
         const std::vector<SceneObject *> &GetObjects() const { return objects_; }
         const std::vector<SceneLight *> &GetLights() const { return lights_; }

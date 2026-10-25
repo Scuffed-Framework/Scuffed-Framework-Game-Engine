@@ -16,7 +16,7 @@ namespace SF::Engine
 {
     void FlacSoundBuffer::Load(SoundBuffer &soundBuffer, const DataInput &input)
     {
-        drflac *flac = drflac_open_file(input.file->GetName().c_str(), nullptr);
+        drflac *flac = drflac_open_file(input.file->GetFullPath().c_str(), nullptr);
         if (!flac)
         {
             std::cerr << "Failed to open FLAC file: " << input.file << std::endl;

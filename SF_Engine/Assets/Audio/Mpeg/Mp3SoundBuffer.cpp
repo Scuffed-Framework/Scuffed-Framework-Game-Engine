@@ -17,7 +17,7 @@ namespace SF::Engine
     void Mp3SoundBuffer::Load(SoundBuffer &soundBuffer, const DataInput &input)
     {
         drmp3 mp3;
-        if (!drmp3_init_file(&mp3, input.file->GetName().c_str(), nullptr))
+        if (!drmp3_init_file(&mp3, input.file->GetFullPath().c_str(), nullptr))
         {
             std::cerr << "Failed to open MP3 file: " << input.file << std::endl;
             return;
@@ -36,7 +36,7 @@ namespace SF::Engine
 
         // Re-init required after drmp3_get_pcm_frame_count, which consumes the stream.
         drmp3_uninit(&mp3);
-        if (!drmp3_init_file(&mp3, input.file->GetName().c_str(), nullptr))
+        if (!drmp3_init_file(&mp3, input.file->GetFullPath().c_str(), nullptr))
         {
             std::cerr << "Failed to reopen MP3 file: " << input.file << std::endl;
             return;

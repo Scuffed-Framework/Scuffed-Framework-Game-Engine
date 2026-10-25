@@ -633,6 +633,66 @@ namespace SF::Engine
         std::shared_ptr<TImage> texture;
         std::filesystem::path filename; // empty if not disk-backed (e.g. procedural LUTs)
 
+        // Import settings (only used for assets imported from a source file; Image2d only).
+        bool srgb         = true; // colour textures: true. Normal / roughness / data maps: false.
+        bool generateMips = true;
+
+        void SerializeImportSettings(XMLNode &node) const override
+        {
+            node.SetAttribute("srgb", srgb);
+            node.SetAttribute("generateMips", generateMips);
+        }
+
+        void DeserializeImportSettings(const XMLNode &node) override
+        {
+            node.GetAttribute("srgb", srgb);
+            node.GetAttribute("generateMips", generateMips);
+        }
+
+        // Builds `texture` from assetPath (the imported source image). Image2d only.
+        bool EnsureLoaded() override
+        {
+            if (texture)
+                return true;
+
+            if constexpr (std::is_same_v<TImage, Image2d>)
+            {
+                if (assetPath.empty() || !std::filesystem::exists(assetPath))
+                    return false;
+
+                try
+                {
+                    auto bitmap = std::make_unique<Bitmap>(assetPath);
+                    if (!bitmap || !*bitmap)
+                        return false;
+
+                    // The upload path assumes tightly packed RGBA8 (or RGBA16F for HDR sources).
+                    const bool hdr          = bitmap->IsFloat();
+                    const PixelFormat wanted = hdr ? PixelFormat::RGBA16F : PixelFormat::RGBA8;
+                    if (bitmap->GetFormat() != wanted)
+                        bitmap = std::make_unique<Bitmap>(bitmap->Converted(wanted));
+
+                    const VkFormat format = hdr ? VK_FORMAT_R16G16B16A16_SFLOAT
+                                                : (srgb ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM);
+
+                    texture = std::make_shared<Image2d>(
+                            std::move(bitmap), format, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_FILTER_LINEAR,
+                            VK_SAMPLER_ADDRESS_MODE_REPEAT, VK_SAMPLE_COUNT_1_BIT, true, generateMips);
+                    filename = assetPath;
+                } catch (const std::exception &e)
+                {
+                    Log::Error("ImageAsset '{}': failed to load '{}': {}", name, assetPath.string(), e.what());
+                    texture.reset();
+                    return false;
+                }
+                return texture != nullptr;
+            } else
+            {
+                return false;
+            }
+        }
+
         void Save() override;
 
         bool Load(std::span<const uint8_t> /*payload*/) override

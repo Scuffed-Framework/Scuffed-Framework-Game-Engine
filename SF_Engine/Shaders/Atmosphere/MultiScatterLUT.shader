@@ -13,12 +13,19 @@ RWTexture2D<float4> multiScatterLUT;
 groupshared float3 s_fms[SPHERE_SAMPLES];
 groupshared float3 s_lms[SPHERE_SAMPLES];
 
+// Distance along the ray (origin on the Y axis at radius h, cosine mu with +Y) to the FIRST
+// intersection with a sphere of radius R centred at the origin, or -1 on a miss.
+//  - ground (h > R): the near root is the surface; the far root is on the far side of the planet.
+//  - atmosphere top (h < R): the near root is behind the origin, so this returns the exit point.
 float rayToSphere(float h, float mu, float R)
 {
     float disc = h * h * (mu * mu - 1.0) + R * R;
     if (disc < 0.0) return -1.0;
-    float t = -h * mu + sqrt(max(0.0, disc));
-    return t > 0.0 ? t : -1.0;  // don't clamp, preserve the "no hit" signal
+    float s = sqrt(disc);
+    float t0 = -h * mu - s;
+    if (t0 > 0.0) return t0;
+    float t1 = -h * mu + s;
+    return t1 > 0.0 ? t1 : -1.0;
 }
 
 float3 fibonacciDir(int i)
@@ -58,9 +65,9 @@ void main(uint3 groupID : SV_GroupID, uint3 localID : SV_GroupThreadID)
 
     if (tMax > 0.0)
     {
-        float dt = tMax / float(STEPS);
+        float dt = tMax / float(MsSTEPS);
 
-        for (int i = 0; i < STEPS; i++)
+        for (int i = 0; i < MsSTEPS; i++)
         {
             float t = (float(i) + 0.5) * dt;
             float3 p = pos + rayDir * t;
@@ -73,14 +80,14 @@ void main(uint3 groupID : SV_GroupID, uint3 localID : SV_GroupThreadID)
             float rho_oz = (1.0 / (denom * denom + 1.0)) * rho_ray;
 
             float3 sigma_s = RAY_BETA * rho_ray + MIE_BETA * rho_mie;
-            float3 sigma_t = sigma_s + ABSORPTION_BETA * rho_oz;
+            float3 sigma_t = sigma_s + (MIE_EXT - MIE_BETA) * rho_mie + ABSORPTION_BETA * rho_oz;
 
             // Step transmittance
             float3 T_step = exp(-sigma_t * dt);
 
             // Sun transmittance at this point
             float cosSunHere = dot(normalize(p), sunDir);
-            float3 T_sun = sampleTransmittance(transmittanceLUT, 
+            float3 T_sun = sampleTransmittance(transmittanceLUT,
                                                length(p), cosSunHere,
                                                BOTTOM_RADIUS, TOP_RADIUS);
 
@@ -89,7 +96,7 @@ void main(uint3 groupID : SV_GroupID, uint3 localID : SV_GroupThreadID)
             // Analytic single-step luminance integral
             float3 Sint = (S - S * T_step) / max(sigma_t, float3(1e-7));
 
-            fms += T_view * sigma_s * ISO * dt;
+            fms += T_view * sigma_s * (float3(1.0) - T_step) / max(sigma_t, float3(1e-7));
             lms += T_view * Sint;
             T_view *= T_step;
         }

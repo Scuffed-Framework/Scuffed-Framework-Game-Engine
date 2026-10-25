@@ -32,13 +32,19 @@ const static float kPI = 3.14159265358979;
 // TODO: buffer
 const static float BOTTOM_RADIUS = 6371000.0; // Earth surface radius (metres)
 const static float TOP_RADIUS = 6471000.0;    // Atmosphere top radius (metres)
-const static int STEPS = 40;                  // Transmittance LUT ray-march steps
+const static int MsSTEPS = 40;  // Multiscatter LUT ray-march steps
+const static int TmSTEPS = 256; // Transmittance LUT ray-march steps
 // Rayleigh: Earth standard values (Bruneton & Neyret 2008).
 // The blue/red ratio (~5.7×) is what gives the sky its colour.
 // Original values were correct here; kept as-is.
 const static float3 RAY_BETA = float3(5.80245e-6, 1.35579e-5, 3.31084e-5);
 
 const static float3 MIE_BETA = float3(3.996e-6);
+
+// Mie EXTINCTION (scattering + absorption). Bruneton/Hillaire Earth values: scattering 3.996e-6,
+// extinction 4.44e-6 (single-scatter albedo 0.9). Use MIE_BETA only for in-scattering and
+// MIE_EXT for anything that attenuates (optical depth, sigma_t, transmittance).
+const static float3 MIE_EXT = float3(4.44e-6);
 
 const static float3 AMBIENT_BETA = float3(0.0);
 
@@ -164,6 +170,18 @@ float2 raySphereIntersect(float3 start, float3 dir, float radius)
                   (-b + sqrt(d)) / (2.0 * a));
 }
 
+// U: angle phi in [0, PI] between the view direction's horizontal projection and the sun's.
+// u = sqrt(0.5 - 0.5*cos(phi)) = sin(phi/2): Hillaire's sqrt remap, more texels toward the sun.
+float skyViewEncodeU(float phi)
+{
+    return sin(0.5 * clamp(phi, 0.0, kPI));
+}
+
+float skyViewDecodeU(float u)
+{
+    return 2.0 * asin(clamp(u, 0.0, 1.0));
+}
+
 float skyViewEncodeV(float theta, float camR, float botRadius)
 {
     float ratio = botRadius / camR;
@@ -269,10 +287,13 @@ float3 calculateScattering(
         float denom = (HEIGHT_ABSORPTION - heightI) / ABSORPTION_FALLOFF;
         density.z = (1.0 / (denom * denom + 1.0)) * density.x;
         density *= dt;
+        // Scatter happens at the step midpoint, so attenuate by the optical depth to the midpoint,
+        // not to the far end of the step.
+        float3 optMid = optI + 0.5 * density;
         optI += density;
 
         float3 camTrans = exp(
-            -RAY_BETA * optI.x - MIE_BETA * optI.y - ABSORPTION_BETA * optI.z);
+            -RAY_BETA * optMid.x - MIE_EXT * optMid.y - ABSORPTION_BETA * optMid.z);
 
         float cosSunI = dot(normalize(posI), lightDir);
         float hI = length(posI);
@@ -289,14 +310,22 @@ float3 calculateScattering(
         totalMS += camTrans * sigma_s * ms * dt;
     }
 
-    transmittance = exp(-(MIE_BETA * optI.y + RAY_BETA * optI.x + ABSORPTION_BETA * optI.z));
+    transmittance = exp(-(MIE_EXT * optI.y + RAY_BETA * optI.x + ABSORPTION_BETA * optI.z));
 
     return (phaseR * RAY_BETA * totalRay + phaseM * MIE_BETA * totalMie + totalMS + optI.x * AMBIENT_BETA) * lightIntensity;
 }
 
+// Exact inverse pair. Unit coordinate 0 / 1 land on the centres of the first / last texel, so
+// the LUT's parameter range is fully covered and the horizon (unit v = 0.5) is sampled at uv 0.5.
+// The bake (SkyViewLUT.shader) uses fromSubUvsToUnit, sampling uses fromUnitToSubUvs.
 float fromUnitToSubUvs(float u, float resolution)
 {
-    return (u + 0.5f / resolution) * (resolution / (resolution + 1.0f));
+    return (0.5f + u * (resolution - 1.0f)) / resolution;
+}
+
+float fromSubUvsToUnit(float uv, float resolution)
+{
+    return (uv * resolution - 0.5f) / (resolution - 1.0f);
 }
 
 void skyViewLutParamsToUv(
@@ -374,16 +403,27 @@ float3 sampleSkyView(float3 rd, float3 viewPos, float3 sunDir, float camR, float
     {
         float3 rdHoriz = rdH / rdHLen;
         float phi = atan2(dot(rdHoriz, perpAxis), dot(rdHoriz, sunProj));
-        u_coord = abs(phi) / kPI;
+        u_coord = skyViewEncodeU(abs(phi));
     }
 
-    return skyViewLUT.SampleLevel(float2(u_coord, v), 0.0).rgb;
+    uint lutW, lutH;
+    skyViewLUT.GetDimensions(lutW, lutH);
+    float2 uv = float2(fromUnitToSubUvs(u_coord, float(lutW)),
+                       fromUnitToSubUvs(v, float(lutH)));
+    return skyViewLUT.SampleLevel(uv, 0.0).rgb;
 }
 
 float3 GetSkyAmbientColor(float3 worldPos, float3 sunDirection, float camHeight, float bottomRadius, Sampler2D<float4> lutImage)
 {
     float3 upVector = normalize(worldPos);
     return sampleSkyView(upVector, worldPos, sunDirection, camHeight, bottomRadius, lutImage);
+}
+
+float ozoneDensity(float alt) // meters
+{
+    float km = alt * 1e-3;
+    return (km < 25.0) ? saturate(km * (1.0/15.0) - 2.0/3.0)
+                       : saturate(-km * (1.0/15.0) + 8.0/3.0);
 }
 
 #endif

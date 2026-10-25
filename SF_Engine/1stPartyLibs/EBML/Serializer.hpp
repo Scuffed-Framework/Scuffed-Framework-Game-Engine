@@ -19,6 +19,7 @@
 
 namespace SF::EBML
 {
+    using namespace std;
     // Forward declaration
     class BackPatchableWriter;
 
@@ -27,7 +28,7 @@ namespace SF::EBML
     {
         // Start offset (id byte of the element header) of the FIRST occurrence of each element id.
         std::unordered_map<uint64_t, size_t> elementPositions;
-        std::unordered_map<uint64_t, std::vector<size_t>> seekPositions;
+        std::unordered_map<uint64_t, vector<size_t>> seekPositions;
         // Running absolute offset. Set it to where the bytes will land in the output
         // before calling serialize(); it is advanced as elements are serialized.
         size_t currentPosition = 0;
@@ -63,7 +64,7 @@ namespace SF::EBML
         return element.id().encode().size() + encode_size(serialized_body_size(element)).size();
     }
 
-    inline std::vector<byte> serialize(const Element &element, SerializationContext *ctx = nullptr)
+    inline vector<byte> serialize(const Element &element, SerializationContext *ctx = nullptr)
     {
         // The header size depends on the payload size, so get that first. That lets every
         // nested element know its absolute start offset before it is serialized.
@@ -103,9 +104,8 @@ namespace SF::EBML
     // Back-patchable writer with support for updating SeekHead
     class BackPatchableWriter
     {
-    private:
-        std::ostream &out_;
-        mutable std::mutex mutex_;
+        ostream &out_;
+        mutable mutex mutex_;
         size_t position_ = 0;
         bool isTwoPass_  = false;
         bool seekable_   = false;
@@ -119,8 +119,8 @@ namespace SF::EBML
             bool hasValue  = false; // value assigned but not yet written (deferred patch)
             bool isWritten = false;
         };
-        std::unordered_map<uint64_t, std::vector<PatchPoint>> patches_;
-        std::unordered_map<uint64_t, size_t> elementPositions_;
+        unordered_map<uint64_t, vector<PatchPoint>> patches_;
+        unordered_map<uint64_t, size_t> elementPositions_;
 
         // Appends the element at the current position and records the start offset of it
         // and everything nested in it. Returns the element's start offset.
@@ -143,7 +143,7 @@ namespace SF::EBML
             return start;
         }
 
-        void write_patch_locked(PatchPoint &patch)
+        void write_patch_locked(PatchPoint &patch) const
         {
             if (!seekable_)
                 throw std::runtime_error("BackPatchableWriter: cannot back-patch a non-seekable stream");
@@ -171,7 +171,7 @@ namespace SF::EBML
         {
             // Non-seekable streams (pipes, sockets) report -1; they can write but not back-patch.
             const std::streampos p = out_.tellp();
-            seekable_              = (p != std::streampos(-1));
+            seekable_              = p != std::streampos(-1);
             // Start from wherever the stream already is, so recorded offsets are absolute.
             position_ = seekable_ ? static_cast<size_t>(static_cast<std::streamoff>(p)) : 0;
         }
@@ -231,7 +231,7 @@ namespace SF::EBML
             return position_;
         }
 
-        void flush()
+        void flush() const
         {
             std::lock_guard<std::mutex> lock(mutex_);
             out_.flush();
@@ -306,7 +306,7 @@ namespace SF::EBML
             elementPositions_ = std::move(ctx.elementPositions);
         }
 
-        void write(std::ostream &out, bool backPatch = true)
+        void write(std::ostream &out, bool backPatch = true) const
         {
             BackPatchableWriter writer(out, true);
 

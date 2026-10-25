@@ -44,10 +44,10 @@ void main(uint3 threadId : SV_DispatchThreadID)
     uvToParams(uv, h, cosZ);
 
     float dist = distToAtmTop(h, cosZ);
-    float dt = dist / float(STEPS);
+    float dt = dist / float(TmSTEPS);
 
     float3 opticalDepth = float3(0.0);
-    for (int i = 0; i < STEPS; i++)
+    for (int i = 0; i < TmSTEPS; i++)
     {
         float t = (float(i) + 0.5) * dt;
         // Altitude at sample point along the ray
@@ -64,7 +64,7 @@ void main(uint3 threadId : SV_DispatchThreadID)
 
     float3 transmittance = exp(
         - RAY_BETA        * opticalDepth.x
-        - MIE_BETA        * opticalDepth.y
+        - MIE_EXT         * opticalDepth.y
         - ABSORPTION_BETA * opticalDepth.z);
 
     transmittanceLUT[coord] = float4(transmittance, 1.0);

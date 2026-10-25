@@ -5,6 +5,7 @@
 #include <Gui/ImGui/UIRegistry.hpp>
 #include <Gui/ImGui/ocornut/imgui.h>
 #include <Gui/ImGui/ocornut/imgui_internal.h>
+#include <LowLevel/Rocket.hpp>
 #include <LowLevel/Reflection/RTTI/RTTICast.hpp>
 #include <Rendering/RHI/Images/Image.hpp>
 #include <filesystem>
@@ -38,6 +39,7 @@ namespace SF::Engine
         }
         ~AssetBrowser()
         {
+            m_dropConnection.disconnect();
             if (s_instance == this)
                 s_instance = nullptr;
         }
@@ -100,6 +102,15 @@ namespace SF::Engine
         void RefreshDirectoryCache();
         std::filesystem::path CreateUniqueFolder(const std::filesystem::path &parent, const std::string &baseName);
         void OpenSceneFile(const std::filesystem::path &file);
+
+        //  import / placement
+        void EnsureDropSubscribed();
+        void ProcessPendingDrops();   // OS files dropped on the editor window (queued by the GLFW callback)
+        void ProcessSceneAssetDrag(); // an asset tile dragged out of this panel and released over the 3D view
+        void ImportFiles(const std::vector<std::filesystem::path> &files, bool placeInScene);
+        bool GroundPointUnderCursor(Vec3 &out) const;
+        void SetStatus(std::string text, bool isError);
+        void DrawStatus();
 
         //  grid view
         void DrawGridView(const AssetList &assets);
@@ -201,6 +212,19 @@ namespace SF::Engine
         bool m_showDeleteConfirmPopup = false;
         bool m_deleteTargetIsScene    = false;
         std::filesystem::path m_deleteTargetPath;
+
+        // import / placement state
+        rocket::connection m_dropConnection;
+        bool m_dropSubscribed = false;
+        std::vector<std::filesystem::path> m_pendingDrops;
+        Vec2 m_windowMin{};
+        Vec2 m_windowMax{};
+        bool m_windowRectValid = false;
+        std::optional<UUID> m_dragAsset; // asset tile currently being dragged
+        bool m_dragConsumed = false;     // drop already handled while ImGui's payload lingers
+        std::string m_status;
+        bool m_statusIsError = false;
+        double m_statusUntil = 0.0;
 
         inline static AssetBrowser *s_instance = nullptr;
     };

@@ -21,7 +21,10 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
     skyViewLUT.GetDimensions(size.x, size.y);
     if (coord.x >= size.x || coord.y >= size.y) return;
 
-    float2 uv = (float2(coord) + 0.5) / float2(size);
+    // Texel-centre UV -> unit LUT coordinates (inverse of the remap in sampleSkyView).
+    float2 uvTexel = (float2(coord) + 0.5) / float2(size);
+    float2 uv = float2(fromSubUvsToUnit(uvTexel.x, float(size.x)),
+                       fromSubUvsToUnit(uvTexel.y, float(size.y)));
 
     float h = max(length(pc.camPos.xyz), pc.bottomRadius + 1.0);
     float3 viewPos = normalize(pc.camPos.xyz) * h;
@@ -34,7 +37,7 @@ void main(uint3 globalThreadID : SV_DispatchThreadID)
     float3 sunProj = (sunHLen > 1e-4) ? (sunHoriz / sunHLen) : arbitraryPerp(up);
     float3 perpAxis = cross(up, sunProj);
 
-    float phi = uv.x * kPI;
+    float phi = skyViewDecodeU(uv.x);
     float theta = skyViewDecodeV(uv.y, h, pc.bottomRadius);
 
     // phi=0 → toward sun horizontally; matches sampleSkyView convention

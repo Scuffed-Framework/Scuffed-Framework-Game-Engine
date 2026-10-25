@@ -1,23 +1,23 @@
 #pragma once
 
+#include <chrono>
+#include <memory>
+#include <random>
+#include <unordered_map>
 #include "Block.hpp"
-#include "Track.hpp"
 #include "Cues.hpp"
-#include "Timestamp.hpp"
-#include "Streaming.hpp"
 #include "MatroskaIds.hpp"
 #include "MatroskaSchema.hpp"
-#include <memory>
-#include <unordered_map>
-#include <random>
-#include <chrono>
+#include "Streaming.hpp"
+#include "Timestamp.hpp"
+#include "Track.hpp"
 
 using namespace SF::EBML;
 namespace SF::Matroska
 {
+    using namespace std;
     class MatroskaFile
     {
-    private:
         Schema schema_;
         Element info_;
         Element tracksElement_;
@@ -26,20 +26,20 @@ namespace SF::Matroska
         Timestamp timestamp_;
         std::unordered_map<uint64_t, Track> tracksMap_;
         uint64_t nextTrackNumber_ = 1;
-        
+
         // Track positions for cues
         std::vector<CuePoint> cuePoints_;
-        uint64_t clusterTimecode_ = 0;
+        uint64_t clusterTimecode_    = 0;
         size_t clusterStartPosition_ = 0;
-        uint64_t blockNumber_ = 0;
+        uint64_t blockNumber_        = 0;
 
         // Segment-relative byte offsets of Info/Tracks, captured as they're
         // written, so a populated SeekHead can be emitted once Cues (whose
         // own position isn't known until finalize()) is written too.
         size_t segmentDataStart_ = 0;
-        size_t infoPos_ = 0;
-        size_t tracksPos_ = 0;
-        
+        size_t infoPos_          = 0;
+        size_t tracksPos_        = 0;
+
         // File duration tracking
         std::chrono::nanoseconds duration_{0};
 
@@ -51,18 +51,22 @@ namespace SF::Matroska
         bool finalized_ = false;
 
     public:
-        MatroskaFile()
-            : schema_(create_matroska_schema()),
-              info_(Element::make_master(ids::Info)),
-              tracksElement_(Element::make_master(ids::Tracks))
-        {}
+        MatroskaFile() :
+            schema_(create_matroska_schema()), info_(Element::make_master(ids::Info)),
+            tracksElement_(Element::make_master(ids::Tracks))
+        {
+        }
 
         ~MatroskaFile()
         {
             if (writer_ && !finalized_)
             {
-                try { finalize(); }
-                catch (...) {}
+                try
+                {
+                    finalize();
+                } catch (...)
+                {
+                }
             }
         }
 
@@ -90,50 +94,50 @@ namespace SF::Matroska
         {
             if (track.number == 0)
                 throw std::runtime_error("Track number cannot be 0");
-            
+
             auto entry = create_track_entry(track);
             tracksElement_.add(std::move(entry));
             tracksMap_[track.number] = track;
-            
+
             if (track.number >= nextTrackNumber_)
                 nextTrackNumber_ = track.number + 1;
         }
 
-        Track add_video_track(int width, int height, const std::string &codecID, 
-                              const std::vector<byte>& codecPrivate = {})
+        Track add_video_track(int width, int height, const std::string &codecID,
+                              const std::vector<byte> &codecPrivate = {})
         {
             Track track;
-            track.number = nextTrackNumber_++;
-            track.uid = generate_uid();
-            track.type = TrackType::Video;
+            track.number  = nextTrackNumber_++;
+            track.uid     = generate_uid();
+            track.type    = TrackType::Video;
             track.codecID = codecID;
 
             VideoTrack video;
-            video.pixelWidth = width;
-            video.pixelHeight = height;
+            video.pixelWidth   = width;
+            video.pixelHeight  = height;
             video.codecPrivate = codecPrivate;
-            video.codecID = codecID;
-            track.specific = std::move(video);
+            video.codecID      = codecID;
+            track.specific     = std::move(video);
 
             add_track(track);
             return track;
         }
 
         Track add_audio_track(int sampleRate, int channels, const std::string &codecID,
-                              const std::vector<byte>& codecPrivate = {})
+                              const std::vector<EBML::byte> &codecPrivate = {})
         {
             Track track;
-            track.number = nextTrackNumber_++;
-            track.uid = generate_uid();
-            track.type = TrackType::Audio;
+            track.number  = nextTrackNumber_++;
+            track.uid     = generate_uid();
+            track.type    = TrackType::Audio;
             track.codecID = codecID;
 
             AudioTrack audio;
             audio.samplingFrequency = sampleRate;
-            audio.channels = channels;
-            audio.codecPrivate = codecPrivate;
-            audio.codecID = codecID;
-            track.specific = std::move(audio);
+            audio.channels          = channels;
+            audio.codecPrivate      = codecPrivate;
+            audio.codecID           = codecID;
+            track.specific          = std::move(audio);
 
             add_track(track);
             return track;
@@ -146,47 +150,44 @@ namespace SF::Matroska
             if (finalized_)
                 throw std::runtime_error("File already finalized");
 
-            clusterTimecode_ = static_cast<uint64_t>(timecode);
+            clusterTimecode_      = static_cast<uint64_t>(timecode);
             clusterStartPosition_ = writer_->tell();
-            
-            timestamp_.set_cluster_start(
-                std::chrono::nanoseconds(timecode * timestamp_.timecode_scale()));
+
+            timestamp_.set_cluster_start(std::chrono::nanoseconds(timecode * timestamp_.timecode_scale()));
 
             writer_->begin_unknown(ids::Cluster, 8, false);
 
-            auto clusterTimecode = Element::make_uint(ids::Timecode,
-                                                      static_cast<uint64_t>(timecode));
+            auto clusterTimecode = Element::make_uint(ids::Timecode, static_cast<uint64_t>(timecode));
             writer_->write_element(clusterTimecode);
-            
+
             blockNumber_ = 0;
         }
 
-        void end_cluster()
+        void end_cluster() const
         {
             if (!writer_)
                 throw std::runtime_error("Writer not initialized");
             if (finalized_)
                 throw std::runtime_error("File already finalized");
-            
+
             writer_->end_unknown();
         }
 
-        void write_frame(uint64_t trackNumber, int64_t timestamp,
-                         std::span<const byte> data, bool keyframe = true)
+        void write_frame(uint64_t trackNumber, int64_t timestamp, std::span<const byte> data, bool keyframe = true)
         {
             if (!writer_)
                 throw std::runtime_error("Writer not initialized");
             if (finalized_)
                 throw std::runtime_error("File already finalized");
-            if (trackNumber == 0 || tracksMap_.find(trackNumber) == tracksMap_.end())
+            if (trackNumber == 0 || !tracksMap_.contains(trackNumber))
                 throw std::runtime_error("Invalid track number");
 
             SimpleBlock block;
             block.trackNumber = trackNumber;
-            block.timecode = timestamp_.block_timecode(
-                std::chrono::nanoseconds(timestamp * timestamp_.timecode_scale()));
+            block.timecode =
+                    timestamp_.block_timecode(std::chrono::nanoseconds(timestamp * timestamp_.timecode_scale()));
             block.keyframe = keyframe;
-            block.lacing = LacingType::None;
+            block.lacing   = LacingType::None;
 
             Frame frame;
             frame.data = std::vector<byte>(data.begin(), data.end());
@@ -194,7 +195,7 @@ namespace SF::Matroska
 
             writer_->write_simple_block(block);
             blockNumber_++;
-            
+
             // Update duration
             auto absTime = timestamp_.from_block_timecode(block.timecode);
             if (absTime > duration_)
@@ -206,25 +207,25 @@ namespace SF::Matroska
                 CuePoint point;
                 point.timecode = static_cast<uint64_t>(timestamp);
                 CuePoint::TrackPosition pos;
-                pos.trackNumber = trackNumber;
+                pos.trackNumber     = trackNumber;
                 pos.clusterPosition = clusterStartPosition_;
-                pos.blockNumber = blockNumber_;
+                pos.blockNumber     = blockNumber_;
                 point.positions.push_back(pos);
                 cuePoints_.push_back(point);
             }
         }
 
-        void finalize(std::ostream* out = nullptr)
+        void finalize(std::ostream *out = nullptr)
         {
-            if (finalized_) return;
-            if (!writer_) 
+            if (finalized_)
+                return;
+            if (!writer_)
                 throw std::runtime_error("Writer not initialized");
 
             // Write duration to Info
             if (duration_.count() > 0)
             {
-                auto durationElement = Element::make_float(ids::Duration,
-                    static_cast<double>(duration_.count()) / 1e9);
+                auto durationElement = Element::make_float(ids::Duration, static_cast<double>(duration_.count()) / 1e9);
                 // We'd need to update the Info element, but it's already written
                 // For now, we'll just note it
             }
@@ -232,10 +233,10 @@ namespace SF::Matroska
             // Generate and write Cues, tracking its Segment-relative offset
             // so the trailing SeekHead below can point at it.
             size_t cuesPos = 0;
-            bool haveCues = false;
+            bool haveCues  = false;
             if (!cuePoints_.empty())
             {
-                cuesPos = writer_->tell() - segmentDataStart_;
+                cuesPos          = writer_->tell() - segmentDataStart_;
                 auto cuesElement = generate_cues(cuePoints_);
                 writer_->write_element(cuesElement);
                 haveCues = true;
@@ -244,7 +245,7 @@ namespace SF::Matroska
             // Populated SeekHead, written last now that every position it
             // references (Info, Tracks, Cues) is actually known.
             auto seekHead = generate_seek_head(infoPos_, tracksPos_,
-                haveCues ? std::optional<uint64_t>(cuesPos) : std::nullopt);
+                                               haveCues ? std::optional<uint64_t>(cuesPos) : std::nullopt);
             writer_->write_element(seekHead);
 
             // Close Segment
@@ -253,38 +254,20 @@ namespace SF::Matroska
             finalized_ = true;
         }
 
-        const std::unordered_map<uint64_t, Track>& get_tracks() const 
-        { 
-            return tracksMap_; 
-        }
+        const std::unordered_map<uint64_t, Track> &get_tracks() const { return tracksMap_; }
 
-        const Element& get_tracks_element() const 
-        { 
-            return tracksElement_; 
-        }
+        const Element &get_tracks_element() const { return tracksElement_; }
 
-        const std::vector<CuePoint>& get_cue_points() const 
-        { 
-            return cuePoints_; 
-        }
+        const std::vector<CuePoint> &get_cue_points() const { return cuePoints_; }
 
-        void set_timecode_scale(uint64_t scale)
-        {
-            timestamp_.set_timecode_scale(scale);
-        }
+        void set_timecode_scale(uint64_t scale) { timestamp_.set_timecode_scale(scale); }
 
-        uint64_t get_timecode_scale() const
-        {
-            return timestamp_.timecode_scale();
-        }
+        uint64_t get_timecode_scale() const { return timestamp_.timecode_scale(); }
 
     private:
-        uint64_t generate_uid()
-        {
-            return rng_();
-        }
+        uint64_t generate_uid() { return rng_(); }
 
-        void write_ebml_header()
+        void write_ebml_header() const
         {
             auto ebml = Element::make_master(::SF::EBML::ids::EBML);
             ebml.add(Element::make_uint(::SF::EBML::ids::EBMLVersion, 1));
@@ -307,16 +290,13 @@ namespace SF::Matroska
 
             // Generate SegmentUID
             std::vector<byte> uid(16);
-            for (auto& b : uid)
+            for (auto &b: uid)
                 b = static_cast<byte>(rng_() & 0xFF);
             info_.add(Element::make_binary(ids::SegmentUID, std::move(uid)));
 
             writer_->write_element(info_);
         }
 
-        void write_tracks()
-        {
-            writer_->write_element(tracksElement_);
-        }
+        void write_tracks() const { writer_->write_element(tracksElement_); }
     };
-}
+} // namespace SF::Matroska

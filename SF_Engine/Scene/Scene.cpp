@@ -18,6 +18,9 @@
 #include <string>
 
 #include <Assets/Bitmaps/Bitmap.hpp>
+#include <Assets/Audio/AudioAsset.hpp>
+#include <Assets/Audio/AudioClip.hpp>
+#include <Assets/Models/MeshAsset.hpp>
 #include <Rendering/RenderSystem.hpp>
 
 #include <Gui/ImGui/UIRegistry.hpp>
@@ -38,15 +41,143 @@ namespace SF::Engine
 
     void Scene::ResolveBuiltinMesh(SceneObject *obj)
     {
-        if (!obj || obj->mesh || obj->meshSourcePath.empty())
+        if (!obj)
             return;
-        if (obj->meshSourcePath == "__cube__")
-            obj->mesh = MeshFactory::CreateCube();
-        else if (obj->meshSourcePath == "__sphere__")
-            obj->mesh = MeshFactory::CreateSphere();
-        else if (obj->meshSourcePath == "__quad__")
-            obj->mesh = MeshFactory::CreateQuad();
-        // Non-builtin mesh paths are expected to be loaded by the asset layer.
+
+        if (!obj->mesh && !obj->meshSourcePath.empty())
+        {
+            if (obj->meshSourcePath == "__cube__")
+                obj->mesh = MeshFactory::CreateCube();
+            else if (obj->meshSourcePath == "__sphere__")
+                obj->mesh = MeshFactory::CreateSphere();
+            else if (obj->meshSourcePath == "__quad__")
+                obj->mesh = MeshFactory::CreateQuad();
+        }
+
+        // Imported assets are referenced by UUID (meshAsset / albedoAsset / audioAsset).
+        ResolveAssetRefs(obj);
+    }
+
+    void Scene::ResolveAssetRefs(SceneObject *obj)
+    {
+        auto *assets = AssetController::Get();
+        if (!obj || !assets)
+            return;
+
+        if (!obj->mesh && !obj->meshAsset.IsNull())
+        {
+            auto meshAsset = ::SF::RTTI::rtti_pointer_cast<MeshAsset>(assets->FindByUUID(obj->meshAsset));
+            if (!meshAsset)
+            {
+                Log::Warning("Scene: object '{}' references mesh asset {} which is not in the project.",
+                             obj->GetName(), obj->meshAsset.ToString());
+            } else if (meshAsset->EnsureLoaded() && obj->meshPart >= 0 &&
+                       static_cast<size_t>(obj->meshPart) < meshAsset->parts.size())
+            {
+                obj->mesh = meshAsset->parts[static_cast<size_t>(obj->meshPart)].mesh;
+            } else
+            {
+                Log::Warning("Scene: object '{}': mesh asset '{}' failed to load or has no part {}.", obj->GetName(),
+                             meshAsset->name, obj->meshPart);
+            }
+        }
+
+        if (!obj->albedoAsset.IsNull())
+        {
+            auto image = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image2d>>(assets->FindByUUID(obj->albedoAsset));
+            auto *mat  = obj->GetComponent<MeshMaterial>();
+            if (image && mat && image->EnsureLoaded())
+                mat->albedo = image->texture; // replaces the unloaded placeholder MeshMaterial::Deserialize makes
+            else
+                Log::Warning("Scene: object '{}': texture asset {} could not be resolved.", obj->GetName(),
+                             obj->albedoAsset.ToString());
+        }
+
+        if (!obj->audioAsset.IsNull() && !obj->GetComponent<AudioClip>())
+        {
+            auto audio = ::SF::RTTI::rtti_pointer_cast<AudioAsset>(assets->FindByUUID(obj->audioAsset));
+            if (audio && audio->EnsureLoaded())
+                obj->AddComponent<AudioClip>(audio->buffer, static_cast<Audio::Type>(audio->settings.busType), false,
+                                             obj->audioLoop, obj->audioGain, obj->audioPitch);
+            else
+                Log::Warning("Scene: object '{}': audio asset {} could not be resolved.", obj->GetName(),
+                             obj->audioAsset.ToString());
+        }
+    }
+
+    SceneObject *Scene::InstantiateAsset(const std::shared_ptr<AssetBase> &asset, const Vec3 &position, Entity *parent)
+    {
+        if (!asset)
+            return nullptr;
+        if (!asset->EnsureLoaded())
+        {
+            Log::Error("Scene: cannot place '{}': the asset failed to load.", asset->name);
+            return nullptr;
+        }
+
+        SceneObject *root = nullptr;
+
+        if (auto model = ::SF::RTTI::rtti_pointer_cast<MeshAsset>(asset))
+        {
+            const auto applyPart = [&](SceneObject *o, int index)
+            {
+                const auto &part = model->parts[static_cast<size_t>(index)];
+                o->meshAsset      = model->uuid;
+                o->meshPart       = index;
+                o->meshSourcePath = model->assetPath.filename().string(); // informational; the UUID is authoritative
+                auto *mat         = o->GetComponent<MeshMaterial>();
+                mat->baseColor       = part.baseColor;
+                mat->metallicFactor  = part.metallic;
+                mat->roughnessFactor = part.roughness;
+            };
+
+            root = AddObject(model->name, parent);
+            if (model->parts.size() == 1)
+            {
+                applyPart(root, 0);
+            } else
+            {
+                // Empty SceneObject group (it serializes, unlike a plain Entity) with one child per material.
+                for (size_t i = 0; i < model->parts.size(); ++i)
+                    applyPart(AddObject(model->parts[i].name, root), static_cast<int>(i));
+            }
+
+            // Rest the model's lowest point on `position` rather than burying its pivot in the ground.
+            root->GetComponent<Transform>()->position = position - Vec3(0.0f, model->boundsMin.y, 0.0f);
+        } else if (auto image = ::SF::RTTI::rtti_pointer_cast<ImageAsset<Image2d>>(asset))
+        {
+            const auto extent  = image->texture->GetExtent();
+            const float aspect = extent.y > 0 ? static_cast<float>(extent.x) / static_cast<float>(extent.y) : 1.0f;
+
+            root                 = AddObject(image->name, parent);
+            root->meshSourcePath = "__quad__";
+            root->albedoAsset    = image->uuid;
+
+            auto *t     = root->GetComponent<Transform>();
+            t->position = position + Vec3(0.0f, 0.5f, 0.0f);
+            t->scale    = Vec3(aspect, 1.0f, 1.0f);
+        } else if (auto audio = ::SF::RTTI::rtti_pointer_cast<AudioAsset>(asset))
+        {
+            root             = AddObject(audio->name, parent);
+            root->audioAsset = audio->uuid;
+            root->audioLoop  = audio->settings.defaultLoop;
+            root->audioGain  = audio->settings.defaultGain;
+            root->GetComponent<Transform>()->position = position;
+        } else
+        {
+            Log::Warning("Scene: assets of this type can't be placed in a scene yet ('{}').", asset->name);
+            return nullptr;
+        }
+
+        // Before Initialize() the renderer doesn't exist; Initialize() resolves every object then.
+        if (initialized_)
+        {
+            ResolveBuiltinMesh(root);
+            for (const auto &child: root->GetChildren())
+                if (auto *so = dynamic_cast<SceneObject *>(child.get()))
+                    ResolveBuiltinMesh(so);
+        }
+        return root;
     }
 
     void Scene::PopulateDefaults()

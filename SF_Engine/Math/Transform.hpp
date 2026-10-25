@@ -72,6 +72,10 @@ namespace SF::Engine
             scale    = DeserializeVec3(node, "scale", {1.f, 1.f, 1.f});
         }
 
+        // Local TRS composed up the parent chain, using the same degrees convention as ToMatrix().
+        // (GetWorldMatrix() treats rotation as radians and sums parent/child angles, so it is not usable here.)
+        Mat4 ToWorldMatrix() const;
+
         Mat4 ToMatrix() const
         {
             Mat4 T = glm::translate(Mat4(1.0f), position);

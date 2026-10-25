@@ -586,6 +586,13 @@ namespace SF::Engine
     template<typename TImage>
     void ImageAsset<TImage>::Save()
     {
+        // Imported (source-backed) assets persist as a .meta sidecar next to the source image.
+        if (!assetPath.empty())
+        {
+            SaveMeta();
+            return;
+        }
+
         XMLModule *writer = XMLModule::Get();
         writer->SetRootNode(RTTI_TypeName());
         XMLNode root = writer->GetRootNode();

@@ -257,7 +257,7 @@ namespace SF::Engine
         {
             if (obj->enabled && obj->mesh)
                 gbuffer_->Submit(obj->mesh, *obj->GetComponent<MeshMaterial>(),
-                                 obj->GetComponent<Transform>()->ToMatrix());
+                                 obj->GetComponent<Transform>()->ToWorldMatrix());
         }
 
         if (atmoController && !atmoController->Empty())

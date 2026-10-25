@@ -27,6 +27,18 @@ namespace SF::Engine
         return matrix;
     }
 
+    Mat4 Transform::ToWorldMatrix() const
+    {
+        Mat4 m = ToMatrix();
+        const Entity *owner = GetOwner();
+        for (const Entity *p = owner ? owner->GetParent() : nullptr; p; p = p->GetParent())
+        {
+            if (const Transform *t = p->GetComponent<Transform>())
+                m = t->ToMatrix() * m;
+        }
+        return m;
+    }
+
     Vec3 Transform::GetPosition() const { return GetWorldTransform().position; }
     Vec3 Transform::GetRotation() const { return GetWorldTransform().rotation; }
     Vec3 Transform::GetScale() const { return GetWorldTransform().scale; }

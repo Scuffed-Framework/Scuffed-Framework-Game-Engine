@@ -5,7 +5,7 @@
 
 namespace SF::Matroska
 {
-    inline EBML::Schema create_matroska_schema()
+    inline Schema create_matroska_schema()
     {
         using namespace EBML;
 
@@ -264,4 +264,4 @@ namespace SF::Matroska
 
         return schema;
     }
-}
+} // namespace SF::Matroska

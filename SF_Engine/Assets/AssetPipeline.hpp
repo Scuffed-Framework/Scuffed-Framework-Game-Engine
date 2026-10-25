@@ -7,6 +7,7 @@
 #include <UtilityClasses/UUID.hpp>
 #include <filesystem>
 #include <span>
+#include <vector>
 
 namespace SF::Engine
 {
@@ -30,20 +31,39 @@ namespace SF::Engine
         AnimationStateMachine
     };
 
+    // The editor-side half of the Asset-Resource-Protocol (see Assets/AssetAndResourceProtocol).
+    // Everything below is written to the "<source file>.meta" sidecar. No keys, no payload copies.
     class AssetBase : public Serializable
     {
         SF_RTTI(AssetBase, Serializable)
     public:
+        static constexpr int kSchemaVersion = 1;
+
+        // The source file this asset was imported from (it sits next to its .meta). Empty for procedural assets.
         filesystem::path assetPath;
         string name;
         AssetType type;
-        UUID uuid = UUID::Generate();
+        UUID uuid = UUID::Generate(); // stable asset ID: scenes reference assets by this, never by path
 
+        int schemaVersion   = kSchemaVersion;
+        int importerVersion = 0;  // bumped when an importer changes what it produces; lets us detect stale imports
+        string sourceHash;        // BLAKE2b-256 (hex) of the source bytes at import time
+        string packageId;         // filled in by the RSC build step; empty in the editor
+        string recordLocator;     // ditto
+        vector<UUID> dependencies; // assets this one needs (e.g. a model's textures)
 
         virtual ~AssetBase() = default;
 
         virtual void Save()                            = 0;
         virtual bool Load(span<const uint8_t> payload) = 0;
+
+        // Import settings live in <Asset><ImportSettings>. Override to persist per-type settings.
+        virtual void SerializeImportSettings(XMLNode & /*node*/) const {}
+        virtual void DeserializeImportSettings(const XMLNode & /*node*/) {}
+
+        // Builds the runtime resource (GPU buffers, OpenAL buffer, ...) from `assetPath`.
+        // Idempotent and cheap once loaded. Returns false if the source is missing or unreadable.
+        virtual bool EnsureLoaded() { return true; }
 
         void Serialize(XMLNode &node) const override
         {
@@ -52,6 +72,26 @@ namespace SF::Engine
             asset.SetAttribute("Type", static_cast<int>(type));
             asset.SetAttribute(string("UUID"), uuid.ToString());
             asset.SetAttribute("ConcreteType", string(RTTI_GetTypeName()));
+            asset.SetAttribute("Schema", schemaVersion);
+            asset.SetAttribute("ImporterVersion", importerVersion);
+            asset.SetAttribute("SourceHash", sourceHash);
+            if (!packageId.empty())
+                asset.SetAttribute("PackageId", packageId);
+            if (!recordLocator.empty())
+                asset.SetAttribute("RecordLocator", recordLocator);
+
+            if (!dependencies.empty())
+            {
+                XMLNode deps = asset.AddChild("Dependencies");
+                for (const UUID &dep: dependencies)
+                {
+                    XMLNode d = deps.AddChild("Dependency");
+                    d.SetAttribute(string("UUID"), dep.ToString());
+                }
+            }
+
+            XMLNode settings = asset.AddChild("ImportSettings");
+            SerializeImportSettings(settings);
         }
 
         void Deserialize(const XMLNode &node) override
@@ -62,6 +102,34 @@ namespace SF::Engine
             asset.GetAttribute("Type", rawType);
             type = static_cast<AssetType>(rawType);
             uuid = UUID::FromString(asset.GetAttribute(string(string("UUID"))));
+
+            // Everything below is optional so meta files written before the ARP fields existed still load.
+            asset.GetAttribute("Schema", schemaVersion);
+            asset.GetAttribute("ImporterVersion", importerVersion);
+            asset.GetAttribute("SourceHash", sourceHash);
+            asset.GetAttribute("PackageId", packageId);
+            asset.GetAttribute("RecordLocator", recordLocator);
+
+            dependencies.clear();
+            if (XMLNode deps = asset.GetChild("Dependencies"); deps.IsValid())
+            {
+                for (const XMLNode &d: deps.GetChildren("Dependency"))
+                {
+                    string raw;
+                    if (!d.GetAttribute("UUID", raw))
+                        continue;
+                    try
+                    {
+                        dependencies.push_back(UUID::FromString(raw));
+                    } catch (const std::exception &)
+                    {
+                        Log::Warning("AssetBase: '{}' has a malformed dependency id '{}'; ignored.", name, raw);
+                    }
+                }
+            }
+
+            if (XMLNode settings = asset.GetChild("ImportSettings"); settings.IsValid())
+                DeserializeImportSettings(settings);
         }
 
         void SaveMeta() const
@@ -113,11 +181,21 @@ namespace SF::Engine
 
         static void RegisterFactory(const string &rttiTypeName, AssetFactoryFn factory);
 
+        // Registers MeshAsset / AudioAsset / ImageAsset<...> explicitly. Static-registrar objects in
+        // otherwise-unreferenced .cpp files get dropped when SF_Engine is linked as a static library,
+        // so the importable types are not left to static initialisation.
+        static void RegisterBuiltinFactories();
+
         void SaveAll();
         void SaveManifest();
 
         [[nodiscard]] shared_ptr<AssetBase> FindByUUID(const UUID &guid) const;
         [[nodiscard]] shared_ptr<AssetBase> FindByName(string_view name) const;
+        // Matches on the source file (assetPath), tolerant of different spellings of the same path.
+        [[nodiscard]] shared_ptr<AssetBase> FindByPath(const filesystem::path &path) const;
+
+        // Adds an already-constructed asset (e.g. freshly imported) to the live asset list.
+        void AddAsset(shared_ptr<AssetBase> asset);
 
         template<typename T>
         shared_ptr<Asset<T>> GetAsset(const UUID &guid) const
@@ -146,7 +224,7 @@ namespace SF::Engine
     struct AssetRegistrar
     {
         static_assert(is_base_of_v<AssetBase, T>, "AssetRegistrar<T> requires T to derive from AssetBase "
-                                                  "(this includes Asset<Payload> and ImageAssetBase<TImage> leaves)");
+                                                  "(this includes Asset<Payload> and ImageAsset<TImage> leaves)");
 
         explicit AssetRegistrar()
         {

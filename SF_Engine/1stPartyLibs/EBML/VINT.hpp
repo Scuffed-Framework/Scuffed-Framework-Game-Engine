@@ -69,7 +69,7 @@ namespace SF::EBML
         std::uint8_t length = 0;
         bool unknown = false;
         
-        bool is_valid() const noexcept { return length > 0 && length <= kMaxVintLength; }
+        [[nodiscard]] bool is_valid() const noexcept { return length > 0 && length <= kMaxVintLength; }
     };
 
     constexpr std::optional<VintSize> decode_size(std::span<const byte> data) noexcept
@@ -148,7 +148,7 @@ namespace SF::EBML
         std::uint32_t value = 0;
         std::uint8_t length = 0;
         
-        bool is_valid() const noexcept { return length > 0 && length <= 4; }
+        [[nodiscard]] bool is_valid() const noexcept { return length > 0 && length <= 4; }
     };
 
     constexpr std::optional<VintId> decode_id(std::span<const byte> data) noexcept
