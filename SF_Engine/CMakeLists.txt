@@ -54,6 +54,8 @@ find_package(WebP CONFIG REQUIRED) # Conan libwebp -> WebP-config.cmake, targets
 find_package(TinyOBJLoader REQUIRED)
 find_package(opusfile REQUIRED)
 find_package(fastgltf REQUIRED)
+find_package(AOM REQUIRED)
+find_package(libvpx REQUIRED)
 
 #
 # Sources
@@ -232,6 +234,8 @@ target_link_libraries(SF_Engine PUBLIC
         WebP::webpdemux
         fastgltf::fastgltf
         opusfile::opusfile
+        AOM::aom
+        libvpx::libvpx
 )
 
 if (TARGET utf8cpp::utf8cpp)

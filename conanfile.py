@@ -32,6 +32,10 @@ class SfEngineConan(ConanFile):
         self.requires("openal-soft/1.24.3")
         self.requires("opusfile/0.12")
 
+        # Video
+        self.requires("libaom-av1/3.13.3")
+        self.requires("libvpx/1.16.0")
+
         # 3D Model Loading
         self.requires("assimp/5.3.1")
         self.requires("openfbx/cci.20210426")
