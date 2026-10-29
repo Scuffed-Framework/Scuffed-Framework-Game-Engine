@@ -17,6 +17,16 @@
     #undef Always
 #endif
 
+#ifdef InitSuccess
+    #undef InitSuccess
+#endif
+#define InitSuccess true
+
+#ifdef InitFailure
+    #undef InitFailure
+#endif
+#define InitFailure false
+
 namespace SF::Engine
 {
     using namespace std;

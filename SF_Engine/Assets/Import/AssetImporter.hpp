@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Assets/AssetPipeline.hpp>
+#include <assimp/Importer.hpp>
 #include <filesystem>
 #include <memory>
 #include <span>
@@ -32,6 +33,8 @@ namespace SF::Engine
     class AssetImporter
     {
     public:
+        // todo: multi instance for multithreading
+        static std::unique_ptr<Assimp::Importer> importer;
         static constexpr int kImporterVersion = 1;
 
         [[nodiscard]] static ImportKind Classify(const std::filesystem::path &file);
@@ -39,6 +42,8 @@ namespace SF::Engine
         {
             return Classify(file) != ImportKind::Unknown;
         }
+
+        AssetImporter() { importer = std::make_unique<Assimp::Importer>(); }
 
         // Imports one file. Files outside the project's Assets folder are copied into `destDir`
         // (clamped to Assets/); files already inside it are imported in place.

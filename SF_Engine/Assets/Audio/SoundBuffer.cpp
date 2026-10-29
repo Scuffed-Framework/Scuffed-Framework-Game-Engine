@@ -1,9 +1,9 @@
 #include "SoundBuffer.hpp"
 
 #ifdef _PLATFORM_MACOS
-#include <OpenAL/al.h>
+    #include <OpenAL/al.h>
 #else
-#include <al.h>
+    #include <al.h>
 #endif
 #include <iostream>
 #include <stdexcept>
@@ -40,13 +40,12 @@ namespace SF::Engine
 
         // Create new sound buffer
         auto soundBuffer = std::make_shared<SoundBuffer>(input, true);
-        cache[key] = soundBuffer;
+        cache[key]       = soundBuffer;
 
         return soundBuffer;
     }
 
-    SoundBuffer::SoundBuffer(DataInput input, bool load)
-        : input(std::move(input)), buffer(0)
+    SoundBuffer::SoundBuffer(DataInput input, bool load) : input(input), buffer(0)
     {
         // Generate OpenAL buffer
         alGenBuffers(1, &buffer);
@@ -77,8 +76,7 @@ namespace SF::Engine
         }
     }
 
-    SoundBuffer::SoundBuffer(SoundBuffer &&other) noexcept
-        : input(std::move(other.input)), buffer(other.buffer)
+    SoundBuffer::SoundBuffer(SoundBuffer &&other) noexcept : input(other.input), buffer(other.buffer)
     {
         other.buffer = 0;
     }
@@ -94,8 +92,8 @@ namespace SF::Engine
             }
 
             // Move data
-            input = std::move(other.input);
-            buffer = other.buffer;
+            input        = std::move(other.input);
+            buffer       = other.buffer;
             other.buffer = 0;
         }
         return *this;
@@ -139,7 +137,7 @@ namespace SF::Engine
 
             // Look up loader in registry
             auto &registry = Registry();
-            auto it = registry.find(extension);
+            auto it        = registry.find(extension);
 
             if (it == registry.end())
             {
@@ -150,17 +148,14 @@ namespace SF::Engine
             try
             {
                 it->second.first(*this, input);
-            }
-            catch (const std::exception &e)
+            } catch (const std::exception &e)
             {
-                std::cerr << "Failed to load sound buffer from " << input.file->GetFullPath() << input.memory << ": " << e.what()
-                          << std::endl;
+                std::cerr << "Failed to load sound buffer from " << input.file->GetFullPath() << input.memory << ": "
+                          << e.what() << std::endl;
             }
-        }
-        else // reading from mem
+        } else // reading from mem
         {
-            alBufferData(this->GetBuffer(), AL_FORMAT_STEREO16, input.memory,
-                         static_cast<ALsizei>(64),
+            alBufferData(this->GetBuffer(), AL_FORMAT_STEREO16, input.memory, static_cast<ALsizei>(64),
                          static_cast<ALsizei>(128));
 
             ALenum error = alGetError();
@@ -180,19 +175,19 @@ namespace SF::Engine
         }
 
         // Construct without generating/loading, then adopt the caller's handle.
-        auto sb = std::make_shared<SoundBuffer>(std::move(input), /*load=*/false);
+        auto sb = std::make_shared<SoundBuffer>(input, /*load=*/false);
         sb->SetBuffer(existingBuffer);
         return sb;
     }
 
-    std::shared_ptr<SoundBuffer> SoundBuffer::CreateWave(ALuint waveType, float frequency,
-                                                         float durationSeconds, uint32_t sampleRate)
+    std::shared_ptr<SoundBuffer> SoundBuffer::CreateWave(ALuint waveType, float frequency, float durationSeconds,
+                                                         uint32_t sampleRate)
     {
         auto sb = std::make_shared<SoundBuffer>(DataInput{}, /*load=*/false);
         if (sb->buffer == 0)
             return nullptr;
 
-        const size_t sampleCount = static_cast<size_t>(durationSeconds * sampleRate);
+        const auto sampleCount = static_cast<size_t>(durationSeconds * sampleRate);
         std::vector<int16_t> samples(sampleCount);
 
         static thread_local std::mt19937 rng{std::random_device{}()};
@@ -201,38 +196,37 @@ namespace SF::Engine
 
         for (size_t i = 0; i < sampleCount; ++i)
         {
-            const float t = static_cast<float>(i) / static_cast<float>(sampleRate);
+            const float t     = static_cast<float>(i) / static_cast<float>(sampleRate);
             const float phase = t * frequency;
-            float value = 0.0f;
+            float value       = 0.0f;
 
             switch (waveType)
             {
-            case ExtraAudioWaves::Wave_Sine:
-                value = std::sin(2.0f * PI * phase);
-                break;
-            case ExtraAudioWaves::Wave_Square:
-                value = std::fmod(phase, 1.0f) < 0.5f ? 1.0f : -1.0f;
-                break;
-            case ExtraAudioWaves::Wave_Triangle:
-                value = 4.0f * std::fabs(std::fmod(phase + 0.75f, 1.0f) - 0.5f) - 1.0f;
-                break;
-            case ExtraAudioWaves::Wave_Sawtooth:
-                value = 2.0f * std::fmod(phase, 1.0f) - 1.0f;
-                break;
-            case ExtraAudioWaves::Wave_WhiteNoise:
-                value = noiseDist(rng);
-                break;
-            default:
-                std::cerr << "CreateWave: unknown wave type " << waveType << std::endl;
-                break;
+                case ExtraAudioWaves::Wave_Sine:
+                    value = std::sin(2.0f * PI * phase);
+                    break;
+                case ExtraAudioWaves::Wave_Square:
+                    value = std::fmod(phase, 1.0f) < 0.5f ? 1.0f : -1.0f;
+                    break;
+                case ExtraAudioWaves::Wave_Triangle:
+                    value = 4.0f * std::fabs(std::fmod(phase + 0.75f, 1.0f) - 0.5f) - 1.0f;
+                    break;
+                case ExtraAudioWaves::Wave_Sawtooth:
+                    value = 2.0f * std::fmod(phase, 1.0f) - 1.0f;
+                    break;
+                case ExtraAudioWaves::Wave_WhiteNoise:
+                    value = noiseDist(rng);
+                    break;
+                default:
+                    std::cerr << "CreateWave: unknown wave type " << waveType << std::endl;
+                    break;
             }
 
             samples[i] = static_cast<int16_t>(std::clamp(value, -1.0f, 1.0f) * 32767.0f);
         }
 
         alBufferData(sb->buffer, AL_FORMAT_MONO16, samples.data(),
-                     static_cast<ALsizei>(samples.size() * sizeof(int16_t)),
-                     static_cast<ALsizei>(sampleRate));
+                     static_cast<ALsizei>(samples.size() * sizeof(int16_t)), static_cast<ALsizei>(sampleRate));
 
         ALenum error = alGetError();
         if (error != AL_NO_ERROR)
@@ -240,4 +234,4 @@ namespace SF::Engine
 
         return sb;
     }
-}
+} // namespace SF::Engine

@@ -72,6 +72,7 @@ namespace SF::Engine
         /**
          * @brief Wraps an already-existing OpenAL buffer handle.
          * @param existingBuffer A valid OpenAL buffer name; ownership transfers to the SoundBuffer.
+         * @param input data
          */
         static std::shared_ptr<SoundBuffer> CreateFromHandle(ALuint existingBuffer, DataInput input = {});
 
@@ -99,7 +100,7 @@ namespace SF::Engine
 
         [[nodiscard]] std::type_index GetTypeIndex() const { return typeid(SoundBuffer); }
 
-        [[nodiscard]] const DataInput &Getinput() const { return input; }
+        [[nodiscard]] const DataInput &GetInput() const { return input; }
         [[nodiscard]] uint32_t GetBuffer() const { return buffer; }
         void SetBuffer(uint32_t buffer);
 

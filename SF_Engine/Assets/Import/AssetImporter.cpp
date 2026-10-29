@@ -7,7 +7,6 @@
 #include <Engine/Project/Project.hpp>
 #include <Rendering/RHI/Images/Image.hpp>
 
-#include <assimp/Importer.hpp>
 #include <sodium.h>
 
 #include <algorithm>
@@ -53,7 +52,7 @@ namespace SF::Engine
             if (!taken(desired))
                 return desired;
 
-            const fs::path dir = desired.parent_path();
+            const fs::path dir     = desired.parent_path();
             const std::string stem = desired.stem().string();
             const std::string ext  = desired.extension().string();
             for (int i = 1; i < 10000; ++i)
@@ -92,7 +91,7 @@ namespace SF::Engine
         if (Bitmap::Registry().contains(Bitmap::NormalizeExtension(ext)))
             return ImportKind::Image;
 
-        if (Assimp::Importer::IsExtensionSupported(ext))
+        if (importer->IsExtensionSupported(ext))
             return ImportKind::Model;
 
         return ImportKind::Unknown;
@@ -206,10 +205,10 @@ namespace SF::Engine
         if (!asset->EnsureLoaded())
         {
             cleanup();
-            return Fail(std::move(result), "the file could not be read as " +
-                                                   std::string(kind == ImportKind::Model   ? "a model"
-                                                               : kind == ImportKind::Audio ? "audio"
-                                                                                           : "an image"));
+            return Fail(std::move(result),
+                        "the file could not be read as " + std::string(kind == ImportKind::Model   ? "a model"
+                                                                       : kind == ImportKind::Audio ? "audio"
+                                                                                                   : "an image"));
         }
 
         asset->SaveMeta();
