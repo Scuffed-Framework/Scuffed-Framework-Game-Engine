@@ -8,18 +8,19 @@
 namespace SF::Engine
 {
     using namespace std;
-    const vector<VkDynamicState> DYNAMIC_STATES = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
-                                                   VK_DYNAMIC_STATE_LINE_WIDTH};
+    const vector DYNAMIC_STATES = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_LINE_WIDTH};
 
     RhiRenderPipeline::RhiRenderPipeline(Stage stage, filesystem::path shaderPath,
                                          vector<Shader::VertexInput> vertexInputs, vector<Shader::Define> defines,
                                          Mode mode, Depth depth, VkPrimitiveTopology topology,
                                          VkPolygonMode polygonMode, VkCullModeFlags cullMode, VkFrontFace frontFace,
                                          bool pushDescriptors, vector<VkDescriptorSetLayout> additionalLayouts,
-                                         Blend blend, vector<VkPipelineColorBlendAttachmentState> blendStates) :
+                                         Blend blend, vector<VkPipelineColorBlendAttachmentState> blendStates,
+                                         uint32_t patchControlPoints) :
         stage(std::move(stage)), shaderPath(std::move(shaderPath)), vertexInputs(std::move(vertexInputs)),
         defines(std::move(defines)), mode(mode), depth(depth), topology(topology), polygonMode(polygonMode),
-        cullMode(cullMode), frontFace(frontFace), pushDescriptors(pushDescriptors), dynamicStates(DYNAMIC_STATES),
+        cullMode(cullMode), frontFace(frontFace), pushDescriptors(pushDescriptors),
+        patchControlPoints(patchControlPoints), dynamicStates(DYNAMIC_STATES),
         pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS), blend(blend), customBlendStates(std::move(blendStates)),
         additionalLayouts(std::move(additionalLayouts))
     {
@@ -49,13 +50,14 @@ namespace SF::Engine
                                          vector<Shader::Define> defines, Depth depth, VkPrimitiveTopology topology,
                                          VkPolygonMode polygonMode, VkCullModeFlags cullMode, VkFrontFace frontFace,
                                          vector<VkDescriptorSetLayout> additionalLayouts, Blend blend,
-                                         vector<VkPipelineColorBlendAttachmentState> blendStates) :
+                                         vector<VkPipelineColorBlendAttachmentState> blendStates,
+                                         uint32_t patchControlPoints) :
         stage({0, subpassIndex}), shaderPath(std::move(shaderPath)), vertexInputs(std::move(vertexInputs)),
         defines(std::move(defines)), mode(Mode::Polygon), depth(depth), topology(topology), polygonMode(polygonMode),
-        cullMode(cullMode), frontFace(frontFace), pushDescriptors(false), dynamicStates(DYNAMIC_STATES),
-        pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS), offscreenRenderPass_(offscreenRenderPass),
-        offscreenSubpass_(subpassIndex), isOffscreen_(true), blend(blend), customBlendStates(std::move(blendStates)),
-        additionalLayouts(std::move(additionalLayouts))
+        cullMode(cullMode), frontFace(frontFace), pushDescriptors(false), patchControlPoints(patchControlPoints),
+        dynamicStates(DYNAMIC_STATES), pipelineBindPoint(VK_PIPELINE_BIND_POINT_GRAPHICS),
+        offscreenRenderPass_(offscreenRenderPass), offscreenSubpass_(subpassIndex), isOffscreen_(true), blend(blend),
+        customBlendStates(std::move(blendStates)), additionalLayouts(std::move(additionalLayouts))
     {
         device_ = *RenderSystem::Get()->GetLogicalDevice();
         sort(this->vertexInputs.begin(), this->vertexInputs.end());
@@ -188,7 +190,7 @@ namespace SF::Engine
 
     void RhiRenderPipeline::CreateShaderProgram()
     {
-        auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
+        const auto logicalDevice = RenderSystem::Get()->GetLogicalDevice();
 
         Shaders::ShaderParser parser;
         Log::Info("Loading shader: {} (cwd={})", shaderPath.string(), GetExecutablePath().string());
@@ -203,38 +205,40 @@ namespace SF::Engine
         if (!compiledOpt)
             throw runtime_error("Failed to compile shader '" + shaderPath.string() + "': " + parser.getLastError());
 
-        vector<uint32_t> vertexSpirv, fragmentSpirv, tessCtrlSpv, tessEvalSpv;
-        bool hasVertexShader = false, hasFragmentShader = false;
-
+        // Collect every graphics stage the .shader file defined. Which optional stages
+        // exist (tessellation, geometry, ...) is derived from the file, not from flags the
+        // caller has to keep in sync.
+        map<VkShaderStageFlagBits, vector<uint32_t>> byStage;
         for (auto &c: *compiledOpt)
         {
-            switch (c.stage)
-            {
-                case Shaders::ShaderStage::Vertex:
-                    vertexSpirv     = std::move(c.spirv);
-                    hasVertexShader = true;
-                    break;
-                case Shaders::ShaderStage::Fragment:
-                    fragmentSpirv     = std::move(c.spirv);
-                    hasFragmentShader = true;
-                    break;
-                case Shaders::ShaderStage::TessellationControl:
-                    tessCtrlSpv = std::move(c.spirv);
-                    break;
-                case Shaders::ShaderStage::TessellationEvaluation:
-                    tessEvalSpv = std::move(c.spirv);
-                    break;
-                default:
-                    break; // Compute/Geometry entries in the same file aren't consumed here
-            }
+            if (c.stage == Shaders::ShaderStage::Compute)
+                continue; // compute entries in the same file aren't consumed by a graphics pipeline
+
+            const auto vkStage = Shaders::toVkStage(c.stage);
+            if (byStage.contains(vkStage))
+                Log::Warning("Shader '{}' defines more than one {} entry point; using the last one",
+                             shaderPath.string(), Shaders::stageToString(c.stage));
+            byStage[vkStage] = std::move(c.spirv);
         }
 
-        shader = Shader::CreateFromSPIRV(*logicalDevice, vertexSpirv, fragmentSpirv, tessCtrlSpv, tessEvalSpv);
-
-        if (!hasVertexShader || !hasFragmentShader)
+        if (!byStage.contains(VK_SHADER_STAGE_VERTEX_BIT) || !byStage.contains(VK_SHADER_STAGE_FRAGMENT_BIT))
             throw runtime_error("RenderSystem pipeline requires both vertex and fragment shaders");
+
+        const bool hasTesc = byStage.contains(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+        if (const bool hasTese = byStage.contains(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT); hasTesc != hasTese)
+            throw runtime_error("Tessellation requires both control and evaluation stages");
+
+        vector<Shader::StageSpirv> stageList;
+        stageList.reserve(byStage.size());
+        for (auto &[stageBit, spirv]: byStage)
+            stageList.push_back({stageBit, std::move(spirv)});
+
+        shader = Shader::CreateFromStages(*logicalDevice, stageList);
         if (!shader)
             throw runtime_error("Failed to create Vulkan shader from SPIR-V");
+
+        hasTessellationShader = shader->HasStage(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+        hasGeometryShader     = shader->HasStage(VK_SHADER_STAGE_GEOMETRY_BIT);
 
         stages = shader->GetPipelineStages();
     }
@@ -368,6 +372,30 @@ namespace SF::Engine
                                 "does not support non solid fills.");
         }
 
+        if (hasGeometryShader && !logicalDevice->GetEnabledFeatures().geometryShader)
+            throw runtime_error("Geometry shader used but geometryShader feature not enabled");
+
+        // Tessellation must be resolved BEFORE inputAssemblyState is filled in, since it can
+        // force the topology to PATCH_LIST.
+        tessellationState.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+        if (hasTessellationShader)
+        {
+            if (!logicalDevice->GetEnabledFeatures().tessellationShader)
+                throw runtime_error("Tessellation shader used but tessellationShader feature not enabled");
+
+            if (topology != VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
+            {
+                Log::Warning("Tessellation shader present; overriding topology to PATCH_LIST");
+                topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+            }
+            if (patchControlPoints == 0)
+                patchControlPoints = 3; // triangle domain default; pass 4 for quads, etc.
+            tessellationState.patchControlPoints = patchControlPoints;
+        } else if (topology == VK_PRIMITIVE_TOPOLOGY_PATCH_LIST)
+        {
+            throw runtime_error("PATCH_LIST topology requires tessellation control + evaluation stages");
+        }
+
         inputAssemblyState.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         inputAssemblyState.topology               = topology;
         inputAssemblyState.primitiveRestartEnable = VK_FALSE;
@@ -438,9 +466,6 @@ namespace SF::Engine
         dynamicState.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates    = dynamicStates.data();
-
-        tessellationState.sType              = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
-        tessellationState.patchControlPoints = 4;
     }
 
     void RhiRenderPipeline::CreatePipeline()

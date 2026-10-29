@@ -44,6 +44,7 @@ namespace SF::Engine
         bool pushDescriptors           = false;
         std::vector<VkDescriptorSetLayout> additionalLayouts;
         RhiRenderPipeline::Blend blend = RhiRenderPipeline::Blend::PremultipliedAlpha;
+        uint32_t patchControlPoints    = 0; // 0 = auto (3) if the shader has tessellation stages
         std::vector<VkPipelineColorBlendAttachmentState> blendStates; // only consulted for Blend::Custom
     };
 
@@ -55,7 +56,7 @@ namespace SF::Engine
         // named terminal methods reading awkwardly at the call site.
         struct Offscreen
         {
-            VkRenderPass renderPass;
+            VkRenderPass renderPass{};
             uint32_t subpassIndex = 0;
         };
 
@@ -149,6 +150,12 @@ namespace SF::Engine
             return Self();
         }
 
+        RenderPipelineBuilder &PatchControlPoints(uint32_t n)
+        {
+            m_Product.patchControlPoints = n;
+            return Self();
+        }
+
         // Only consulted when Blend(RhiRenderPipeline::Blend::Custom) is also set; see
         // RhiRenderPipeline's constructor docs for the exact count required (1 for
         // Mode::Polygon, attachmentCount for Mode::MRT).
@@ -163,9 +170,9 @@ namespace SF::Engine
         {
             return std::make_unique<RhiRenderPipeline>(
                     std::move(stage), m_Product.shaderPath, m_Product.vertexInputs, m_Product.defines, m_Product.mode,
-                    m_Product.depth, m_Product.topology, m_Product.polygonMode, m_Product.cullMode,
-                    m_Product.frontFace, m_Product.pushDescriptors, m_Product.additionalLayouts, m_Product.blend,
-                    m_Product.blendStates);
+                    m_Product.depth, m_Product.topology, m_Product.polygonMode, m_Product.cullMode, m_Product.frontFace,
+                    m_Product.pushDescriptors, m_Product.additionalLayouts, m_Product.blend, m_Product.blendStates,
+                    m_Product.patchControlPoints);
         }
 
         // Constructs the real RhiRenderPipeline against a caller-supplied offscreen
@@ -174,11 +181,11 @@ namespace SF::Engine
         // constructor is always Mode::Polygon.
         [[nodiscard]] std::unique_ptr<RhiRenderPipeline> Create(Offscreen target) const
         {
-            return std::make_unique<RhiRenderPipeline>(target.renderPass, target.subpassIndex, m_Product.shaderPath,
-                                                       m_Product.vertexInputs, m_Product.defines, m_Product.depth,
-                                                       m_Product.topology, m_Product.polygonMode, m_Product.cullMode,
-                                                       m_Product.frontFace, m_Product.additionalLayouts,
-                                                       m_Product.blend, m_Product.blendStates);
+            return std::make_unique<RhiRenderPipeline>(
+                    target.renderPass, target.subpassIndex, m_Product.shaderPath, m_Product.vertexInputs,
+                    m_Product.defines, m_Product.depth, m_Product.topology, m_Product.polygonMode, m_Product.cullMode,
+                    m_Product.frontFace, m_Product.additionalLayouts, m_Product.blend, m_Product.blendStates,
+                    m_Product.patchControlPoints);
         }
     };
 } // namespace SF::Engine

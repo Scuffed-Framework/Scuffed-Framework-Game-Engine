@@ -24,11 +24,12 @@ namespace SF::Engine
      */
     struct Vertex
     {
-        Vec3 position;
-        Vec3 color;
-        Vec3 texCoord; // 2d UV: u, v, 0
-        Vec3 tangent;
-        Vec3 normal;
+        Vec3 position{};
+        Vec3 color{};
+        Vec3 texCoord{}; // 2d UV: u, v, 0
+        Vec3 tangent{};
+        Vec3 bitangent{};
+        Vec3 normal{};
 
         optional<JointData> jointData = {};
 
@@ -108,7 +109,7 @@ namespace SF::Engine
         }
     };
 
-
+    // TODO: REMOVE
     struct PatchVertex
     {
         Vec3 position;

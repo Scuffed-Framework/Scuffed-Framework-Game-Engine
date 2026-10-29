@@ -14,7 +14,7 @@ namespace SF::Engine::Shaders
 {
     enum class ShaderLanguage
     {
-        GLSL,  // GLSL-flavoured source, parsed by Slang's GLSL frontend
+        GLSL, // GLSL-flavoured source, parsed by Slang's GLSL frontend
         HLSL,
         SLANG
     };
@@ -51,15 +51,15 @@ namespace SF::Engine::Shaders
         std::string name;
         ShaderStage stage;
         glm::uvec3 workgroupSize = {1, 1, 1};
-        bool hasWorkgroupSize = false;
+        bool hasWorkgroupSize    = false;
     };
 
     struct ParsedShader
     {
-        std::string name;     // derived from the filename -- no more `Shader "..."` header
+        std::string name; // derived from the filename -- no more `Shader "..."` header
         std::string filepath;
         ShaderLanguage language = ShaderLanguage::GLSL;
-        std::string source;   // comment-stripped file text; #import/#include not yet expanded
+        std::string source; // comment-stripped file text; #import/#include not yet expanded
 
         std::vector<ShaderEntryPointInfo> entryPoints;
 
@@ -68,9 +68,9 @@ namespace SF::Engine::Shaders
         std::vector<ShaderSpecializationConstant> specializationConstants;
         std::vector<std::vector<std::string>> multiCompileKeywords;
 
-        UVec3 workgroupSizeOverride = {1, 1, 1};
+        UVec3 workgroupSizeOverride   = {1, 1, 1};
         bool hasWorkgroupSizeOverride = false;
-        bool usesBindless = false;
+        bool usesBindless             = false;
     };
 
     struct CompiledShader
@@ -81,7 +81,7 @@ namespace SF::Engine::Shaders
         std::vector<uint32_t> spirv;
         std::string entryPoint;
         glm::uvec3 workgroupSize = {1, 1, 1};
-        bool hasWorkgroupSize = false;
+        bool hasWorkgroupSize    = false;
     };
 
     // ShaderParser
@@ -100,11 +100,12 @@ namespace SF::Engine::Shaders
         bool discoverEntryPoints(ParsedShader &shader);
 
         std::optional<CompiledShader> compile(const ParsedShader &shader, ShaderStage stage,
-                                              const std::vector<SF::Engine::Shader::Define> &defines = {}, const std::string &entry = "");
-        std::optional<std::vector<CompiledShader>> compileAll(const ParsedShader &shader,
-                                              const std::vector<SF::Engine::Shader::Define> &defines = {});
+                                              const std::vector<SF::Engine::Shader::Define> &defines = {},
+                                              const std::string &entry                               = "");
+        std::optional<std::vector<CompiledShader>>
+        compileAll(const ParsedShader &shader, const std::vector<SF::Engine::Shader::Define> &defines = {});
 
-        const std::string &getLastError() const { return lastError_; }
+        [[nodiscard]] const std::string &getLastError() const { return lastError_; }
 
     private:
         void setError(const std::string &error);
@@ -113,31 +114,49 @@ namespace SF::Engine::Shaders
         void scanPragmas(ParsedShader &shader);
         // Injects defines/specialization-constant decls, resolves #import/#include,
         // returns source ready to hand to Slang.
-        std::string preprocess(const ParsedShader &shader,
-                               const std::vector<SF::Engine::Shader::Define> &defines);
+        std::string preprocess(const ParsedShader &shader, const std::vector<SF::Engine::Shader::Define> &defines);
 
         std::string lastError_;
     };
 
-    // Helpers
+    inline VkShaderStageFlagBits toVkStage(ShaderStage stage)
+    {
+        switch (stage)
+        {
+            case ShaderStage::Vertex:
+                return VK_SHADER_STAGE_VERTEX_BIT;
+            case ShaderStage::Fragment:
+                return VK_SHADER_STAGE_FRAGMENT_BIT;
+            case ShaderStage::Compute:
+                return VK_SHADER_STAGE_COMPUTE_BIT;
+            case ShaderStage::Geometry:
+                return VK_SHADER_STAGE_GEOMETRY_BIT;
+            case ShaderStage::TessellationControl:
+                return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+            case ShaderStage::TessellationEvaluation:
+                return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+        }
+        return VK_SHADER_STAGE_ALL;
+    }
+
     inline const char *stageToString(ShaderStage stage)
     {
         switch (stage)
         {
-        case ShaderStage::Vertex:
-            return "vertex";
-        case ShaderStage::Fragment:
-            return "fragment";
-        case ShaderStage::Compute:
-            return "compute";
-        case ShaderStage::Geometry:
-            return "geometry";
-        case ShaderStage::TessellationControl:
-            return "tess_control";
-        case ShaderStage::TessellationEvaluation:
-            return "tess_eval";
-        default:
-            return "unknown";
+            case ShaderStage::Vertex:
+                return "vertex";
+            case ShaderStage::Fragment:
+                return "fragment";
+            case ShaderStage::Compute:
+                return "compute";
+            case ShaderStage::Geometry:
+                return "geometry";
+            case ShaderStage::TessellationControl:
+                return "tess_control";
+            case ShaderStage::TessellationEvaluation:
+                return "tess_eval";
+            default:
+                return "unknown";
         }
     }
 

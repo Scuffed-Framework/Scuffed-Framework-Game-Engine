@@ -61,7 +61,7 @@ namespace SF::Engine
          * @param planetCenter  Planet center in world space.
          * @param planetRadius  Planet (sea-level) radius in world units.
          */
-        void RegenerateAt(const Vec3 &cameraPos, const Vec3 &planetCenter, float planetRadius);
+        void RegenerateAt(const Vec3 &cameraPos, const Vec3 &planetCenter, float planetRadius) const;
 
         /**
          * Bind vertex / index buffers and issue vkCmdDrawIndexed.
@@ -86,7 +86,7 @@ namespace SF::Engine
         // frame / sphere projection. Shared by the constructor and
         // RegenerateAt().
         void writeVertices(const Vec3 &origin, const Vec3 &tangentU, const Vec3 &tangentV, const Vec3 &planetCenter,
-                           float planetRadius);
+                           float planetRadius) const;
 
         uint32_t patchCount_;
         Vec2 patchExtent_;

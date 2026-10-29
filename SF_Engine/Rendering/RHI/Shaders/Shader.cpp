@@ -7,14 +7,11 @@ namespace SF::Engine
 {
     Shader::Shader(VkDevice device) : device(device) {}
 
-    Shader::~Shader()
-    {
-        Cleanup();
-    }
+    Shader::~Shader() { Cleanup(); }
 
     void Shader::Cleanup()
     {
-        for (const auto &info : moduleInfos)
+        for (const auto &info: moduleInfos)
         {
             if (info.module != VK_NULL_HANDLE)
             {
@@ -24,33 +21,75 @@ namespace SF::Engine
         moduleInfos.clear();
     }
 
-    std::shared_ptr<Shader> Shader::CreateFromSPIRV(VkDevice device,
-                                                    const std::vector<uint32_t> &vertSpirv, const std::vector<uint32_t> &fragSpirv,
-                                                    const std::vector<uint32_t> &tessCtrlSpirv, const std::vector<uint32_t> &tessEvalSpirv)
+    std::shared_ptr<Shader> Shader::CreateFromStages(VkDevice device, const std::vector<StageSpirv> &stages)
     {
+        // Canonical graphics pipeline order. Vulkan doesn't care, but a stable order keeps
+        // descriptor/push-constant reflection merging deterministic.
+        static constexpr VkShaderStageFlagBits ORDER[] = {VK_SHADER_STAGE_VERTEX_BIT,
+                                                          VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+                                                          VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+                                                          VK_SHADER_STAGE_GEOMETRY_BIT, VK_SHADER_STAGE_FRAGMENT_BIT};
+
         auto shader = std::shared_ptr<Shader>(new Shader(device));
-        shader->AddShaderModule(vertSpirv, VK_SHADER_STAGE_VERTEX_BIT);
-        shader->ReflectFromSPIRV(vertSpirv, VK_SHADER_STAGE_VERTEX_BIT);
 
-        if (!tessCtrlSpirv.empty())
+        size_t consumed = 0;
+        for (auto stage: ORDER)
         {
-            shader->AddShaderModule(tessCtrlSpirv, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-            shader->ReflectFromSPIRV(tessCtrlSpirv, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+            const StageSpirv *found = nullptr;
+            for (const auto &s: stages)
+            {
+                if (s.stage != stage)
+                    continue;
+                if (found)
+                {
+                    std::cerr << "Shader::CreateFromStages: duplicate stage " << stage << std::endl;
+                    return nullptr;
+                }
+                found = &s;
+            }
+            if (!found)
+                continue;
+            if (found->spirv.empty())
+            {
+                std::cerr << "Shader::CreateFromStages: empty SPIR-V for stage " << stage << std::endl;
+                return nullptr;
+            }
+
+            const size_t before = shader->moduleInfos.size();
+            shader->AddShaderModule(found->spirv, stage);
+            if (shader->moduleInfos.size() == before)
+                return nullptr; // module creation failed (already logged)
+            shader->ReflectFromSPIRV(found->spirv, stage);
+            ++consumed;
         }
-        if (!tessEvalSpirv.empty())
+
+        if (consumed != stages.size())
         {
-            shader->AddShaderModule(tessEvalSpirv, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
-            shader->ReflectFromSPIRV(tessEvalSpirv, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+            std::cerr << "Shader::CreateFromStages: unsupported stage in graphics shader" << std::endl;
+            return nullptr;
         }
-
-        shader->AddShaderModule(fragSpirv, VK_SHADER_STAGE_FRAGMENT_BIT);
-        shader->ReflectFromSPIRV(fragSpirv, VK_SHADER_STAGE_FRAGMENT_BIT);
-
         return shader;
     }
 
-    std::shared_ptr<Shader> Shader::CreateComputeFromSPIRV(
-        VkDevice device, const std::vector<uint32_t> &computeSpirv)
+    std::shared_ptr<Shader> Shader::CreateFromSPIRV(VkDevice device, const std::vector<uint32_t> &vertSpirv,
+                                                    const std::vector<uint32_t> &fragSpirv,
+                                                    const std::vector<uint32_t> &tessCtrlSpirv,
+                                                    const std::vector<uint32_t> &tessEvalSpirv,
+                                                    const std::vector<uint32_t> &geomSpirv)
+    {
+        std::vector<StageSpirv> stages;
+        stages.push_back({VK_SHADER_STAGE_VERTEX_BIT, vertSpirv});
+        if (!tessCtrlSpirv.empty())
+            stages.push_back({VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, tessCtrlSpirv});
+        if (!tessEvalSpirv.empty())
+            stages.push_back({VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, tessEvalSpirv});
+        if (!geomSpirv.empty())
+            stages.push_back({VK_SHADER_STAGE_GEOMETRY_BIT, geomSpirv});
+        stages.push_back({VK_SHADER_STAGE_FRAGMENT_BIT, fragSpirv});
+        return CreateFromStages(device, stages);
+    }
+
+    std::shared_ptr<Shader> Shader::CreateComputeFromSPIRV(VkDevice device, const std::vector<uint32_t> &computeSpirv)
     {
         auto shader = std::shared_ptr<Shader>(new Shader(device));
 
@@ -60,8 +99,7 @@ namespace SF::Engine
         return shader;
     }
 
-    std::shared_ptr<Shader> Shader::CreateFromFile(VkDevice device,
-                                                   const std::filesystem::path &vertPath,
+    std::shared_ptr<Shader> Shader::CreateFromFile(VkDevice device, const std::filesystem::path &vertPath,
                                                    const std::filesystem::path &fragPath)
     {
         auto readFile = [](const std::filesystem::path &path) -> std::vector<uint32_t>
@@ -76,13 +114,13 @@ namespace SF::Engine
             size_t fileSize = file.tellg();
             std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
             file.seekg(0);
-            file.read(reinterpret_cast<char *>(buffer.data()), fileSize);
+            file.read(reinterpret_cast<char *>(buffer.data()), static_cast<signed long>(fileSize));
             file.close();
             return buffer;
         };
 
-        auto vertSpirv = readFile(vertPath);
-        auto fragSpirv = readFile(fragPath);
+        const auto vertSpirv = readFile(vertPath);
+        const auto fragSpirv = readFile(fragPath);
 
         if (vertSpirv.empty() || fragSpirv.empty())
             return nullptr;
@@ -93,9 +131,9 @@ namespace SF::Engine
     void Shader::AddShaderModule(const std::vector<uint32_t> &spirv, VkShaderStageFlagBits stage)
     {
         VkShaderModuleCreateInfo info{};
-        info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         info.codeSize = spirv.size() * sizeof(uint32_t);
-        info.pCode = spirv.data();
+        info.pCode    = spirv.data();
 
         VkShaderModule module;
         VkResult result = vkCreateShaderModule(device, &info, nullptr, &module);
@@ -112,13 +150,12 @@ namespace SF::Engine
     void Shader::ReflectFromSPIRV(const std::vector<uint32_t> &spirv, VkShaderStageFlagBits stage)
     {
         SpvReflectShaderModule reflectModule;
-        SpvReflectResult result = spvReflectCreateShaderModule(spirv.size() * sizeof(uint32_t),
-                                                               spirv.data(), &reflectModule);
+        SpvReflectResult result =
+                spvReflectCreateShaderModule(spirv.size() * sizeof(uint32_t), spirv.data(), &reflectModule);
 
         if (result != SPV_REFLECT_RESULT_SUCCESS)
         {
-            std::cerr << "SPIRV-Reflect failed to create shader module! Error: " << result
-                      << std::endl;
+            std::cerr << "SPIRV-Reflect failed to create shader module! Error: " << result << std::endl;
             return;
         }
 
@@ -133,33 +170,30 @@ namespace SF::Engine
 
             std::map<VkDescriptorType, uint32_t> descriptorPoolCounts;
 
-            for (auto *binding : bindings)
+            for (auto *binding: bindings)
             {
-                VkDescriptorType type = static_cast<VkDescriptorType>(binding->descriptor_type);
+                auto type = static_cast<VkDescriptorType>(binding->descriptor_type);
 
                 // Store uniform info
-                UniformInfo info{.binding = binding->binding,
-                                 .offset = 0,
-                                 .size = binding->block.size,
-                                 .type = type,
+                UniformInfo info{.binding    = binding->binding,
+                                 .offset     = 0,
+                                 .size       = binding->block.size,
+                                 .type       = type,
                                  .stageFlags = static_cast<VkShaderStageFlags>(stage),
-                                 .readOnly = (binding->decoration_flags &
-                                              SPV_REFLECT_DECORATION_NON_WRITABLE) != 0,
-                                 .writeOnly = (binding->decoration_flags &
-                                               SPV_REFLECT_DECORATION_NON_READABLE) != 0};
+                                 .readOnly   = (binding->decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE) != 0,
+                                 .writeOnly  = (binding->decoration_flags & SPV_REFLECT_DECORATION_NON_READABLE) != 0};
 
                 auto it = uniforms.find(binding->name);
                 if (it != uniforms.end())
                 {
                     // Merge stage flags if binding already exists
                     it->second.stageFlags |= stage;
-                }
-                else
+                } else
                 {
-                    uniforms[binding->name] = info;
+                    uniforms[binding->name]            = info;
                     descriptorLocations[binding->name] = binding->binding;
-                    descriptorSizes[binding->name] = binding->block.size;
-                    descriptorTypes[binding->binding] = type;
+                    descriptorSizes[binding->name]     = binding->block.size;
+                    descriptorTypes[binding->binding]  = type;
                 }
 
                 // Update last descriptor binding
@@ -167,23 +201,21 @@ namespace SF::Engine
 
                 // Create descriptor set layout binding
                 VkDescriptorSetLayoutBinding layoutBinding{};
-                layoutBinding.binding = binding->binding;
-                layoutBinding.descriptorType = type;
-                layoutBinding.descriptorCount = binding->count;
-                layoutBinding.stageFlags = static_cast<VkShaderStageFlags>(stage);
+                layoutBinding.binding            = binding->binding;
+                layoutBinding.descriptorType     = type;
+                layoutBinding.descriptorCount    = binding->count;
+                layoutBinding.stageFlags         = static_cast<VkShaderStageFlags>(stage);
                 layoutBinding.pImmutableSamplers = nullptr;
 
                 // Check if binding already exists (from another stage)
-                auto bindingIt = std::find_if(descriptorBindings.begin(), descriptorBindings.end(),
-                                              [&](const VkDescriptorSetLayoutBinding &b)
-                                              { return b.binding == layoutBinding.binding; });
+                auto bindingIt = ranges::find_if(descriptorBindings, [&](const VkDescriptorSetLayoutBinding &b)
+                                                 { return b.binding == layoutBinding.binding; });
 
                 if (bindingIt != descriptorBindings.end())
                 {
                     // Merge stage flags
                     bindingIt->stageFlags |= static_cast<VkShaderStageFlags>(stage);
-                }
-                else
+                } else
                 {
                     descriptorBindings.push_back(layoutBinding);
                     IncrementDescriptorPool(descriptorPoolCounts, type);
@@ -198,20 +230,17 @@ namespace SF::Engine
             }
 
             // Convert descriptor pool counts to VkDescriptorPoolSize
-            for (const auto &[type, count] : descriptorPoolCounts)
+            for (const auto &[type, descCount]: descriptorPoolCounts)
             {
-                auto poolIt =
-                    std::find_if(descriptorPools.begin(), descriptorPools.end(),
-                                 [type](const VkDescriptorPoolSize &p)
-                                 { return p.type == type; });
+                auto poolIt = ranges::find_if(descriptorPools,
+                                              [type](const VkDescriptorPoolSize &p) { return p.type == type; });
 
                 if (poolIt != descriptorPools.end())
                 {
-                    poolIt->descriptorCount += count;
-                }
-                else
+                    poolIt->descriptorCount += descCount;
+                } else
                 {
-                    descriptorPools.push_back({type, count});
+                    descriptorPools.push_back({.type = type, .descriptorCount = descCount});
                 }
             }
         }
@@ -225,22 +254,20 @@ namespace SF::Engine
             std::vector<SpvReflectBlockVariable *> blocks(count);
             spvReflectEnumeratePushConstantBlocks(&reflectModule, &count, blocks.data());
 
-            for (auto *block : blocks)
+            for (auto *block: blocks)
             {
                 // Check if this push constant range already exists
-                auto it = std::find_if(
-                    pushConstants.begin(), pushConstants.end(), [&](const PushConstantRange &r)
-                    { return r.offset == block->offset && r.size == block->size; });
+                auto it = ranges::find_if(pushConstants, [&](const PushConstantRange &r)
+                                          { return r.offset == block->offset && r.size == block->size; });
 
                 if (it != pushConstants.end())
                 {
                     // Merge stage flags for identical range
                     it->stageFlags |= static_cast<VkShaderStageFlags>(stage);
-                }
-                else
+                } else
                 {
-                    PushConstantRange range{.offset = block->offset,
-                                            .size = block->size,
+                    PushConstantRange range{.offset     = block->offset,
+                                            .size       = block->size,
                                             .stageFlags = static_cast<VkShaderStageFlags>(stage)};
                     pushConstants.push_back(range);
                 }
@@ -258,20 +285,21 @@ namespace SF::Engine
                 std::vector<SpvReflectInterfaceVariable *> inputVars(count);
                 spvReflectEnumerateInputVariables(&reflectModule, &count, inputVars.data());
 
-                for (auto *var : inputVars)
+                for (auto *var: inputVars)
                 {
                     if (var->built_in != -1) // Skip built-ins
                         continue;
 
-                    Attribute attr(0, var->location, var->numeric.scalar.width / 8,
+                    Attribute attr(0, static_cast<int32_t>(var->location),
+                                   static_cast<int32_t>(var->numeric.scalar.width) / 8,
                                    static_cast<VkFormat>(var->format));
                     attributes[var->name] = attr;
 
                     VkVertexInputAttributeDescription attrDesc{};
                     attrDesc.location = var->location;
-                    attrDesc.binding = 0; // Default binding
-                    attrDesc.format = static_cast<VkFormat>(var->format);
-                    attrDesc.offset = 0; // Will be calculated based on layout
+                    attrDesc.binding  = 0; // Default binding
+                    attrDesc.format   = static_cast<VkFormat>(var->format);
+                    attrDesc.offset   = 0; // Will be calculated based on layout
                     attributeDescriptions.push_back(attrDesc);
                 }
             }
@@ -283,30 +311,29 @@ namespace SF::Engine
     void Shader::LoadUniformBlock(const SpvReflectBlockVariable &block, VkShaderStageFlagBits stage)
     {
         UniformBlock uniformBlock;
-        uniformBlock.binding = -1; // Will be set by descriptor binding
-        uniformBlock.size = block.size;
+        uniformBlock.binding    = -1; // Will be set by descriptor binding
+        uniformBlock.size       = static_cast<int32_t>(block.size);
         uniformBlock.stageFlags = static_cast<VkShaderStageFlags>(stage); // MSVC BS DETECTED
-        uniformBlock.type = UniformBlock::Type::Uniform;
+        uniformBlock.type       = UniformBlock::Type::Uniform;
 
         // Load members
         for (uint32_t i = 0; i < block.member_count; ++i)
         {
             const auto &member = block.members[i];
-            UniformInfo memberInfo{.binding = 0,
-                                   .offset = member.offset,
-                                   .size = member.size,
-                                   .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            UniformInfo memberInfo{.binding    = 0,
+                                   .offset     = member.offset,
+                                   .size       = member.size,
+                                   .type       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                                    .stageFlags = static_cast<VkShaderStageFlags>(stage),
-                                   .readOnly = false,
-                                   .writeOnly = false};
+                                   .readOnly   = false,
+                                   .writeOnly  = false};
             uniformBlock.uniforms[member.name] = memberInfo;
         }
 
         uniformBlocks[block.name] = uniformBlock;
     }
 
-    void Shader::IncrementDescriptorPool(std::map<VkDescriptorType, uint32_t> &poolCounts,
-                                         VkDescriptorType type)
+    void Shader::IncrementDescriptorPool(std::map<VkDescriptorType, uint32_t> &poolCounts, VkDescriptorType type)
     {
         poolCounts[type]++;
     }
@@ -316,13 +343,13 @@ namespace SF::Engine
         std::vector<VkPipelineShaderStageCreateInfo> stages;
         stages.reserve(moduleInfos.size());
 
-        for (const auto &info : moduleInfos)
+        for (const auto &info: moduleInfos)
         {
             VkPipelineShaderStageCreateInfo stageInfo{};
-            stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-            stageInfo.stage = info.stage;
-            stageInfo.module = info.module;
-            stageInfo.pName = "main";
+            stageInfo.sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            stageInfo.stage               = info.stage;
+            stageInfo.module              = info.module;
+            stageInfo.pName               = "main";
             stageInfo.pSpecializationInfo = nullptr;
             stages.push_back(stageInfo);
         }
@@ -336,9 +363,9 @@ namespace SF::Engine
             return VK_NULL_HANDLE;
 
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
-        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutInfo.bindingCount = static_cast<uint32_t>(descriptorBindings.size());
-        layoutInfo.pBindings = descriptorBindings.data();
+        layoutInfo.pBindings    = descriptorBindings.data();
 
         VkDescriptorSetLayout layout;
         VkResult result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &layout);
@@ -357,12 +384,12 @@ namespace SF::Engine
         std::vector<VkPushConstantRange> ranges;
         ranges.reserve(pushConstants.size());
 
-        for (const auto &pc : pushConstants)
+        for (const auto &pc: pushConstants)
         {
             VkPushConstantRange range{};
             range.stageFlags = pc.stageFlags;
-            range.offset = pc.offset;
-            range.size = pc.size;
+            range.offset     = pc.offset;
+            range.size       = pc.size;
             ranges.push_back(range);
         }
 
@@ -419,23 +446,21 @@ namespace SF::Engine
 
     bool Shader::HasStage(VkShaderStageFlagBits stage) const
     {
-        return std::any_of(moduleInfos.begin(), moduleInfos.end(),
-                           [stage](const ModuleInfo &info)
-                           { return info.stage == stage; });
+        return ranges::any_of(moduleInfos, [stage](const ModuleInfo &info) { return info.stage == stage; });
     }
 
     void Shader::Reload(const std::vector<uint32_t> &newSpirv, VkShaderStageFlagBits stage)
     {
-        for (auto &info : moduleInfos)
+        for (auto &info: moduleInfos)
         {
             if (info.stage == stage)
             {
                 vkDestroyShaderModule(device, info.module, nullptr);
 
                 VkShaderModuleCreateInfo createInfo{};
-                createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+                createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
                 createInfo.codeSize = newSpirv.size() * sizeof(uint32_t);
-                createInfo.pCode = newSpirv.data();
+                createInfo.pCode    = newSpirv.data();
 
                 VkResult result = vkCreateShaderModule(device, &createInfo, nullptr, &info.module);
 
@@ -458,7 +483,7 @@ namespace SF::Engine
                 lastDescriptorBinding = 0;
 
                 // Re-reflect all stages
-                for (const auto &moduleInfo : moduleInfos)
+                for (const auto &moduleInfo: moduleInfos)
                 {
                     // Note: You'll need to store original SPIRV to re-reflect properly
                     // This is a simplified version
@@ -476,24 +501,24 @@ namespace SF::Engine
         // Map common GL types to Vulkan formats
         switch (type)
         {
-        case 0x1406:
-            return VK_FORMAT_R32_SFLOAT; // GL_FLOAT
-        case 0x8B50:
-            return VK_FORMAT_R32G32_SFLOAT; // GL_FLOAT_VEC2
-        case 0x8B51:
-            return VK_FORMAT_R32G32B32_SFLOAT; // GL_FLOAT_VEC3
-        case 0x8B52:
-            return VK_FORMAT_R32G32B32A32_SFLOAT; // GL_FLOAT_VEC4
-        case 0x1404:
-            return VK_FORMAT_R32_SINT; // GL_INT
-        case 0x8B53:
-            return VK_FORMAT_R32G32_SINT; // GL_INT_VEC2
-        case 0x8B54:
-            return VK_FORMAT_R32G32B32_SINT; // GL_INT_VEC3
-        case 0x8B55:
-            return VK_FORMAT_R32G32B32A32_SINT; // GL_INT_VEC4
-        default:
-            return VK_FORMAT_UNDEFINED;
+            case 0x1406:
+                return VK_FORMAT_R32_SFLOAT; // GL_FLOAT
+            case 0x8B50:
+                return VK_FORMAT_R32G32_SFLOAT; // GL_FLOAT_VEC2
+            case 0x8B51:
+                return VK_FORMAT_R32G32B32_SFLOAT; // GL_FLOAT_VEC3
+            case 0x8B52:
+                return VK_FORMAT_R32G32B32A32_SFLOAT; // GL_FLOAT_VEC4
+            case 0x1404:
+                return VK_FORMAT_R32_SINT; // GL_INT
+            case 0x8B53:
+                return VK_FORMAT_R32G32_SINT; // GL_INT_VEC2
+            case 0x8B54:
+                return VK_FORMAT_R32G32B32_SINT; // GL_INT_VEC3
+            case 0x8B55:
+                return VK_FORMAT_R32G32B32A32_SINT; // GL_INT_VEC4
+            default:
+                return VK_FORMAT_UNDEFINED;
         }
     }
-}
+} // namespace SF::Engine
