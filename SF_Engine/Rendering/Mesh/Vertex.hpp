@@ -13,6 +13,8 @@ namespace SF::Engine
     {
         Ui32Vec3 Id;
         Vec3 Weight;
+
+        bool operator==(const JointData &rhs) const { return Id == rhs.Id && Weight == rhs.Weight; }
     };
 
     /**
@@ -29,6 +31,12 @@ namespace SF::Engine
         Vec3 normal;
 
         optional<JointData> jointData = {};
+
+        bool operator==(const Vertex &rhs) const
+        {
+            return position == rhs.position && color == rhs.color && texCoord == rhs.texCoord &&
+                   tangent == rhs.tangent && normal == rhs.normal && jointData == rhs.jointData;
+        }
 
         static VkVertexInputBindingDescription GetBindingDescription()
         {
@@ -71,8 +79,6 @@ namespace SF::Engine
             return attributeDescriptions;
         }
 
-        bool operator==(const Vertex &) const = default;
-
         static Shader::VertexInput GetVertexInput()
         {
             std::vector<VkVertexInputBindingDescription> bindings(1);
@@ -81,10 +87,22 @@ namespace SF::Engine
             bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
             std::vector<VkVertexInputAttributeDescription> attrs(4);
-            attrs[0] = {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)};
-            attrs[1] = {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)};
-            attrs[2] = {2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, texCoord)};
-            attrs[3] = {3, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, tangent)};
+            attrs[0] = {.location = 0,
+                        .binding  = 0,
+                        .format   = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset   = offsetof(Vertex, position)};
+            attrs[1] = {.location = 1,
+                        .binding  = 0,
+                        .format   = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset   = offsetof(Vertex, normal)};
+            attrs[2] = {.location = 2,
+                        .binding  = 0,
+                        .format   = VK_FORMAT_R32G32_SFLOAT,
+                        .offset   = offsetof(Vertex, texCoord)};
+            attrs[3] = {.location = 3,
+                        .binding  = 0,
+                        .format   = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset   = offsetof(Vertex, tangent)};
 
             return {std::move(bindings), std::move(attrs)};
         }
@@ -105,9 +123,18 @@ namespace SF::Engine
             bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
             std::vector<VkVertexInputAttributeDescription> attrs(3);
-            attrs[0] = {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PatchVertex, position)};
-            attrs[1] = {1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(PatchVertex, uv)};
-            attrs[2] = {2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(PatchVertex, normal)};
+            attrs[0] = {.location = 0,
+                        .binding  = 0,
+                        .format   = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset   = offsetof(PatchVertex, position)};
+            attrs[1] = {.location = 1,
+                        .binding  = 0,
+                        .format   = VK_FORMAT_R32G32_SFLOAT,
+                        .offset   = offsetof(PatchVertex, uv)};
+            attrs[2] = {.location = 2,
+                        .binding  = 0,
+                        .format   = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset   = offsetof(PatchVertex, normal)};
 
             return {std::move(bindings), std::move(attrs)};
         }
