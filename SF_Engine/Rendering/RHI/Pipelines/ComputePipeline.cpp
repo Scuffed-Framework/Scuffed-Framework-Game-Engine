@@ -9,8 +9,9 @@
 
 namespace SF::Engine
 {
-    ComputePipeline::ComputePipeline(filesystem::path shaderStage, vector<Shader::Define> defines, bool pushDescriptors,
-                                     vector<VkDescriptorSetLayout> additionalLayouts, UVec3 localSize) :
+    ComputePipeline::ComputePipeline(filesystem::path shaderStage, vector<Shader::Define> defines,
+                                     const bool pushDescriptors, vector<VkDescriptorSetLayout> additionalLayouts,
+                                     const UVec3 localSize) :
         shaderStage(std::move(shaderStage)), defines(std::move(defines)), pushDescriptors(pushDescriptors),
         additionalLayouts(std::move(additionalLayouts)), localSize(localSize)
     {
@@ -26,8 +27,8 @@ namespace SF::Engine
     }
 
     ComputePipeline::ComputePipeline(filesystem::path shaderStage, const string &entry, vector<Shader::Define> defines,
-                                     bool pushDescriptors, vector<VkDescriptorSetLayout> additionalLayouts,
-                                     UVec3 localSize) :
+                                     const bool pushDescriptors, vector<VkDescriptorSetLayout> additionalLayouts,
+                                     const UVec3 localSize) :
         shaderStage(std::move(shaderStage)), defines(std::move(defines)), pushDescriptors(pushDescriptors),
         additionalLayouts(std::move(additionalLayouts)), localSize(localSize), entryOpt(entry)
     {
@@ -61,7 +62,7 @@ namespace SF::Engine
         Shaders::ShaderParser parser;
         Log::Info("Loading compute shader: {} (cwd={})", shaderStage.string(), GetExecutablePath().string());
 
-        auto parsedOpt = parser.parse(filesystem::path(GetExecutablePath() / shaderStage).string());
+        const auto parsedOpt = parser.parse(filesystem::path(GetExecutablePath() / shaderStage).string());
         if (!parsedOpt)
             throw runtime_error("Failed to parse compute shader '" + shaderStage.string() +
                                 "': " + parser.getLastError());
@@ -106,10 +107,10 @@ namespace SF::Engine
 
         vector<VkDescriptorPoolSize> sizes;
         for (const auto &[type, count]: counts)
-            sizes.push_back({type, count * 64});
+            sizes.push_back({.type = type, .descriptorCount = count * 64});
 
         if (sizes.empty())
-            sizes.push_back({VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1});
+            sizes.push_back({.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 1});
 
         VkDescriptorPoolCreateInfo info{};
         info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -127,8 +128,8 @@ namespace SF::Engine
         const auto &pcs = shader->GetPushConstants();
 
         vector<VkPushConstantRange> ranges;
-        for (const auto &pc: pcs)
-            ranges.push_back({pc.stageFlags, pc.offset, pc.size});
+        for (const auto &[offset, size, stageFlags]: pcs)
+            ranges.push_back({.stageFlags = stageFlags, offset, .size = size});
 
         vector<VkDescriptorSetLayout> setLayouts;
         setLayouts.reserve(2 + additionalLayouts.size());
@@ -148,8 +149,8 @@ namespace SF::Engine
 
     void ComputePipeline::CreatePipelineCompute()
     {
-        auto *dev  = RenderSystem::Get()->GetLogicalDevice();
-        auto cache = RenderSystem::Get()->GetPipelineCache();
+        auto *dev        = RenderSystem::Get()->GetLogicalDevice();
+        const auto cache = RenderSystem::Get()->GetPipelineCache();
 
         const auto &stages = shader->GetPipelineStages();
         if (stages.empty())
