@@ -9,14 +9,13 @@
 
 namespace SF::Engine
 {
-    ComputePipeline::ComputePipeline(std::filesystem::path shaderStage, std::vector<Shader::Define> defines,
-                                     bool pushDescriptors, std::vector<VkDescriptorSetLayout> additionalLayouts,
-                                     UVec3 localSize) :
+    ComputePipeline::ComputePipeline(filesystem::path shaderStage, vector<Shader::Define> defines, bool pushDescriptors,
+                                     vector<VkDescriptorSetLayout> additionalLayouts, UVec3 localSize) :
         shaderStage(std::move(shaderStage)), defines(std::move(defines)), pushDescriptors(pushDescriptors),
         additionalLayouts(std::move(additionalLayouts)), localSize(localSize)
     {
         if (localSize.x == 0 || localSize.y == 0 || localSize.z == 0)
-            throw std::runtime_error("ComputePipeline: localSize components must be non-zero");
+            throw runtime_error("ComputePipeline: localSize components must be non-zero");
 
         device_ = *RenderSystem::Get()->GetLogicalDevice();
         CreateShaderProgram("");
@@ -26,14 +25,14 @@ namespace SF::Engine
         CreatePipelineCompute();
     }
 
-    ComputePipeline::ComputePipeline(std::filesystem::path shaderStage, std::string entry,
-                                     std::vector<Shader::Define> defines, bool pushDescriptors,
-                                     std::vector<VkDescriptorSetLayout> additionalLayouts, UVec3 localSize) :
+    ComputePipeline::ComputePipeline(filesystem::path shaderStage, const string &entry, vector<Shader::Define> defines,
+                                     bool pushDescriptors, vector<VkDescriptorSetLayout> additionalLayouts,
+                                     UVec3 localSize) :
         shaderStage(std::move(shaderStage)), defines(std::move(defines)), pushDescriptors(pushDescriptors),
         additionalLayouts(std::move(additionalLayouts)), localSize(localSize), entryOpt(entry)
     {
         if (localSize.x == 0 || localSize.y == 0 || localSize.z == 0)
-            throw std::runtime_error("ComputePipeline: localSize components must be non-zero");
+            throw runtime_error("ComputePipeline: localSize components must be non-zero");
 
         device_ = *RenderSystem::Get()->GetLogicalDevice();
         CreateShaderProgram(entry);
@@ -55,31 +54,31 @@ namespace SF::Engine
         vkDestroyDescriptorPool(device_, descriptorPool, nullptr);
     }
 
-    void ComputePipeline::CreateShaderProgram(std::string entry)
+    void ComputePipeline::CreateShaderProgram(const string &entry)
     {
         auto *dev = RenderSystem::Get()->GetLogicalDevice();
 
         Shaders::ShaderParser parser;
         Log::Info("Loading compute shader: {} (cwd={})", shaderStage.string(), GetExecutablePath().string());
 
-        auto parsedOpt = parser.parse(std::filesystem::path(GetExecutablePath() / shaderStage).string());
+        auto parsedOpt = parser.parse(filesystem::path(GetExecutablePath() / shaderStage).string());
         if (!parsedOpt)
-            throw std::runtime_error("Failed to parse compute shader '" + shaderStage.string() +
-                                     "': " + parser.getLastError());
+            throw runtime_error("Failed to parse compute shader '" + shaderStage.string() +
+                                "': " + parser.getLastError());
 
-        std::optional<Shaders::CompiledShader> compiledOpt;
+        optional<Shaders::CompiledShader> compiledOpt;
         if (!entry.empty())
             compiledOpt = parser.compile(*parsedOpt, Shaders::ShaderStage::Compute, defines, entry);
         else
             compiledOpt = parser.compile(*parsedOpt, Shaders::ShaderStage::Compute, defines);
 
         if (!compiledOpt)
-            throw std::runtime_error("Failed to compile compute shader '" + shaderStage.string() +
-                                     "': " + parser.getLastError());
+            throw runtime_error("Failed to compile compute shader '" + shaderStage.string() +
+                                "': " + parser.getLastError());
 
         shader = Shader::CreateComputeFromSPIRV(*dev, compiledOpt->spirv);
         if (!shader)
-            throw std::runtime_error("Failed to create Vulkan compute shader from SPIR-V");
+            throw runtime_error("Failed to create Vulkan compute shader from SPIR-V");
     }
 
     void ComputePipeline::CreateDescriptorLayout()
@@ -101,11 +100,11 @@ namespace SF::Engine
         auto *dev            = RenderSystem::Get()->GetLogicalDevice();
         const auto &bindings = shader->GetDescriptorBindings();
 
-        std::map<VkDescriptorType, uint32_t> counts;
+        map<VkDescriptorType, uint32_t> counts;
         for (const auto &b: bindings)
             counts[b.descriptorType] += b.descriptorCount;
 
-        std::vector<VkDescriptorPoolSize> sizes;
+        vector<VkDescriptorPoolSize> sizes;
         for (const auto &[type, count]: counts)
             sizes.push_back({type, count * 64});
 
@@ -127,11 +126,11 @@ namespace SF::Engine
         auto *dev       = RenderSystem::Get()->GetLogicalDevice();
         const auto &pcs = shader->GetPushConstants();
 
-        std::vector<VkPushConstantRange> ranges;
+        vector<VkPushConstantRange> ranges;
         for (const auto &pc: pcs)
             ranges.push_back({pc.stageFlags, pc.offset, pc.size});
 
-        std::vector<VkDescriptorSetLayout> setLayouts;
+        vector<VkDescriptorSetLayout> setLayouts;
         setLayouts.reserve(2 + additionalLayouts.size());
         setLayouts.push_back(descriptorSetLayout);
         setLayouts.push_back(SharedSamplers::GetSharedSamplerSetLayout());
@@ -154,7 +153,7 @@ namespace SF::Engine
 
         const auto &stages = shader->GetPipelineStages();
         if (stages.empty())
-            throw std::runtime_error("Compute shader has no pipeline stages after reflection");
+            throw runtime_error("Compute shader has no pipeline stages after reflection");
 
         VkComputePipelineCreateInfo info{};
         info.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -167,7 +166,7 @@ namespace SF::Engine
     }
 
     void ComputePipeline::Dispatch(const CommandBuffer &commandBuffer, const UVec3 &extent,
-                                    const UVec3 &localSize) const
+                                   const UVec3 &localSize) const
     {
         const UVec3 groupCount{Mathematics::CeilDiv(extent.x, localSize.x), Mathematics::CeilDiv(extent.y, localSize.y),
                                Mathematics::CeilDiv(extent.z, localSize.z)};
@@ -175,7 +174,7 @@ namespace SF::Engine
         vkCmdDispatch(commandBuffer, groupCount.x, groupCount.y, groupCount.z);
     }
 
-    void ComputePipeline::ReloadShader(const std::vector<uint32_t> &newSpirv)
+    void ComputePipeline::ReloadShader(const vector<uint32_t> &newSpirv) const
     {
         auto *dev = RenderSystem::Get()->GetLogicalDevice();
         vkDeviceWaitIdle(*dev);

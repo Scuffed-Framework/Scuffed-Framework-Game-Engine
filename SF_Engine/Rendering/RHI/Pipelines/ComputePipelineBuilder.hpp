@@ -7,6 +7,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     /**
      * @brief Fluent construction settings for a ComputePipeline, mirroring
      * DescriptorSetWriteBuilder's style (RHI/Descriptors/DescriptorSetBuilder.hpp).
@@ -27,36 +28,36 @@ namespace SF::Engine
      */
     struct ComputePipelineDesc
     {
-        std::filesystem::path shaderStage;
-        std::string entry; // empty = use the shader's default entry point
-        std::vector<Shader::Define> defines;
+        filesystem::path shaderStage;
+        string entry; // empty = use the shader's default entry point
+        vector<Shader::Define> defines;
         bool pushDescriptors = false;
-        std::vector<VkDescriptorSetLayout> additionalLayouts;
+        vector<VkDescriptorSetLayout> additionalLayouts;
         UVec3 localSize{16, 16, 1};
     };
 
     class ComputePipelineBuilder : public BuilderPattern<ComputePipelineBuilder, ComputePipelineDesc>
     {
     public:
-        ComputePipelineBuilder &Shader(std::filesystem::path shaderStage)
+        ComputePipelineBuilder &Shader(filesystem::path shaderStage)
         {
             m_Product.shaderStage = std::move(shaderStage);
             return Self();
         }
 
-        ComputePipelineBuilder &Entry(std::string entryPoint)
+        ComputePipelineBuilder &Entry(string entryPoint)
         {
             m_Product.entry = std::move(entryPoint);
             return Self();
         }
 
-        ComputePipelineBuilder &Define(std::string name, std::string value = "")
+        ComputePipelineBuilder &Define(string name, string value = "")
         {
             m_Product.defines.emplace_back(std::move(name), std::move(value));
             return Self();
         }
 
-        ComputePipelineBuilder &Defines(std::vector<Shader::Define> defines)
+        ComputePipelineBuilder &Defines(vector<Shader::Define> defines)
         {
             m_Product.defines = std::move(defines);
             return Self();
@@ -74,7 +75,7 @@ namespace SF::Engine
             return Self();
         }
 
-        ComputePipelineBuilder &AdditionalLayouts(std::vector<VkDescriptorSetLayout> layouts)
+        ComputePipelineBuilder &AdditionalLayouts(vector<VkDescriptorSetLayout> layouts)
         {
             m_Product.additionalLayouts = std::move(layouts);
             return Self();
@@ -95,16 +96,15 @@ namespace SF::Engine
         // Constructs the real ComputePipeline from the accumulated settings -- this is the
         // "Apply()" of this builder, matching DescriptorSetWrites::Apply()'s role of the step
         // that actually does the Vulkan work.
-        [[nodiscard]] std::unique_ptr<ComputePipeline> Create() const
+        [[nodiscard]] unique_ptr<ComputePipeline> Create() const
         {
             if (m_Product.entry.empty())
-                return std::make_unique<ComputePipeline>(m_Product.shaderStage, m_Product.defines,
-                                                         m_Product.pushDescriptors, m_Product.additionalLayouts,
-                                                         m_Product.localSize);
+                return make_unique<ComputePipeline>(m_Product.shaderStage, m_Product.defines, m_Product.pushDescriptors,
+                                                    m_Product.additionalLayouts, m_Product.localSize);
 
-            return std::make_unique<ComputePipeline>(m_Product.shaderStage, m_Product.entry, m_Product.defines,
-                                                     m_Product.pushDescriptors, m_Product.additionalLayouts,
-                                                     m_Product.localSize);
+            return make_unique<ComputePipeline>(m_Product.shaderStage, m_Product.entry, m_Product.defines,
+                                                m_Product.pushDescriptors, m_Product.additionalLayouts,
+                                                m_Product.localSize);
         }
     };
 } // namespace SF::Engine

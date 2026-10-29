@@ -7,6 +7,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     /**
      * @brief Fluent construction settings for a RhiRenderPipeline, mirroring
      * DescriptorSetWriteBuilder's style (RHI/Descriptors/DescriptorSetBuilder.hpp) the same way
@@ -32,9 +33,9 @@ namespace SF::Engine
      */
     struct RenderPipelineDesc
     {
-        std::filesystem::path shaderPath;
-        std::vector<Shader::VertexInput> vertexInputs;
-        std::vector<Shader::Define> defines;
+        filesystem::path shaderPath;
+        vector<Shader::VertexInput> vertexInputs;
+        vector<Shader::Define> defines;
         RhiRenderPipeline::Mode mode   = RhiRenderPipeline::Mode::Polygon;
         RhiRenderPipeline::Depth depth = RhiRenderPipeline::Depth::ReadWrite;
         VkPrimitiveTopology topology   = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -42,10 +43,10 @@ namespace SF::Engine
         VkCullModeFlags cullMode       = VK_CULL_MODE_BACK_BIT;
         VkFrontFace frontFace          = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         bool pushDescriptors           = false;
-        std::vector<VkDescriptorSetLayout> additionalLayouts;
+        vector<VkDescriptorSetLayout> additionalLayouts;
         RhiRenderPipeline::Blend blend = RhiRenderPipeline::Blend::PremultipliedAlpha;
-        uint32_t patchControlPoints    = 0; // 0 = auto (3) if the shader has tessellation stages
-        std::vector<VkPipelineColorBlendAttachmentState> blendStates; // only consulted for Blend::Custom
+        uint32_t patchControlPoints    = 0;                      // 0 = auto (3) if the shader has tessellation stages
+        vector<VkPipelineColorBlendAttachmentState> blendStates; // only consulted for Blend::Custom
     };
 
     class RenderPipelineBuilder : public BuilderPattern<RenderPipelineBuilder, RenderPipelineDesc>
@@ -60,7 +61,7 @@ namespace SF::Engine
             uint32_t subpassIndex = 0;
         };
 
-        RenderPipelineBuilder &Shader(std::filesystem::path path)
+        RenderPipelineBuilder &Shader(filesystem::path path)
         {
             m_Product.shaderPath = std::move(path);
             return Self();
@@ -72,61 +73,61 @@ namespace SF::Engine
             return Self();
         }
 
-        RenderPipelineBuilder &VertexInputs(std::vector<Shader::VertexInput> inputs)
+        RenderPipelineBuilder &VertexInputs(vector<Shader::VertexInput> inputs)
         {
             m_Product.vertexInputs = std::move(inputs);
             return Self();
         }
 
-        RenderPipelineBuilder &Define(std::string name, std::string value = "")
+        RenderPipelineBuilder &Define(string name, string value = "")
         {
             m_Product.defines.emplace_back(std::move(name), std::move(value));
             return Self();
         }
 
-        RenderPipelineBuilder &Defines(std::vector<Shader::Define> defines)
+        RenderPipelineBuilder &Defines(vector<Shader::Define> defines)
         {
             m_Product.defines = std::move(defines);
             return Self();
         }
 
-        RenderPipelineBuilder &Mode(RhiRenderPipeline::Mode mode)
+        RenderPipelineBuilder &Mode(const RhiRenderPipeline::Mode mode)
         {
             m_Product.mode = mode;
             return Self();
         }
 
-        RenderPipelineBuilder &Depth(RhiRenderPipeline::Depth depth)
+        RenderPipelineBuilder &Depth(const RhiRenderPipeline::Depth depth)
         {
             m_Product.depth = depth;
             return Self();
         }
 
-        RenderPipelineBuilder &Topology(VkPrimitiveTopology topology)
+        RenderPipelineBuilder &Topology(const VkPrimitiveTopology topology)
         {
             m_Product.topology = topology;
             return Self();
         }
 
-        RenderPipelineBuilder &PolygonMode(VkPolygonMode mode)
+        RenderPipelineBuilder &PolygonMode(const VkPolygonMode mode)
         {
             m_Product.polygonMode = mode;
             return Self();
         }
 
-        RenderPipelineBuilder &CullMode(VkCullModeFlags mode)
+        RenderPipelineBuilder &CullMode(const VkCullModeFlags mode)
         {
             m_Product.cullMode = mode;
             return Self();
         }
 
-        RenderPipelineBuilder &FrontFace(VkFrontFace face)
+        RenderPipelineBuilder &FrontFace(const VkFrontFace face)
         {
             m_Product.frontFace = face;
             return Self();
         }
 
-        RenderPipelineBuilder &PushDescriptors(bool value = true)
+        RenderPipelineBuilder &PushDescriptors(const bool value = true)
         {
             m_Product.pushDescriptors = value;
             return Self();
@@ -138,19 +139,19 @@ namespace SF::Engine
             return Self();
         }
 
-        RenderPipelineBuilder &AdditionalLayouts(std::vector<VkDescriptorSetLayout> layouts)
+        RenderPipelineBuilder &AdditionalLayouts(vector<VkDescriptorSetLayout> layouts)
         {
             m_Product.additionalLayouts = std::move(layouts);
             return Self();
         }
 
-        RenderPipelineBuilder &Blend(RhiRenderPipeline::Blend blend)
+        RenderPipelineBuilder &Blend(const RhiRenderPipeline::Blend blend)
         {
             m_Product.blend = blend;
             return Self();
         }
 
-        RenderPipelineBuilder &PatchControlPoints(uint32_t n)
+        RenderPipelineBuilder &PatchControlPoints(const uint32_t n)
         {
             m_Product.patchControlPoints = n;
             return Self();
@@ -159,16 +160,16 @@ namespace SF::Engine
         // Only consulted when Blend(RhiRenderPipeline::Blend::Custom) is also set; see
         // RhiRenderPipeline's constructor docs for the exact count required (1 for
         // Mode::Polygon, attachmentCount for Mode::MRT).
-        RenderPipelineBuilder &BlendStates(std::vector<VkPipelineColorBlendAttachmentState> states)
+        RenderPipelineBuilder &BlendStates(vector<VkPipelineColorBlendAttachmentState> states)
         {
             m_Product.blendStates = std::move(states);
             return Self();
         }
 
         // Constructs the real RhiRenderPipeline tied to a RenderSystem stage/subpass.
-        [[nodiscard]] std::unique_ptr<RhiRenderPipeline> Create(Pipeline::Stage stage) const
+        [[nodiscard]] unique_ptr<RhiRenderPipeline> Create(Pipeline::Stage stage) const
         {
-            return std::make_unique<RhiRenderPipeline>(
+            return make_unique<RhiRenderPipeline>(
                     std::move(stage), m_Product.shaderPath, m_Product.vertexInputs, m_Product.defines, m_Product.mode,
                     m_Product.depth, m_Product.topology, m_Product.polygonMode, m_Product.cullMode, m_Product.frontFace,
                     m_Product.pushDescriptors, m_Product.additionalLayouts, m_Product.blend, m_Product.blendStates,
@@ -179,13 +180,13 @@ namespace SF::Engine
         // VkRenderPass instead of a RenderSystem stage (e.g. one-shot LUT bakes) -- see
         // RhiRenderPipeline's offscreen constructor. Note: Mode is ignored here; the offscreen
         // constructor is always Mode::Polygon.
-        [[nodiscard]] std::unique_ptr<RhiRenderPipeline> Create(Offscreen target) const
+        [[nodiscard]] unique_ptr<RhiRenderPipeline> Create(Offscreen target) const
         {
-            return std::make_unique<RhiRenderPipeline>(
-                    target.renderPass, target.subpassIndex, m_Product.shaderPath, m_Product.vertexInputs,
-                    m_Product.defines, m_Product.depth, m_Product.topology, m_Product.polygonMode, m_Product.cullMode,
-                    m_Product.frontFace, m_Product.additionalLayouts, m_Product.blend, m_Product.blendStates,
-                    m_Product.patchControlPoints);
+            return make_unique<RhiRenderPipeline>(target.renderPass, target.subpassIndex, m_Product.shaderPath,
+                                                  m_Product.vertexInputs, m_Product.defines, m_Product.depth,
+                                                  m_Product.topology, m_Product.polygonMode, m_Product.cullMode,
+                                                  m_Product.frontFace, m_Product.additionalLayouts, m_Product.blend,
+                                                  m_Product.blendStates, m_Product.patchControlPoints);
         }
     };
 } // namespace SF::Engine

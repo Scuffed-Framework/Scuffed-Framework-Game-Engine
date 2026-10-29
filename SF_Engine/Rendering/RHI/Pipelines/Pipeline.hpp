@@ -5,6 +5,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     /**
      * @brief Class that is used to represent a pipeline.
      */
@@ -14,7 +15,7 @@ namespace SF::Engine
         /**
          * @breif Represents position in the render structure, first value being the renderpass and second for subpass.
          */
-        using Stage = std::pair<uint32_t, uint32_t>;
+        using Stage = pair<uint32_t, uint32_t>;
 
         Pipeline()          = default;
         virtual ~Pipeline() = default;
