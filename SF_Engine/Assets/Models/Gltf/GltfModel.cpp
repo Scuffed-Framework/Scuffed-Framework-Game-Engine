@@ -212,7 +212,7 @@ namespace SF::Engine
                             {
                                 if (base + i >= vertices.size())
                                     return;
-                                vertices[base + i].texCoord = Vec2(uv[0], uv[1]);
+                                vertices[base + i].texCoord = Vec3(uv[0], uv[1], 0.0f);
                             });
                 }
 

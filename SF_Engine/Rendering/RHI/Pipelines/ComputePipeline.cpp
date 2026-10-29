@@ -129,7 +129,7 @@ namespace SF::Engine
 
         vector<VkPushConstantRange> ranges;
         for (const auto &[offset, size, stageFlags]: pcs)
-            ranges.push_back({.stageFlags = stageFlags, offset, .size = size});
+            ranges.push_back({.stageFlags = stageFlags, .offset = offset, .size = size});
 
         vector<VkDescriptorSetLayout> setLayouts;
         setLayouts.reserve(2 + additionalLayouts.size());

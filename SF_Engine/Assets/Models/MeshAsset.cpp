@@ -50,8 +50,8 @@ namespace SF::Engine
 
         // aiProcess_PreTransformVertices is deliberately NOT used: we bake node transforms ourselves so each
         // material stays its own part.
-        unsigned flags = aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_GenUVCoords |
-                         aiProcess_ValidateDataStructure;
+        unsigned flags =
+                aiProcess_Triangulate | aiProcess_SortByPType | aiProcess_GenUVCoords | aiProcess_ValidateDataStructure;
         if (settings.joinIdenticalVertices)
             flags |= aiProcess_JoinIdenticalVertices;
         if (settings.generateNormals)
@@ -94,7 +94,7 @@ namespace SF::Engine
             stack.pop_back();
             const Mat4 world = frame.parentWorld * ToGlm(frame.node->mTransformation);
 
-            const glm::mat3 linear = glm::mat3(world);
+            const glm::mat3 linear    = glm::mat3(world);
             const glm::mat3 normalMat = glm::transpose(glm::inverse(linear));
             const bool mirrored       = glm::determinant(linear) < 0.0f; // flips triangle winding
 
@@ -125,7 +125,8 @@ namespace SF::Engine
                         out.normal = Vec3(0, 1, 0);
 
                     if (m->HasTextureCoords(0))
-                        out.texCoord = Vec2(m->mTextureCoords[0][v].x, m->mTextureCoords[0][v].y);
+                        out.texCoord =
+                                Vec3(m->mTextureCoords[0][v].x, m->mTextureCoords[0][v].y, m->mTextureCoords[0][v].z);
 
                     if (m->HasTangentsAndBitangents())
                     {
@@ -156,7 +157,8 @@ namespace SF::Engine
                 }
 
                 Part part;
-                part.name = m->mName.length > 0 ? std::string(m->mName.C_Str()) : std::string(frame.node->mName.C_Str());
+                part.name =
+                        m->mName.length > 0 ? std::string(m->mName.C_Str()) : std::string(frame.node->mName.C_Str());
                 if (part.name.empty())
                     part.name = name + "_" + std::to_string(built.size());
                 part.vertexCount   = m->mNumVertices;

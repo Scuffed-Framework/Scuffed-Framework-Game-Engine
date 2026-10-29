@@ -1,5 +1,5 @@
 #CORE
-NOW: RTGI
+NOW: RTGI, fix viewports
 1. Improve renderer
 2. Shader hot-reloading (at some point)
 3. Finish AssetSystem
