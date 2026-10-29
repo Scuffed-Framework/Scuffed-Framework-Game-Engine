@@ -140,4 +140,16 @@ namespace SF::Engine
             return {std::move(bindings), std::move(attrs)};
         }
     };
+
+    constexpr Vertex MakeVertex(const Vec3 &pos, const Vec3 &normal, const Vec2 &uv, const Vec3 &tangent)
+    {
+        Vertex v;
+        v.position  = pos;
+        v.normal    = normal;
+        v.texCoord  = Vec3(uv.x, uv.y, 0.0f);
+        v.tangent   = tangent;
+        v.bitangent = cross(normal, tangent);
+        v.color     = Vec3(1.0f);
+        return v;
+    }
 } // namespace SF::Engine

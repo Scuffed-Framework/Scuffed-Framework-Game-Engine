@@ -1,5 +1,5 @@
 #pragma once
-#include <Assets/Bitmaps/Bitmap.hpp>
+#include <Assets/AssetTraits.hpp>
 #include <LowLevel/FileSystem/File.hpp>
 #include <UtilityClasses/StreamFactory.hpp>
 
@@ -18,6 +18,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     class VideoBuffer;
 
     /**
@@ -101,8 +102,14 @@ namespace SF::Engine
                 TImport imp;
                 if constexpr (requires { &T::Load; })
                     load = &T::Load;
-                if constexpr (requires { &T::Write; })
+                if constexpr (HasWriteMember<T>::value)
+                {
+                    // Catches a typo'd signature loudly instead of silently dropping the writer.
+                    static_assert(
+                            HasValidWrite<T, Base>::value,
+                            "T::Write exists but doesn't match void(const SoundBuffer&, const std::filesystem::path&)");
                     write = &T::Write;
+                }
                 if constexpr (requires { &T::Import; })
                     imp = &T::Import;
 

@@ -170,7 +170,7 @@ namespace SF::Engine
         return RenderSystem::Get()->GetRenderStage(stage ? *stage : this->stage.first)->GetDepthStencil();
     }
 
-    const Image2d *RhiRenderPipeline::GetImage(uint32_t index, const optional<uint32_t> &stage) const
+    const Image2d *RhiRenderPipeline::GetImage(const uint32_t index, const optional<uint32_t> &stage) const
     {
         if (isOffscreen_ && !stage)
             throw runtime_error("RenderPipeline::GetImage: this pipeline is offscreen and isn't tied to a "

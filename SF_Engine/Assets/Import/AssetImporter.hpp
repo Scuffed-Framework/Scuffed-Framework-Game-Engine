@@ -34,7 +34,7 @@ namespace SF::Engine
     {
     public:
         // todo: multi instance for multithreading
-        static std::unique_ptr<Assimp::Importer> importer;
+        inline static std::unique_ptr<Assimp::Importer> importer;
         static constexpr int kImporterVersion = 1;
 
         [[nodiscard]] static ImportKind Classify(const std::filesystem::path &file);

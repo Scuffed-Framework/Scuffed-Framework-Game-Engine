@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Assets/AssetTraits.hpp>
 #include <LowLevel/FileSystem/File.hpp>
 #include <functional>
 #include <memory>
@@ -47,7 +48,18 @@ namespace SF::Engine
             template<typename... Args>
             static bool Register(Args &&...names)
             {
-                ((SoundBufferFactory::Registry()[std::string(names)] = std::make_pair(&T::Load, &T::Write)), ...);
+                TWriteMethod write; // empty = this format can't be written
+                if constexpr (HasWriteMember<T>::value)
+                {
+                    // Catches a typo'd signature loudly instead of silently dropping the writer.
+                    static_assert(
+                            HasValidWrite<T, Base>::value,
+                            "T::Write exists but doesn't match void(const SoundBuffer&, const std::filesystem::path&)");
+                    write = &T::Write;
+                }
+
+                ((SoundBufferFactory::Registry()[std::string(names)] = std::make_pair(TLoadMethod(&T::Load), write)),
+                 ...);
                 return true;
             }
         };
@@ -59,6 +71,8 @@ namespace SF::Engine
      * Contains decoded audio data loaded from disk. Multiple AudioClip instances
      * can share the same SoundBuffer.
      */
+    // TODO: Make write optional because like what even uses it except Ogg, Mpeg, and MKA
+    // we are going to pull the same move in video, convert everything to mka
     class SoundBuffer : public SoundBufferFactory<SoundBuffer>
     {
     public:
