@@ -72,14 +72,16 @@ namespace SF::Engine
 
         /**
          * Creates a new model.
-         * @tparam T The vertex type. Must be usable to construct a Vertex
-         *           (e.g. via vector's range constructor), so a plain
-         *           vector<Vertex> works out of the box.
+         * @param vertices The vertex data.
          * @param vertices The model vertices.
          * @param indices The model indices.
          */
-        template<typename T>
-        explicit Model(const vector<T> &vertices, const vector<uint32_t> &indices = {});
+        explicit Model(const vector<Vertex> &vertices, const vector<uint32_t> &indices = {})
+        {
+            vector vertexData(vertices.begin(), vertices.end());
+            vector indexData(indices);
+            Initialize(vertexData, indexData);
+        }
 
         [[nodiscard]] bool CmdRender(const CommandBuffer &commandBuffer, uint32_t instances = 1) const;
 
@@ -124,15 +126,4 @@ namespace SF::Engine
         Vec3 maxExtents = {};
         float radius    = 0.0f;
     };
-
-    // Template constructors must be defined where they're visible for
-    // instantiation, so this one stays in the header. Everything it calls
-    // into is non-template and defined once, in Model.cpp.
-    template<typename T>
-    Model::Model(const vector<T> &vertices, const vector<uint32_t> &indices) : Model()
-    {
-        vector<Vertex> vertexData(vertices.begin(), vertices.end());
-        vector<uint32_t> indexData(indices);
-        Initialize(vertexData, indexData);
-    }
 } // namespace SF::Engine
