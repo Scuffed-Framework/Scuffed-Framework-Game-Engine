@@ -110,10 +110,6 @@ namespace SF::Engine
         static VkIndexType GetIndexType() { return VK_INDEX_TYPE_UINT32; }
 
     protected:
-        // NOTE: intentionally NOT a template. The templated constructor below
-        // normalizes any T into vector<Vertex> and forwards here, so this
-        // single, non-template implementation can live in Model.cpp without
-        // causing multiple-definition (ODR) errors across translation units.
         void Initialize(vector<Vertex> &vertices, vector<uint32_t> &indices);
 
     private:

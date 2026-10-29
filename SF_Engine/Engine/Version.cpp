@@ -4,6 +4,6 @@
 namespace SF::Engine {
 const uint16_t Engine_VERSION_MAJOR = 2026;
 const uint8_t Engine_VERSION_MINOR = 10;
-const uint16_t Engine_VERSION_PATCH = 159;
-const std::string_view Engine_VERSION = "2026.10.159";
+const uint16_t Engine_VERSION_PATCH = 160;
+const std::string_view Engine_VERSION = "2026.10.160";
 } // namespace SF::Engine
