@@ -13,7 +13,7 @@ namespace SF::Engine
                          float pitch) : buffer(SoundBuffer::Create(input)), type(type), gain(gain), pitch(pitch)
     {
         alGenSources(1, &source);
-        alSourcei(source, AL_BUFFER, buffer->GetBuffer());
+        alSourcei(source, AL_BUFFER, static_cast<ALint>(buffer->GetBuffer()));
         Audio::CheckAl(alGetError());
 
         SetGain(gain);
@@ -91,7 +91,7 @@ namespace SF::Engine
         SetGain(gain);
     }
 
-    void AudioClip::Pause()
+    void AudioClip::Pause() const
     {
         if (!IsPlaying())
             return;
@@ -111,7 +111,7 @@ namespace SF::Engine
         SetGain(gain);
     }
 
-    void AudioClip::Stop()
+    void AudioClip::Stop() const
     {
         if (!IsPlaying())
             return;

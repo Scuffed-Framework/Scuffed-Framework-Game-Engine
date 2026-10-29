@@ -35,9 +35,9 @@ namespace SF::Engine
         ~AudioClip() override;
 
         void Play(bool loop = false);
-        void Pause();
+        void Pause() const;
         void Resume();
-        void Stop();
+        void Stop() const;
 
         [[nodiscard]] bool IsPlaying() const;
 
