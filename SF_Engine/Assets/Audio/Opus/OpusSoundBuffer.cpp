@@ -29,7 +29,7 @@ namespace SF::Engine
         const std::string path = std::filesystem::path(input.file->GetFullPath()).string();
 
         int err = 0;
-        std::unique_ptr<OggOpusFile, OpusFileDeleter> opus(op_open_file(path.c_str(), &err));
+        const std::unique_ptr<OggOpusFile, OpusFileDeleter> opus(op_open_file(path.c_str(), &err));
         if (!opus)
         {
             std::cerr << "Failed to open Opus file: " << path << " (opusfile error " << err << ")" << std::endl;
@@ -44,8 +44,7 @@ namespace SF::Engine
         // const ALenum format   = mono ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
 
         std::vector<opus_int16> pcm;
-        const ogg_int64_t totalFrames = op_pcm_total(opus.get(), -1); // per channel, 48 kHz; <0 if unknown
-        if (totalFrames > 0)
+        if (const ogg_int64_t totalFrames = op_pcm_total(opus.get(), -1); totalFrames > 0)
             pcm.reserve(static_cast<size_t>(totalFrames) * outChannels);
 
         // op_read* return frames per channel, and want the buffer size in total int16 values.
