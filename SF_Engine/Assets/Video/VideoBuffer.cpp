@@ -25,13 +25,12 @@ namespace SF::Engine
         return e;
     }
 
-
     shared_ptr<VideoBuffer> VideoBuffer::Create(const File &input)
     {
         const string key = fs::weakly_canonical(PathOf(input)).string();
 
         lock_guard lock(cacheMutex);
-        if (auto it = cache.find(key); it != cache.end())
+        if (const auto it = cache.find(key); it != cache.end())
             if (auto sp = it->second.lock())
                 return sp;
 
@@ -40,8 +39,7 @@ namespace SF::Engine
         return buffer;
     }
 
-
-    VideoBuffer::VideoBuffer(File input, bool load) : source(std::move(input))
+    VideoBuffer::VideoBuffer(File input, const bool load) : source(std::move(input))
     {
         if (load)
             Load();
@@ -49,34 +47,35 @@ namespace SF::Engine
 
     VideoBuffer::~VideoBuffer() { CloseDecoder(); }
 
-    VideoBuffer::VideoBuffer(VideoBuffer &&o) noexcept :
-        source(std::move(o.source)), info(std::move(o.info)), packets(std::move(o.packets)), loaded(o.loaded),
-        decoder(o.decoder), settings(o.settings), nextPacket(o.nextPacket), draining(o.draining), pending(o.pending)
+    VideoBuffer::VideoBuffer(VideoBuffer &&other) noexcept :
+        source(std::move(other.source)), info(std::move(other.info)), packets(std::move(other.packets)),
+        loaded(other.loaded), decoder(other.decoder), settings(other.settings), nextPacket(other.nextPacket),
+        draining(other.draining), pending(other.pending)
     {
-        o.decoder = nullptr;
-        o.pending = {};
-        o.loaded  = false;
+        other.decoder = nullptr;
+        other.pending = {};
+        other.loaded  = false;
     }
 
-    VideoBuffer &VideoBuffer::operator=(VideoBuffer &&o) noexcept
+    VideoBuffer &VideoBuffer::operator=(VideoBuffer &&other) noexcept
     {
-        if (this == &o)
+        if (this == &other)
             return *this;
         CloseDecoder();
 
-        source     = std::move(o.source);
-        info       = std::move(o.info);
-        packets    = std::move(o.packets);
-        loaded     = o.loaded;
-        decoder    = o.decoder;
-        settings   = o.settings;
-        nextPacket = o.nextPacket;
-        draining   = o.draining;
-        pending    = o.pending;
+        source     = std::move(other.source);
+        info       = std::move(other.info);
+        packets    = std::move(other.packets);
+        loaded     = other.loaded;
+        decoder    = other.decoder;
+        settings   = other.settings;
+        nextPacket = other.nextPacket;
+        draining   = other.draining;
+        pending    = other.pending;
 
-        o.decoder = nullptr;
-        o.pending = {};
-        o.loaded  = false;
+        other.decoder = nullptr;
+        other.pending = {};
+        other.loaded  = false;
         return *this;
     }
 
@@ -85,7 +84,7 @@ namespace SF::Engine
         const fs::path path = PathOf(src);
         const auto ext      = LowerExt(path);
 
-        auto it = Registry().find(ext);
+        const auto it = Registry().find(ext);
         if (it == Registry().end())
             throw runtime_error("VideoBuffer: no loader registered for '" + ext + "'. Convert it to AV1 MKV first.");
 
@@ -95,10 +94,10 @@ namespace SF::Engine
 
         // Transcode once, reuse next time while the source is unchanged.
         fs::path out = path;
-        out.replace_extension(".av1.mkv"); // TODO: point at your cache dir instead of next to the source
+        out.replace_extension(".av1.mkv"); // TODO: replace imported media with mkv :) :) trolling
         error_code ec;
-        const bool fresh = fs::exists(out, ec) && fs::last_write_time(out, ec) >= fs::last_write_time(path, ec);
-        if (!fresh)
+        if (const bool fresh = fs::exists(out, ec) && fs::last_write_time(out, ec) >= fs::last_write_time(path, ec);
+            !fresh)
             importFn(File(src), File(out));
 
         return {out};
@@ -112,7 +111,7 @@ namespace SF::Engine
 
         const File mkv = ResolveToAv1Mkv(source);
 
-        auto it = Registry().find(".mkv");
+        const auto it = Registry().find(".mkv");
         if (it == Registry().end() || !get<0>(it->second))
             throw runtime_error("VideoBuffer: MKV loader not registered (include MkvVideoBuffer.hpp)");
 
@@ -123,7 +122,7 @@ namespace SF::Engine
     void VideoBuffer::Write(const File &output) const
     {
         const auto ext = LowerExt(PathOf(output));
-        auto it        = Registry().find(ext);
+        const auto it  = Registry().find(ext);
         if (it == Registry().end() || !get<1>(it->second))
             throw runtime_error("VideoBuffer: no writer registered for '" + ext + "'");
         get<1>(it->second)(*this, output);

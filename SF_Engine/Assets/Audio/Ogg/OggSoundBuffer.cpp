@@ -8,7 +8,7 @@
 
 extern "C"
 {
-#include "stb_vorbis.c"
+#include <3rdPartyLibs/stb_vorbis.c>
 }
 
 #include <iostream>

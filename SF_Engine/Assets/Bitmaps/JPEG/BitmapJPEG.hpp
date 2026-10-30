@@ -1,8 +1,8 @@
 #pragma once
+#include <3rdPartyLibs/stb_image.h>
+#include <3rdPartyLibs/stb_image_write.h>
 #include <Assets/Bitmaps/Bitmap.hpp>
 #include <LowLevel/FileSystem/File.hpp>
-#include <LowLevel/stb_image.h>
-#include <LowLevel/stb_image_write.h>
 #include <cstdint>
 #include <stdexcept>
 #include <vector>

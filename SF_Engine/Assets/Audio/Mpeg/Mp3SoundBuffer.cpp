@@ -7,7 +7,7 @@
 #endif
 
 #define DR_MP3_IMPLEMENTATION
-#include "dr_mp3.hpp"
+#include <3rdPartyLibs/dr_mp3.hpp>
 
 #include <iostream>
 #include <vector>

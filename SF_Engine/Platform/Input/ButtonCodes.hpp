@@ -1,6 +1,6 @@
 #pragma once
+#include <3rdPartyLibs/Rocket.hpp>
 #include <LowLevel/Bitmask.hpp>
-#include <LowLevel/Rocket.hpp>
 
 #ifdef None
 #undef None

@@ -1,4 +1,4 @@
-#include "stb_image_write.h"
+#include "../LowLevel/stb_image_write.h"
 
 #ifdef _WIN32
     #ifndef _CRT_SECURE_NO_WARNINGS

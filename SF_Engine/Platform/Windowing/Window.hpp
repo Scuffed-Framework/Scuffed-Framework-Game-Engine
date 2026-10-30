@@ -4,8 +4,8 @@
     #define VK_NO_PROTOTYPES
 #endif
 
+#include <3rdPartyLibs/Rocket.hpp>
 #include <LowLevel/Bitmask.hpp>
-#include <LowLevel/Rocket.hpp>
 #include <Platform/Input/ButtonCodes.hpp>
 #include <volk.h>
 #include "Monitor.hpp"

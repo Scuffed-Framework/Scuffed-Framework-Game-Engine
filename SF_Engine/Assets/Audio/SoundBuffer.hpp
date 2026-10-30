@@ -11,8 +11,7 @@
 
 namespace SF::Engine
 {
-    // TODO: replace all write methods with some sort of EBML write. loading audio types is for editor, + EXPOSE PCM
-    // DATA HERE
+    // TODO: replace all write methods with some sort of EBML write. loading audio types is for editor
     /**
      * @brief Factory base for registering sound buffer loaders by file extension.
      */

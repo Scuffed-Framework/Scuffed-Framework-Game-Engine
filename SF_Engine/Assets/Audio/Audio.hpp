@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Engine/Engine.hpp>
+#include <3rdPartyLibs/Rocket.hpp>
 #include <Controllers/CameraController.hpp>
-#include <LowLevel/Rocket.hpp>
+#include <Engine/Engine.hpp>
 #ifdef _Platform_Mac
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>

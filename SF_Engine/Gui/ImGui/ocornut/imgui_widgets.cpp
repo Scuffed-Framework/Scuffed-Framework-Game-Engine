@@ -4622,7 +4622,7 @@ bool ImGui::InputDouble(const char *label, double *v, double step, double step_f
 
 namespace ImStb
 {
-    #include <LowLevel/imstb_textedit.h>
+    #include <3rdPartyLibs/imstb_textedit.h>
 }
 
 // If you want to use InputText() with std::string or any custom dynamic string type, use the wrapper in
@@ -4946,7 +4946,7 @@ namespace ImStb
 
     #define IMSTB_TEXTEDIT_IMPLEMENTATION
     #define IMSTB_TEXTEDIT_memmove memmove
-    #include <LowLevel/imstb_textedit.h>
+    #include <3rdPartyLibs/imstb_textedit.h>
 
     // stb_textedit internally allows for a single undo record to do addition and deletion, but somehow, calling
     // the stb_textedit_paste() function creates two separate records, so we perform it manually. (FIXME: Report to

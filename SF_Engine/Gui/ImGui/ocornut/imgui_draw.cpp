@@ -169,7 +169,7 @@ namespace IMGUI_STB_NAMESPACE
             #define STBRP_SORT ImQsort
             #define STB_RECT_PACK_IMPLEMENTATION
         #endif
-        #include <LowLevel/imstb_rectpack.h>
+        #include <3rdPartyLibs/imstb_rectpack.h>
     #endif
 
     #ifdef IMGUI_ENABLE_STB_TRUETYPE
@@ -199,7 +199,7 @@ namespace IMGUI_STB_NAMESPACE
             #ifdef IMGUI_STB_TRUETYPE_FILENAME
                 #include IMGUI_STB_TRUETYPE_FILENAME
             #else
-                #include <LowLevel/imstb_truetype.h>
+                #include <3rdPartyLibs/imstb_truetype.h>
             #endif
         #endif
     #endif // IMGUI_ENABLE_STB_TRUETYPE
