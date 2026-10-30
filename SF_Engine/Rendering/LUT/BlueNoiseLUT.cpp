@@ -104,7 +104,6 @@ namespace SF::Engine
         transitionToReadOnly(cmd, texture_.get());
         texture_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         baked_ = true;
-        Log::Info("BlueNoiseLUT::Bake complete ({}x{})", size_, size_);
     }
 
     PerlinWorleyNoiseLUT::PerlinWorleyNoiseLUT(uint32_t size)
@@ -142,6 +141,5 @@ namespace SF::Engine
         transitionToReadOnly3d(cmd, texture_.get());
         texture_->SetLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         baked_ = true;
-        Log::Info("PerlinWorleyNoiseLUT::Bake complete ({}^3)", size_);
     }
 } // namespace SF::Engine

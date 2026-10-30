@@ -11,6 +11,7 @@
 
 namespace SF::Engine
 {
+    using namespace std;
     // TODO: replace all write methods with some sort of EBML write. loading audio types is for editor
     /**
      * @brief Factory base for registering sound buffer loaders by file extension.
@@ -19,9 +20,9 @@ namespace SF::Engine
     class SoundBufferFactory
     {
     public:
-        using TLoadMethod  = std::function<void(Base &, const DataInput &)>;
-        using TWriteMethod = std::function<void(const Base &, const std::filesystem::path &)>;
-        using TRegistryMap = std::unordered_map<std::string, std::pair<TLoadMethod, TWriteMethod>>;
+        using TLoadMethod  = function<void(Base &, const DataInput &)>;
+        using TWriteMethod = function<void(const Base &, const filesystem::path &)>;
+        using TRegistryMap = unordered_map<string, pair<TLoadMethod, TWriteMethod>>;
 
         virtual ~SoundBufferFactory() = default;
 
@@ -54,12 +55,11 @@ namespace SF::Engine
                     // Catches a typo'd signature loudly instead of silently dropping the writer.
                     static_assert(
                             HasValidWrite<T, Base>::value,
-                            "T::Write exists but doesn't match void(const SoundBuffer&, const std::filesystem::path&)");
+                            "T::Write exists but doesn't match void(const SoundBuffer&, const filesystem::path&)");
                     write = &T::Write;
                 }
 
-                ((SoundBufferFactory::Registry()[std::string(names)] = std::make_pair(TLoadMethod(&T::Load), write)),
-                 ...);
+                ((SoundBufferFactory::Registry()[string(names)] = make_pair(TLoadMethod(&T::Load), write)), ...);
                 return true;
             }
         };
@@ -80,7 +80,7 @@ namespace SF::Engine
          */
         struct PCMData
         {
-            std::vector<int16_t> Samples;
+            vector<int16_t> Samples;
             uint32_t SampleRate  = 0;
             uint8_t ChannelCount = 0;
 
@@ -97,20 +97,20 @@ namespace SF::Engine
          * @param input Path to the audio file.
          * @return Shared pointer to the sound buffer.
          */
-        static std::shared_ptr<SoundBuffer> Create(const DataInput &input);
+        static shared_ptr<SoundBuffer> Create(const DataInput &input);
 
         /**
          * @brief Wraps an already-existing OpenAL buffer handle.
          * @param existingBuffer A valid OpenAL buffer name; ownership transfers to the SoundBuffer.
          * @param input data
          */
-        static std::shared_ptr<SoundBuffer> CreateFromHandle(ALuint existingBuffer, DataInput input = {});
+        static shared_ptr<SoundBuffer> CreateFromHandle(ALuint existingBuffer, DataInput input = {});
 
         /**
          * @brief Creates a buffer filled with a procedurally generated waveform.
          */
-        static std::shared_ptr<SoundBuffer> CreateWave(ALuint waveType, float frequency = 440.0f,
-                                                       float durationSeconds = 1.0f, uint32_t sampleRate = 44100);
+        static shared_ptr<SoundBuffer> CreateWave(ALuint waveType, float frequency = 440.0f,
+                                                  float durationSeconds = 1.0f, uint32_t sampleRate = 44100);
 
         /**
          * @brief Constructs a sound buffer.
@@ -128,7 +128,7 @@ namespace SF::Engine
         SoundBuffer(SoundBuffer &&other) noexcept;
         SoundBuffer &operator=(SoundBuffer &&other) noexcept;
 
-        [[nodiscard]] std::type_index GetTypeIndex() const { return typeid(SoundBuffer); }
+        [[nodiscard]] type_index GetTypeIndex() const { return typeid(SoundBuffer); }
 
         [[nodiscard]] const DataInput &GetInput() const { return input; }
         [[nodiscard]] uint32_t GetBuffer() const { return buffer; }
@@ -153,7 +153,7 @@ namespace SF::Engine
         uint32_t buffer = 0;
         PCMData pcm;
 
-        static std::unordered_map<DataInput, std::weak_ptr<SoundBuffer>> cache;
-        static std::mutex cacheMutex;
+        static unordered_map<DataInput, weak_ptr<SoundBuffer>> cache;
+        static mutex cacheMutex;
     };
 } // namespace SF::Engine

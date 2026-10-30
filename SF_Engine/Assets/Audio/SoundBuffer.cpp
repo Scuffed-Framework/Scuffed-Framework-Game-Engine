@@ -17,7 +17,7 @@ namespace SF::Engine
 
     std::shared_ptr<SoundBuffer> SoundBuffer::Create(const DataInput &input)
     {
-        std::lock_guard<std::mutex> lock(cacheMutex);
+        std::lock_guard lock(cacheMutex);
 
         DataInput key;
         // Convert to absolute path for consistent caching
@@ -27,8 +27,7 @@ namespace SF::Engine
             key.memory = (input.memory);
 
         // Check if already cached
-        auto it = cache.find(key);
-        if (it != cache.end())
+        if (const auto it = cache.find(key); it != cache.end())
         {
             if (auto existing = it->second.lock())
             {
@@ -45,12 +44,11 @@ namespace SF::Engine
         return soundBuffer;
     }
 
-    SoundBuffer::SoundBuffer(DataInput input, bool load) : input(input), buffer(0)
+    SoundBuffer::SoundBuffer(const DataInput input, const bool load) : input(input), buffer(0)
     {
         // Generate OpenAL buffer
         alGenBuffers(1, &buffer);
-        ALenum error = alGetError();
-        if (error != AL_NO_ERROR)
+        if (const ALenum error = alGetError(); error != AL_NO_ERROR)
         {
             std::cerr << "Failed to generate OpenAL buffer: " << error << std::endl;
             buffer = 0;
@@ -68,8 +66,7 @@ namespace SF::Engine
         if (buffer != 0)
         {
             alDeleteBuffers(1, &buffer);
-            ALenum error = alGetError();
-            if (error != AL_NO_ERROR)
+            if (const ALenum error = alGetError(); error != AL_NO_ERROR)
             {
                 std::cerr << "Failed to delete OpenAL buffer: " << error << std::endl;
             }
@@ -107,8 +104,7 @@ namespace SF::Engine
         if (this->buffer != 0)
         {
             alDeleteBuffers(1, &this->buffer);
-            ALenum error = alGetError();
-            if (error != AL_NO_ERROR)
+            if (const ALenum error = alGetError(); error != AL_NO_ERROR)
             {
                 std::cerr << "Failed to delete old OpenAL buffer: " << error << std::endl;
             }
@@ -135,11 +131,11 @@ namespace SF::Engine
         if (hasFile)
         {
             // Get file extension
-            std::string extension = input.file->GetExtension();
+            const std::string extension = input.file->GetExtension();
 
             // Look up loader in registry
             auto &registry = Registry();
-            auto it        = registry.find(extension);
+            const auto it  = registry.find(extension);
 
             if (it == registry.end())
             {
@@ -160,15 +156,14 @@ namespace SF::Engine
             alBufferData(this->GetBuffer(), AL_FORMAT_STEREO16, input.memory, static_cast<ALsizei>(64),
                          static_cast<ALsizei>(128));
 
-            ALenum error = alGetError();
-            if (error != AL_NO_ERROR)
+            if (const ALenum error = alGetError(); error != AL_NO_ERROR)
             {
                 std::cerr << "Failed to buffer data from memory" << error << std::endl;
             }
         }
     }
 
-    std::shared_ptr<SoundBuffer> SoundBuffer::CreateFromHandle(ALuint existingBuffer, DataInput input)
+    std::shared_ptr<SoundBuffer> SoundBuffer::CreateFromHandle(const ALuint existingBuffer, DataInput input)
     {
         if (existingBuffer == 0 || alIsBuffer(existingBuffer) == AL_FALSE)
         {
@@ -182,8 +177,8 @@ namespace SF::Engine
         return sb;
     }
 
-    std::shared_ptr<SoundBuffer> SoundBuffer::CreateWave(ALuint waveType, float frequency, float durationSeconds,
-                                                         uint32_t sampleRate)
+    std::shared_ptr<SoundBuffer> SoundBuffer::CreateWave(const ALuint waveType, const float frequency,
+                                                         const float durationSeconds, const uint32_t sampleRate)
     {
         auto sb = std::make_shared<SoundBuffer>(DataInput{}, /*load=*/false);
         if (sb->buffer == 0)
@@ -227,11 +222,10 @@ namespace SF::Engine
             samples[i] = static_cast<int16_t>(std::clamp(value, -1.0f, 1.0f) * 32767.0f);
         }
 
-        PCMData data{std::move(samples), sampleRate, 1};
+        PCMData data{.Samples = std::move(samples), .SampleRate = sampleRate, .ChannelCount = 1};
         sb->SetPCM(std::move(data));
 
-        ALenum error = alGetError();
-        if (error != AL_NO_ERROR)
+        if (const ALenum error = alGetError(); error != AL_NO_ERROR)
             std::cerr << "CreateWave: alBufferData failed: " << error << std::endl;
 
         return sb;
@@ -253,7 +247,7 @@ namespace SF::Engine
 
         if (const ALenum error = alGetError(); error != AL_NO_ERROR)
         {
-            std::cerr << "SetPCM: alBufferData failed: " << error << std::endl;
+            Log::Error("SetPCM: alBufferData failed:{} ", error);
             return false;
         }
 

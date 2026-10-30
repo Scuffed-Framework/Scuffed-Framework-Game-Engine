@@ -54,9 +54,6 @@ namespace SF::Engine
         auto size = texture_->GetSize();
         vkCmdDispatch(cmd, (size.x + 7) / 8, (size.y + 7) / 8, 1);
 
-        Log::Info("TransmittanceLUT::Bake: image handle before final barrier = 0x{:x}",
-                  (uint64_t)(VkImage)texture_->GetImage());
-
         Image::InsertImageMemoryBarrier(
             cmd, texture_->GetImage(),
             VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,

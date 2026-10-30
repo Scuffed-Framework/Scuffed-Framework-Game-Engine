@@ -108,25 +108,19 @@ namespace SF::Engine
 
         if (depthAttachment)
         {
-            Log::Info("Creating ImageDepth");
             depthStencil = std::make_unique<ImageDepth>(
                     fbExtent, depthAttachment->IsMultisampled() ? msaaSamples : VK_SAMPLE_COUNT_1_BIT);
-            Log::Info("ImageDepth created");
         }
 
         // Always recreate the renderpass so it uses the correct depth format.
         // The old guard `if (!renderpass)` caused it to reuse a stale renderpass
         // built before depthStencil existed, producing VK_FORMAT_R4G4_UNORM_PACK8.
-        Log::Info("Creating Renderpass");
         renderpass = std::make_unique<RhiRenderpass>(*logicalDevice, *this,
                                                      depthStencil ? depthStencil->GetFormat() : VK_FORMAT_UNDEFINED,
                                                      surface->GetFormat().format, msaaSamples);
-        Log::Info("Renderpass created");
 
-        Log::Info("Creating Framebuffer");
         framebuffer = std::make_unique<Framebuffer>(*logicalDevice, swapchain, *this, *renderpass, depthStencil.get(),
                                                     fbExtent, msaaSamples);
-        Log::Info("Framebuffer created");
         outOfDate = false;
 
         descriptors.clear();
