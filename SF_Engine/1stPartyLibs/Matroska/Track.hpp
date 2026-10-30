@@ -10,6 +10,11 @@
 #include "Block.hpp"
 #include "MatroskaIds.hpp"
 
+// Thanks X.h
+#ifdef Complex
+    #undef Complex
+#endif
+
 using namespace SF::EBML;
 namespace SF::Matroska
 {

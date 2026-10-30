@@ -313,7 +313,7 @@ namespace SF::Matroska
             }
         }
 
-        void finalize(std::ostream *out = nullptr)
+        void finalize()
         {
             if (finalized_)
                 return;
