@@ -41,7 +41,7 @@ namespace SF::Engine
         // downmixed to stereo by op_read_stereo (core AL has no >2 channel formats).
         const bool mono       = (channels == 1);
         const int outChannels = mono ? 1 : 2;
-        const ALenum format   = mono ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
+        // const ALenum format   = mono ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
 
         std::vector<opus_int16> pcm;
         const ogg_int64_t totalFrames = op_pcm_total(opus.get(), -1); // per channel, 48 kHz; <0 if unknown
