@@ -149,7 +149,7 @@ namespace SF::Engine
             ImGui::PopID();
 
             if (removed)
-                break; // erased from the map we're range-for'ing over — stop iterating this frame
+                break;
         }
     }
 

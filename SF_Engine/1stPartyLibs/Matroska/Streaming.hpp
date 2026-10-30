@@ -212,6 +212,20 @@ namespace SF::Matroska
 
         void flush() const { out_.flush(); }
 
+        // Overwrites already-written bytes at an absolute stream offset (e.g. a fixed-size
+        // placeholder such as Info/Duration), then restores the write position.
+        // Returns false if the stream isn't seekable or the write failed.
+        bool patch_bytes(size_t position, span<const byte> bytes) const
+        {
+            const streampos resume = out_.tellp();
+            if (resume == streampos(-1))
+                return false;
+            out_.seekp(static_cast<streamoff>(position));
+            out_.write(reinterpret_cast<const char *>(bytes.data()), static_cast<streamsize>(bytes.size()));
+            out_.seekp(resume);
+            return out_.good();
+        }
+
         // Overrides the Segment data start used to make SeekPosition values relative.
         // Normally detected automatically when a Segment is written.
         void set_segment_data_start(size_t position) { segmentDataStart_ = position; }
@@ -280,9 +294,9 @@ namespace SF::Matroska
                 return false; // not seekable (pipe, socket, ...)
 
             bool allResolved = true;
-            for (const auto &entry: seekEntries_)
+            for (const auto &[id, position]: seekEntries_)
             {
-                const auto it = elementPositions_.find(entry.id);
+                const auto it = elementPositions_.find(id);
                 if (it == elementPositions_.end() || it->second < *segmentDataStart_)
                 {
                     allResolved = false;
@@ -297,7 +311,7 @@ namespace SF::Matroska
                     value >>= 8;
                 }
 
-                target.seekp(static_cast<streamoff>(entry.position));
+                target.seekp(static_cast<streamoff>(position));
                 target.write(reinterpret_cast<const char *>(bytes.data()), static_cast<streamsize>(bytes.size()));
             }
 
@@ -309,10 +323,8 @@ namespace SF::Matroska
         bool update_seek_entries() { return update_seek_entries(out_); }
     };
 
-    // Streaming reader
     class StreamingReader
     {
-    private:
         istream &in_;
         const Schema &schema_;
         function<void(const Element &)> callback_;
@@ -344,11 +356,11 @@ namespace SF::Matroska
 
                 try
                 {
-                    auto result = parse_element(
+                    auto [element, consumed] = parse_element(
                             span<const byte>(buffer_.data() + bufferPos_, buffer_.size() - bufferPos_), schema_);
 
-                    bufferPos_ += result.consumed;
-                    bytesRead_ += result.consumed;
+                    bufferPos_ += consumed;
+                    bytesRead_ += consumed;
 
                     if (bufferPos_ > buffer_.size() / 2)
                     {
@@ -358,10 +370,10 @@ namespace SF::Matroska
 
                     if (callback_)
                     {
-                        callback_(result.element);
+                        callback_(element);
                     }
 
-                    return std::move(result.element);
+                    return std::move(element);
                 } catch (const ParseError &)
                 {
                     if (!read_more_data())
@@ -396,10 +408,10 @@ namespace SF::Matroska
             }
 
             static constexpr size_t kChunkSize = 1024 * 1024;
-            size_t oldSize                     = buffer_.size();
+            const size_t oldSize               = buffer_.size();
             buffer_.resize(oldSize + kChunkSize);
             in_.read(reinterpret_cast<char *>(buffer_.data() + oldSize), kChunkSize);
-            auto read = static_cast<size_t>(in_.gcount());
+            const auto read = static_cast<size_t>(in_.gcount());
             buffer_.resize(oldSize + read);
 
             return read > 0;

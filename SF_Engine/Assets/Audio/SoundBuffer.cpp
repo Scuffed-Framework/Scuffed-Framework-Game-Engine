@@ -5,8 +5,8 @@
 #else
     #include <al.h>
 #endif
+#include <Math/Math.hpp>
 #include <iostream>
-#include <stdexcept>
 #include "Waves.hpp"
 
 namespace SF::Engine
@@ -76,7 +76,8 @@ namespace SF::Engine
         }
     }
 
-    SoundBuffer::SoundBuffer(SoundBuffer &&other) noexcept : input(other.input), buffer(other.buffer)
+    SoundBuffer::SoundBuffer(SoundBuffer &&other) noexcept :
+        input(other.input), buffer(other.buffer), pcm(std::move(other.pcm))
     {
         other.buffer = 0;
     }
@@ -92,8 +93,9 @@ namespace SF::Engine
             }
 
             // Move data
-            input        = std::move(other.input);
+            input        = other.input;
             buffer       = other.buffer;
+            pcm          = other.pcm;
             other.buffer = 0;
         }
         return *this;
@@ -187,15 +189,15 @@ namespace SF::Engine
         if (sb->buffer == 0)
             return nullptr;
 
-        const auto sampleCount = static_cast<size_t>(durationSeconds * sampleRate);
+        const auto sampleCount = static_cast<size_t>(durationSeconds * static_cast<float>(sampleRate));
         std::vector<int16_t> samples(sampleCount);
 
-        static thread_local std::mt19937 rng{std::random_device{}()};
+        thread_local std::mt19937 rng{std::random_device{}()};
         std::uniform_real_distribution<float> noiseDist(-1.0f, 1.0f);
-        constexpr float PI = 3.14159265358979323846f;
 
         for (size_t i = 0; i < sampleCount; ++i)
         {
+            ;
             const float t     = static_cast<float>(i) / static_cast<float>(sampleRate);
             const float phase = t * frequency;
             float value       = 0.0f;
@@ -203,7 +205,7 @@ namespace SF::Engine
             switch (waveType)
             {
                 case ExtraAudioWaves::Wave_Sine:
-                    value = std::sin(2.0f * PI * phase);
+                    value = std::sin(2.0f * Pi * phase);
                     break;
                 case ExtraAudioWaves::Wave_Square:
                     value = std::fmod(phase, 1.0f) < 0.5f ? 1.0f : -1.0f;
@@ -225,13 +227,37 @@ namespace SF::Engine
             samples[i] = static_cast<int16_t>(std::clamp(value, -1.0f, 1.0f) * 32767.0f);
         }
 
-        alBufferData(sb->buffer, AL_FORMAT_MONO16, samples.data(),
-                     static_cast<ALsizei>(samples.size() * sizeof(int16_t)), static_cast<ALsizei>(sampleRate));
+        PCMData data{std::move(samples), sampleRate, 1};
+        sb->SetPCM(std::move(data));
 
         ALenum error = alGetError();
         if (error != AL_NO_ERROR)
             std::cerr << "CreateWave: alBufferData failed: " << error << std::endl;
 
         return sb;
+    }
+
+    bool SoundBuffer::SetPCM(PCMData data)
+    {
+        if (buffer == 0 || data.Empty() || data.ChannelCount < 1 || data.ChannelCount > 2)
+        {
+            std::cerr << "SetPCM: invalid buffer or PCM data" << std::endl;
+            return false;
+        }
+
+        const ALenum format = (data.ChannelCount == 1) ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
+
+        alGetError(); // clear stale errors
+        alBufferData(buffer, format, data.Samples.data(), static_cast<ALsizei>(data.Samples.size() * sizeof(int16_t)),
+                     static_cast<ALsizei>(data.SampleRate));
+
+        if (const ALenum error = alGetError(); error != AL_NO_ERROR)
+        {
+            std::cerr << "SetPCM: alBufferData failed: " << error << std::endl;
+            return false;
+        }
+
+        pcm = std::move(data);
+        return true;
     }
 } // namespace SF::Engine

@@ -8,7 +8,7 @@
 #include <Assets/Audio/Mpeg/Mp3SoundBuffer.hpp>
 #include <Assets/Audio/Ogg/OggSoundBuffer.hpp>
 #include <Assets/Audio/Opus/OpusSoundBuffer.hpp>
-#include <Assets/Audio/Wave/WaveSoundBuffer.hpp>
+#include <Assets/Audio/Wav/WaveSoundBuffer.hpp>
 
 #ifdef _PLATFORM_MACOS
     #include <OpenAL/al.h>

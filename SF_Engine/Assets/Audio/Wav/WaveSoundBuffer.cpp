@@ -1,9 +1,9 @@
 #include "WaveSoundBuffer.hpp"
 
 #ifdef _PLATFORM_MACOS
-#include <OpenAL/al.h>
+    #include <OpenAL/al.h>
 #else
-#include <al.h>
+    #include <al.h>
 #endif
 
 #define DR_WAV_IMPLEMENTATION
@@ -25,8 +25,8 @@ namespace SF::Engine
 
         if (wav.channels < 1 || wav.channels > 2)
         {
-            std::cerr << "Unsupported WAV channel count (" << wav.channels
-                       << ") in " << input.file << ", only mono/stereo supported" << std::endl;
+            std::cerr << "Unsupported WAV channel count (" << wav.channels << ") in " << input.file
+                      << ", only mono/stereo supported" << std::endl;
             drwav_uninit(&wav);
             return;
         }
@@ -48,15 +48,29 @@ namespace SF::Engine
 
         drwav_uninit(&wav);
     }
-
     void WaveSoundBuffer::Write(const SoundBuffer &soundBuffer, const std::filesystem::path &file)
     {
-        // NOTE: Core OpenAL has no alGetBufferData equivalent, so PCM samples can't be
-        // read back out of an AL buffer for re-encoding. Writing requires the decoded
-        // PCM to be cached somewhere accessible (e.g. on SoundBuffer itself) before this
-        // can be implemented for real. Left as a stub so the extension is still registered.
-        (void)soundBuffer;
-        std::cerr << "WaveSoundBuffer::Write is not implemented (no PCM readback from OpenAL buffer): "
-                  << file << std::endl;
+        if (!soundBuffer.HasPCM())
+        {
+            std::cerr << "Write: no PCM available\n";
+            return;
+        }
+        const auto &pcm = soundBuffer.GetPCM();
+
+        drwav_data_format fmt{};
+        fmt.container     = drwav_container_riff;
+        fmt.format        = DR_WAVE_FORMAT_PCM;
+        fmt.channels      = pcm.ChannelCount;
+        fmt.sampleRate    = pcm.SampleRate;
+        fmt.bitsPerSample = 16;
+
+        drwav wav;
+        if (!drwav_init_file_write(&wav, file.string().c_str(), &fmt, nullptr))
+        {
+            std::cerr << "Failed to open for writing: " << file << std::endl;
+            return;
+        }
+        drwav_write_pcm_frames(&wav, pcm.FrameCount(), pcm.Samples.data());
+        drwav_uninit(&wav);
     }
-}
+} // namespace SF::Engine

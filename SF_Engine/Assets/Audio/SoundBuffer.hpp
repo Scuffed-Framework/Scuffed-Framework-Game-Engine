@@ -6,12 +6,13 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 #include "Audio.hpp"
 
 namespace SF::Engine
 {
-    // TODO: replace all write methods with stdbuffer (some sort of EBML) write. loading audio types is for editor,
-    // stdbuffer is for built games.
+    // TODO: replace all write methods with some sort of EBML write. loading audio types is for editor, + EXPOSE PCM
+    // DATA HERE
     /**
      * @brief Factory base for registering sound buffer loaders by file extension.
      */
@@ -71,11 +72,27 @@ namespace SF::Engine
      * Contains decoded audio data loaded from disk. Multiple AudioClip instances
      * can share the same SoundBuffer.
      */
-    // TODO: Make write optional because like what even uses it except Ogg, Mpeg, and MKA
-    // we are going to pull the same move in video, convert everything to mka
+    // TODO: we are going to pull the same move in video, convert everything to mka, add PCM
     class SoundBuffer : public SoundBufferFactory<SoundBuffer>
     {
     public:
+        /**
+         * @breif 16 bit decoded PCM
+         */
+        struct PCMData
+        {
+            std::vector<int16_t> Samples;
+            uint32_t SampleRate  = 0;
+            uint8_t ChannelCount = 0;
+
+            [[nodiscard]] bool Empty() const { return Samples.empty(); }
+            [[nodiscard]] size_t FrameCount() const { return ChannelCount ? Samples.size() / ChannelCount : 0; }
+            [[nodiscard]] float DurationSeconds() const
+            {
+                return SampleRate ? static_cast<float>(FrameCount()) / static_cast<float>(SampleRate) : 0.f;
+            }
+        };
+
         /**
          * @brief Creates or retrieves a cached sound buffer.
          * @param input Path to the audio file.
@@ -123,9 +140,19 @@ namespace SF::Engine
          */
         void Load();
 
+        bool SetPCM(PCMData data);
+
+        [[nodiscard]] const PCMData &GetPCM() const { return pcm; }
+        [[nodiscard]] bool HasPCM() const { return !pcm.Empty(); }
+
+        /** Frees the CPU-side copy (the AL buffer stays valid). Use in shipped builds. */
+        void ReleasePCM() { PCMData().Samples.swap(pcm.Samples); }
+
+
     private:
         DataInput input;
         uint32_t buffer = 0;
+        PCMData pcm;
 
         static std::unordered_map<DataInput, std::weak_ptr<SoundBuffer>> cache;
         static std::mutex cacheMutex;

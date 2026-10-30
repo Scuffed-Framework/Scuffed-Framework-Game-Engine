@@ -34,16 +34,6 @@ namespace SF::Engine
         w.dstSet          = d;
         w.dstBinding      = b;
         w.descriptorCount = 1;
-        // DeferredLight.shader declares gbufAlbedo/Normal/PBR/Depth as plain
-        // Texture2D (bindings 4-7) plus one separate SamplerState
-        // (binding 8) — not a combined image-sampler, same pattern
-        // GBuffer.shader itself uses (see GBufferPass.cpp's GBufWImg comment).
-        // The reflected descriptor set layout for bindings 4-7 is therefore
-        // SAMPLED_IMAGE, not COMBINED_IMAGE_SAMPLER — writing the wrong type
-        // here is a layout mismatch, and separately, binding 8's actual
-        // SamplerState was never being written at all, leaving every
-        // .Sample(linearSampler, ...) call in the shader reading through an
-        // uninitialized sampler descriptor.
         w.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         w.pImageInfo     = i;
         return w;
@@ -88,10 +78,6 @@ namespace SF::Engine
                 WriteSSBO(descSet_->GetDescriptorSet(), 3, &idxInfo),
         });
 
-        // Binding 8 : the separate SamplerState the shader actually filters
-        // through. This never got written before — written once here since
-        // the sampler object itself is stable across attachment recreation,
-        // same as the buffer bindings above.
         VkDescriptorImageInfo samplerInfo{};
         samplerInfo.sampler = SharedSamplers::GetLinearRepeatSampler();
         DescriptorSet::Update({

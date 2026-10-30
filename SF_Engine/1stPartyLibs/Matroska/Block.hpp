@@ -63,13 +63,12 @@ namespace SF::Matroska
 
         // Flags byte
         uint8_t flags = 0;
-        if (!block.keyframe)
-            flags |= 0x80;
+        if (block.keyframe)
+            flags |= 0x80; // SimpleBlock: bit set = keyframe
         if (block.invisible)
             flags |= 0x08;
         if (block.lacing != LacingType::None)
         {
-            flags |= 0x06;
             flags |= (static_cast<uint8_t>(block.lacing) & 0x03) << 1;
         }
         if (block.discardable)
@@ -96,10 +95,10 @@ namespace SF::Matroska
         if (block.lacing == LacingType::Fixed)
         {
             // Fixed lacing: all frames same size
-            uint64_t frameSize = block.frames[0].data.size();
-            for (const auto &frame: block.frames)
+            const uint64_t frameSize = block.frames[0].data.size();
+            for (const auto &[data, duration]: block.frames)
             {
-                if (frame.data.size() != frameSize)
+                if (data.size() != frameSize)
                     throw runtime_error("Fixed lacing requires all frames same size");
             }
             // No size encoding needed
@@ -176,7 +175,7 @@ namespace SF::Matroska
         SimpleBlock block;
         block.trackNumber = trackNumber;
         block.timecode    = timecode;
-        block.keyframe    = !(flags & 0x80);
+        block.keyframe    = isSimpleBlock ? !!(flags & 0x80) : true; // plain Block: bit is reserved
         block.invisible   = !!(flags & 0x08);
         block.discardable = isSimpleBlock && !!(flags & 0x01);
 
@@ -205,10 +204,10 @@ namespace SF::Matroska
         if (block.lacing == LacingType::Fixed)
         {
             // All frames same size
-            size_t totalRemaining = data.size() - pos;
+            const size_t totalRemaining = data.size() - pos;
             if (totalRemaining % frameCount != 0)
                 throw runtime_error("Fixed lacing: total size not divisible by frame count");
-            size_t frameSize = totalRemaining / frameCount;
+            const size_t frameSize = totalRemaining / frameCount;
             sizes.assign(frameCount, frameSize);
         } else if (block.lacing == LacingType::Xiph)
         {
@@ -235,7 +234,7 @@ namespace SF::Matroska
             size_t totalSize = 0;
             for (size_t i = 0; i < frameCount - 1; ++i)
             {
-                auto sizeResult = decode_size(data.subspan(pos));
+                const auto sizeResult = decode_size(data.subspan(pos));
                 if (!sizeResult)
                     throw runtime_error("Invalid EBML lacing size");
                 pos += sizeResult->length;
@@ -277,7 +276,7 @@ namespace SF::Matroska
         temp.invisible   = block.invisible;
         temp.lacing      = block.lacing;
         temp.frames      = block.frames;
-        temp.keyframe    = true; // Default value, will be inverted in flags
+        temp.keyframe    = false; // plain Block: 0x80 is reserved, keyframe-ness lives in the BlockGroup
         temp.discardable = false;
         return encode_simple_block(temp);
     }

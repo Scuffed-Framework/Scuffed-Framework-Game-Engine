@@ -57,7 +57,7 @@ namespace SF::Engine
         auto shaderAsset       = AssetController::Get()->RegisterAsset<ShaderAsset>(name);
         shaderAsset->type      = AssetType::Shader;
         shaderAsset->assetPath = path;
-        shaderAsset->SaveMeta(); // writes <path>.meta only — no full-manifest rewrite
+        shaderAsset->SaveMeta();
 
         showCS = false;
     }

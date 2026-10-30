@@ -3,7 +3,9 @@
 #include <chrono>
 #include <memory>
 #include <random>
+#include <span>
 #include <unordered_map>
+#include <unordered_set>
 #include "Block.hpp"
 #include "Cues.hpp"
 #include "MatroskaIds.hpp"
@@ -40,8 +42,14 @@ namespace SF::Matroska
         size_t infoPos_          = 0;
         size_t tracksPos_        = 0;
 
-        // File duration tracking
+        // File duration tracking (end of the last frame, incl. its duration)
         std::chrono::nanoseconds duration_{0};
+        size_t durationPayloadPos_ = 0; // absolute offset of Info/Duration's 8-byte payload
+
+        // Cluster management
+        bool clusterOpen_         = false;
+        uint64_t maxClusterTicks_ = 0; // 0 = derive from timecode scale (5 s, capped to the int16 block range)
+        std::unordered_set<uint64_t> cuedTracksInCluster_;
 
         // Random generator for UIDs
         std::mt19937_64 rng_{std::random_device{}()};
@@ -92,6 +100,8 @@ namespace SF::Matroska
 
         void add_track(const Track &track)
         {
+            if (writer_)
+                throw std::runtime_error("Tracks must be added before initialize_writer()");
             if (track.number == 0)
                 throw std::runtime_error("Track number cannot be 0");
 
@@ -143,6 +153,45 @@ namespace SF::Matroska
             return track;
         }
 
+        struct AudioTrackOptions
+        {
+            std::vector<EBML::byte> codecPrivate;
+            std::chrono::nanoseconds codecDelay{0};      // Opus: pre-skip in ns
+            std::chrono::nanoseconds seekPreRoll{0};     // Opus: 80 ms
+            std::chrono::nanoseconds defaultDuration{0}; // e.g. 20 ms for 20 ms Opus packets
+            uint64_t outputSamplingFrequency = 0;
+            uint64_t bitDepth                = 0;
+            std::string language             = "eng";
+            std::string name;
+        };
+
+        Track add_audio_track(double sampleRate, int channels, const std::string &codecID, const AudioTrackOptions &opt)
+        {
+            Track track;
+            track.number          = nextTrackNumber_++;
+            track.uid             = generate_uid();
+            track.type            = TrackType::Audio;
+            track.codecID         = codecID;
+            track.language        = opt.language;
+            track.name            = opt.name;
+            track.codecDelay      = opt.codecDelay;
+            track.seekPreRoll     = opt.seekPreRoll;
+            track.defaultDuration = opt.defaultDuration;
+            track.lacing          = false;
+
+            AudioTrack audio;
+            audio.samplingFrequency       = sampleRate;
+            audio.outputSamplingFrequency = opt.outputSamplingFrequency;
+            audio.channels                = static_cast<uint64_t>(channels);
+            audio.bitDepth                = opt.bitDepth;
+            audio.codecPrivate            = opt.codecPrivate;
+            audio.codecID                 = codecID;
+            track.specific                = std::move(audio);
+
+            add_track(track);
+            return track;
+        }
+
         void start_cluster(int64_t timecode)
         {
             if (!writer_)
@@ -161,55 +210,104 @@ namespace SF::Matroska
             writer_->write_element(clusterTimecode);
 
             blockNumber_ = 0;
+            clusterOpen_ = true;
+            cuedTracksInCluster_.clear();
         }
 
-        void end_cluster() const
+        void end_cluster()
         {
             if (!writer_)
                 throw std::runtime_error("Writer not initialized");
             if (finalized_)
                 throw std::runtime_error("File already finalized");
 
-            writer_->end_unknown();
+            if (clusterOpen_)
+            {
+                writer_->end_unknown();
+                clusterOpen_ = false;
+            }
         }
 
-        void write_frame(uint64_t trackNumber, int64_t timestamp, std::span<const byte> data, bool keyframe = true)
+        // Optional: override the automatic cluster length (in timecode ticks). Must stay < 32767.
+        void set_max_cluster_ticks(uint64_t ticks) { maxClusterTicks_ = ticks; }
+
+        /**
+         * @brief Writes one frame/packet. Clusters are opened and rotated automatically.
+         * @param trackNumber track number
+         * @param timestamp      Absolute time in timecode ticks (default 1 tick = 1 ms).
+         * @param data
+         * @param keyframe
+         * @param durationTicks  Optional. Recorded as BlockDuration and used for the file Duration.
+         * @param discardPaddingNs Optional (Opus): ns to trim from the END of this packet's decoded output.
+         *        Either of the last two makes the frame a BlockGroup instead of a SimpleBlock.
+         */
+        void write_frame(uint64_t trackNumber, int64_t timestamp, std::span<const byte> data, bool keyframe = true,
+                         uint64_t durationTicks = 0, int64_t discardPaddingNs = 0)
         {
             if (!writer_)
                 throw std::runtime_error("Writer not initialized");
             if (finalized_)
                 throw std::runtime_error("File already finalized");
-            if (trackNumber == 0 || !tracksMap_.contains(trackNumber))
+            auto trackIt = tracksMap_.find(trackNumber);
+            if (trackNumber == 0 || trackIt == tracksMap_.end())
                 throw std::runtime_error("Invalid track number");
 
-            SimpleBlock block;
-            block.trackNumber = trackNumber;
-            block.timecode =
-                    timestamp_.block_timecode(std::chrono::nanoseconds(timestamp * timestamp_.timecode_scale()));
-            block.keyframe = keyframe;
-            block.lacing   = LacingType::None;
+            const uint64_t scale = timestamp_.timecode_scale();
+            if (maxClusterTicks_ == 0)
+                maxClusterTicks_ = std::min<uint64_t>(30000, std::max<uint64_t>(1, 5'000'000'000ull / scale));
 
+            if (!clusterOpen_ || timestamp < static_cast<int64_t>(clusterTimecode_) ||
+                timestamp - static_cast<int64_t>(clusterTimecode_) >= static_cast<int64_t>(maxClusterTicks_))
+            {
+                end_cluster();
+                start_cluster(timestamp);
+            }
+
+            Block block;
+            block.trackNumber = trackNumber;
+            block.timecode    = timestamp_.block_timecode(std::chrono::nanoseconds(timestamp * scale));
+            block.lacing      = LacingType::None;
             Frame frame;
-            frame.data = std::vector<byte>(data.begin(), data.end());
+            frame.data.assign(data.begin(), data.end());
             block.frames.push_back(std::move(frame));
 
-            writer_->write_simple_block(block);
+            if (durationTicks == 0 && discardPaddingNs == 0)
+            {
+                SimpleBlock sb;
+                sb.trackNumber = block.trackNumber;
+                sb.timecode    = block.timecode;
+                sb.keyframe    = keyframe;
+                sb.frames      = std::move(block.frames);
+                writer_->write_simple_block(sb);
+            } else
+            {
+                auto group = Element::make_master(ids::BlockGroup);
+                group.add(Element::make_binary(ids::Block, encode_block(block)));
+                if (durationTicks)
+                    group.add(Element::make_uint(ids::BlockDuration, durationTicks));
+                if (!keyframe)
+                    group.add(Element::make_int(ids::ReferenceBlock, -1)); // any reference => not a keyframe
+                if (discardPaddingNs)
+                    group.add(Element::make_int(ids::DiscardPadding, discardPaddingNs));
+                writer_->write_element(group);
+            }
             blockNumber_++;
 
-            // Update duration
-            auto absTime = timestamp_.from_block_timecode(block.timecode);
-            if (absTime > duration_)
-                duration_ = absTime;
+            auto end = timestamp_.from_block_timecode(block.timecode) + std::chrono::nanoseconds(durationTicks * scale);
+            if (end > duration_)
+                duration_ = end;
 
-            // Add cue point for keyframes
-            if (keyframe)
+            // Cues: every keyframe for video, once per cluster for everything else (audio frames are all
+            // keyframes, a CuePoint per packet would bloat the file).
+            const bool isVideo = trackIt->second.type == TrackType::Video;
+            if (keyframe && (isVideo || cuedTracksInCluster_.insert(trackNumber).second))
             {
                 CuePoint point;
                 point.timecode = static_cast<uint64_t>(timestamp);
                 CuePoint::TrackPosition pos;
                 pos.trackNumber     = trackNumber;
-                pos.clusterPosition = clusterStartPosition_;
-                pos.blockNumber     = blockNumber_;
+                pos.clusterPosition = clusterStartPosition_ - segmentDataStart_; // Segment-relative, per spec
+                pos.blockNumber     = blockNumber_;                              // 1-based within the cluster
                 point.positions.push_back(pos);
                 cuePoints_.push_back(point);
             }
@@ -222,12 +320,17 @@ namespace SF::Matroska
             if (!writer_)
                 throw std::runtime_error("Writer not initialized");
 
-            // Write duration to Info
-            if (duration_.count() > 0)
+            // Close the open cluster before Cues/SeekHead (they are siblings of Cluster, not children).
+            end_cluster();
+
+            // Patch Info/Duration (a float64 placeholder written up front). Per spec it is in timecode
+            // ticks, not seconds. Silently skipped on non-seekable streams.
+            if (duration_.count() > 0 && durationPayloadPos_ != 0)
             {
-                auto durationElement = Element::make_float(ids::Duration, static_cast<double>(duration_.count()) / 1e9);
-                // We'd need to update the Info element, but it's already written
-                // For now, we'll just note it
+                const auto ticks =
+                        static_cast<double>(duration_.count()) / static_cast<double>(timestamp_.timecode_scale());
+                const auto bytes = encode_float(ticks);
+                writer_->patch_bytes(durationPayloadPos_, bytes);
             }
 
             // Generate and write Cues, tracking its Segment-relative offset
@@ -284,6 +387,7 @@ namespace SF::Matroska
         void write_info()
         {
             info_.add(Element::make_uint(ids::TimecodeScale, timestamp_.timecode_scale()));
+            info_.add(Element::make_float(ids::Duration, 0.0)); // 8-byte placeholder, patched in finalize()
             info_.add(Element::make_utf8(ids::MuxingApp, "SF::EBML/Matroska"));
             info_.add(Element::make_utf8(ids::WritingApp, "SF::EBML/Matroska"));
             info_.add(Element::make_date(ids::DateUTC, std::chrono::system_clock::now()));
@@ -293,6 +397,12 @@ namespace SF::Matroska
             for (auto &b: uid)
                 b = static_cast<byte>(rng_() & 0xFF);
             info_.add(Element::make_binary(ids::SegmentUID, std::move(uid)));
+
+            SerializationContext ctx;
+            ctx.currentPosition = writer_->tell();
+            (void) serialize(info_, &ctx); // only to learn where Duration lands
+            durationPayloadPos_ = ctx.elementPositions.at(ids::Duration.value()) + ids::Duration.encode().size() +
+                                  encode_size(8).size();
 
             writer_->write_element(info_);
         }

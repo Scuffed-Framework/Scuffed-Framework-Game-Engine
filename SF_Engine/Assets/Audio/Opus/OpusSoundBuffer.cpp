@@ -65,7 +65,7 @@ namespace SF::Engine
                 std::cerr << "Opus decode error " << frames << " in " << path << std::endl;
                 return;
             }
-            pcm.insert(pcm.end(), chunk.begin(), chunk.begin() + static_cast<size_t>(frames) * outChannels);
+            pcm.insert(pcm.end(), chunk.begin(), chunk.begin() + static_cast<long>(frames) * outChannels);
         }
 
         if (pcm.empty())
@@ -75,8 +75,13 @@ namespace SF::Engine
         }
 
         alGetError(); // clear any stale error so we only report ours
-        alBufferData(soundBuffer.GetBuffer(), format, pcm.data(), static_cast<ALsizei>(pcm.size() * sizeof(opus_int16)),
-                     48000);
+        if (pcm.empty())
+        {
+            Log::Error("PCM empty!");
+            return;
+        }
+        soundBuffer.SetPCM(
+                {.Samples = std::move(pcm), .SampleRate = 48000, .ChannelCount = static_cast<uint8_t>(outChannels)});
 
         if (const ALenum error = alGetError(); error != AL_NO_ERROR)
             std::cerr << "Failed to buffer Opus data for " << path << ": " << error << std::endl;

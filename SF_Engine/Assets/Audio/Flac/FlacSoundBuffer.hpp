@@ -10,6 +10,5 @@ namespace SF::Engine
 
     public:
         static void Load(SoundBuffer &soundBuffer, const DataInput &input);
-        static void Write(const SoundBuffer &soundBuffer, const std::filesystem::path &file);
     };
-}
+} // namespace SF::Engine

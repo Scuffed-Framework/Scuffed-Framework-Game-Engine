@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <stdexcept>
 
 namespace SF::Matroska
 {
